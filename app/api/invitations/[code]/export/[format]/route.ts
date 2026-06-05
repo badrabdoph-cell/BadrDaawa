@@ -25,6 +25,15 @@ type ExportData = {
   rows: ExportRow[];
 };
 
+type DatabaseGuestRow = {
+  name: string;
+  phone: string;
+  attendees: number;
+  status: "CONFIRMED" | "DECLINED";
+  note: string | null;
+  createdAt: Date;
+};
+
 async function getExportRows(code: string): Promise<ExportData | null> {
   if (prisma) {
     const invitation = await prisma.invitation.findUnique({
@@ -34,7 +43,7 @@ async function getExportRows(code: string): Promise<ExportData | null> {
     if (!invitation) return null;
     return {
       title: `${invitation.groomName} & ${invitation.brideName}`,
-      rows: invitation.guests.map((guest) => ({
+      rows: invitation.guests.map((guest: DatabaseGuestRow) => ({
         name: guest.name,
         phone: guest.phone,
         attendees: guest.attendees,
