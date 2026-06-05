@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatArabicDate(date: string) {
-  return new Intl.DateTimeFormat("ar-EG", {
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -14,7 +14,7 @@ export function formatArabicDate(date: string) {
 }
 
 export function formatArabicNumber(value: number) {
-  return new Intl.NumberFormat("ar-EG").format(value);
+  return new Intl.NumberFormat("en-US").format(value);
 }
 
 export function getSiteUrl() {

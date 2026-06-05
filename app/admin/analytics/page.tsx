@@ -20,7 +20,7 @@ export default function AnalyticsPage() {
           { label: "إجمالي المشاهدات", value: demoInvitations.reduce((sum, item) => sum + item.views, 0) },
           { label: "RSVP Conversion", value: `${conversion}%` },
           { label: "أكثر قالب طلبًا", value: invitationTemplates[0].arabicName },
-          { label: "متوسط الضيوف", value: "٢.٣" },
+          { label: "متوسط الضيوف", value: "2.3" },
         ]}
       />
       <section className="section compact">

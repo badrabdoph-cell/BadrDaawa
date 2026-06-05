@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 };
 
 const plans = [
-  { name: "Starter", price: "٧٥٠ ج", text: "مناسب لدعوة راقية وسريعة.", features: ["قالب جاهز", "رابط دعوة", "RSVP", "QR Code"] },
-  { name: "Premium", price: "١٥٠٠ ج", text: "أفضل اختيار لمعظم الأفراح.", featured: true, features: ["كل Starter", "لوحة عميل", "تصدير Excel/PDF", "صور متعددة", "خريطة القاعة"] },
-  { name: "Royal", price: "٣٠٠٠ ج", text: "تجربة مخصصة أكثر.", features: ["تصميم أقرب للمخصص", "افتتاحية خاصة", "موسيقى خلفية", "دعم يوم الفرح"] },
+  { name: "Starter", price: "750 ج", text: "مناسب لدعوة راقية وسريعة.", features: ["قالب Royal Envelope", "رابط دعوة", "RSVP", "QR Code"] },
+  { name: "Premium", price: "1500 ج", text: "أفضل اختيار لمعظم الأفراح.", featured: true, features: ["كل Starter", "لوحة عميل", "تصدير Excel/PDF", "صور متعددة", "خريطة القاعة"] },
+  { name: "Royal", price: "3000 ج", text: "تجربة مخصصة أكثر.", features: ["تعديل أقرب للمخصص", "افتتاحية الظرف", "موسيقى خلفية", "دعم يوم الفرح"] },
 ];
 
 export default function PricingPage() {

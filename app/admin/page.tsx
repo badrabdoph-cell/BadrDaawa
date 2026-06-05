@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
           <article className="panel">
             <Activity size={24} />
             <h2>نشاط حديث</h2>
-            <p>تم تسجيل ٤ ردود حضور اليوم، ودعوتان نشطتان تحققان معدل تحويل مرتفع.</p>
+            <p>تم تسجيل 4 ردود حضور اليوم، ودعوتان نشطتان تحققان معدل تحويل مرتفع.</p>
           </article>
           <article className="panel">
             <Copy size={24} />

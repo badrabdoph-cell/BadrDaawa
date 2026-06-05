@@ -45,13 +45,13 @@ export default function HomePage() {
                   ابدأ دعوة جديدة
                 </Link>
                 <Link className="btn btn-soft" href="/templates">
-                  شاهد ٢٠ قالب
+                  شاهد القالب الحالي
                 </Link>
               </div>
               <div className="hero-metrics">
                 <div className="metric-tile">
-                  <strong>٢٠</strong>
-                  <span>قالب فاخر</span>
+                  <strong>1</strong>
+                  <span>قالب مركز</span>
                 </div>
                 <div className="metric-tile">
                   <strong>QR</strong>
@@ -126,9 +126,9 @@ export default function HomePage() {
             <SectionIntro eyebrow="باقات واضحة" title="ابدأ بسيط وكبّر براحتك" lead="تسعير قابل للتعديل من لوحة الإدارة لاحقًا، مع تصور تجاري جاهز لبيع الخدمة." />
             <div className="pricing-grid">
               {[
-                ["أساسي", "٧٥٠ ج", ["قالب احترافي", "رابط دعوة", "RSVP", "QR Code"]],
-                ["Premium", "١٥٠٠ ج", ["كل الأساسي", "صور متعددة", "لوحة عميل", "تصدير الحضور"], true],
-                ["Royal", "٣٠٠٠ ج", ["تصميم مخصص", "موسيقى وخريطة", "متابعة كاملة", "دعم VIP"]],
+                ["أساسي", "750 ج", ["قالب Royal Envelope", "رابط دعوة", "RSVP", "QR Code"]],
+                ["Premium", "1500 ج", ["كل الأساسي", "صور متعددة", "لوحة عميل", "تصدير الحضور"], true],
+                ["Royal", "3000 ج", ["تعديل مخصص", "موسيقى وخريطة", "متابعة كاملة", "دعم VIP"]],
               ].map(([name, price, features, featured]) => (
                 <article className={`pricing-card ${featured ? "featured" : ""}`} key={String(name)}>
                   <h3>{name}</h3>

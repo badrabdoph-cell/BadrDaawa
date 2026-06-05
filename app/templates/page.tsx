@@ -6,8 +6,8 @@ import { TemplateCard } from "@/components/TemplateCard";
 import { invitationTemplates, getTemplateBySlug } from "@/lib/templates";
 
 export const metadata: Metadata = {
-  title: "قوالب دعوات الزفاف",
-  description: "معرض قوالب BadrDaawa: 20 قالب زفاف رقمي فاخر بهويات مختلفة.",
+  title: "قالب الدعوة الحالي",
+  description: "قالب Royal Envelope الحالي لدعوات BadrDaawa.",
 };
 
 type PageProps = {
@@ -26,8 +26,8 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
           <div className="container">
             <SectionIntro
               eyebrow="معرض القوالب"
-              title="٢٠ قالب زفاف احترافي"
-              lead="كل قالب له افتتاحية، تكوين، تايبوجرافي، وهوية مختلفة. اختر القالب الأقرب لشخصية الفرح."
+              title="قالب Royal Envelope"
+              lead="نعمل الآن على قالب واحد فقط حتى تكون التجربة مصقولة للموبايل، وبعدها نضيف أفكار قوالب جديدة بهدوء."
             />
           </div>
         </section>
