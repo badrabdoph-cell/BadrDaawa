@@ -1,20 +1,6 @@
 export type Language = "ar" | "en";
 
-export type TemplateStyle =
-  | "royal"
-  | "cinematic"
-  | "heritage"
-  | "palace"
-  | "floral"
-  | "night"
-  | "minimal"
-  | "editorial"
-  | "bohemian"
-  | "classic"
-  | "desert"
-  | "crystal"
-  | "garden"
-  | "celestial";
+export type TemplateStyle = "royal";
 
 export type TemplateDefinition = {
   id: string;

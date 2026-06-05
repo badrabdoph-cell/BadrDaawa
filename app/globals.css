@@ -906,14 +906,6 @@ img {
   overflow: hidden;
 }
 
-.invitation-frame.template-modern-cinema,
-.invitation-frame.template-black-tie,
-.invitation-frame.template-celestial-night,
-.invitation-frame.template-golden-night {
-  background: color-mix(in srgb, var(--tpl-surface, #151821) 94%, transparent);
-  color: var(--tpl-ink, #fff);
-}
-
 .invite-cover {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(280px, 0.55fr);
