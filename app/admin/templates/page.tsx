@@ -7,7 +7,7 @@ export default function AdminTemplatesPage() {
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Templates</span>
-          <h1>إدارة القوالب</h1>
+          <h1>إدارة القالب الحالي</h1>
         </div>
       </div>
       <div className="template-grid">

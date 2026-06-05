@@ -31,6 +31,7 @@ body {
   font-family: "Cairo", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
   line-height: 1.7;
   text-rendering: geometricPrecision;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 body::selection {
@@ -309,16 +310,14 @@ img {
 }
 
 .hero-card {
+  display: grid;
+  place-items: center;
   align-self: stretch;
   min-height: 520px;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.88), rgba(255, 249, 238, 0.7)),
-    url("/assets/templates/royal-envelope.png");
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 35px 90px rgba(35, 25, 16, 0.2);
+  padding: 24px;
+  border: 1px solid rgba(189, 143, 63, 0.22);
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.9), rgba(232, 220, 195, 0.72));
+  box-shadow: 0 35px 90px rgba(35, 25, 16, 0.16);
 }
 
 .hero-card-inner {
@@ -335,6 +334,106 @@ img {
   margin: 0;
   font-size: clamp(2rem, 4vw, 4rem);
   line-height: 1;
+}
+
+.royal-envelope {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1.55;
+  cursor: default;
+  perspective: 1000px;
+  animation: envelope-open 5.6s ease-in-out infinite;
+}
+
+.hero-envelope {
+  width: min(100%, 390px);
+}
+
+.royal-envelope-base,
+.royal-envelope-flap,
+.royal-envelope-card {
+  position: absolute;
+  border-radius: 8px;
+}
+
+.royal-envelope-base {
+  inset: 0;
+  background:
+    linear-gradient(145deg, rgba(255, 244, 219, 0.22), transparent 48%),
+    #d8c19a;
+  box-shadow: 0 24px 55px rgba(58, 46, 31, 0.18);
+}
+
+.royal-envelope-base::before,
+.royal-envelope-base::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  clip-path: polygon(0 100%, 50% 45%, 100% 100%);
+  background: rgba(180, 139, 57, 0.24);
+}
+
+.royal-envelope-base::after {
+  clip-path: polygon(0 0, 50% 58%, 100% 0, 100% 100%, 0 100%);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.royal-envelope-flap {
+  inset: 0 0 auto;
+  height: 52%;
+  z-index: 3;
+  background: #c8ab77;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top;
+  transition: transform 800ms ease;
+}
+
+.royal-envelope-card {
+  inset-inline: 7%;
+  bottom: 9%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 76%;
+  padding: 16px;
+  border: 1px solid rgba(180, 139, 57, 0.32);
+  background: #fffdf8;
+  color: #3a2e1f;
+  text-align: center;
+  transform: translateY(30%);
+  transition: transform 800ms ease;
+}
+
+.royal-envelope-card span,
+.royal-envelope-card small {
+  color: #8a6426;
+  font-weight: 900;
+}
+
+.royal-envelope-card strong {
+  font-size: clamp(1.25rem, 6vw, 2rem);
+  line-height: 1.1;
+}
+
+.royal-envelope:hover .royal-envelope-flap {
+  transform: rotateX(180deg);
+}
+
+.royal-envelope:hover .royal-envelope-card {
+  transform: translateY(-20%);
+}
+
+@keyframes envelope-open {
+  0%,
+  18%,
+  100% {
+    transform: translateY(0);
+  }
+  42%,
+  68% {
+    transform: translateY(-5px);
+  }
 }
 
 .grid-3 {
@@ -535,6 +634,78 @@ img {
 
 .form-panel {
   padding: clamp(18px, 3vw, 30px);
+}
+
+.choice-section {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.choice-section h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 4vw, 2rem);
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.choice-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-card,
+.choice-chip {
+  border: 1px solid rgba(33, 28, 24, 0.12);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: right;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.choice-card {
+  display: grid;
+  gap: 4px;
+  min-height: 116px;
+  padding: 14px;
+}
+
+.choice-card strong {
+  font-size: 1rem;
+}
+
+.choice-card span {
+  color: #9b6b1f;
+  font-weight: 950;
+}
+
+.choice-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.choice-card.selected,
+.choice-chip.selected {
+  border-color: rgba(180, 139, 57, 0.72);
+  background: #fff7e5;
+  box-shadow: 0 10px 28px rgba(180, 139, 57, 0.14);
+}
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice-chip {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-weight: 900;
 }
 
 .input-grid {
@@ -749,9 +920,14 @@ img {
   min-height: 560px;
 }
 
-.invite-image {
+.invite-envelope {
+  display: grid;
+  place-items: center;
   min-height: 420px;
-  background-image: var(--invite-photo);
+  padding: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.45), rgba(216, 193, 154, 0.38)),
+    var(--invite-photo);
   background-size: cover;
   background-position: center;
 }
@@ -899,20 +1075,53 @@ img {
     width: min(100% - 24px, 1180px);
   }
 
+  .section {
+    padding: 44px 0;
+  }
+
+  .section.compact {
+    padding: 32px 0;
+  }
+
   .nav {
     min-height: 68px;
+    gap: 10px;
   }
 
   .nav-links {
     display: none;
   }
 
+  .brand {
+    font-size: 1.05rem;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
   .nav-actions .btn-soft {
     display: none;
   }
 
+  .nav-actions .btn-gold {
+    min-height: 40px;
+    padding: 9px 12px;
+    font-size: 0.88rem;
+  }
+
+  .hero {
+    min-height: auto;
+    padding: 32px 0 44px;
+  }
+
   .hero h1 {
-    font-size: clamp(2.6rem, 16vw, 4.8rem);
+    font-size: clamp(2.25rem, 12vw, 4.1rem);
+  }
+
+  .hero p {
+    font-size: 1rem;
   }
 
   .hero-metrics,
@@ -923,19 +1132,55 @@ img {
   .journey,
   .stats-grid,
   .input-grid,
-  .invite-details,
-  .countdown {
+  .invite-details {
     grid-template-columns: 1fr;
   }
 
-  .invite-copy h1 {
-    font-size: clamp(2.8rem, 18vw, 5rem);
+  .countdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .footer-grid,
+  .choice-grid,
+  .choice-grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-card {
+    min-height: auto;
+  }
+
+  .hero-card {
+    min-height: 300px;
+    padding: 18px;
+  }
+
+  .royal-envelope {
+    width: min(100%, 330px);
+  }
+
+  .invite-cover {
+    min-height: auto;
+  }
+
+  .invite-envelope {
+    min-height: 300px;
+    padding: 20px;
+  }
+
+  .invite-copy h1 {
+    font-size: clamp(2.5rem, 14vw, 4.4rem);
+  }
+
+  .invite-section {
+    padding: 28px 16px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-head {
-    flex-direction: column;
-    align-items: start;
+    align-items: stretch;
   }
 
   .button-row {
@@ -944,6 +1189,26 @@ img {
 
   .button-row .btn {
     flex: 1 1 190px;
+  }
+
+  .btn {
+    min-height: 48px;
+    white-space: normal;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    min-height: 52px;
+    font-size: 16px;
+  }
+
+  .form-panel,
+  .panel,
+  .pricing-card,
+  .template-card,
+  .stat-card {
+    box-shadow: 0 14px 42px rgba(42, 32, 22, 0.1);
   }
 }
 

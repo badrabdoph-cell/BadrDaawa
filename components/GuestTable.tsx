@@ -26,7 +26,7 @@ export function GuestTable({ guests }: { guests: GuestRsvp[] }) {
               <td>
                 <span className={guest.status === "confirmed" ? "status success" : "status danger"}>{guest.status === "confirmed" ? "حاضر" : "معتذر"}</span>
               </td>
-              <td>{new Date(guest.createdAt).toLocaleDateString("ar-EG")}</td>
+              <td>{new Date(guest.createdAt).toLocaleDateString("ar-EG-u-nu-latn")}</td>
               <td>
                 <div className="button-row">
                   <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}`} title="واتساب">

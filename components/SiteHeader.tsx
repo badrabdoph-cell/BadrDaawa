@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Crown, LayoutDashboard, Send } from "lucide-react";
 
 const navLinks = [
-  { href: "/templates", label: "القوالب" },
+  { href: "/templates", label: "القالب" },
   { href: "/pricing", label: "الأسعار" },
   { href: "/faq", label: "الأسئلة" },
   { href: "/contact", label: "تواصل" },

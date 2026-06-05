@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   keywords: ["دعوة فرح", "دعوات زفاف رقمية", "RSVP", "QR Code", "BadrDaawa"],
   openGraph: {
     title: "BadrDaawa | دعوة فرحك بشكل يليق بفرحتك",
-    description: "قوالب زفاف فاخرة وصفحات دعوة خاصة بكل عميل مع متابعة حضور كاملة.",
+    description: "دعوة زفاف رقمية فاخرة بقالب Royal Envelope وصفحة خاصة بكل عميل مع متابعة حضور كاملة.",
     siteName: "BadrDaawa",
     locale: "ar_EG",
     type: "website",

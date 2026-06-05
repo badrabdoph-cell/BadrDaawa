@@ -14,7 +14,23 @@ type FormState = {
   notes: string;
   templateSlug: string;
   language: "ar" | "en";
+  packageId: "starter" | "premium" | "royal";
+  deliverySpeed: "normal" | "fast";
+  addons: string[];
 };
+
+const packages = [
+  { id: "starter", name: "Starter", price: "750 ج", text: "دعوة أساسية أنيقة" },
+  { id: "premium", name: "Premium", price: "1500 ج", text: "الأفضل لمعظم الأفراح" },
+  { id: "royal", name: "Royal", price: "3000 ج", text: "اهتمام وتفاصيل أكثر" },
+] as const;
+
+const deliverySpeeds = [
+  { id: "normal", name: "تجهيز عادي", text: "خلال 48 ساعة" },
+  { id: "fast", name: "تجهيز سريع", text: "خلال 24 ساعة" },
+] as const;
+
+const addons = ["صور إضافية", "موسيقى", "خريطة القاعة", "QR للطباعة"];
 
 export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
   const [form, setForm] = useState<FormState>({
@@ -26,6 +42,9 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
     notes: "",
     templateSlug: initialTemplate || invitationTemplates[0].slug,
     language: "ar",
+    packageId: "premium",
+    deliverySpeed: "normal",
+    addons: ["خريطة القاعة", "QR للطباعة"],
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -35,8 +54,15 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
     [form.templateSlug],
   );
 
-  function updateField(field: keyof FormState, value: string) {
+  function updateField<K extends Exclude<keyof FormState, "addons">>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function toggleAddon(addon: string) {
+    setForm((current) => ({
+      ...current,
+      addons: current.addons.includes(addon) ? current.addons.filter((item) => item !== addon) : [...current.addons, addon],
+    }));
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -51,6 +77,9 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
       `العروسة: ${form.brideName}`,
       `رقم الهاتف: ${form.phone}`,
       `القالب: ${selectedTemplate.arabicName} - ${selectedTemplate.name}`,
+      `الباقة: ${packages.find((item) => item.id === form.packageId)?.name}`,
+      `سرعة التجهيز: ${deliverySpeeds.find((item) => item.id === form.deliverySpeed)?.name}`,
+      `الإضافات: ${form.addons.length ? form.addons.join(", ") : "بدون إضافات"}`,
       `لغة الدعوة: ${form.language === "ar" ? "عربي" : "English"}`,
       `تاريخ الفرح: ${form.weddingDate}`,
       `مكان الفرح: ${form.venue}`,
@@ -82,6 +111,44 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
 
   return (
     <form className="form-panel" onSubmit={submitOrder}>
+      <div className="choice-section">
+        <span className="eyebrow">اختيار سريع</span>
+        <h2>اختر شكل الطلب</h2>
+        <div className="choice-grid">
+          {packages.map((item) => (
+            <button
+              className={`choice-card ${form.packageId === item.id ? "selected" : ""}`}
+              key={item.id}
+              type="button"
+              onClick={() => updateField("packageId", item.id)}
+            >
+              <strong>{item.name}</strong>
+              <span>{item.price}</span>
+              <small>{item.text}</small>
+            </button>
+          ))}
+        </div>
+        <div className="choice-grid two">
+          {deliverySpeeds.map((item) => (
+            <button
+              className={`choice-card ${form.deliverySpeed === item.id ? "selected" : ""}`}
+              key={item.id}
+              type="button"
+              onClick={() => updateField("deliverySpeed", item.id)}
+            >
+              <strong>{item.name}</strong>
+              <small>{item.text}</small>
+            </button>
+          ))}
+        </div>
+        <div className="chip-grid" aria-label="إضافات الطلب">
+          {addons.map((addon) => (
+            <button className={`choice-chip ${form.addons.includes(addon) ? "selected" : ""}`} key={addon} type="button" onClick={() => toggleAddon(addon)}>
+              {addon}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="input-grid">
         <div className="field">
           <label htmlFor="groomName">اسم العريس</label>
@@ -115,7 +182,7 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
         </div>
         <div className="field">
           <label htmlFor="language">لغة الدعوة</label>
-          <select id="language" value={form.language} onChange={(event) => updateField("language", event.target.value)}>
+          <select id="language" value={form.language} onChange={(event) => updateField("language", event.target.value as FormState["language"])}>
             <option value="ar">عربي</option>
             <option value="en">English</option>
           </select>

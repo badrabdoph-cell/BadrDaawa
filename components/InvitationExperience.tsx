@@ -44,7 +44,19 @@ export async function InvitationExperience({ invitation, template }: { invitatio
                 </a>
               </div>
             </div>
-            <div className="invite-image" aria-label="صورة العروسين" />
+            <div className="invite-envelope" aria-label="ظرف الدعوة">
+              <div className="royal-envelope" aria-hidden="true">
+                <div className="royal-envelope-base" />
+                <div className="royal-envelope-flap" />
+                <div className="royal-envelope-card">
+                  <span>{template.arabicName}</span>
+                  <strong>
+                    {invitation.groomName} &amp; {invitation.brideName}
+                  </strong>
+                  <small>افتح الدعوة</small>
+                </div>
+              </div>
+            </div>
           </div>
           <section className="invite-section">
             <div className="invite-details">

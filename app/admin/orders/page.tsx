@@ -32,7 +32,7 @@ export default function OrdersPage() {
                     {order.groomName} &amp; {order.brideName}
                   </td>
                   <td>{order.phone}</td>
-                  <td>{new Date(order.weddingDate).toLocaleDateString("ar-EG")}</td>
+                  <td>{new Date(order.weddingDate).toLocaleDateString("ar-EG-u-nu-latn")}</td>
                   <td>{template?.arabicName}</td>
                   <td>
                     <span className={order.status === "accepted" ? "status success" : "status"}>{order.status === "new" ? "جديد" : "مقبول"}</span>

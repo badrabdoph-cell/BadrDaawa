@@ -15,12 +15,12 @@ const benefits = [
   { icon: ShieldCheck, title: "قابل للتوسع", text: "دعوات ديناميكية من قاعدة بيانات واحدة، بدون إنشاء صفحات يدويًا." },
 ];
 
-const journey = ["اختار القالب المناسب", "ابعت بيانات الفرح والصور", "نجهز رابط الدعوة وQR", "تابع حضور ضيوفك من اللوحة"];
+const journey = ["اختار باقة الدعوة", "ابعت بيانات الفرح والصور", "نجهز رابط الدعوة وQR", "تابع حضور ضيوفك من اللوحة"];
 
 const faqs = [
   ["هل الدعوة صفحة خاصة؟", "نعم، كل عميل يحصل على رابط خاص مثل BadrDaawa.com/A7X92K يتم تحميل بياناته ديناميكيًا من قاعدة البيانات."],
   ["هل يوجد دفع أونلاين؟", "في هذه النسخة الطلب يتحول مباشرة إلى واتساب برسالة جاهزة، بدون بوابة دفع."],
-  ["هل يمكن تغيير القالب لاحقًا؟", "من لوحة Super Admin يمكن تغيير القالب أو إيقاف الدعوة أو تعديل البيانات بدون إعادة بناء الموقع."],
+  ["هل سيتم إضافة قوالب أخرى؟", "حاليًا نركز على Royal Envelope حتى تخرج التجربة قوية على الموبايل، وبعدها نضيف أفكار جديدة."],
 ];
 
 export default function HomePage() {
@@ -63,11 +63,15 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="hero-card animate-float">
-              <div className="hero-card-inner">
-                <span>Royal Envelope</span>
-                <h2>سيف &amp; ليلى</h2>
-                <p>18 سبتمبر 2026 - القاهرة</p>
+            <div className="hero-card">
+              <div className="royal-envelope hero-envelope" aria-hidden="true">
+                <div className="royal-envelope-base" />
+                <div className="royal-envelope-flap" />
+                <div className="royal-envelope-card">
+                  <span>Royal Envelope</span>
+                  <strong>سيف &amp; ليلى</strong>
+                  <small>18 September 2026</small>
+                </div>
               </div>
             </div>
           </div>
@@ -77,7 +81,7 @@ export default function HomePage() {
           <div className="container">
             <SectionIntro
               eyebrow="كل ما يحتاجه الفرح"
-              title="من أول القالب لحد قائمة الحضور"
+              title="من أول الطلب لحد قائمة الحضور"
               lead="المنصة مصممة كمنتج تجاري حقيقي: صفحة دعوة، RSVP، QR، لوحة عميل، ولوحة إدارة مركزية بدون تعقيد."
             />
             <div className="grid-3" style={{ marginTop: 28 }}>
@@ -99,7 +103,7 @@ export default function HomePage() {
 
         <section className="section compact">
           <div className="container">
-            <SectionIntro eyebrow="نماذج مختارة" title="قوالب لها شخصيات مختلفة" lead="مش مجرد تغيير ألوان. كل قالب له فكرة افتتاح، هوية بصرية، وتكوين يناسب نوع فرح مختلف." />
+            <SectionIntro eyebrow="القالب الحالي" title="Royal Envelope بتجربة مصقولة" lead="نبدأ بقالب واحد واضح: ظرف ملكي يفتح الدعوة، تفاصيل الفرح، عد تنازلي، خريطة، وتأكيد حضور." />
             <div className="template-grid">
               {featuredTemplates.map((template) => (
                 <TemplateCard key={template.slug} template={template} />

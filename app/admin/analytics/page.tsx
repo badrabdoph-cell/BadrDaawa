@@ -19,7 +19,7 @@ export default function AnalyticsPage() {
         stats={[
           { label: "إجمالي المشاهدات", value: demoInvitations.reduce((sum, item) => sum + item.views, 0) },
           { label: "RSVP Conversion", value: `${conversion}%` },
-          { label: "أكثر قالب طلبًا", value: invitationTemplates[0].arabicName },
+          { label: "القالب الحالي", value: invitationTemplates[0].arabicName },
           { label: "متوسط الضيوف", value: "2.3" },
         ]}
       />
@@ -33,12 +33,12 @@ export default function AnalyticsPage() {
           <article className="panel">
             <MousePointerClick size={24} />
             <h2>نسبة التأكيد</h2>
-            <p>قياس عدد الردود مقارنة بالمشاهدات يساعد على تحسين القوالب.</p>
+            <p>قياس عدد الردود مقارنة بالمشاهدات يساعد على تحسين تجربة الدعوة.</p>
           </article>
           <article className="panel">
             <TrendingUp size={24} />
-            <h2>القوالب الأعلى أداءً</h2>
-            <p>تحديد القوالب الأكثر بيعًا واستخدامًا في السوق.</p>
+            <h2>أداء القالب الحالي</h2>
+            <p>نتابع أداء Royal Envelope قبل إضافة قوالب جديدة.</p>
           </article>
           <article className="panel">
             <UsersRound size={24} />

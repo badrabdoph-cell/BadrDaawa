@@ -18,7 +18,7 @@ export function SiteFooter() {
           <Link className="btn btn-soft btn-icon" href="/contact" title="تواصل معنا">
             <MessageCircle size={20} />
           </Link>
-          <Link className="btn btn-soft btn-icon" href="/templates" title="شاهد القوالب">
+          <Link className="btn btn-soft btn-icon" href="/templates" title="شاهد القالب">
             <Instagram size={20} />
           </Link>
         </div>
