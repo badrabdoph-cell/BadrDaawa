@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { Loader2, MessageCircle, Send } from "lucide-react";
 import { invitationTemplates } from "@/lib/templates";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
@@ -27,6 +27,8 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
     templateSlug: initialTemplate || invitationTemplates[0].slug,
     language: "ar",
   });
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+  const [message, setMessage] = useState("");
 
   const selectedTemplate = useMemo(
     () => invitationTemplates.find((template) => template.slug === form.templateSlug) || invitationTemplates[0],
@@ -37,8 +39,11 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function submitOrder(event: React.FormEvent<HTMLFormElement>) {
+  async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setState("loading");
+    setMessage("");
+
     const message = [
       "طلب دعوة جديد من BadrDaawa",
       `اسم العميل: ${form.groomName || "غير مكتمل"} و ${form.brideName || "غير مكتمل"}`,
@@ -54,7 +59,25 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
       .filter(Boolean)
       .join("\n");
 
-    window.location.href = getWhatsAppOrderUrl(message);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        setState("error");
+        setMessage(data?.error || "راجع بيانات الطلب وحاول مرة أخرى.");
+        return;
+      }
+
+      window.location.href = getWhatsAppOrderUrl(message);
+    } catch {
+      setState("error");
+      setMessage("تعذر إرسال الطلب للخادم. حاول مرة أخرى.");
+    }
   }
 
   return (
@@ -103,15 +126,16 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
         </div>
       </div>
       <div className="button-row" style={{ marginTop: 18 }}>
-        <button className="btn btn-gold" type="submit">
-          <MessageCircle size={19} />
-          إرسال الطلب على واتساب
+        <button className="btn btn-gold" type="submit" disabled={state === "loading"}>
+          {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
+          {state === "loading" ? "جاري إرسال الطلب" : "إرسال الطلب على واتساب"}
         </button>
         <a className="btn btn-soft" href={`/templates?preview=${selectedTemplate.slug}`}>
           <Send size={18} />
           معاينة القالب المختار
         </a>
       </div>
+      {message ? <p className="status danger">{message}</p> : null}
     </form>
   );
 }

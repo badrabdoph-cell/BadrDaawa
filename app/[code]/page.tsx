@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { InvitationExperience } from "@/components/InvitationExperience";
-import { getInvitationByCode } from "@/lib/demo-data";
+import { getInvitationByCode } from "@/lib/invitation-data";
 import { getTemplateBySlug } from "@/lib/templates";
 import { getInvitationUrl } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { code } = await params;
-  const invitation = getInvitationByCode(code);
+  const invitation = await getInvitationByCode(code);
   if (!invitation) {
     return { title: "دعوة غير موجودة" };
   }
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function InvitationPage({ params }: PageProps) {
   const { code } = await params;
-  const invitation = getInvitationByCode(code);
+  const invitation = await getInvitationByCode(code);
   if (!invitation || !invitation.isActive) {
     notFound();
   }

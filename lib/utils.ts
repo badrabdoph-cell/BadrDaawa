@@ -25,10 +25,17 @@ export function getInvitationUrl(code: string) {
   return `${getSiteUrl().replace(/\/$/, "")}/${code}`;
 }
 
+export function normalizePhoneForWhatsApp(phone: string) {
+  const digits = phone.replace(/[^\d]/g, "");
+  if (digits.startsWith("00")) return digits.slice(2);
+  if (digits.startsWith("0")) return `20${digits.slice(1)}`;
+  if (digits.length === 10 && digits.startsWith("1")) return `20${digits}`;
+  return digits;
+}
+
 export function getWhatsAppOrderUrl(message: string) {
   const phone = process.env.WHATSAPP_ORDER_PHONE || "01011511561";
-  const normalized = phone.replace(/^0/, "20").replace(/[^\d]/g, "");
-  return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${normalizePhoneForWhatsApp(phone)}?text=${encodeURIComponent(message)}`;
 }
 
 export function calculateAttendance(guests: { attendees: number; status: string }[]) {

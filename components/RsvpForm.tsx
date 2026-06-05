@@ -21,20 +21,26 @@ export function RsvpForm({ code }: { code: string }) {
     setState("loading");
     setMessage("");
 
-    const response = await fetch(`/api/invitations/${code}/rsvp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const response = await fetch(`/api/invitations/${code}/rsvp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    if (response.ok) {
-      setState("success");
-      setMessage("تم تسجيل ردك بنجاح. وجودك يفرحنا.");
-      setForm({ name: "", phone: "", attendees: 1, status: "confirmed", note: "" });
-    } else {
+      if (response.ok) {
+        setState("success");
+        setMessage("تم تسجيل ردك بنجاح. وجودك يفرحنا.");
+        setForm({ name: "", phone: "", attendees: 1, status: "confirmed", note: "" });
+        return;
+      }
+
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
       setState("error");
       setMessage(data?.error || "حصلت مشكلة أثناء التسجيل. حاول مرة تانية.");
+    } catch {
+      setState("error");
+      setMessage("تعذر الاتصال بالخادم. تأكد من الإنترنت وحاول مرة أخرى.");
     }
   }
 

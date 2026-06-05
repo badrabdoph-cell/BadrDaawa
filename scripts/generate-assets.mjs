@@ -25,25 +25,6 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const templates = [
   ["royal-envelope", "#efe3ca", "#9d7a36", "#fff9ee", "envelope"],
-  ["modern-cinema", "#111111", "#d4af37", "#f5f2ea", "cinema"],
-  ["arabic-heritage", "#f6ead8", "#0f5c55", "#c98b3b", "arch"],
-  ["white-palace", "#f8f6f0", "#bec7bd", "#b88a44", "palace"],
-  ["golden-night", "#14100d", "#f1bd57", "#fff6e4", "stars"],
-  ["floral-garden", "#fff1f3", "#7d9d7a", "#d9768f", "petals"],
-  ["moonlight", "#e9edf2", "#3f5f6f", "#17242b", "moon"],
-  ["black-tie", "#080808", "#c7a76c", "#fdfaf5", "tie"],
-  ["bohemian-romance", "#f5e4d0", "#9b7255", "#3c2d25", "fabric"],
-  ["vintage-love", "#eee0c7", "#8d4d3d", "#33261e", "post"],
-  ["european-palace", "#f0eadf", "#53615c", "#b58b4f", "columns"],
-  ["editorial-fashion", "#f7f1ea", "#26231f", "#bb3f46", "grid"],
-  ["desert-luxury", "#ead2ad", "#7f5941", "#33251b", "dune"],
-  ["crystal-wedding", "#eef7f8", "#91b9bd", "#1e373b", "crystal"],
-  ["modern-minimal", "#f6f3ee", "#333a36", "#20231f", "line"],
-  ["luxury-magazine", "#fbf6ed", "#5c1e2c", "#d0a14a", "mag"],
-  ["garden-ceremony", "#edf4e8", "#3f694f", "#1f3528", "leaf"],
-  ["contemporary-elegant", "#f2f0ea", "#24464a", "#bd8f5d", "panel"],
-  ["romantic-classic", "#fff0ee", "#8f4450", "#3f262b", "ribbon"],
-  ["celestial-night", "#121826", "#f0c878", "#f7fbff", "orbit"],
 ];
 
 function hex(value) {
@@ -239,34 +220,14 @@ for (const [slug, primary, accent, ink, kind] of templates) {
 
 await savePng(join(root, "public", "assets", "brand", "hero-luxury.png"), 1440, 960, ["#f8ead4", "#bd8f3f", "#2b2118"], "envelope");
 await savePng(join(root, "public", "assets", "brand", "couple-royal.png"), 900, 960, ["#f4e5ce", "#bd8f3f", "#2b2118"], "palace");
-await savePng(join(root, "public", "assets", "brand", "couple-cinema.png"), 900, 960, ["#111111", "#d4af37", "#fff7e8"], "cinema");
 
-const accentNames = [
-  "champagne-rings",
-  "cinema-frame",
-  "mosaic",
-  "palace-column",
-  "gold-spark",
-  "petals",
-  "moon",
-  "velvet",
-  "pampas",
-  "postmark",
-  "chandelier",
-  "magazine",
-  "dune",
-  "crystal",
-  "minimal-line",
-  "editorial-grid",
-  "leaves",
-  "panel",
-  "ribbon",
-  "starmap",
+const accentVisuals = [
+  ["champagne-rings", "#f8ead4", "#bd8f3f", "#2b2118", "envelope"],
 ];
 
 await Promise.all(
-  accentNames.map((name, index) =>
-    writeFile(join(root, "public", "assets", "brand", `${name}.txt`), `Generated visual accent for ${name} (${index + 1}).\n`),
+  accentVisuals.map(([name, primary, accent, ink, kind]) =>
+    savePng(join(root, "public", "assets", "brand", `${name}.png`), 420, 420, [primary, accent, ink], kind),
   ),
 );
 

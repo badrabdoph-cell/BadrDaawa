@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Copy, Download, ExternalLink, QrCode } from "lucide-react";
+import { Download, ExternalLink, QrCode } from "lucide-react";
 import { notFound } from "next/navigation";
+import { CopyButton } from "@/components/CopyButton";
 import { GuestTable } from "@/components/GuestTable";
 import { QrCodeBlock } from "@/components/QrCodeBlock";
 import { StatsGrid } from "@/components/StatsGrid";
-import { getGuestsByInvitation, getInvitationByCode } from "@/lib/demo-data";
+import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { calculateAttendance, getInvitationUrl } from "@/lib/utils";
 
 type PageProps = {
@@ -13,12 +14,12 @@ type PageProps = {
 
 export default async function ClientInvitationDashboard({ params }: PageProps) {
   const { code } = await params;
-  const invitation = getInvitationByCode(code);
+  const invitation = await getInvitationByCode(code);
   if (!invitation) {
     notFound();
   }
 
-  const guests = getGuestsByInvitation(invitation.code);
+  const guests = await getGuestsByInvitation(invitation.code);
   const summary = calculateAttendance(guests);
   const url = getInvitationUrl(invitation.code);
 
@@ -38,10 +39,7 @@ export default async function ClientInvitationDashboard({ params }: PageProps) {
               <ExternalLink size={18} />
               فتح الدعوة
             </Link>
-            <button className="btn btn-gold" type="button">
-              <Copy size={18} />
-              نسخ الرابط
-            </button>
+            <CopyButton className="btn btn-gold" value={url} label="نسخ الرابط" title="نسخ رابط الدعوة" />
           </div>
         </div>
         <StatsGrid

@@ -1,5 +1,7 @@
-import { Copy, MessageCircle, Trash2 } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { CopyButton } from "./CopyButton";
 import type { GuestRsvp } from "@/lib/types";
+import { normalizePhoneForWhatsApp } from "@/lib/utils";
 
 export function GuestTable({ guests }: { guests: GuestRsvp[] }) {
   return (
@@ -27,15 +29,10 @@ export function GuestTable({ guests }: { guests: GuestRsvp[] }) {
               <td>{new Date(guest.createdAt).toLocaleDateString("ar-EG")}</td>
               <td>
                 <div className="button-row">
-                  <a className="btn btn-soft btn-icon" href={`https://wa.me/2${guest.phone.replace(/^0/, "")}`} title="واتساب">
+                  <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}`} title="واتساب">
                     <MessageCircle size={17} />
                   </a>
-                  <button className="btn btn-soft btn-icon" type="button" title="نسخ الرقم">
-                    <Copy size={17} />
-                  </button>
-                  <button className="btn btn-soft btn-icon" type="button" title="حذف الرد">
-                    <Trash2 size={17} />
-                  </button>
+                  <CopyButton className="btn btn-soft btn-icon" value={guest.phone} title="نسخ الرقم" iconOnly />
                 </div>
               </td>
             </tr>

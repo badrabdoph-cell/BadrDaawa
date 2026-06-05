@@ -13,6 +13,15 @@ export async function POST(request: Request) {
   }
 
   if (prisma) {
+    const template = await prisma.weddingTemplate.findUnique({
+      where: { slug: parsed.data.templateSlug },
+      select: { id: true },
+    });
+
+    if (!template) {
+      return NextResponse.json({ error: "القالب المختار غير موجود" }, { status: 400 });
+    }
+
     await prisma.orderRequest.create({
       data: {
         groomName: parsed.data.groomName,
@@ -22,7 +31,7 @@ export async function POST(request: Request) {
         venue: parsed.data.venue,
         notes: parsed.data.notes,
         language: parsed.data.language,
-        template: { connect: { slug: parsed.data.templateSlug } },
+        templateId: template.id,
       },
     });
   }
