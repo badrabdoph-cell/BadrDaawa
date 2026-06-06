@@ -1,4 +1,3 @@
-import { demoGuests, demoInvitations, demoOrders } from "./demo-data";
 import { prisma } from "./db";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 
@@ -112,7 +111,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
 }
 
 export async function getAdminInvitations(): Promise<Invitation[]> {
-  if (!prisma) return demoInvitations;
+  if (!prisma) return [];
 
   try {
     const invitations = await prisma.invitation.findMany({
@@ -122,12 +121,12 @@ export async function getAdminInvitations(): Promise<Invitation[]> {
     return invitations.map(toInvitation);
   } catch (error) {
     console.error("Failed to load admin invitations", error);
-    return demoInvitations;
+    return [];
   }
 }
 
 export async function getAdminOrders(): Promise<OrderRequest[]> {
-  if (!prisma) return demoOrders;
+  if (!prisma) return [];
 
   try {
     const orders = await prisma.orderRequest.findMany({
@@ -137,12 +136,12 @@ export async function getAdminOrders(): Promise<OrderRequest[]> {
     return orders.map(toOrder);
   } catch (error) {
     console.error("Failed to load admin orders", error);
-    return demoOrders;
+    return [];
   }
 }
 
 export async function getAdminGuests(): Promise<GuestRsvp[]> {
-  if (!prisma) return demoGuests;
+  if (!prisma) return [];
 
   try {
     const guests = await prisma.guestRsvp.findMany({
@@ -162,24 +161,12 @@ export async function getAdminGuests(): Promise<GuestRsvp[]> {
     }));
   } catch (error) {
     console.error("Failed to load admin guests", error);
-    return demoGuests;
+    return [];
   }
 }
 
 export async function getAdminCustomers(): Promise<AdminCustomer[]> {
-  if (!prisma) {
-    return [
-      {
-        id: "cus_001",
-        name: "بدر و Sara",
-        phone: "01012345678",
-        username: "badr-sarah",
-        isActive: true,
-        invitations: 1,
-        createdAt: "2026-06-01T10:00:00.000Z",
-      },
-    ];
-  }
+  if (!prisma) return [];
 
   try {
     const customers = await prisma.customer.findMany({
@@ -199,16 +186,6 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     }));
   } catch (error) {
     console.error("Failed to load admin customers", error);
-    return [
-      {
-        id: "cus_001",
-        name: "بدر و Sara",
-        phone: "01012345678",
-        username: "badr-sarah",
-        isActive: true,
-        invitations: 1,
-        createdAt: "2026-06-01T10:00:00.000Z",
-      },
-    ];
+    return [];
   }
 }

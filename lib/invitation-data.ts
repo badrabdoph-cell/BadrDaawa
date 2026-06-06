@@ -112,3 +112,24 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
     return getDemoGuestsByInvitation(code);
   }
 }
+
+export async function recordInvitationView(code: string) {
+  if (!prisma) return;
+
+  try {
+    const invitation = await prisma.invitation.update({
+      where: { code },
+      data: { viewCount: { increment: 1 } },
+      select: { id: true },
+    });
+
+    await prisma.analyticsEvent.create({
+      data: {
+        invitationId: invitation.id,
+        eventType: "VIEW",
+      },
+    });
+  } catch (error) {
+    console.error("Failed to record invitation view", error);
+  }
+}

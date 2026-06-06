@@ -32,8 +32,8 @@ function slugify(value: string) {
 }
 
 function extractHtmlTitle(html: string) {
-  const title = html.match(/<title[^>]*>(.*?)<\/title>/is)?.[1];
-  const heading = html.match(/<h1[^>]*>(.*?)<\/h1>/is)?.[1];
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
+  const heading = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1];
   const cleaned = (title || heading || "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")

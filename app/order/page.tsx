@@ -17,6 +17,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
   const templates = await getTemplatesWithSettings();
   const selected = params.template ? templates.find((template) => template.slug === params.template) : templates[0];
+  const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
 
   return (
     <div className="page-shell">
@@ -24,7 +25,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <main className="section compact">
         <div className="container order-shell">
           <SectionIntro eyebrow="طلب جديد" title="اختر القالب أولًا" lead="المرحلة الأولى اختيار القالب، وبعدها تكتب بيانات الفرح ويتبعت الطلب كامل على واتساب." />
-          <OrderForm initialTemplate={selected?.slug} templates={templates} />
+          <OrderForm initialTemplate={selected?.slug} templates={templateOptions} />
         </div>
       </main>
       <SiteFooter />

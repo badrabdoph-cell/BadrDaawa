@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, BellRing, Copy, Database, ExternalLink, Plus, Send, Settings2, Sparkles } from "lucide-react";
+import { Activity, Archive, BellRing, Copy, Database, ExternalLink, FileText, Palette, Plus, Send, Settings2, Sparkles, UsersRound } from "lucide-react";
 import { StatsGrid } from "@/components/StatsGrid";
 import { getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { getPushSubscriptionCount } from "@/lib/push-notifications";
@@ -26,17 +26,17 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     getAdminOrders(),
     getPushSubscriptionCount(),
   ]);
-  const totalGuests = guests.reduce((total, guest) => total + guest.attendees, 0);
   const latestInvitation = invitations[0];
   const notificationStatus = getNotificationStatus(params?.notify);
+  const hasDatabase = Boolean(process.env.DATABASE_URL);
 
   return (
     <>
       <section className="admin-hero-panel">
         <div>
-          <span className="eyebrow">Super Admin</span>
-          <h1>لوحة التحكم الرئيسية</h1>
-          <p>إدارة كاملة للموقع، الدعوات، العملاء، الطلبات، وروابط لوحات العملاء.</p>
+          <span className="eyebrow">Control Center</span>
+          <h1>إدارة الموقع من مكان واحد</h1>
+          <p>متابعة الدعوات، الطلبات، القوالب، العملاء، والإشعارات بأرقام حقيقية من قاعدة البيانات فقط.</p>
         </div>
         <div className="admin-hero-actions">
           <Link className="btn btn-gold btn-glow" href="/admin/invitations">
@@ -44,51 +44,101 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             إنشاء دعوة
           </Link>
           <Link className="btn btn-soft btn-glass" href="/admin/templates">
-            <Sparkles size={18} />
-            تعديل القالب
+            <Palette size={18} />
+            إدارة القوالب
           </Link>
         </div>
       </section>
+      {!hasDatabase ? (
+        <div className="notice danger">
+          قاعدة البيانات غير متصلة. الأرقام المعروضة الآن حقيقية وليست ديمو، لذلك ستظهر صفر حتى تضيف DATABASE_URL صحيح.
+        </div>
+      ) : null}
       <StatsGrid
         stats={[
           { label: "إجمالي الدعوات", value: formatArabicNumber(invitations.length), hint: "كل الدعوات المسجلة" },
           { label: "دعوات نشطة", value: formatArabicNumber(invitations.filter((invitation) => invitation.isActive).length), hint: "جاهزة للعرض" },
-          { label: "إجمالي الضيوف", value: formatArabicNumber(totalGuests), hint: "حسب RSVP" },
+          { label: "ردود الحضور", value: formatArabicNumber(guests.length), hint: "عدد نماذج RSVP المسجلة" },
           { label: "طلبات جديدة", value: formatArabicNumber(orders.filter((order) => order.status === "new").length), hint: "في انتظار القرار" },
         ]}
       />
-      <section className="section compact">
-        <div className="admin-command-grid">
-          <article className="panel">
-            <Activity size={24} />
-            <h2>نظرة سريعة</h2>
-            <p>كل دعوة لها رابط عام، QR، ولوحة عميل منفصلة تنتهي بـ /ad_3399.</p>
-          </article>
-          <article className="panel">
-            <Copy size={24} />
-            <h2>آخر دعوة</h2>
-            <p>{latestInvitation ? getInvitationUrl(latestInvitation.code) : "أنشئ أول دعوة من صفحة الدعوات."}</p>
+
+      <section className="admin-home-grid">
+        <article className="panel admin-work-card admin-work-card-wide">
+          <div className="admin-card-head">
+            <Activity size={22} />
+            <div>
+              <span className="eyebrow">Workflow</span>
+              <h2>الإجراءات السريعة</h2>
+            </div>
+          </div>
+          <div className="admin-action-grid">
+            <Link href="/admin/orders">
+              <FileText size={20} />
+              <span>
+                <strong>مراجعة الطلبات</strong>
+                <small>{formatArabicNumber(orders.filter((order) => order.status === "new").length)} طلب جديد</small>
+              </span>
+            </Link>
+            <Link href="/admin/invitations">
+              <Archive size={20} />
+              <span>
+                <strong>إنشاء أو تعديل دعوة</strong>
+                <small>{formatArabicNumber(invitations.length)} دعوة مسجلة</small>
+              </span>
+            </Link>
+            <Link href="/admin/templates">
+              <Sparkles size={20} />
+              <span>
+                <strong>القوالب والمعاينات</strong>
+                <small>إضافة كود قالب وتعديل الموسيقى</small>
+              </span>
+            </Link>
+            <Link href="/admin/customers">
+              <UsersRound size={20} />
+              <span>
+                <strong>حسابات العملاء</strong>
+                <small>بيانات الدخول ولوحات العملاء</small>
+              </span>
+            </Link>
+          </div>
+        </article>
+
+        <article className="panel admin-work-card">
+          <div className="admin-card-head">
+            <Copy size={22} />
+            <div>
+              <span className="eyebrow">Latest</span>
+              <h2>آخر دعوة</h2>
+            </div>
+          </div>
+          <p className="admin-long-link">{latestInvitation ? getInvitationUrl(latestInvitation.code) : "لسه مفيش دعوات حقيقية مسجلة."}</p>
+          <div className="button-row">
             <Link className="btn btn-soft" href={latestInvitation ? `/${latestInvitation.code}` : "/admin/invitations"}>
+              <ExternalLink size={17} />
               فتح الدعوة
             </Link>
-          </article>
-          <article className="panel">
-            <Settings2 size={24} />
-            <h2>لوحة العميل</h2>
-            <p>{latestInvitation ? getCustomerAdminPath(latestInvitation.code) : "تظهر تلقائيًا بعد إنشاء الدعوة."}</p>
             <Link className="btn btn-soft" href={latestInvitation ? getCustomerAdminPath(latestInvitation.code) : "/admin/invitations"}>
-              <ExternalLink size={17} />
-              فتح لوحة العميل
+              <Settings2 size={17} />
+              لوحة العميل
             </Link>
-          </article>
-          <article className="panel">
-            <Database size={24} />
-            <h2>حالة البيانات</h2>
-            <p>{process.env.DATABASE_URL ? "قاعدة البيانات متصلة من المتغير DATABASE_URL." : "يعمل الآن بوضع الديمو حتى تضيف DATABASE_URL."}</p>
-          </article>
-        </div>
+          </div>
+        </article>
+
+        <article className="panel admin-work-card">
+          <div className="admin-card-head">
+            <Database size={22} />
+            <div>
+              <span className="eyebrow">Database</span>
+              <h2>حالة البيانات</h2>
+            </div>
+          </div>
+          <p>{hasDatabase ? "قاعدة البيانات متصلة، وكل أرقام الأدمن مبنية على البيانات الحقيقية." : "قاعدة البيانات غير متصلة، لذلك لن تظهر أرقام وهمية داخل الأدمن."}</p>
+          <span className={hasDatabase ? "admin-health-pill good" : "admin-health-pill danger"}>{hasDatabase ? "متصل" : "غير متصل"}</span>
+        </article>
       </section>
-      <section className="section compact">
+
+      <section className="admin-notification-section">
         <article className="panel admin-notification-panel">
           <div>
             <span className="eyebrow">Push Notifications</span>
