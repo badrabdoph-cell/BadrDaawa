@@ -60,8 +60,14 @@ export default function HomePage() {
                   <strong>تعرف مين دخل الدعوة وتتابع الحضور أول بأول</strong>
                 </div>
               </div>
+              <div className="live-preview-title">
+                <span>اختر استايلك الخاص ✨</span>
+                <h2>كل دعوة ليها شكل يحكي فرحتك</h2>
+              </div>
               <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara">
+                <span className="live-preview-badge">معاينة</span>
                 <iframe src="/badr-sarah-1?silentPreview=1" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation; notifications" />
+                <Link className="live-preview-open" href="/templates" aria-label="افتح صفحة القوالب واختر استايلك الخاص" />
               </div>
               <div className="button-row live-preview-actions">
                 <Link className="btn btn-gold btn-glow" href="/badr-sarah-1">
