@@ -18,7 +18,7 @@ export const royalEnvelopeTemplate: TemplateDefinition = {
     ink: "#3a2e1f",
     surface: "#ffffff",
   },
-  previewImage: "/assets/templates/royal-envelope.png",
+  previewImage: "/assets/templates/royal-envelope.svg",
   accentImage: "/assets/brand/champagne-rings.png",
   enabled: true,
   score: 100,
