@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellRing, Headphones, Link2, Send, SlidersHorizontal, Sparkles, Vote } from "lucide-react";
+import { BellRing, Eye, Headphones, Link2, Palette, Send, SlidersHorizontal, Sparkles, Vote, WandSparkles } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -26,12 +26,14 @@ export default function HomePage() {
               </span>
               <h1>دعوه فرحك بشكل كريتف وترندي</h1>
               <p className="hero-shine-copy">حابب تعمل دعايه لنفسك والمعازيم تعرفك قبل ما الفرح يبدأ أصلًا؟</p>
-              <div className="button-row">
-                <Link className="btn btn-gold btn-glow" href="/order">
-                  طلب دعوه
+              <div className="button-row home-cta-row">
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/order">
+                  <WandSparkles size={19} />
+                  <span>طلب دعوه</span>
                 </Link>
-                <Link className="btn btn-soft btn-glass" href="/templates">
-                  شوف الاشكال والافكار
+                <Link className="btn btn-soft btn-glass home-cta home-cta-secondary" href="/templates">
+                  <Palette size={19} />
+                  <span>شوف الاشكال والافكار</span>
                 </Link>
               </div>
             </div>
@@ -70,11 +72,13 @@ export default function HomePage() {
                 <Link className="live-preview-open" href="/templates" aria-label="افتح صفحة القوالب واختر استايلك الخاص" />
               </div>
               <div className="button-row live-preview-actions">
-                <Link className="btn btn-gold btn-glow" href="/badr-sarah-1">
-                  افتح الدعوة كاملة
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/badr-sarah-1">
+                  <Eye size={19} />
+                  <span>افتح الدعوة كاملة</span>
                 </Link>
-                <Link className="btn btn-soft btn-glass" href="/order">
-                  عايز واحد زيه
+                <Link className="btn btn-soft btn-glass home-cta home-cta-secondary" href="/order">
+                  <Sparkles size={19} />
+                  <span>عايز واحد زيه</span>
                 </Link>
               </div>
             </div>
