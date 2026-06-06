@@ -20,6 +20,21 @@ type FormState = {
 
 type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
 
+const orderImageSlots = [
+  {
+    title: "الصورة الأولى",
+    hint: "الصورة الأساسية اللي تظهر في أول الدعوة والمعاينة.",
+  },
+  {
+    title: "الصورة الثانية",
+    hint: "لقطة قريبة أو تفصيلة تكمل شكل القالب.",
+  },
+  {
+    title: "الصورة الثالثة",
+    hint: "صورة إضافية للجاليري والحركة داخل الدعوة.",
+  },
+];
+
 export function OrderForm({ initialTemplate, templates }: { initialTemplate?: string; templates: OrderTemplateOption[] }) {
   const fallbackTemplate = templates[0] || { slug: "royal-envelope", name: "Royal Envelope", arabicName: "Royal Envelope", previewImage: "/assets/templates/royal-envelope.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
@@ -83,7 +98,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   }
 
   function openPreview() {
-    window.open(previewHref(getCurrentFormFromDom()), "_blank", "noopener,noreferrer");
+    window.location.href = previewHref(getCurrentFormFromDom());
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -233,8 +248,21 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
             </div>
             <div className="field full order-images-field">
               <span>صور الدعوة</span>
-              <p>اختار 3 صور بالترتيب: الصورة الأولى، ثم الثانية، ثم الثالثة. سيتم ضغط الصور وتجهيزها قبل إرسال الطلب.</p>
-              <ImageCropUploader name="orderImage" label="إضافة صور الدعوة بالترتيب" targetWidth={1200} targetHeight={1500} maxFiles={3} />
+              <p>ارفع كل صورة في خانتها حسب ترتيب ظهورها. كل صورة لها كروب ومعاينة منفصلة لتناسب شكل القالب المختار.</p>
+              <div className="order-image-slots">
+                {orderImageSlots.map((slot, index) => (
+                  <div className="order-image-slot" key={slot.title}>
+                    <div className="order-image-slot-head">
+                      <strong className="order-image-slot-number">{index + 1}</strong>
+                      <div>
+                        <h3>{slot.title}</h3>
+                        <p>{slot.hint}</p>
+                      </div>
+                    </div>
+                    <ImageCropUploader name="orderImage" label={`إضافة ${slot.title}`} targetWidth={1200} targetHeight={1500} maxFiles={1} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
