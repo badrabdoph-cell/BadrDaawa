@@ -1,15 +1,15 @@
-import { Facebook, Instagram, MapPin, Music2, Share2 } from "lucide-react";
+import { Facebook, Instagram, Music2, Share2 } from "lucide-react";
 import { Countdown } from "./Countdown";
+import { InviteMap } from "./InviteMap";
 import { InvitePoll } from "./InvitePoll";
 import { QrCodeBlock } from "./QrCodeBlock";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { formatArabicDate, getInvitationUrl } from "@/lib/utils";
 
-const galleryImages = ["/assets/brand/couple-royal.png", "/assets/brand/hero-luxury.png", "/assets/templates/royal-envelope.png"];
+const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
 export async function InvitationExperience({ invitation, template }: { invitation: Invitation; template: TemplateDefinition }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const mapEmbed = `https://maps.google.com/maps?q=${encodeURIComponent(invitation.venue + " " + invitation.city)}&z=13&output=embed`;
 
   return (
     <main
@@ -66,14 +66,7 @@ export async function InvitationExperience({ invitation, template }: { invitatio
             <h2>{invitation.venue}</h2>
             <p>{invitation.city}</p>
           </div>
-          <div className="map-frame">
-            <iframe src={mapEmbed} title="خريطة مكان الفرح" loading="lazy" />
-            <span className="map-pin user-pin">موقعك</span>
-            <span className="map-pin venue-pin">
-              <MapPin size={14} />
-              الفرح
-            </span>
-          </div>
+          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
         </section>
 
         <section className="invite-card photographer-card">

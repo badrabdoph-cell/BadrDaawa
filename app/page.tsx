@@ -9,7 +9,7 @@ export default function HomePage() {
       <SiteHeader />
       <main>
         <section className="hero clean-hero">
-          <div className="container hero-grid">
+          <div className="container hero-grid hero-grid-single">
             <div className="hero-copy">
               <span className="eyebrow">
                 <Sparkles size={16} />
@@ -26,37 +26,23 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="hero-card">
-              <div className="royal-envelope hero-envelope" aria-hidden="true">
-                <div className="royal-envelope-base" />
-                <div className="royal-envelope-flap" />
-                <div className="royal-envelope-card">
-                  <span>دعوة خاصة</span>
-                  <strong>بدر &amp; سارة</strong>
-                  <small>26 October 2026</small>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
         <section className="section compact live-template-section">
           <div className="container live-template-wrap">
-            <div className="live-template-head">
-              <span className="eyebrow">Live Preview</span>
-              <h2>معاينة مباشرة للقالب</h2>
-              <p>نفس الدعوة اللي هتتبعت للمعازيم، بنفس الأنيميشن والتفاصيل.</p>
-              <div className="button-row">
+            <div className="live-preview-stack">
+              <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر وسارة">
+                <iframe src="/A7X92K" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation" />
+              </div>
+              <div className="button-row live-preview-actions">
                 <Link className="btn btn-gold btn-glow" href="/A7X92K">
                   افتح الدعوة كاملة
                 </Link>
                 <Link className="btn btn-soft btn-glass" href="/order">
-                  اعمل واحدة زيها
+                  عايز واحد زيه
                 </Link>
               </div>
-            </div>
-            <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر وسارة">
-              <iframe src="/A7X92K" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" />
             </div>
           </div>
         </section>

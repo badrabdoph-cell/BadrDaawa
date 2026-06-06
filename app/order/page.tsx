@@ -22,7 +22,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <SiteHeader />
       <main className="section compact">
         <div className="container order-shell">
-          <SectionIntro eyebrow={selected?.arabicName || "Royal Envelope"} title="اطلب دعوتك" lead="اختيارات بسيطة، ثم بيانات الفرح. بعدها يفتح واتساب برسالة جاهزة." />
+          <SectionIntro eyebrow="طلب جديد" title="اختر القالب أولًا" lead="المرحلة الأولى اختيار القالب، وبعدها تكتب بيانات الفرح ويتبعت الطلب كامل على واتساب." />
           <OrderForm initialTemplate={selected?.slug} />
         </div>
       </main>
