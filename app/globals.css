@@ -12066,6 +12066,7 @@ body:has(.template-preview-floating-actions) .music-control {
   .template-admin-tools,
   .text-edit-grid,
   .analytics-grid,
+  .backup-status-grid,
   .template-match-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -12268,6 +12269,7 @@ body:has(.template-preview-floating-actions) .music-control {
   .template-admin-tools,
   .text-edit-grid,
   .analytics-grid,
+  .backup-status-grid,
   .template-match-grid,
   .template-link-search {
     grid-template-columns: 1fr;

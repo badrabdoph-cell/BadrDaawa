@@ -35,6 +35,7 @@ export function normalizeSiteUrl(value?: string | null) {
     const url = new URL(withProtocol);
     const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
     if (!url.hostname || url.hostname.includes("..") || (!isLocalhost && !url.hostname.includes("."))) return defaultSiteUrl;
+    url.pathname = "/";
     url.hash = "";
     url.search = "";
     return url.toString().replace(/\/$/, "");
