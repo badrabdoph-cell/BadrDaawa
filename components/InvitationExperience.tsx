@@ -2,6 +2,7 @@ import { Facebook, Instagram, Music2, Share2 } from "lucide-react";
 import { Countdown } from "./Countdown";
 import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
+import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
 import { QrCodeBlock } from "./QrCodeBlock";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
@@ -25,6 +26,7 @@ export async function InvitationExperience({ invitation, template }: { invitatio
         } as React.CSSProperties
       }
     >
+      <InviteMusic musicUrl={invitation.musicUrl} />
       <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="invite-story">
@@ -39,7 +41,7 @@ export async function InvitationExperience({ invitation, template }: { invitatio
         </div>
 
         <div className="luxury-gallery" aria-label="صور الدعوة">
-          {galleryImages.map((image, index) => (
+          {(invitation.gallery.length ? invitation.gallery : galleryImages).map((image, index) => (
             <img src={image} alt={`صورة من الدعوة ${index + 1}`} key={image} />
           ))}
         </div>

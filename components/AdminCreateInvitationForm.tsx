@@ -1,4 +1,5 @@
 import { Link2, WandSparkles } from "lucide-react";
+import { ImageCropUploader } from "@/components/ImageCropUploader";
 import { invitationTemplates } from "@/lib/templates";
 
 export function AdminCreateInvitationForm({ created, error, demo }: { created?: string; error?: string; demo?: string }) {
@@ -70,6 +71,10 @@ export function AdminCreateInvitationForm({ created, error, demo }: { created?: 
           <input name="mapUrl" placeholder="https://maps.google.com/..." />
         </label>
         <label className="field">
+          <span>رابط الأغنية</span>
+          <input name="musicUrl" placeholder="اتركه فارغًا للموسيقى المؤقتة" />
+        </label>
+        <label className="field">
           <span>القالب</span>
           <select name="templateSlug" defaultValue="royal-envelope">
             {invitationTemplates.map((template) => (
@@ -79,6 +84,9 @@ export function AdminCreateInvitationForm({ created, error, demo }: { created?: 
             ))}
           </select>
         </label>
+        <div className="field full">
+          <ImageCropUploader label="صور الدعوة" name="galleryImage" maxFiles={3} />
+        </div>
         <button className="btn btn-gold btn-glow admin-submit" type="submit">
           إنشاء الدعوة والرابط
         </button>

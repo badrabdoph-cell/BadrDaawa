@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 function adminUsername() {
-  return process.env.ADMIN_USERNAME || process.env.ADMIN_EMAIL || "admin";
+  if (process.env.ADMIN_USERNAME || process.env.ADMIN_EMAIL) return process.env.ADMIN_USERNAME || process.env.ADMIN_EMAIL || "";
+  return process.env.NODE_ENV === "production" ? "__missing_admin_username__" : "admin";
 }
 
 function adminPassword() {
-  return process.env.ADMIN_PASSWORD || "admin12345";
+  return process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === "production" ? "__missing_admin_password__" : "admin12345");
 }
 
 function adminSessionSecret() {

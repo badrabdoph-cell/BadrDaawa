@@ -27,6 +27,13 @@ export async function POST(request: NextRequest) {
   const venue = String(formData.get("venue") || "").trim();
   const city = String(formData.get("city") || "").trim();
   const mapUrl = String(formData.get("mapUrl") || "").trim();
+  const musicUrl = String(formData.get("musicUrl") || "").trim();
+  const galleryImages = formData
+    .getAll("galleryImage")
+    .map((value) => String(value))
+    .filter((value) => value.startsWith("data:image/jpeg") || value.startsWith("/"));
+  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
+  const gallery = galleryImages.length ? galleryImages : fallbackGallery;
 
   if (!groomName || !brideName || !phone || !username || !password || !weddingDate || !venue) {
     return NextResponse.redirect(new URL("/admin/invitations?error=missing", request.url), 303);
@@ -110,8 +117,9 @@ export async function POST(request: NextRequest) {
       venue,
       city,
       mapUrl,
-      heroPhoto: "/assets/invite/badr-sarah-1.jpeg",
-      gallery: ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"],
+      heroPhoto: gallery[0],
+      gallery,
+      musicUrl,
       customerId: customer.id,
       templateId: template.id,
     },

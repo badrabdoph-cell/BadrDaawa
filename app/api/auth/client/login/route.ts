@@ -15,6 +15,9 @@ async function isValidClientLogin(code: string, username: string, password: stri
   }
 
   if (!prisma) {
+    if (process.env.NODE_ENV === "production") {
+      return false;
+    }
     return username === "client" && password === "client12345";
   }
 
