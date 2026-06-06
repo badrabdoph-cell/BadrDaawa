@@ -7063,21 +7063,23 @@ body:has(.template-preview-floating-actions) .music-control {
   }
 
   body:has(.template-preview-floating-actions) .music-control {
-    inset-block-end: 86px;
+    inset-block-end: 78px;
   }
 
   .template-preview-floating-actions {
-    grid-template-columns: 1fr;
-    gap: 7px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
     inset-block-end: 10px;
-    padding: 7px;
+    padding: 6px;
     border-radius: 16px;
   }
 
   .template-preview-action {
-    min-height: 42px;
-    padding: 9px 10px;
-    font-size: 0.84rem;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 54px;
+    padding: 7px 5px;
+    font-size: 0.72rem;
   }
 
   .admin-dark-shell .dashboard-main {
@@ -7220,31 +7222,22 @@ body:has(.template-preview-floating-actions) .music-control {
 
   .template-card {
     border-radius: 16px;
+    overflow: hidden;
   }
 
   .template-preview {
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 3 / 3.85;
     padding: 8px;
   }
 
   .template-preview-screen {
-    width: min(82%, 170px);
+    width: min(86%, 178px);
+    height: calc(100% - 10px);
     border-radius: 16px;
   }
 
   .template-preview-caption {
-    inset-inline: 10px;
-    inset-block-end: 10px;
-    padding: 7px 8px;
-    border-radius: 10px;
-  }
-
-  .template-preview-caption strong {
-    font-size: 0.78rem;
-  }
-
-  .template-preview-caption small {
-    font-size: 0.66rem;
+    display: none;
   }
 
   .template-badge {
@@ -7259,8 +7252,8 @@ body:has(.template-preview-floating-actions) .music-control {
   }
 
   .template-body {
-    gap: 4px;
-    padding: 10px 8px 12px;
+    gap: 8px;
+    padding: 10px 8px 10px;
     text-align: center;
   }
 
@@ -7271,9 +7264,27 @@ body:has(.template-preview-floating-actions) .music-control {
     line-height: 1.2;
   }
 
-  .template-body p,
-  .template-body .button-row {
+  .template-body p {
     display: none;
+  }
+
+  .template-body .button-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .template-body .btn {
+    min-height: 38px;
+    padding: 8px 6px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    white-space: normal;
+  }
+
+  .template-body .btn svg {
+    width: 15px;
+    height: 15px;
   }
 
   .selected-template-strip {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { TemplateCard } from "@/components/TemplateCard";
+import { TemplateBrowser } from "@/components/TemplateBrowser";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
@@ -22,11 +22,7 @@ export default async function TemplatesPage() {
             <h1 className="section-title">اختر شكل الدعوة</h1>
             <p className="section-lead">كل قالب له معاينة مباشرة ومزامن مع الطلبات ولوحة الأدمن.</p>
           </div>
-          <div className="template-grid">
-            {templates.map((template) => (
-              <TemplateCard template={template} key={template.slug} />
-            ))}
-          </div>
+          <TemplateBrowser templates={templates} />
         </div>
       </main>
       <SiteFooter />
