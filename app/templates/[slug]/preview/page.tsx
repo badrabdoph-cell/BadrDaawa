@@ -5,8 +5,29 @@ import type { Invitation } from "@/lib/types";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ silentPreview?: string; embed?: string }>;
+  searchParams?: Promise<{
+    silentPreview?: string;
+    embed?: string;
+    groomName?: string;
+    brideName?: string;
+    weddingDate?: string;
+    weddingTime?: string;
+    venue?: string;
+    city?: string;
+    mapUrl?: string;
+  }>;
 };
+
+function cleanPreviewText(value: string | undefined, fallback: string) {
+  const clean = value?.trim();
+  return clean ? clean.slice(0, 120) : fallback;
+}
+
+function cleanPreviewDate(value: string | undefined) {
+  const clean = value?.trim();
+  if (!clean || Number.isNaN(Date.parse(clean))) return "2026-10-26";
+  return clean;
+}
 
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
@@ -19,13 +40,13 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     code: `preview-${template.slug}`,
     templateSlug: template.slug,
     language: "ar",
-    groomName: "بدر",
-    brideName: "Sara",
-    weddingDate: "2026-10-26",
-    weddingTime: "07:00 مساءً",
-    venue: "قاعة رويال",
-    city: "البحيرة",
-    mapUrl: "https://maps.google.com/?q=Royal+Hall+Beheira",
+    groomName: cleanPreviewText(query?.groomName, "بدر"),
+    brideName: cleanPreviewText(query?.brideName, "Sara"),
+    weddingDate: cleanPreviewDate(query?.weddingDate),
+    weddingTime: cleanPreviewText(query?.weddingTime, "07:00 مساءً"),
+    venue: cleanPreviewText(query?.venue, "قاعة رويال"),
+    city: cleanPreviewText(query?.city, "البحيرة"),
+    mapUrl: cleanPreviewText(query?.mapUrl, "https://maps.google.com/?q=Royal+Hall+Beheira"),
     heroPhoto: "/assets/invite/badr-sarah-1.jpeg",
     gallery: ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"],
     musicUrl: "",
