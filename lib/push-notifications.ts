@@ -33,31 +33,36 @@ function base64UrlDecode(input: string) {
 async function ensurePushTables() {
   if (!prisma) return false;
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS push_subscriptions (
-      endpoint TEXT PRIMARY KEY,
-      p256dh TEXT NOT NULL,
-      auth TEXT NOT NULL,
-      invitation_code TEXT,
-      user_agent TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        endpoint TEXT PRIMARY KEY,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        invitation_code TEXT,
+        user_agent TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS push_notifications (
-      id BIGSERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      body TEXT NOT NULL,
-      url TEXT NOT NULL DEFAULT '/',
-      success_count INTEGER NOT NULL DEFAULT 0,
-      failure_count INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS push_notifications (
+        id BIGSERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        url TEXT NOT NULL DEFAULT '/',
+        success_count INTEGER NOT NULL DEFAULT 0,
+        failure_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
 
-  return true;
+    return true;
+  } catch (error) {
+    console.error("Failed to prepare push notification tables", error);
+    return false;
+  }
 }
 
 export async function savePushSubscription(subscription: BrowserPushSubscription, invitationCode: string, userAgent?: string) {
@@ -69,44 +74,59 @@ export async function savePushSubscription(subscription: BrowserPushSubscription
     return { ok: false, reason: "invalid-subscription" };
   }
 
-  if (!(await ensurePushTables())) {
-    return { ok: false, reason: "database-disabled" };
-  }
+  try {
+    if (!(await ensurePushTables())) {
+      return { ok: false, reason: "database-disabled" };
+    }
 
-  await prisma!.$executeRawUnsafe(
-    `
-      INSERT INTO push_subscriptions (endpoint, p256dh, auth, invitation_code, user_agent, updated_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
-      ON CONFLICT (endpoint)
-      DO UPDATE SET
-        p256dh = EXCLUDED.p256dh,
-        auth = EXCLUDED.auth,
-        invitation_code = EXCLUDED.invitation_code,
-        user_agent = EXCLUDED.user_agent,
-        updated_at = NOW()
-    `,
-    endpoint,
-    p256dh,
-    auth,
-    invitationCode || null,
-    userAgent || null,
-  );
+    await prisma!.$executeRawUnsafe(
+      `
+        INSERT INTO push_subscriptions (endpoint, p256dh, auth, invitation_code, user_agent, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW())
+        ON CONFLICT (endpoint)
+        DO UPDATE SET
+          p256dh = EXCLUDED.p256dh,
+          auth = EXCLUDED.auth,
+          invitation_code = EXCLUDED.invitation_code,
+          user_agent = EXCLUDED.user_agent,
+          updated_at = NOW()
+      `,
+      endpoint,
+      p256dh,
+      auth,
+      invitationCode || null,
+      userAgent || null,
+    );
+  } catch (error) {
+    console.error("Failed to save push subscription", error);
+    return { ok: false, reason: "database-error" };
+  }
 
   return { ok: true };
 }
 
 export async function getPushSubscriptionCount() {
-  if (!(await ensurePushTables())) return 0;
-  const rows = await prisma!.$queryRawUnsafe<Array<{ count: bigint | number | string }>>(`SELECT COUNT(*) AS count FROM push_subscriptions`);
-  return Number(rows[0]?.count || 0);
+  try {
+    if (!(await ensurePushTables())) return 0;
+    const rows = await prisma!.$queryRawUnsafe<Array<{ count: bigint | number | string }>>(`SELECT COUNT(*) AS count FROM push_subscriptions`);
+    return Number(rows[0]?.count || 0);
+  } catch (error) {
+    console.error("Failed to count push subscriptions", error);
+    return 0;
+  }
 }
 
 export async function getLatestNotification() {
-  if (!(await ensurePushTables())) return DEFAULT_NOTIFICATION;
-  const rows = await prisma!.$queryRawUnsafe<Array<{ title: string; body: string; url: string }>>(
-    `SELECT title, body, url FROM push_notifications ORDER BY created_at DESC LIMIT 1`,
-  );
-  return rows[0] || DEFAULT_NOTIFICATION;
+  try {
+    if (!(await ensurePushTables())) return DEFAULT_NOTIFICATION;
+    const rows = await prisma!.$queryRawUnsafe<Array<{ title: string; body: string; url: string }>>(
+      `SELECT title, body, url FROM push_notifications ORDER BY created_at DESC LIMIT 1`,
+    );
+    return rows[0] || DEFAULT_NOTIFICATION;
+  } catch (error) {
+    console.error("Failed to load latest push notification", error);
+    return DEFAULT_NOTIFICATION;
+  }
 }
 
 function getVapidJwt(endpoint: string) {
