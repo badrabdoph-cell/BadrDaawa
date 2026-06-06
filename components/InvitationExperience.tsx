@@ -1,4 +1,4 @@
-import { Camera, Facebook, Heart, Instagram, MapPin, Music2, Share2, Sparkles } from "lucide-react";
+import { Calendar, Camera, Clock, Facebook, Heart, Instagram, MapPin, Music2, Share2, Sparkles } from "lucide-react";
 import { Countdown } from "./Countdown";
 import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
@@ -12,12 +12,24 @@ import { formatArabicDate, getInvitationUrl } from "@/lib/utils";
 
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
+function getSocialShareLinks(invitationUrl: string) {
+  return [
+    { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(invitationUrl)}` },
+    { label: "Instagram", href: "https://www.instagram.com/" },
+    { label: "TikTok", href: "https://www.tiktok.com/" },
+    { label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(invitationUrl)}` },
+  ];
+}
+
 export async function InvitationExperience({ invitation, template }: { invitation: Invitation; template: TemplateDefinition }) {
   if (template.slug === "luxe-noir") {
     return <LuxeNoirInvitationExperience invitation={invitation} />;
   }
   if (template.slug === "ivory-arches") {
     return <IvoryArchesInvitationExperience invitation={invitation} />;
+  }
+  if (template.slug === "mobile-gold") {
+    return <MobileGoldInvitationExperience invitation={invitation} />;
   }
 
   const invitationUrl = getInvitationUrl(invitation.code);
