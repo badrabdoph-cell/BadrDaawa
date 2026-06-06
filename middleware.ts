@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSessionSecret, getClientSessionSecret } from "@/lib/auth-config";
+import { getPublicUrl } from "@/lib/utils";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -7,8 +8,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const session = request.cookies.get("bd_admin_session")?.value;
     if (session !== getAdminSessionSecret()) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
+      const url = getPublicUrl("/admin/login", request.headers, request.nextUrl.origin);
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }

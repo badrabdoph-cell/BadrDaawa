@@ -47,6 +47,26 @@ export function getSiteUrl() {
   return normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
 }
 
+export function getPublicSiteUrl(headers?: Headers, fallbackOrigin = "http://localhost:3000") {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
+  }
+
+  const forwardedHost = headers?.get("x-forwarded-host")?.split(",")[0]?.trim() || headers?.get("host")?.split(",")[0]?.trim();
+  const forwardedProto = headers?.get("x-forwarded-proto")?.split(",")[0]?.trim();
+
+  if (forwardedHost) {
+    const protocol = forwardedProto || (/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(forwardedHost) ? "http" : "https");
+    return normalizeSiteUrl(`${protocol}://${forwardedHost}`);
+  }
+
+  return normalizeSiteUrl(fallbackOrigin);
+}
+
+export function getPublicUrl(path: string, headers?: Headers, fallbackOrigin?: string) {
+  return new URL(path, getPublicSiteUrl(headers, fallbackOrigin));
+}
+
 export function getMetadataBaseUrl() {
   return new URL(normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL));
 }

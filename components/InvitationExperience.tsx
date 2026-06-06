@@ -28,7 +28,7 @@ export async function InvitationExperience({ invitation, template }: { invitatio
   if (template.slug === "ivory-arches") {
     return <IvoryArchesInvitationExperience invitation={invitation} />;
   }
-  if (template.slug === "mobile-gold") {
+  if (template.slug === "mobile-gold" || template.slug === "soft-gold") {
     return <MobileGoldInvitationExperience invitation={invitation} />;
   }
   if (template.slug === "boho-chic") {

@@ -13,8 +13,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const expected = getAdminSessionSecret();
 
   if (session !== expected) {
-    return children;
+    return <div className="admin-dark-shell">{children}</div>;
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <div className="admin-dark-shell">
+      <DashboardShell>{children}</DashboardShell>
+    </div>
+  );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { LoginPanel } from "@/components/LoginPanel";
-import { isAdminAuthConfigured } from "@/lib/auth-config";
+import { getAdminSessionSecret, isAdminAuthConfigured } from "@/lib/auth-config";
 
 export const metadata: Metadata = {
   title: "دخول الادمن",
@@ -8,6 +10,10 @@ export const metadata: Metadata = {
 
 export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string; setup?: string }> }) {
   const params = await searchParams;
+  const cookieStore = await cookies();
+  if (cookieStore.get("bd_admin_session")?.value === getAdminSessionSecret()) {
+    redirect("/admin");
+  }
 
   return (
     <LoginPanel

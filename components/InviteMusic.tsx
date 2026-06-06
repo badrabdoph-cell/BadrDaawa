@@ -50,24 +50,12 @@ function playGeneratedLoop() {
 export function InviteMusic({ musicUrl }: { musicUrl?: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const generatedRef = useRef<{ stop: () => void } | null>(null);
+  const hasAudioErrorRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
   const audioSource = musicUrl || DEFAULT_MUSIC_URL;
 
-  const start = async () => {
-    setNeedsTap(false);
-    if (audioRef.current) {
-      try {
-        audioRef.current.currentTime = audioRef.current.currentTime || 0;
-        await audioRef.current.play();
-        setIsPlaying(true);
-        return;
-      } catch {
-        setNeedsTap(true);
-        return;
-      }
-    }
-
+  const startGenerated = () => {
     try {
       generatedRef.current?.stop();
       generatedRef.current = playGeneratedLoop();
@@ -78,6 +66,28 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string }) {
     }
   };
 
+  const start = async () => {
+    setNeedsTap(false);
+    if (audioRef.current && !hasAudioErrorRef.current) {
+      try {
+        audioRef.current.currentTime = audioRef.current.currentTime || 0;
+        await audioRef.current.play();
+        setIsPlaying(true);
+        return;
+      } catch (error) {
+        if (audioRef.current.error) {
+          hasAudioErrorRef.current = true;
+          startGenerated();
+          return;
+        }
+        setNeedsTap(true);
+        return;
+      }
+    }
+
+    startGenerated();
+  };
+
   const stop = () => {
     audioRef.current?.pause();
     generatedRef.current?.stop();
@@ -86,18 +96,46 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string }) {
   };
 
   useEffect(() => {
+    hasAudioErrorRef.current = false;
     const timer = window.setTimeout(() => {
       void start();
     }, 3100);
+
+    const startOnInteraction = () => {
+      void start();
+    };
+
+    window.addEventListener("pointerdown", startOnInteraction, { once: true, passive: true });
+    window.addEventListener("touchstart", startOnInteraction, { once: true, passive: true });
+    window.addEventListener("keydown", startOnInteraction, { once: true });
+    window.addEventListener("scroll", startOnInteraction, { once: true, passive: true });
+
     return () => {
       window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", startOnInteraction);
+      window.removeEventListener("touchstart", startOnInteraction);
+      window.removeEventListener("keydown", startOnInteraction);
+      window.removeEventListener("scroll", startOnInteraction);
       generatedRef.current?.stop();
     };
   }, [audioSource]);
 
   return (
     <div className="music-control">
-      <audio ref={audioRef} src={audioSource} loop preload="auto" onError={() => setNeedsTap(true)} />
+      <audio
+        ref={audioRef}
+        src={audioSource}
+        loop
+        preload="auto"
+        playsInline
+        onCanPlay={() => {
+          hasAudioErrorRef.current = false;
+        }}
+        onError={() => {
+          hasAudioErrorRef.current = true;
+          void start();
+        }}
+      />
       <button
         className={`music-button ${needsTap ? "attention" : ""} ${isPlaying ? "playing" : ""}`}
         type="button"
