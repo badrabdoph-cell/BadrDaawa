@@ -1,70 +1,123 @@
-import { CloudDownload, DatabaseBackup, RotateCcw } from "lucide-react";
+import { Archive, CloudDownload, DatabaseBackup, FileJson, RotateCcw, ShieldCheck } from "lucide-react";
+import { listBackupSnapshots } from "@/lib/backups";
 
-const backups = [
-  { file: "hourly-2026-06-05-18.dump.gz", type: "Hourly", status: "SUCCESS", size: "18 MB" },
-  { file: "daily-2026-06-05.dump.gz", type: "Daily Full", status: "SUCCESS", size: "122 MB" },
-  { file: "hourly-2026-06-05-17.dump.gz", type: "Hourly", status: "SUCCESS", size: "18 MB" },
-];
+export const dynamic = "force-dynamic";
 
-export default function BackupsPage() {
+function formatBytes(value: number) {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatBackupDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+export default async function BackupsPage({ searchParams }: { searchParams: Promise<{ created?: string }> }) {
+  const [params, backups] = await Promise.all([searchParams, listBackupSnapshots()]);
+  const latest = backups[0];
+  const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
+
   return (
     <>
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Backups</span>
           <h1>النسخ الاحتياطي</h1>
+          <p>نسخ فعلية من بيانات المشروع وملفات الرفع، محفوظة محليًا داخل `data/backups` وقابلة للتحميل.</p>
         </div>
-        <button className="btn btn-gold" type="button">
-          <DatabaseBackup size={18} />
-          نسخة يدوية
-        </button>
+        <form action="/api/admin/backups" method="post">
+          <button className="btn btn-gold btn-glow" type="submit">
+            <DatabaseBackup size={18} />
+            إنشاء نسخة يدوية
+          </button>
+        </form>
       </div>
-      <div className="grid-3" style={{ marginBottom: 18 }}>
-        <div className="panel">
-          <h3>كل ساعة</h3>
-          <p>Workflow مجدول يحفظ نسخة مضغوطة إلى GitHub.</p>
+
+      {params.created ? (
+        <div className="notice success">
+          <ShieldCheck size={18} />
+          تم إنشاء النسخة: <strong>{params.created}</strong>
         </div>
-        <div className="panel">
-          <h3>يومي كامل</h3>
-          <p>نسخة كاملة يومية يمكن استخدامها للاسترجاع.</p>
-        </div>
-        <div className="panel">
-          <h3>استرجاع</h3>
-          <p>الاسترجاع يتم عبر pg_restore بعد اختيار ملف النسخة.</p>
-        </div>
+      ) : null}
+
+      <div className="backup-status-grid">
+        <article className="panel backup-status-card">
+          <Archive size={24} />
+          <span>عدد النسخ</span>
+          <strong>{backups.length}</strong>
+        </article>
+        <article className="panel backup-status-card">
+          <FileJson size={24} />
+          <span>إجمالي الحجم</span>
+          <strong>{formatBytes(totalSize)}</strong>
+        </article>
+        <article className="panel backup-status-card">
+          <DatabaseBackup size={24} />
+          <span>آخر نسخة</span>
+          <strong>{latest ? formatBackupDate(latest.createdAt) : "لا توجد"}</strong>
+        </article>
       </div>
+
+      <div className="backup-sync-note">
+        <ShieldCheck size={18} />
+        <span>النسخة تحتوي على ملفات إعدادات `data/*.json`، وملفات الرفع من `public/uploads`، وتصدير قاعدة البيانات عند توفر `DATABASE_URL`.</span>
+      </div>
+
       <div className="table-shell">
         <table className="data-table">
           <thead>
             <tr>
               <th>الملف</th>
-              <th>النوع</th>
+              <th>المصدر</th>
+              <th>العناصر</th>
               <th>الحالة</th>
               <th>الحجم</th>
+              <th>تاريخ الإنشاء</th>
               <th>إجراءات</th>
             </tr>
           </thead>
           <tbody>
-            {backups.map((backup) => (
-              <tr key={backup.file}>
-                <td>{backup.file}</td>
-                <td>{backup.type}</td>
-                <td>
-                  <span className="status success">{backup.status}</span>
-                </td>
-                <td>{backup.size}</td>
-                <td>
-                  <div className="button-row">
-                    <button className="btn btn-soft btn-icon" type="button" title="تحميل">
-                      <CloudDownload size={17} />
-                    </button>
-                    <button className="btn btn-soft btn-icon" type="button" title="استرجاع">
-                      <RotateCcw size={17} />
-                    </button>
+            {backups.length ? (
+              backups.map((backup) => (
+                <tr key={backup.fileName}>
+                  <td>
+                    <span className="backup-file-name">{backup.fileName}</span>
+                  </td>
+                  <td>{backup.source === "database" ? "قاعدة البيانات + الملفات" : "ملفات التشغيل"}</td>
+                  <td>{backup.items}</td>
+                  <td>
+                    <span className="status success">{backup.status}</span>
+                  </td>
+                  <td>{formatBytes(backup.sizeBytes)}</td>
+                  <td>{formatBackupDate(backup.createdAt)}</td>
+                  <td>
+                    <div className="button-row">
+                      <a className="btn btn-soft btn-icon" href={`/api/admin/backups/${backup.fileName}`} title="تحميل">
+                        <CloudDownload size={17} />
+                      </a>
+                      <button className="btn btn-soft btn-icon" type="button" title="الاسترجاع يحتاج تأكيد منفصل" disabled>
+                        <RotateCcw size={17} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7}>
+                  <div className="admin-empty-state">
+                    <strong>لا توجد نسخ احتياطية حتى الآن</strong>
+                    <p>اضغط “إنشاء نسخة يدوية” وسيظهر الملف هنا مباشرة.</p>
                   </div>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
