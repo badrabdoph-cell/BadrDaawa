@@ -1,61 +1,48 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { SectionIntro } from "@/components/SectionIntro";
-import { TemplateCard } from "@/components/TemplateCard";
-import { invitationTemplates, getTemplateBySlug } from "@/lib/templates";
+import { invitationTemplates } from "@/lib/templates";
 
 export const metadata: Metadata = {
-  title: "قالب الدعوة الحالي",
-  description: "قالب Royal Envelope الحالي لدعوات BadrDaawa.",
+  title: "Royal Envelope",
+  description: "قالب الدعوة الحالي من BadrDaawa.",
 };
 
-type PageProps = {
-  searchParams?: Promise<{ preview?: string }>;
-};
-
-export default async function TemplatesPage({ searchParams }: PageProps) {
-  const params = searchParams ? await searchParams : {};
-  const preview = params.preview ? getTemplateBySlug(params.preview) ?? invitationTemplates[0] : invitationTemplates[0];
+export default function TemplatesPage() {
+  const template = invitationTemplates[0];
 
   return (
     <div className="page-shell">
       <SiteHeader />
-      <main>
-        <section className="section compact">
-          <div className="container">
-            <SectionIntro
-              eyebrow="معرض القوالب"
-              title="قالب Royal Envelope"
-              lead="نعمل الآن على قالب واحد فقط حتى تكون التجربة مصقولة للموبايل، وبعدها نضيف أفكار قوالب جديدة بهدوء."
-            />
+      <main className="section compact">
+        <div className="container template-focus">
+          <div className="template-focus-media">
+            <img src={template.previewImage} alt={template.arabicName} />
           </div>
-        </section>
-        <section className="section compact" style={{ paddingTop: 0 }}>
-          <div className="container form-grid">
-            <div className="template-grid" style={{ marginTop: 0 }}>
-              {invitationTemplates.map((template) => (
-                <TemplateCard key={template.slug} template={template} />
+          <div className="template-focus-copy">
+            <span className="eyebrow">القالب الحالي</span>
+            <h1>Royal Envelope</h1>
+            <p>قالب واحد مصقول للموبايل: ظرف فاخر، تفاصيل واضحة، تأكيد حضور، وخريطة.</p>
+            <ul className="feature-list">
+              {["يفتح كظرف دعوة", "مناسب للواتساب", "QR وخريطة", "RSVP سريع"].map((feature) => (
+                <li key={feature}>
+                  <CheckCircle2 size={18} />
+                  {feature}
+                </li>
               ))}
+            </ul>
+            <div className="button-row">
+              <Link className="btn btn-gold" href="/order">
+                اطلب هذا القالب
+              </Link>
+              <Link className="btn btn-soft" href="/A7X92K">
+                شاهد مثال
+              </Link>
             </div>
-            <aside className="form-panel" style={{ position: "sticky", top: 96 }}>
-              <img src={preview.previewImage} alt={`معاينة ${preview.arabicName}`} style={{ width: "100%", aspectRatio: "4 / 5", objectFit: "cover", borderRadius: 8 }} />
-              <span className="eyebrow" style={{ marginTop: 16 }}>
-                {preview.category}
-              </span>
-              <h2>{preview.arabicName}</h2>
-              <p>{preview.concept}</p>
-              <ul className="feature-list">
-                <li>الافتتاح: {preview.opening}</li>
-                <li>التكوين: {preview.layout}</li>
-                <li>الخطوط: {preview.typography}</li>
-              </ul>
-              <a className="btn btn-gold" href={`/order?template=${preview.slug}`} style={{ marginTop: 14 }}>
-                اختار القالب
-              </a>
-            </aside>
           </div>
-        </section>
+        </div>
       </main>
       <SiteFooter />
     </div>

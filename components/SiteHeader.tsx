@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Crown, LayoutDashboard, Send } from "lucide-react";
+import { Crown, Send } from "lucide-react";
 
 const navLinks = [
   { href: "/templates", label: "القالب" },
@@ -26,10 +26,6 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="nav-actions">
-          <Link className="btn btn-soft" href="/admin" title="لوحة التحكم الرئيسية">
-            <LayoutDashboard size={18} />
-            لوحة التحكم
-          </Link>
           <Link className="btn btn-gold" href="/order">
             <Send size={18} />
             اطلب دعوتك

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { CalendarDays, MapPin, Music2, Navigation } from "lucide-react";
 import { Countdown } from "./Countdown";
 import { QrCodeBlock } from "./QrCodeBlock";
@@ -85,24 +84,17 @@ export async function InvitationExperience({ invitation, template }: { invitatio
               <span className="eyebrow">RSVP</span>
               <h2 className="section-title">أكد حضورك</h2>
               <p className="section-lead" style={{ marginInline: "auto" }}>
-                سجّل اسمك وعدد الأفراد في ثواني، والرد يوصل مباشرة للوحة متابعة العروسين.
+                سجّل ردك في ثواني.
               </p>
             </div>
             <RsvpForm code={invitation.code} />
           </section>
           <section className="invite-section">
-            <div className="grid-3">
+            <div className="invite-share-grid">
               <QrCodeBlock value={invitationUrl} />
               <div className="detail-box">
                 <h3>رابط الدعوة</h3>
                 <p>{invitationUrl}</p>
-                <Link className="btn btn-soft" href={`/client/${invitation.code}`}>
-                  لوحة العميل
-                </Link>
-              </div>
-              <div className="detail-box">
-                <h3>كلمة من BadrDaawa</h3>
-                <p>كل تفصيلة هنا قابلة للربط بقاعدة البيانات، القالب، الصور، الموسيقى، والحضور بدون إنشاء صفحات يدويًا.</p>
               </div>
             </div>
           </section>

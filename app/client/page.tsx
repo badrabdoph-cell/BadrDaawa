@@ -8,13 +8,13 @@ export default function ClientLoginPage() {
   return (
     <div className="page-shell">
       <SiteHeader />
-      <main className="section">
-        <div className="container form-grid">
+      <main className="section compact">
+        <div className="container order-shell">
           <div>
-            <SectionIntro eyebrow="لوحة العميل" title="دخول العروسين" lead="في الإنتاج يتم الدخول باسم مستخدم وكلمة مرور يتم إنشاؤهما من Super Admin." />
+            <SectionIntro eyebrow="لوحة العميل" title="دخول العروسين" lead="تابع الحضور والرابط والـ QR من مكان واحد." />
             <div className="panel" style={{ marginTop: 28 }}>
               <h3>تجربة سريعة</h3>
-              <p>افتح لوحة العميل التجريبية لمتابعة حضور دعوة A7X92K.</p>
+              <p>افتح لوحة تجريبية وشاهد شكل المتابعة.</p>
               <Link className="btn btn-gold" href="/client/A7X92K">
                 فتح لوحة تجريبية
               </Link>
@@ -35,7 +35,7 @@ export default function ClientLoginPage() {
             </button>
             <p className="status" style={{ marginTop: 16 }}>
               <KeyRound size={16} />
-              بيانات الدخول يتم إنشاؤها تلقائيًا لكل عميل.
+              يتم تسليم بيانات الدخول مع رابط الدعوة.
             </p>
           </form>
         </div>

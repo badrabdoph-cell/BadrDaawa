@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, MessageCircle, Send } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { invitationTemplates } from "@/lib/templates";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
@@ -20,9 +20,9 @@ type FormState = {
 };
 
 const packages = [
-  { id: "starter", name: "Starter", price: "750 ج", text: "دعوة أساسية أنيقة" },
-  { id: "premium", name: "Premium", price: "1500 ج", text: "الأفضل لمعظم الأفراح" },
-  { id: "royal", name: "Royal", price: "3000 ج", text: "اهتمام وتفاصيل أكثر" },
+  { id: "starter", name: "Starter", price: "750 ج" },
+  { id: "premium", name: "Premium", price: "1500 ج" },
+  { id: "royal", name: "Royal", price: "3000 ج" },
 ] as const;
 
 const deliverySpeeds = [
@@ -30,7 +30,7 @@ const deliverySpeeds = [
   { id: "fast", name: "تجهيز سريع", text: "خلال 24 ساعة" },
 ] as const;
 
-const addons = ["صور إضافية", "موسيقى", "خريطة القاعة", "QR للطباعة"];
+const addons = ["صور", "موسيقى", "خريطة", "QR"];
 
 export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
   const [form, setForm] = useState<FormState>({
@@ -112,8 +112,7 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
   return (
     <form className="form-panel" onSubmit={submitOrder}>
       <div className="choice-section">
-        <span className="eyebrow">اختيار سريع</span>
-        <h2>اختر شكل الطلب</h2>
+        <h2>اختر الباقة</h2>
         <div className="choice-grid">
           {packages.map((item) => (
             <button
@@ -124,10 +123,10 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
             >
               <strong>{item.name}</strong>
               <span>{item.price}</span>
-              <small>{item.text}</small>
             </button>
           ))}
         </div>
+        <h2>سرعة التجهيز</h2>
         <div className="choice-grid two">
           {deliverySpeeds.map((item) => (
             <button
@@ -141,6 +140,7 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
             </button>
           ))}
         </div>
+        <h2>إضافات</h2>
         <div className="chip-grid" aria-label="إضافات الطلب">
           {addons.map((addon) => (
             <button className={`choice-chip ${form.addons.includes(addon) ? "selected" : ""}`} key={addon} type="button" onClick={() => toggleAddon(addon)}>
@@ -152,15 +152,15 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
       <div className="input-grid">
         <div className="field">
           <label htmlFor="groomName">اسم العريس</label>
-          <input id="groomName" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required />
+          <input id="groomName" placeholder="مثال: أحمد" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required />
         </div>
         <div className="field">
           <label htmlFor="brideName">اسم العروسة</label>
-          <input id="brideName" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
+          <input id="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
         </div>
         <div className="field">
           <label htmlFor="phone">رقم الهاتف</label>
-          <input id="phone" inputMode="tel" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} required />
+          <input id="phone" inputMode="tel" placeholder="010..." value={form.phone} onChange={(event) => updateField("phone", event.target.value)} required />
         </div>
         <div className="field">
           <label htmlFor="weddingDate">تاريخ الفرح</label>
@@ -168,28 +168,11 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
         </div>
         <div className="field full">
           <label htmlFor="venue">مكان الفرح</label>
-          <input id="venue" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required />
-        </div>
-        <div className="field">
-          <label htmlFor="templateSlug">اختيار القالب</label>
-          <select id="templateSlug" value={form.templateSlug} onChange={(event) => updateField("templateSlug", event.target.value)}>
-            {invitationTemplates.map((template) => (
-              <option key={template.slug} value={template.slug}>
-                {template.arabicName}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="language">لغة الدعوة</label>
-          <select id="language" value={form.language} onChange={(event) => updateField("language", event.target.value as FormState["language"])}>
-            <option value="ar">عربي</option>
-            <option value="en">English</option>
-          </select>
+          <input id="venue" placeholder="اسم القاعة أو المكان" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required />
         </div>
         <div className="field full">
           <label htmlFor="notes">ملاحظات</label>
-          <textarea id="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="اكتب أي تفاصيل مهمة عن الصور، الموسيقى، أو شكل الدعوة" />
+          <textarea id="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="أي تفاصيل إضافية" />
         </div>
       </div>
       <div className="button-row" style={{ marginTop: 18 }}>
@@ -197,10 +180,6 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
           {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
           {state === "loading" ? "جاري إرسال الطلب" : "إرسال الطلب على واتساب"}
         </button>
-        <a className="btn btn-soft" href={`/templates?preview=${selectedTemplate.slug}`}>
-          <Send size={18} />
-          معاينة القالب المختار
-        </a>
       </div>
       {message ? <p className="status danger">{message}</p> : null}
     </form>

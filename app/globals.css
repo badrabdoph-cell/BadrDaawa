@@ -271,6 +271,11 @@ img {
   font-size: clamp(1.08rem, 2vw, 1.35rem);
 }
 
+.clean-hero {
+  min-height: auto;
+  padding: clamp(34px, 7vw, 74px) 0 clamp(22px, 5vw, 54px);
+}
+
 .hero-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -468,6 +473,132 @@ img {
   color: #8a6426;
 }
 
+.mobile-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mini-panel {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 18px;
+}
+
+.mini-panel h2,
+.mini-panel p {
+  margin: 0;
+}
+
+.mini-panel h2 {
+  font-size: 1.05rem;
+}
+
+.mini-panel p {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.split-band,
+.template-focus,
+.contact-focus,
+.order-shell {
+  display: grid;
+  gap: 22px;
+}
+
+.split-band {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr);
+  align-items: center;
+}
+
+.simple-steps {
+  display: grid;
+  gap: 10px;
+}
+
+.simple-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.72);
+  font-weight: 900;
+}
+
+.simple-step strong {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #b48b39;
+  color: #fff;
+}
+
+.final-cta,
+.contact-focus {
+  max-width: 720px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.final-cta {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: clamp(22px, 5vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.78);
+  box-shadow: var(--shadow);
+}
+
+.final-cta h2,
+.final-cta p {
+  margin: 0;
+}
+
+.final-cta p {
+  color: var(--muted);
+}
+
+.template-focus {
+  grid-template-columns: minmax(260px, 0.55fr) minmax(0, 0.75fr);
+  align-items: center;
+}
+
+.template-focus-media {
+  overflow: hidden;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.template-focus-media img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.template-focus-copy {
+  display: grid;
+  gap: 16px;
+}
+
+.template-focus-copy h1,
+.template-focus-copy p {
+  margin: 0;
+}
+
+.template-focus-copy h1 {
+  font-size: clamp(2.2rem, 7vw, 4.4rem);
+  line-height: 1;
+}
+
 .template-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -643,8 +774,9 @@ img {
 }
 
 .choice-section h2 {
-  margin: 0;
-  font-size: clamp(1.35rem, 4vw, 2rem);
+  margin: 8px 0 0;
+  color: #5a4b3d;
+  font-size: 1rem;
 }
 
 .choice-grid {
@@ -671,7 +803,7 @@ img {
 .choice-card {
   display: grid;
   gap: 4px;
-  min-height: 116px;
+  min-height: 92px;
   padding: 14px;
 }
 
@@ -1001,6 +1133,13 @@ img {
   color: #1c1a18;
 }
 
+.invite-share-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.45fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
 .footer {
   padding: 42px 0;
   border-top: 1px solid var(--line);
@@ -1124,8 +1263,20 @@ img {
   .journey,
   .stats-grid,
   .input-grid,
-  .invite-details {
+  .invite-details,
+  .mobile-feature-grid,
+  .split-band,
+  .template-focus,
+  .invite-share-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: clamp(1.65rem, 8vw, 2.4rem);
+  }
+
+  .section-lead {
+    font-size: 0.98rem;
   }
 
   .countdown {
@@ -1142,7 +1293,7 @@ img {
   }
 
   .hero-card {
-    min-height: 300px;
+    min-height: 268px;
     padding: 18px;
   }
 
@@ -1165,6 +1316,37 @@ img {
 
   .invite-section {
     padding: 28px 16px;
+  }
+
+  .mini-panel {
+    min-height: auto;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .mini-panel p {
+    grid-column: 2;
+  }
+
+  .simple-step {
+    min-height: 52px;
+  }
+
+  .final-cta {
+    text-align: right;
+    justify-items: stretch;
+  }
+
+  .contact-focus {
+    text-align: right;
+  }
+
+  .template-focus-copy {
+    gap: 12px;
+  }
+
+  .template-focus-media img {
+    max-height: 420px;
   }
 
   .footer-grid {

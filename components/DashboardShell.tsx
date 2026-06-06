@@ -6,7 +6,7 @@ const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/orders", label: "الطلبات", icon: FileText },
   { href: "/admin/invitations", label: "الدعوات", icon: Archive },
-  { href: "/admin/templates", label: "القوالب", icon: Palette },
+  { href: "/admin/templates", label: "القالب", icon: Palette },
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },

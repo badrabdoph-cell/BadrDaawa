@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Gift, MessageCircle, ShieldCheck } from "lucide-react";
 import { OrderForm } from "@/components/OrderForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -21,28 +20,9 @@ export default async function OrderPage({ searchParams }: PageProps) {
   return (
     <div className="page-shell">
       <SiteHeader />
-      <main className="section">
-        <div className="container form-grid">
-          <div>
-            <SectionIntro eyebrow="طلب جديد" title="اكتب بيانات الفرح والباقي علينا" lead="بعد الإرسال سيتم فتح واتساب تلقائيًا برسالة جاهزة تحتوي على كل البيانات. لا يوجد دفع أونلاين في هذه المرحلة." />
-            <div className="grid-3" style={{ marginTop: 28 }}>
-              <div className="panel">
-                <Gift size={24} />
-                <h3>قالب مختار</h3>
-                <p>{selected?.arabicName}</p>
-              </div>
-              <div className="panel">
-                <MessageCircle size={24} />
-                <h3>تحويل مباشر</h3>
-                <p>WhatsApp 01011511561</p>
-              </div>
-              <div className="panel">
-                <ShieldCheck size={24} />
-                <h3>بيانات منظمة</h3>
-                <p>جاهزة للتحويل إلى دعوة من لوحة الإدارة.</p>
-              </div>
-            </div>
-          </div>
+      <main className="section compact">
+        <div className="container order-shell">
+          <SectionIntro eyebrow={selected?.arabicName || "Royal Envelope"} title="اطلب دعوتك" lead="اختيارات بسيطة، ثم بيانات الفرح. بعدها يفتح واتساب برسالة جاهزة." />
           <OrderForm initialTemplate={selected?.slug} />
         </div>
       </main>

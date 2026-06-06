@@ -11,23 +11,22 @@ export const metadata: Metadata = {
 };
 
 const plans = [
-  { name: "Starter", price: "750 ج", text: "مناسب لدعوة راقية وسريعة.", features: ["قالب Royal Envelope", "رابط دعوة", "RSVP", "QR Code"] },
-  { name: "Premium", price: "1500 ج", text: "أفضل اختيار لمعظم الأفراح.", featured: true, features: ["كل Starter", "لوحة عميل", "تصدير Excel/PDF", "صور متعددة", "خريطة القاعة"] },
-  { name: "Royal", price: "3000 ج", text: "تجربة مخصصة أكثر.", features: ["تعديل أقرب للمخصص", "افتتاحية الظرف", "موسيقى خلفية", "دعم يوم الفرح"] },
+  { name: "Starter", price: "750 ج", features: ["رابط دعوة", "QR", "RSVP"] },
+  { name: "Premium", price: "1500 ج", featured: true, features: ["صور", "لوحة عميل", "تصدير"] },
+  { name: "Royal", price: "3000 ج", features: ["تعديل خاص", "موسيقى", "دعم"] },
 ];
 
 export default function PricingPage() {
   return (
     <div className="page-shell">
       <SiteHeader />
-      <main className="section">
+      <main className="section compact">
         <div className="container">
-          <SectionIntro eyebrow="الأسعار" title="باقات سهلة البيع والتطوير" lead="الأرقام قابلة للتعديل لاحقًا، لكن الهيكل التجاري جاهز لاستقبال العملاء من اليوم." />
+          <SectionIntro eyebrow="الأسعار" title="اختار المناسب" lead="ثلاث باقات واضحة، والبداية من واتساب." />
           <div className="pricing-grid">
             {plans.map((plan) => (
               <article className={`pricing-card ${plan.featured ? "featured" : ""}`} key={plan.name}>
                 <h3>{plan.name}</h3>
-                <p>{plan.text}</p>
                 <div className="price">{plan.price}</div>
                 <ul className="feature-list">
                   {plan.features.map((feature) => (
