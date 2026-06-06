@@ -73,7 +73,7 @@ export default async function ClientInvitationDashboard({ params }: PageProps) {
             </article>
             <article className="panel">
               <h2>صلاحيات العميل</h2>
-              <p>العميل يتابع الحضور فقط، بدون صلاحيات لتكسير القوالب أو تغيير التصميم.</p>
+              <p>متابعة الحضور والرابط والملفات فقط.</p>
             </article>
           </div>
         </section>
