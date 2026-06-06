@@ -118,7 +118,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as { error?: string } | null;
         setState("error");
-        setMessage(data?.error || "راجع بيانات الطلب وحاول مرة أخرى.");
+        setMessage(data?.error || "حصل خطأ مؤقت أثناء تأكيد الطلب. جرّب مرة تانية أو افتح واتساب من زر المصور/التواصل.");
         return;
       }
 
