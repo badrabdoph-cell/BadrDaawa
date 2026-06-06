@@ -3312,6 +3312,58 @@ img {
   font-size: 0.9rem;
 }
 
+.backup-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.backup-status-card {
+  display: grid;
+  gap: 8px;
+}
+
+.backup-status-card > svg {
+  color: #f3cf73;
+}
+
+.backup-status-card span {
+  color: rgba(245, 234, 214, 0.62);
+  font-weight: 900;
+}
+
+.backup-status-card strong {
+  color: #fff7e8;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.backup-sync-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(243, 207, 115, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 248, 234, 0.055);
+  color: rgba(255, 247, 232, 0.82);
+  font-weight: 850;
+  line-height: 1.7;
+}
+
+.backup-sync-note svg {
+  flex: 0 0 auto;
+  color: #f3cf73;
+}
+
+.backup-file-name {
+  direction: ltr;
+  display: inline-block;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
 .admin-empty-state {
   display: grid;
   gap: 5px;
