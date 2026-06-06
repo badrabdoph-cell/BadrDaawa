@@ -1,7 +1,7 @@
 import { KeyRound, UserPlus } from "lucide-react";
 
 const customers = [
-  { name: "سيف وليلى", phone: "01012345678", username: "saif-laila", invitations: 1 },
+  { name: "بدر وسارة", phone: "01012345678", username: "badr-sarah", invitations: 1 },
   { name: "آدم ومريم", phone: "01198765432", username: "adam-mariam", invitations: 1 },
 ];
 

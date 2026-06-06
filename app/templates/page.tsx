@@ -19,7 +19,15 @@ export default function TemplatesPage() {
       <main className="section compact">
         <div className="container template-focus">
           <div className="template-focus-media">
-            <img src={template.previewImage} alt={template.arabicName} />
+            <div className="royal-envelope hero-envelope" aria-hidden="true">
+              <div className="royal-envelope-base" />
+              <div className="royal-envelope-flap" />
+              <div className="royal-envelope-card">
+                <span>دعوة خاصة</span>
+                <strong>بدر &amp; سارة</strong>
+                <small>26 October 2026</small>
+              </div>
+            </div>
           </div>
           <div className="template-focus-copy">
             <span className="eyebrow">القالب الحالي</span>
@@ -37,8 +45,8 @@ export default function TemplatesPage() {
               <Link className="btn btn-gold" href="/order">
                 اطلب هذا القالب
               </Link>
-              <Link className="btn btn-soft" href="/A7X92K">
-                شاهد مثال
+              <Link className="btn btn-soft btn-glass" href="/A7X92K">
+                افتح الدعوة
               </Link>
             </div>
           </div>

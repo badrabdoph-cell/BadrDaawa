@@ -1,15 +1,7 @@
 import Link from "next/link";
-import { CalendarCheck2, MapPinned, QrCode, Sparkles, UsersRound } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-
-const features = [
-  { icon: CalendarCheck2, title: "دعوة جاهزة", text: "صفحة أنيقة باسم العروسين." },
-  { icon: UsersRound, title: "تأكيد حضور", text: "اسم، رقم، وعدد الأفراد." },
-  { icon: QrCode, title: "QR وخريطة", text: "مشاركة سهلة ووصول أسرع." },
-];
-
-const steps = ["اختر الباقة", "اكتب بيانات الفرح", "استلم الرابط والـ QR"];
 
 export default function HomePage() {
   return (
@@ -23,14 +15,14 @@ export default function HomePage() {
                 <Sparkles size={16} />
                 Royal Envelope
               </span>
-              <h1>دعوة زفاف فاخرة بدون زحمة</h1>
-              <p>رابط أنيق يفتح كظرف ملكي، فيه تفاصيل الفرح، الخريطة، QR، وتأكيد حضور الضيوف.</p>
+              <h1>دعوه فرحك بشكل كريتف وترندي</h1>
+              <p className="hero-shine-copy">حابب تعمل دعايه لنفسك والمعازيم تعرفك قبل ما الفرح يبدأ أصلًا؟</p>
               <div className="button-row">
-                <Link className="btn btn-gold" href="/order">
-                  اطلب الدعوة
+                <Link className="btn btn-gold btn-glow" href="/order">
+                  طلب دعوه
                 </Link>
-                <Link className="btn btn-soft" href="/A7X92K">
-                  شاهد مثال
+                <Link className="btn btn-soft btn-glass" href="/templates">
+                  شوف الاشكال والافكار
                 </Link>
               </div>
             </div>
@@ -40,56 +32,32 @@ export default function HomePage() {
                 <div className="royal-envelope-flap" />
                 <div className="royal-envelope-card">
                   <span>دعوة خاصة</span>
-                  <strong>سيف &amp; ليلى</strong>
-                  <small>18 September 2026</small>
+                  <strong>بدر &amp; سارة</strong>
+                  <small>26 October 2026</small>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="section compact">
-          <div className="container">
-            <div className="mobile-feature-grid">
-              {features.map((feature) => {
-                const Icon = feature.icon;
-                return (
-                  <article className="panel mini-panel" key={feature.title}>
-                    <Icon size={22} />
-                    <h2>{feature.title}</h2>
-                    <p>{feature.text}</p>
-                  </article>
-                );
-              })}
+        <section className="section compact live-template-section">
+          <div className="container live-template-wrap">
+            <div className="live-template-head">
+              <span className="eyebrow">Live Preview</span>
+              <h2>معاينة مباشرة للقالب</h2>
+              <p>نفس الدعوة اللي هتتبعت للمعازيم، بنفس الأنيميشن والتفاصيل.</p>
+              <div className="button-row">
+                <Link className="btn btn-gold btn-glow" href="/A7X92K">
+                  افتح الدعوة كاملة
+                </Link>
+                <Link className="btn btn-soft btn-glass" href="/order">
+                  اعمل واحدة زيها
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
-
-        <section className="section compact">
-          <div className="container split-band">
-            <div>
-              <span className="eyebrow">الخطوات</span>
-              <h2 className="section-title">من الطلب للرابط</h2>
+            <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر وسارة">
+              <iframe src="/A7X92K" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" />
             </div>
-            <div className="simple-steps">
-              {steps.map((step, index) => (
-                <div className="simple-step" key={step}>
-                  <strong>{index + 1}</strong>
-                  <span>{step}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="section compact">
-          <div className="container final-cta">
-            <MapPinned size={26} />
-            <h2>ابدأ بقالب واحد مصقول</h2>
-            <p>نركز الآن على Royal Envelope فقط حتى تكون التجربة ممتازة على الهاتف.</p>
-            <Link className="btn btn-gold" href="/order">
-              ابدأ الآن
-            </Link>
           </div>
         </section>
       </main>
