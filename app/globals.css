@@ -1532,6 +1532,33 @@ img {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid rgba(180, 139, 57, 0.2);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 253, 248, 0.9), rgba(255, 242, 213, 0.72));
+  box-shadow: 0 14px 34px rgba(139, 96, 27, 0.09);
+}
+
+.selected-template-strip > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.selected-template-strip strong {
+  color: #3a2e1f;
+  font-size: 1.05rem;
+}
+
+.selected-template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.selected-template-actions .btn {
+  min-height: 42px;
+  padding: 9px 12px;
 }
 
 .details-form {
@@ -1564,6 +1591,11 @@ img {
 .order-submit {
   width: 100%;
   margin-top: 16px;
+}
+
+.order-back-button {
+  width: 100%;
+  margin-top: 10px;
 }
 
 .input-grid {
@@ -6760,6 +6792,16 @@ img {
   .order-template-card {
     min-height: 248px;
     padding: 8px;
+  }
+
+  .selected-template-strip {
+    display: grid;
+  }
+
+  .selected-template-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 
   .client-invitations-grid {

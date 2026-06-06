@@ -89,12 +89,13 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
       .join("\n");
 
     try {
+      const orderVenue = [form.venue, form.mapUrl].filter((value) => value.trim()).join(" - ");
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          venue: `${form.venue}${form.mapUrl ? ` - ${form.mapUrl}` : ""}`,
+          venue: orderVenue,
           notes: [form.notes, form.mapUrl ? `لوكيشن الخريطة: ${form.mapUrl}` : ""].filter(Boolean).join("\n"),
         }),
       });
