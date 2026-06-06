@@ -1,12 +1,19 @@
 import { PrismaClient } from "@prisma/client";
+import { getDatabaseUrl } from "./database-url";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
+const databaseUrl = getDatabaseUrl();
+
 export const prisma =
-  process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0
-    ? globalForPrisma.prisma ?? new PrismaClient({ log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"] })
+  databaseUrl
+    ? globalForPrisma.prisma ??
+      new PrismaClient({
+        datasources: { db: { url: databaseUrl } },
+        log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+      })
     : null;
 
 if (process.env.NODE_ENV !== "production" && prisma) {

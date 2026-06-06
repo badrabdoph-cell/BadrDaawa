@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { syncAdminStateToGitHub } from "@/lib/github-sync";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
 import { getPublicUrl } from "@/lib/utils";
 
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/");
   revalidatePath("/admin/preview");
+  await syncAdminStateToGitHub("Homepage preview settings updated from admin.", { createSnapshot: true });
 
   return NextResponse.redirect(new URL("/admin/preview?saved=1", request.url), 303);
 }

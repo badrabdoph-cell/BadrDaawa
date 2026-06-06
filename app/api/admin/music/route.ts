@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { syncAdminStateToGitHub } from "@/lib/github-sync";
 import { updateMusicSlot } from "@/lib/music-library";
 import { getTemplatesWithSettings, updateTemplatesMusic } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
     for (const slug of appliedTemplateSlugs) {
       revalidatePath(`/templates/${slug}/preview`);
     }
+    await syncAdminStateToGitHub(`Music slot ${savedSlot.id} applied to ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
   }
 
   const url = new URL("/admin/music", request.url);

@@ -2,13 +2,13 @@
   "slots": [
     {
       "id": "track-1",
-      "name": "اختبار موسيقى القوالب",
+      "name": "المقطع الرئيسي",
       "url": "/assets/audio/badr-sara-wedding-3.mp3",
       "applyToAll": false,
       "templateSlugs": [
         "featured-1"
       ],
-      "updatedAt": "2026-06-06T23:29:53.686Z"
+      "updatedAt": "2026-06-06T23:34:23.119Z"
     },
     {
       "id": "track-2",

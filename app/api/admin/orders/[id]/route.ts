@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
+import { syncAdminStateToGitHub } from "@/lib/github-sync";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -172,6 +173,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (action === "delete") {
     if (prisma) await prisma.orderRequest.delete({ where: { id } }).catch(() => null);
     else await deleteFileOrder(id);
+    await syncAdminStateToGitHub(`Order deleted from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, "deleted");
   }
 
@@ -179,11 +181,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const status = action === "accept" ? "accepted" : "rejected";
     if (prisma) await prisma.orderRequest.update({ where: { id }, data: { status: status.toUpperCase() as "ACCEPTED" | "REJECTED" } }).catch(() => null);
     else await updateFileOrder(id, { status });
+    await syncAdminStateToGitHub(`Order ${status} from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, status);
   }
 
   if (action === "convert") {
     const code = prisma ? await convertPrismaOrder(id) : await convertFileOrder(id);
+    if (code) await syncAdminStateToGitHub(`Order converted to invitation: ${code}.`, { createSnapshot: true });
     return redirectBack(request, code ? `converted-${code}` : "missing");
   }
 
@@ -201,6 +205,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!prisma) {
       const existing = await getFileOrder(id);
       await updateFileOrder(id, { groomName, brideName, phone, weddingDate, venue, notes, imageUrls: existing?.imageUrls || [], templateSlug });
+      await syncAdminStateToGitHub(`Order updated from admin: ${id}.`, { createSnapshot: true });
       return redirectBack(request, "updated");
     }
 
@@ -259,6 +264,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         ...(template ? { templateId: template.id } : {}),
       },
     });
+    await syncAdminStateToGitHub(`Order updated from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, "updated");
   }
 

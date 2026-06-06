@@ -5,6 +5,7 @@ import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
+import { syncAdminStateToGitHub } from "@/lib/github-sync";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
     });
+    await syncAdminStateToGitHub(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
     return NextResponse.redirect(new URL(`/admin/client-invitations?created=${invitation.code}`, request.url), 303);
   }
 
@@ -179,5 +181,6 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  await syncAdminStateToGitHub(`Client invitation created: ${code}.`, { createSnapshot: true });
   return NextResponse.redirect(new URL(`/admin/client-invitations?created=${code}`, request.url), 303);
 }

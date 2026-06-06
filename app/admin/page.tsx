@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Archive, ArrowUpLeft, BarChart3, FileText, MonitorPlay, Palette, Plus, Sparkles, UsersRound } from "lucide-react";
 import { getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
+import { hasDatabaseConfig } from "@/lib/database-url";
 import { formatArabicNumber } from "@/lib/utils";
 
 function formatOrderDate(value: string) {
@@ -21,7 +22,7 @@ export default async function AdminDashboardPage() {
   const [invitations, orders] = await Promise.all([getAdminInvitations(), getAdminOrders()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const recentOrders = orders.slice(0, 4);
-  const hasDatabase = Boolean(process.env.DATABASE_URL);
+  const hasDatabase = hasDatabaseConfig();
 
   return (
     <>

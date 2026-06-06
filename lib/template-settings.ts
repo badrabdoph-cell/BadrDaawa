@@ -172,6 +172,26 @@ export async function updateTemplatesMusic(slugs: string[], musicUrl: string) {
   return selectedSlugs;
 }
 
+export async function updateTemplatesMusicState(slugs: string[], input: { musicUrl?: string; enabled: boolean }) {
+  const templates = await getTemplatesWithSettings();
+  const validSlugs = new Set(templates.map((template) => template.slug));
+  const selectedSlugs = Array.from(new Set(slugs.map((slug) => slug.trim()).filter((slug) => validSlugs.has(slug))));
+  const cleanedMusicUrl = cleanUrl(input.musicUrl || "");
+  if (!selectedSlugs.length) return [];
+  if (input.enabled && !cleanedMusicUrl) return [];
+
+  const settings = await readTemplateSettings();
+  for (const slug of selectedSlugs) {
+    const next = { ...(settings[slug] || {}) };
+    next.musicMuted = !input.enabled;
+    if (cleanedMusicUrl) next.musicUrl = cleanedMusicUrl;
+    settings[slug] = next;
+  }
+
+  await writeTemplateSettings(settings);
+  return selectedSlugs;
+}
+
 export async function updateTemplateSettings(
   slug: string,
   input: {

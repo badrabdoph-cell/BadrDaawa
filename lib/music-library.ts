@@ -6,6 +6,7 @@ export type MusicSlot = {
   id: string;
   name: string;
   url: string;
+  enabled: boolean;
   applyToAll: boolean;
   templateSlugs: string[];
   updatedAt: string;
@@ -22,6 +23,7 @@ export const defaultMusicSlots: MusicSlot[] = slotIds.map((id, index) => ({
   id,
   name: `مقطع ${index + 1}`,
   url: "",
+  enabled: true,
   applyToAll: false,
   templateSlugs: [],
   updatedAt: "",
@@ -62,6 +64,7 @@ function normalizeMusicLibrary(input: Partial<MusicLibrary>): MusicLibrary {
       id: fallback.id,
       name: cleanText(incoming?.name || "", fallback.name),
       url: cleanUrl(incoming?.url || ""),
+      enabled: incoming?.enabled !== false,
       applyToAll: incoming?.applyToAll === true,
       templateSlugs: Array.isArray(incoming?.templateSlugs) ? Array.from(new Set(incoming.templateSlugs.map((slug) => String(slug).trim()).filter(Boolean))) : [],
       updatedAt: typeof incoming?.updatedAt === "string" ? incoming.updatedAt : "",
@@ -85,6 +88,7 @@ export async function updateMusicSlot(input: {
   id: string;
   name: string;
   url: string;
+  enabled: boolean;
   applyToAll: boolean;
   templateSlugs: string[];
 }) {
@@ -97,6 +101,7 @@ export async function updateMusicSlot(input: {
     id: fallback.id,
     name: cleanText(input.name, fallback.name),
     url: cleanUrl(input.url),
+    enabled: input.enabled,
     applyToAll: input.applyToAll,
     templateSlugs: Array.from(new Set(input.templateSlugs.map((slug) => slug.trim()).filter(Boolean))),
     updatedAt: new Date().toISOString(),
