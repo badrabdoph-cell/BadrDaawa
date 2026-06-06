@@ -3,7 +3,7 @@ import { OrderForm } from "@/components/OrderForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SectionIntro } from "@/components/SectionIntro";
-import { getTemplateBySlug, invitationTemplates } from "@/lib/templates";
+import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
   title: "اطلب دعوتك",
@@ -15,7 +15,8 @@ type PageProps = {
 
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
-  const selected = params.template ? getTemplateBySlug(params.template) : invitationTemplates[0];
+  const templates = await getTemplatesWithSettings();
+  const selected = params.template ? templates.find((template) => template.slug === params.template) : templates[0];
 
   return (
     <div className="page-shell">
@@ -23,7 +24,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <main className="section compact">
         <div className="container order-shell">
           <SectionIntro eyebrow="طلب جديد" title="اختر القالب أولًا" lead="المرحلة الأولى اختيار القالب، وبعدها تكتب بيانات الفرح ويتبعت الطلب كامل على واتساب." />
-          <OrderForm initialTemplate={selected?.slug} />
+          <OrderForm initialTemplate={selected?.slug} templates={templates} />
         </div>
       </main>
       <SiteFooter />

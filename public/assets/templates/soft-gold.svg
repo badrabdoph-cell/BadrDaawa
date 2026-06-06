@@ -32,7 +32,7 @@
     <text x="450" y="202" text-anchor="middle" fill="#D4AF37" font-family="Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="8">WEDDING INVITATION</text>
     <text x="450" y="324" text-anchor="middle" fill="#1A1A1A" font-family="Georgia, serif" font-size="78">Badr</text>
     <text x="450" y="392" text-anchor="middle" fill="#D4AF37" font-family="Georgia, serif" font-size="54" font-style="italic">&amp;</text>
-    <text x="450" y="500" text-anchor="middle" fill="#1A1A1A" font-family="Georgia, serif" font-size="78">Sarah</text>
+    <text x="450" y="500" text-anchor="middle" fill="#1A1A1A" font-family="Georgia, serif" font-size="78">Sara</text>
     <line x1="402" y1="560" x2="498" y2="560" stroke="#D4AF37" stroke-width="4"/>
 
     <rect x="276" y="616" width="168" height="120" rx="24" fill="#FAFAFA" stroke="#F0F0F0"/>

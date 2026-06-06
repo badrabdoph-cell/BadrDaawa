@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { ErrorRecoveryActions } from "@/components/ErrorRecoveryActions";
 
 export default function AdminErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
@@ -11,10 +12,7 @@ export default function AdminErrorPage({ error, reset }: { error: Error & { dige
         <h1>حصل خطأ داخل لوحة الإدارة</h1>
         <p>الصفحة لم تتوقف بصمت. جرّب إعادة التحميل، ولو المشكلة مستمرة راجع اتصال قاعدة البيانات أو متغيرات Railway.</p>
         {error.digest ? <code>{error.digest}</code> : null}
-        <button className="btn btn-gold btn-glow" type="button" onClick={() => reset()}>
-          <RefreshCw size={17} />
-          إعادة المحاولة
-        </button>
+        <ErrorRecoveryActions error={error} context="admin" reset={reset} />
       </section>
     </main>
   );

@@ -1,5 +1,7 @@
 import type { TemplateDefinition } from "./types";
 
+export const defaultTemplateMusicUrl = "/assets/audio/badr-sara-wedding-3.mp3";
+
 export const royalEnvelopeTemplate: TemplateDefinition = {
   id: "tpl_royal_envelope",
   slug: "royal-envelope",
@@ -20,6 +22,7 @@ export const royalEnvelopeTemplate: TemplateDefinition = {
   },
   previewImage: "/assets/templates/royal-envelope.svg",
   accentImage: "/assets/brand/champagne-rings.png",
+  musicUrl: defaultTemplateMusicUrl,
   enabled: true,
   score: 100,
 };
@@ -44,6 +47,7 @@ export const luxeNoirTemplate: TemplateDefinition = {
   },
   previewImage: "/assets/templates/luxe-noir.svg",
   accentImage: "/assets/invite/badr-sarah-2.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
   enabled: true,
   score: 96,
 };
@@ -68,6 +72,7 @@ export const ivoryArchesTemplate: TemplateDefinition = {
   },
   previewImage: "/assets/templates/ivory-arches.svg",
   accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
   enabled: true,
   score: 94,
 };
@@ -92,6 +97,7 @@ export const mobileGoldTemplate: TemplateDefinition = {
   },
   previewImage: "/assets/templates/mobile-gold.svg",
   accentImage: "/assets/invite/badr-sarah-3.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
   enabled: true,
   score: 92,
 };
@@ -116,6 +122,7 @@ export const softGoldTemplate: TemplateDefinition = {
   },
   previewImage: "/assets/templates/soft-gold.svg",
   accentImage: "/assets/invite/badr-sarah-2.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
   enabled: true,
   score: 90,
 };
@@ -140,11 +147,71 @@ export const bohoChicTemplate: TemplateDefinition = {
   },
   previewImage: "/assets/templates/boho-chic.svg",
   accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
   enabled: true,
   score: 91,
 };
 
-export const invitationTemplates: TemplateDefinition[] = [royalEnvelopeTemplate, luxeNoirTemplate, ivoryArchesTemplate, mobileGoldTemplate, bohoChicTemplate, softGoldTemplate];
+export const gardenEleganceTemplate: TemplateDefinition = {
+  id: "tpl_garden_elegance",
+  slug: "garden-elegance",
+  name: "Garden Elegance",
+  arabicName: "Garden Elegance",
+  category: "قالب حديقة أنيق",
+  style: "garden",
+  concept: "دعوة طبيعية هادئة بدوائر أسماء متداخلة، صورة مقوسة، تفاصيل Timeline، وخريطة وQR بتصميم تذكرة.",
+  opening: "Organic reveal",
+  layout: "غلاف طبيعي، صورة مقوسة، تفاصيل الزمان والمكان، عداد، خريطة، معرض صور، مصور، RSVP وQR.",
+  typography: "خطوط رقيقة وواضحة مع أخضر Sage ولمسة وردية ترابية تناسب الهاتف.",
+  palette: {
+    primary: "#f4f6f0",
+    secondary: "#e2e6d8",
+    accent: "#ca7d60",
+    ink: "#2c3b2e",
+    surface: "#ffffff",
+  },
+  previewImage: "/assets/templates/garden-elegance.svg",
+  accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
+  enabled: true,
+  score: 93,
+};
+
+export const cinematicStoryTemplate: TemplateDefinition = {
+  id: "tpl_cinematic_story",
+  slug: "cinematic-story",
+  name: "Cinematic Story",
+  arabicName: "Cinematic Story",
+  category: "قالب سينمائي داكن",
+  style: "cinematic",
+  concept: "دعوة سينمائية بخلفية زمرد داكن، صورة كاملة، أسماء كبيرة، كارت زجاجي، صور متراكبة وQR فاخر.",
+  opening: "Cinematic photo story",
+  layout: "Hero بصورة كاملة، بطاقة موعد وعد تنازلي، معرض صور متراكب، خريطة، مصور، RSVP وQR.",
+  typography: "خطوط كبيرة وفاخرة بتباين أبيض وذهبي فوق خلفية زمردية داكنة مناسبة للموبايل.",
+  palette: {
+    primary: "#0a1110",
+    secondary: "#131f1c",
+    accent: "#d4af37",
+    ink: "#e8efe5",
+    surface: "#1a2e29",
+  },
+  previewImage: "/assets/templates/cinematic-story.svg",
+  accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
+  enabled: true,
+  score: 95,
+};
+
+export const invitationTemplates: TemplateDefinition[] = [
+  royalEnvelopeTemplate,
+  luxeNoirTemplate,
+  ivoryArchesTemplate,
+  mobileGoldTemplate,
+  bohoChicTemplate,
+  softGoldTemplate,
+  gardenEleganceTemplate,
+  cinematicStoryTemplate,
+];
 
 export function getTemplateBySlug(slug: string) {
   return invitationTemplates.find((template) => template.slug === slug);

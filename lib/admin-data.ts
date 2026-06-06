@@ -171,7 +171,7 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     return [
       {
         id: "cus_001",
-        name: "بدر و سارة",
+        name: "بدر و Sara",
         phone: "01012345678",
         username: "badr-sarah",
         isActive: true,
@@ -202,7 +202,7 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     return [
       {
         id: "cus_001",
-        name: "بدر و سارة",
+        name: "بدر و Sara",
         phone: "01012345678",
         username: "badr-sarah",
         isActive: true,

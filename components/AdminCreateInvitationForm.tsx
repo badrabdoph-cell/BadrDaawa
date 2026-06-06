@@ -1,8 +1,8 @@
 import { Link2, WandSparkles } from "lucide-react";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
-import { invitationTemplates } from "@/lib/templates";
+import type { TemplateDefinition } from "@/lib/types";
 
-export function AdminCreateInvitationForm({ created, error, demo }: { created?: string; error?: string; demo?: string }) {
+export function AdminCreateInvitationForm({ created, error, demo, templates }: { created?: string; error?: string; demo?: string; templates: TemplateDefinition[] }) {
   return (
     <section className="admin-create-card">
       <div className="admin-create-head">
@@ -28,7 +28,7 @@ export function AdminCreateInvitationForm({ created, error, demo }: { created?: 
         </label>
         <label className="field">
           <span>اسم العروسة</span>
-          <input name="brideName" placeholder="سارة" required />
+          <input name="brideName" placeholder="Sara" required />
         </label>
         <label className="field">
           <span>اسم العريس بالإنجليزي للرابط</span>
@@ -36,7 +36,7 @@ export function AdminCreateInvitationForm({ created, error, demo }: { created?: 
         </label>
         <label className="field">
           <span>اسم العروسة بالإنجليزي للرابط</span>
-          <input name="brideEnglish" placeholder="sarah" pattern="[A-Za-z0-9 -]+" required />
+          <input name="brideEnglish" placeholder="Sara" pattern="[A-Za-z0-9 -]+" required />
         </label>
         <label className="field">
           <span>رقم موبايل العميل</span>
@@ -72,12 +72,12 @@ export function AdminCreateInvitationForm({ created, error, demo }: { created?: 
         </label>
         <label className="field">
           <span>رابط الأغنية</span>
-          <input name="musicUrl" placeholder="اتركه فارغًا للموسيقى المؤقتة" />
+          <input name="musicUrl" placeholder="اتركه فارغًا لاستخدام موسيقى القالب الافتراضية" />
         </label>
         <label className="field">
           <span>القالب</span>
           <select name="templateSlug" defaultValue="royal-envelope">
-            {invitationTemplates.map((template) => (
+            {templates.map((template) => (
               <option key={template.slug} value={template.slug}>
                 {template.arabicName}
               </option>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getTemplateBySlug, getTemplateSortOrder } from "@/lib/templates";
+import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import { orderRequestSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   if (prisma) {
-    const selectedTemplate = getTemplateBySlug(parsed.data.templateSlug);
+    const selectedTemplate = await getTemplateWithSettings(parsed.data.templateSlug);
     if (!selectedTemplate) {
       return NextResponse.json({ error: "القالب المختار غير موجود" }, { status: 400 });
     }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         palette: selectedTemplate.palette,
         previewUrl: selectedTemplate.previewImage,
         enabled: selectedTemplate.enabled,
-        sortOrder: getTemplateSortOrder(selectedTemplate.slug),
+        sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
       },
       select: { id: true },
     });

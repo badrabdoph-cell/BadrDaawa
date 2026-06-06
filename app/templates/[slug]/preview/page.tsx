@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { InvitationExperience } from "@/components/InvitationExperience";
-import { getTemplateBySlug } from "@/lib/templates";
+import { getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 
 type PageProps = {
@@ -9,7 +9,7 @@ type PageProps = {
 
 export default async function TemplatePreviewPage({ params }: PageProps) {
   const { slug } = await params;
-  const template = getTemplateBySlug(slug);
+  const template = await getTemplateWithSettings(slug);
   if (!template) notFound();
 
   const invitation: Invitation = {
@@ -18,7 +18,7 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
     templateSlug: template.slug,
     language: "ar",
     groomName: "بدر",
-    brideName: "سارة",
+    brideName: "Sara",
     weddingDate: "2026-10-26",
     weddingTime: "07:00 مساءً",
     venue: "قاعة رويال",

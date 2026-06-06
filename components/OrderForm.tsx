@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Camera, Check, Loader2, MessageCircle } from "lucide-react";
-import { invitationTemplates } from "@/lib/templates";
+import type { TemplateDefinition } from "@/lib/types";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 type FormState = {
@@ -17,8 +17,11 @@ type FormState = {
   language: "ar" | "en";
 };
 
-export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
-  const initialSlug = invitationTemplates.some((template) => template.slug === initialTemplate) ? initialTemplate! : invitationTemplates[0].slug;
+type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
+
+export function OrderForm({ initialTemplate, templates }: { initialTemplate?: string; templates: OrderTemplateOption[] }) {
+  const fallbackTemplate = templates[0] || { slug: "royal-envelope", name: "Royal Envelope", arabicName: "Royal Envelope", previewImage: "/assets/templates/royal-envelope.svg" };
+  const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
   const [step, setStep] = useState<"template" | "details">("template");
   const [form, setForm] = useState<FormState>({
     groomName: "",
@@ -35,8 +38,8 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
   const [message, setMessage] = useState("");
 
   const selectedTemplate = useMemo(
-    () => invitationTemplates.find((template) => template.slug === form.templateSlug) || invitationTemplates[0],
-    [form.templateSlug],
+    () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
+    [fallbackTemplate, form.templateSlug, templates],
   );
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
@@ -111,7 +114,7 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
             <p>اختيار القالب مطلوب قبل كتابة البيانات. لما نضيف قوالب جديدة هتظهر هنا تلقائيًا بنفس الشكل.</p>
           </div>
           <div className="order-template-grid">
-            {invitationTemplates.map((template) => (
+            {templates.map((template) => (
               <button
                 className={`order-template-card ${form.templateSlug === template.slug ? "selected" : ""}`}
                 key={template.slug}
@@ -149,7 +152,7 @@ export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
             </div>
             <div className="field">
               <label htmlFor="brideName">اسم العروسة</label>
-              <input id="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
+              <input id="brideName" placeholder="مثال: Sara" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
             </div>
             <div className="field">
               <label htmlFor="phone">رقم الموبايل</label>

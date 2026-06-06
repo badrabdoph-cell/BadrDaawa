@@ -1,90 +1,145 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
-const DEFAULT_MUSIC_URL = "/assets/audio/badr-sarah-wedding-3.mp3";
+export const DEFAULT_INVITE_MUSIC_URL = "/assets/audio/badr-sara-wedding-3.mp3";
 
-export function InviteMusic({ musicUrl }: { musicUrl?: string }) {
+export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const hasAudioErrorRef = useRef(false);
+  const retryTimersRef = useRef<number[]>([]);
+  const hasErrorRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [needsTap, setNeedsTap] = useState(false);
-  const audioSource = musicUrl || DEFAULT_MUSIC_URL;
+  const [needsInteraction, setNeedsInteraction] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  const start = async () => {
-    setNeedsTap(false);
-    if (!audioRef.current || hasAudioErrorRef.current) {
-      setIsPlaying(false);
-      return;
-    }
+  const audioSource = useMemo(() => {
+    const source = musicUrl?.trim();
+    return source || DEFAULT_INVITE_MUSIC_URL;
+  }, [musicUrl]);
+
+  const clearRetryTimer = useCallback(() => {
+    retryTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    retryTimersRef.current = [];
+  }, []);
+
+  const start = useCallback(async () => {
+    const audio = audioRef.current;
+    if (!audio || hasErrorRef.current) return false;
 
     try {
-      audioRef.current.currentTime = audioRef.current.currentTime || 0;
-      await audioRef.current.play();
+      audio.loop = true;
+      audio.volume = 1;
+      audio.muted = false;
+      if (audio.readyState === 0) audio.load();
+      if (!audio.currentTime) audio.currentTime = 0;
+      await audio.play();
       setIsPlaying(true);
+      setNeedsInteraction(false);
+      clearRetryTimer();
+      return true;
     } catch {
-      if (audioRef.current?.error) {
-        hasAudioErrorRef.current = true;
-        setIsPlaying(false);
-        return;
-      }
-      setNeedsTap(true);
+      setIsPlaying(false);
+      setNeedsInteraction(true);
+      return false;
     }
-  };
+  }, [clearRetryTimer]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
+    clearRetryTimer();
     audioRef.current?.pause();
     setIsPlaying(false);
-  };
+    setNeedsInteraction(false);
+  }, [clearRetryTimer]);
 
   useEffect(() => {
-    hasAudioErrorRef.current = false;
-    const timer = window.setTimeout(() => {
-      void start();
-    }, 3100);
+    const audio = audioRef.current;
+    hasErrorRef.current = false;
+    setHasError(false);
+    setIsPlaying(false);
+    setNeedsInteraction(false);
+    clearRetryTimer();
+    audio?.load();
 
-    const startOnInteraction = () => {
+    const attemptStart = () => {
       void start();
     };
 
-    window.addEventListener("pointerdown", startOnInteraction, { once: true, passive: true });
-    window.addEventListener("touchstart", startOnInteraction, { once: true, passive: true });
-    window.addEventListener("keydown", startOnInteraction, { once: true });
-    window.addEventListener("scroll", startOnInteraction, { once: true, passive: true });
+    const retryDelays = [120, 700, 1600, 3200];
+    retryTimersRef.current = retryDelays.map((delay) => window.setTimeout(attemptStart, delay));
+
+    const startAfterInteraction = () => {
+      void start();
+    };
+
+    window.addEventListener("pointerdown", startAfterInteraction, { passive: true });
+    window.addEventListener("touchstart", startAfterInteraction, { passive: true });
+    window.addEventListener("click", startAfterInteraction);
+    window.addEventListener("keydown", startAfterInteraction);
+    window.addEventListener("scroll", startAfterInteraction, { passive: true });
+    window.addEventListener("focus", startAfterInteraction);
+
+    const restartWhenVisible = () => {
+      if (document.visibilityState === "visible" && audioRef.current?.paused) {
+        void start();
+      }
+    };
+
+    document.addEventListener("visibilitychange", restartWhenVisible);
 
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("pointerdown", startOnInteraction);
-      window.removeEventListener("touchstart", startOnInteraction);
-      window.removeEventListener("keydown", startOnInteraction);
-      window.removeEventListener("scroll", startOnInteraction);
+      clearRetryTimer();
+      audio?.pause();
+      window.removeEventListener("pointerdown", startAfterInteraction);
+      window.removeEventListener("touchstart", startAfterInteraction);
+      window.removeEventListener("click", startAfterInteraction);
+      window.removeEventListener("keydown", startAfterInteraction);
+      window.removeEventListener("scroll", startAfterInteraction);
+      window.removeEventListener("focus", startAfterInteraction);
+      document.removeEventListener("visibilitychange", restartWhenVisible);
     };
-  }, [audioSource]);
+  }, [audioSource, clearRetryTimer, start]);
 
   return (
     <div className="music-control">
       <audio
         ref={audioRef}
         src={audioSource}
+        autoPlay
         loop
         preload="auto"
         playsInline
         onCanPlay={() => {
-          hasAudioErrorRef.current = false;
+          hasErrorRef.current = false;
+          setHasError(false);
+          void start();
+        }}
+        onEnded={() => {
+          if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            void start();
+          }
         }}
         onError={() => {
-          hasAudioErrorRef.current = true;
+          hasErrorRef.current = true;
+          setHasError(true);
           setIsPlaying(false);
-          setNeedsTap(false);
+          setNeedsInteraction(false);
+        }}
+        onPause={() => {
+          setIsPlaying(false);
+        }}
+        onPlay={() => {
+          setIsPlaying(true);
+          setNeedsInteraction(false);
         }}
       />
       <button
-        className={`music-button ${needsTap ? "attention" : ""} ${isPlaying ? "playing" : ""}`}
+        className={`music-button ${needsInteraction ? "attention" : ""} ${isPlaying ? "playing" : ""}`}
         type="button"
         onClick={isPlaying ? stop : start}
         aria-label={isPlaying ? "إيقاف الموسيقى" : "تشغيل الموسيقى"}
-        title={isPlaying ? "إيقاف الموسيقى" : "تشغيل الموسيقى"}
+        title={hasError ? "تعذر تحميل ملف الموسيقى" : isPlaying ? "إيقاف الموسيقى" : "تشغيل الموسيقى"}
       >
         {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
       </button>

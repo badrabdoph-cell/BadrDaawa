@@ -3,7 +3,8 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
-import { getTemplateBySlug, getTemplateSortOrder, royalEnvelopeTemplate } from "@/lib/templates";
+import { royalEnvelopeTemplate } from "@/lib/templates";
+import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
   const mapUrl = String(formData.get("mapUrl") || "").trim();
   const musicUrl = String(formData.get("musicUrl") || "").trim();
   const templateSlug = String(formData.get("templateSlug") || royalEnvelopeTemplate.slug).trim();
-  const selectedTemplate = getTemplateBySlug(templateSlug) || royalEnvelopeTemplate;
+  const selectedTemplate = (await getTemplateWithSettings(templateSlug)) || royalEnvelopeTemplate;
   const galleryImages = formData
     .getAll("galleryImage")
     .map((value) => String(value))
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       palette: selectedTemplate.palette,
       previewUrl: selectedTemplate.previewImage,
       enabled: selectedTemplate.enabled,
-      sortOrder: getTemplateSortOrder(selectedTemplate.slug),
+      sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
     },
     create: {
       slug: selectedTemplate.slug,
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       palette: selectedTemplate.palette,
       previewUrl: selectedTemplate.previewImage,
       enabled: selectedTemplate.enabled,
-      sortOrder: getTemplateSortOrder(selectedTemplate.slug),
+      sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
     },
   });
 

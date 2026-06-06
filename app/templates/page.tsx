@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TemplateCard } from "@/components/TemplateCard";
-import { invitationTemplates } from "@/lib/templates";
+import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
   title: "قوالب الدعوات",
   description: "اختار قالب دعوة فرحك من BadrDaawa.",
 };
 
-export default function TemplatesPage() {
+export default async function TemplatesPage() {
+  const templates = await getTemplatesWithSettings();
+
   return (
     <div className="page-shell">
       <SiteHeader />
@@ -21,7 +23,7 @@ export default function TemplatesPage() {
             <p className="section-lead">كل قالب له معاينة مباشرة ومزامن مع الطلبات ولوحة الأدمن.</p>
           </div>
           <div className="template-grid">
-            {invitationTemplates.map((template) => (
+            {templates.map((template) => (
               <TemplateCard template={template} key={template.slug} />
             ))}
           </div>

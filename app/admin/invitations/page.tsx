@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Copy, Eye, Pause, Play, Trash2 } from "lucide-react";
 import { AdminCreateInvitationForm } from "@/components/AdminCreateInvitationForm";
 import { getAdminInvitations } from "@/lib/admin-data";
-import { invitationTemplates } from "@/lib/templates";
+import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getInvitationUrl } from "@/lib/utils";
 import { getCustomerAdminPath } from "@/lib/slug";
 
@@ -11,7 +11,7 @@ export default async function InvitationsPage({
 }: {
   searchParams: Promise<{ created?: string; error?: string; demo?: string }>;
 }) {
-  const [params, invitations] = await Promise.all([searchParams, getAdminInvitations()]);
+  const [params, invitations, templates] = await Promise.all([searchParams, getAdminInvitations(), getTemplatesWithSettings()]);
 
   return (
     <>
@@ -25,7 +25,7 @@ export default async function InvitationsPage({
         </a>
       </div>
       <div id="create-invitation">
-        <AdminCreateInvitationForm created={params.created} error={params.error} demo={params.demo} />
+        <AdminCreateInvitationForm created={params.created} error={params.error} demo={params.demo} templates={templates} />
       </div>
       <div className="table-shell">
         <table className="data-table">
@@ -42,7 +42,7 @@ export default async function InvitationsPage({
           </thead>
           <tbody>
             {invitations.map((invitation) => {
-              const template = invitationTemplates.find((item) => item.slug === invitation.templateSlug);
+              const template = templates.find((item) => item.slug === invitation.templateSlug);
               return (
                 <tr key={invitation.id}>
                   <td>{invitation.code}</td>

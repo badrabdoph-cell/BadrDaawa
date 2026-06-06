@@ -1,6 +1,6 @@
 export type Language = "ar" | "en";
 
-export type TemplateStyle = "royal" | "noir" | "ivory" | "mobile" | "boho";
+export type TemplateStyle = "royal" | "noir" | "ivory" | "mobile" | "boho" | "garden" | "cinematic" | "custom";
 
 export type TemplateDefinition = {
   id: string;
@@ -22,6 +22,9 @@ export type TemplateDefinition = {
   };
   previewImage: string;
   accentImage: string;
+  musicUrl?: string;
+  customHtml?: string;
+  isCustom?: boolean;
   enabled: boolean;
   score: number;
 };

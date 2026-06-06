@@ -126,7 +126,7 @@ export default async function CustomerAdminPage({
         <article className="panel control-panel-wide">
           <Music2 size={24} />
           <h2>موسيقى الدعوة</h2>
-          <p>اترك الرابط فارغًا لتشغيل الموسيقى المؤقتة، أو ضع رابط ملف MP3/WAV خاص بالدعوة.</p>
+          <p>اترك الرابط فارغًا لتشغيل موسيقى القالب الافتراضية، أو ضع رابط ملف MP3/WAV خاص بالدعوة.</p>
           <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post">
             <label className="field full">
               <span>رابط الأغنية</span>

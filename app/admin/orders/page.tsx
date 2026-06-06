@@ -1,9 +1,9 @@
 import { Check, RefreshCw, X } from "lucide-react";
 import { getAdminOrders } from "@/lib/admin-data";
-import { invitationTemplates } from "@/lib/templates";
+import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export default async function OrdersPage() {
-  const orders = await getAdminOrders();
+  const [orders, templates] = await Promise.all([getAdminOrders(), getTemplatesWithSettings()]);
 
   return (
     <>
@@ -27,7 +27,7 @@ export default async function OrdersPage() {
           </thead>
           <tbody>
             {orders.map((order) => {
-              const template = invitationTemplates.find((item) => item.slug === order.templateSlug);
+              const template = templates.find((item) => item.slug === order.templateSlug);
               return (
                 <tr key={order.id}>
                   <td>
