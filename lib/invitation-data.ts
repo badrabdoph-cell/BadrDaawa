@@ -1,5 +1,6 @@
 import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode as getDemoInvitationByCode } from "./demo-data";
 import { prisma } from "./db";
+import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
 import type { GuestRsvp, Invitation } from "./types";
 
 type DatabaseInvitation = {
@@ -78,7 +79,7 @@ function toGuestRsvp(guest: DatabaseGuest): GuestRsvp {
 
 export async function getInvitationByCode(code: string): Promise<Invitation | undefined> {
   if (!prisma) {
-    return getDemoInvitationByCode(code);
+    return (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
   }
 
   try {
@@ -90,13 +91,14 @@ export async function getInvitationByCode(code: string): Promise<Invitation | un
     return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : undefined;
   } catch (error) {
     console.error("Failed to load invitation", error);
-    return getDemoInvitationByCode(code);
+    return (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
   }
 }
 
 export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> {
   if (!prisma) {
-    return getDemoGuestsByInvitation(code);
+    const fileGuests = await getFileGuestsByInvitation(code);
+    return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
   }
 
   try {
@@ -109,12 +111,16 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
     return guests.map((guest) => toGuestRsvp(guest as DatabaseGuest));
   } catch (error) {
     console.error("Failed to load invitation guests", error);
-    return getDemoGuestsByInvitation(code);
+    const fileGuests = await getFileGuestsByInvitation(code);
+    return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
   }
 }
 
 export async function recordInvitationView(code: string) {
-  if (!prisma) return;
+  if (!prisma) {
+    await recordFileInvitationView(code);
+    return;
+  }
 
   try {
     const invitation = await prisma.invitation.update({
@@ -131,5 +137,6 @@ export async function recordInvitationView(code: string) {
     });
   } catch (error) {
     console.error("Failed to record invitation view", error);
+    await recordFileInvitationView(code);
   }
 }

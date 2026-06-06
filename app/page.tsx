@@ -41,9 +41,6 @@ export default function HomePage() {
         <section className="section compact live-template-section">
           <div className="container live-template-wrap">
             <div className="live-preview-stack">
-              <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara">
-                <iframe src="/badr-sarah-1" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation; autoplay; notifications" />
-              </div>
               <div className="home-feature-points" aria-label="مميزات الدعوة الرقمية">
                 {homeFeaturePoints.map((item) => {
                   const Icon = item.icon;
@@ -62,6 +59,9 @@ export default function HomePage() {
                   </span>
                   <strong>تعرف مين دخل الدعوة وتتابع الحضور أول بأول</strong>
                 </div>
+              </div>
+              <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara">
+                <iframe src="/badr-sarah-1" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation; autoplay; notifications" />
               </div>
               <div className="button-row live-preview-actions">
                 <Link className="btn btn-gold btn-glow" href="/badr-sarah-1">

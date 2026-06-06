@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
+import { createFileInvitation } from "@/lib/file-store";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
@@ -46,8 +47,23 @@ export async function POST(request: NextRequest) {
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
 
   if (!prisma) {
-    const code = makeNumberedInvitationSlug(baseSlug, []);
-    return NextResponse.redirect(new URL(`/admin/invitations?created=${code}&demo=1`, request.url), 303);
+    const invitation = await createFileInvitation({
+      baseSlug,
+      templateSlug: selectedTemplate.slug,
+      groomName,
+      brideName,
+      phone,
+      username,
+      password,
+      weddingDate,
+      weddingTime,
+      venue,
+      city,
+      mapUrl,
+      gallery,
+      musicUrl,
+    });
+    return NextResponse.redirect(new URL(`/admin/invitations?created=${invitation.code}`, request.url), 303);
   }
 
   const existing = await prisma.invitation.findMany({

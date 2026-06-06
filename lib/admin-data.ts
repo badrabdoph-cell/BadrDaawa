@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { getFileCustomers, getFileGuestsByInvitation, getFileInvitations, getFileOrders } from "./file-store";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 
 export type AdminCustomer = {
@@ -111,7 +112,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
 }
 
 export async function getAdminInvitations(): Promise<Invitation[]> {
-  if (!prisma) return [];
+  if (!prisma) return getFileInvitations();
 
   try {
     const invitations = await prisma.invitation.findMany({
@@ -121,12 +122,12 @@ export async function getAdminInvitations(): Promise<Invitation[]> {
     return invitations.map(toInvitation);
   } catch (error) {
     console.error("Failed to load admin invitations", error);
-    return [];
+    return getFileInvitations();
   }
 }
 
 export async function getAdminOrders(): Promise<OrderRequest[]> {
-  if (!prisma) return [];
+  if (!prisma) return getFileOrders();
 
   try {
     const orders = await prisma.orderRequest.findMany({
@@ -136,12 +137,16 @@ export async function getAdminOrders(): Promise<OrderRequest[]> {
     return orders.map(toOrder);
   } catch (error) {
     console.error("Failed to load admin orders", error);
-    return [];
+    return getFileOrders();
   }
 }
 
 export async function getAdminGuests(): Promise<GuestRsvp[]> {
-  if (!prisma) return [];
+  if (!prisma) {
+    const invitations = await getFileInvitations();
+    const guestGroups = await Promise.all(invitations.map((invitation) => getFileGuestsByInvitation(invitation.code)));
+    return guestGroups.flat();
+  }
 
   try {
     const guests = await prisma.guestRsvp.findMany({
@@ -161,12 +166,14 @@ export async function getAdminGuests(): Promise<GuestRsvp[]> {
     }));
   } catch (error) {
     console.error("Failed to load admin guests", error);
-    return [];
+    const invitations = await getFileInvitations();
+    const guestGroups = await Promise.all(invitations.map((invitation) => getFileGuestsByInvitation(invitation.code)));
+    return guestGroups.flat();
   }
 }
 
 export async function getAdminCustomers(): Promise<AdminCustomer[]> {
-  if (!prisma) return [];
+  if (!prisma) return getFileCustomers();
 
   try {
     const customers = await prisma.customer.findMany({
@@ -186,6 +193,6 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     }));
   } catch (error) {
     console.error("Failed to load admin customers", error);
-    return [];
+    return getFileCustomers();
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getClientSessionSecret } from "@/lib/auth-config";
+import { validateFileClientLogin } from "@/lib/file-store";
 import { verifyPassword } from "@/lib/password";
 
 async function isValidClientLogin(code: string, username: string, password: string) {
@@ -12,10 +13,7 @@ async function isValidClientLogin(code: string, username: string, password: stri
   }
 
   if (!prisma) {
-    if (process.env.NODE_ENV === "production") {
-      return false;
-    }
-    return username === "client" && password === "client12345";
+    return validateFileClientLogin(code, username, password);
   }
 
   const invitation = await prisma.invitation.findUnique({

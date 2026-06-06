@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { addFileGuest, getFileInvitationByCode } from "@/lib/file-store";
 import { getInvitationByCode } from "@/lib/demo-data";
 import { rsvpSchema } from "@/lib/validation";
 
@@ -35,9 +36,18 @@ export async function POST(request: Request, context: RouteContext) {
       },
     });
   } else {
-    const invitation = getInvitationByCode(code);
+    const invitation = (await getFileInvitationByCode(code)) || getInvitationByCode(code);
     if (!invitation) {
       return NextResponse.json({ error: "الدعوة غير موجودة" }, { status: 404 });
+    }
+    if (await getFileInvitationByCode(code)) {
+      await addFileGuest(code, {
+        name: parsed.data.name,
+        phone: parsed.data.phone,
+        attendees: parsed.data.attendees,
+        status: parsed.data.status,
+        note: parsed.data.note,
+      });
     }
   }
 
