@@ -5,10 +5,12 @@ import type { Invitation } from "@/lib/types";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ silentPreview?: string; embed?: string }>;
 };
 
-export default async function TemplatePreviewPage({ params }: PageProps) {
+export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const query = await searchParams;
   const template = await getTemplateWithSettings(slug);
   if (!template) notFound();
 
@@ -32,5 +34,7 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
     customerId: "preview",
   };
 
-  return <InvitationExperience invitation={invitation} template={template} />;
+  const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
+
+  return <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />;
 }

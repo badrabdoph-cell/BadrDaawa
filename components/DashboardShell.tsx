@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, Home, LayoutDashboard, LogOut, Palette, ShieldCheck, UsersRound } from "lucide-react";
+import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, Home, LayoutDashboard, LogOut, MonitorPlay, Palette, ShieldCheck, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/orders", label: "الطلبات", icon: FileText },
   { href: "/admin/client-invitations", label: "دعوات العملاء", icon: Archive },
   { href: "/admin/templates", label: "القوالب", icon: Palette },
+  { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
   { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },

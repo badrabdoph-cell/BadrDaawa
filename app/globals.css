@@ -900,6 +900,15 @@ img {
   background: #fbf4e8;
 }
 
+.live-preview-media {
+  width: 100%;
+  height: 720px;
+  border: 0;
+  border-radius: 24px;
+  background: #17110c;
+  object-fit: cover;
+}
+
 .live-preview-open {
   position: absolute;
   inset: 0;
@@ -1051,6 +1060,66 @@ img {
 .template-body h3 {
   margin: 0;
   font-size: 1.1rem;
+}
+
+.preview-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.preview-admin-form-card,
+.preview-admin-live-card {
+  display: grid;
+  gap: 18px;
+}
+
+.preview-option-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 12px 14px;
+  border: 1px solid rgba(245, 234, 214, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 248, 234, 0.04);
+  color: #fff7e8;
+  cursor: pointer;
+  font-weight: 950;
+}
+
+.preview-option-card input {
+  accent-color: #f3cf73;
+}
+
+.preview-option-card span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-admin-phone {
+  width: min(100%, 360px);
+  min-height: 640px;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 8px solid #07080b;
+  border-radius: 30px;
+  background: #08090d;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.preview-admin-phone iframe,
+.preview-admin-phone img,
+.preview-admin-phone video {
+  width: 100%;
+  height: 640px;
+  border: 0;
+  border-radius: 22px;
+  background: #0c0e13;
+  object-fit: cover;
 }
 
 .client-invitations-page {
@@ -1516,6 +1585,13 @@ img {
 .field span {
   color: #514337;
   font-weight: 900;
+}
+
+.field small {
+  color: rgba(81, 67, 55, 0.66);
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.55;
 }
 
 .field input,
@@ -2315,6 +2391,10 @@ img {
 .admin-dark-shell .crop-controls label,
 .admin-dark-shell .admin-toggle-row {
   color: rgba(245, 234, 214, 0.82);
+}
+
+.admin-dark-shell .field small {
+  color: rgba(245, 234, 214, 0.54);
 }
 
 .admin-dark-shell .field input,
@@ -6368,6 +6448,7 @@ img {
   .loading-grid,
   .admin-form-grid,
   .customer-control-grid,
+  .preview-admin-grid,
   .template-editor-card,
   .template-admin-tools,
   .text-edit-grid {
@@ -6498,7 +6579,6 @@ img {
   .hero-metrics,
   .grid-3,
   .grid-4,
-  .template-grid,
   .pricing-grid,
   .journey,
   .stats-grid,
@@ -6512,6 +6592,7 @@ img {
   .admin-form-grid,
   .admin-form-grid.compact-controls,
   .customer-control-grid,
+  .preview-admin-grid,
   .client-gallery-editor,
   .template-editor-card,
   .crop-item,
@@ -6661,6 +6742,10 @@ img {
   .choice-grid,
   .choice-grid.two {
     grid-template-columns: 1fr;
+  }
+
+  .template-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .choice-card {

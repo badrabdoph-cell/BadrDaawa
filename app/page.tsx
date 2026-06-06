@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BellRing, Eye, Headphones, Link2, Palette, Send, SlidersHorizontal, Sparkles, Vote, WandSparkles } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { getHomePreviewSettings } from "@/lib/preview-settings";
 
 const homeFeaturePoints = [
   { icon: Sparkles, text: "انشئ دعوة زفافك بنفسك" },
@@ -12,7 +13,10 @@ const homeFeaturePoints = [
   { icon: Link2, text: "رابط خاص بيك + رابط متابعة + قائمة بتتحدث فوري" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const previewSettings = await getHomePreviewSettings();
+  const previewTemplateSrc = `/templates/${previewSettings.templateSlug}/preview?silentPreview=1`;
+
   return (
     <div className="page-shell">
       <SiteHeader />
@@ -68,7 +72,13 @@ export default function HomePage() {
               </div>
               <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara">
                 <span className="live-preview-badge">معاينة</span>
-                <iframe src="/badr-sarah-1?silentPreview=1" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation; notifications" />
+                {previewSettings.mode === "image" && previewSettings.imageUrl ? (
+                  <img className="live-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" />
+                ) : previewSettings.mode === "video" && previewSettings.videoUrl ? (
+                  <video className="live-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls />
+                ) : (
+                  <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" allow="geolocation; notifications" />
+                )}
                 <Link className="live-preview-open" href="/templates" aria-label="افتح صفحة القوالب واختر استايلك الخاص" />
               </div>
               <div className="button-row live-preview-actions">
