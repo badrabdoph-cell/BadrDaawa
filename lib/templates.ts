@@ -96,6 +96,30 @@ export const mobileGoldTemplate: TemplateDefinition = {
   score: 92,
 };
 
+export const softGoldTemplate: TemplateDefinition = {
+  id: "tpl_soft_gold",
+  slug: "soft-gold",
+  name: "Soft Gold",
+  arabicName: "Soft Gold",
+  category: "قالب ذهبي ناعم",
+  style: "mobile",
+  concept: "دعوة بيضاء ذهبية خفيفة بعرض موبايل، أسماء واضحة، كروت تاريخ، صور Collage، وخريطة ومشاركة سريعة.",
+  opening: "Envelope reveal",
+  layout: "غلاف بسيط، كروت التاريخ والوقت، عد تنازلي، معرض صور، رسالة، خريطة، مصور، RSVP وQR.",
+  typography: "خطوط واضحة ومساحات مريحة تشبه الكود المرفق بدون تغيير في هيئة التجربة.",
+  palette: {
+    primary: "#fafafa",
+    secondary: "#ffffff",
+    accent: "#d4af37",
+    ink: "#2a2a2a",
+    surface: "#ffffff",
+  },
+  previewImage: "/assets/templates/soft-gold.svg",
+  accentImage: "/assets/invite/badr-sarah-2.jpeg",
+  enabled: true,
+  score: 90,
+};
+
 export const bohoChicTemplate: TemplateDefinition = {
   id: "tpl_boho_chic",
   slug: "boho-chic",
@@ -120,7 +144,7 @@ export const bohoChicTemplate: TemplateDefinition = {
   score: 91,
 };
 
-export const invitationTemplates: TemplateDefinition[] = [royalEnvelopeTemplate, luxeNoirTemplate, ivoryArchesTemplate, mobileGoldTemplate, bohoChicTemplate];
+export const invitationTemplates: TemplateDefinition[] = [royalEnvelopeTemplate, luxeNoirTemplate, ivoryArchesTemplate, mobileGoldTemplate, bohoChicTemplate, softGoldTemplate];
 
 export function getTemplateBySlug(slug: string) {
   return invitationTemplates.find((template) => template.slug === slug);
