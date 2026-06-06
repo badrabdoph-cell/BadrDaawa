@@ -3,13 +3,21 @@ import { Download, ExternalLink, ImagePlus, LogOut, MessageSquareText, QrCode, S
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
 import { GuestTable } from "@/components/GuestTable";
+import { ImageCropUploader } from "@/components/ImageCropUploader";
 import { QrCodeBlock } from "@/components/QrCodeBlock";
 import { StatsGrid } from "@/components/StatsGrid";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { calculateAttendance, getInvitationUrl } from "@/lib/utils";
 
-export default async function CustomerAdminPage({ params }: { params: Promise<{ code: string }> }) {
+export default async function CustomerAdminPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ code: string }>;
+  searchParams: Promise<{ saved?: string }>;
+}) {
   const { code } = await params;
+  const query = await searchParams;
   const invitation = await getInvitationByCode(code);
   if (!invitation) {
     notFound();
@@ -53,6 +61,8 @@ export default async function CustomerAdminPage({ params }: { params: Promise<{ 
         ]}
       />
 
+      {query.saved ? <div className="notice success customer-notice">تم حفظ التعديلات المتاحة لهذه الدعوة.</div> : null}
+
       <section className="customer-control-grid">
         <article className="panel">
           <QrCode size={24} />
@@ -64,32 +74,36 @@ export default async function CustomerAdminPage({ params }: { params: Promise<{ 
         <article className="panel control-panel-wide">
           <Settings2 size={24} />
           <h2>تعديل بيانات الدعوة</h2>
-          <form className="admin-form-grid compact-controls">
+          <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post">
             <label className="field">
               <span>اسم العريس</span>
-              <input defaultValue={invitation.groomName} />
+              <input name="groomName" defaultValue={invitation.groomName} />
             </label>
             <label className="field">
               <span>اسم العروسة</span>
-              <input defaultValue={invitation.brideName} />
+              <input name="brideName" defaultValue={invitation.brideName} />
             </label>
             <label className="field">
               <span>تاريخ الفرح</span>
-              <input type="date" defaultValue={invitation.weddingDate.slice(0, 10)} />
+              <input name="weddingDate" type="date" defaultValue={invitation.weddingDate.slice(0, 10)} />
             </label>
             <label className="field">
               <span>وقت الفرح</span>
-              <input defaultValue={invitation.weddingTime} />
+              <input name="weddingTime" defaultValue={invitation.weddingTime} />
             </label>
             <label className="field">
               <span>القاعة والعنوان</span>
-              <input defaultValue={invitation.venue} />
+              <input name="venue" defaultValue={invitation.venue} />
+            </label>
+            <label className="field">
+              <span>المدينة</span>
+              <input name="city" defaultValue={invitation.city} />
             </label>
             <label className="field">
               <span>رابط الخريطة</span>
-              <input defaultValue={invitation.mapUrl} />
+              <input name="mapUrl" defaultValue={invitation.mapUrl} />
             </label>
-            <button className="btn btn-gold admin-submit" type="button">
+            <button className="btn btn-gold admin-submit" type="submit">
               <Save size={17} />
               حفظ التعديلات
             </button>
@@ -99,11 +113,30 @@ export default async function CustomerAdminPage({ params }: { params: Promise<{ 
         <article className="panel control-panel-wide">
           <ImagePlus size={24} />
           <h2>استبدال الصور</h2>
-          <p>الصور الحالية ظاهرة داخل الدعوة. عند ربط التخزين، العميل يقدر يستبدلها من هنا.</p>
-          <div className="client-gallery-editor">
-            {invitation.gallery.length ? invitation.gallery.map((image) => <img src={image} alt="صورة الدعوة" key={image} />) : null}
-          </div>
-          <input type="file" multiple accept="image/*" />
+          <p>ارفع الصور بعد الكروب والضغط بنفس أبعاد القالب حتى تظهر في الدعوة بدون قص عشوائي.</p>
+          <form action={`/api/client/invitations/${invitation.code}`} method="post">
+            <ImageCropUploader label="صور الدعوة" name="galleryImage" maxFiles={3} defaultImages={invitation.gallery} />
+            <button className="btn btn-gold admin-submit" type="submit">
+              <Save size={17} />
+              حفظ الصور
+            </button>
+          </form>
+        </article>
+
+        <article className="panel control-panel-wide">
+          <ImagePlus size={24} />
+          <h2>موسيقى الدعوة</h2>
+          <p>اترك الرابط فارغًا لتشغيل الموسيقى المؤقتة، أو ضع رابط ملف MP3/WAV خاص بالدعوة.</p>
+          <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post">
+            <label className="field full">
+              <span>رابط الأغنية</span>
+              <input name="musicUrl" defaultValue={invitation.musicUrl || ""} placeholder="https://..." />
+            </label>
+            <button className="btn btn-gold admin-submit" type="submit">
+              <Save size={17} />
+              حفظ الموسيقى
+            </button>
+          </form>
         </article>
 
         <article className="panel control-panel-wide">
