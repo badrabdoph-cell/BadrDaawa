@@ -5,8 +5,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { syncAdminStateToGitHub } from "@/lib/github-sync";
-import { updateMusicSlot } from "@/lib/music-library";
-import { getTemplatesWithSettings, updateTemplatesMusic } from "@/lib/template-settings";
+import { getMusicLibrary, updateMusicSlot } from "@/lib/music-library";
+import { getTemplatesWithSettings, updateTemplatesMusicState } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -21,6 +21,8 @@ const allowedAudioTypes: Record<string, string> = {
   "audio/mp4": "m4a",
   "audio/aac": "aac",
 };
+
+const allowedAudioExtensions = new Set(["mp3", "wav", "ogg", "webm", "m4a", "aac"]);
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -41,7 +43,8 @@ function cleanAudioUrl(value: string) {
 
 async function saveAudioFile(file: File | null) {
   if (!file || !file.size) return "";
-  const extension = allowedAudioTypes[file.type];
+  const nameExtension = file.name.split(".").pop()?.toLowerCase() || "";
+  const extension = allowedAudioTypes[file.type] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : "");
   if (!extension || file.size > 35 * 1024 * 1024) return "";
 
   const uploadDir = path.join(process.cwd(), "public", "uploads", "music");
@@ -57,21 +60,24 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const templates = await getTemplatesWithSettings();
-  const allTemplateSlugs = templates.map((template) => template.slug);
+  const [templates, library] = await Promise.all([getTemplatesWithSettings(), getMusicLibrary()]);
+  const allTemplateSlugs = templates.filter((template) => template.enabled).map((template) => template.slug);
   const slotId = String(formData.get("slotId") || "");
+  const currentSlot = library.slots.find((slot) => slot.id === slotId);
   const trackName = String(formData.get("trackName") || "");
+  const trackEnabled = formData.get("trackEnabled") === "on";
   const applyToAll = formData.get("applyToAll") === "on";
   const uploadedFile = formData.get("audioFile");
   const uploadedUrl = await saveAudioFile(uploadedFile instanceof File ? uploadedFile : null);
-  const audioUrl = uploadedUrl || cleanAudioUrl(String(formData.get("audioUrl") || ""));
+  const audioUrl = uploadedUrl || cleanAudioUrl(String(formData.get("audioUrl") || "")) || cleanAudioUrl(String(formData.get("existingAudioUrl") || "")) || currentSlot?.url || "";
   const selectedTemplateSlugs = applyToAll ? allTemplateSlugs : formData.getAll("templateSlugs").map((value) => String(value));
-  const appliedTemplateSlugs = audioUrl ? await updateTemplatesMusic(selectedTemplateSlugs, audioUrl) : [];
+  const appliedTemplateSlugs = await updateTemplatesMusicState(selectedTemplateSlugs, { musicUrl: audioUrl, enabled: trackEnabled });
 
   const savedSlot = await updateMusicSlot({
     id: slotId,
     name: trackName,
     url: audioUrl,
+    enabled: trackEnabled,
     applyToAll,
     templateSlugs: applyToAll ? allTemplateSlugs : appliedTemplateSlugs,
   });
@@ -83,11 +89,11 @@ export async function POST(request: NextRequest) {
     for (const slug of appliedTemplateSlugs) {
       revalidatePath(`/templates/${slug}/preview`);
     }
-    await syncAdminStateToGitHub(`Music slot ${savedSlot.id} applied to ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
+    await syncAdminStateToGitHub(`Music slot ${savedSlot.id} ${trackEnabled ? "enabled" : "disabled"} for ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
   }
 
   const url = new URL("/admin/music", request.url);
-  if (!savedSlot || !audioUrl || !appliedTemplateSlugs.length) {
+  if (!savedSlot || !appliedTemplateSlugs.length || (trackEnabled && !audioUrl)) {
     url.searchParams.set("error", "1");
   } else {
     url.searchParams.set("saved", savedSlot.id);
