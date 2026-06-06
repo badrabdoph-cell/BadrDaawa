@@ -1044,6 +1044,10 @@ img {
   padding: 16px;
 }
 
+.template-name-link {
+  display: block;
+}
+
 .template-body h3 {
   margin: 0;
   font-size: 1.1rem;
@@ -6613,6 +6617,48 @@ img {
 
   .template-card-copy small {
     font-size: 0.78rem;
+  }
+
+  .template-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .template-card {
+    border-radius: 16px;
+  }
+
+  .template-preview {
+    aspect-ratio: 3 / 4;
+  }
+
+  .template-badge {
+    inset-block-start: 8px;
+    inset-inline-start: 8px;
+    max-width: calc(100% - 16px);
+    padding: 5px 8px;
+    overflow: hidden;
+    font-size: 0.66rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .template-body {
+    gap: 4px;
+    padding: 10px 8px 12px;
+    text-align: center;
+  }
+
+  .template-name-link h3,
+  .template-body h3 {
+    margin: 0;
+    font-size: clamp(0.9rem, 4vw, 1.04rem);
+    line-height: 1.2;
+  }
+
+  .template-body p,
+  .template-body .button-row {
+    display: none;
   }
 
   .selected-template-strip {

@@ -10,7 +10,9 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         <span className="template-badge">{template.category}</span>
       </Link>
       <div className="template-body">
-        <h3>{template.arabicName}</h3>
+        <Link className="template-name-link" href={`/templates/${template.slug}/preview`}>
+          <h3>{template.arabicName}</h3>
+        </Link>
         <p>{template.concept}</p>
         <div className="button-row">
           <Link className="btn btn-soft" href={`/templates/${template.slug}/preview`}>
