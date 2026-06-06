@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, ExternalLink, ImagePlus, LogOut, MessageSquareText, QrCode, Save, Settings2 } from "lucide-react";
+import { Download, ExternalLink, ImagePlus, LogOut, MessageSquareText, Music2, QrCode, Save, Settings2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
 import { GuestTable } from "@/components/GuestTable";
@@ -124,7 +124,7 @@ export default async function CustomerAdminPage({
         </article>
 
         <article className="panel control-panel-wide">
-          <ImagePlus size={24} />
+          <Music2 size={24} />
           <h2>موسيقى الدعوة</h2>
           <p>اترك الرابط فارغًا لتشغيل الموسيقى المؤقتة، أو ضع رابط ملف MP3/WAV خاص بالدعوة.</p>
           <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post">

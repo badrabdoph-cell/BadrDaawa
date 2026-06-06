@@ -75,14 +75,15 @@ export function ImageCropUploader({
 }) {
   const [items, setItems] = useState<CropItem[]>([]);
   const timers = useRef<Record<string, number>>({});
+  const objectUrls = useRef<string[]>([]);
   const ratio = useMemo(() => `${targetWidth} / ${targetHeight}`, [targetHeight, targetWidth]);
 
   useEffect(() => {
     return () => {
       Object.values(timers.current).forEach((timer) => window.clearTimeout(timer));
-      items.forEach((item) => URL.revokeObjectURL(item.sourceUrl));
+      objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [items]);
+  }, []);
 
   const queueOptimize = (nextItem: CropItem) => {
     window.clearTimeout(timers.current[nextItem.id]);
@@ -106,26 +107,30 @@ export function ImageCropUploader({
 
   const handleFiles = (files: FileList | null) => {
     if (!files?.length) return;
+    objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrls.current = [];
+
     const selected = Array.from(files)
       .filter((file) => file.type.startsWith("image/"))
       .slice(0, maxFiles);
 
-    const nextItems = selected.map((file) => ({
-      id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
-      fileName: file.name,
-      originalSize: file.size,
-      sourceUrl: URL.createObjectURL(file),
-      cropX: 0,
-      cropY: 0,
-      zoom: 1,
-      optimizedUrl: "",
-      optimizedSize: 0,
-    }));
-
-    setItems((current) => {
-      current.forEach((item) => URL.revokeObjectURL(item.sourceUrl));
-      return nextItems;
+    const nextItems = selected.map((file) => {
+      const sourceUrl = URL.createObjectURL(file);
+      objectUrls.current.push(sourceUrl);
+      return {
+        id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        fileName: file.name,
+        originalSize: file.size,
+        sourceUrl,
+        cropX: 0,
+        cropY: 0,
+        zoom: 1,
+        optimizedUrl: "",
+        optimizedSize: 0,
+      };
     });
+
+    setItems(nextItems);
     nextItems.forEach(queueOptimize);
   };
 
