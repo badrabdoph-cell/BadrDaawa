@@ -6937,8 +6937,8 @@ img {
   .home-cta {
     flex-basis: 100%;
     min-width: 0;
-    min-height: 56px;
-    padding: 14px 18px;
+    min-height: 52px;
+    padding: 12px 18px;
     font-size: 0.98rem;
   }
 
