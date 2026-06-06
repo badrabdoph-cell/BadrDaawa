@@ -17,7 +17,8 @@ export function formatArabicNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-const defaultSiteUrl = "https://BadrDaawa.com";
+const defaultSiteUrl = "https://weddingdaawa.up.railway.app";
+const templatePreviewQrUrl = "https://weddingdaawa.up.railway.app/";
 
 export function normalizeSiteUrl(value?: string | null) {
   const raw = value
@@ -45,7 +46,7 @@ export function normalizeSiteUrl(value?: string | null) {
 }
 
 export function getSiteUrl() {
-  return normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+  return normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : defaultSiteUrl));
 }
 
 export function getPublicSiteUrl(headers?: Headers, fallbackOrigin = "http://localhost:3000") {
@@ -73,6 +74,7 @@ export function getMetadataBaseUrl() {
 }
 
 export function getInvitationUrl(code: string) {
+  if (code.startsWith("preview-")) return templatePreviewQrUrl;
   return `${getSiteUrl().replace(/\/$/, "")}/${code}`;
 }
 

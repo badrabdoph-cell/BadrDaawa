@@ -1,0 +1,144 @@
+{
+  "hero": {
+    "kicker": "Forever Begins Here",
+    "mainTitle": "دعوة فرحك",
+    "accentTitle": "بشكل كريتف وترندي",
+    "description": "حابب تعمل دعايه لنفسك والمعازيم تعرفك قبل ما الفرح يبدأ أصلًا؟",
+    "primaryCta": "طلب دعوه",
+    "secondaryCta": "شوف الاشكال والافكار"
+  },
+  "features": {
+    "title": "المميزات ال هتتقدملك",
+    "points": [
+      {
+        "id": "rsvp-open",
+        "text": "مفتوح تسجيلات الحضور"
+      },
+      {
+        "id": "guest-records",
+        "text": "الحصول على سجلات الحضور بالأسماء وأرقام الهواتف"
+      },
+      {
+        "id": "client-admin",
+        "text": "بيدج أدمن خاصة بيك"
+      },
+      {
+        "id": "reminder",
+        "text": "إشعار تذكير بموعد الفرح للمسجلين حضور"
+      },
+      {
+        "id": "music",
+        "text": "إضافة أغاني أو موسيقى تشتغل تلقائي عند فتح الدعوة"
+      },
+      {
+        "id": "anytime-edit",
+        "text": "إمكانية التعديل على التصميم في أي وقت"
+      },
+      {
+        "id": "self-create",
+        "text": "انشئ دعوة زفافك بنفسك"
+      },
+      {
+        "id": "support",
+        "text": "متابعة حالة الدعم 24/7"
+      },
+      {
+        "id": "send-message",
+        "text": "تقدر تبعت رسالة لكل اللي حضر الدعوة"
+      },
+      {
+        "id": "free-edit",
+        "text": "تقدر تعدل براحتك في دعوتك"
+      },
+      {
+        "id": "poll",
+        "text": "استفتاء مين هيحضر ومين لا"
+      },
+      {
+        "id": "private-link",
+        "text": "رابط خاص بيك + رابط متابعة + قائمة بتتحدث فوري"
+      },
+      {
+        "id": "tracking",
+        "text": "تعرف مين دخل الدعوة وتتابع الحضور أول بأول"
+      }
+    ]
+  },
+  "preview": {
+    "eyebrow": "اختر استايلك الخاص ✨",
+    "title": "كل دعوة ليها شكل يحكي فرحتك",
+    "badge": "معاينة",
+    "fullInviteCta": "افتح الدعوة كاملة",
+    "orderCta": "عايز واحد زيه"
+  },
+  "pricing": {
+    "eyebrow": "الباقات",
+    "title": "اختار المناسب لفرحك",
+    "invitationPlanName": "باقة الدعوة فقط",
+    "invitationPrice": "100 ج",
+    "plusPlanName": "باقة الدعوة بلس",
+    "plusPrice": "300 ج",
+    "rows": [
+      {
+        "id": "reminder",
+        "feature": "إشعار تذكير بموعد الفرح للمسجلين حضور",
+        "invitation": false,
+        "plus": true
+      },
+      {
+        "id": "music",
+        "feature": "إضافة أغاني أو موسيقى من اختيارك تشتغل تلقائي عند فتح الدعوة",
+        "invitation": false,
+        "plus": true
+      },
+      {
+        "id": "anytime-edit",
+        "feature": "إمكانية التعديل على التصميم في أي وقت",
+        "invitation": false,
+        "plus": true
+      },
+      {
+        "id": "main-page",
+        "feature": "صفحة الدعوة الأساسية",
+        "invitation": true,
+        "plus": true
+      },
+      {
+        "id": "choose-design",
+        "feature": "اختيار التصميم",
+        "invitation": true,
+        "plus": true
+      },
+      {
+        "id": "comments",
+        "feature": "مفتوح كومنت",
+        "invitation": true,
+        "plus": true
+      },
+      {
+        "id": "rsvp-open",
+        "feature": "مفتوح تسجيلات الحضور",
+        "invitation": true,
+        "plus": true
+      },
+      {
+        "id": "client-admin",
+        "feature": "بيدج أدمن خاصة بيك",
+        "invitation": true,
+        "plus": true
+      },
+      {
+        "id": "guest-records",
+        "feature": "الحصول علي سجلات الحضور اسماء وارقام هواتفهم",
+        "invitation": true,
+        "plus": true
+      },
+      {
+        "id": "support",
+        "feature": "خدمه عملاء",
+        "invitation": true,
+        "plus": true
+      }
+    ]
+  }
+}

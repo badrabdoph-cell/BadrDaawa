@@ -12,46 +12,58 @@ type Marker = {
   left: number;
 };
 
-function readMarkers() {
-  return Array.from(document.querySelectorAll<HTMLElement>("[data-broadcast-key]"))
-    .map((element) => {
-      const rect = element.getBoundingClientRect();
-      if (!rect.width || !rect.height) return null;
-      return {
-        key: element.dataset.broadcastKey || "",
-        label: element.dataset.broadcastLabel || "تعديل",
-        kind: element.dataset.broadcastKind || "text",
-        value: element.dataset.broadcastValue || element.textContent?.trim() || "",
-        top: Math.max(10, rect.top + 8),
-        left: Math.min(window.innerWidth - 52, Math.max(10, rect.left + rect.width - 42)),
-      };
-    })
-    .filter((marker): marker is Marker => Boolean(marker?.key));
+function readMarker(element: HTMLElement): Marker | null {
+  const rect = element.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  return {
+    key: element.dataset.broadcastKey || "",
+    label: element.dataset.broadcastLabel || "تعديل",
+    kind: element.dataset.broadcastKind || "text",
+    value: element.dataset.broadcastValue || element.textContent?.trim() || "",
+    top: Math.max(10, rect.top + 8),
+    left: Math.min(window.innerWidth - 52, Math.max(10, rect.left + rect.width - 42)),
+  };
 }
 
 export function BroadcastAnnotator() {
-  const [markers, setMarkers] = useState<Marker[]>([]);
+  const [marker, setMarker] = useState<Marker | null>(null);
 
   useEffect(() => {
     document.body.classList.add("broadcast-edit-mode");
-    const update = () => setMarkers(readMarkers());
-    update();
 
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    const timer = window.setInterval(update, 900);
+    const selectFromTarget = (target: EventTarget | null) => {
+      const element = target instanceof HTMLElement ? target.closest<HTMLElement>("[data-broadcast-key]") : null;
+      if (element) setMarker(readMarker(element));
+    };
+
+    const refresh = () => {
+      const key = marker?.key;
+      if (!key) return;
+      const element = document.querySelector<HTMLElement>(`[data-broadcast-key="${CSS.escape(key)}"]`);
+      if (element) setMarker(readMarker(element));
+    };
+
+    const onMove = (event: MouseEvent) => selectFromTarget(event.target);
+    const onFocus = (event: FocusEvent) => selectFromTarget(event.target);
+
+    document.addEventListener("mouseover", onMove);
+    document.addEventListener("focusin", onFocus);
+
+    window.addEventListener("resize", refresh);
+    window.addEventListener("scroll", refresh, true);
 
     return () => {
       document.body.classList.remove("broadcast-edit-mode");
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-      window.clearInterval(timer);
+      document.removeEventListener("mouseover", onMove);
+      document.removeEventListener("focusin", onFocus);
+      window.removeEventListener("resize", refresh);
+      window.removeEventListener("scroll", refresh, true);
     };
-  }, []);
+  }, [marker?.key]);
 
   return (
     <div className="broadcast-markers" aria-label="أزرار تعديل شاشة بث الموقع">
-      {markers.map((marker) => (
+      {marker ? (
         <button
           className="broadcast-marker-button"
           key={marker.key}
@@ -64,7 +76,7 @@ export function BroadcastAnnotator() {
         >
           <Pencil size={15} />
         </button>
-      ))}
+      ) : null}
     </div>
   );
 }
