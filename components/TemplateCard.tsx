@@ -1,13 +1,30 @@
 import Link from "next/link";
 import { Eye, Sparkles } from "lucide-react";
+import type { CSSProperties } from "react";
 import type { TemplateDefinition } from "@/lib/types";
 
 export function TemplateCard({ template }: { template: TemplateDefinition }) {
   return (
-    <article className="template-card">
+    <article
+      className="template-card"
+      style={
+        {
+          "--template-accent": template.palette.accent,
+          "--template-ink": template.palette.ink,
+          "--template-surface": template.palette.surface,
+          "--template-primary": template.palette.primary,
+        } as CSSProperties
+      }
+    >
       <Link href={`/templates/${template.slug}/preview`} className="template-preview" aria-label={`معاينة قالب ${template.arabicName}`}>
-        <img src={template.previewImage} alt={`معاينة قالب ${template.arabicName}`} loading="lazy" />
+        <span className="template-preview-screen">
+          <img src={template.previewImage} alt={`معاينة قالب ${template.arabicName}`} loading="lazy" />
+        </span>
         <span className="template-badge">{template.category}</span>
+        <span className="template-preview-caption">
+          <strong>{template.arabicName}</strong>
+          <small>{template.name}</small>
+        </span>
       </Link>
       <div className="template-body">
         <Link className="template-name-link" href={`/templates/${template.slug}/preview`}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Crown, Send } from "lucide-react";
+import { Crown, MessageCircle, Send } from "lucide-react";
+import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const navLinks = [
   { href: "/templates", label: "القالب" },
@@ -10,6 +11,8 @@ const navLinks = [
 ];
 
 export function SiteHeader() {
+  const supportUrl = getWhatsAppOrderUrl("محتاج مساعدة في دعوة الفرح");
+
   return (
     <header className="site-header">
       <div className="container nav">
@@ -27,6 +30,10 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="nav-actions">
+          <a className="btn btn-soft nav-whatsapp" href={supportUrl} target="_blank" rel="noreferrer" aria-label="دعم واتساب">
+            <MessageCircle size={18} />
+            دعم واتساب
+          </a>
           <Link className="btn btn-gold" href="/order">
             <Send size={18} />
             اطلب دعوتك

@@ -47,23 +47,31 @@ export default async function HomePage() {
         <section className="section compact live-template-section">
           <div className="container live-template-wrap">
             <div className="live-preview-stack">
-              <div className="home-feature-points" aria-label="مميزات الدعوة الرقمية">
-                {homeFeaturePoints.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div className="home-feature-point" key={item.text}>
-                      <span>
-                        <Icon size={17} />
-                      </span>
-                      <strong>{item.text}</strong>
-                    </div>
-                  );
-                })}
-                <div className="home-feature-point home-feature-point-wide">
+              <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
+                <div className="home-features-head">
                   <span>
-                    <BellRing size={17} />
+                    <Sparkles size={16} />
                   </span>
-                  <strong>تعرف مين دخل الدعوة وتتابع الحضور أول بأول</strong>
+                  <h2>المميزات ال هتتقدملك</h2>
+                </div>
+                <div className="home-feature-points">
+                  {homeFeaturePoints.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div className="home-feature-point" key={item.text}>
+                        <span>
+                          <Icon size={17} />
+                        </span>
+                        <strong>{item.text}</strong>
+                      </div>
+                    );
+                  })}
+                  <div className="home-feature-point home-feature-point-wide">
+                    <span>
+                      <BellRing size={17} />
+                    </span>
+                    <strong>تعرف مين دخل الدعوة وتتابع الحضور أول بأول</strong>
+                  </div>
                 </div>
               </div>
               <div className="live-preview-title">
