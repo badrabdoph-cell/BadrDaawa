@@ -6,12 +6,14 @@ import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
 import { QrCodeBlock } from "./QrCodeBlock";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
+import { shouldShowPhotographerCard } from "@/lib/site-settings";
 import { formatArabicDate, getInvitationUrl } from "@/lib/utils";
 
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
 export async function InvitationExperience({ invitation, template }: { invitation: Invitation; template: TemplateDefinition }) {
   const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
 
   return (
     <main
@@ -61,21 +63,26 @@ export async function InvitationExperience({ invitation, template }: { invitatio
           <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
         </section>
 
-        <section className="invite-card photographer-card">
-          <span className="invite-kicker">Photographer</span>
-          <h2>badrabdoph</h2>
-          <p>لقطات فرحتنا بعدسة خاصة.</p>
-          <div className="button-row">
-            <a className="btn btn-soft btn-glass" href="#" aria-label="Facebook">
-              <Facebook size={18} />
-              Facebook
-            </a>
-            <a className="btn btn-soft btn-glass" href="#" aria-label="Instagram">
-              <Instagram size={18} />
-              Instagram
-            </a>
-          </div>
-        </section>
+        {showPhotographer ? (
+          <section className="invite-card photographer-card">
+            <div className="photographer-logo" aria-hidden="true">
+              BA
+            </div>
+            <div>
+              <span className="invite-kicker">Photographer</span>
+              <h2>badrabdoph</h2>
+              <p>لقطات فرحتنا بعدسة خاصة.</p>
+            </div>
+            <div className="photographer-socials" aria-label="روابط المصور">
+              <a href="#" aria-label="Facebook">
+                <Facebook size={19} />
+              </a>
+              <a href="#" aria-label="Instagram">
+                <Instagram size={19} />
+              </a>
+            </div>
+          </section>
+        ) : null}
 
         <InvitePoll code={invitation.code} />
 
