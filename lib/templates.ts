@@ -96,7 +96,31 @@ export const mobileGoldTemplate: TemplateDefinition = {
   score: 92,
 };
 
-export const invitationTemplates: TemplateDefinition[] = [royalEnvelopeTemplate, luxeNoirTemplate, ivoryArchesTemplate, mobileGoldTemplate];
+export const bohoChicTemplate: TemplateDefinition = {
+  id: "tpl_boho_chic",
+  slug: "boho-chic",
+  name: "Boho Chic",
+  arabicName: "Boho Chic",
+  category: "قالب Boho Sage",
+  style: "boho",
+  concept: "دعوة ترابية ناعمة بصورة غلاف كبيرة، كروت بيضاء، معرض أفقي، وخريطة خضراء هادئة.",
+  opening: "Cinematic photo cover",
+  layout: "غلاف بصورة كاملة، بطاقة تاريخ وعد تنازلي، معرض صور أفقي، خريطة، مصور، RSVP وQR.",
+  typography: "خطوط كلاسيكية ناعمة مع ألوان Sage وSand ومظهر هادئ مناسب للموبايل.",
+  palette: {
+    primary: "#f7f5f0",
+    secondary: "#e2d8c8",
+    accent: "#9cafa4",
+    ink: "#3e453c",
+    surface: "#ffffff",
+  },
+  previewImage: "/assets/templates/boho-chic.svg",
+  accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  enabled: true,
+  score: 91,
+};
+
+export const invitationTemplates: TemplateDefinition[] = [royalEnvelopeTemplate, luxeNoirTemplate, ivoryArchesTemplate, mobileGoldTemplate, bohoChicTemplate];
 
 export function getTemplateBySlug(slug: string) {
   return invitationTemplates.find((template) => template.slug === slug);

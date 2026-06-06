@@ -1,6 +1,6 @@
 export type Language = "ar" | "en";
 
-export type TemplateStyle = "royal" | "noir" | "ivory" | "mobile";
+export type TemplateStyle = "royal" | "noir" | "ivory" | "mobile" | "boho";
 
 export type TemplateDefinition = {
   id: string;
