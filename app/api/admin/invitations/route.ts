@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateBySlug, getTemplateSortOrder, royalEnvelopeTemplate } from "@/lib/templates";
+import { getPublicUrl } from "@/lib/utils";
 
-function isAdmin(request: NextRequest) {
-  const expected = process.env.ADMIN_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-admin-local";
-  return request.cookies.get("bd_admin_session")?.value === expected;
+async function isAdmin(request: NextRequest) {
+  return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdmin(request)) {
-    return NextResponse.redirect(new URL("/admin/login", request.url), 303);
+  if (!(await isAdmin(request))) {
+    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();

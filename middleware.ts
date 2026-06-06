@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSessionSecret, getClientSessionSecret } from "@/lib/auth-config";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getClientSessionSecret } from "@/lib/auth-config";
 import { getPublicUrl } from "@/lib/utils";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    const session = request.cookies.get("bd_admin_session")?.value;
-    if (session !== getAdminSessionSecret()) {
+    const session = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+    if (!(await verifyAdminSessionCookie(session))) {
       const url = getPublicUrl("/admin/login", request.headers, request.nextUrl.origin);
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);

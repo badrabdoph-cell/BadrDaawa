@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { DashboardShell } from "@/components/DashboardShell";
-import { getAdminSessionSecret } from "@/lib/auth-config";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 
 export const metadata: Metadata = {
   title: "لوحة الإدارة",
@@ -9,10 +9,9 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const session = cookieStore.get("bd_admin_session")?.value;
-  const expected = getAdminSessionSecret();
+  const session = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 
-  if (session !== expected) {
+  if (!(await verifyAdminSessionCookie(session))) {
     return <div className="admin-dark-shell">{children}</div>;
   }
 
