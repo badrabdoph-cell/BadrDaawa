@@ -6,6 +6,7 @@ export function LoginPanel({
   description,
   usernamePlaceholder = "اسم المستخدم",
   error,
+  setupWarning,
   hiddenFields = {},
 }: {
   action: string;
@@ -13,6 +14,7 @@ export function LoginPanel({
   description: string;
   usernamePlaceholder?: string;
   error?: string;
+  setupWarning?: string;
   hiddenFields?: Record<string, string>;
 }) {
   return (
@@ -29,6 +31,7 @@ export function LoginPanel({
         {Object.entries(hiddenFields).map(([name, value]) => (
           <input key={name} name={name} type="hidden" value={value} />
         ))}
+        {setupWarning ? <p className="login-warning">{setupWarning}</p> : null}
         {error ? <p className="login-error">بيانات الدخول غير صحيحة</p> : null}
         <label className="field">
           <span>{usernamePlaceholder}</span>

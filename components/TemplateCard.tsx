@@ -5,7 +5,7 @@ import type { TemplateDefinition } from "@/lib/types";
 export function TemplateCard({ template }: { template: TemplateDefinition }) {
   return (
     <article className="template-card">
-      <Link href={`/templates?preview=${template.slug}`} className="template-preview" aria-label={`معاينة قالب ${template.arabicName}`}>
+      <Link href={`/templates/${template.slug}/preview`} className="template-preview" aria-label={`معاينة قالب ${template.arabicName}`}>
         <img src={template.previewImage} alt={`معاينة قالب ${template.arabicName}`} loading="lazy" />
         <span className="template-badge">{template.category}</span>
       </Link>
@@ -13,7 +13,7 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         <h3>{template.arabicName}</h3>
         <p>{template.concept}</p>
         <div className="button-row">
-          <Link className="btn btn-soft" href={`/templates?preview=${template.slug}`}>
+          <Link className="btn btn-soft" href={`/templates/${template.slug}/preview`}>
             <Eye size={17} />
             معاينة
           </Link>

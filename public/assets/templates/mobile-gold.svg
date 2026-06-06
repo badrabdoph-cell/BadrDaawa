@@ -1,0 +1,15 @@
+<svg width="900" height="1200" viewBox="0 0 900 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1200" fill="#FAFAFA"/>
+  <rect x="245" y="80" width="410" height="1040" rx="60" fill="#FFFFFF" stroke="#EFEFEF" stroke-width="4"/>
+  <text x="450" y="186" text-anchor="middle" fill="#D4AF37" font-family="Arial, sans-serif" font-size="22" letter-spacing="8">WEDDING INVITATION</text>
+  <text x="450" y="320" text-anchor="middle" fill="#1A1A1A" font-family="Georgia, serif" font-size="86">Badr</text>
+  <text x="450" y="390" text-anchor="middle" fill="#D4AF37" font-family="Georgia, serif" font-size="54" font-style="italic">&amp;</text>
+  <text x="450" y="500" text-anchor="middle" fill="#1A1A1A" font-family="Georgia, serif" font-size="86">Sarah</text>
+  <line x1="402" y1="560" x2="498" y2="560" stroke="#D4AF37" stroke-width="4"/>
+  <rect x="285" y="610" width="160" height="130" rx="28" fill="#FAFAFA" stroke="#F0F0F0"/>
+  <rect x="455" y="610" width="160" height="130" rx="28" fill="#FAFAFA" stroke="#F0F0F0"/>
+  <rect x="285" y="782" width="330" height="120" rx="34" fill="#1A1A1A"/>
+  <text x="450" y="856" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="700">Countdown</text>
+  <rect x="285" y="940" width="330" height="130" rx="30" fill="#E9D9A5"/>
+  <text x="450" y="1018" text-anchor="middle" fill="#1A1A1A" font-family="Arial, sans-serif" font-size="28" font-weight="700">Mobile First</text>
+</svg>

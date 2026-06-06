@@ -81,12 +81,17 @@ export async function getInvitationByCode(code: string): Promise<Invitation | un
     return getDemoInvitationByCode(code);
   }
 
-  const invitation = await prisma.invitation.findUnique({
-    where: { code },
-    include: { template: { select: { slug: true } } },
-  });
+  try {
+    const invitation = await prisma.invitation.findUnique({
+      where: { code },
+      include: { template: { select: { slug: true } } },
+    });
 
-  return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : undefined;
+    return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : undefined;
+  } catch (error) {
+    console.error("Failed to load invitation", error);
+    return getDemoInvitationByCode(code);
+  }
 }
 
 export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> {
@@ -94,11 +99,16 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
     return getDemoGuestsByInvitation(code);
   }
 
-  const guests = await prisma.guestRsvp.findMany({
-    where: { invitation: { code } },
-    include: { invitation: { select: { code: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const guests = await prisma.guestRsvp.findMany({
+      where: { invitation: { code } },
+      include: { invitation: { select: { code: true } } },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return guests.map((guest) => toGuestRsvp(guest as DatabaseGuest));
+    return guests.map((guest) => toGuestRsvp(guest as DatabaseGuest));
+  } catch (error) {
+    console.error("Failed to load invitation guests", error);
+    return getDemoGuestsByInvitation(code);
+  }
 }

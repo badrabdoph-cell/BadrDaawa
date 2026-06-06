@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
-import { royalEnvelopeTemplate } from "@/lib/templates";
+import { getTemplateBySlug, getTemplateSortOrder, royalEnvelopeTemplate } from "@/lib/templates";
 
 function isAdmin(request: NextRequest) {
   const expected = process.env.ADMIN_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-admin-local";
@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
   const city = String(formData.get("city") || "").trim();
   const mapUrl = String(formData.get("mapUrl") || "").trim();
   const musicUrl = String(formData.get("musicUrl") || "").trim();
+  const templateSlug = String(formData.get("templateSlug") || royalEnvelopeTemplate.slug).trim();
+  const selectedTemplate = getTemplateBySlug(templateSlug) || royalEnvelopeTemplate;
   const galleryImages = formData
     .getAll("galleryImage")
     .map((value) => String(value))
@@ -56,35 +58,35 @@ export async function POST(request: NextRequest) {
   );
 
   const template = await prisma.weddingTemplate.upsert({
-    where: { slug: royalEnvelopeTemplate.slug },
+    where: { slug: selectedTemplate.slug },
     update: {
-      name: royalEnvelopeTemplate.name,
-      arabicName: royalEnvelopeTemplate.arabicName,
-      category: royalEnvelopeTemplate.category,
-      style: royalEnvelopeTemplate.style,
-      concept: royalEnvelopeTemplate.concept,
-      opening: royalEnvelopeTemplate.opening,
-      layout: royalEnvelopeTemplate.layout,
-      typography: royalEnvelopeTemplate.typography,
-      palette: royalEnvelopeTemplate.palette,
-      previewUrl: royalEnvelopeTemplate.previewImage,
-      enabled: true,
-      sortOrder: 1,
+      name: selectedTemplate.name,
+      arabicName: selectedTemplate.arabicName,
+      category: selectedTemplate.category,
+      style: selectedTemplate.style,
+      concept: selectedTemplate.concept,
+      opening: selectedTemplate.opening,
+      layout: selectedTemplate.layout,
+      typography: selectedTemplate.typography,
+      palette: selectedTemplate.palette,
+      previewUrl: selectedTemplate.previewImage,
+      enabled: selectedTemplate.enabled,
+      sortOrder: getTemplateSortOrder(selectedTemplate.slug),
     },
     create: {
-      slug: royalEnvelopeTemplate.slug,
-      name: royalEnvelopeTemplate.name,
-      arabicName: royalEnvelopeTemplate.arabicName,
-      category: royalEnvelopeTemplate.category,
-      style: royalEnvelopeTemplate.style,
-      concept: royalEnvelopeTemplate.concept,
-      opening: royalEnvelopeTemplate.opening,
-      layout: royalEnvelopeTemplate.layout,
-      typography: royalEnvelopeTemplate.typography,
-      palette: royalEnvelopeTemplate.palette,
-      previewUrl: royalEnvelopeTemplate.previewImage,
-      enabled: true,
-      sortOrder: 1,
+      slug: selectedTemplate.slug,
+      name: selectedTemplate.name,
+      arabicName: selectedTemplate.arabicName,
+      category: selectedTemplate.category,
+      style: selectedTemplate.style,
+      concept: selectedTemplate.concept,
+      opening: selectedTemplate.opening,
+      layout: selectedTemplate.layout,
+      typography: selectedTemplate.typography,
+      palette: selectedTemplate.palette,
+      previewUrl: selectedTemplate.previewImage,
+      enabled: selectedTemplate.enabled,
+      sortOrder: getTemplateSortOrder(selectedTemplate.slug),
     },
   });
 

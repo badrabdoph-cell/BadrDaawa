@@ -13,7 +13,67 @@ export type AdminCustomer = {
   createdAt: string;
 };
 
-function toInvitation(row: any): Invitation {
+type AdminInvitationRow = {
+  id: string;
+  code: string;
+  template?: { slug: string } | null;
+  templateSlug?: string;
+  language: string;
+  groomName: string;
+  brideName: string;
+  weddingDate: Date | string;
+  weddingTime: string;
+  venue: string;
+  city?: string | null;
+  mapUrl?: string | null;
+  heroPhoto?: string | null;
+  gallery?: unknown;
+  musicUrl?: string | null;
+  status?: string;
+  isActive?: boolean;
+  viewCount?: number;
+  views?: number;
+  customerId: string;
+};
+
+type AdminOrderRow = {
+  id: string;
+  groomName: string;
+  brideName: string;
+  phone: string;
+  weddingDate: Date | string;
+  venue: string;
+  notes?: string | null;
+  template?: { slug: string } | null;
+  templateSlug?: string;
+  language: string;
+  status: string;
+  createdAt: Date | string;
+};
+
+type AdminGuestRow = {
+  id: string;
+  invitation: { code: string };
+  name: string;
+  phone: string;
+  attendees: number;
+  status: string;
+  note?: string | null;
+  createdAt: Date;
+};
+
+type AdminCustomerRow = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  username: string;
+  isActive: boolean;
+  _count: { invitations: number };
+  createdAt: Date;
+};
+
+function toInvitation(row: AdminInvitationRow): Invitation {
   return {
     id: row.id,
     code: row.code,
@@ -29,13 +89,13 @@ function toInvitation(row: any): Invitation {
     heroPhoto: row.heroPhoto || "/assets/invite/badr-sarah-1.jpeg",
     gallery: Array.isArray(row.gallery) ? row.gallery : [],
     musicUrl: row.musicUrl || undefined,
-    isActive: row.status ? row.status === "ACTIVE" : row.isActive,
+    isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
     views: row.viewCount ?? row.views ?? 0,
     customerId: row.customerId,
   };
 }
 
-function toOrder(row: any): OrderRequest {
+function toOrder(row: AdminOrderRow): OrderRequest {
   return {
     id: row.id,
     groomName: row.groomName,
@@ -54,41 +114,56 @@ function toOrder(row: any): OrderRequest {
 export async function getAdminInvitations(): Promise<Invitation[]> {
   if (!prisma) return demoInvitations;
 
-  const invitations = await prisma.invitation.findMany({
-    include: { template: { select: { slug: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  return invitations.map(toInvitation);
+  try {
+    const invitations = await prisma.invitation.findMany({
+      include: { template: { select: { slug: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return invitations.map(toInvitation);
+  } catch (error) {
+    console.error("Failed to load admin invitations", error);
+    return demoInvitations;
+  }
 }
 
 export async function getAdminOrders(): Promise<OrderRequest[]> {
   if (!prisma) return demoOrders;
 
-  const orders = await prisma.orderRequest.findMany({
-    include: { template: { select: { slug: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  return orders.map(toOrder);
+  try {
+    const orders = await prisma.orderRequest.findMany({
+      include: { template: { select: { slug: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return orders.map(toOrder);
+  } catch (error) {
+    console.error("Failed to load admin orders", error);
+    return demoOrders;
+  }
 }
 
 export async function getAdminGuests(): Promise<GuestRsvp[]> {
   if (!prisma) return demoGuests;
 
-  const guests = await prisma.guestRsvp.findMany({
-    include: { invitation: { select: { code: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const guests = await prisma.guestRsvp.findMany({
+      include: { invitation: { select: { code: true } } },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return guests.map((guest: any) => ({
-    id: guest.id,
-    invitationCode: guest.invitation.code,
-    name: guest.name,
-    phone: guest.phone,
-    attendees: guest.attendees,
-    status: guest.status === "CONFIRMED" ? "confirmed" : "declined",
-    note: guest.note || undefined,
-    createdAt: guest.createdAt.toISOString(),
-  }));
+    return (guests as AdminGuestRow[]).map((guest) => ({
+      id: guest.id,
+      invitationCode: guest.invitation.code,
+      name: guest.name,
+      phone: guest.phone,
+      attendees: guest.attendees,
+      status: guest.status === "CONFIRMED" ? "confirmed" : "declined",
+      note: guest.note || undefined,
+      createdAt: guest.createdAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error("Failed to load admin guests", error);
+    return demoGuests;
+  }
 }
 
 export async function getAdminCustomers(): Promise<AdminCustomer[]> {
@@ -106,19 +181,34 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     ];
   }
 
-  const customers = await prisma.customer.findMany({
-    include: { _count: { select: { invitations: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const customers = await prisma.customer.findMany({
+      include: { _count: { select: { invitations: true } } },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return customers.map((customer: any) => ({
-    id: customer.id,
-    name: customer.name,
-    phone: customer.phone,
-    email: customer.email || undefined,
-    username: customer.username,
-    isActive: customer.isActive,
-    invitations: customer._count.invitations,
-    createdAt: customer.createdAt.toISOString(),
-  }));
+    return (customers as AdminCustomerRow[]).map((customer) => ({
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email || undefined,
+      username: customer.username,
+      isActive: customer.isActive,
+      invitations: customer._count.invitations,
+      createdAt: customer.createdAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error("Failed to load admin customers", error);
+    return [
+      {
+        id: "cus_001",
+        name: "بدر و سارة",
+        phone: "01012345678",
+        username: "badr-sarah",
+        isActive: true,
+        invitations: 1,
+        createdAt: "2026-06-01T10:00:00.000Z",
+      },
+    ];
+  }
 }

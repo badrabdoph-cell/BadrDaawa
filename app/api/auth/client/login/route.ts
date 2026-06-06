@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getClientSessionSecret } from "@/lib/auth-config";
 import { verifyPassword } from "@/lib/password";
-
-function clientSessionSecret() {
-  return process.env.CLIENT_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-client-local";
-}
 
 async function isValidClientLogin(code: string, username: string, password: string) {
   const envUsername = process.env.CLIENT_ADMIN_USERNAME;
@@ -44,7 +41,7 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.redirect(new URL(`/${code}/ad_3399`, request.url), 303);
-  response.cookies.set("bd_client_session", `${clientSessionSecret()}:${code}`, {
+  response.cookies.set("bd_client_session", `${getClientSessionSecret()}:${code}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

@@ -18,7 +18,7 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Templates</span>
-          <h1>إدارة القالب الحالي</h1>
+          <h1>إدارة القوالب</h1>
           <p>كل قالب يظهر بمعاينة مباشرة، ومن قسم التعديل تتحكم في الألوان والصور والموسيقى وطريقة العرض.</p>
         </div>
       </div>
@@ -73,7 +73,7 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
         {invitationTemplates.map((template) => (
           <article className="template-editor-card" key={template.slug}>
             <div className="template-live-preview">
-              <iframe src="/badr-sarah-1" title={`معاينة ${template.arabicName}`} loading="lazy" allow="geolocation; autoplay" />
+              <iframe src={`/templates/${template.slug}/preview`} title={`معاينة ${template.arabicName}`} loading="lazy" allow="geolocation; autoplay; notifications" />
             </div>
             <div className="template-editor-body">
               <div className="template-editor-head">
@@ -85,7 +85,7 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
                 <span className="template-badge">{template.score}%</span>
               </div>
               <div className="button-row">
-                <a className="btn btn-soft btn-icon" href="/badr-sarah-1" title="فتح المعاينة">
+                <a className="btn btn-soft btn-icon" href={`/templates/${template.slug}/preview`} title="فتح المعاينة">
                   <Eye size={17} />
                 </a>
                 <button className="btn btn-soft" type="button">

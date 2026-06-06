@@ -21,7 +21,7 @@ export default async function AnalyticsPage() {
         stats={[
           { label: "إجمالي المشاهدات", value: invitations.reduce((sum, item) => sum + item.views, 0) },
           { label: "RSVP Conversion", value: `${conversion}%` },
-          { label: "القالب الحالي", value: invitationTemplates[0].arabicName },
+          { label: "القوالب المتاحة", value: invitationTemplates.length },
           { label: "متوسط الضيوف", value: averageGuests },
         ]}
       />
@@ -39,8 +39,8 @@ export default async function AnalyticsPage() {
           </article>
           <article className="panel">
             <TrendingUp size={24} />
-            <h2>أداء القالب الحالي</h2>
-            <p>نتابع أداء Royal Envelope قبل إضافة قوالب جديدة.</p>
+            <h2>أداء القوالب</h2>
+            <p>قارن بين القوالب المتاحة حسب المشاهدات وردود الحضور.</p>
           </article>
           <article className="panel">
             <UsersRound size={24} />

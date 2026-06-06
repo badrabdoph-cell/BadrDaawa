@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Music, Pause, Play } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
+
+const DEFAULT_MUSIC_URL = "/assets/audio/badr-sarah-wedding-3.mp3";
 
 function playGeneratedLoop() {
   const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -50,11 +52,13 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string }) {
   const generatedRef = useRef<{ stop: () => void } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
+  const audioSource = musicUrl || DEFAULT_MUSIC_URL;
 
   const start = async () => {
     setNeedsTap(false);
-    if (musicUrl && audioRef.current) {
+    if (audioRef.current) {
       try {
+        audioRef.current.currentTime = audioRef.current.currentTime || 0;
         await audioRef.current.play();
         setIsPlaying(true);
         return;
@@ -89,15 +93,19 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string }) {
       window.clearTimeout(timer);
       generatedRef.current?.stop();
     };
-  }, [musicUrl]);
+  }, [audioSource]);
 
   return (
     <div className="music-control">
-      {musicUrl ? <audio ref={audioRef} src={musicUrl} loop preload="auto" /> : null}
-      <button className={`music-button ${needsTap ? "attention" : ""}`} type="button" onClick={isPlaying ? stop : start}>
-        {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-        <Music size={17} />
-        <span>{isPlaying ? "الموسيقى شغالة" : needsTap ? "اضغط لتشغيل الموسيقى" : "تشغيل الموسيقى"}</span>
+      <audio ref={audioRef} src={audioSource} loop preload="auto" onError={() => setNeedsTap(true)} />
+      <button
+        className={`music-button ${needsTap ? "attention" : ""} ${isPlaying ? "playing" : ""}`}
+        type="button"
+        onClick={isPlaying ? stop : start}
+        aria-label={isPlaying ? "إيقاف الموسيقى" : "تشغيل الموسيقى"}
+        title={isPlaying ? "إيقاف الموسيقى" : "تشغيل الموسيقى"}
+      >
+        {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
       </button>
     </div>
   );

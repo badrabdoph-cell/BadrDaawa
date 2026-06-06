@@ -18,7 +18,7 @@ type FormState = {
 };
 
 export function OrderForm({ initialTemplate }: { initialTemplate?: string }) {
-  const initialSlug = initialTemplate || invitationTemplates[0].slug;
+  const initialSlug = invitationTemplates.some((template) => template.slug === initialTemplate) ? initialTemplate! : invitationTemplates[0].slug;
   const [step, setStep] = useState<"template" | "details">("template");
   const [form, setForm] = useState<FormState>({
     groomName: "",
