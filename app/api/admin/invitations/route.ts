@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const gallery = galleryImages.length ? galleryImages : fallbackGallery;
 
   if (!groomName || !brideName || !phone || !username || !password || !weddingDate || !venue) {
-    return NextResponse.redirect(new URL("/admin/invitations?error=missing", request.url), 303);
+    return NextResponse.redirect(new URL("/admin/client-invitations?error=missing", request.url), 303);
   }
 
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
     });
-    return NextResponse.redirect(new URL(`/admin/invitations?created=${invitation.code}`, request.url), 303);
+    return NextResponse.redirect(new URL(`/admin/client-invitations?created=${invitation.code}`, request.url), 303);
   }
 
   const existing = await prisma.invitation.findMany({
@@ -145,5 +145,5 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.redirect(new URL(`/admin/invitations?created=${code}`, request.url), 303);
+  return NextResponse.redirect(new URL(`/admin/client-invitations?created=${code}`, request.url), 303);
 }

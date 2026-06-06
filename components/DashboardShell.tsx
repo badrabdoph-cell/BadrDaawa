@@ -8,7 +8,7 @@ import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, Home, Layout
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/orders", label: "الطلبات", icon: FileText },
-  { href: "/admin/invitations", label: "الدعوات", icon: Archive },
+  { href: "/admin/client-invitations", label: "دعوات العملاء", icon: Archive },
   { href: "/admin/templates", label: "القوالب", icon: Palette },
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },

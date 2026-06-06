@@ -36,12 +36,12 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         <div>
           <span className="eyebrow">Control Center</span>
           <h1>إدارة الموقع من مكان واحد</h1>
-          <p>متابعة الدعوات، الطلبات، القوالب، العملاء، والإشعارات بأرقام حقيقية من قاعدة البيانات فقط.</p>
+          <p>متابعة دعوات العملاء، الطلبات، القوالب، العملاء، والإشعارات بأرقام حقيقية من قاعدة البيانات فقط.</p>
         </div>
         <div className="admin-hero-actions">
-          <Link className="btn btn-gold btn-glow" href="/admin/invitations">
+          <Link className="btn btn-gold btn-glow" href="/admin/client-invitations">
             <Plus size={18} />
-            إنشاء دعوة
+            إنشاء دعوة عميل
           </Link>
           <Link className="btn btn-soft btn-glass" href="/admin/templates">
             <Palette size={18} />
@@ -56,7 +56,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
       ) : null}
       <StatsGrid
         stats={[
-          { label: "إجمالي الدعوات", value: formatArabicNumber(invitations.length), hint: "كل الدعوات المسجلة" },
+          { label: "دعوات العملاء", value: formatArabicNumber(invitations.length), hint: "كل الدعوات المنشأة من الأدمن" },
           { label: "دعوات نشطة", value: formatArabicNumber(invitations.filter((invitation) => invitation.isActive).length), hint: "جاهزة للعرض" },
           { label: "ردود الحضور", value: formatArabicNumber(guests.length), hint: "عدد نماذج RSVP المسجلة" },
           { label: "طلبات جديدة", value: formatArabicNumber(orders.filter((order) => order.status === "new").length), hint: "في انتظار القرار" },
@@ -80,10 +80,10 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                 <small>{formatArabicNumber(orders.filter((order) => order.status === "new").length)} طلب جديد</small>
               </span>
             </Link>
-            <Link href="/admin/invitations">
+            <Link href="/admin/client-invitations">
               <Archive size={20} />
               <span>
-                <strong>إنشاء أو تعديل دعوة</strong>
+                <strong>دعوات العملاء</strong>
                 <small>{formatArabicNumber(invitations.length)} دعوة مسجلة</small>
               </span>
             </Link>
@@ -114,11 +114,11 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           </div>
           <p className="admin-long-link">{latestInvitation ? getInvitationUrl(latestInvitation.code) : "لسه مفيش دعوات حقيقية مسجلة."}</p>
           <div className="button-row">
-            <Link className="btn btn-soft" href={latestInvitation ? `/${latestInvitation.code}` : "/admin/invitations"}>
+            <Link className="btn btn-soft" href={latestInvitation ? `/${latestInvitation.code}` : "/admin/client-invitations"}>
               <ExternalLink size={17} />
               فتح الدعوة
             </Link>
-            <Link className="btn btn-soft" href={latestInvitation ? getCustomerAdminPath(latestInvitation.code) : "/admin/invitations"}>
+            <Link className="btn btn-soft" href={latestInvitation ? getCustomerAdminPath(latestInvitation.code) : "/admin/client-invitations"}>
               <Settings2 size={17} />
               لوحة العميل
             </Link>

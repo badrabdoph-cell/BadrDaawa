@@ -7,8 +7,8 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
     <section className="admin-create-card">
       <div className="admin-create-head">
         <div>
-          <span className="eyebrow">Create Invitation</span>
-          <h2>إنشاء دعوة جديدة</h2>
+          <span className="eyebrow">Create Client Invitation</span>
+          <h2>إنشاء دعوة عميل جديدة</h2>
           <p>اكتب بيانات الفرح وبيانات دخول العميل. الرابط بيتولد تلقائيًا مثل: `badr-sarah-1` ولو الاسم اتكرر هيزود الرقم.</p>
         </div>
         <WandSparkles size={30} />
@@ -88,7 +88,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
           <ImageCropUploader label="صور الدعوة" name="galleryImage" maxFiles={3} />
         </div>
         <button className="btn btn-gold btn-glow admin-submit" type="submit">
-          إنشاء الدعوة والرابط
+          إنشاء دعوة العميل والرابط
         </button>
       </form>
     </section>
