@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowRight, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
@@ -57,5 +59,25 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
 
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
 
-  return <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />;
+  return (
+    <>
+      <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />
+      {!isSilentPreview ? (
+        <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
+          <Link className="template-preview-action template-preview-action-soft" href="/">
+            <Home size={17} />
+            الصفحة الرئيسية
+          </Link>
+          <Link className="template-preview-action template-preview-action-soft" href="/templates">
+            <ArrowRight size={17} />
+            اختار واحد تاني
+          </Link>
+          <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
+            <Sparkles size={17} />
+            اختار القالب دا
+          </Link>
+        </nav>
+      ) : null}
+    </>
+  );
 }

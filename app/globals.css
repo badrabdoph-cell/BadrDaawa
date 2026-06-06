@@ -3296,6 +3296,65 @@ img {
   background: rgba(157, 116, 44, 0.78);
 }
 
+body:has(.template-preview-floating-actions) .music-control {
+  inset-block-end: 92px;
+}
+
+.template-preview-floating-actions {
+  position: fixed;
+  inset-inline: 12px;
+  inset-block-end: 18px;
+  z-index: 45;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(620px, calc(100% - 24px));
+  margin-inline: auto;
+  padding: 8px;
+  border: 1px solid rgba(255, 238, 183, 0.38);
+  border-radius: 18px;
+  background: rgba(28, 22, 16, 0.72);
+  box-shadow: 0 20px 54px rgba(22, 15, 9, 0.26);
+  backdrop-filter: blur(18px);
+}
+
+.template-preview-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 238, 183, 0.22);
+  border-radius: 12px;
+  color: #fff7df;
+  font-size: 0.88rem;
+  font-weight: 950;
+  line-height: 1.25;
+  text-align: center;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.template-preview-action:hover {
+  transform: translateY(-2px);
+}
+
+.template-preview-action-soft {
+  background: rgba(255, 253, 248, 0.12);
+}
+
+.template-preview-action-soft:hover {
+  border-color: rgba(255, 238, 183, 0.42);
+  background: rgba(255, 253, 248, 0.18);
+}
+
+.template-preview-action-gold {
+  border-color: rgba(255, 241, 184, 0.72);
+  background: linear-gradient(135deg, #9f742b, #f3cf73 54%, #fff0ad);
+  color: #21160a;
+  box-shadow: 0 14px 34px rgba(180, 123, 31, 0.28);
+}
+
 .custom-code-invite {
   min-height: 100svh;
   background: #0f0f10;
@@ -7001,6 +7060,24 @@ img {
   .music-control {
     inset-inline: 12px auto;
     inset-block-end: 12px;
+  }
+
+  body:has(.template-preview-floating-actions) .music-control {
+    inset-block-end: 86px;
+  }
+
+  .template-preview-floating-actions {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    inset-block-end: 10px;
+    padding: 7px;
+    border-radius: 16px;
+  }
+
+  .template-preview-action {
+    min-height: 42px;
+    padding: 9px 10px;
+    font-size: 0.84rem;
   }
 
   .admin-dark-shell .dashboard-main {
