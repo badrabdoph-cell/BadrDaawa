@@ -1,4 +1,4 @@
-import { Calendar, Camera, Clock, Facebook, Heart, Instagram, MapPin, Music2, Share2, Sparkles } from "lucide-react";
+import { Calendar, CalendarHeart, Camera, Clock, Facebook, Heart, Instagram, MapPin, Music2, Share2, Sparkles } from "lucide-react";
 import { Countdown } from "./Countdown";
 import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
@@ -30,6 +30,9 @@ export async function InvitationExperience({ invitation, template }: { invitatio
   }
   if (template.slug === "mobile-gold") {
     return <MobileGoldInvitationExperience invitation={invitation} />;
+  }
+  if (template.slug === "boho-chic") {
+    return <BohoChicInvitationExperience invitation={invitation} />;
   }
 
   const invitationUrl = getInvitationUrl(invitation.code);
@@ -446,6 +449,118 @@ async function MobileGoldInvitationExperience({ invitation }: { invitation: Invi
           </div>
         </section>
       </section>
+    </main>
+  );
+}
+
+async function BohoChicInvitationExperience({ invitation }: { invitation: Invitation }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="boho-invite">
+      <InviteMusic musicUrl={invitation.musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <section className="boho-hero">
+        <img src={heroImage} alt="صورة العروسين" />
+        <div className="boho-hero-shade" />
+
+        <div className="boho-hero-copy">
+          <p>We Are Getting Married</p>
+          <h1>{invitation.groomName}</h1>
+          <span>&amp;</span>
+          <h1>{invitation.brideName}</h1>
+        </div>
+      </section>
+
+      <div className="boho-content">
+        <section className="boho-date-card">
+          <Heart size={20} />
+
+          <div className="boho-date-row">
+            <div>
+              <CalendarHeart size={24} strokeWidth={1.5} />
+              <p>{formatArabicDate(invitation.weddingDate)}</p>
+            </div>
+
+            <i />
+
+            <div>
+              <Clock size={24} strokeWidth={1.5} />
+              <strong>{invitation.weddingTime}</strong>
+            </div>
+          </div>
+
+          <div className="boho-countdown">
+            <Countdown targetDate={invitation.weddingDate} />
+          </div>
+        </section>
+
+        <section className="boho-gallery-wrap" aria-label="صور الدعوة">
+          <div className="boho-gallery-scroll">
+            {images.map((image, index) => (
+              <div key={`${image}-${index}`}>
+                <img src={image} alt={`Gallery ${index + 1}`} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="boho-map-card">
+          <div className="boho-map-copy">
+            <div>
+              <MapPin size={24} />
+            </div>
+            <p>Location</p>
+            <h2>{invitation.venue}</h2>
+            <span>{invitation.city}</span>
+          </div>
+          <div className="boho-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="boho-photographer">
+            <div className="boho-photographer-icon">
+              <Camera size={28} strokeWidth={1.5} />
+            </div>
+            <div>
+              <p>Captured By</p>
+              <h3>badrabdoph</h3>
+            </div>
+            <div className="boho-photographer-socials">
+              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+                <Instagram size={18} />
+              </a>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="boho-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="boho-qr-card">
+          <h3>بطاقة الدخول والمشاركة</h3>
+
+          <div className="boho-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+
+          <div className="boho-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={20} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

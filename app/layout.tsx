@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://BadrDaawa.com"),
+  metadataBase: getMetadataBaseUrl(),
   title: {
     default: "BadrDaawa | دعوات زفاف رقمية فاخرة",
     template: "%s | BadrDaawa",

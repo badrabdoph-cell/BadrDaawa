@@ -17,8 +17,38 @@ export function formatArabicNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+const defaultSiteUrl = "https://BadrDaawa.com";
+
+export function normalizeSiteUrl(value?: string | null) {
+  const raw = value
+    ?.trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/[↗↘↙↖]+/g, "")
+    .replace(/\s+/g, "");
+
+  if (!raw) return defaultSiteUrl;
+
+  const isLocalhostInput = /^(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i.test(raw);
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `${isLocalhostInput ? "http" : "https"}://${raw}`;
+
+  try {
+    const url = new URL(withProtocol);
+    const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (!url.hostname || url.hostname.includes("..") || (!isLocalhost && !url.hostname.includes("."))) return defaultSiteUrl;
+    url.hash = "";
+    url.search = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return defaultSiteUrl;
+  }
+}
+
 export function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  return normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+}
+
+export function getMetadataBaseUrl() {
+  return new URL(normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL));
 }
 
 export function getInvitationUrl(code: string) {

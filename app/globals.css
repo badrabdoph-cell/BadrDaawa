@@ -3773,6 +3773,409 @@ img {
   transform: scale(0.95);
 }
 
+.boho-invite {
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: 64px;
+  background: #f7f5f0;
+  color: #3e453c;
+}
+
+.boho-hero {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: min(90vh, 760px);
+  min-height: 620px;
+  border-radius: 0 0 48px 48px;
+  box-shadow: 0 18px 54px rgba(36, 43, 33, 0.18);
+}
+
+.boho-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: boho-drift 20s ease-in-out infinite alternate;
+}
+
+.boho-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.2) 58%, rgba(0, 0, 0, 0.04));
+}
+
+.boho-hero-copy {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 64px;
+  display: grid;
+  justify-items: center;
+  padding-inline: 24px;
+  text-align: center;
+}
+
+.boho-hero-copy p {
+  margin: 0 0 16px;
+  color: #e2d8c8;
+  font-size: 0.76rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.boho-hero-copy h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(3rem, 14vw, 4.8rem);
+  line-height: 1.02;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.36);
+}
+
+.boho-hero-copy span {
+  display: block;
+  margin: 8px 0;
+  color: #9cafa4;
+  font-size: clamp(2.4rem, 10vw, 3.6rem);
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.36);
+}
+
+.boho-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: min(100% - 40px, 540px);
+  margin: -40px auto 0;
+}
+
+.boho-date-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  border: 1px solid rgba(226, 216, 200, 0.34);
+  border-radius: 32px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+.boho-date-card > svg {
+  margin-bottom: 16px;
+  color: #9cafa4;
+}
+
+.boho-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  margin-bottom: 24px;
+  padding-inline: 8px;
+}
+
+.boho-date-row > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boho-date-row svg {
+  margin-bottom: 8px;
+  color: #3e453c;
+}
+
+.boho-date-row p,
+.boho-date-row strong {
+  margin: 0;
+  color: #5c6659;
+  font-size: 0.88rem;
+  font-weight: 850;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.boho-date-row strong {
+  color: #3e453c;
+  font-size: 1.05rem;
+}
+
+.boho-date-row i {
+  display: block;
+  width: 1px;
+  height: 48px;
+  background: #e2d8c8;
+}
+
+.boho-countdown {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid rgba(226, 216, 200, 0.52);
+  border-radius: 22px;
+  background: #fafaf8;
+}
+
+.boho-countdown .countdown div {
+  min-height: 64px;
+  border-color: rgba(156, 175, 164, 0.18);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.boho-countdown .countdown strong {
+  color: #3e453c;
+}
+
+.boho-gallery-wrap {
+  margin-inline: -20px;
+  padding: 16px 20px 10px;
+}
+
+.boho-gallery-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.boho-gallery-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.boho-gallery-scroll > div {
+  position: relative;
+  overflow: hidden;
+  min-width: 75%;
+  height: 320px;
+  border-radius: 32px;
+  box-shadow: 0 12px 30px rgba(62, 69, 60, 0.14);
+  scroll-snap-align: center;
+}
+
+.boho-gallery-scroll img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boho-map-card {
+  overflow: hidden;
+  border-radius: 40px;
+  background: #9cafa4;
+  color: #ffffff;
+  box-shadow: 0 16px 42px rgba(92, 102, 89, 0.22);
+}
+
+.boho-map-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.boho-map-copy > div {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.boho-map-copy p {
+  margin: 0 0 8px;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  opacity: 0.82;
+  text-transform: uppercase;
+}
+
+.boho-map-copy h2 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 2rem;
+  line-height: 1.12;
+}
+
+.boho-map-copy span {
+  opacity: 0.9;
+}
+
+.boho-map-frame {
+  height: 256px;
+  background: #e2d8c8;
+}
+
+.boho-map-frame .route-map {
+  height: 100%;
+  min-height: 256px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: auto;
+}
+
+.boho-photographer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid rgba(226, 216, 200, 0.34);
+  border-radius: 32px;
+  background: #ffffff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+}
+
+.boho-photographer-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  border-radius: 18px;
+  background: #f7f5f0;
+  color: #9cafa4;
+}
+
+.boho-photographer > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.boho-photographer p {
+  margin: 0 0 4px;
+  color: #9cafa4;
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.boho-photographer h3 {
+  margin: 0;
+  color: #3e453c;
+  font-size: 1.25rem;
+}
+
+.boho-photographer-socials {
+  display: flex;
+  gap: 8px;
+}
+
+.boho-photographer-socials a {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #f7f5f0;
+  color: #3e453c;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.boho-photographer-socials a:hover {
+  background: #9cafa4;
+  color: #ffffff;
+}
+
+.boho-poll-wrap {
+  padding-block: 8px;
+}
+
+.boho-invite .invite-poll {
+  border-color: rgba(226, 216, 200, 0.38);
+  border-radius: 28px;
+  background: #ffffff;
+}
+
+.boho-invite .poll-choice.selected {
+  border-color: rgba(156, 175, 164, 0.62);
+  background: #eef3ef;
+  color: #3e453c;
+}
+
+.boho-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 16px;
+  padding: 32px;
+  border: 2px solid rgba(156, 175, 164, 0.3);
+  border-radius: 40px;
+  background: transparent;
+  text-align: center;
+}
+
+.boho-qr-card h3 {
+  margin: 0 0 24px;
+  color: #3e453c;
+  font-size: 1.45rem;
+}
+
+.boho-qr-box {
+  display: grid;
+  place-items: center;
+  width: 176px;
+  height: 176px;
+  margin-bottom: 32px;
+  padding: 12px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(62, 69, 60, 0.08);
+}
+
+.boho-qr-box .qr-card {
+  padding: 0;
+  background: transparent;
+}
+
+.boho-qr-box .qr-card img {
+  width: 136px;
+  height: 136px;
+}
+
+.boho-qr-box .qr-card strong {
+  font-size: 0.7rem;
+}
+
+.boho-share-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.boho-share-row a {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5c6659;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 140ms ease, background 180ms ease, color 180ms ease;
+}
+
+.boho-share-row a:hover {
+  background: #9cafa4;
+  color: #ffffff;
+}
+
+.boho-share-row a:active {
+  transform: scale(0.9);
+}
+
 @keyframes open-flap {
   to {
     transform: rotateX(180deg);
@@ -3818,6 +4221,15 @@ img {
   }
   50% {
     transform: translateY(-8px) scale(1.018);
+  }
+}
+
+@keyframes boho-drift {
+  from {
+    transform: scale(1.04);
+  }
+  to {
+    transform: scale(1.12) translateY(-1.8%);
   }
 }
 
@@ -4390,6 +4802,46 @@ img {
   .mobile-gold-message,
   .mobile-gold-qr-card {
     padding: 26px;
+  }
+
+  .boho-hero {
+    height: 80vh;
+    min-height: 560px;
+    border-radius: 0 0 38px 38px;
+  }
+
+  .boho-hero-copy {
+    inset-block-end: 52px;
+  }
+
+  .boho-content {
+    width: min(100% - 28px, 540px);
+    gap: 28px;
+  }
+
+  .boho-date-card,
+  .boho-map-copy,
+  .boho-qr-card {
+    padding: 26px;
+  }
+
+  .boho-gallery-wrap {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+
+  .boho-gallery-scroll > div {
+    min-width: 76%;
+    height: 310px;
+  }
+
+  .boho-share-row {
+    gap: 12px;
+  }
+
+  .boho-share-row a {
+    width: 52px;
+    height: 52px;
   }
 
   .map-frame,
