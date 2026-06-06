@@ -3776,6 +3776,66 @@ img {
   font-weight: 800;
 }
 
+.admin-created-links {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(74, 127, 108, 0.22);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(234, 249, 242, 0.92), rgba(255, 253, 248, 0.84)),
+    radial-gradient(circle at 10% 0%, rgba(74, 127, 108, 0.14), transparent 12rem);
+  color: #244f3d;
+}
+
+.admin-created-links-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 950;
+}
+
+.admin-created-links-head span {
+  color: rgba(36, 79, 61, 0.72);
+  font-size: 0.86rem;
+}
+
+.admin-created-link-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+  border: 1px solid rgba(74, 127, 108, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.admin-created-link-box span,
+.admin-created-link-box strong {
+  grid-column: 1;
+}
+
+.admin-created-link-box span {
+  color: rgba(36, 79, 61, 0.68);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.admin-created-link-box strong {
+  direction: ltr;
+  overflow-wrap: anywhere;
+  color: #173a2c;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.admin-created-link-box .btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3789,6 +3849,111 @@ img {
 .admin-submit {
   align-self: end;
   min-height: 50px;
+}
+
+.admin-gallery-field {
+  gap: 8px;
+}
+
+.admin-gallery-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  font-weight: 950;
+}
+
+.admin-gallery-field > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1.6;
+}
+
+.admin-gallery-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-gallery-slot {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(180, 139, 57, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 253, 248, 0.78);
+  text-align: center;
+}
+
+.admin-gallery-slot > strong {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #9f742b, #f3cf73 55%, #fff0ad);
+  color: #21160a;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.admin-gallery-slot > span {
+  color: #392a16;
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.admin-gallery-slot .crop-uploader {
+  width: 100%;
+  gap: 6px;
+}
+
+.admin-gallery-slot .crop-dropzone {
+  min-height: 88px;
+  padding: 10px 6px;
+  border-radius: 12px;
+}
+
+.admin-gallery-slot .crop-dropzone svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-gallery-slot .crop-dropzone span {
+  display: none;
+}
+
+.admin-gallery-slot .crop-dropzone strong {
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.admin-gallery-slot .crop-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-gallery-slot .crop-preview {
+  width: 100%;
+  min-height: 92px;
+  border-radius: 12px;
+}
+
+.admin-gallery-slot .crop-controls {
+  display: contents;
+}
+
+.admin-gallery-slot .crop-controls > :not(input[type="hidden"]) {
+  display: none;
 }
 
 .notice {
@@ -11750,6 +11915,34 @@ body:has(.template-preview-floating-actions) .music-control {
   .admin-order-actions {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .admin-created-link-box {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-created-link-box .btn {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .admin-gallery-slots {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .admin-gallery-slot {
+    padding: 7px;
+  }
+
+  .admin-gallery-slot > span,
+  .admin-gallery-slot .crop-dropzone strong {
+    font-size: 0.68rem;
+  }
+
+  .admin-gallery-slot .crop-dropzone {
+    min-height: 76px;
+    padding: 8px 4px;
   }
 
   .admin-create-head,
