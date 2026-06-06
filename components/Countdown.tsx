@@ -2,6 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+const initialRemaining = {
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+};
+
 function getRemaining(target: string) {
   const diff = Math.max(0, new Date(target).getTime() - Date.now());
   const day = 1000 * 60 * 60 * 24;
@@ -17,9 +24,10 @@ function getRemaining(target: string) {
 
 export function Countdown({ targetDate }: { targetDate: string }) {
   const target = useMemo(() => `${targetDate}T20:00:00`, [targetDate]);
-  const [remaining, setRemaining] = useState(() => getRemaining(target));
+  const [remaining, setRemaining] = useState(initialRemaining);
 
   useEffect(() => {
+    setRemaining(getRemaining(target));
     const timer = window.setInterval(() => setRemaining(getRemaining(target)), 1000);
     return () => window.clearInterval(timer);
   }, [target]);
