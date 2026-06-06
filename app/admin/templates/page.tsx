@@ -133,7 +133,7 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
         {templates.map((template) => (
           <article className="template-editor-card" key={template.slug}>
             <div className="template-live-preview">
-              <iframe src={`/templates/${template.slug}/preview`} title={`معاينة ${template.arabicName}`} loading="lazy" allow="geolocation; autoplay; notifications" />
+              <iframe src={`/templates/${template.slug}/preview?silentPreview=1`} title={`معاينة ${template.arabicName}`} loading="lazy" allow="geolocation; notifications" />
             </div>
             <div className="template-editor-body">
               <div className="template-editor-head">

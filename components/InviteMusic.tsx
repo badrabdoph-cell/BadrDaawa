@@ -8,8 +8,13 @@ export const DEFAULT_INVITE_MUSIC_URL = "/assets/audio/badr-sara-wedding-3.mp3";
 
 const nonInvitationSegments = new Set(["", "admin", "api", "_next", "templates", "order", "pricing", "faq", "contact", "client", "client-invitations"]);
 
-function isInvitationPath(pathname: string | null) {
+function isTemplatePreviewPath(segments: string[]) {
+  return segments.length === 3 && segments[0]?.toLowerCase() === "templates" && Boolean(segments[1]) && segments[2]?.toLowerCase() === "preview";
+}
+
+function isMusicEnabledPath(pathname: string | null) {
   const segments = (pathname || "").split("?")[0].split("#")[0].split("/").filter(Boolean);
+  if (isTemplatePreviewPath(segments)) return true;
   if (segments.length !== 1) return false;
   return !nonInvitationSegments.has(segments[0].toLowerCase());
 }
@@ -23,7 +28,7 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [needsInteraction, setNeedsInteraction] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const isEnabledInvitationPath = isInvitationPath(pathname);
+  const isEnabledInvitationPath = isMusicEnabledPath(pathname);
   const isDisabled = musicUrl === null || !isEnabledInvitationPath;
 
   const audioSource = useMemo(() => {

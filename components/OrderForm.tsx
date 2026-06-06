@@ -19,6 +19,8 @@ type FormState = {
 };
 
 type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
+type FieldErrors = Partial<Record<keyof FormState, string>>;
+type OrderFormValues = Pick<FormState, "groomName" | "brideName" | "phone" | "weddingDate" | "mapUrl" | "venue" | "notes">;
 
 const orderImageSlots = [
   {
@@ -52,6 +54,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedTemplate = useMemo(
@@ -61,6 +64,13 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    if (message) setMessage("");
   }
 
   function selectTemplate(slug: string) {
@@ -86,25 +96,52 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     return `/templates/${form.templateSlug}/preview?${params.toString()}`;
   }
 
-  function getCurrentFormFromDom() {
+  function getCurrentFormFromDom(): OrderFormValues {
     const formData = new FormData(formRef.current || undefined);
     return {
       groomName: String(formData.get("groomName") || "").trim(),
       brideName: String(formData.get("brideName") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
       weddingDate: String(formData.get("weddingDate") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
       mapUrl: String(formData.get("mapUrl") || "").trim(),
+      notes: String(formData.get("notes") || "").trim(),
     };
   }
 
+  function validateOrder(values: OrderFormValues) {
+    const nextErrors: FieldErrors = {};
+    if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
+    if (!values.brideName) nextErrors.brideName = "اكتب اسم العروسة كما تحب ظهوره في الدعوة.";
+    if (!values.weddingDate) nextErrors.weddingDate = "اختار تاريخ الفرح عشان نجهز الدعوة والعداد.";
+    if (values.phone && values.phone.replace(/\D/g, "").length < 8) nextErrors.phone = "رقم الموبايل قصير. اكتب رقم صحيح أو اتركه فارغ.";
+    if (values.mapUrl && !/^https?:\/\/\S+\.\S+/.test(values.mapUrl)) nextErrors.mapUrl = "رابط اللوكيشن غير واضح. انسخ رابط Google Maps كامل أو اترك الخانة فارغة.";
+    return nextErrors;
+  }
+
+  function showValidationErrors(nextErrors: FieldErrors) {
+    setErrors(nextErrors);
+    const entries = Object.entries(nextErrors);
+    if (!entries.length) return false;
+    setState("error");
+    setMessage(`راجع ${entries.length === 1 ? "الخانة المحددة" : "الخانات المحددة"} باللون الأحمر قبل المتابعة.`);
+    const firstField = entries[0]?.[0];
+    window.setTimeout(() => {
+      const element = formRef.current?.querySelector<HTMLElement>(`[name="${firstField}"]`);
+      element?.focus();
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+    return true;
+  }
+
   function openPreview() {
-    window.location.href = previewHref(getCurrentFormFromDom());
+    const currentForm = getCurrentFormFromDom();
+    if (showValidationErrors(validateOrder(currentForm))) return;
+    window.location.href = previewHref(currentForm);
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setState("loading");
-    setMessage("");
     const formData = new FormData(event.currentTarget);
     const orderImages = formData.getAll("orderImage").map((value) => String(value)).filter(Boolean).slice(0, 3);
     const currentForm: FormState = {
@@ -118,6 +155,9 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
       venue: String(formData.get("venue") || "").trim(),
       notes: String(formData.get("notes") || "").trim(),
     };
+    if (showValidationErrors(validateOrder(currentForm))) return;
+    setState("loading");
+    setMessage("");
 
     const baseMessage = [
       "طلب دعوة جديد من BadrDaawa",
@@ -199,7 +239,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
           </div>
         </section>
       ) : (
-        <form className="form-panel details-form" onSubmit={submitOrder} ref={formRef}>
+        <form className="form-panel details-form" onSubmit={submitOrder} ref={formRef} noValidate>
           <div className="selected-template-strip">
             <div>
               <span className="eyebrow">القالب المختار</span>
@@ -216,27 +256,38 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
               </button>
             </div>
           </div>
+          {message ? (
+            <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
+              <strong>{state === "error" ? "فيه بيانات محتاجة مراجعة" : "تمام"}</strong>
+              <p>{message}</p>
+            </div>
+          ) : null}
 
           <div className="input-grid">
-            <div className="field">
+            <div className={`field ${errors.groomName ? "has-error" : ""}`}>
               <label htmlFor="groomName">اسم العريس *</label>
-              <input id="groomName" name="groomName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Badr" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required />
+              <input id="groomName" name="groomName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Badr" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
+              {errors.groomName ? <small className="field-error" id="groomName-error">{errors.groomName}</small> : null}
             </div>
-            <div className="field">
+            <div className={`field ${errors.brideName ? "has-error" : ""}`}>
               <label htmlFor="brideName">اسم العروسة *</label>
-              <input id="brideName" name="brideName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Sara" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
+              <input id="brideName" name="brideName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Sara" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
+              {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
             </div>
-            <div className="field">
+            <div className={`field ${errors.phone ? "has-error" : ""}`}>
               <label htmlFor="phone">رقم الموبايل</label>
-              <input id="phone" name="phone" inputMode="tel" placeholder="اختياري، لكن يسهّل علينا التواصل السريع معاك" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
+              <input id="phone" name="phone" inputMode="tel" placeholder="اختياري، لكن يسهّل علينا التواصل السريع معاك" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined} />
+              {errors.phone ? <small className="field-error" id="phone-error">{errors.phone}</small> : null}
             </div>
-            <div className="field">
+            <div className={`field ${errors.weddingDate ? "has-error" : ""}`}>
               <label htmlFor="weddingDate">تاريخ الفرح *</label>
-              <input id="weddingDate" name="weddingDate" type="date" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required />
+              <input id="weddingDate" name="weddingDate" type="date" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error" : undefined} />
+              {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
             </div>
-            <div className="field full">
+            <div className={`field full ${errors.mapUrl ? "has-error" : ""}`}>
               <label htmlFor="mapUrl">اللوكيشن على الخريطة</label>
-              <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="اختياري: انسخ رابط Google Maps هنا لو متاح، أو اتركه ونضيفه معاك لاحقًا" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} />
+              <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="اختياري: انسخ رابط Google Maps هنا لو متاح، أو اتركه ونضيفه معاك لاحقًا" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error" : undefined} />
+              {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
             </div>
             <div className="field full">
               <label htmlFor="venue">العنوان واسم القاعة</label>
@@ -283,7 +334,6 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
             {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
             {state === "loading" ? "جاري تأكيد الطلب" : "تأكيد الطلب"}
           </button>
-          {message ? <p className="status danger">{message}</p> : null}
           <button className="btn btn-soft order-back-button" type="button" onClick={() => setStep("template")}>
             <ArrowRight size={17} />
             رجوع لاختيار قالب آخر
