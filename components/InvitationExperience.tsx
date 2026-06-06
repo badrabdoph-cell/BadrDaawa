@@ -37,6 +37,8 @@ export async function InvitationExperience({ invitation, template }: { invitatio
           <h1>
             {invitation.groomName} &amp; {invitation.brideName}
           </h1>
+          <h2 className="invite-venue-title">{invitation.venue}</h2>
+          <p className="invite-short-line">✦ ✧ ✦</p>
           <p>{formatArabicDate(invitation.weddingDate)}</p>
           <strong>{invitation.weddingTime}</strong>
           <Countdown targetDate={invitation.weddingDate} />
