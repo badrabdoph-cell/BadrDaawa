@@ -1710,6 +1710,126 @@ img {
   padding: 5px;
 }
 
+.template-admin-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.62fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.template-search-panel,
+.photographer-admin-panel,
+.text-admin-panel {
+  display: grid;
+  gap: 12px;
+  padding: clamp(18px, 3vw, 24px);
+}
+
+.text-admin-panel {
+  grid-column: 1 / -1;
+}
+
+.template-link-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.template-link-search input,
+.admin-text-search input,
+.text-edit-panel textarea {
+  width: 100%;
+  border: 1px solid rgba(33, 28, 24, 0.15);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  padding: 12px 14px;
+  outline: none;
+}
+
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 950;
+}
+
+.admin-toggle-row input {
+  width: 20px;
+  height: 20px;
+  accent-color: #bd8f3f;
+}
+
+.photographer-admin-panel code {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: #171614;
+  color: #fff3c6;
+  direction: ltr;
+}
+
+.admin-text-editor,
+.text-edit-grid,
+.text-match-list,
+.text-edit-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-text-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(33, 28, 24, 0.1);
+  border-radius: var(--radius);
+  background: rgba(255, 250, 241, 0.8);
+}
+
+.admin-text-search input {
+  border: 0;
+  background: transparent;
+  padding: 6px;
+}
+
+.text-edit-grid {
+  grid-template-columns: minmax(220px, 0.6fr) minmax(0, 1fr);
+}
+
+.text-match-list button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(33, 28, 24, 0.1);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: right;
+}
+
+.text-match-list button.selected {
+  border-color: rgba(180, 139, 57, 0.5);
+  background: #fff3d0;
+}
+
+.text-match-list span,
+.text-edit-panel p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.text-edit-panel {
+  align-content: start;
+  padding: 16px;
+  border: 1px solid rgba(33, 28, 24, 0.1);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.76);
+}
+
 .invitation-page {
   min-height: 100vh;
   color: var(--tpl-ink, #241f1a);
@@ -2033,6 +2153,66 @@ img {
 .invite-message {
   text-align: center;
   justify-items: center;
+}
+
+.photographer-card {
+  position: relative;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  overflow: hidden;
+  border-color: rgba(255, 236, 166, 0.72);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 245, 215, 0.72)),
+    radial-gradient(circle at 18% 0%, rgba(255, 222, 135, 0.55), transparent 34%);
+}
+
+.photographer-card::before {
+  position: absolute;
+  inset: -42% auto -42% -18%;
+  width: 42%;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  transform: rotate(18deg);
+  animation: shine-pass 4.8s ease-in-out infinite;
+}
+
+.photographer-logo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 2px solid rgba(255, 235, 166, 0.8);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6d5, #b48b39 62%, #2b2113);
+  color: #20170c;
+  box-shadow: 0 14px 32px rgba(88, 58, 18, 0.22);
+  font-weight: 950;
+}
+
+.photographer-card > div:not(.photographer-socials):not(.photographer-logo) {
+  position: relative;
+  z-index: 1;
+}
+
+.photographer-socials {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.photographer-socials a {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(180, 139, 57, 0.24);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.78);
+  color: #7a571f;
+  box-shadow: 0 12px 26px rgba(88, 58, 18, 0.14);
 }
 
 .invite-message p,
