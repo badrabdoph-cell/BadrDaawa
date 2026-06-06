@@ -1,8 +1,10 @@
 import { Check, RefreshCw, X } from "lucide-react";
-import { demoOrders } from "@/lib/demo-data";
+import { getAdminOrders } from "@/lib/admin-data";
 import { invitationTemplates } from "@/lib/templates";
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+  const orders = await getAdminOrders();
+
   return (
     <>
       <div className="dashboard-head">
@@ -24,7 +26,7 @@ export default function OrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {demoOrders.map((order) => {
+            {orders.map((order) => {
               const template = invitationTemplates.find((item) => item.slug === order.templateSlug);
               return (
                 <tr key={order.id}>
@@ -35,7 +37,9 @@ export default function OrdersPage() {
                   <td>{new Date(order.weddingDate).toLocaleDateString("ar-EG-u-nu-latn")}</td>
                   <td>{template?.arabicName}</td>
                   <td>
-                    <span className={order.status === "accepted" ? "status success" : "status"}>{order.status === "new" ? "جديد" : "مقبول"}</span>
+                    <span className={order.status === "accepted" || order.status === "converted" ? "status success" : order.status === "rejected" ? "status danger" : "status"}>
+                      {order.status === "new" ? "جديد" : order.status === "accepted" ? "مقبول" : order.status === "converted" ? "تم تحويله" : "مرفوض"}
+                    </span>
                   </td>
                   <td>
                     <div className="button-row">

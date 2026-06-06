@@ -3,7 +3,7 @@ import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 export const demoInvitations: Invitation[] = [
   {
     id: "inv_001",
-    code: "A7X92K",
+    code: "badr-sarah-1",
     templateSlug: "royal-envelope",
     language: "ar",
     groomName: "بدر",
@@ -13,8 +13,8 @@ export const demoInvitations: Invitation[] = [
     venue: "قاعة رويال",
     city: "البحيرة",
     mapUrl: "https://maps.google.com/?q=Royal+Hall+Beheira",
-    heroPhoto: "/assets/brand/couple-royal.png",
-    gallery: ["/assets/templates/royal-envelope.png"],
+    heroPhoto: "/assets/invite/badr-sarah-1.jpeg",
+    gallery: ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"],
     musicUrl: "",
     isActive: true,
     views: 1842,
@@ -44,7 +44,7 @@ export const demoInvitations: Invitation[] = [
 export const demoGuests: GuestRsvp[] = [
   {
     id: "gst_001",
-    invitationCode: "A7X92K",
+    invitationCode: "badr-sarah-1",
     name: "محمد عبدالعزيز",
     phone: "01012345678",
     attendees: 2,
@@ -54,7 +54,7 @@ export const demoGuests: GuestRsvp[] = [
   },
   {
     id: "gst_002",
-    invitationCode: "A7X92K",
+    invitationCode: "badr-sarah-1",
     name: "هنا مصطفى",
     phone: "01198765432",
     attendees: 3,
@@ -63,7 +63,7 @@ export const demoGuests: GuestRsvp[] = [
   },
   {
     id: "gst_003",
-    invitationCode: "A7X92K",
+    invitationCode: "badr-sarah-1",
     name: "كريم سالم",
     phone: "01210002000",
     attendees: 1,

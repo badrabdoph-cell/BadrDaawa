@@ -45,7 +45,7 @@ export default function TemplatesPage() {
               <Link className="btn btn-gold" href="/order">
                 اطلب هذا القالب
               </Link>
-              <Link className="btn btn-soft btn-glass" href="/A7X92K">
+              <Link className="btn btn-soft btn-glass" href="/badr-sarah-1">
                 افتح الدعوة
               </Link>
             </div>

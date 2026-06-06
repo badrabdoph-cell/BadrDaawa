@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Archive, BarChart3, Crown, DatabaseBackup, FileText, LayoutDashboard, Palette, UsersRound } from "lucide-react";
+import { Archive, BarChart3, Crown, DatabaseBackup, FileText, LayoutDashboard, LogOut, Palette, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
@@ -33,6 +33,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+        <form action="/api/auth/admin/logout" method="post">
+          <button className="dashboard-logout" type="submit">
+            <LogOut size={17} />
+            تسجيل خروج
+          </button>
+        </form>
       </aside>
       <main className="dashboard-main">{children}</main>
     </div>

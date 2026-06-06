@@ -15,7 +15,7 @@ export default function ClientLoginPage() {
             <div className="panel" style={{ marginTop: 28 }}>
               <h3>تجربة سريعة</h3>
               <p>افتح لوحة تجريبية وشاهد شكل المتابعة.</p>
-              <Link className="btn btn-gold" href="/client/A7X92K">
+              <Link className="btn btn-gold" href="/badr-sarah-1/ad_3399">
                 فتح لوحة تجريبية
               </Link>
             </div>

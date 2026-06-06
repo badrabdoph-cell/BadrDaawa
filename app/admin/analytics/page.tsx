@@ -1,11 +1,13 @@
 import { BarChart3, MousePointerClick, TrendingUp, UsersRound } from "lucide-react";
 import { StatsGrid } from "@/components/StatsGrid";
-import { demoGuests, demoInvitations } from "@/lib/demo-data";
+import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { invitationTemplates } from "@/lib/templates";
 
-export default function AnalyticsPage() {
-  const confirmed = demoGuests.filter((guest) => guest.status === "confirmed").length;
-  const conversion = Math.round((confirmed / demoGuests.length) * 100);
+export default async function AnalyticsPage() {
+  const [guests, invitations] = await Promise.all([getAdminGuests(), getAdminInvitations()]);
+  const confirmed = guests.filter((guest) => guest.status === "confirmed").length;
+  const conversion = guests.length ? Math.round((confirmed / guests.length) * 100) : 0;
+  const averageGuests = guests.length ? (guests.reduce((sum, guest) => sum + guest.attendees, 0) / guests.length).toFixed(1) : "0";
 
   return (
     <>
@@ -17,10 +19,10 @@ export default function AnalyticsPage() {
       </div>
       <StatsGrid
         stats={[
-          { label: "إجمالي المشاهدات", value: demoInvitations.reduce((sum, item) => sum + item.views, 0) },
+          { label: "إجمالي المشاهدات", value: invitations.reduce((sum, item) => sum + item.views, 0) },
           { label: "RSVP Conversion", value: `${conversion}%` },
           { label: "القالب الحالي", value: invitationTemplates[0].arabicName },
-          { label: "متوسط الضيوف", value: "2.3" },
+          { label: "متوسط الضيوف", value: averageGuests },
         ]}
       />
       <section className="section compact">
