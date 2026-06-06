@@ -1,9 +1,10 @@
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#2C2C2C] font-sans antialiased selection:bg-amber-200" dir="rtl">
+    <div className="min-h-screen bg-[#FAF9F6] text-[#2C2C2C] font-sans antialiased selection:bg-amber-200 dir=rtl" dir="rtl">
       
       {/* 1. القائمة العلوية التفاعلية (Navbar) */}
       <nav className="sticky top-0 z-50 backdrop-blur-md bg-[#FAF9F6]/80 border-b border-amber-100 transition-all duration-300">
