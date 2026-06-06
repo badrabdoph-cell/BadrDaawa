@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowRight, Camera, Check, Eye, Loader2, MessageCircle, Palette } from "lucide-react";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
 import type { TemplateDefinition } from "@/lib/types";
@@ -37,6 +37,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
@@ -60,14 +61,29 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     return value.trim() || fallback;
   }
 
-  function previewHref() {
+  function previewHref(values: Partial<FormState> = form) {
     const params = new URLSearchParams();
-    params.set("groomName", form.groomName || "اسم العريس");
-    params.set("brideName", form.brideName || "اسم العروسة");
-    if (form.weddingDate) params.set("weddingDate", form.weddingDate);
-    if (form.venue) params.set("venue", form.venue);
-    if (form.mapUrl) params.set("mapUrl", form.mapUrl);
+    params.set("groomName", values.groomName || "اسم العريس");
+    params.set("brideName", values.brideName || "اسم العروسة");
+    if (values.weddingDate) params.set("weddingDate", values.weddingDate);
+    if (values.venue) params.set("venue", values.venue);
+    if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     return `/templates/${form.templateSlug}/preview?${params.toString()}`;
+  }
+
+  function getCurrentFormFromDom() {
+    const formData = new FormData(formRef.current || undefined);
+    return {
+      groomName: String(formData.get("groomName") || "").trim(),
+      brideName: String(formData.get("brideName") || "").trim(),
+      weddingDate: String(formData.get("weddingDate") || "").trim(),
+      venue: String(formData.get("venue") || "").trim(),
+      mapUrl: String(formData.get("mapUrl") || "").trim(),
+    };
+  }
+
+  function openPreview() {
+    window.open(previewHref(getCurrentFormFromDom()), "_blank", "noopener,noreferrer");
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -168,7 +184,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
           </div>
         </section>
       ) : (
-        <form className="form-panel details-form" onSubmit={submitOrder}>
+        <form className="form-panel details-form" onSubmit={submitOrder} ref={formRef}>
           <div className="selected-template-strip">
             <div>
               <span className="eyebrow">القالب المختار</span>
@@ -179,10 +195,10 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
                 <Palette size={17} />
                 تغيير القالب
               </button>
-              <a className="btn btn-soft btn-glass" href={previewHref()} target="_blank" rel="noreferrer">
+              <button className="btn btn-soft btn-glass" type="button" onClick={openPreview}>
                 <Eye size={17} />
                 عاين ببياناتي
-              </a>
+              </button>
             </div>
           </div>
 
@@ -230,10 +246,10 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
             </span>
           </a>
 
-          <a className="btn btn-soft btn-glass order-preview-button" href={previewHref()} target="_blank" rel="noreferrer">
+          <button className="btn btn-soft btn-glass order-preview-button" type="button" onClick={openPreview}>
             <Eye size={19} />
             معاينة الدعوة
-          </a>
+          </button>
 
           <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>
             {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
