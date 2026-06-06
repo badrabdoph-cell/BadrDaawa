@@ -35,6 +35,14 @@ function cleanMediaUrl(value: string, allowDataImage = false) {
   }
 }
 
+function inferMediaMode(value: string): HomePreviewMode | "" {
+  const clean = value.trim().split("?")[0]?.toLowerCase() || "";
+  if (!clean) return "";
+  if (/\.(mp4|webm|mov|m4v)$/.test(clean)) return "video";
+  if (/\.(jpg|jpeg|png|webp|gif|svg)$/.test(clean) || clean.startsWith("data:image/jpeg")) return "image";
+  return "";
+}
+
 function isHomePreviewMode(value: string): value is HomePreviewMode {
   return value === "template" || value === "image" || value === "video";
 }
@@ -73,6 +81,9 @@ export async function getHomePreviewSettings(): Promise<HomePreviewSettings> {
 export async function updateHomePreviewSettings(input: {
   mode: string;
   templateSlug: string;
+  mediaUrl?: string;
+  uploadedMediaUrl?: string;
+  uploadedMediaMode?: string;
   imageUrl: string;
   uploadedImageUrl?: string;
   videoUrl: string;
@@ -81,13 +92,21 @@ export async function updateHomePreviewSettings(input: {
   const mode = isHomePreviewMode(input.mode) ? input.mode : defaultHomePreviewSettings.mode;
   const template = await getTemplateWithSettings(input.templateSlug);
   const templateSlug = template?.slug || defaultHomePreviewSettings.templateSlug;
+  const uploadedMediaUrl = cleanMediaUrl(input.uploadedMediaUrl || "");
+  const unifiedMediaUrl = uploadedMediaUrl || cleanMediaUrl(input.mediaUrl || "", true);
   const uploadedImageUrl = cleanMediaUrl(input.uploadedImageUrl || "", true);
-  const imageUrl = uploadedImageUrl || cleanMediaUrl(input.imageUrl, true);
+  const legacyImageUrl = uploadedImageUrl || cleanMediaUrl(input.imageUrl, true);
   const uploadedVideoUrl = cleanMediaUrl(input.uploadedVideoUrl || "");
-  const videoUrl = uploadedVideoUrl || cleanMediaUrl(input.videoUrl);
+  const legacyVideoUrl = uploadedVideoUrl || cleanMediaUrl(input.videoUrl);
+  const inferredMode = isHomePreviewMode(input.uploadedMediaMode || "")
+    ? (input.uploadedMediaMode as HomePreviewMode)
+    : inferMediaMode(unifiedMediaUrl) || (uploadedImageUrl ? "image" : uploadedVideoUrl ? "video" : "");
+  const finalMode = inferredMode || mode;
+  const imageUrl = finalMode === "image" ? unifiedMediaUrl || legacyImageUrl : legacyImageUrl;
+  const videoUrl = finalMode === "video" ? unifiedMediaUrl || legacyVideoUrl : legacyVideoUrl;
 
   const nextSettings: HomePreviewSettings = {
-    mode,
+    mode: finalMode,
     templateSlug,
     imageUrl,
     videoUrl,

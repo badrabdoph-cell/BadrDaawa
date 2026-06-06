@@ -1,5 +1,4 @@
-import { Image, MonitorPlay, Save, Video } from "lucide-react";
-import { ImageCropUploader } from "@/components/ImageCropUploader";
+import { Image, Link2, MonitorPlay, Save, UploadCloud, Video } from "lucide-react";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
@@ -31,7 +30,7 @@ export default async function AdminPreviewPage({ searchParams }: { searchParams:
             </div>
           </div>
 
-          <form className="admin-form-grid compact-controls" action="/api/admin/preview" method="post" encType="multipart/form-data">
+          <form className="preview-admin-form" action="/api/admin/preview" method="post" encType="multipart/form-data">
             <label className="preview-option-card">
               <input name="mode" type="radio" value="template" defaultChecked={settings.mode === "template"} />
               <span>
@@ -54,7 +53,7 @@ export default async function AdminPreviewPage({ searchParams }: { searchParams:
               </span>
             </label>
 
-            <label className="field">
+            <label className="field full">
               <span>اختيار قالب للمعاينة</span>
               <select name="templateSlug" defaultValue={selectedTemplate?.slug || "royal-envelope"}>
                 {templates.map((template) => (
@@ -65,24 +64,36 @@ export default async function AdminPreviewPage({ searchParams }: { searchParams:
               </select>
             </label>
 
-            <label className="field">
-              <span>رابط صورة جاهزة</span>
-              <input name="imageUrl" defaultValue={settings.imageUrl} placeholder="/assets/templates/royal-envelope.svg" />
+            <div className="preview-media-card full">
+              <div className="preview-media-card-head">
+                <span>
+                  <UploadCloud size={20} />
+                </span>
+                <div>
+                  <h3>ارفع صورة أو فيديو</h3>
+                  <p>اختار ملف واحد للمعاينة. لو رفعت صورة أو فيديو هيظهر تلقائيًا في الرئيسية بدون ما تحتاج تغير النوع يدويًا.</p>
+                </div>
+              </div>
+              <label className="preview-media-dropzone">
+                <input name="previewMedia" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" />
+                <UploadCloud size={24} />
+                <strong>اختار ملف صورة أو فيديو</strong>
+                <small>الصورة حتى 8MB، والفيديو حتى 35MB. الأفضل مقاس عمودي.</small>
+              </label>
+            </div>
+
+            <label className="field full preview-unified-url">
+              <span>
+                <Link2 size={16} />
+                رابط صورة أو فيديو
+              </span>
+              <input name="mediaUrl" defaultValue={settings.mode === "video" ? settings.videoUrl : settings.imageUrl} placeholder="/uploads/previews/file.jpg أو https://example.com/preview.mp4" />
+              <small>لو الرابط ينتهي بـ mp4 أو webm أو mov هيتعامل كفيديو، وأي رابط صورة هيتعامل كصورة.</small>
             </label>
 
-            <label className="field">
-              <span>رابط فيديو مباشر</span>
-              <input name="videoUrl" defaultValue={settings.videoUrl} placeholder="/assets/video/preview.mp4 أو https://..." />
-            </label>
-
-            <label className="field full">
-              <span>رفع فيديو للمعاينة</span>
-              <input name="previewVideo" type="file" accept="video/mp4,video/webm,video/quicktime" />
-              <small>يفضل فيديو عمودي خفيف، والحد الأقصى 35MB.</small>
-            </label>
-
-            <div className="field full">
-              <ImageCropUploader name="previewImage" label="رفع صورة للمعاينة" targetWidth={900} targetHeight={1500} maxFiles={1} defaultImages={settings.imageUrl ? [settings.imageUrl] : []} />
+            <div className="preview-current-media full">
+              <span>المستخدم حاليًا</span>
+              <strong>{settings.mode === "template" ? selectedTemplate?.arabicName || "قالب جاهز" : settings.mode === "video" ? settings.videoUrl || "فيديو بدون رابط" : settings.imageUrl || "صورة بدون رابط"}</strong>
             </div>
 
             <button className="btn btn-gold btn-glow admin-submit" type="submit">

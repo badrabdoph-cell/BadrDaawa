@@ -1,8 +1,11 @@
-import { KeyRound, UserPlus } from "lucide-react";
+import { KeyRound, UserCheck, UserPlus, UsersRound } from "lucide-react";
+import { StatsGrid } from "@/components/StatsGrid";
 import { getAdminCustomers } from "@/lib/admin-data";
 
 export default async function CustomersPage() {
   const customers = await getAdminCustomers();
+  const activeCustomers = customers.filter((customer) => customer.isActive).length;
+  const totalInvitations = customers.reduce((sum, customer) => sum + customer.invitations, 0);
 
   return (
     <>
@@ -15,6 +18,21 @@ export default async function CustomersPage() {
           <UserPlus size={18} />
           عميل جديد
         </button>
+      </div>
+      <StatsGrid
+        stats={[
+          { label: "إجمالي العملاء", value: customers.length, hint: "متزامن من حسابات الدعوات المنشأة" },
+          { label: "عملاء نشطين", value: activeCustomers, hint: "الحسابات المتاحة للدخول" },
+          { label: "دعوات مرتبطة", value: totalInvitations, hint: "عدد الدعوات المملوكة للعملاء" },
+        ]}
+      />
+      <div className="customer-sync-note">
+        <UsersRound size={18} />
+        <span>أي دعوة جديدة من الأدمن أو تحويل طلب لدعوة بتنشئ/تحدث حساب العميل هنا تلقائيًا.</span>
+        <strong>
+          <UserCheck size={15} />
+          متزامن
+        </strong>
       </div>
       <div className="table-shell">
         <table className="data-table">
