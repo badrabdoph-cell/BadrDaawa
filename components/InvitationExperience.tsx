@@ -1732,6 +1732,70 @@ async function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { in
   );
 }
 
+async function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="ocean-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <section className="ocean-hero">
+        <h1>{invitation.groomName}</h1>
+        <h1>{invitation.brideName}</h1>
+      </section>
+
+      <div className="ocean-shell">
+        <figure className="ocean-photo">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="ocean-date-grid">
+          <div>
+            <p>Date</p>
+            <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+          </div>
+          <div>
+            <p>Time</p>
+            <strong>{invitation.weddingTime}</strong>
+          </div>
+        </section>
+
+        <section className="ocean-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="ocean-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="ocean-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="ocean-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="ocean-qr-card">
+          <div className="ocean-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="ocean-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 async function CinematicStoryInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = shouldShowPhotographerCard();
