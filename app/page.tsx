@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellRing, CheckCircle2, Headphones, Link2, Send, SlidersHorizontal, Sparkles, Vote } from "lucide-react";
+import { BellRing, Headphones, Link2, Send, SlidersHorizontal, Sparkles, Vote } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
