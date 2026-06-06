@@ -3364,6 +3364,275 @@ img {
   text-align: left;
 }
 
+.music-admin-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 234, 0.08), rgba(243, 207, 115, 0.045)),
+    radial-gradient(circle at 10% 0%, rgba(243, 207, 115, 0.16), transparent 18rem);
+}
+
+.music-admin-hero > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.music-admin-hero h2 {
+  margin: 8px 0 5px;
+  color: #fff7e8;
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+}
+
+.music-admin-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: rgba(245, 234, 214, 0.68);
+  font-weight: 850;
+}
+
+.music-orb,
+.music-slot-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(243, 207, 115, 0.28);
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.24), transparent 2rem), linear-gradient(135deg, #9f742b, #f3cf73);
+  color: #17120a;
+  box-shadow: 0 18px 38px rgba(243, 207, 115, 0.16);
+}
+
+.music-orb {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+}
+
+.music-admin-stats {
+  display: grid;
+  gap: 2px;
+  min-width: 132px;
+  padding: 14px 16px;
+  border: 1px solid rgba(243, 207, 115, 0.16);
+  border-radius: 16px;
+  background: rgba(8, 10, 15, 0.42);
+  text-align: center;
+}
+
+.music-admin-stats strong {
+  color: #f3cf73;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.music-admin-stats span {
+  color: rgba(245, 234, 214, 0.62);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.music-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.music-slot-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(255, 248, 234, 0.075), rgba(255, 255, 255, 0.035)),
+    radial-gradient(circle at 100% 0%, rgba(49, 95, 86, 0.2), transparent 18rem);
+}
+
+.music-slot-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.music-slot-number {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  font-weight: 950;
+}
+
+.music-slot-head h2 {
+  margin: 6px 0 3px;
+  color: #fff7e8;
+  font-size: 1.45rem;
+}
+
+.music-slot-head p {
+  margin: 0;
+  color: rgba(245, 234, 214, 0.58);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.music-current-source {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(243, 207, 115, 0.14);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  color: rgba(245, 234, 214, 0.78);
+}
+
+.music-current-source span {
+  direction: ltr;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-slot-form {
+  display: grid;
+  gap: 13px;
+}
+
+.music-upload-box {
+  display: grid;
+  place-items: center;
+  gap: 7px;
+  min-height: 132px;
+  padding: 18px;
+  border: 1px dashed rgba(243, 207, 115, 0.28);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 234, 0.08), rgba(243, 207, 115, 0.045)),
+    radial-gradient(circle at 20% 0%, rgba(243, 207, 115, 0.16), transparent 10rem);
+  color: #fff7e8;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.music-upload-box:hover {
+  border-color: rgba(243, 207, 115, 0.52);
+  transform: translateY(-2px);
+  background: rgba(243, 207, 115, 0.1);
+}
+
+.music-upload-box input {
+  width: min(100%, 260px);
+  color: rgba(245, 234, 214, 0.72);
+  font-size: 0.8rem;
+}
+
+.music-upload-box strong {
+  font-size: 1rem;
+}
+
+.music-upload-box small {
+  color: rgba(245, 234, 214, 0.54);
+  font-weight: 850;
+}
+
+.music-apply-all {
+  align-items: flex-start;
+  padding: 12px;
+  border-color: rgba(243, 207, 115, 0.16);
+  background: rgba(243, 207, 115, 0.07);
+}
+
+.music-template-picker {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 16px;
+  background: rgba(8, 10, 15, 0.28);
+}
+
+.music-picker-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #fff7e8;
+}
+
+.music-picker-head span {
+  color: rgba(245, 234, 214, 0.52);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.music-template-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding-inline-end: 2px;
+}
+
+.music-template-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: 54px;
+  padding: 9px 10px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+}
+
+.music-template-option span {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.music-template-option strong,
+.music-template-option small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-template-option strong {
+  color: #fff7e8;
+  font-size: 0.86rem;
+}
+
+.music-template-option small {
+  direction: ltr;
+  color: rgba(245, 234, 214, 0.46);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.music-save-button {
+  width: 100%;
+}
+
+.music-slot-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 2px;
+  color: rgba(245, 234, 214, 0.54);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.music-slot-foot strong {
+  color: rgba(245, 234, 214, 0.76);
+  text-align: left;
+}
+
 .admin-empty-state {
   display: grid;
   gap: 5px;
@@ -12067,6 +12336,7 @@ body:has(.template-preview-floating-actions) .music-control {
   .text-edit-grid,
   .analytics-grid,
   .backup-status-grid,
+  .music-slot-grid,
   .template-match-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -12270,9 +12540,27 @@ body:has(.template-preview-floating-actions) .music-control {
   .text-edit-grid,
   .analytics-grid,
   .backup-status-grid,
+  .music-slot-grid,
   .template-match-grid,
   .template-link-search {
     grid-template-columns: 1fr;
+  }
+
+  .music-admin-hero {
+    display: grid;
+  }
+
+  .music-admin-hero > div:first-child {
+    display: grid;
+  }
+
+  .music-admin-stats {
+    width: 100%;
+  }
+
+  .music-template-list {
+    grid-template-columns: 1fr;
+    max-height: 320px;
   }
 
   .template-found-card,

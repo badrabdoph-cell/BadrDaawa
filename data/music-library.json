@@ -1,0 +1,46 @@
+{
+  "slots": [
+    {
+      "id": "track-1",
+      "name": "اختبار موسيقى القوالب",
+      "url": "/assets/audio/badr-sara-wedding-3.mp3",
+      "applyToAll": false,
+      "templateSlugs": [
+        "featured-1"
+      ],
+      "updatedAt": "2026-06-06T23:29:53.686Z"
+    },
+    {
+      "id": "track-2",
+      "name": "مقطع 2",
+      "url": "",
+      "applyToAll": false,
+      "templateSlugs": [],
+      "updatedAt": ""
+    },
+    {
+      "id": "track-3",
+      "name": "مقطع 3",
+      "url": "",
+      "applyToAll": false,
+      "templateSlugs": [],
+      "updatedAt": ""
+    },
+    {
+      "id": "track-4",
+      "name": "مقطع 4",
+      "url": "",
+      "applyToAll": false,
+      "templateSlugs": [],
+      "updatedAt": ""
+    },
+    {
+      "id": "track-5",
+      "name": "مقطع 5",
+      "url": "",
+      "applyToAll": false,
+      "templateSlugs": [],
+      "updatedAt": ""
+    }
+  ]
+}
