@@ -1,5 +1,6 @@
 import { Facebook, Instagram, Music2, Share2 } from "lucide-react";
 import { Countdown } from "./Countdown";
+import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
 import { InvitePoll } from "./InvitePoll";
 import { QrCodeBlock } from "./QrCodeBlock";
@@ -24,18 +25,7 @@ export async function InvitationExperience({ invitation, template }: { invitatio
         } as React.CSSProperties
       }
     >
-      <section className="invite-opening" aria-label="فتح ظرف الدعوة">
-        <div className="opening-envelope">
-          <div className="opening-envelope-base" />
-          <div className="opening-envelope-flap" />
-          <div className="opening-paper">
-            <span>دعوة فرح</span>
-            <strong>
-              {invitation.groomName} &amp; {invitation.brideName}
-            </strong>
-          </div>
-        </div>
-      </section>
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="invite-story">
         <div className="invite-card invite-title-card">

@@ -1445,7 +1445,6 @@ img {
   padding: 24px;
   background: linear-gradient(145deg, #fbf6ec, #e6d6ba);
   overflow: hidden;
-  animation: opening-hide 1ms linear 2.8s forwards;
 }
 
 .opening-envelope {
@@ -1835,14 +1834,6 @@ img {
   }
   50% {
     transform: translateY(-8px) scale(1.018);
-  }
-}
-
-@keyframes opening-hide {
-  to {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
   }
 }
 
