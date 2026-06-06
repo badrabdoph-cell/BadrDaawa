@@ -5,9 +5,9 @@ const validDateString = (value: string) => !Number.isNaN(Date.parse(value));
 export const orderRequestSchema = z.object({
   groomName: z.string().trim().min(2),
   brideName: z.string().trim().min(2),
-  phone: z.string().trim().min(8),
+  phone: z.string().trim().optional().default(""),
   weddingDate: z.string().trim().min(8).refine(validDateString, "اكتب تاريخ صحيح"),
-  venue: z.string().trim().min(2),
+  venue: z.string().trim().optional().default(""),
   notes: z.string().trim().max(1000).optional(),
   templateSlug: z.string().trim().min(2),
   language: z.enum(["ar", "en"]),

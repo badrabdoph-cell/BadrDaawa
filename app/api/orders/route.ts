@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const parsed = orderRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "بيانات الطلب غير مكتملة", details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: "اكتب اسم العريس واسم العروسة وتاريخ الفرح، وبعدها تقدر تكمل الطلب على واتساب.", details: parsed.error.flatten() }, { status: 400 });
   }
 
   if (prisma) {
@@ -56,9 +56,9 @@ export async function POST(request: Request) {
       data: {
         groomName: parsed.data.groomName,
         brideName: parsed.data.brideName,
-        phone: parsed.data.phone,
+        phone: parsed.data.phone || "",
         weddingDate: new Date(parsed.data.weddingDate),
-        venue: parsed.data.venue,
+        venue: parsed.data.venue || "",
         notes: parsed.data.notes,
         language: parsed.data.language,
         templateId: template.id,

@@ -16,7 +16,7 @@ type PageProps = {
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
   const templates = await getTemplatesWithSettings();
-  const selected = params.template ? templates.find((template) => template.slug === params.template) : templates[0];
+  const selected = params.template ? templates.find((template) => template.slug === params.template) : undefined;
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
 
   return (
@@ -24,7 +24,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <SiteHeader />
       <main className="section compact">
         <div className="container order-shell">
-          <SectionIntro eyebrow="طلب جديد" title="اختر القالب أولًا" lead="المرحلة الأولى اختيار القالب، وبعدها تكتب بيانات الفرح ويتبعت الطلب كامل على واتساب." />
+          <SectionIntro eyebrow="طلب جديد" title="احجز تصميم دعوتك" lead="اختار الستايل اللي يليق بفرحتك، اكتب البيانات الأساسية، وبعدها هنكمل معاك على واتساب بهدوء وبشكل واضح." />
           <OrderForm initialTemplate={selected?.slug} templates={templateOptions} />
         </div>
       </main>
