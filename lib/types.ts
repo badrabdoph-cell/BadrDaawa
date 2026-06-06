@@ -23,6 +23,12 @@ export type TemplateDefinition = {
   previewImage: string;
   accentImage: string;
   musicUrl?: string;
+  photographer?: {
+    enabled: boolean;
+    name: string;
+    instagramUrl: string;
+    facebookUrl: string;
+  };
   customHtml?: string;
   isCustom?: boolean;
   enabled: boolean;

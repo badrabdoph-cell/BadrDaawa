@@ -4471,6 +4471,51 @@ body:has(.template-preview-floating-actions) .music-control {
 
 .template-code-import-panel {
   grid-column: 1 / -1;
+  padding: 0;
+  overflow: hidden;
+}
+
+.template-import-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  padding: 18px 22px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 950;
+}
+
+.template-import-summary::-webkit-details-marker {
+  display: none;
+}
+
+.template-import-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+}
+
+.template-import-summary strong {
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(189, 143, 63, 0.12);
+  color: #73501b;
+  font-size: 0.82rem;
+}
+
+.template-import-body {
+  display: grid;
+  gap: 14px;
+  padding: 0 22px 22px;
+}
+
+.template-import-body p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 850;
 }
 
 .template-code-import-form {
@@ -4492,6 +4537,7 @@ body:has(.template-preview-floating-actions) .music-control {
 }
 
 .template-editor-card {
+  scroll-margin-top: 18px;
   display: grid;
   grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
   gap: 18px;
@@ -4599,21 +4645,43 @@ body:has(.template-preview-floating-actions) .music-control {
   margin-bottom: 18px;
 }
 
-.template-search-panel,
-.photographer-admin-panel,
+.template-lookup-panel,
 .text-admin-panel {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   padding: clamp(18px, 3vw, 24px);
 }
 
+.template-lookup-panel,
 .text-admin-panel {
   grid-column: 1 / -1;
 }
 
+.template-lookup-head,
+.template-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.template-lookup-head h2,
+.template-section-head h2 {
+  margin: 8px 0 6px;
+}
+
+.template-lookup-head p,
+.template-section-head p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-weight: 850;
+  line-height: 1.7;
+}
+
 .template-link-search {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 10px;
 }
 
@@ -4629,6 +4697,72 @@ body:has(.template-preview-floating-actions) .music-control {
   outline: none;
 }
 
+.template-lookup-results {
+  display: grid;
+  gap: 12px;
+}
+
+.template-match-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.template-found-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(33, 28, 24, 0.1);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.92), rgba(245, 235, 216, 0.72)),
+    radial-gradient(circle at top left, rgba(189, 143, 63, 0.12), transparent 14rem);
+}
+
+.template-found-card img {
+  width: 96px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #191714;
+}
+
+.template-found-card h3 {
+  margin: 2px 0 4px;
+}
+
+.template-found-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.template-found-card small {
+  display: block;
+  margin-top: 6px;
+  color: #7a633d;
+  direction: ltr;
+  font-weight: 900;
+  text-align: left;
+}
+
+.invitation-found-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.template-empty-soft {
+  padding: 12px 14px;
+  border: 1px dashed rgba(33, 28, 24, 0.16);
+  border-radius: 14px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.52);
+  font-weight: 900;
+}
+
 .admin-toggle-row {
   display: flex;
   align-items: center;
@@ -4642,13 +4776,13 @@ body:has(.template-preview-floating-actions) .music-control {
   accent-color: #bd8f3f;
 }
 
-.photographer-admin-panel code {
-  display: block;
-  padding: 10px 12px;
+.template-inline-toggle {
+  align-self: end;
+  min-height: 48px;
+  padding: 11px 13px;
+  border: 1px solid rgba(33, 28, 24, 0.12);
   border-radius: var(--radius);
-  background: #171614;
-  color: #fff3c6;
-  direction: ltr;
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .admin-text-editor,
@@ -11669,7 +11803,8 @@ body:has(.template-preview-floating-actions) .music-control {
   .preview-admin-grid,
   .template-editor-card,
   .template-admin-tools,
-  .text-edit-grid {
+  .text-edit-grid,
+  .template-match-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -11869,8 +12004,25 @@ body:has(.template-preview-floating-actions) .music-control {
   .color-control-grid,
   .template-admin-tools,
   .text-edit-grid,
+  .template-match-grid,
   .template-link-search {
     grid-template-columns: 1fr;
+  }
+
+  .template-found-card,
+  .invitation-found-card {
+    grid-template-columns: 1fr;
+  }
+
+  .template-found-card img {
+    width: 100%;
+    height: 170px;
+  }
+
+  .template-lookup-head,
+  .template-section-head,
+  .template-import-summary {
+    display: grid;
   }
 
   .photographer-card {

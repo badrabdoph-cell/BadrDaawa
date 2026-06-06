@@ -1,17 +1,16 @@
 import Link from "next/link";
-import { Code2, Eye, Link2, Music2, Palette, Search, Settings2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Camera, Code2, Eye, ImagePlus, Music2, Palette, Settings2, ToggleLeft, ToggleRight } from "lucide-react";
+import { AdminTemplateLookup } from "@/components/AdminTemplateLookup";
 import { AdminTextEditor } from "@/components/AdminTextEditor";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
 import { getInvitationByCode } from "@/lib/invitation-data";
-import { extractInvitationCodeFromInput, shouldShowPhotographerCard } from "@/lib/site-settings";
+import { extractInvitationCodeFromInput } from "@/lib/site-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
-import { getInvitationUrl } from "@/lib/utils";
 
 export default async function AdminTemplatesPage({ searchParams }: { searchParams: Promise<{ invitation?: string; saved?: string; imported?: string }> }) {
   const params = await searchParams;
   const searchedCode = extractInvitationCodeFromInput(params.invitation || "");
   const searchedInvitation = searchedCode ? await getInvitationByCode(searchedCode) : undefined;
-  const showPhotographer = shouldShowPhotographerCard();
   const templates = await getTemplatesWithSettings();
 
   return (
@@ -25,96 +24,73 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
       </div>
 
       <section className="template-admin-tools">
-        <article className="panel template-code-import-panel">
-          <Code2 size={24} />
-          <h2>إنشاء قالب من كود</h2>
-          <p>الصق كود HTML كامل أو جزء من صفحة، وسيتم تحويله لقالب يظهر في الموقع والمعاينات والطلبات.</p>
-          <form className="template-code-import-form" action="/api/admin/templates/import" method="post">
-            <div className="admin-form-grid compact-controls">
-              <label className="field">
-                <span>اسم القالب</span>
-                <input name="name" placeholder="مثال: Ivory Motion" />
-              </label>
-              <label className="field">
-                <span>الرابط المختصر</span>
-                <input name="slug" placeholder="ivory-motion" pattern="[A-Za-z0-9 -]+" />
-              </label>
-              <label className="field">
-                <span>التصنيف</span>
-                <input name="category" placeholder="قالب مخصص" />
-              </label>
-              <label className="field">
-                <span>رابط الموسيقى</span>
-                <input name="musicUrl" placeholder="/assets/audio/badr-sara-wedding-3.mp3" />
-              </label>
-              <label className="field full">
-                <span>وصف قصير</span>
-                <input name="concept" placeholder="وصف يظهر في قائمة القوالب" />
-              </label>
-              <label className="field full">
-                <span>كود القالب</span>
-                <textarea
-                  name="html"
-                  rows={9}
-                  placeholder={`الصق HTML هنا. يمكنك استخدام:
+        <details className="panel template-code-import-panel">
+          <summary className="template-import-summary">
+            <span>
+              <Code2 size={22} />
+              إنشاء قالب من كود
+            </span>
+            <strong>فتح الأداة</strong>
+          </summary>
+          <div className="template-import-body">
+            <p>الصق كود HTML كامل أو جزء من صفحة، وسيتم تحويله لقالب يظهر في الموقع والمعاينات والطلبات.</p>
+            <form className="template-code-import-form" action="/api/admin/templates/import" method="post">
+              <div className="admin-form-grid compact-controls">
+                <label className="field">
+                  <span>اسم القالب</span>
+                  <input name="name" placeholder="مثال: Ivory Motion" />
+                </label>
+                <label className="field">
+                  <span>الرابط المختصر</span>
+                  <input name="slug" placeholder="ivory-motion" pattern="[A-Za-z0-9 -]+" />
+                </label>
+                <label className="field">
+                  <span>التصنيف</span>
+                  <input name="category" placeholder="قالب مخصص" />
+                </label>
+                <label className="field">
+                  <span>رابط الموسيقى</span>
+                  <input name="musicUrl" placeholder="/assets/audio/badr-sara-wedding-3.mp3 أو رابط أغنية مباشر" />
+                </label>
+                <label className="field full">
+                  <span>وصف قصير</span>
+                  <input name="concept" placeholder="وصف يظهر في قائمة القوالب" />
+                </label>
+                <label className="field full">
+                  <span>كود القالب</span>
+                  <textarea
+                    name="html"
+                    rows={9}
+                    placeholder={`الصق HTML هنا. يمكنك استخدام:
 {{groomName}} {{brideName}} {{coupleNames}}
 {{weddingDate}} {{weddingTime}} {{venue}} {{city}}
 {{mapUrl}} {{invitationUrl}} {{musicUrl}}
 {{gallery1}} {{gallery2}} {{gallery3}}`}
-                  required
-                />
-              </label>
-            </div>
-            <button className="btn btn-gold btn-glow" type="submit">
-              <Code2 size={18} />
-              تحويل الكود لقالب
-            </button>
-          </form>
-        </article>
+                    required
+                  />
+                </label>
+              </div>
+              <button className="btn btn-gold btn-glow" type="submit">
+                <Code2 size={18} />
+                تحويل الكود لقالب
+              </button>
+            </form>
+          </div>
+        </details>
 
-        <article className="panel template-search-panel">
-          <Search size={24} />
-          <h2>الوصول لقالب دعوة منشأة</h2>
-          <p>اكتب رابط الدعوة أو الكود فقط، وسيظهر القالب المرتبط بها للتعديل والمعاينة.</p>
-          <form className="template-link-search">
-            <input name="invitation" defaultValue={params.invitation || ""} placeholder="مثال: https://site.com/badr-sarah-1 أو badr-sarah-1" />
-            <button className="btn btn-gold" type="submit">
-              بحث
-            </button>
-          </form>
-          {searchedCode ? (
-            <div className={searchedInvitation ? "notice success" : "notice danger"}>
-              <Link2 size={18} />
-              {searchedInvitation ? (
-                <>
-                  تم العثور على دعوة {searchedInvitation.groomName} و {searchedInvitation.brideName}: <strong>{getInvitationUrl(searchedInvitation.code)}</strong>
-                  <Link className="btn btn-soft" href={`/${searchedInvitation.code}`}>
-                    فتح المعاينة
-                  </Link>
-                </>
-              ) : (
-                <>لم يتم العثور على دعوة بهذا الرابط.</>
-              )}
-            </div>
-          ) : null}
-        </article>
+        <AdminTemplateLookup templates={templates} initialQuery={params.invitation || ""} searchedInvitation={searchedInvitation} />
+      </section>
 
-        <article className="panel photographer-admin-panel">
+      <section className="panel text-admin-panel">
+        <div className="template-section-head">
+          <div>
+            <span className="eyebrow">Text Search</span>
+            <h2>تعديل النصوص بالبحث</h2>
+            <p>قسم مستقل للعثور على النصوص بسرعة وتعديلها بدون ما الاختيار يختفي أثناء الكتابة.</p>
+          </div>
           <Settings2 size={24} />
-          <h2>ظهور مربع المصور</h2>
-          <p>هذا التحكم خاص بالادمن الرئيسي للموقع بالكامل. لتفعيله أو إخفائه على الإنتاج استخدم المتغير التالي.</p>
-          <label className="admin-toggle-row">
-            <input type="checkbox" checked={showPhotographer} readOnly />
-            <span>{showPhotographer ? "ظاهر الآن" : "مخفي الآن"}</span>
-          </label>
-          <code>SHOW_PHOTOGRAPHER_CARD={showPhotographer ? "true" : "false"}</code>
-        </article>
-
-        <article className="panel text-admin-panel">
-          <h2>تعديل النصوص بالبحث</h2>
-          <p>ابحث عن كلمة، اختر النص المطلوب، ثم عدله بدون أن يختفي أثناء الكتابة.</p>
-          <AdminTextEditor />
-        </article>
+        </div>
+        <AdminTextEditor />
       </section>
 
       {params.saved ? (
@@ -131,7 +107,7 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
 
       <div className="admin-template-workspace">
         {templates.map((template) => (
-          <article className="template-editor-card" key={template.slug}>
+          <article className="template-editor-card" id={`template-${template.slug}`} key={template.slug}>
             <div className="template-live-preview">
               <iframe src={`/templates/${template.slug}/preview?silentPreview=1`} title={`معاينة ${template.arabicName}`} loading="lazy" allow="geolocation; notifications" />
             </div>
@@ -163,27 +139,34 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
                   <div className="admin-form-grid compact-controls">
                     <label className="field">
                       <span>اسم القالب</span>
-                      <input defaultValue={template.arabicName} />
+                      <input name="arabicName" defaultValue={template.arabicName} />
                     </label>
                     <label className="field">
                       <span>التصنيف</span>
-                      <input defaultValue={template.category} />
+                      <input name="category" defaultValue={template.category} />
+                    </label>
+                    <label className="field">
+                      <span>حالة الظهور</span>
+                      <select name="enabled" defaultValue={template.enabled ? "on" : "off"}>
+                        <option value="on">ظاهر في الموقع</option>
+                        <option value="off">مخفي مؤقتًا</option>
+                      </select>
                     </label>
                     <label className="field full">
                       <span>فكرة القالب</span>
-                      <textarea defaultValue={template.concept} rows={3} />
+                      <textarea name="concept" defaultValue={template.concept} rows={3} />
                     </label>
                     <label className="field">
                       <span>طريقة الفتح</span>
-                      <input defaultValue={template.opening} />
+                      <input name="opening" defaultValue={template.opening} />
                     </label>
                     <label className="field">
                       <span>نظام العرض</span>
-                      <input defaultValue={template.layout} />
+                      <input name="layout" defaultValue={template.layout} />
                     </label>
                     <label className="field full">
                       <span>الخطوط</span>
-                      <input defaultValue={template.typography} />
+                      <input name="typography" defaultValue={template.typography} />
                     </label>
                   </div>
                   <div className="template-edit-section">
@@ -195,30 +178,70 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
                       {Object.entries(template.palette).map(([key, value]) => (
                         <label className="field color-field" key={key}>
                           <span>{key}</span>
-                          <input type="color" defaultValue={value} />
+                          <input type="color" name={`palette${key.charAt(0).toUpperCase()}${key.slice(1)}`} defaultValue={value} />
                         </label>
                       ))}
                     </div>
                   </div>
                   <div className="template-edit-section">
                     <h3>
-                      <Eye size={18} />
+                      <ImagePlus size={18} />
                       صور معاينة القالب
                     </h3>
-                    <ImageCropUploader label="صور معاينة القالب" name="templateImage" maxFiles={3} defaultImages={[template.previewImage]} />
+                    <div className="admin-form-grid compact-controls">
+                      <label className="field">
+                        <span>رابط صورة المعاينة</span>
+                        <input name="previewImage" defaultValue={template.previewImage} placeholder="/assets/templates/example.svg" />
+                      </label>
+                      <label className="field">
+                        <span>رابط صورة داخلية/بديلة</span>
+                        <input name="accentImage" defaultValue={template.accentImage} placeholder="/assets/templates/example.svg" />
+                      </label>
+                    </div>
+                    <ImageCropUploader label="رفع صور بديلة" name="templateImage" maxFiles={2} defaultImages={[template.previewImage, template.accentImage].filter(Boolean)} />
                   </div>
                   <div className="template-edit-section">
                     <h3>
                       <Music2 size={18} />
-                      موسيقى القالب الافتراضية
+                      موسيقى القالب
                     </h3>
-                    <label className="field">
-                      <span>رابط الأغنية الافتراضي</span>
-                      <input name="musicUrl" defaultValue={template.musicUrl || ""} placeholder="/assets/audio/badr-sara-wedding-3.mp3" />
-                    </label>
+                    <div className="admin-form-grid compact-controls">
+                      <label className="field">
+                        <span>رابط الأغنية أو ملف صوت</span>
+                        <input name="musicUrl" defaultValue={template.musicUrl || ""} placeholder="/assets/audio/badr-sara-wedding-3.mp3 أو https://..." />
+                      </label>
+                      <label className="admin-toggle-row template-inline-toggle">
+                        <input name="musicMuted" type="checkbox" />
+                        <span>إسكات الموسيقى لهذا القالب</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="template-edit-section">
+                    <h3>
+                      <Camera size={18} />
+                      كارت المصور داخل القالب
+                    </h3>
+                    <div className="admin-form-grid compact-controls">
+                      <label className="admin-toggle-row template-inline-toggle">
+                        <input name="photographerEnabled" type="checkbox" defaultChecked={template.photographer?.enabled ?? true} />
+                        <span>إظهار كارت المصور</span>
+                      </label>
+                      <label className="field">
+                        <span>اسم المصور</span>
+                        <input name="photographerName" defaultValue={template.photographer?.name || "badrabdoph"} placeholder="اسم المصور" />
+                      </label>
+                      <label className="field">
+                        <span>لينك الانستجرام</span>
+                        <input name="photographerInstagramUrl" defaultValue={template.photographer?.instagramUrl || ""} placeholder="https://www.instagram.com/..." />
+                      </label>
+                      <label className="field">
+                        <span>لينك الفيسبوك</span>
+                        <input name="photographerFacebookUrl" defaultValue={template.photographer?.facebookUrl || ""} placeholder="https://www.facebook.com/..." />
+                      </label>
+                    </div>
                   </div>
                   <button className="btn btn-gold btn-glow" type="submit">
-                    حفظ موسيقى القالب
+                    حفظ تعديل القالب
                   </button>
                 </form>
               </details>

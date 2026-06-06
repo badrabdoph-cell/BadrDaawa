@@ -21,42 +21,59 @@ function getSocialShareLinks(invitationUrl: string) {
   ];
 }
 
+type PhotographerConfig = {
+  enabled: boolean;
+  name: string;
+  instagramUrl: string;
+  facebookUrl: string;
+};
+
+function getTemplatePhotographer(template: TemplateDefinition): PhotographerConfig {
+  return {
+    enabled: shouldShowPhotographerCard() && (template.photographer?.enabled ?? true),
+    name: template.photographer?.name || "badrabdoph",
+    instagramUrl: template.photographer?.instagramUrl || "https://www.instagram.com/",
+    facebookUrl: template.photographer?.facebookUrl || "https://www.facebook.com/",
+  };
+}
+
 export async function InvitationExperience({ invitation, template, disableMusic = false }: { invitation: Invitation; template: TemplateDefinition; disableMusic?: boolean }) {
   const templateMusicUrl = disableMusic ? null : invitation.musicUrl || template.musicUrl;
+  const photographer = getTemplatePhotographer(template);
 
   if (template.customHtml) {
     return <CustomHtmlInvitationExperience invitation={invitation} template={template} musicUrl={templateMusicUrl} />;
   }
 
   if (template.slug === "luxe-noir") {
-    return <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "ivory-arches") {
-    return <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "mobile-gold" || template.slug === "soft-gold") {
-    return <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "boho-chic") {
-    return <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "garden-elegance") {
-    return <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "featured-1") {
-    return <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "cinematic-rose") {
-    return <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "modern-cinematic") {
-    return <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "ethereal-glass") {
-    return <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "botanical-theme") {
-    return <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "royal-gold") {
     return <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
@@ -86,11 +103,11 @@ export async function InvitationExperience({ invitation, template, disableMusic 
     return <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
   if (template.slug === "cinematic-story") {
-    return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
 
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
 
   return (
     <main
@@ -150,14 +167,14 @@ export async function InvitationExperience({ invitation, template, disableMusic 
             </div>
             <div>
               <span className="invite-kicker">Photographer</span>
-              <h2>badrabdoph</h2>
+              <h2>{photographer.name}</h2>
               <p>لقطات فرحتنا بعدسة خاصة.</p>
             </div>
             <div className="photographer-socials" aria-label="روابط المصور">
-              <a href="#" aria-label="Facebook">
+              <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={19} />
               </a>
-              <a href="#" aria-label="Instagram">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={19} />
               </a>
             </div>
@@ -238,9 +255,9 @@ async function CustomHtmlInvitationExperience({ invitation, template, musicUrl }
   );
 }
 
-async function LuxeNoirInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
 
   return (
@@ -310,15 +327,15 @@ async function LuxeNoirInvitationExperience({ invitation, musicUrl }: { invitati
                   <Camera size={16} />
                   Photographer
                 </span>
-                <h2>badrabdoph</h2>
+                <h2>{photographer.name}</h2>
                 <p>لقطات فرحتنا بعدسة خاصة.</p>
               </div>
             </div>
             <div className="noir-socials">
-              <a href="#" aria-label="Facebook">
+              <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={20} />
               </a>
-              <a href="#" aria-label="Instagram">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={20} />
               </a>
             </div>
@@ -343,9 +360,9 @@ async function LuxeNoirInvitationExperience({ invitation, musicUrl }: { invitati
   );
 }
 
-async function IvoryArchesInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
 
   return (
@@ -417,13 +434,13 @@ async function IvoryArchesInvitationExperience({ invitation, musicUrl }: { invit
               <span>BA</span>
             </div>
             <span>Photography</span>
-            <h2>badrabdoph</h2>
+            <h2>{photographer.name}</h2>
             <p>لقطات فرحتنا بعدسة خاصة</p>
             <div className="ivory-socials">
-              <a href="#" aria-label="Facebook">
+              <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={22} strokeWidth={1.5} />
               </a>
-              <a href="#" aria-label="Instagram">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={22} strokeWidth={1.5} />
               </a>
             </div>
@@ -450,9 +467,9 @@ async function IvoryArchesInvitationExperience({ invitation, musicUrl }: { invit
   );
 }
 
-async function MobileGoldInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -528,14 +545,14 @@ async function MobileGoldInvitationExperience({ invitation, musicUrl }: { invita
                   <Camera size={12} />
                   Photo
                 </p>
-                <h2>badrabdoph</h2>
+                <h2>{photographer.name}</h2>
               </div>
             </div>
             <div className="mobile-gold-socials" aria-label="روابط المصور">
-              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+              <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={18} />
               </a>
-              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={18} />
               </a>
             </div>
@@ -564,9 +581,9 @@ async function MobileGoldInvitationExperience({ invitation, musicUrl }: { invita
   );
 }
 
-async function BohoChicInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -642,10 +659,10 @@ async function BohoChicInvitationExperience({ invitation, musicUrl }: { invitati
             </div>
             <div>
               <p>Captured By</p>
-              <h3>badrabdoph</h3>
+              <h3>{photographer.name}</h3>
             </div>
             <div className="boho-photographer-socials">
-              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={18} />
               </a>
             </div>
@@ -676,9 +693,9 @@ async function BohoChicInvitationExperience({ invitation, musicUrl }: { invitati
   );
 }
 
-async function GardenEleganceInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -781,14 +798,14 @@ async function GardenEleganceInvitationExperience({ invitation, musicUrl }: { in
               </div>
               <div>
                 <p>Official Photographer</p>
-                <h3>badrabdoph</h3>
+                <h3>{photographer.name}</h3>
                 <small>لتوثيق أجمل لحظاتنا</small>
               </div>
               <div className="garden-photographer-socials">
-                <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+                <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                   <Facebook size={17} />
                 </a>
-                <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+                <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                   <Instagram size={17} />
                 </a>
               </div>
@@ -822,9 +839,9 @@ async function GardenEleganceInvitationExperience({ invitation, musicUrl }: { in
   );
 }
 
-async function FeaturedOneInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -929,13 +946,13 @@ async function FeaturedOneInvitationExperience({ invitation, musicUrl }: { invit
               <span>BA</span>
             </div>
             <span>Photography</span>
-            <h2>badrabdoph</h2>
+            <h2>{photographer.name}</h2>
             <p>لقطات فرحتنا بعدسة خاصة</p>
             <div className="featured-socials">
-              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+              <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={22} strokeWidth={1.5} />
               </a>
-              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={22} strokeWidth={1.5} />
               </a>
             </div>
@@ -964,9 +981,9 @@ async function FeaturedOneInvitationExperience({ invitation, musicUrl }: { invit
   );
 }
 
-async function CinematicRoseInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
   const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
@@ -1043,14 +1060,14 @@ async function CinematicRoseInvitationExperience({ invitation, musicUrl }: { inv
               </span>
               <div>
                 <p>Captured By</p>
-                <h3>badrabdoph</h3>
+                <h3>{photographer.name}</h3>
               </div>
             </div>
             <div className="cinema-rose-socials">
-              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+              <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={20} />
               </a>
-              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+              <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
                 <Instagram size={20} />
               </a>
             </div>
@@ -1079,9 +1096,9 @@ async function CinematicRoseInvitationExperience({ invitation, musicUrl }: { inv
   );
 }
 
-async function ModernCinematicInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function ModernCinematicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1160,10 +1177,10 @@ async function ModernCinematicInvitationExperience({ invitation, musicUrl }: { i
               </span>
               <div>
                 <p>Captured By</p>
-                <h3>badrabdoph</h3>
+                <h3>{photographer.name}</h3>
               </div>
             </div>
-            <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">
+            <a href={photographer.instagramUrl} target="_blank" rel="noreferrer">
               Follow
             </a>
           </section>
@@ -1191,9 +1208,9 @@ async function ModernCinematicInvitationExperience({ invitation, musicUrl }: { i
   );
 }
 
-async function EtherealGlassInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1278,7 +1295,7 @@ async function EtherealGlassInvitationExperience({ invitation, musicUrl }: { inv
             </span>
             <div>
               <p>Photography</p>
-              <strong>badrabdoph</strong>
+              <strong>{photographer.name}</strong>
             </div>
           </section>
         ) : null}
@@ -1305,9 +1322,9 @@ async function EtherealGlassInvitationExperience({ invitation, musicUrl }: { inv
   );
 }
 
-async function BotanicalThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1354,7 +1371,7 @@ async function BotanicalThemeInvitationExperience({ invitation, musicUrl }: { in
               <Camera size={18} />
             </span>
             <div>
-              <h3>badrabdoph</h3>
+              <h3>{photographer.name}</h3>
               <p>لقطات طبيعية وواقعية بدون مبالغة</p>
             </div>
           </section>
@@ -1921,9 +1938,9 @@ async function MagazineThemeInvitationExperience({ invitation, musicUrl }: { inv
   );
 }
 
-async function CinematicStoryInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+async function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
-  const showPhotographer = shouldShowPhotographerCard();
+  const showPhotographer = photographer.enabled;
   const images = invitation.gallery.length ? invitation.gallery : galleryImages;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -2003,7 +2020,7 @@ async function CinematicStoryInvitationExperience({ invitation, musicUrl }: { in
             </div>
             <div>
               <span>Official Photographer</span>
-              <h2>badrabdoph</h2>
+              <h2>{photographer.name}</h2>
             </div>
           </section>
         ) : null}

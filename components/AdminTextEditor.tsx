@@ -38,15 +38,26 @@ const defaultTexts: EditableText[] = [
 ];
 
 export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText[] }) {
+  const [items, setItems] = useState(texts);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(texts[0]?.id || "");
-  const selected = texts.find((item) => item.id === selectedId) || texts[0];
+  const selected = items.find((item) => item.id === selectedId) || items[0];
+  const [draft, setDraft] = useState(selected?.value || "");
 
   const matches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return texts;
-    return texts.filter((item) => `${item.label} ${item.value}`.toLowerCase().includes(normalized));
-  }, [query, texts]);
+    if (!normalized) return items;
+    return items.filter((item) => `${item.label} ${item.value}`.toLowerCase().includes(normalized));
+  }, [items, query]);
+
+  function selectText(item: EditableText) {
+    setSelectedId(item.id);
+    setDraft(item.value);
+  }
+
+  function saveDraft() {
+    setItems((current) => current.map((item) => (item.id === selected?.id ? { ...item, value: draft } : item)));
+  }
 
   return (
     <section className="admin-text-editor">
@@ -57,7 +68,7 @@ export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText
       <div className="text-edit-grid">
         <div className="text-match-list">
           {matches.map((item) => (
-            <button className={item.id === selectedId ? "selected" : ""} key={item.id} type="button" onClick={() => setSelectedId(item.id)}>
+            <button className={item.id === selectedId ? "selected" : ""} key={item.id} type="button" onClick={() => selectText(item)}>
               <strong>{item.label}</strong>
               <span>{item.value}</span>
             </button>
@@ -66,9 +77,9 @@ export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText
         <div className="text-edit-panel">
           <FilePenLine size={22} />
           <h3>{selected?.label}</h3>
-          <p>اختيار النص ثابت أثناء التعديل، حتى لو كتبت كلمات مختلفة في مربع البحث.</p>
-          <textarea defaultValue={selected?.value} rows={5} />
-          <button className="btn btn-gold btn-glow" type="button">
+          <p>اختيار النص ثابت أثناء التعديل، والبحث يقرأ آخر نسخة محفوظة داخل الواجهة.</p>
+          <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={5} />
+          <button className="btn btn-gold btn-glow" type="button" onClick={saveDraft}>
             حفظ النص
           </button>
         </div>

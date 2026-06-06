@@ -15,7 +15,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
         <div>
           <span className="eyebrow">Create Client Invitation</span>
           <h2>إنشاء دعوة عميل جديدة</h2>
-          <p>اكتب بيانات الفرح وبيانات دخول العميل. الرابط بيتولد تلقائيًا مثل: `badr-sarah-1` ولو الاسم اتكرر هيزود الرقم.</p>
+          <p>اكتب بيانات الفرح وبيانات دخول العميل، وبعد الإنشاء هتظهر روابط الدعوة ولوحة تعديل العميل جاهزة للنسخ والإرسال.</p>
         </div>
         <WandSparkles size={30} />
       </div>
@@ -107,7 +107,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
             <ImagePlus size={17} />
             صور الدعوة
           </span>
-          <p>ارفع 3 صور صغيرة بالترتيب: الغلاف، لقطة ثانية، ولقطة ثالثة. الصور تتحفظ كرابط وتظهر للعميل مباشرة.</p>
+          <p>اختار 3 صور بالترتيب: الغلاف، لقطة ثانية، ولقطة ثالثة. الصور تتحفظ كرابط خفيف وتظهر للعميل مباشرة.</p>
           <div className="admin-gallery-slots">
             {["الغلاف", "الصورة الثانية", "الصورة الثالثة"].map((label, index) => (
               <div className="admin-gallery-slot" key={label}>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TemplateBrowser } from "@/components/TemplateBrowser";
-import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
   title: "قوالب الدعوات",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  const templates = await getTemplatesWithSettings();
+  const templates = await getPublicTemplatesWithSettings();
 
   return (
     <div className="page-shell">

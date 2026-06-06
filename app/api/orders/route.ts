@@ -4,7 +4,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { createFileOrder } from "@/lib/file-store";
-import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
+import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 
@@ -43,9 +43,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "اكتب اسم العريس واسم العروسة وتاريخ الفرح، وبعدها تقدر تكمل الطلب على واتساب.", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const selectedTemplate = await getTemplateWithSettings(parsed.data.templateSlug);
+  const selectedTemplate = await getPublicTemplateWithSettings(parsed.data.templateSlug);
   if (!selectedTemplate) {
-    return NextResponse.json({ error: "القالب المختار غير موجود" }, { status: 400 });
+    return NextResponse.json({ error: "القالب المختار غير متاح حاليًا" }, { status: 400 });
   }
 
   const imageUrls = await saveOrderImages(parsed.data.orderImages, request);

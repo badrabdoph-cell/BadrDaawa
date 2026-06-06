@@ -9,12 +9,29 @@ type TemplateSettings = Record<
   string,
   {
     musicUrl?: string;
+    musicMuted?: boolean;
+    arabicName?: string;
+    category?: string;
+    concept?: string;
+    opening?: string;
+    layout?: string;
+    typography?: string;
+    enabled?: boolean;
+    previewImage?: string;
+    accentImage?: string;
+    palette?: Partial<TemplateDefinition["palette"]>;
+    photographer?: {
+      enabled?: boolean;
+      name?: string;
+      instagramUrl?: string;
+      facebookUrl?: string;
+    };
   }
 >;
 
 const settingsPath = path.join(process.cwd(), "data", "template-settings.json");
 
-function cleanMusicUrl(value: string) {
+function cleanUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
 
@@ -26,6 +43,14 @@ function cleanMusicUrl(value: string) {
   } catch {
     return "";
   }
+}
+
+function cleanText(value: string, maxLength = 800) {
+  return value.trim().slice(0, maxLength);
+}
+
+function cleanHexColor(value: string) {
+  return /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim() : "";
 }
 
 async function readTemplateSettings(): Promise<TemplateSettings> {
@@ -47,14 +72,46 @@ async function writeTemplateSettings(settings: TemplateSettings) {
 
 function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings): TemplateDefinition {
   const override = settings[template.slug];
-  if (!override?.musicUrl) return template;
-  return { ...template, musicUrl: override.musicUrl };
+  if (!override) return template;
+
+  const palette = override.palette
+    ? {
+        ...template.palette,
+        ...Object.fromEntries(Object.entries(override.palette).filter(([, value]) => typeof value === "string" && cleanHexColor(value))),
+      }
+    : template.palette;
+
+  return {
+    ...template,
+    arabicName: override.arabicName || template.arabicName,
+    category: override.category || template.category,
+    concept: override.concept || template.concept,
+    opening: override.opening || template.opening,
+    layout: override.layout || template.layout,
+    typography: override.typography || template.typography,
+    enabled: typeof override.enabled === "boolean" ? override.enabled : template.enabled,
+    previewImage: override.previewImage || template.previewImage,
+    accentImage: override.accentImage || template.accentImage,
+    palette,
+    musicUrl: override.musicMuted ? "" : override.musicUrl || template.musicUrl,
+    photographer: {
+      enabled: override.photographer?.enabled ?? template.photographer?.enabled ?? true,
+      name: override.photographer?.name || template.photographer?.name || "badrabdoph",
+      instagramUrl: override.photographer?.instagramUrl || template.photographer?.instagramUrl || "https://www.instagram.com/",
+      facebookUrl: override.photographer?.facebookUrl || template.photographer?.facebookUrl || "https://www.facebook.com/",
+    },
+  };
 }
 
 export async function getTemplatesWithSettings() {
   const settings = await readTemplateSettings();
   const customTemplates = await getCustomTemplates();
   return [...invitationTemplates, ...customTemplates].map((template) => applyTemplateSettings(template, settings));
+}
+
+export async function getPublicTemplatesWithSettings() {
+  const templates = await getTemplatesWithSettings();
+  return templates.filter((template) => template.enabled);
 }
 
 export async function getTemplateWithSettings(slug: string) {
@@ -65,13 +122,18 @@ export async function getTemplateWithSettings(slug: string) {
   return applyTemplateSettings(template, settings);
 }
 
+export async function getPublicTemplateWithSettings(slug: string) {
+  const template = await getTemplateWithSettings(slug);
+  return template?.enabled ? template : undefined;
+}
+
 export async function updateTemplateMusic(slug: string, musicUrl: string) {
   const customTemplates = await getCustomTemplates();
   const template = getTemplateBySlug(slug) || customTemplates.find((item) => item.slug === slug);
   if (!template) return false;
 
   const settings = await readTemplateSettings();
-  const cleanedMusicUrl = cleanMusicUrl(musicUrl);
+  const cleanedMusicUrl = cleanUrl(musicUrl);
 
   if (cleanedMusicUrl) {
     settings[slug] = { ...(settings[slug] || {}), musicUrl: cleanedMusicUrl };
@@ -86,6 +148,89 @@ export async function updateTemplateMusic(slug: string, musicUrl: string) {
     }
   }
 
+  await writeTemplateSettings(settings);
+  return true;
+}
+
+export async function updateTemplateSettings(
+  slug: string,
+  input: {
+    arabicName?: string;
+    category?: string;
+    concept?: string;
+    opening?: string;
+    layout?: string;
+    typography?: string;
+    enabled?: boolean;
+    musicUrl?: string;
+    musicMuted?: boolean;
+    previewImage?: string;
+    accentImage?: string;
+    palette?: Partial<TemplateDefinition["palette"]>;
+    photographer?: {
+      enabled?: boolean;
+      name?: string;
+      instagramUrl?: string;
+      facebookUrl?: string;
+    };
+  },
+) {
+  const customTemplates = await getCustomTemplates();
+  const template = getTemplateBySlug(slug) || customTemplates.find((item) => item.slug === slug);
+  if (!template) return false;
+
+  const settings = await readTemplateSettings();
+  const next = { ...(settings[slug] || {}) };
+
+  const arabicName = cleanText(input.arabicName || "", 90);
+  const category = cleanText(input.category || "", 80);
+  const concept = cleanText(input.concept || "", 500);
+  const opening = cleanText(input.opening || "", 240);
+  const layout = cleanText(input.layout || "", 240);
+  const typography = cleanText(input.typography || "", 240);
+  const previewImage = cleanUrl(input.previewImage || "");
+  const accentImage = cleanUrl(input.accentImage || "");
+  const musicUrl = cleanUrl(input.musicUrl || "");
+  const instagramUrl = cleanUrl(input.photographer?.instagramUrl || "");
+  const facebookUrl = cleanUrl(input.photographer?.facebookUrl || "");
+
+  if (arabicName) next.arabicName = arabicName;
+  else delete next.arabicName;
+  if (category) next.category = category;
+  else delete next.category;
+  if (concept) next.concept = concept;
+  else delete next.concept;
+  if (opening) next.opening = opening;
+  else delete next.opening;
+  if (layout) next.layout = layout;
+  else delete next.layout;
+  if (typography) next.typography = typography;
+  else delete next.typography;
+  if (previewImage) next.previewImage = previewImage;
+  else delete next.previewImage;
+  if (accentImage) next.accentImage = accentImage;
+  else delete next.accentImage;
+
+  next.enabled = input.enabled !== false;
+  next.musicMuted = input.musicMuted === true;
+  if (musicUrl && !next.musicMuted) next.musicUrl = musicUrl;
+  else delete next.musicUrl;
+
+  const paletteEntries = Object.entries(input.palette || {})
+    .map(([key, value]) => [key, cleanHexColor(String(value || ""))])
+    .filter(([, value]) => value);
+  if (paletteEntries.length) next.palette = Object.fromEntries(paletteEntries) as Partial<TemplateDefinition["palette"]>;
+  else delete next.palette;
+
+  const photographerName = cleanText(input.photographer?.name || "", 90);
+  next.photographer = {
+    enabled: input.photographer?.enabled !== false,
+    ...(photographerName ? { name: photographerName } : {}),
+    ...(instagramUrl ? { instagramUrl } : {}),
+    ...(facebookUrl ? { facebookUrl } : {}),
+  };
+
+  settings[slug] = next;
   await writeTemplateSettings(settings);
   return true;
 }

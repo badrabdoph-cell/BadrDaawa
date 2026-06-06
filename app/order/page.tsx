@@ -4,7 +4,7 @@ import { OrderForm } from "@/components/OrderForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SectionIntro } from "@/components/SectionIntro";
-import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
   title: "اطلب دعوتك",
@@ -16,7 +16,7 @@ type PageProps = {
 
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
-  const templates = await getTemplatesWithSettings();
+  const templates = await getPublicTemplatesWithSettings();
   const selected = params.template ? templates.find((template) => template.slug === params.template) : undefined;
   if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
