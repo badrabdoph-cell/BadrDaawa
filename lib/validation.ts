@@ -9,6 +9,7 @@ export const orderRequestSchema = z.object({
   weddingDate: z.string().trim().min(8).refine(validDateString, "اكتب تاريخ صحيح"),
   venue: z.string().trim().optional().default(""),
   notes: z.string().trim().max(1000).optional(),
+  orderImages: z.array(z.string()).max(3).optional().default([]),
   templateSlug: z.string().trim().min(2),
   language: z.enum(["ar", "en"]),
 });

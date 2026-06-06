@@ -1,9 +1,38 @@
 import { NextResponse } from "next/server";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
+import { getPublicUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
+
+async function saveOrderImages(images: string[], request: Request) {
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "order-requests");
+  const savedUrls: string[] = [];
+
+  for (const image of images.slice(0, 3)) {
+    if (image.startsWith("/")) {
+      savedUrls.push(getPublicUrl(image, request.headers, new URL(request.url).origin).toString());
+      continue;
+    }
+
+    const match = image.match(/^data:image\/jpeg;base64,([a-zA-Z0-9+/=]+)$/);
+    if (!match) continue;
+
+    const bytes = Buffer.from(match[1], "base64");
+    if (!bytes.length || bytes.length > 2.5 * 1024 * 1024) continue;
+
+    await mkdir(uploadDir, { recursive: true });
+    const fileName = `order-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.jpg`;
+    await writeFile(path.join(uploadDir, fileName), bytes);
+    savedUrls.push(getPublicUrl(`/uploads/order-requests/${fileName}`, request.headers, new URL(request.url).origin).toString());
+  }
+
+  return savedUrls;
+}
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -18,6 +47,8 @@ export async function POST(request: Request) {
     if (!selectedTemplate) {
       return NextResponse.json({ error: "القالب المختار غير موجود" }, { status: 400 });
     }
+    const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
+    const notes = [parsed.data.notes, imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : ""].filter(Boolean).join("\n\n");
 
     const template = await prisma.weddingTemplate.upsert({
       where: { slug: parsed.data.templateSlug },
@@ -59,12 +90,15 @@ export async function POST(request: Request) {
         phone: parsed.data.phone || "",
         weddingDate: new Date(parsed.data.weddingDate),
         venue: parsed.data.venue || "",
-        notes: parsed.data.notes,
+        notes,
         language: parsed.data.language,
         templateId: template.id,
       },
     });
+
+    return NextResponse.json({ ok: true, imageUrls });
   }
 
-  return NextResponse.json({ ok: true });
+  const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
+  return NextResponse.json({ ok: true, imageUrls });
 }

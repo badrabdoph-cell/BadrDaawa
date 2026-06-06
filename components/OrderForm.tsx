@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Camera, Check, Eye, Loader2, MessageCircle, Palette } from "lucide-react";
+import { ImageCropUploader } from "@/components/ImageCropUploader";
 import type { TemplateDefinition } from "@/lib/types";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
@@ -73,30 +74,44 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     event.preventDefault();
     setState("loading");
     setMessage("");
+    const formData = new FormData(event.currentTarget);
+    const orderImages = formData.getAll("orderImage").map((value) => String(value)).filter(Boolean).slice(0, 3);
+    const currentForm: FormState = {
+      ...form,
+      templateSlug: selectedTemplate.slug,
+      groomName: String(formData.get("groomName") || "").trim(),
+      brideName: String(formData.get("brideName") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
+      weddingDate: String(formData.get("weddingDate") || "").trim(),
+      mapUrl: String(formData.get("mapUrl") || "").trim(),
+      venue: String(formData.get("venue") || "").trim(),
+      notes: String(formData.get("notes") || "").trim(),
+    };
 
-    const message = [
+    const baseMessage = [
       "طلب دعوة جديد من BadrDaawa",
       `القالب: ${selectedTemplate.arabicName} - ${selectedTemplate.name}`,
-      `العريس: ${fieldValue(form.groomName)}`,
-      `العروسة: ${fieldValue(form.brideName)}`,
-      `رقم الموبايل: ${fieldValue(form.phone)}`,
-      `تاريخ الفرح: ${form.weddingDate}`,
-      `العنوان / اسم القاعة: ${fieldValue(form.venue)}`,
-      `لوكيشن الخريطة: ${fieldValue(form.mapUrl)}`,
-      form.notes ? `ملاحظات: ${form.notes}` : "",
+      `العريس: ${fieldValue(currentForm.groomName)}`,
+      `العروسة: ${fieldValue(currentForm.brideName)}`,
+      `رقم الموبايل: ${fieldValue(currentForm.phone)}`,
+      `تاريخ الفرح: ${currentForm.weddingDate}`,
+      `العنوان / اسم القاعة: ${fieldValue(currentForm.venue)}`,
+      `لوكيشن الخريطة: ${fieldValue(currentForm.mapUrl)}`,
+      currentForm.notes ? `ملاحظات: ${currentForm.notes}` : "",
     ]
       .filter(Boolean)
       .join("\n");
 
     try {
-      const orderVenue = [form.venue, form.mapUrl].filter((value) => value.trim()).join(" - ");
+      const orderVenue = [currentForm.venue, currentForm.mapUrl].filter((value) => value.trim()).join(" - ");
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          ...currentForm,
           venue: orderVenue,
-          notes: [form.notes, form.mapUrl ? `لوكيشن الخريطة: ${form.mapUrl}` : ""].filter(Boolean).join("\n"),
+          notes: [currentForm.notes, currentForm.mapUrl ? `لوكيشن الخريطة: ${currentForm.mapUrl}` : ""].filter(Boolean).join("\n"),
+          orderImages,
         }),
       });
 
@@ -107,7 +122,9 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
         return;
       }
 
-      window.location.href = getWhatsAppOrderUrl(message);
+      const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
+      const imageLines = data?.imageUrls?.length ? `\n\nصور الدعوة بالترتيب:\n${data.imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
+      window.location.href = getWhatsAppOrderUrl(`${baseMessage}${imageLines}`);
     } catch {
       setState("error");
       setMessage("تعذر إرسال الطلب للخادم. حاول مرة أخرى.");
@@ -172,31 +189,36 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
           <div className="input-grid">
             <div className="field">
               <label htmlFor="groomName">اسم العريس *</label>
-              <input id="groomName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Badr" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required />
+              <input id="groomName" name="groomName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Badr" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required />
             </div>
             <div className="field">
               <label htmlFor="brideName">اسم العروسة *</label>
-              <input id="brideName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Sara" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
+              <input id="brideName" name="brideName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Sara" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required />
             </div>
             <div className="field">
               <label htmlFor="phone">رقم الموبايل</label>
-              <input id="phone" inputMode="tel" placeholder="اختياري، لكن يسهّل علينا التواصل السريع معاك" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
+              <input id="phone" name="phone" inputMode="tel" placeholder="اختياري، لكن يسهّل علينا التواصل السريع معاك" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="weddingDate">تاريخ الفرح *</label>
-              <input id="weddingDate" type="date" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required />
+              <input id="weddingDate" name="weddingDate" type="date" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required />
             </div>
             <div className="field full">
               <label htmlFor="mapUrl">اللوكيشن على الخريطة</label>
-              <input id="mapUrl" inputMode="url" placeholder="اختياري: انسخ رابط Google Maps هنا لو متاح، أو اتركه ونضيفه معاك لاحقًا" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} />
+              <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="اختياري: انسخ رابط Google Maps هنا لو متاح، أو اتركه ونضيفه معاك لاحقًا" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} />
             </div>
             <div className="field full">
               <label htmlFor="venue">العنوان واسم القاعة</label>
-              <input id="venue" placeholder="اختياري: مثال قاعة رويال - البحيرة. ينفع نكمله معاك بعد الطلب" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} />
+              <input id="venue" name="venue" placeholder="اختياري: مثال قاعة رويال - البحيرة. ينفع نكمله معاك بعد الطلب" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} />
             </div>
             <div className="field full">
               <label htmlFor="notes">ملاحظات اختيارية</label>
-              <textarea id="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="اكتب أي ذوق تفضله، ألوان معينة، نص خاص، أو أي تعديل تحب نشوفه في الدعوة" />
+              <textarea id="notes" name="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="اكتب أي ذوق تفضله، ألوان معينة، نص خاص، أو أي تعديل تحب نشوفه في الدعوة" />
+            </div>
+            <div className="field full order-images-field">
+              <span>صور الدعوة</span>
+              <p>اختار 3 صور بالترتيب: الصورة الأولى، ثم الثانية، ثم الثالثة. سيتم ضغط الصور وتجهيزها قبل إرسال الطلب.</p>
+              <ImageCropUploader name="orderImage" label="إضافة صور الدعوة بالترتيب" targetWidth={1200} targetHeight={1500} maxFiles={3} />
             </div>
           </div>
 
@@ -208,9 +230,14 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
             </span>
           </a>
 
+          <a className="btn btn-soft btn-glass order-preview-button" href={previewHref()} target="_blank" rel="noreferrer">
+            <Eye size={19} />
+            معاينة الدعوة
+          </a>
+
           <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>
             {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
-            {state === "loading" ? "جاري إرسال الطلب" : "تأكيد الطلب على واتساب"}
+            {state === "loading" ? "جاري تأكيد الطلب" : "تأكيد الطلب"}
           </button>
           {message ? <p className="status danger">{message}</p> : null}
           <button className="btn btn-soft order-back-button" type="button" onClick={() => setStep("template")}>
