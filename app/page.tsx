@@ -61,7 +61,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara">
-                <iframe src="/badr-sarah-1" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation; autoplay; notifications" />
+                <iframe src="/badr-sarah-1?silentPreview=1" title="معاينة مباشرة لقالب Royal Envelope" loading="lazy" allow="geolocation; notifications" />
               </div>
               <div className="button-row live-preview-actions">
                 <Link className="btn btn-gold btn-glow" href="/badr-sarah-1">

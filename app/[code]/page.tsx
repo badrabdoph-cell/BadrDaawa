@@ -7,6 +7,7 @@ import { getInvitationUrl } from "@/lib/utils";
 
 type PageProps = {
   params: Promise<{ code: string }>;
+  searchParams?: Promise<{ silentPreview?: string; embed?: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -22,8 +23,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function InvitationPage({ params }: PageProps) {
-  const { code } = await params;
+export default async function InvitationPage({ params, searchParams }: PageProps) {
+  const [{ code }, query] = await Promise.all([params, searchParams]);
+  const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
   const invitation = await getInvitationByCode(code);
   if (!invitation || !invitation.isActive) {
     notFound();
@@ -34,7 +36,9 @@ export default async function InvitationPage({ params }: PageProps) {
     notFound();
   }
 
-  await recordInvitationView(invitation.code);
+  if (!isSilentPreview) {
+    await recordInvitationView(invitation.code);
+  }
 
-  return <InvitationExperience invitation={invitation} template={template} />;
+  return <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />;
 }

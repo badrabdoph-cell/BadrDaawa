@@ -12,8 +12,10 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [needsInteraction, setNeedsInteraction] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const isDisabled = musicUrl === null;
 
   const audioSource = useMemo(() => {
+    if (musicUrl === null) return "";
     const source = musicUrl?.trim();
     return source || DEFAULT_INVITE_MUSIC_URL;
   }, [musicUrl]);
@@ -25,7 +27,7 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
 
   const start = useCallback(async () => {
     const audio = audioRef.current;
-    if (!audio || hasErrorRef.current) return false;
+    if (isDisabled || !audio || hasErrorRef.current) return false;
 
     try {
       audio.loop = true;
@@ -43,7 +45,7 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       setNeedsInteraction(true);
       return false;
     }
-  }, [clearRetryTimer]);
+  }, [clearRetryTimer, isDisabled]);
 
   const stop = useCallback(() => {
     clearRetryTimer();
@@ -54,6 +56,15 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
 
   useEffect(() => {
     const audio = audioRef.current;
+    if (isDisabled) {
+      clearRetryTimer();
+      audio?.pause();
+      setIsPlaying(false);
+      setNeedsInteraction(false);
+      setHasError(false);
+      return undefined;
+    }
+
     hasErrorRef.current = false;
     setHasError(false);
     setIsPlaying(false);
@@ -98,7 +109,9 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       window.removeEventListener("focus", startAfterInteraction);
       document.removeEventListener("visibilitychange", restartWhenVisible);
     };
-  }, [audioSource, clearRetryTimer, start]);
+  }, [audioSource, clearRetryTimer, isDisabled, start]);
+
+  if (isDisabled) return null;
 
   return (
     <div className="music-control">
