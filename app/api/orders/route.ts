@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
+import { createFileOrder } from "@/lib/file-store";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
@@ -48,9 +49,24 @@ export async function POST(request: Request) {
   }
 
   const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
-  const notes = [parsed.data.notes, imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : ""].filter(Boolean).join("\n\n");
+  const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
+  const notes = [parsed.data.notes, imageNotes].filter(Boolean).join("\n\n");
+  let orderId = "";
 
-  if (prisma) {
+  if (!prisma) {
+    const order = await createFileOrder({
+      groomName: parsed.data.groomName,
+      brideName: parsed.data.brideName,
+      phone: parsed.data.phone || "",
+      weddingDate: parsed.data.weddingDate,
+      venue: parsed.data.venue || "",
+      notes,
+      imageUrls,
+      templateSlug: selectedTemplate.slug,
+      language: parsed.data.language,
+    });
+    orderId = order.id;
+  } else {
     try {
       const template = await prisma.weddingTemplate.upsert({
         where: { slug: parsed.data.templateSlug },
@@ -85,7 +101,7 @@ export async function POST(request: Request) {
         select: { id: true },
       });
 
-      await prisma.orderRequest.create({
+      const order = await prisma.orderRequest.create({
         data: {
           groomName: parsed.data.groomName,
           brideName: parsed.data.brideName,
@@ -96,11 +112,25 @@ export async function POST(request: Request) {
           language: parsed.data.language,
           templateId: template.id,
         },
+        select: { id: true },
       });
+      orderId = order.id;
     } catch (error) {
       console.error("Failed to persist order request", error);
+      const order = await createFileOrder({
+        groomName: parsed.data.groomName,
+        brideName: parsed.data.brideName,
+        phone: parsed.data.phone || "",
+        weddingDate: parsed.data.weddingDate,
+        venue: parsed.data.venue || "",
+        notes,
+        imageUrls,
+        templateSlug: selectedTemplate.slug,
+        language: parsed.data.language,
+      });
+      orderId = order.id;
     }
   }
 
-  return NextResponse.json({ ok: true, imageUrls });
+  return NextResponse.json({ ok: true, orderId, imageUrls });
 }

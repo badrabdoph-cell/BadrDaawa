@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { OrderForm } from "@/components/OrderForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -17,6 +18,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
   const templates = await getTemplatesWithSettings();
   const selected = params.template ? templates.find((template) => template.slug === params.template) : undefined;
+  if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
 
   return (
@@ -24,8 +26,8 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <SiteHeader />
       <main className="section compact">
         <div className="container order-shell">
-          <SectionIntro eyebrow="طلب جديد" title="احجز تصميم دعوتك" lead="اختار الستايل اللي يليق بفرحتك، اكتب البيانات الأساسية، وبعدها هنكمل معاك على واتساب بهدوء وبشكل واضح." />
-          <OrderForm initialTemplate={selected?.slug} templates={templateOptions} />
+          <SectionIntro eyebrow="الخطوة الثانية" title="كمّل بيانات دعوتك" lead="القالب اتحدد، دلوقتي اكتب البيانات الأساسية وارفع الصور اللي تحب تظهر في الدعوة. بعد التأكيد هنكمل معاك التفاصيل على واتساب." />
+          <OrderForm initialTemplate={selected.slug} templates={templateOptions} />
         </div>
       </main>
       <SiteFooter />

@@ -32,11 +32,11 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         </Link>
         <p>{template.concept}</p>
         <div className="button-row">
-          <Link className="btn btn-soft" href={`/templates/${template.slug}/preview`}>
+          <Link className="btn btn-soft btn-glass template-card-preview-button" href={`/templates/${template.slug}/preview`}>
             <Eye size={17} />
             معاينة
           </Link>
-          <Link className="btn btn-primary" href={`/order?template=${template.slug}`}>
+          <Link className="btn btn-gold btn-glow template-card-select-button" href={`/order?template=${template.slug}`}>
             <Sparkles size={17} />
             اختار
           </Link>

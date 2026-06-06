@@ -36,7 +36,7 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link className={plan.featured ? "btn btn-gold" : "btn btn-soft"} href="/order">
+                <Link className={plan.featured ? "btn btn-gold" : "btn btn-soft"} href="/templates">
                   اطلب الآن
                 </Link>
               </article>

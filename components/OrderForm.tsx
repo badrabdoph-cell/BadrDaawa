@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { ArrowRight, Camera, Check, Eye, Loader2, MessageCircle, Palette } from "lucide-react";
+import { ArrowRight, CalendarDays, Camera, Eye, Images, Loader2, MapPin, MessageCircle, UserRound } from "lucide-react";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
 import type { TemplateDefinition } from "@/lib/types";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
@@ -24,23 +24,22 @@ type OrderFormValues = Pick<FormState, "groomName" | "brideName" | "phone" | "we
 
 const orderImageSlots = [
   {
-    title: "الصورة الأولى",
-    hint: "الصورة الأساسية اللي تظهر في أول الدعوة والمعاينة.",
+    title: "الغلاف",
+    hint: "الصورة الأساسية",
   },
   {
-    title: "الصورة الثانية",
-    hint: "لقطة قريبة أو تفصيلة تكمل شكل القالب.",
+    title: "لقطة 2",
+    hint: "تفصيلة قريبة",
   },
   {
-    title: "الصورة الثالثة",
-    hint: "صورة إضافية للجاليري والحركة داخل الدعوة.",
+    title: "لقطة 3",
+    hint: "صورة إضافية",
   },
 ];
 
 export function OrderForm({ initialTemplate, templates }: { initialTemplate?: string; templates: OrderTemplateOption[] }) {
   const fallbackTemplate = templates[0] || { slug: "royal-envelope", name: "Royal Envelope", arabicName: "Royal Envelope", previewImage: "/assets/templates/royal-envelope.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
-  const [step, setStep] = useState<"template" | "details">(initialTemplate ? "details" : "template");
   const [form, setForm] = useState<FormState>({
     groomName: "",
     brideName: "",
@@ -73,9 +72,8 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     if (message) setMessage("");
   }
 
-  function selectTemplate(slug: string) {
-    updateField("templateSlug", slug);
-    setStep("details");
+  function goToTemplates() {
+    window.location.href = "/templates";
   }
 
   function photographerWhatsAppUrl() {
@@ -86,11 +84,48 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     return value.trim() || fallback;
   }
 
+  function toEnglishDigits(value: string) {
+    const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+    return value.replace(/[٠-٩۰-۹]/g, (digit) => {
+      const arabicIndex = arabicDigits.indexOf(digit);
+      if (arabicIndex >= 0) return String(arabicIndex);
+      const persianIndex = persianDigits.indexOf(digit);
+      return persianIndex >= 0 ? String(persianIndex) : digit;
+    });
+  }
+
+  function normalizeWeddingDate(value: string) {
+    const clean = toEnglishDigits(value).trim().replace(/\s*([\\/.-])\s*/g, "$1").replace(/\s+/g, " ");
+    const isoMatch = clean.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    const dmyMatch = clean.match(/^(\d{1,2})[\\/.\- ](\d{1,2})[\\/.\- ](\d{4})$/);
+    const match = isoMatch
+      ? { year: Number(isoMatch[1]), month: Number(isoMatch[2]), day: Number(isoMatch[3]) }
+      : dmyMatch
+        ? { year: Number(dmyMatch[3]), month: Number(dmyMatch[2]), day: Number(dmyMatch[1]) }
+        : null;
+    if (!match) return "";
+    const date = new Date(match.year, match.month - 1, match.day);
+    if (date.getFullYear() !== match.year || date.getMonth() !== match.month - 1 || date.getDate() !== match.day) return "";
+    return `${match.year}-${String(match.month).padStart(2, "0")}-${String(match.day).padStart(2, "0")}`;
+  }
+
+  function displayWeddingDate(value: string) {
+    const normalized = normalizeWeddingDate(value) || value;
+    const date = new Date(`${normalized}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat("ar-EG", { dateStyle: "full" }).format(date);
+  }
+
+  const normalizedDate = normalizeWeddingDate(form.weddingDate);
+  const readableDate = normalizedDate ? displayWeddingDate(normalizedDate) : "";
+
   function previewHref(values: Partial<FormState> = form) {
     const params = new URLSearchParams();
     params.set("groomName", values.groomName || "اسم العريس");
     params.set("brideName", values.brideName || "اسم العروسة");
-    if (values.weddingDate) params.set("weddingDate", values.weddingDate);
+    const weddingDate = normalizeWeddingDate(values.weddingDate || "");
+    if (weddingDate) params.set("weddingDate", weddingDate);
     if (values.venue) params.set("venue", values.venue);
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     return `/templates/${form.templateSlug}/preview?${params.toString()}`;
@@ -113,7 +148,8 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     const nextErrors: FieldErrors = {};
     if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
     if (!values.brideName) nextErrors.brideName = "اكتب اسم العروسة كما تحب ظهوره في الدعوة.";
-    if (!values.weddingDate) nextErrors.weddingDate = "اختار تاريخ الفرح عشان نجهز الدعوة والعداد.";
+    if (!values.weddingDate) nextErrors.weddingDate = "اكتب تاريخ الفرح عشان نجهز الدعوة والعداد.";
+    else if (!normalizeWeddingDate(values.weddingDate)) nextErrors.weddingDate = "اكتب التاريخ بالشكل ده: 26 / 10 / 2026.";
     if (values.phone && values.phone.replace(/\D/g, "").length < 8) nextErrors.phone = "رقم الموبايل قصير. اكتب رقم صحيح أو اتركه فارغ.";
     if (values.mapUrl && !/^https?:\/\/\S+\.\S+/.test(values.mapUrl)) nextErrors.mapUrl = "رابط اللوكيشن غير واضح. انسخ رابط Google Maps كامل أو اترك الخانة فارغة.";
     return nextErrors;
@@ -137,25 +173,26 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   function openPreview() {
     const currentForm = getCurrentFormFromDom();
     if (showValidationErrors(validateOrder(currentForm))) return;
-    window.location.href = previewHref(currentForm);
+    window.location.href = previewHref({ ...currentForm, weddingDate: normalizeWeddingDate(currentForm.weddingDate) });
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const orderImages = formData.getAll("orderImage").map((value) => String(value)).filter(Boolean).slice(0, 3);
+    const rawWeddingDate = String(formData.get("weddingDate") || "").trim();
     const currentForm: FormState = {
       ...form,
       templateSlug: selectedTemplate.slug,
       groomName: String(formData.get("groomName") || "").trim(),
       brideName: String(formData.get("brideName") || "").trim(),
       phone: String(formData.get("phone") || "").trim(),
-      weddingDate: String(formData.get("weddingDate") || "").trim(),
+      weddingDate: normalizeWeddingDate(rawWeddingDate) || rawWeddingDate,
       mapUrl: String(formData.get("mapUrl") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
       notes: String(formData.get("notes") || "").trim(),
     };
-    if (showValidationErrors(validateOrder(currentForm))) return;
+    if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }))) return;
     setState("loading");
     setMessage("");
 
@@ -165,7 +202,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
       `العريس: ${fieldValue(currentForm.groomName)}`,
       `العروسة: ${fieldValue(currentForm.brideName)}`,
       `رقم الموبايل: ${fieldValue(currentForm.phone)}`,
-      `تاريخ الفرح: ${currentForm.weddingDate}`,
+      `تاريخ الفرح: ${displayWeddingDate(currentForm.weddingDate)}`,
       `العنوان / اسم القاعة: ${fieldValue(currentForm.venue)}`,
       `لوكيشن الخريطة: ${fieldValue(currentForm.mapUrl)}`,
       currentForm.notes ? `ملاحظات: ${currentForm.notes}` : "",
@@ -205,56 +242,16 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   return (
     <div className="order-flow">
       <div className="order-steps" aria-label="مراحل الطلب">
-        <span className={step === "template" ? "active" : ""}>1. اختر القالب</span>
-        <span className={step === "details" ? "active" : ""}>2. بيانات الفرح</span>
+        <span>1. شوف الأشكال</span>
+        <span className="active">2. بيانات الفرح</span>
       </div>
 
-      {step === "template" ? (
-        <section className="template-picker">
-          <div className="template-picker-head">
-            <span className="eyebrow">المرحلة الأولى</span>
-            <h2>اختار الاستايل الأقرب لفرحتك</h2>
-            <p>دوس على القالب اللي عجبك، وتقدر ترجع تغيره في أي وقت قبل تأكيد الطلب.</p>
-          </div>
-          <div className="order-template-grid">
-            {templates.map((template) => (
-              <button
-                className={`order-template-card ${form.templateSlug === template.slug ? "selected" : ""}`}
-                key={template.slug}
-                type="button"
-                onClick={() => selectTemplate(template.slug)}
-              >
-                <span className="template-thumb">
-                  <img src={template.previewImage} alt={template.arabicName} />
-                </span>
-                <span className="template-card-copy">
-                  <strong>{template.arabicName}</strong>
-                  <small>{template.name}</small>
-                </span>
-                <span className="template-select-mark">
-                  <Check size={16} />
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : (
-        <form className="form-panel details-form" onSubmit={submitOrder} ref={formRef} noValidate>
-          <div className="selected-template-strip">
-            <div>
-              <span className="eyebrow">القالب المختار</span>
-              <strong>{selectedTemplate.arabicName}</strong>
-            </div>
-            <div className="selected-template-actions">
-              <button className="btn btn-soft btn-glass" type="button" onClick={() => setStep("template")}>
-                <Palette size={17} />
-                تغيير القالب
-              </button>
-              <button className="btn btn-soft btn-glass" type="button" onClick={openPreview}>
-                <Eye size={17} />
-                عاين ببياناتي
-              </button>
-            </div>
+      <form className="form-panel details-form" onSubmit={submitOrder} ref={formRef} noValidate>
+          <div className="selected-template-dot">
+            <span aria-hidden="true" />
+            <p>
+              القالب المختار: <strong>{selectedTemplate.arabicName}</strong>
+            </p>
           </div>
           {message ? (
             <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
@@ -264,42 +261,68 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
           ) : null}
 
           <div className="input-grid">
+            <div className="order-section-label full">
+              <UserRound size={18} />
+              <div>
+                <strong>الأسماء والتواصل</strong>
+                <span>اكتب الأسماء زي ما تحب تشوفها في أول الدعوة.</span>
+              </div>
+            </div>
             <div className={`field ${errors.groomName ? "has-error" : ""}`}>
               <label htmlFor="groomName">اسم العريس *</label>
-              <input id="groomName" name="groomName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Badr" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
+              <input id="groomName" name="groomName" placeholder="مثال: بدر" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
               {errors.groomName ? <small className="field-error" id="groomName-error">{errors.groomName}</small> : null}
             </div>
             <div className={`field ${errors.brideName ? "has-error" : ""}`}>
               <label htmlFor="brideName">اسم العروسة *</label>
-              <input id="brideName" name="brideName" placeholder="اكتب الاسم كما تحب ظهوره في الدعوة، مثال: Sara" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
+              <input id="brideName" name="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
               {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
             </div>
             <div className={`field ${errors.phone ? "has-error" : ""}`}>
               <label htmlFor="phone">رقم الموبايل</label>
-              <input id="phone" name="phone" inputMode="tel" placeholder="اختياري، لكن يسهّل علينا التواصل السريع معاك" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined} />
+              <input id="phone" name="phone" inputMode="tel" placeholder="رقم للتواصل على واتساب" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined} />
               {errors.phone ? <small className="field-error" id="phone-error">{errors.phone}</small> : null}
+            </div>
+            <div className="order-section-label full">
+              <CalendarDays size={18} />
+              <div>
+                <strong>الموعد والمكان</strong>
+                <span>التاريخ يتحول تلقائيًا لصيغة عربية داخل الدعوة.</span>
+              </div>
             </div>
             <div className={`field ${errors.weddingDate ? "has-error" : ""}`}>
               <label htmlFor="weddingDate">تاريخ الفرح *</label>
-              <input id="weddingDate" name="weddingDate" type="date" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error" : undefined} />
+              <input id="weddingDate" name="weddingDate" inputMode="numeric" placeholder="مثال: 26 / 10 / 2026" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
+              <small className="field-hint" id="weddingDate-hint">اكتب اليوم / الشهر / السنة. ينفع تكتب بالأرقام العربية أو الإنجليزية.</small>
+              {readableDate ? <small className="field-preview">هيظهر في الدعوة: {readableDate}</small> : null}
               {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
             </div>
             <div className={`field full ${errors.mapUrl ? "has-error" : ""}`}>
               <label htmlFor="mapUrl">اللوكيشن على الخريطة</label>
-              <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="اختياري: انسخ رابط Google Maps هنا لو متاح، أو اتركه ونضيفه معاك لاحقًا" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error" : undefined} />
+              <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps لو موجود" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error" : undefined} />
               {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
             </div>
             <div className="field full">
               <label htmlFor="venue">العنوان واسم القاعة</label>
-              <input id="venue" name="venue" placeholder="اختياري: مثال قاعة رويال - البحيرة. ينفع نكمله معاك بعد الطلب" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} />
+              <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} />
+            </div>
+            <div className="order-section-label full">
+              <MapPin size={18} />
+              <div>
+                <strong>لمساتك الخاصة</strong>
+                <span>أي أغنية أو لون أو جملة ناعمة تحب تضيفها.</span>
+              </div>
             </div>
             <div className="field full">
               <label htmlFor="notes">ملاحظات اختيارية</label>
-              <textarea id="notes" name="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="اكتب أي ذوق تفضله، ألوان معينة، نص خاص، أو أي تعديل تحب نشوفه في الدعوة" />
+              <textarea id="notes" name="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="ألوان مفضلة، أغنية، جملة خاصة، أو أي تعديل تحب تضيفه" />
             </div>
             <div className="field full order-images-field">
-              <span>صور الدعوة</span>
-              <p>ارفع كل صورة في خانتها حسب ترتيب ظهورها. كل صورة لها كروب ومعاينة منفصلة لتناسب شكل القالب المختار.</p>
+              <span className="order-images-title">
+                <Images size={17} />
+                صور الدعوة
+              </span>
+              <p>اختار لحد 3 صور. الخانات صغيرة ومترتبة: غلاف، لقطة ثانية، ولقطة ثالثة.</p>
               <div className="order-image-slots">
                 {orderImageSlots.map((slot, index) => (
                   <div className="order-image-slot" key={slot.title}>
@@ -310,7 +333,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
                         <p>{slot.hint}</p>
                       </div>
                     </div>
-                    <ImageCropUploader name="orderImage" label={`إضافة ${slot.title}`} targetWidth={1200} targetHeight={1500} maxFiles={1} />
+                    <ImageCropUploader name="orderImage" label="اختار صورة" targetWidth={1200} targetHeight={1500} maxFiles={1} />
                   </div>
                 ))}
               </div>
@@ -325,21 +348,22 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
             </span>
           </a>
 
-          <button className="btn btn-soft btn-glass order-preview-button" type="button" onClick={openPreview}>
-            <Eye size={19} />
-            معاينة الدعوة
-          </button>
+          <div className="order-action-grid">
+            <button className="btn btn-gold btn-glow order-preview-button" type="button" onClick={openPreview}>
+              <Eye size={19} />
+              معاينة الدعوة
+            </button>
 
-          <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>
-            {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
-            {state === "loading" ? "جاري تأكيد الطلب" : "تأكيد الطلب"}
-          </button>
-          <button className="btn btn-soft order-back-button" type="button" onClick={() => setStep("template")}>
-            <ArrowRight size={17} />
-            رجوع لاختيار قالب آخر
-          </button>
+            <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>
+              {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <MessageCircle size={19} />}
+              {state === "loading" ? "جاري التأكيد" : "تأكيد الطلب"}
+            </button>
+            <button className="btn btn-gold btn-glow order-back-button" type="button" onClick={goToTemplates}>
+              <ArrowRight size={17} />
+              رجوع للأشكال
+            </button>
+          </div>
         </form>
-      )}
     </div>
   );
 }

@@ -17,10 +17,10 @@ export default async function TemplatesPage() {
       <SiteHeader />
       <main className="section compact">
         <div className="container">
-          <div className="section-title-block">
-            <span className="eyebrow">Templates</span>
-            <h1 className="section-title">اختر شكل الدعوة</h1>
-            <p className="section-lead">كل قالب له معاينة مباشرة ومزامن مع الطلبات ولوحة الأدمن.</p>
+          <div className="section-title-block templates-title-block">
+            <span className="eyebrow">شوف الأشكال</span>
+            <h1 className="section-title">اختار قالب يحكي فرحتك</h1>
+            <p className="section-lead">عاين أي قالب براحتك، ولما تستقر على الشكل اضغط اختار وكمّل بيانات الدعوة في خطوة هادية وسريعة.</p>
           </div>
           <TemplateBrowser templates={templates} />
         </div>

@@ -302,6 +302,56 @@ export const oceanThemeTemplate: TemplateDefinition = {
   score: 92,
 };
 
+export const artDecoThemeTemplate: TemplateDefinition = {
+  id: "tpl_art_deco_theme",
+  slug: "art-deco-theme",
+  name: "Art Deco Theme",
+  arabicName: "آرت ديكو ذهبي",
+  category: "قالب أسود وذهبي فاخر",
+  style: "artdeco",
+  concept: "دعوة Art Deco بتباين أسود وذهبي، إطارات مزدوجة، صورة كلاسيكية، وخريطة وQR بطابع حفلات فاخرة.",
+  opening: "Golden art deco frame",
+  layout: "إطار أسماء مزدوج، صورة رمادية، موعد، عداد، خريطة، RSVP وQR.",
+  typography: "أسماء Serif قوية مع ذهب هادئ ومساحات مضبوطة للهاتف.",
+  palette: {
+    primary: "#2a2a2a",
+    secondary: "#1a1a1a",
+    accent: "#e5c158",
+    ink: "#f7e6a0",
+    surface: "#141414",
+  },
+  previewImage: "/assets/templates/art-deco-theme.svg",
+  accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
+  enabled: true,
+  score: 92,
+};
+
+export const magazineThemeTemplate: TemplateDefinition = {
+  id: "tpl_magazine_theme",
+  slug: "magazine-theme",
+  name: "Magazine Theme",
+  arabicName: "غلاف مجلة",
+  category: "قالب Editorial جرئ",
+  style: "magazine",
+  concept: "دعوة بشكل غلاف مجلة عصري: أسماء كبيرة، صورة طويلة، فواصل سوداء حادة، وخريطة وQR بأسلوب Editorial.",
+  opening: "Bold magazine cover",
+  layout: "اسم فوق الصورة، صورة طويلة، اسم ثانٍ متداخل، موعد، عداد، خريطة، RSVP وQR.",
+  typography: "أسماء كبيرة وثقيلة بتكوين جريء مناسب للموبايل بدون تباعد حروف مزعج للعربي.",
+  palette: {
+    primary: "#f4f4f4",
+    secondary: "#111111",
+    accent: "#000000",
+    ink: "#111111",
+    surface: "#ffffff",
+  },
+  previewImage: "/assets/templates/magazine-theme.svg",
+  accentImage: "/assets/invite/badr-sarah-1.jpeg",
+  musicUrl: defaultTemplateMusicUrl,
+  enabled: true,
+  score: 92,
+};
+
 export const royalEnvelopeTemplate: TemplateDefinition = {
   id: "tpl_royal_envelope",
   slug: "royal-envelope",
@@ -515,6 +565,8 @@ export const invitationTemplates: TemplateDefinition[] = [
   vintageThemeTemplate,
   fairytaleThemeTemplate,
   oceanThemeTemplate,
+  artDecoThemeTemplate,
+  magazineThemeTemplate,
   royalEnvelopeTemplate,
   luxeNoirTemplate,
   ivoryArchesTemplate,

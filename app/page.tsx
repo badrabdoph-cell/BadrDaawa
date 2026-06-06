@@ -58,7 +58,7 @@ export default async function HomePage() {
               </h1>
               <p className="hero-shine-copy">حابب تعمل دعايه لنفسك والمعازيم تعرفك قبل ما الفرح يبدأ أصلًا؟</p>
               <div className="button-row home-cta-row">
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/order">
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <WandSparkles size={19} />
                   <span>طلب دعوه</span>
                 </Link>
@@ -115,7 +115,7 @@ export default async function HomePage() {
                   <Eye size={19} />
                   <span>افتح الدعوة كاملة</span>
                 </Link>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/order">
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <Sparkles size={19} />
                   <span>عايز واحد زيه</span>
                 </Link>

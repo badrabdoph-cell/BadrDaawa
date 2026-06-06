@@ -20,7 +20,7 @@ export default function ContactPage() {
             <Phone size={24} />
             <h2>01011511561</h2>
             <p>أرسل الأسماء، التاريخ، والمكان.</p>
-            <Link className="btn btn-gold" href="/order">
+            <Link className="btn btn-gold" href="/templates">
               <MessageCircle size={18} />
               افتح نموذج الطلب
             </Link>

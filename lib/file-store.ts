@@ -43,6 +43,12 @@ type FileInvitationUpdate = Partial<
   Pick<Invitation, "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "gallery" | "heroPhoto">
 >;
 
+type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
+  status?: OrderRequest["status"];
+};
+
+type FileOrderUpdate = Partial<Pick<OrderRequest, "groomName" | "brideName" | "phone" | "weddingDate" | "venue" | "notes" | "imageUrls" | "templateSlug" | "status">>;
+
 const storePath = path.join(process.cwd(), "data", "runtime-store.json");
 
 function createEmptyStore(): FileStoreData {
@@ -84,6 +90,42 @@ export async function getFileInvitations() {
 export async function getFileOrders() {
   const store = await readStore();
   return store.orders;
+}
+
+export async function createFileOrder(input: CreateFileOrderInput) {
+  const store = await readStore();
+  const order: OrderRequest = {
+    id: `ord_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    status: input.status || "new",
+    createdAt: new Date().toISOString(),
+    ...input,
+  };
+  store.orders.unshift(order);
+  await writeStore(store);
+  return order;
+}
+
+export async function updateFileOrder(id: string, update: FileOrderUpdate) {
+  const store = await readStore();
+  const index = store.orders.findIndex((order) => order.id === id);
+  if (index < 0) return null;
+  store.orders[index] = { ...store.orders[index], ...update };
+  await writeStore(store);
+  return store.orders[index];
+}
+
+export async function deleteFileOrder(id: string) {
+  const store = await readStore();
+  const nextOrders = store.orders.filter((order) => order.id !== id);
+  if (nextOrders.length === store.orders.length) return false;
+  store.orders = nextOrders;
+  await writeStore(store);
+  return true;
+}
+
+export async function getFileOrder(id: string) {
+  const store = await readStore();
+  return store.orders.find((order) => order.id === id) || null;
 }
 
 export async function getFileCustomers() {

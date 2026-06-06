@@ -1,164 +1,137 @@
 import Link from "next/link";
-import { Activity, Archive, BellRing, Copy, Database, ExternalLink, FileText, Palette, Plus, Send, Settings2, Sparkles, UsersRound } from "lucide-react";
-import { StatsGrid } from "@/components/StatsGrid";
-import { getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
-import { getPushSubscriptionCount } from "@/lib/push-notifications";
-import { formatArabicNumber, getInvitationUrl } from "@/lib/utils";
-import { getCustomerAdminPath } from "@/lib/slug";
+import { Archive, ArrowUpLeft, BarChart3, FileText, MonitorPlay, Palette, Plus, Sparkles, UsersRound } from "lucide-react";
+import { getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
+import { formatArabicNumber } from "@/lib/utils";
 
-function getNotificationStatus(value?: string) {
-  if (!value) return "";
-  if (value === "empty") return "اكتب نص الإشعار الأول.";
-  if (value === "error") return "حصلت مشكلة أثناء إرسال الإشعار.";
-  if (value === "demo") return "قاعدة البيانات غير متصلة، لذلك لم يتم إرسال الإشعار.";
-  if (value.startsWith("sent-")) {
-    const [, success, failed] = value.split("-");
-    return `تم إرسال الإشعار إلى ${success || "0"} جهاز، وفشل ${failed || "0"}.`;
-  }
-  return "";
+function formatOrderDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
-export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ notify?: string }> }) {
-  const params = await searchParams;
-  const [invitations, guests, orders, pushSubscribers] = await Promise.all([
-    getAdminInvitations(),
-    getAdminGuests(),
-    getAdminOrders(),
-    getPushSubscriptionCount(),
-  ]);
-  const latestInvitation = invitations[0];
-  const notificationStatus = getNotificationStatus(params?.notify);
+function statusLabel(status: string) {
+  if (status === "new") return "جديد";
+  if (status === "accepted") return "مقبول";
+  if (status === "converted") return "تم تحويله";
+  if (status === "rejected") return "مرفوض";
+  return status;
+}
+
+export default async function AdminDashboardPage() {
+  const [invitations, orders] = await Promise.all([getAdminInvitations(), getAdminOrders()]);
+  const newOrders = orders.filter((order) => order.status === "new");
+  const recentOrders = orders.slice(0, 4);
   const hasDatabase = Boolean(process.env.DATABASE_URL);
 
   return (
     <>
-      <section className="admin-hero-panel">
+      <section className="admin-hero-panel admin-home-hero">
         <div>
-          <span className="eyebrow">Control Center</span>
-          <h1>إدارة الموقع من مكان واحد</h1>
-          <p>متابعة دعوات العملاء، الطلبات، القوالب، العملاء، والإشعارات بأرقام حقيقية من قاعدة البيانات فقط.</p>
+          <span className="eyebrow">الرئيسية</span>
+          <h1>ابدأ من هنا</h1>
+          <p>أهم أزرار التشغيل في مكان واحد. الأرقام والتحليلات التفصيلية موجودة في صفحة التحليلات.</p>
         </div>
         <div className="admin-hero-actions">
-          <Link className="btn btn-gold btn-glow" href="/admin/client-invitations">
-            <Plus size={18} />
-            إنشاء دعوة عميل
+          <Link className="btn btn-gold btn-glow" href="/admin/orders">
+            <FileText size={18} />
+            الطلبات الجديدة
           </Link>
-          <Link className="btn btn-soft btn-glass" href="/admin/templates">
-            <Palette size={18} />
-            إدارة القوالب
+          <Link className="btn btn-soft btn-glass" href="/admin/client-invitations">
+            <Plus size={18} />
+            إنشاء دعوة
           </Link>
         </div>
       </section>
+
       {!hasDatabase ? (
         <div className="notice danger">
-          قاعدة البيانات غير متصلة. الأرقام المعروضة الآن حقيقية وليست ديمو، لذلك ستظهر صفر حتى تضيف DATABASE_URL صحيح.
+          قاعدة البيانات غير متصلة. اربط DATABASE_URL عشان الطلبات والدعوات تظهر من قاعدة البيانات الحقيقية.
         </div>
       ) : null}
-      <StatsGrid
-        stats={[
-          { label: "دعوات العملاء", value: formatArabicNumber(invitations.length), hint: "كل الدعوات المنشأة من الأدمن" },
-          { label: "دعوات نشطة", value: formatArabicNumber(invitations.filter((invitation) => invitation.isActive).length), hint: "جاهزة للعرض" },
-          { label: "ردود الحضور", value: formatArabicNumber(guests.length), hint: "عدد نماذج RSVP المسجلة" },
-          { label: "طلبات جديدة", value: formatArabicNumber(orders.filter((order) => order.status === "new").length), hint: "في انتظار القرار" },
-        ]}
-      />
 
-      <section className="admin-home-grid">
-        <article className="panel admin-work-card admin-work-card-wide">
-          <div className="admin-card-head">
-            <Activity size={22} />
-            <div>
-              <span className="eyebrow">Workflow</span>
-              <h2>الإجراءات السريعة</h2>
-            </div>
-          </div>
-          <div className="admin-action-grid">
-            <Link href="/admin/orders">
-              <FileText size={20} />
-              <span>
-                <strong>مراجعة الطلبات</strong>
-                <small>{formatArabicNumber(orders.filter((order) => order.status === "new").length)} طلب جديد</small>
-              </span>
-            </Link>
-            <Link href="/admin/client-invitations">
-              <Archive size={20} />
-              <span>
-                <strong>دعوات العملاء</strong>
-                <small>{formatArabicNumber(invitations.length)} دعوة مسجلة</small>
-              </span>
-            </Link>
-            <Link href="/admin/templates">
-              <Sparkles size={20} />
-              <span>
-                <strong>القوالب والمعاينات</strong>
-                <small>إضافة كود قالب وتعديل الموسيقى</small>
-              </span>
-            </Link>
-            <Link href="/admin/customers">
-              <UsersRound size={20} />
-              <span>
-                <strong>حسابات العملاء</strong>
-                <small>بيانات الدخول ولوحات العملاء</small>
-              </span>
-            </Link>
-          </div>
-        </article>
-
-        <article className="panel admin-work-card">
-          <div className="admin-card-head">
-            <Copy size={22} />
-            <div>
-              <span className="eyebrow">Latest</span>
-              <h2>آخر دعوة</h2>
-            </div>
-          </div>
-          <p className="admin-long-link">{latestInvitation ? getInvitationUrl(latestInvitation.code) : "لسه مفيش دعوات حقيقية مسجلة."}</p>
-          <div className="button-row">
-            <Link className="btn btn-soft" href={latestInvitation ? `/${latestInvitation.code}` : "/admin/client-invitations"}>
-              <ExternalLink size={17} />
-              فتح الدعوة
-            </Link>
-            <Link className="btn btn-soft" href={latestInvitation ? getCustomerAdminPath(latestInvitation.code) : "/admin/client-invitations"}>
-              <Settings2 size={17} />
-              لوحة العميل
-            </Link>
-          </div>
-        </article>
-
-        <article className="panel admin-work-card">
-          <div className="admin-card-head">
-            <Database size={22} />
-            <div>
-              <span className="eyebrow">Database</span>
-              <h2>حالة البيانات</h2>
-            </div>
-          </div>
-          <p>{hasDatabase ? "قاعدة البيانات متصلة، وكل أرقام الأدمن مبنية على البيانات الحقيقية." : "قاعدة البيانات غير متصلة، لذلك لن تظهر أرقام وهمية داخل الأدمن."}</p>
-          <span className={hasDatabase ? "admin-health-pill good" : "admin-health-pill danger"}>{hasDatabase ? "متصل" : "غير متصل"}</span>
-        </article>
+      <section className="admin-start-grid" aria-label="اختصارات التشغيل">
+        <Link className="admin-start-card primary" href="/admin/orders">
+          <FileText size={22} />
+          <span>
+            <strong>راجع الطلبات</strong>
+            <small>{formatArabicNumber(newOrders.length)} طلب جديد محتاج متابعة</small>
+          </span>
+          <ArrowUpLeft size={18} />
+        </Link>
+        <Link className="admin-start-card" href="/admin/client-invitations">
+          <Archive size={22} />
+          <span>
+            <strong>دعوات العملاء</strong>
+            <small>{formatArabicNumber(invitations.length)} دعوة مسجلة</small>
+          </span>
+          <ArrowUpLeft size={18} />
+        </Link>
+        <Link className="admin-start-card" href="/admin/templates">
+          <Palette size={22} />
+          <span>
+            <strong>القوالب</strong>
+            <small>إضافة قالب أو تعديل معاينة وموسيقى</small>
+          </span>
+          <ArrowUpLeft size={18} />
+        </Link>
+        <Link className="admin-start-card" href="/admin/preview">
+          <MonitorPlay size={22} />
+          <span>
+            <strong>معاينة الرئيسية</strong>
+            <small>اختار اللي يظهر في واجهة الموقع</small>
+          </span>
+          <ArrowUpLeft size={18} />
+        </Link>
       </section>
 
-      <section className="admin-notification-section">
-        <article className="panel admin-notification-panel">
-          <div>
-            <span className="eyebrow">Push Notifications</span>
-            <h2>
-              <BellRing size={22} />
-              إرسال إشعار للمعازيم
-            </h2>
-            <p>الأجهزة المسجلة حاليًا: {formatArabicNumber(pushSubscribers)} جهاز. اكتب رسالة قصيرة وستصل للأجهزة التي وافقت على الإشعارات.</p>
+      <section className="admin-home-grid admin-home-grid-simple">
+        <article className="panel admin-work-card admin-recent-panel">
+          <div className="admin-card-head">
+            <Sparkles size={22} />
+            <div>
+              <span className="eyebrow">متابعة سريعة</span>
+              <h2>أحدث الطلبات</h2>
+            </div>
           </div>
-          <form className="admin-notification-form" action="/api/admin/notifications/send" method="post">
-            <input name="title" defaultValue="BadrDaawa" aria-label="عنوان الإشعار" />
-            <textarea name="body" placeholder="اكتب نص الإشعار هنا..." rows={3} required />
-            <input name="url" defaultValue={latestInvitation ? `/${latestInvitation.code}` : "/"} aria-label="رابط فتح الإشعار" />
-            <button className="btn btn-gold btn-glow" type="submit">
-              <Send size={18} />
-              إرسال الإشعار
-            </button>
-          </form>
-          {notificationStatus ? <p className="status success">{notificationStatus}</p> : null}
+          {recentOrders.length ? (
+            <div className="admin-order-list">
+              {recentOrders.map((order) => (
+                <Link className="admin-order-item" href="/admin/orders" key={order.id}>
+                  <span>
+                    <strong>
+                      {order.groomName} &amp; {order.brideName}
+                    </strong>
+                    <small>{formatOrderDate(order.weddingDate)}</small>
+                  </span>
+                  <em className={order.status === "new" ? "status" : order.status === "rejected" ? "status danger" : "status success"}>{statusLabel(order.status)}</em>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="admin-empty-state">
+              <strong>لا توجد طلبات حالية</strong>
+              <p>أول طلب جديد هيظهر هنا مباشرة.</p>
+            </div>
+          )}
         </article>
+
+        <aside className="panel admin-work-card admin-side-shortcuts">
+          <div className="admin-card-head">
+            <UsersRound size={22} />
+            <div>
+              <span className="eyebrow">اختصارات</span>
+              <h2>إدارة سريعة</h2>
+            </div>
+          </div>
+          <div className="admin-mini-links">
+            <Link href="/admin/customers">حسابات العملاء</Link>
+            <Link href="/admin/backups">النسخ الاحتياطي</Link>
+            <Link href="/admin/analytics">
+              <BarChart3 size={16} />
+              التحليلات والأرقام
+            </Link>
+          </div>
+        </aside>
       </section>
     </>
   );

@@ -1,6 +1,6 @@
 export type Language = "ar" | "en";
 
-export type TemplateStyle = "featured" | "royal" | "noir" | "ivory" | "mobile" | "boho" | "garden" | "cinematic" | "glass" | "minimal" | "neon" | "vintage" | "ocean" | "custom";
+export type TemplateStyle = "featured" | "royal" | "noir" | "ivory" | "mobile" | "boho" | "garden" | "cinematic" | "glass" | "minimal" | "neon" | "vintage" | "ocean" | "artdeco" | "magazine" | "custom";
 
 export type TemplateDefinition = {
   id: string;
@@ -68,6 +68,7 @@ export type OrderRequest = {
   weddingDate: string;
   venue: string;
   notes?: string;
+  imageUrls?: string[];
   templateSlug: string;
   language: Language;
   status: "new" | "accepted" | "rejected" | "converted";

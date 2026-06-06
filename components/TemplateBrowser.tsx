@@ -20,6 +20,8 @@ const styleLabels: Record<string, string> = {
   neon: "نيون",
   vintage: "فينتاج",
   ocean: "أوشن",
+  artdeco: "آرت ديكو",
+  magazine: "مجلة",
   custom: "خاص",
 };
 

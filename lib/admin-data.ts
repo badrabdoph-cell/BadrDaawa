@@ -96,6 +96,9 @@ function toInvitation(row: AdminInvitationRow): Invitation {
 }
 
 function toOrder(row: AdminOrderRow): OrderRequest {
+  const notes = row.notes || "";
+  const imageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/order-requests\/\S+/g)).map((match) => match[0].trim());
+
   return {
     id: row.id,
     groomName: row.groomName,
@@ -103,7 +106,8 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     phone: row.phone,
     weddingDate: row.weddingDate instanceof Date ? row.weddingDate.toISOString() : row.weddingDate,
     venue: row.venue,
-    notes: row.notes || undefined,
+    notes: notes || undefined,
+    imageUrls,
     templateSlug: row.template?.slug || row.templateSlug || "royal-envelope",
     language: row.language === "en" ? "en" : "ar",
     status: String(row.status || "new").toLowerCase() as OrderRequest["status"],

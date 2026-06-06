@@ -79,6 +79,12 @@ export async function InvitationExperience({ invitation, template, disableMusic 
   if (template.slug === "ocean-theme") {
     return <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
+  if (template.slug === "art-deco-theme") {
+    return <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "magazine-theme") {
+    return <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
   if (template.slug === "cinematic-story") {
     return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
@@ -1791,6 +1797,125 @@ async function OceanThemeInvitationExperience({ invitation, musicUrl }: { invita
             ))}
           </div>
         </section>
+      </div>
+    </main>
+  );
+}
+
+async function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="artdeco-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="artdeco-shell">
+        <section className="artdeco-name-frame">
+          <div>
+            <h1>{invitation.groomName}</h1>
+            <span aria-hidden="true" />
+            <h1>{invitation.brideName}</h1>
+          </div>
+        </section>
+
+        <figure className="artdeco-photo">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="artdeco-date-card">
+          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <span>{invitation.weddingTime}</span>
+        </section>
+
+        <section className="artdeco-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="artdeco-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="artdeco-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="artdeco-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="artdeco-qr-card">
+          <div className="artdeco-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="artdeco-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="magazine-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="magazine-shell">
+        <section className="magazine-cover">
+          <h1 className="magazine-name magazine-name-top">{invitation.groomName}</h1>
+          <figure className="magazine-photo">
+            <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+          </figure>
+          <h1 className="magazine-name magazine-name-bottom">{invitation.brideName}</h1>
+        </section>
+
+        <div className="magazine-content">
+          <section className="magazine-date-row">
+            <span>{formatArabicDate(invitation.weddingDate)}</span>
+            <span>{invitation.weddingTime}</span>
+          </section>
+
+          <section className="magazine-countdown">
+            <Countdown targetDate={invitation.weddingDate} />
+          </section>
+
+          <section className="magazine-map-card">
+            <h2>{invitation.venue}</h2>
+            <p>{invitation.city}</p>
+            <div className="magazine-map-frame">
+              <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            </div>
+          </section>
+
+          <div className="magazine-poll-wrap">
+            <InvitePoll code={invitation.code} />
+          </div>
+
+          <section className="magazine-qr-card">
+            <QrCodeBlock value={invitationUrl} />
+            <p>Scan for access</p>
+            <div className="magazine-share-row" aria-label="روابط السوشيال">
+              {socialLinks.map((item) => (
+                <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                  <Share2 size={18} />
+                </a>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );

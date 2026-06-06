@@ -36,7 +36,7 @@ export function SiteHeader() {
             </svg>
             <Headphones size={18} aria-hidden="true" />
           </a>
-          <Link className="btn btn-gold btn-glow" href="/order">
+          <Link className="btn btn-gold btn-glow" href="/templates">
             <Send size={18} />
             اطلب دعوتك
           </Link>
