@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Boho Sand template preview">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#faf3e0"/>
+      <stop offset=".58" stop-color="#fff8ed"/>
+      <stop offset="1" stop-color="#e8c39e"/>
+    </linearGradient>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f3d6bd"/>
+      <stop offset=".48" stop-color="#c48b5c"/>
+      <stop offset="1" stop-color="#8b4513"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#8b4513" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <circle cx="120" cy="110" r="150" fill="#e8c39e" opacity=".22"/>
+  <circle cx="780" cy="1030" r="180" fill="#8b4513" opacity=".08"/>
+  <g filter="url(#shadow)">
+    <path d="M450 96 C560 96 650 186 650 296 L650 430 C650 540 560 630 450 630 C340 630 250 540 250 430 L250 296 C250 186 340 96 450 96Z" fill="url(#photo)" stroke="#e8c39e" stroke-width="10"/>
+    <circle cx="520" cy="325" r="74" fill="#faf3e0" opacity=".28"/>
+  </g>
+  <text x="450" y="745" text-anchor="middle" font-family="Georgia, serif" font-size="88" fill="#8b4513">بدر</text>
+  <text x="450" y="835" text-anchor="middle" font-family="Georgia, serif" font-size="88" fill="#8b4513">Sara</text>
+  <g filter="url(#shadow)">
+    <rect x="120" y="890" width="660" height="82" rx="41" fill="#e8c39e"/>
+    <text x="310" y="943" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#fff">26 أكتوبر</text>
+    <line x1="450" y1="913" x2="450" y2="950" stroke="#fff" stroke-opacity=".42"/>
+    <text x="590" y="943" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#fff">07:00</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="155" y="1030" width="590" height="92" rx="36" fill="#fff"/>
+    <circle cx="290" cy="1076" r="24" fill="#faf3e0"/>
+    <circle cx="397" cy="1076" r="24" fill="#faf3e0"/>
+    <circle cx="504" cy="1076" r="24" fill="#faf3e0"/>
+    <circle cx="611" cy="1076" r="24" fill="#faf3e0"/>
+  </g>
+</svg>

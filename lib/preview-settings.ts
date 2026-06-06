@@ -16,7 +16,7 @@ const settingsPath = path.join(process.cwd(), "data", "home-preview-settings.jso
 
 export const defaultHomePreviewSettings: HomePreviewSettings = {
   mode: "template",
-  templateSlug: "royal-envelope",
+  templateSlug: "featured-1",
   imageUrl: "",
   videoUrl: "",
 };

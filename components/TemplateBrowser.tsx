@@ -7,6 +7,7 @@ import type { TemplateDefinition } from "@/lib/types";
 
 const styleLabels: Record<string, string> = {
   all: "الكل",
+  featured: "مميز",
   royal: "ملكي",
   noir: "داكن",
   ivory: "رومانسي",
@@ -14,6 +15,8 @@ const styleLabels: Record<string, string> = {
   boho: "بوهو",
   garden: "حدائق",
   cinematic: "سينمائي",
+  glass: "زجاجي",
+  minimal: "مينيمال",
   custom: "خاص",
 };
 

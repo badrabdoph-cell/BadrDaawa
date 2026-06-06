@@ -43,6 +43,30 @@ export async function InvitationExperience({ invitation, template, disableMusic 
   if (template.slug === "garden-elegance") {
     return <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
+  if (template.slug === "featured-1") {
+    return <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "cinematic-rose") {
+    return <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "modern-cinematic") {
+    return <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "ethereal-glass") {
+    return <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "botanical-theme") {
+    return <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "royal-gold") {
+    return <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "boho-sand") {
+    return <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "pure-white") {
+    return <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
   if (template.slug === "cinematic-story") {
     return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
@@ -776,6 +800,747 @@ async function GardenEleganceInvitationExperience({ invitation, musicUrl }: { in
           </div>
         </section>
       </section>
+    </main>
+  );
+}
+
+async function FeaturedOneInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="featured-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <section className="featured-hero">
+        <div className="featured-hero-media">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="صورة العرسان" />
+          <div className="featured-hero-gradient" />
+        </div>
+
+        <div className="featured-hero-copy">
+          <p>Forever Begins Here</p>
+          <h1>{invitation.groomName}</h1>
+          <div className="featured-heart-line" aria-hidden="true">
+            <span />
+            <Heart size={20} className="featured-heart" />
+            <span />
+          </div>
+          <h1>{invitation.brideName}</h1>
+        </div>
+      </section>
+
+      <div className="featured-content">
+        <section className="featured-detail-card">
+          <Flower2 className="featured-detail-flower" size={42} aria-hidden="true" />
+          <div className="featured-timeline">
+            <span className="featured-timeline-line" aria-hidden="true" />
+
+            <div className="featured-detail-row">
+              <span className="featured-detail-icon">
+                <Calendar size={14} />
+              </span>
+              <div>
+                <p>اليوم والتاريخ</p>
+                <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+              </div>
+            </div>
+
+            <div className="featured-detail-row">
+              <span className="featured-detail-icon">
+                <Clock size={14} />
+              </span>
+              <div>
+                <p>موعد الحضور</p>
+                <strong>{invitation.weddingTime}</strong>
+              </div>
+            </div>
+
+            <div className="featured-detail-row">
+              <span className="featured-detail-icon">
+                <MapPin size={14} />
+              </span>
+              <div>
+                <p>القاعة والموقع</p>
+                <strong>{invitation.venue}</strong>
+                <small>{invitation.city}</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="featured-countdown-card">
+          <p>The Countdown</p>
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="featured-gallery" aria-label="صور الدعوة">
+          <figure className="featured-arch-card">
+            <img src={images[0] || galleryImages[0]} alt="صورة العريس والعروسة 1" />
+          </figure>
+          <figure className="featured-photo-card">
+            <img src={images[1] || galleryImages[1]} alt="صورة العريس والعروسة 2" />
+            <span aria-hidden="true" />
+          </figure>
+          <figure className="featured-arch-card">
+            <img src={images[2] || galleryImages[2]} alt="صورة العريس والعروسة 3" />
+          </figure>
+        </section>
+
+        <section className="featured-map-card">
+          <div className="featured-map-copy">
+            <span>
+              <MapPin size={17} />
+              The Venue
+            </span>
+            <h2>{invitation.venue}</h2>
+            <p>{invitation.city}</p>
+          </div>
+          <div className="featured-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="featured-photographer-card">
+            <div className="featured-photographer-logo">
+              <Camera size={24} />
+              <span>BA</span>
+            </div>
+            <span>Photography</span>
+            <h2>badrabdoph</h2>
+            <p>لقطات فرحتنا بعدسة خاصة</p>
+            <div className="featured-socials">
+              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+                <Facebook size={22} strokeWidth={1.5} />
+              </a>
+              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+                <Instagram size={22} strokeWidth={1.5} />
+              </a>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="featured-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="featured-qr-card">
+          <h3>بطاقة الدخول والمشاركة</h3>
+          <div className="featured-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="featured-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function CinematicRoseInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+  const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
+  const galleryImage1 = images[1] || galleryImages[1];
+  const galleryImage2 = images[2] || galleryImages[2];
+
+  return (
+    <main className="cinema-rose-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <section className="cinema-rose-hero">
+        <div className="cinema-rose-hero-media">
+          <img src={heroImage} alt="صورة الغلاف" />
+          <span aria-hidden="true" />
+        </div>
+        <div className="cinema-rose-hero-copy">
+          <p>The Wedding Of</p>
+          <h1>{invitation.groomName}</h1>
+          <strong>&amp;</strong>
+          <h1>{invitation.brideName}</h1>
+        </div>
+      </section>
+
+      <section className="cinema-rose-float-card">
+        <div className="cinema-rose-date-row">
+          <div>
+            <Calendar size={22} />
+            <p>{formatArabicDate(invitation.weddingDate)}</p>
+          </div>
+          <i />
+          <div>
+            <Clock size={22} />
+            <strong>{invitation.weddingTime}</strong>
+          </div>
+        </div>
+        <Countdown targetDate={invitation.weddingDate} />
+      </section>
+
+      <section className="cinema-rose-content">
+        <div className="cinema-rose-message">
+          <Heart size={34} />
+          <h2>"يومنا لن يكتمل إلا بحضوركم، ننتظركم لنصنع معاً ذكريات لا تنسى في أفضل يوم في عمرنا."</h2>
+        </div>
+
+        <section className="cinema-rose-gallery" aria-label="صور الدعوة">
+          <figure>
+            <img src={galleryImage1} alt="صورة من الدعوة 2" />
+          </figure>
+          <figure>
+            <img src={galleryImage2} alt="صورة من الدعوة 3" />
+          </figure>
+        </section>
+
+        <section className="cinema-rose-map-card">
+          <div className="cinema-rose-map-copy">
+            <span>
+              <MapPin size={18} />
+              Venue
+            </span>
+            <h2>{invitation.venue}</h2>
+            <p>{invitation.city}</p>
+          </div>
+          <div className="cinema-rose-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="cinema-rose-photographer">
+            <div className="cinema-rose-photographer-main">
+              <span>
+                <Camera size={20} />
+              </span>
+              <div>
+                <p>Captured By</p>
+                <h3>badrabdoph</h3>
+              </div>
+            </div>
+            <div className="cinema-rose-socials">
+              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+                <Facebook size={20} />
+              </a>
+              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+                <Instagram size={20} />
+              </a>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="cinema-rose-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="cinema-rose-qr-card">
+          <h3>مشاركة الدعوة</h3>
+          <div className="cinema-rose-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="cinema-rose-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={20} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+async function ModernCinematicInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="modern-cinema-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <section className="modern-cinema-hero">
+        <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="صورة الغلاف" />
+        <span className="modern-cinema-hero-shade" aria-hidden="true" />
+        <div className="modern-cinema-hero-copy">
+          <p>
+            <Heart size={13} />
+            The Premiere
+          </p>
+          <h1>{invitation.groomName}</h1>
+          <strong>&amp;</strong>
+          <h1>{invitation.brideName}</h1>
+        </div>
+      </section>
+
+      <section className="modern-cinema-content">
+        <div className="modern-cinema-date-strip">
+          <div>
+            <Calendar size={18} />
+            <span>Date</span>
+            <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+          </div>
+          <i />
+          <div>
+            <Clock size={18} />
+            <span>Time</span>
+            <strong>{invitation.weddingTime}</strong>
+          </div>
+        </div>
+
+        <div className="modern-cinema-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </div>
+
+        <div className="modern-cinema-message">
+          <h2>
+            "يومنا لا يكتمل إلا بوجودكم،
+            <span> حضوركم هو أجمل لقطة في قصتنا.</span>"
+          </h2>
+        </div>
+
+        <section className="modern-cinema-gallery" aria-label="صور الدعوة">
+          {(images.length > 1 ? images.slice(1) : galleryImages.slice(1)).map((image, index) => (
+            <figure key={`${image}-${index}`}>
+              <img src={image} alt={`صورة من الدعوة ${index + 2}`} />
+            </figure>
+          ))}
+        </section>
+
+        <section className="modern-cinema-map-card">
+          <div className="modern-cinema-map-copy">
+            <span>
+              <MapPin size={16} />
+              Location
+            </span>
+            <h3>{invitation.venue}</h3>
+            <p>{invitation.city}</p>
+          </div>
+          <div className="modern-cinema-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="modern-cinema-photographer">
+            <div>
+              <span>
+                <Camera size={20} />
+              </span>
+              <div>
+                <p>Captured By</p>
+                <h3>badrabdoph</h3>
+              </div>
+            </div>
+            <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">
+              Follow
+            </a>
+          </section>
+        ) : null}
+
+        <div className="modern-cinema-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="modern-cinema-qr-card">
+          <div className="modern-cinema-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <h4>احفظ التذكرة أو شاركها مع من تحب</h4>
+          <div className="modern-cinema-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+async function EtherealGlassInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="ethereal-glass-invite">
+      <div className="ethereal-glass-bg" aria-hidden="true">
+        <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="" />
+        <span />
+      </div>
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="ethereal-glass-content">
+        <section className="ethereal-glass-hero">
+          <p>We Invite You To Celebrate</p>
+          <h1>{invitation.groomName}</h1>
+          <div aria-hidden="true">
+            <span />
+            <strong>&amp;</strong>
+            <span />
+          </div>
+          <h1>{invitation.brideName}</h1>
+        </section>
+
+        <section className="ethereal-glass-card ethereal-glass-details">
+          <div className="ethereal-glass-date-row">
+            <div>
+              <span>
+                <Calendar size={14} />
+                Date
+              </span>
+              <p>{formatArabicDate(invitation.weddingDate)}</p>
+            </div>
+            <i />
+            <div>
+              <span>
+                <Clock size={14} />
+                Time
+              </span>
+              <p>{invitation.weddingTime}</p>
+            </div>
+          </div>
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="ethereal-glass-gallery" aria-label="صور الدعوة">
+          <figure>
+            <img src={images[1] || galleryImages[1]} alt="صورة من الدعوة 2" />
+          </figure>
+          <figure>
+            <img src={images[2] || galleryImages[2]} alt="صورة من الدعوة 3" />
+          </figure>
+        </section>
+
+        <div className="ethereal-glass-message">
+          <Heart size={24} fill="currentColor" />
+          <p>
+            "يومنا المفضل مش هيكمل غير بوجودكم،
+            <br />
+            مستنيينكم نشارك مع بعض أحلى لحظات عمرنا."
+          </p>
+        </div>
+
+        <section className="ethereal-glass-card ethereal-glass-map-card">
+          <div className="ethereal-glass-map-copy">
+            <span>
+              <MapPin size={14} />
+              Location
+            </span>
+            <h3>{invitation.venue}</h3>
+            <p>{invitation.city}</p>
+          </div>
+          <div className="ethereal-glass-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="ethereal-glass-photographer">
+            <span>
+              <Camera size={18} />
+            </span>
+            <div>
+              <p>Photography</p>
+              <strong>badrabdoph</strong>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="ethereal-glass-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="ethereal-glass-card ethereal-glass-qr-card">
+          <h4>بطاقة الدخول والمشاركة</h4>
+          <div className="ethereal-glass-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="ethereal-glass-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function BotanicalThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="botanical-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="botanical-shell">
+        <section className="botanical-hero-card">
+          <Sparkles className="botanical-sparkle" size={24} />
+          <h1>{invitation.groomName}</h1>
+          <span>&amp;</span>
+          <h1>{invitation.brideName}</h1>
+          <p>
+            {formatArabicDate(invitation.weddingDate)} - {invitation.weddingTime}
+          </p>
+        </section>
+
+        <section className="botanical-countdown-card">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <figure className="botanical-cover-photo">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="botanical-map-card">
+          <div className="botanical-map-copy">
+            <h2>
+              <MapPin size={18} />
+              {invitation.venue}
+            </h2>
+            <p>{invitation.city}</p>
+          </div>
+          <div className="botanical-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="botanical-photographer">
+            <span>
+              <Camera size={18} />
+            </span>
+            <div>
+              <h3>badrabdoph</h3>
+              <p>لقطات طبيعية وواقعية بدون مبالغة</p>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="botanical-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="botanical-qr-card">
+          <h3>بطاقة الدخول والمشاركة</h3>
+          <div className="botanical-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="botanical-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="royal-gold-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="royal-gold-shell">
+        <section className="royal-gold-names">
+          <h1>{invitation.groomName}</h1>
+          <p>&amp;</p>
+          <h1>{invitation.brideName}</h1>
+        </section>
+
+        <section className="royal-gold-date-strip">
+          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <span aria-hidden="true" />
+          <p>{invitation.weddingTime}</p>
+        </section>
+
+        <figure className="royal-gold-cover">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="royal-gold-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="royal-gold-map-card">
+          <MapPin size={26} />
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="royal-gold-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="royal-gold-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="royal-gold-qr-card">
+          <h3>بطاقة الدخول والمشاركة</h3>
+          <div className="royal-gold-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="royal-gold-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="boho-sand-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="boho-sand-shell">
+        <figure className="boho-sand-cover">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="boho-sand-names">
+          <h1>{invitation.groomName}</h1>
+          <h1>{invitation.brideName}</h1>
+          <div className="boho-sand-date-pill">
+            <span>{formatArabicDate(invitation.weddingDate)}</span>
+            <i aria-hidden="true" />
+            <span>{invitation.weddingTime}</span>
+          </div>
+        </section>
+
+        <section className="boho-sand-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="boho-sand-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="boho-sand-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="boho-sand-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="boho-sand-qr-card">
+          <h3>بطاقة الدخول والمشاركة</h3>
+          <div className="boho-sand-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="boho-sand-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="pure-white-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="pure-white-shell">
+        <section className="pure-white-names">
+          <p>Wedding Celebration</p>
+          <h1>{invitation.groomName}</h1>
+          <h1>{invitation.brideName}</h1>
+        </section>
+
+        <figure className="pure-white-cover">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="pure-white-date">
+          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <span>{invitation.weddingTime}</span>
+        </section>
+
+        <section className="pure-white-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="pure-white-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="pure-white-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="pure-white-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="pure-white-qr-card">
+          <h3>بطاقة الدخول والمشاركة</h3>
+          <div className="pure-white-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="pure-white-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

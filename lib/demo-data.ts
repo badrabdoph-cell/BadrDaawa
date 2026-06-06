@@ -4,7 +4,7 @@ export const demoInvitations: Invitation[] = [
   {
     id: "inv_001",
     code: "badr-sarah-1",
-    templateSlug: "royal-envelope",
+    templateSlug: "featured-1",
     language: "ar",
     groomName: "بدر",
     brideName: "Sara",

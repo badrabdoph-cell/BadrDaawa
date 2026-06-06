@@ -76,7 +76,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
         </label>
         <label className="field">
           <span>القالب</span>
-          <select name="templateSlug" defaultValue="royal-envelope">
+          <select name="templateSlug" defaultValue={templates[0]?.slug || "featured-1"}>
             {templates.map((template) => (
               <option key={template.slug} value={template.slug}>
                 {template.arabicName}
