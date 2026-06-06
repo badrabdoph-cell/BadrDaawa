@@ -67,6 +67,18 @@ export async function InvitationExperience({ invitation, template, disableMusic 
   if (template.slug === "pure-white") {
     return <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
+  if (template.slug === "neon-theme") {
+    return <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "vintage-theme") {
+    return <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "fairytale-theme") {
+    return <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
+  if (template.slug === "ocean-theme") {
+    return <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+  }
   if (template.slug === "cinematic-story") {
     return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
   }
@@ -1533,6 +1545,181 @@ async function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitat
             <QrCodeBlock value={invitationUrl} />
           </div>
           <div className="pure-white-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="neon-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="neon-shell">
+        <section className="neon-name-card">
+          <h1>{invitation.groomName}</h1>
+          <h1>{invitation.brideName}</h1>
+          <div className="neon-date-row">
+            <span>{formatArabicDate(invitation.weddingDate)}</span>
+            <span>{invitation.weddingTime}</span>
+          </div>
+        </section>
+
+        <figure className="neon-cover">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="neon-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="neon-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="neon-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="neon-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="neon-qr-card">
+          <div className="neon-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="neon-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="vintage-invite">
+      <div className="vintage-paper-pattern" aria-hidden="true" />
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="vintage-shell">
+        <section className="vintage-title-card">
+          <h1>
+            {invitation.groomName} &amp; {invitation.brideName}
+          </h1>
+          <span aria-hidden="true" />
+          <p>
+            {formatArabicDate(invitation.weddingDate)} • {invitation.weddingTime}
+          </p>
+        </section>
+
+        <figure className="vintage-photo">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="vintage-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="vintage-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="vintage-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="vintage-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="vintage-qr-card">
+          <div className="vintage-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="vintage-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={18} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+async function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="fairytale-invite">
+      <InviteMusic musicUrl={musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+
+      <div className="fairytale-shell">
+        <section className="fairytale-hero-card">
+          <Heart className="fairytale-heart" fill="currentColor" />
+          <h1>{invitation.groomName}</h1>
+          <h1>{invitation.brideName}</h1>
+        </section>
+
+        <figure className="fairytale-photo">
+          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
+        </figure>
+
+        <section className="fairytale-date-card">
+          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <span>{invitation.weddingTime}</span>
+        </section>
+
+        <section className="fairytale-countdown">
+          <Countdown targetDate={invitation.weddingDate} />
+        </section>
+
+        <section className="fairytale-map-card">
+          <h2>{invitation.venue}</h2>
+          <p>{invitation.city}</p>
+          <div className="fairytale-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        <div className="fairytale-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="fairytale-qr-card">
+          <div className="fairytale-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="fairytale-share-row" aria-label="روابط السوشيال">
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />

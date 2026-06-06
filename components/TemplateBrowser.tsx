@@ -17,6 +17,9 @@ const styleLabels: Record<string, string> = {
   cinematic: "سينمائي",
   glass: "زجاجي",
   minimal: "مينيمال",
+  neon: "نيون",
+  vintage: "فينتاج",
+  ocean: "أوشن",
   custom: "خاص",
 };
 
