@@ -6206,23 +6206,44 @@ img {
     padding: 12px;
   }
 
+  .admin-dark-shell .dashboard-sidebar {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .admin-brand {
+    min-height: 50px;
+    margin-bottom: 10px;
+  }
+
+  .admin-system-card {
+    min-height: 58px;
+    padding: 10px;
+  }
+
   .dashboard-topbar {
     position: relative;
     min-height: 66px;
     padding: 12px;
   }
 
-  .admin-dark-shell .dashboard-nav,
+  .admin-dark-shell .dashboard-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
   .admin-action-grid {
     grid-template-columns: 1fr;
   }
 
   .admin-dark-shell .dashboard-nav a {
-    min-height: 44px;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
   }
 
-  .admin-system-card {
-    margin-bottom: 12px;
+  .dashboard-sidebar-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-dark-shell .stat-card {
