@@ -335,3 +335,117 @@ async function IvoryArchesInvitationExperience({ invitation }: { invitation: Inv
     </main>
   );
 }
+
+async function MobileGoldInvitationExperience({ invitation }: { invitation: Invitation }) {
+  const invitationUrl = getInvitationUrl(invitation.code);
+  const showPhotographer = shouldShowPhotographerCard();
+  const images = invitation.gallery.length ? invitation.gallery : galleryImages;
+  const socialLinks = getSocialShareLinks(invitationUrl);
+
+  return (
+    <main className="mobile-gold-invite">
+      <InviteMusic musicUrl={invitation.musicUrl} />
+      <InvitePermissions invitationCode={invitation.code} />
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
+
+      <section className="mobile-gold-story">
+        <div className="mobile-gold-hero">
+          <p className="mobile-gold-kicker">Wedding Invitation</p>
+
+          <h1>{invitation.groomName}</h1>
+          <span>&amp;</span>
+          <h1>{invitation.brideName}</h1>
+
+          <div className="mobile-gold-line" />
+
+          <div className="mobile-gold-date-grid">
+            <div>
+              <Calendar size={20} />
+              <p>{formatArabicDate(invitation.weddingDate)}</p>
+            </div>
+            <div>
+              <Clock size={20} />
+              <strong>{invitation.weddingTime}</strong>
+            </div>
+          </div>
+
+          <div className="mobile-gold-countdown">
+            <Countdown targetDate={invitation.weddingDate} />
+          </div>
+        </div>
+
+        <div className="mobile-gold-gallery" aria-label="صور الدعوة">
+          <div className="mobile-gold-photo-main">
+            <img src={images[0] || galleryImages[0]} alt="صورة 1" />
+          </div>
+          <div>
+            <img src={images[1] || galleryImages[1]} alt="صورة 2" />
+          </div>
+          <div>
+            <img src={images[2] || galleryImages[2]} alt="صورة 3" />
+          </div>
+        </div>
+
+        <div className="mobile-gold-message">
+          <Heart size={24} />
+          <p>"حضورك هيفرحني، بتمنى إنك تحضر معايا أفضل يوم في عمري. أنا مستنيك تكون جزء من يومي المفضل."</p>
+        </div>
+
+        <section className="mobile-gold-map-card">
+          <div className="mobile-gold-map-copy">
+            <div>
+              <MapPin size={18} />
+              <span>Location</span>
+            </div>
+            <h2>{invitation.venue}</h2>
+            <p>{invitation.city}</p>
+          </div>
+          <div className="mobile-gold-map-frame">
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          </div>
+        </section>
+
+        {showPhotographer ? (
+          <section className="mobile-gold-photographer">
+            <div className="mobile-gold-photographer-main">
+              <div className="mobile-gold-photographer-logo">BA</div>
+              <div>
+                <p>
+                  <Camera size={12} />
+                  Photo
+                </p>
+                <h2>badrabdoph</h2>
+              </div>
+            </div>
+            <div className="mobile-gold-socials" aria-label="روابط المصور">
+              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer">
+                <Facebook size={18} />
+              </a>
+              <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+                <Instagram size={18} />
+              </a>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="mobile-gold-poll-wrap">
+          <InvitePoll code={invitation.code} />
+        </div>
+
+        <section className="mobile-gold-qr-card">
+          <h3>شارك دعوتنا</h3>
+          <div className="mobile-gold-qr-box">
+            <QrCodeBlock value={invitationUrl} />
+          </div>
+          <div className="mobile-gold-share-row" aria-label="روابط السوشيال">
+            {socialLinks.map((item) => (
+              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
+                <Share2 size={20} />
+              </a>
+            ))}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
