@@ -3151,6 +3151,51 @@ img {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
 }
 
+.admin-health-overview {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-health-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-health-card {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-height: 154px;
+  padding: 14px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(20, 23, 30, 0.9), rgba(13, 15, 20, 0.84)),
+    radial-gradient(circle at 10% 0%, rgba(49, 95, 86, 0.16), transparent 11rem);
+}
+
+.admin-health-card > svg {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  border-radius: 13px;
+  background: rgba(245, 234, 214, 0.06);
+  color: #f3cf73;
+}
+
+.admin-health-card strong {
+  color: #fff7e8;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.admin-health-card small {
+  color: rgba(245, 234, 214, 0.58);
+  font-weight: 850;
+  line-height: 1.45;
+}
+
 .admin-work-card {
   display: grid;
   align-content: start;
@@ -12772,6 +12817,10 @@ body:has(.template-preview-floating-actions) .music-control {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .admin-health-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-home-grid {
     grid-template-columns: 1fr;
   }
@@ -13006,6 +13055,10 @@ body:has(.template-preview-floating-actions) .music-control {
   }
 
   .admin-start-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-health-grid {
     grid-template-columns: 1fr;
   }
 

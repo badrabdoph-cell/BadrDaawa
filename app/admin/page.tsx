@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { Archive, ArrowUpLeft, BarChart3, FileText, MonitorPlay, Palette, Plus, Sparkles, UsersRound } from "lucide-react";
+import { Archive, ArrowUpLeft, BarChart3, Database, DatabaseBackup, FileText, Github, MonitorPlay, Music2, Palette, Plus, Sparkles, UsersRound } from "lucide-react";
 import { getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
+import { listBackupSnapshots } from "@/lib/backups";
 import { hasDatabaseConfig } from "@/lib/database-url";
+import { getGitHubSyncReadiness } from "@/lib/github-sync";
+import { getMusicLibrary } from "@/lib/music-library";
 import { formatArabicNumber } from "@/lib/utils";
 
 function formatOrderDate(value: string) {
@@ -19,10 +22,13 @@ function statusLabel(status: string) {
 }
 
 export default async function AdminDashboardPage() {
-  const [invitations, orders] = await Promise.all([getAdminInvitations(), getAdminOrders()]);
+  const [invitations, orders, backups, musicLibrary] = await Promise.all([getAdminInvitations(), getAdminOrders(), listBackupSnapshots(), getMusicLibrary()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const recentOrders = orders.slice(0, 4);
   const hasDatabase = hasDatabaseConfig();
+  const githubSync = getGitHubSyncReadiness();
+  const activeMusicSlots = musicLibrary.slots.filter((slot) => slot.enabled && slot.url).length;
+  const latestBackup = backups[0];
 
   return (
     <>
@@ -83,6 +89,42 @@ export default async function AdminDashboardPage() {
           </span>
           <ArrowUpLeft size={18} />
         </Link>
+      </section>
+
+      <section className="panel admin-health-overview" aria-label="حالة التشغيل">
+        <div className="admin-card-head">
+          <Database size={22} />
+          <div>
+            <span className="eyebrow">System Health</span>
+            <h2>حالة التشغيل</h2>
+          </div>
+        </div>
+        <div className="admin-health-grid">
+          <div className="admin-health-card">
+            <Database size={19} />
+            <span className={hasDatabase ? "admin-health-pill good" : "admin-health-pill danger"}>{hasDatabase ? "متصلة" : "ملفات محلية"}</span>
+            <strong>قاعدة البيانات</strong>
+            <small>{hasDatabase ? "الطلبات والدعوات تقرأ من قاعدة البيانات." : "اربط DATABASE_URL للبيانات الحقيقية على الإنتاج."}</small>
+          </div>
+          <div className="admin-health-card">
+            <Github size={19} />
+            <span className={githubSync.configured ? "admin-health-pill good" : "admin-health-pill danger"}>{githubSync.label}</span>
+            <strong>مزامنة GitHub</strong>
+            <small>{githubSync.detail}</small>
+          </div>
+          <div className="admin-health-card">
+            <DatabaseBackup size={19} />
+            <span className={backups.length ? "admin-health-pill good" : "admin-health-pill danger"}>{formatArabicNumber(backups.length)}</span>
+            <strong>النسخ الاحتياطي</strong>
+            <small>{latestBackup ? `آخر نسخة: ${formatOrderDate(latestBackup.createdAt)}` : "لا توجد نسخة محفوظة بعد."}</small>
+          </div>
+          <div className="admin-health-card">
+            <Music2 size={19} />
+            <span className={activeMusicSlots ? "admin-health-pill good" : "admin-health-pill danger"}>{formatArabicNumber(activeMusicSlots)}/5</span>
+            <strong>الموسيقى</strong>
+            <small>{activeMusicSlots ? "فيه مقاطع مفعلة على القوالب." : "لا توجد مقاطع مفعلة حاليا."}</small>
+          </div>
+        </div>
       </section>
 
       <section className="admin-home-grid admin-home-grid-simple">

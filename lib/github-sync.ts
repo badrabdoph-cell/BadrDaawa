@@ -62,6 +62,41 @@ function getSyncConfig() {
   return { token, repo, branch };
 }
 
+export function getGitHubSyncReadiness() {
+  if (process.env.GITHUB_SYNC_ENABLED === "false") {
+    return {
+      configured: false,
+      label: "متوقفة",
+      detail: "GITHUB_SYNC_ENABLED=false",
+    };
+  }
+
+  const token = process.env.GITHUB_SYNC_TOKEN || process.env.BACKUP_GITHUB_TOKEN || "";
+  const rawRepo = process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "";
+  const repo = parseRepo(rawRepo);
+  const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
+
+  if (!token || !repo || !branch) {
+    const missing = [
+      !token ? "Token" : "",
+      !repo ? "Repo" : "",
+      !branch ? "Branch" : "",
+    ].filter(Boolean);
+
+    return {
+      configured: false,
+      label: "غير مكتملة",
+      detail: `ناقص: ${missing.join(" / ") || "إعدادات GitHub"}`,
+    };
+  }
+
+  return {
+    configured: true,
+    label: "جاهزة",
+    detail: `${repo.owner}/${repo.repo} - ${branch}`,
+  };
+}
+
 async function exists(filePath: string) {
   try {
     await stat(filePath);
