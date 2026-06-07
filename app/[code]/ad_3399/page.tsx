@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Download, ExternalLink, ImagePlus, LogOut, MessageSquareText, Music2, QrCode, Save, Settings2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
@@ -7,7 +8,7 @@ import { ImageCropUploader } from "@/components/ImageCropUploader";
 import { QrCodeBlock } from "@/components/QrCodeBlock";
 import { StatsGrid } from "@/components/StatsGrid";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
-import { calculateAttendance, getInvitationUrl } from "@/lib/utils";
+import { calculateAttendance, getPublicSiteUrl } from "@/lib/utils";
 
 export default async function CustomerAdminPage({
   params,
@@ -17,7 +18,7 @@ export default async function CustomerAdminPage({
   searchParams: Promise<{ saved?: string }>;
 }) {
   const { code } = await params;
-  const query = await searchParams;
+  const [query, requestHeaders] = await Promise.all([searchParams, headers()]);
   const invitation = await getInvitationByCode(code);
   if (!invitation) {
     notFound();
@@ -25,7 +26,7 @@ export default async function CustomerAdminPage({
 
   const guests = await getGuestsByInvitation(invitation.code);
   const summary = calculateAttendance(guests);
-  const url = getInvitationUrl(invitation.code);
+  const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${invitation.code}`;
 
   return (
     <main className="customer-admin">
@@ -62,7 +63,9 @@ export default async function CustomerAdminPage({
       />
 
       {query.saved === "music-error" ? (
-        <div className="notice danger customer-notice">رابط الموسيقى غير قابل للتشغيل. استخدم ملف مرفوع أو رابط صوت مباشر مثل MP3/WAV.</div>
+        <div className="notice danger customer-notice">الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV.</div>
+      ) : query.saved === "images-error" ? (
+        <div className="notice danger customer-notice">الصور لم يتم حفظها. ارفع صور JPG/PNG/WebP أو انتظر انتهاء الضغط قبل الحفظ.</div>
       ) : query.saved ? (
         <div className="notice success customer-notice">تم حفظ التعديلات المتاحة لهذه الدعوة.</div>
       ) : null}
@@ -118,7 +121,7 @@ export default async function CustomerAdminPage({
           <ImagePlus size={24} />
           <h2>استبدال الصور</h2>
           <p>ارفع الصور بعد الكروب والضغط بنفس أبعاد القالب حتى تظهر في الدعوة بدون قص عشوائي.</p>
-          <form action={`/api/client/invitations/${invitation.code}`} method="post">
+          <form action={`/api/client/invitations/${invitation.code}`} method="post" encType="multipart/form-data">
             <ImageCropUploader label="صور الدعوة" name="galleryImage" maxFiles={3} defaultImages={invitation.gallery} />
             <button className="btn btn-gold admin-submit" type="submit">
               <Save size={17} />

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { getMusicLibrary, updateMusicSlot } from "@/lib/music-library";
+import { deleteMusicSlot, getMusicLibrary, saveMusicSlot, setMusicSlotEnabled } from "@/lib/music-library";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
   const existingAudioUrl = String(formData.get("existingAudioUrl") || currentSlot?.url || "");
   const requestedAudioUrl = String(formData.get("audioUrl") || "").trim();
   const url = getRedirectUrl("/admin/music", request.headers, request.nextUrl.origin);
+  const trimmedTrackName = trackName.trim();
 
   if (!currentSlot) {
     url.searchParams.set("error", "slot");
@@ -46,14 +47,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "disable") {
-    const savedSlot = await updateMusicSlot({
-      id: slotId,
-      name: currentSlot.name,
-      url: currentSlot.url,
-      enabled: false,
-      applyToAll: true,
-      templateSlugs: [],
-    });
+    const savedSlot = await setMusicSlotEnabled(slotId, false);
     revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Global music disabled: ${savedSlot?.id || slotId}.`, { createSnapshot: true });
     url.searchParams.set("saved", "disabled");
@@ -66,14 +60,7 @@ export async function POST(request: NextRequest) {
       url.searchParams.set("error", "audio");
       return NextResponse.redirect(url, 303);
     }
-    const savedSlot = await updateMusicSlot({
-      id: slotId,
-      name: currentSlot.name,
-      url: currentSlot.url,
-      enabled: true,
-      applyToAll: true,
-      templateSlugs: [],
-    });
+    const savedSlot = await setMusicSlotEnabled(slotId, true);
     revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Global music enabled: ${savedSlot?.id || slotId}.`, { createSnapshot: true });
     url.searchParams.set("saved", "enabled");
@@ -81,16 +68,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(url, 303);
   }
 
-  if (action === "clear") {
+  if (action === "clear" || action === "delete") {
     await deleteUploadedMusicFile(currentSlot.url);
-    const savedSlot = await updateMusicSlot({
-      id: slotId,
-      name: currentSlot.name,
-      url: "",
-      enabled: false,
-      applyToAll: true,
-      templateSlugs: [],
-    });
+    const savedSlot = await deleteMusicSlot(slotId);
     revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Global music cleared: ${savedSlot?.id || slotId}.`, { createSnapshot: true });
     url.searchParams.set("saved", "cleared");
@@ -103,10 +83,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(url, 303);
   }
 
-  const uploadedUrl = await saveUploadedAudioFile(uploadedFile instanceof File ? uploadedFile : null, existingAudioUrl);
+  const sameNameSlot = trimmedTrackName ? library.slots.find((slot) => slot.name.trim().toLowerCase() === trimmedTrackName.toLowerCase()) : undefined;
+  const shouldUpdateSelected = Boolean(trimmedTrackName && currentSlot.name.trim().toLowerCase() === trimmedTrackName.toLowerCase());
+  const targetSlot = sameNameSlot || (shouldUpdateSelected ? currentSlot : undefined);
+  const replacingExistingUrl = targetSlot?.url || "";
+  if (!targetSlot && !(uploadedFile instanceof File && uploadedFile.size) && !requestedAudioUrl) {
+    url.searchParams.set("error", "audio");
+    return NextResponse.redirect(url, 303);
+  }
+  const uploadedUrl = await saveUploadedAudioFile(uploadedFile instanceof File ? uploadedFile : null, replacingExistingUrl);
   const directUrl = cleanPlayableAudioUrl(requestedAudioUrl);
-  const isReplacingWithDirectUrl = Boolean(directUrl && directUrl !== existingAudioUrl);
-  const audioUrl = uploadedUrl || directUrl || cleanPlayableAudioUrl(existingAudioUrl) || "";
+  const isReplacingWithDirectUrl = Boolean(directUrl && replacingExistingUrl && directUrl !== replacingExistingUrl);
+  const audioUrl = uploadedUrl || directUrl || cleanPlayableAudioUrl(replacingExistingUrl || existingAudioUrl) || "";
 
   if (requestedAudioUrl && !directUrl) {
     url.searchParams.set("error", "audio");
@@ -124,13 +112,11 @@ export async function POST(request: NextRequest) {
 
   const appliedTemplateSlugs = allTemplateSlugs;
 
-  const savedSlot = await updateMusicSlot({
-    id: slotId,
+  const savedSlot = await saveMusicSlot({
+    id: targetSlot?.id,
     name: trackName,
     url: audioUrl,
     enabled: trackEnabled,
-    applyToAll: true,
-    templateSlugs: appliedTemplateSlugs,
   });
 
   if (savedSlot) {

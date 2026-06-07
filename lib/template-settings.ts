@@ -3,7 +3,7 @@ import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { cleanPlayableAudioUrl } from "./audio-files";
 import { getCustomTemplates } from "./custom-templates";
-import { getMusicLibrary } from "./music-library";
+import { getActiveMusicSlot, getMusicLibrary } from "./music-library";
 import { getTemplateBySlug, invitationTemplates } from "./templates";
 import type { TemplateDefinition } from "./types";
 
@@ -78,10 +78,7 @@ async function writeTemplateSettings(settings: TemplateSettings) {
 
 async function getGlobalMusicOverride() {
   const library = await getMusicLibrary();
-  const slot = library.slots[0];
-  if (!slot) return undefined;
-  if (!slot.enabled) return "";
-  return slot.url || undefined;
+  return getActiveMusicSlot(library)?.url || "";
 }
 
 function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings, globalMusicUrl?: string): TemplateDefinition {

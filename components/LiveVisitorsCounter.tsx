@@ -7,10 +7,10 @@ function randomVisitors() {
   return Math.floor(Math.random() * 11) + 3;
 }
 
-function randomDelay(changeCount: number) {
-  const tripleBaseDelay = 19500 + Math.floor(Math.random() * 28500);
-  const progressiveSlowdown = Math.min(90000, changeCount * (3500 + Math.floor(Math.random() * 7500)));
-  return tripleBaseDelay + progressiveSlowdown;
+function randomDelay() {
+  const normalDelay = 30000 + Math.floor(Math.random() * 65000);
+  const occasionalLongPause = 95000 + Math.floor(Math.random() * 25000);
+  return Math.random() > 0.84 ? occasionalLongPause : normalDelay;
 }
 
 export function LiveVisitorsCounter() {
@@ -19,12 +19,10 @@ export function LiveVisitorsCounter() {
   useEffect(() => {
     let timer: number | undefined;
     let cancelled = false;
-    let changeCount = 0;
 
     const scheduleNextChange = () => {
       timer = window.setTimeout(() => {
         if (cancelled) return;
-        changeCount += 1;
         setCount((current) => {
           const direction = Math.random() > 0.52 ? 1 : -1;
           const step = Math.random() > 0.93 ? 2 : 1;
@@ -34,7 +32,7 @@ export function LiveVisitorsCounter() {
           return next;
         });
         scheduleNextChange();
-      }, randomDelay(changeCount));
+      }, randomDelay());
     };
 
     setCount(randomVisitors());

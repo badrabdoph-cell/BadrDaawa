@@ -3,7 +3,6 @@ import { CopyButton } from "@/components/CopyButton";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
 import type { TemplateDefinition } from "@/lib/types";
 import { getCustomerAdminPath } from "@/lib/slug";
-import { getInvitationUrl, getSiteUrl } from "@/lib/utils";
 
 const invitationImageSlots = [
   {
@@ -29,9 +28,22 @@ const invitationImageSlots = [
   },
 ];
 
-export function AdminCreateInvitationForm({ created, error, demo, templates }: { created?: string; error?: string; demo?: string; templates: TemplateDefinition[] }) {
-  const invitationUrl = created ? getInvitationUrl(created) : "";
-  const clientAdminUrl = created ? `${getSiteUrl().replace(/\/$/, "")}${getCustomerAdminPath(created)}` : "";
+export function AdminCreateInvitationForm({
+  created,
+  error,
+  demo,
+  templates,
+  siteUrl,
+}: {
+  created?: string;
+  error?: string;
+  demo?: string;
+  templates: TemplateDefinition[];
+  siteUrl: string;
+}) {
+  const cleanSiteUrl = siteUrl.replace(/\/$/, "");
+  const invitationUrl = created ? `${cleanSiteUrl}/${created}` : "";
+  const clientAdminUrl = created ? `${cleanSiteUrl}${getCustomerAdminPath(created)}` : "";
 
   return (
     <section className="admin-create-card">
@@ -62,7 +74,15 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
           </div>
         </div>
       ) : null}
-      {error ? <div className="notice danger">{error === "music" ? "رابط الموسيقى غير قابل للتشغيل. استخدم ملف مرفوع أو رابط صوت مباشر مثل MP3/WAV، وليس YouTube." : "راجع البيانات المطلوبة قبل الإنشاء، خصوصا تاريخ الفرح والحقول الأساسية."}</div> : null}
+      {error ? (
+        <div className="notice danger">
+          {error === "music"
+            ? "الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV، وليس YouTube."
+            : error === "images"
+              ? "الصور لم يتم حفظها. ارفع صور JPG/PNG/WebP أو انتظر انتهاء الضغط قبل إنشاء الدعوة."
+              : "راجع البيانات المطلوبة قبل الإنشاء، خصوصا تاريخ الفرح والحقول الأساسية."}
+        </div>
+      ) : null}
       <form className="admin-form-grid" action="/api/admin/invitations" method="post" encType="multipart/form-data">
         <label className="field">
           <span>اسم العريس</span>

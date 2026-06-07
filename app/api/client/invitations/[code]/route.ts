@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
@@ -19,6 +20,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const formData = await request.formData();
   const galleryImages = getInvitationGalleryEntries(formData);
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
+  if (galleryImages.length && !savedGallery.length) {
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=images-error`, request.url), 303);
+  }
 
   const data: Record<string, unknown> = {};
   const fileData: Record<string, unknown> = {};
@@ -31,6 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const mapUrl = String(formData.get("mapUrl") || "").trim();
   const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
   const uploadedAudio = formData.get("audioFile");
+  const hasUploadedAudio = uploadedAudio instanceof File && uploadedAudio.size > 0;
   let currentMusicUrl = "";
 
   if (formData.has("musicUrl") || uploadedAudio instanceof File) {
@@ -81,6 +86,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null, currentMusicUrl);
     const directMusicUrl = cleanPlayableAudioUrl(rawMusicUrl);
     const nextMusicUrl = uploadedMusicUrl || directMusicUrl || "";
+    if (hasUploadedAudio && !uploadedMusicUrl) {
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
+    }
     if (rawMusicUrl && !nextMusicUrl) {
       return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
     }
@@ -102,6 +110,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (Object.keys(data).length) {
         await prisma.invitation.update({ where: { code }, data });
       }
+      revalidatePath(`/${code}`);
+      revalidatePath(`/${code}/ad_3399`);
       return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
     } catch (error) {
       console.error("Failed to update database invitation from client admin", error);
@@ -111,5 +121,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (Object.keys(fileData).length) {
     await updateFileInvitation(code, fileData);
   }
+  revalidatePath(`/${code}`);
+  revalidatePath(`/${code}/ad_3399`);
   return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
 }

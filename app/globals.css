@@ -3987,6 +3987,7 @@ img {
 }
 
 .music-control-panel,
+.music-library-panel,
 .music-replace-panel {
   display: grid;
   gap: 16px;
@@ -4083,6 +4084,47 @@ img {
   border: 1px dashed rgba(245, 234, 214, 0.14);
   border-radius: 14px;
   color: rgba(245, 234, 214, 0.66);
+  font-weight: 850;
+}
+
+.music-track-list {
+  display: grid;
+  gap: 12px;
+}
+
+.music-track-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 18px;
+  background: rgba(8, 10, 15, 0.22);
+}
+
+.music-track-card.active {
+  border-color: rgba(52, 211, 153, 0.24);
+  background:
+    linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(255, 255, 255, 0.025)),
+    rgba(8, 10, 15, 0.24);
+}
+
+.music-track-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.music-track-head h3 {
+  margin: 0 0 3px;
+  color: #fff7e8;
+  font-size: 1.05rem;
+}
+
+.music-track-head p {
+  margin: 0;
+  color: rgba(245, 234, 214, 0.58);
+  font-size: 0.82rem;
   font-weight: 850;
 }
 
@@ -13682,6 +13724,10 @@ body:has(.template-preview-floating-actions) .music-control {
   }
 
   .music-control-status {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .music-track-head {
     grid-template-columns: auto minmax(0, 1fr);
   }
 

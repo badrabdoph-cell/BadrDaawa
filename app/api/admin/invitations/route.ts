@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { cleanPlayableAudioUrl, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
   const mapUrl = String(formData.get("mapUrl") || "").trim();
   const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
   const uploadedAudio = formData.get("audioFile");
+  const hasUploadedAudio = uploadedAudio instanceof File && uploadedAudio.size > 0;
   const templateSlug = String(formData.get("templateSlug") || royalEnvelopeTemplate.slug).trim();
   const selectedTemplate = (await getTemplateWithSettings(templateSlug)) || royalEnvelopeTemplate;
   const galleryImages = getInvitationGalleryEntries(formData);
@@ -49,7 +51,13 @@ export async function POST(request: NextRequest) {
   }
 
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
+  if (galleryImages.length && !savedGallery.length) {
+    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=images", request.headers, request.nextUrl.origin), 303);
+  }
   const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null);
+  if (hasUploadedAudio && !uploadedMusicUrl) {
+    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
+  }
   const musicUrl = uploadedMusicUrl || cleanPlayableAudioUrl(rawMusicUrl);
   if (rawMusicUrl && !musicUrl) {
     return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
@@ -74,6 +82,9 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
     });
+    revalidatePath(`/${invitation.code}`);
+    revalidatePath(`/${invitation.code}/ad_3399`);
+    revalidatePath("/admin/client-invitations");
     queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
     return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.headers, request.nextUrl.origin), 303);
   }
@@ -162,6 +173,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePath(`/${code}`);
+    revalidatePath(`/${code}/ad_3399`);
+    revalidatePath("/admin/client-invitations");
     queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
     return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${code}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {

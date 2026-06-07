@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Eye, Pause, Play, Settings2, Trash2 } from "lucide-react";
 import { AdminCreateInvitationForm } from "@/components/AdminCreateInvitationForm";
 import { CopyButton } from "@/components/CopyButton";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
-import { getInvitationUrl, getSiteUrl } from "@/lib/utils";
+import { getPublicSiteUrl } from "@/lib/utils";
 import { getCustomerAdminPath } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,8 @@ export default async function ClientInvitationsPage({
 }: {
   searchParams: Promise<{ created?: string; error?: string; demo?: string; status?: string }>;
 }) {
-  const [params, invitations, templates] = await Promise.all([searchParams, getAdminInvitations(), getTemplatesWithSettings()]);
+  const [params, invitations, templates, requestHeaders] = await Promise.all([searchParams, getAdminInvitations(), getTemplatesWithSettings(), headers()]);
+  const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
   const statusMessages: Record<string, string> = {
     pause: "تم إيقاف الدعوة.",
     resume: "تم تشغيل الدعوة.",
@@ -36,7 +38,7 @@ export default async function ClientInvitationsPage({
         </a>
       </div>
       <div id="create-invitation">
-        <AdminCreateInvitationForm created={params.created} error={params.error} demo={params.demo} templates={templates} />
+        <AdminCreateInvitationForm created={params.created} error={params.error} demo={params.demo} templates={templates} siteUrl={siteUrl} />
       </div>
       {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
       <div className="table-shell">
@@ -55,7 +57,8 @@ export default async function ClientInvitationsPage({
           <tbody>
             {invitations.map((invitation) => {
               const template = templates.find((item) => item.slug === invitation.templateSlug);
-              const clientAdminUrl = `${getSiteUrl().replace(/\/$/, "")}${getCustomerAdminPath(invitation.code)}`;
+              const invitationUrl = `${siteUrl}/${invitation.code}`;
+              const clientAdminUrl = `${siteUrl}${getCustomerAdminPath(invitation.code)}`;
               return (
                 <tr key={invitation.id}>
                   <td>{invitation.code}</td>
@@ -69,7 +72,7 @@ export default async function ClientInvitationsPage({
                   </td>
                   <td>
                     <div className="mini-links">
-                      <span>{getInvitationUrl(invitation.code)}</span>
+                      <span>{invitationUrl}</span>
                       <span>{clientAdminUrl}</span>
                     </div>
                   </td>
@@ -81,7 +84,7 @@ export default async function ClientInvitationsPage({
                       <Link className="btn btn-soft btn-icon" href={getCustomerAdminPath(invitation.code)} title="تعديل الدعوة">
                         <Settings2 size={17} />
                       </Link>
-                      <CopyButton className="btn btn-soft btn-icon" value={getInvitationUrl(invitation.code)} title="نسخ رابط الدعوة" iconOnly />
+                      <CopyButton className="btn btn-soft btn-icon" value={invitationUrl} title="نسخ رابط الدعوة" iconOnly />
                       <form action={`/api/admin/invitations/${invitation.code}`} method="post">
                         <button className="btn btn-soft btn-icon" name="action" value={invitation.isActive ? "pause" : "resume"} title={invitation.isActive ? "إيقاف الدعوة" : "تشغيل الدعوة"} type="submit">
                           {invitation.isActive ? <Pause size={17} /> : <Play size={17} />}

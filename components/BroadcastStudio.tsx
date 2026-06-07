@@ -87,6 +87,8 @@ export function BroadcastStudio({
   const [newPricingPlus, setNewPricingPlus] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error">("success");
+  const previewSrc = `/?broadcast=1&v=${reloadKey}`;
 
   const fields = useMemo(() => buildBroadcastFields(content, getBroadcastPreviewValue(previewSettings)), [content, previewSettings]);
   const selectedField = fields.find((field) => field.key === selectedKey) || fields[0];
@@ -150,12 +152,19 @@ export function BroadcastStudio({
   async function runMutation(payload: BroadcastMutation, successMessage: string) {
     setIsSaving(true);
     setStatus("");
+    setStatusType("success");
     try {
       const response = await fetch("/api/admin/broadcast", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        cache: "no-store",
         body: JSON.stringify(payload),
       });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(response.redirected || response.url.includes("/admin/login") ? "جلسة الأدمن انتهت. سجل دخول مرة أخرى." : "رد الحفظ غير صالح. أعد تحميل الصفحة وجرب مرة أخرى.");
+      }
       const data = (await response.json()) as { ok?: boolean; error?: string; content?: HomeContent; previewSettings?: HomePreviewSettings };
       if (!response.ok || !data.ok || !data.content || !data.previewSettings) {
         throw new Error(data.error || "تعذر حفظ التعديل");
@@ -163,9 +172,11 @@ export function BroadcastStudio({
       setContent(data.content);
       setPreviewSettings(data.previewSettings);
       setReloadKey((value) => value + 1);
+      setStatusType("success");
       setStatus(successMessage);
       return true;
     } catch (error) {
+      setStatusType("error");
       setStatus(error instanceof Error ? error.message : "تعذر حفظ التعديل");
       return false;
     } finally {
@@ -236,7 +247,7 @@ export function BroadcastStudio({
         <div className="broadcast-stage-stack">
           <div className="panel broadcast-stage">
             <div className={viewport === "mobile" ? "broadcast-frame mobile" : "broadcast-frame desktop"}>
-              <iframe key={reloadKey} src="/?broadcast=1" title="شاشة بث الموقع" loading="eager" />
+              <iframe key={reloadKey} src={previewSrc} title="شاشة بث الموقع" loading="eager" />
             </div>
           </div>
 
@@ -407,7 +418,7 @@ export function BroadcastStudio({
                 <Save size={18} />
                 {isSaving ? "جار الحفظ..." : "حفظ بدون ريفرش"}
               </button>
-              {status ? <div className={status.includes("تعذر") || status.includes("missing") ? "broadcast-save-status error" : "broadcast-save-status"}>{status}</div> : null}
+              {status ? <div className={statusType === "error" ? "broadcast-save-status error" : "broadcast-save-status"}>{status}</div> : null}
             </form>
           ) : (
             <div className="admin-empty-state">
