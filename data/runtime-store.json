@@ -1,6 +1,26 @@
 {
   "invitations": [
     {
+      "id": "inv_ali963896_mona963896_1",
+      "code": "ali963896-mona963896-1",
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "groomName": "Ali Updated",
+      "brideName": "Mona",
+      "weddingDate": "2026-12-31",
+      "weddingTime": "07:00 مساء",
+      "venue": "Test Hall",
+      "city": "Cairo",
+      "mapUrl": "",
+      "heroPhoto": "http://localhost:3000/uploads/client-invitations/invitation-1780796963914-98889dab.jpg",
+      "gallery": [
+        "http://localhost:3000/uploads/client-invitations/invitation-1780796963914-98889dab.jpg"
+      ],
+      "isActive": false,
+      "views": 0,
+      "customerId": "cus_client963896"
+    },
+    {
       "id": "inv_wedding_invitation_3",
       "code": "wedding-invitation-3",
       "templateSlug": "featured-1",
@@ -69,6 +89,15 @@
   ],
   "guests": [],
   "customers": [
+    {
+      "id": "cus_client963896",
+      "name": "Ali و Mona",
+      "phone": "01000000000",
+      "username": "client963896",
+      "passwordHash": "314494f1a4ef449d89d9f1ebf3a45155e13692c4b38a92f48640e926d0bdad98",
+      "isActive": true,
+      "createdAt": "2026-06-07T01:49:23.909Z"
+    },
     {
       "id": "cus__",
       "name": "نتز و يبسبب",

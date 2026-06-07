@@ -73,6 +73,19 @@ type AdminCustomerRow = {
   createdAt: Date;
 };
 
+function toStringArray(value: unknown) {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function toInvitation(row: AdminInvitationRow): Invitation {
   return {
     id: row.id,
@@ -87,7 +100,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     city: row.city || "",
     mapUrl: row.mapUrl || "",
     heroPhoto: row.heroPhoto || "/assets/invite/badr-sarah-1.jpeg",
-    gallery: Array.isArray(row.gallery) ? row.gallery : [],
+    gallery: toStringArray(row.gallery),
     musicUrl: row.musicUrl || undefined,
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
     views: row.viewCount ?? row.views ?? 0,

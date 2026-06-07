@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, Pause, Play, Trash2 } from "lucide-react";
+import { Eye, Pause, Play, Settings2, Trash2 } from "lucide-react";
 import { AdminCreateInvitationForm } from "@/components/AdminCreateInvitationForm";
 import { CopyButton } from "@/components/CopyButton";
 import { getAdminInvitations } from "@/lib/admin-data";
@@ -12,9 +12,16 @@ export const dynamic = "force-dynamic";
 export default async function ClientInvitationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; error?: string; demo?: string }>;
+  searchParams: Promise<{ created?: string; error?: string; demo?: string; status?: string }>;
 }) {
   const [params, invitations, templates] = await Promise.all([searchParams, getAdminInvitations(), getTemplatesWithSettings()]);
+  const statusMessages: Record<string, string> = {
+    pause: "تم إيقاف الدعوة.",
+    resume: "تم تشغيل الدعوة.",
+    delete: "تم حذف الدعوة.",
+    missing: "لم يتم العثور على الدعوة المطلوبة.",
+    invalid: "الإجراء غير صالح.",
+  };
 
   return (
     <>
@@ -31,6 +38,7 @@ export default async function ClientInvitationsPage({
       <div id="create-invitation">
         <AdminCreateInvitationForm created={params.created} error={params.error} demo={params.demo} templates={templates} />
       </div>
+      {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
       <div className="table-shell">
         <table className="data-table">
           <thead>
@@ -70,16 +78,20 @@ export default async function ClientInvitationsPage({
                       <Link className="btn btn-soft btn-icon" href={`/${invitation.code}`} title="فتح الدعوة">
                         <Eye size={17} />
                       </Link>
-                      <Link className="btn btn-soft btn-icon" href={getCustomerAdminPath(invitation.code)} title="لوحة العميل">
-                        <Play size={17} />
+                      <Link className="btn btn-soft btn-icon" href={getCustomerAdminPath(invitation.code)} title="تعديل الدعوة">
+                        <Settings2 size={17} />
                       </Link>
                       <CopyButton className="btn btn-soft btn-icon" value={getInvitationUrl(invitation.code)} title="نسخ رابط الدعوة" iconOnly />
-                      <button className="btn btn-soft btn-icon" title="إيقاف" type="button">
-                        <Pause size={17} />
-                      </button>
-                      <button className="btn btn-soft btn-icon" title="حذف" type="button">
-                        <Trash2 size={17} />
-                      </button>
+                      <form action={`/api/admin/invitations/${invitation.code}`} method="post">
+                        <button className="btn btn-soft btn-icon" name="action" value={invitation.isActive ? "pause" : "resume"} title={invitation.isActive ? "إيقاف الدعوة" : "تشغيل الدعوة"} type="submit">
+                          {invitation.isActive ? <Pause size={17} /> : <Play size={17} />}
+                        </button>
+                      </form>
+                      <form action={`/api/admin/invitations/${invitation.code}`} method="post">
+                        <button className="btn btn-soft btn-icon danger-button" name="action" value="delete" title="حذف الدعوة" type="submit">
+                          <Trash2 size={17} />
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>

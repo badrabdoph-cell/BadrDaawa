@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
 import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
@@ -14,40 +12,6 @@ import { getPublicUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
-}
-
-async function saveInvitationGalleryImages(images: string[], request: NextRequest) {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "client-invitations");
-  const savedUrls: string[] = [];
-
-  for (const image of images.slice(0, 3)) {
-    if (image.startsWith("/")) {
-      savedUrls.push(image);
-      continue;
-    }
-
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      savedUrls.push(image);
-      continue;
-    }
-
-    const match = image.match(/^data:image\/jpeg;base64,([a-zA-Z0-9+/=]+)$/);
-    if (!match) continue;
-
-    const bytes = Buffer.from(match[1], "base64");
-    if (!bytes.length || bytes.length > 3 * 1024 * 1024) continue;
-
-    try {
-      await mkdir(uploadDir, { recursive: true });
-      const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.jpg`;
-      await writeFile(path.join(uploadDir, fileName), bytes);
-      savedUrls.push(getPublicUrl(`/uploads/client-invitations/${fileName}`, request.headers, request.nextUrl.origin).toString());
-    } catch (error) {
-      console.error("Failed to save invitation gallery image", error);
-    }
-  }
-
-  return savedUrls;
 }
 
 export async function POST(request: NextRequest) {
@@ -74,16 +38,15 @@ export async function POST(request: NextRequest) {
   const galleryImages = formData
     .getAll("galleryImage")
     .map((value) => String(value))
-    .filter((value) => value.startsWith("data:image/jpeg") || value.startsWith("/"));
+    .filter((value) => value.startsWith("data:image/") || value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://"));
 
   const parsedWeddingDate = new Date(weddingDate);
   if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue) {
     return NextResponse.redirect(new URL("/admin/client-invitations?error=missing", request.url), 303);
   }
 
-  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
-  const savedGallery = await saveInvitationGalleryImages(galleryImages, request);
-  const gallery = savedGallery.length ? savedGallery : fallbackGallery;
+  const savedGallery = await saveInvitationGalleryImages(galleryImages, request.headers, request.nextUrl.origin);
+  const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
 
   async function createFallbackInvitation() {

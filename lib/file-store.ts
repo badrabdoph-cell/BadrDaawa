@@ -40,7 +40,7 @@ type CreateFileInvitationInput = {
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "gallery" | "heroPhoto">
+  Pick<Invitation, "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "gallery" | "heroPhoto" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -207,6 +207,25 @@ export async function updateFileInvitation(code: string, update: FileInvitationU
   if (index < 0) return false;
 
   store.invitations[index] = { ...store.invitations[index], ...update };
+  await writeStore(store);
+  return true;
+}
+
+export async function setFileInvitationActive(code: string, isActive: boolean) {
+  return updateFileInvitation(code, { isActive });
+}
+
+export async function deleteFileInvitation(code: string) {
+  const store = await readStore();
+  const invitation = store.invitations.find((item) => item.code.toLowerCase() === code.toLowerCase());
+  if (!invitation) return false;
+
+  store.invitations = store.invitations.filter((item) => item.code.toLowerCase() !== code.toLowerCase());
+  store.guests = store.guests.filter((guest) => guest.invitationCode.toLowerCase() !== code.toLowerCase());
+  const customerHasOtherInvitations = store.invitations.some((item) => item.customerId === invitation.customerId);
+  if (!customerHasOtherInvitations) {
+    store.customers = store.customers.filter((customer) => customer.id !== invitation.customerId);
+  }
   await writeStore(store);
   return true;
 }

@@ -12,20 +12,25 @@ async function isValidClientLogin(code: string, username: string, password: stri
     return true;
   }
 
-  if (!prisma) {
-    return validateFileClientLogin(code, username, password);
+  const isValidFileLogin = await validateFileClientLogin(code, username, password);
+  if (!prisma) return isValidFileLogin;
+
+  try {
+    const invitation = await prisma.invitation.findUnique({
+      where: { code },
+      include: { customer: { select: { username: true, passwordHash: true, isActive: true } } },
+    });
+
+    const isValidDatabaseLogin = Boolean(
+      invitation?.customer.isActive &&
+        invitation.customer.username === username &&
+        verifyPassword(password, invitation.customer.passwordHash),
+    );
+    return isValidDatabaseLogin || isValidFileLogin;
+  } catch (error) {
+    console.error("Failed to validate database client login", error);
+    return isValidFileLogin;
   }
-
-  const invitation = await prisma.invitation.findUnique({
-    where: { code },
-    include: { customer: { select: { username: true, passwordHash: true, isActive: true } } },
-  });
-
-  return Boolean(
-    invitation?.customer.isActive &&
-      invitation.customer.username === username &&
-      verifyPassword(password, invitation.customer.passwordHash),
-  );
 }
 
 export async function POST(request: NextRequest) {
