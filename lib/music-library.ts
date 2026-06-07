@@ -56,13 +56,7 @@ function timestamp(value?: string) {
 }
 
 function makeTrackId(name: string, existingIds: string[]) {
-  const base =
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 46) || "music-track";
+  const base = `music-track-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   let id = base;
   let index = 2;
   while (existingIds.includes(id)) {

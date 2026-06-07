@@ -29,7 +29,6 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
   const tracks = library.slots.filter((slot) => slot.url);
   const activeSlot = getActiveMusicSlot(library);
   const message = saveMessage(params.saved, params.count);
-  const defaultSlotId = activeSlot?.id || library.slots[0]?.id || "global-track";
 
   return (
     <>
@@ -53,8 +52,10 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
           <AlertTriangle size={18} />
           {params.error === "youtube"
             ? "YouTube لا يعمل كصوت مباشر. استخدم ملف صوت أو رابط MP3/WAV/OGG مباشر."
+            : params.error === "name"
+              ? "اكتب اسم واضح للمقطع قبل الحفظ."
             : params.error === "audio"
-              ? "لا يوجد ملف صوت صالح. عند إضافة اسم جديد لازم ترفع ملف أو تضيف رابط صوت مباشر."
+              ? "لا يوجد ملف صوت صالح أو الصيغة غير قابلة للتشغيل. ارفع MP3 أو M4A أو WAV أو OGG أو WEBM أو FLAC، أو استخدم رابط مباشر لملف صوت."
               : "تعذر تنفيذ أمر الموسيقى."}
         </div>
       ) : null}
@@ -156,8 +157,6 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
         </div>
 
         <form className="music-simple-form" action="/api/admin/music" method="post" encType="multipart/form-data">
-          <input type="hidden" name="slotId" value={defaultSlotId} />
-          <input type="hidden" name="existingAudioUrl" value={activeSlot?.url || ""} />
           <input type="hidden" name="action" value="save" />
 
           <label className="field">
@@ -167,7 +166,7 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
 
           <label className="field">
             <span>رفع ملف صوت من الجهاز</span>
-            <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac" />
+            <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac" />
             <small>لو الاسم جديد، الملف يضاف كمقطع جديد. لو الاسم موجود، يستبدل نفس المقطع.</small>
           </label>
 

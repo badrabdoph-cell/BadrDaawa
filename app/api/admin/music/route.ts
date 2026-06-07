@@ -43,12 +43,11 @@ export async function POST(request: NextRequest) {
   const trackName = String(formData.get("trackName") || "");
   const trackEnabled = action === "enable" || (action === "save" && formData.get("trackEnabled") === "on");
   const uploadedFile = formData.get("audioFile");
-  const existingAudioUrl = String(formData.get("existingAudioUrl") || currentSlot?.url || "");
   const requestedAudioUrl = String(formData.get("audioUrl") || "").trim();
   const url = getRedirectUrl("/admin/music", request.headers, request.nextUrl.origin);
   const trimmedTrackName = trackName.trim();
 
-  if (!currentSlot) {
+  if (action !== "save" && !currentSlot) {
     url.searchParams.set("error", "slot");
     return NextResponse.redirect(url, 303);
   }
@@ -63,6 +62,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "enable") {
+    if (!currentSlot) {
+      url.searchParams.set("error", "slot");
+      return NextResponse.redirect(url, 303);
+    }
     if (!currentSlot.url) {
       url.searchParams.set("error", "audio");
       return NextResponse.redirect(url, 303);
@@ -76,6 +79,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "clear" || action === "delete") {
+    if (!currentSlot) {
+      url.searchParams.set("error", "slot");
+      return NextResponse.redirect(url, 303);
+    }
     await deleteUploadedMusicFile(currentSlot.url);
     const savedSlot = await deleteMusicSlot(slotId);
     await revalidateMusicPages(allTemplateSlugs);
@@ -90,26 +97,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(url, 303);
   }
 
-  const sameNameSlot = trimmedTrackName ? library.slots.find((slot) => slot.name.trim().toLowerCase() === trimmedTrackName.toLowerCase()) : undefined;
-  const shouldUpdateSelected = Boolean(trimmedTrackName && currentSlot.name.trim().toLowerCase() === trimmedTrackName.toLowerCase());
-  const targetSlot = sameNameSlot || (shouldUpdateSelected ? currentSlot : undefined);
+  if (!trimmedTrackName) {
+    url.searchParams.set("error", "name");
+    return NextResponse.redirect(url, 303);
+  }
+
+  const normalizedTrackName = trimmedTrackName.toLocaleLowerCase("ar-EG");
+  const targetSlot = library.slots.find((slot) => slot.name.trim().toLocaleLowerCase("ar-EG") === normalizedTrackName);
   const replacingExistingUrl = targetSlot?.url || "";
-  if (!targetSlot && !(uploadedFile instanceof File && uploadedFile.size) && !requestedAudioUrl) {
+  const hasUploadedFile = uploadedFile instanceof File && uploadedFile.size > 0;
+
+  if (!targetSlot && !hasUploadedFile && !requestedAudioUrl) {
     url.searchParams.set("error", "audio");
     return NextResponse.redirect(url, 303);
   }
-  const uploadedUrl = await saveUploadedAudioFile(uploadedFile instanceof File ? uploadedFile : null, replacingExistingUrl);
+
+  const uploadedUrl = await saveUploadedAudioFile(hasUploadedFile ? uploadedFile : null, replacingExistingUrl);
   const directUrl = cleanPlayableAudioUrl(requestedAudioUrl);
   const isReplacingWithDirectUrl = Boolean(directUrl && replacingExistingUrl && directUrl !== replacingExistingUrl);
-  const audioUrl = uploadedUrl || directUrl || cleanPlayableAudioUrl(replacingExistingUrl || existingAudioUrl) || "";
+  const audioUrl = uploadedUrl || directUrl || cleanPlayableAudioUrl(replacingExistingUrl) || "";
 
-  if (requestedAudioUrl && !directUrl) {
+  if ((hasUploadedFile && !uploadedUrl) || (requestedAudioUrl && !directUrl)) {
     url.searchParams.set("error", "audio");
     return NextResponse.redirect(url, 303);
   }
 
   if (isReplacingWithDirectUrl) {
-    await deleteUploadedMusicFile(existingAudioUrl);
+    await deleteUploadedMusicFile(replacingExistingUrl);
   }
 
   if (trackEnabled && !audioUrl) {
@@ -121,7 +135,7 @@ export async function POST(request: NextRequest) {
 
   const savedSlot = await saveMusicSlot({
     id: targetSlot?.id,
-    name: trackName,
+    name: trimmedTrackName,
     url: audioUrl,
     enabled: trackEnabled,
   });
