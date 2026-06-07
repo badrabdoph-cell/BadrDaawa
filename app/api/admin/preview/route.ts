@@ -5,6 +5,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { imageExtensionForUpload, isSupportedImageFile } from "@/lib/image-formats";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -16,22 +17,18 @@ async function isAdmin(request: NextRequest) {
 
 async function savePreviewMedia(file: File | null) {
   if (!file || !file.size) return { url: "", mode: "" };
-  const isImage = file.type.startsWith("image/");
+  const isImage = isSupportedImageFile(file);
   const isVideo = file.type.startsWith("video/");
   if (!isImage && !isVideo) return { url: "", mode: "" };
-  if (isImage && file.size > 8 * 1024 * 1024) return { url: "", mode: "" };
+  if (isImage && file.size > 80 * 1024 * 1024) return { url: "", mode: "" };
   if (isVideo && file.size > 35 * 1024 * 1024) return { url: "", mode: "" };
 
   const extensionByType: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
     "video/mp4": "mp4",
     "video/webm": "webm",
     "video/quicktime": "mov",
   };
-  const extension = extensionByType[file.type] || (isImage ? "jpg" : "mp4");
+  const extension = isImage ? imageExtensionForUpload(file.type, file.name) : extensionByType[file.type] || "mp4";
   const fileName = `home-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
   const uploadDir = path.join(process.cwd(), "public", "uploads", "previews");
   await mkdir(uploadDir, { recursive: true });

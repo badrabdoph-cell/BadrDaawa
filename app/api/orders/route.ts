@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { createFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { imageExtensionFromDataMime, isSupportedImageUrl } from "@/lib/image-formats";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
@@ -16,19 +17,22 @@ async function saveOrderImages(images: string[], request: Request) {
   const savedUrls: string[] = [];
 
   for (const image of images.slice(0, 3)) {
-    if (image.startsWith("/")) {
+    if (image.startsWith("/") || image.startsWith("http://") || image.startsWith("https://")) {
       savedUrls.push(getPublicUrl(image, request.headers, new URL(request.url).origin).toString());
       continue;
     }
 
-    const match = image.match(/^data:image\/jpeg;base64,([a-zA-Z0-9+/=]+)$/);
+    if (!isSupportedImageUrl(image)) continue;
+
+    const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
     if (!match) continue;
 
-    const bytes = Buffer.from(match[1], "base64");
-    if (!bytes.length || bytes.length > 2.5 * 1024 * 1024) continue;
+    const bytes = Buffer.from(match[2], "base64");
+    if (!bytes.length || bytes.length > 12 * 1024 * 1024) continue;
+    const extension = imageExtensionFromDataMime(match[1]) || "jpg";
 
     await mkdir(uploadDir, { recursive: true });
-    const fileName = `order-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.jpg`;
+    const fileName = `order-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
     await writeFile(path.join(uploadDir, fileName), bytes);
     savedUrls.push(getPublicUrl(`/uploads/order-requests/${fileName}`, request.headers, new URL(request.url).origin).toString());
   }

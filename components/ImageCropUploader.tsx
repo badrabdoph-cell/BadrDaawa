@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, RotateCcw } from "lucide-react";
+import { acceptedImageFormats, isSupportedImageFile } from "@/lib/image-formats";
 
 type CropItem = {
   id: string;
@@ -14,8 +15,6 @@ type CropItem = {
   optimizedUrl: string;
   optimizedSize: number;
 };
-
-const acceptedImageFormats = "image/*,.jpg,.jpeg,.png,.webp,.gif,.avif,.svg,.bmp,.tif,.tiff,.heic,.heif";
 
 function formatKb(bytes: number) {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -90,7 +89,7 @@ export function ImageCropUploader({
   const queueOptimize = (nextItem: CropItem) => {
     window.clearTimeout(timers.current[nextItem.id]);
     timers.current[nextItem.id] = window.setTimeout(async () => {
-      const optimized = await optimizeImage(nextItem, targetWidth, targetHeight, 0.84);
+      const optimized = await optimizeImage(nextItem, targetWidth, targetHeight, 0.84).catch(() => ({ url: "", size: 0 }));
       setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, optimizedUrl: optimized.url, optimizedSize: optimized.size } : item)));
     }, 160);
   };
@@ -113,7 +112,7 @@ export function ImageCropUploader({
     objectUrls.current = [];
 
     const selected = Array.from(files)
-      .filter((file) => file.type.startsWith("image/"))
+      .filter(isSupportedImageFile)
       .slice(0, maxFiles);
 
     const nextItems = selected.map((file) => {
@@ -142,7 +141,7 @@ export function ImageCropUploader({
         <ImagePlus size={22} />
         <strong>{label}</strong>
         <span>
-          {targetWidth}x{targetHeight}px - كروب إجباري قبل الرفع وضغط تلقائي
+          {targetWidth}x{targetHeight}px - الصور القابلة للمعاينة يتم قصها وضغطها، وباقي الصيغ ترفع كملف أصلي
         </span>
         <input name={`${name}Raw`} type="file" accept={acceptedImageFormats} multiple={maxFiles > 1} onChange={(event) => handleFiles(event.target.files)} />
       </label>

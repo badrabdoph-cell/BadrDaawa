@@ -1,9 +1,10 @@
 import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "./image-formats";
 
 const maxGalleryImageBytes = 3 * 1024 * 1024;
-const maxRawGalleryImageBytes = 12 * 1024 * 1024;
+const maxRawGalleryImageBytes = 80 * 1024 * 1024;
 
 export const fallbackInvitationGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
@@ -11,27 +12,8 @@ function isExistingImageUrl(value: string) {
   return value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://");
 }
 
-const allowedImageExtensions = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif", "svg", "bmp", "tif", "tiff", "heic", "heif"]);
-
-function cleanImageExtension(value?: string) {
-  const extension = value?.split("?")[0]?.split("#")[0]?.replace(/^\./, "").trim().toLowerCase() || "";
-  if (!allowedImageExtensions.has(extension)) return "";
-  return extension === "jpeg" ? "jpg" : extension;
-}
-
 function imageExtension(type: string, fileName = "") {
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/gif") return "gif";
-  if (type === "image/avif") return "avif";
-  if (type === "image/svg+xml") return "svg";
-  if (type === "image/bmp") return "bmp";
-  if (type === "image/tiff") return "tiff";
-  if (type === "image/heic") return "heic";
-  if (type === "image/heif") return "heif";
-  const nameExtension = cleanImageExtension(fileName.split(".").pop());
-  if (nameExtension) return nameExtension;
-  return "jpg";
+  return imageExtensionForUpload(type, fileName);
 }
 
 async function saveImageBytes(bytes: Buffer, extension: string) {
@@ -44,7 +26,7 @@ async function saveImageBytes(bytes: Buffer, extension: string) {
 
 async function saveGalleryImage(image: string | File) {
   if (typeof image !== "string") {
-    if (!image.type.startsWith("image/") || !image.size || image.size > maxRawGalleryImageBytes) return "";
+    if (!isSupportedImageFile(image) || image.size > maxRawGalleryImageBytes) return "";
     try {
       const bytes = Buffer.from(await image.arrayBuffer());
       if (!bytes.length) return "";
@@ -62,14 +44,14 @@ async function saveGalleryImage(image: string | File) {
     return value;
   }
 
-  const match = value.match(/^data:image\/([a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
+  const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
   if (!match) return "";
 
   const bytes = Buffer.from(match[2], "base64");
   if (!bytes.length || bytes.length > maxGalleryImageBytes) return "";
 
   try {
-    return saveImageBytes(bytes, imageExtension(`image/${match[1].toLowerCase()}`));
+    return saveImageBytes(bytes, imageExtensionFromDataMime(match[1].toLowerCase()) || "jpg");
   } catch (error) {
     console.error("Failed to save invitation gallery image", error);
     return "";
@@ -88,14 +70,11 @@ export async function saveInvitationGalleryImages(images: Array<string | File>) 
 }
 
 function isValidGalleryText(value: FormDataEntryValue | null): value is string {
-  return (
-    typeof value === "string" &&
-    (value.startsWith("data:image/") || value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://"))
-  );
+  return typeof value === "string" && isSupportedImageUrl(value);
 }
 
 function isValidGalleryFile(value: FormDataEntryValue | null): value is File {
-  return value instanceof File && value.type.startsWith("image/") && value.size > 0;
+  return value instanceof File && isSupportedImageFile(value);
 }
 
 export function getInvitationGalleryEntries(formData: FormData, slots = 3) {
