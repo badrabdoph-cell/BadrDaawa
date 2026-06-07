@@ -2,8 +2,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import PDFDocument from "pdfkit";
 import * as XLSX from "xlsx";
-import { getGuestsByInvitation, getInvitationByCode } from "@/lib/demo-data";
 import { prisma } from "@/lib/db";
+import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 
 export const runtime = "nodejs";
 
@@ -36,29 +36,34 @@ type DatabaseGuestRow = {
 
 async function getExportRows(code: string): Promise<ExportData | null> {
   if (prisma) {
-    const invitation = await prisma.invitation.findUnique({
-      where: { code },
-      include: { guests: { orderBy: { createdAt: "desc" } } },
-    });
-    if (!invitation) return null;
-    return {
-      title: `${invitation.groomName} & ${invitation.brideName}`,
-      rows: invitation.guests.map((guest: DatabaseGuestRow) => ({
-        name: guest.name,
-        phone: guest.phone,
-        attendees: guest.attendees,
-        status: guest.status === "CONFIRMED" ? "حاضر" : "معتذر",
-        note: guest.note || "",
-        createdAt: guest.createdAt.toISOString(),
-      })),
-    };
+    try {
+      const invitation = await prisma.invitation.findUnique({
+        where: { code },
+        include: { guests: { orderBy: { createdAt: "desc" } } },
+      });
+      if (invitation) {
+        return {
+          title: `${invitation.groomName} & ${invitation.brideName}`,
+          rows: invitation.guests.map((guest: DatabaseGuestRow) => ({
+            name: guest.name,
+            phone: guest.phone,
+            attendees: guest.attendees,
+            status: guest.status === "CONFIRMED" ? "حاضر" : "معتذر",
+            note: guest.note || "",
+            createdAt: guest.createdAt.toISOString(),
+          })),
+        };
+      }
+    } catch (error) {
+      console.error("Failed to load database export rows, falling back to public invitation data", error);
+    }
   }
 
-  const invitation = getInvitationByCode(code);
+  const invitation = await getInvitationByCode(code);
   if (!invitation) return null;
   return {
     title: `${invitation.groomName} & ${invitation.brideName}`,
-    rows: getGuestsByInvitation(code).map((guest) => ({
+    rows: (await getGuestsByInvitation(code)).map((guest) => ({
       name: guest.name,
       phone: guest.phone,
       attendees: guest.attendees,

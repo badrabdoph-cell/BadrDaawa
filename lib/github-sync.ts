@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { ensureRuntimeDirectories } from "./runtime-paths";
 
 type GitHubSyncStatus = "synced" | "skipped" | "unchanged" | "failed";
 
@@ -134,8 +135,12 @@ function toRepoPath(absolutePath: string) {
 }
 
 async function walkFiles(dir: string): Promise<SyncFile[]> {
+  ensureRuntimeDirectories();
   if (!(await exists(dir))) return [];
-  const entries = await readdir(dir, { withFileTypes: true });
+  const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
+    console.error(`[GitHub Sync] Failed to read sync directory: ${dir}`, error);
+    return [];
+  });
   const files: SyncFile[] = [];
 
   for (const entry of entries) {
@@ -146,7 +151,11 @@ async function walkFiles(dir: string): Promise<SyncFile[]> {
     }
 
     if (!entry.isFile()) continue;
-    const fileStat = await stat(fullPath);
+    const fileStat = await stat(fullPath).catch((error: unknown) => {
+      console.error(`[GitHub Sync] Failed to stat sync file: ${fullPath}`, error);
+      return null;
+    });
+    if (!fileStat) continue;
     if (!fileStat.size || fileStat.size > maxSyncFileBytes) continue;
     files.push({
       absolutePath: fullPath,
@@ -159,6 +168,7 @@ async function walkFiles(dir: string): Promise<SyncFile[]> {
 }
 
 async function collectSyncFiles() {
+  ensureRuntimeDirectories();
   const groups = await Promise.all(syncRoots.map((root) => walkFiles(path.join(process.cwd(), root))));
   return groups.flat().sort((a, b) => a.repoPath.localeCompare(b.repoPath));
 }
@@ -203,7 +213,12 @@ async function githubRequest<T>(pathName: string, init: RequestInit, token: stri
 }
 
 async function createBlob(owner: string, repo: string, token: string, file: SyncFile) {
-  const bytes = await readFile(file.absolutePath);
+  const bytes = await readFile(file.absolutePath).catch((error: unknown) => {
+    console.error(`[GitHub Sync] Skipping missing/unreadable file: ${file.repoPath}`, error);
+    return null;
+  });
+  if (!bytes) return null;
+
   const blob = await githubRequest<GitHubBlob>(
     `/repos/${owner}/${repo}/git/blobs`,
     {
@@ -365,7 +380,17 @@ async function attemptSync(
   const { owner, repo } = config.repo;
   const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
   const headCommit = await githubRequest<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, { method: "GET" }, config.token);
-  const treeItems = await Promise.all(files.map((file) => createBlob(owner, repo, config.token, file)));
+  const treeItems = (await Promise.all(files.map((file) => createBlob(owner, repo, config.token, file)))).filter(
+    (item): item is NonNullable<typeof item> => Boolean(item),
+  );
+  if (!treeItems.length) {
+    return {
+      startedAt,
+      status: "skipped",
+      message: "No readable data or uploaded files found to sync.",
+      duration: Date.now() - startedAt,
+    };
+  }
   const tree = await githubRequest<GitHubTree>(
     `/repos/${owner}/${repo}/git/trees`,
     {

@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
 
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
   if (galleryImages.length && !savedGallery.length) {
+    console.error(`[Admin Invitation] Image save failed. Received ${galleryImages.length}, saved 0.`);
     return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=images", request.headers, request.nextUrl.origin), 303);
   }
   const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null);
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
   }
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
+  console.log(`[Admin Invitation] Creating invitation with gallery (${gallery.length}):`, gallery);
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
 
   async function createFallbackInvitation() {
@@ -82,6 +84,7 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
     });
+    console.log(`[Admin Invitation] File invitation ${invitation.code} saved with heroPhoto=${gallery[0]}.`);
     revalidatePath(`/${invitation.code}`);
     revalidatePath(`/${invitation.code}/ad_3399`);
     revalidatePath("/admin/client-invitations");
@@ -172,6 +175,7 @@ export async function POST(request: NextRequest) {
         templateId: template.id,
       },
     });
+    console.log(`[Admin Invitation] Database invitation ${code} saved with heroPhoto=${gallery[0]}.`);
 
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);

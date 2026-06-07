@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promi
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
+import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir, runtimeUploadsDir } from "./runtime-paths";
 
 export type BackupSummary = {
   fileName: string;
@@ -30,9 +31,9 @@ type BackupPayload = {
   uploads?: BackupUploadFile[];
 };
 
-const backupDir = path.join(process.cwd(), "data", "backups");
-const dataDir = path.join(process.cwd(), "data");
-const uploadsDir = path.join(process.cwd(), "public", "uploads");
+const backupDir = runtimeBackupDir;
+const dataDir = runtimeDataDir;
+const uploadsDir = runtimeUploadsDir;
 const maxUploadFileBytes = 5 * 1024 * 1024;
 const maxUploadsTotalBytes = 40 * 1024 * 1024;
 const maxBackupAgeMs = 7 * 24 * 60 * 60 * 1000;
@@ -63,6 +64,7 @@ async function exists(filePath: string) {
 }
 
 async function listJsonDataFiles() {
+  ensureRuntimeDirectories();
   if (!(await exists(dataDir))) return [];
   const entries = await readdir(dataDir, { withFileTypes: true });
   return entries
@@ -129,7 +131,7 @@ async function readDatabaseSnapshot() {
       }),
       prisma.invitation.findMany({
         orderBy: { createdAt: "desc" },
-        select: { id: true, code: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, createdAt: true, updatedAt: true },
+        select: { id: true, code: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, heroPhoto: true, gallery: true, musicUrl: true, createdAt: true, updatedAt: true },
       }),
       prisma.guestRsvp.findMany({
         orderBy: { createdAt: "desc" },
@@ -139,7 +141,7 @@ async function readDatabaseSnapshot() {
       prisma.orderRequest.findMany({
         orderBy: { createdAt: "desc" },
         take: 50,
-        select: { id: true, groomName: true, brideName: true, phone: true, status: true, createdAt: true, updatedAt: true },
+        select: { id: true, groomName: true, brideName: true, phone: true, status: true, imageUrls: true, createdAt: true, updatedAt: true },
       }),
       prisma.analyticsEvent.findMany({
         orderBy: { createdAt: "desc" },
@@ -154,7 +156,7 @@ async function readDatabaseSnapshot() {
     ]);
     return { customers, templates, invitations, guests, orders, analyticsEvents, backupJobs };
   } catch (error) {
-    console.error("Failed to read database backup snapshot", error);
+    console.error("[Backup] Failed to read database snapshot. Falling back to file snapshot.", error);
     return null;
   }
 }
@@ -195,6 +197,7 @@ async function cleanupOldBackups() {
 
 export async function createBackupSnapshot(type = "manual") {
   noStore();
+  ensureRuntimeDirectories();
 
   const createdAt = new Date();
   const database = await readDatabaseSnapshot();
@@ -213,8 +216,10 @@ export async function createBackupSnapshot(type = "manual") {
   };
   const json = `${JSON.stringify(payload, jsonReplacer, 2)}\n`;
 
-  await mkdir(backupDir, { recursive: true });
-  await writeFile(path.join(backupDir, fileName), json, "utf8");
+  const backupPath = path.join(backupDir, fileName);
+  ensureParentDirectory(backupPath);
+  await writeFile(backupPath, json, "utf8");
+  console.log(`[Backup] Created ${fileName} (${Buffer.byteLength(json)} bytes, source: ${payload.source}).`);
 
   if (prisma) {
     await prisma.backupJob
@@ -228,7 +233,7 @@ export async function createBackupSnapshot(type = "manual") {
           finishedAt: new Date(),
         },
       })
-      .catch((error: any) => console.error("Failed to record backup job", error));
+      .catch((error: any) => console.error("[Backup] Failed to record backup job", error));
   }
 
   cleanupOldBackups().catch((error) => console.error("Failed to cleanup old backups", error));
@@ -250,6 +255,7 @@ function toBackupSummary(fileName: string, sizeBytes: number, createdAt: string,
 
 export async function listBackupSnapshots() {
   noStore();
+  ensureRuntimeDirectories();
 
   if (!(await exists(backupDir))) return [];
   const entries = await readdir(backupDir, { withFileTypes: true });
@@ -313,6 +319,7 @@ function isSafeUploadPath(filePath: string) {
 
 export async function restoreBackupSnapshot(fileName: string) {
   noStore();
+  ensureRuntimeDirectories();
 
   const payload = await readBackupPayload(fileName);
   if (!payload?.dataFiles || typeof payload.dataFiles !== "object") return null;

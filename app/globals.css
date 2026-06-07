@@ -5286,6 +5286,18 @@ img {
   color: rgba(245, 234, 214, 0.82);
 }
 
+.admin-dark-shell .crop-controls .crop-status.success {
+  color: #c8f7df;
+}
+
+.admin-dark-shell .crop-controls .crop-status.warning {
+  color: #ffe3a3;
+}
+
+.admin-dark-shell .crop-controls .crop-status.loading {
+  color: #cfe4ff;
+}
+
 .admin-dark-shell .field small {
   color: rgba(245, 234, 214, 0.54);
 }
@@ -6109,6 +6121,39 @@ img {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 900;
+}
+
+.crop-controls .crop-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 9px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.86);
+  color: #475569;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.crop-controls .crop-status.success {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(209, 250, 229, 0.82);
+  color: #065f46;
+}
+
+.crop-controls .crop-status.warning {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(254, 243, 199, 0.86);
+  color: #78350f;
+}
+
+.crop-controls .crop-status.loading {
+  border-color: rgba(59, 130, 246, 0.26);
+  background: rgba(219, 234, 254, 0.86);
+  color: #1e3a8a;
 }
 
 .crop-controls label {

@@ -44,6 +44,23 @@ function parseImageUrls(notes?: string | null) {
     .filter(Boolean);
 }
 
+function parseStoredImageUrls(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeInternalAssetUrl(typeof item === "string" ? item : "")).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return parseStoredImageUrls(parsed);
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
 function digitsOnly(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -180,7 +197,7 @@ async function convertPrismaOrder(id: string, draft: OrderConversionDraft) {
   const digits = digitsOnly(phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
   const password = digits.slice(-6) || order.id.slice(-6) || "123456";
-  const gallery = mergeImageUrls(draft.imageUrls, parseImageUrls(order.notes), parseImageUrls(notes));
+  const gallery = mergeImageUrls(draft.imageUrls, parseStoredImageUrls(order.imageUrls), parseImageUrls(order.notes), parseImageUrls(notes));
 
   const customer = await prisma.customer.upsert({
     where: { username },
@@ -227,6 +244,7 @@ async function convertPrismaOrder(id: string, draft: OrderConversionDraft) {
       weddingDate,
       venue,
       notes,
+      imageUrls: gallery,
       status: "CONVERTED",
       customerId: customer.id,
       templateId: template.id,
@@ -324,11 +342,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return redirectBack(request, "updated");
       }
 
-      const existingOrder = await prisma.orderRequest.findUnique({ where: { id }, select: { notes: true } });
+      const existingOrder = await prisma.orderRequest.findUnique({ where: { id }, select: { notes: true, imageUrls: true } });
       const existingImages = parseImageUrls(existingOrder?.notes);
+      const storedImages = parseStoredImageUrls(existingOrder?.imageUrls);
+      const nextImageUrls = mergeImageUrls(storedImages, existingImages, parseImageUrls(notes));
       const nextNotes =
-        existingImages.length && !existingImages.every((url) => notes.includes(url))
-          ? [notes, `صور الطلب:\n${existingImages.map((url, index) => `${index + 1}. ${url}`).join("\n")}`].filter(Boolean).join("\n\n")
+        nextImageUrls.length && !nextImageUrls.every((url) => notes.includes(url))
+          ? [notes, `صور الطلب:\n${nextImageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}`].filter(Boolean).join("\n\n")
           : notes;
 
       const selectedTemplate = templateSlug ? await getTemplateWithSettings(templateSlug) : null;
@@ -377,6 +397,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           weddingDate: normalizeDate(weddingDate),
           venue,
           notes: nextNotes,
+          imageUrls: nextImageUrls,
           ...(template ? { templateId: template.id } : {}),
         },
       });

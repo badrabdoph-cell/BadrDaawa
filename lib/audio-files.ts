@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { mkdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { ensureDirectory } from "./runtime-paths";
 
 const uploadDir = path.join(process.cwd(), "public", "uploads", "music");
 
@@ -97,6 +98,7 @@ export async function saveUploadedAudioFile(file: File | null, previousUrl?: str
   const extension = normalizeAudioExtension(detectedExtension || allowedAudioTypes[file.type] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : ""));
   if (!extension || file.size > maxAudioBytes) return "";
 
+  ensureDirectory(uploadDir);
   await mkdir(uploadDir, { recursive: true });
   const fileName = `music-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
   const filePath = path.join(uploadDir, fileName);
@@ -111,6 +113,7 @@ export async function saveUploadedAudioFile(file: File | null, previousUrl?: str
 
 export async function listUploadedMusicFiles() {
   try {
+    ensureDirectory(uploadDir);
     const { readdir } = await import("node:fs/promises");
     const entries = await readdir(uploadDir, { withFileTypes: true });
     const files = [];

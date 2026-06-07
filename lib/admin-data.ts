@@ -45,6 +45,7 @@ type AdminOrderRow = {
   weddingDate: Date | string;
   venue: string;
   notes?: string | null;
+  imageUrls?: unknown;
   template?: { slug: string } | null;
   templateSlug?: string;
   language: string;
@@ -111,9 +112,11 @@ function toInvitation(row: AdminInvitationRow): Invitation {
 
 function toOrder(row: AdminOrderRow): OrderRequest {
   const notes = row.notes || "";
-  const imageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
+  const noteImageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
     .map((match) => normalizeInternalAssetUrl(match[0]))
     .filter(Boolean);
+  const savedImageUrls = toStringArray(row.imageUrls);
+  const imageUrls = [...savedImageUrls, ...noteImageUrls].filter((url, index, list) => list.indexOf(url) === index).slice(0, 3);
 
   return {
     id: row.id,

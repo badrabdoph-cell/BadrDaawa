@@ -1,43 +1,16 @@
 import { NextResponse } from "next/server";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { createFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { imageExtensionFromDataMime, isSupportedImageUrl } from "@/lib/image-formats";
+import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
-import { getPublicUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
 async function saveOrderImages(images: string[], request: Request) {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "order-requests");
-  const savedUrls: string[] = [];
-
-  for (const image of images.slice(0, 3)) {
-    if (image.startsWith("/") || image.startsWith("http://") || image.startsWith("https://")) {
-      savedUrls.push(normalizeInternalAssetUrl(image) || getPublicUrl(image, request.headers, new URL(request.url).origin).toString());
-      continue;
-    }
-
-    if (!isSupportedImageUrl(image)) continue;
-
-    const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
-    if (!match) continue;
-
-    const bytes = Buffer.from(match[2], "base64");
-    if (!bytes.length || bytes.length > 12 * 1024 * 1024) continue;
-    const extension = imageExtensionFromDataMime(match[1]) || "jpg";
-
-    await mkdir(uploadDir, { recursive: true });
-    const fileName = `order-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-    await writeFile(path.join(uploadDir, fileName), bytes);
-    savedUrls.push(`/uploads/order-requests/${fileName}`);
-  }
-
-  return savedUrls;
+  console.log(`[Order API] Saving ${images.length} order image(s) for ${request.url}.`);
+  return saveOrderPreviewImages(images, "order-requests");
 }
 
 export async function POST(request: Request) {
@@ -114,6 +87,7 @@ export async function POST(request: Request) {
           weddingDate: new Date(parsed.data.weddingDate),
           venue: parsed.data.venue || "",
           notes,
+          imageUrls,
           language: parsed.data.language,
           templateId: template.id,
         },

@@ -22,7 +22,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const galleryImages = getInvitationGalleryEntries(formData);
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
   if (galleryImages.length && !savedGallery.length) {
+    console.error(`[Client Invitation] Image save failed for ${code}. Received ${galleryImages.length}, saved 0.`);
     return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=images-error`, request.url), 303);
+  }
+  if (savedGallery.length) {
+    console.log(`[Client Invitation] ${code} gallery saved (${savedGallery.length}):`, savedGallery);
   }
 
   const data: Record<string, unknown> = {};
@@ -110,6 +114,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     try {
       if (Object.keys(data).length) {
         await prisma.invitation.update({ where: { code }, data });
+        if (savedGallery.length) {
+          console.log(`[Client Invitation] Database invitation ${code} updated with heroPhoto=${savedGallery[0]}.`);
+        }
       }
       revalidatePath(`/${code}`);
       revalidatePath(`/${code}/ad_3399`);
@@ -121,7 +128,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   if (Object.keys(fileData).length) {
-    await updateFileInvitation(code, fileData);
+    const updated = await updateFileInvitation(code, fileData);
+    if (savedGallery.length) {
+      console.log(`[Client Invitation] File invitation ${code} gallery update result=${updated}.`);
+    }
   }
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "./image-formats";
+import { ensureDirectory } from "./runtime-paths";
 import { normalizeInternalAssetUrl } from "./utils";
 
 const maxGalleryImageBytes = 3 * 1024 * 1024;
@@ -19,21 +20,34 @@ function imageExtension(type: string, fileName = "") {
 
 async function saveImageBytes(bytes: Buffer, extension: string) {
   const uploadDir = path.join(process.cwd(), "public", "uploads", "client-invitations");
+  ensureDirectory(uploadDir);
   await mkdir(uploadDir, { recursive: true });
   const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
   await writeFile(path.join(uploadDir, fileName), bytes);
-  return `/uploads/client-invitations/${fileName}`;
+  const url = `/uploads/client-invitations/${fileName}`;
+  console.log(`[Invitation Images] Saved ${url} (${bytes.length} bytes).`);
+  return url;
 }
 
 async function saveGalleryImage(image: string | File) {
   if (typeof image !== "string") {
-    if (!isSupportedImageFile(image) || image.size > maxRawGalleryImageBytes) return "";
+    if (!isSupportedImageFile(image)) {
+      console.error(`[Invitation Images] Unsupported uploaded image: ${image.name || "unnamed"} (${image.type || "unknown"}).`);
+      return "";
+    }
+    if (image.size > maxRawGalleryImageBytes) {
+      console.error(`[Invitation Images] Uploaded image is too large: ${image.name || "unnamed"} (${image.size} bytes).`);
+      return "";
+    }
     try {
       const bytes = Buffer.from(await image.arrayBuffer());
-      if (!bytes.length) return "";
+      if (!bytes.length) {
+        console.error(`[Invitation Images] Uploaded image is empty: ${image.name || "unnamed"}.`);
+        return "";
+      }
       return saveImageBytes(bytes, imageExtension(image.type, image.name));
     } catch (error) {
-      console.error("Failed to save uploaded invitation image", error);
+      console.error("[Invitation Images] Failed to save uploaded invitation image", error);
       return "";
     }
   }
@@ -46,15 +60,21 @@ async function saveGalleryImage(image: string | File) {
   }
 
   const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
-  if (!match) return "";
+  if (!match) {
+    console.error("[Invitation Images] Ignored invalid gallery image payload.");
+    return "";
+  }
 
   const bytes = Buffer.from(match[2], "base64");
-  if (!bytes.length || bytes.length > maxGalleryImageBytes) return "";
+  if (!bytes.length || bytes.length > maxGalleryImageBytes) {
+    console.error(`[Invitation Images] Optimized gallery image is invalid or too large (${bytes.length} bytes).`);
+    return "";
+  }
 
   try {
     return saveImageBytes(bytes, imageExtensionFromDataMime(match[1].toLowerCase()) || "jpg");
   } catch (error) {
-    console.error("Failed to save invitation gallery image", error);
+    console.error("[Invitation Images] Failed to save invitation gallery image", error);
     return "";
   }
 }
@@ -67,6 +87,7 @@ export async function saveInvitationGalleryImages(images: Array<string | File>) 
     if (saved) savedUrls.push(saved);
   }
 
+  console.log(`[Invitation Images] Received ${images.length}, saved ${savedUrls.length}.`, savedUrls);
   return savedUrls;
 }
 

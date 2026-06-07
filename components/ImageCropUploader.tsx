@@ -26,6 +26,18 @@ function dataUrlSize(dataUrl: string) {
   return Math.round((base64.length * 3) / 4);
 }
 
+function getUploadStatus(item: CropItem) {
+  if (item.optimizedUrl) {
+    return { className: "success", text: "تم تجهيز المعاينة والحفظ" };
+  }
+
+  if (!item.canPreview) {
+    return { className: "warning", text: "سيتم رفع الملف الأصلي، والمتصفح قد لا يعرض معاينة لهذه الصيغة" };
+  }
+
+  return { className: "loading", text: "جاري تجهيز الصورة" };
+}
+
 async function optimizeImage(item: CropItem, width: number, height: number, quality: number) {
   const image = new Image();
   image.src = item.sourceUrl;
@@ -188,6 +200,10 @@ export function ImageCropUploader({
                 )}
               </div>
               <div className="crop-controls">
+                {(() => {
+                  const status = getUploadStatus(item);
+                  return <span className={`crop-status ${status.className}`}>{status.text}</span>;
+                })()}
                 <strong>صورة {index + 1}</strong>
                 <span>
                   {formatKb(item.originalSize)} إلى {item.optimizedSize ? formatKb(item.optimizedSize) : item.canPreview ? "جاري الضغط" : "رفع الملف الأصلي"}

@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdirSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { join } from "node:path";
 
@@ -15,7 +15,8 @@ const stamp = now.toISOString().replace(/[:.]/g, "-");
 const dir = join(process.cwd(), "backups", type);
 const file = join(dir, `badrdaawa-${type}-${stamp}.dump`);
 
-await mkdir(dir, { recursive: true });
+mkdirSync(dir, { recursive: true });
+mkdirSync(join(process.cwd(), "data", "backups"), { recursive: true });
 
 await new Promise((resolve, reject) => {
   const child = spawn("pg_dump", ["--format=custom", "--compress=9", `--file=${file}`, databaseUrl], {
