@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getMusicLibrary, updateMusicSlot } from "@/lib/music-library";
 import { getTemplatesWithSettings, updateTemplatesMusicState } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         revalidatePath(`/templates/${slug}/preview`);
       }
     }
-    await syncAdminStateToGitHub(`Music slot ${savedSlot.id} ${trackEnabled ? "enabled" : "disabled"} for ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
+    queueGitHubSync(`Music slot ${savedSlot.id} ${trackEnabled ? "enabled" : "disabled"} for ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
   }
 
   if (!savedSlot) url.searchParams.set("error", "slot");

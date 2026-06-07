@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getHomeContent, updateHomeContent, type HomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
 import { getPublicUrl } from "@/lib/utils";
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/");
   revalidatePath("/admin/broadcast");
-  await syncAdminStateToGitHub(`Broadcast screen updated: ${key}.`, { createSnapshot: true });
+  queueGitHubSync(`Broadcast screen updated: ${key}.`, { createSnapshot: true });
 
   const url = new URL("/admin/broadcast", request.url);
   url.searchParams.set("saved", key);

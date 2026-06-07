@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       console.error("Failed to revalidate orders page", error);
     }
 
-    await syncAdminStateToGitHub(`Order deleted from admin: ${id}.`, { createSnapshot: true });
+    queueGitHubSync(`Order deleted from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, "deleted");
   }
 
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       console.error("Failed to revalidate orders page", error);
     }
 
-    await syncAdminStateToGitHub(`Order ${status} from admin: ${id}.`, { createSnapshot: true });
+    queueGitHubSync(`Order ${status} from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, status);
   }
 
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         console.error("Failed to revalidate pages", error);
       }
 
-      await syncAdminStateToGitHub(`Order converted to invitation: ${code}.`, { createSnapshot: true });
+      queueGitHubSync(`Order converted to invitation: ${code}.`, { createSnapshot: true });
     }
     return redirectBack(request, code ? `converted-${code}` : "missing");
   }
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!prisma) {
       const existing = await getFileOrder(id);
       await updateFileOrder(id, { groomName, brideName, phone, weddingDate, venue, notes, imageUrls: existing?.imageUrls || [], templateSlug });
-      await syncAdminStateToGitHub(`Order updated from admin: ${id}.`, { createSnapshot: true });
+      queueGitHubSync(`Order updated from admin: ${id}.`, { createSnapshot: true });
       return redirectBack(request, "updated");
     }
 
@@ -304,7 +304,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       console.error("Failed to revalidate orders page", error);
     }
 
-    await syncAdminStateToGitHub(`Order updated from admin: ${id}.`, { createSnapshot: true });
+    queueGitHubSync(`Order updated from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, "updated");
   }
 

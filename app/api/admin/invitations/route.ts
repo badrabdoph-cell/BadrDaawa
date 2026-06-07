@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
     });
-    await syncAdminStateToGitHub(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
+    queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
     return NextResponse.redirect(new URL(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.url), 303);
   }
 
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await syncAdminStateToGitHub(`Client invitation created: ${code}.`, { createSnapshot: true });
+    queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
     return NextResponse.redirect(new URL(`/admin/client-invitations?created=${code}`, request.url), 303);
   } catch (error) {
     console.error("Failed to create database invitation, falling back to file store", error);

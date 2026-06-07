@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createCustomTemplateFromHtml } from "@/lib/custom-templates";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getPublicUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/templates");
     revalidatePath("/order");
     revalidatePath(`/templates/${result.template.slug}/preview`);
-    await syncAdminStateToGitHub(`Custom template imported: ${result.template.slug}.`, { createSnapshot: true });
+    queueGitHubSync(`Custom template imported: ${result.template.slug}.`, { createSnapshot: true });
   }
 
   const url = new URL("/admin/templates", request.url);

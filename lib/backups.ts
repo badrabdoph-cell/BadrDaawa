@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
@@ -23,8 +23,10 @@ type BackupUploadFile = {
 const backupDir = path.join(process.cwd(), "data", "backups");
 const dataDir = path.join(process.cwd(), "data");
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
-const maxUploadFileBytes = 10 * 1024 * 1024;
-const maxUploadsTotalBytes = 80 * 1024 * 1024;
+const maxUploadFileBytes = 5 * 1024 * 1024;
+const maxUploadsTotalBytes = 40 * 1024 * 1024;
+const maxBackupAgeMs = 7 * 24 * 60 * 60 * 1000;
+const maxBackupsPerType = 5;
 
 function jsonReplacer(_key: string, value: unknown) {
   if (typeof value === "bigint") return value.toString();
@@ -53,7 +55,9 @@ async function exists(filePath: string) {
 async function listJsonDataFiles() {
   if (!(await exists(dataDir))) return [];
   const entries = await readdir(dataDir, { withFileTypes: true });
-  return entries.filter((entry) => entry.isFile() && entry.name.endsWith(".json")).map((entry) => entry.name);
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".json") && !entry.name.startsWith("backup"))
+    .map((entry) => entry.name);
 }
 
 async function readDataFiles() {
@@ -105,18 +109,77 @@ async function readDatabaseSnapshot() {
 
   try {
     const [customers, templates, invitations, guests, orders, analyticsEvents, backupJobs] = await Promise.all([
-      prisma.customer.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.weddingTemplate.findMany({ orderBy: { sortOrder: "asc" } }),
-      prisma.invitation.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.guestRsvp.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.orderRequest.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.analyticsEvent.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.backupJob.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.customer.findMany({
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, phone: true, email: true, username: true, isActive: true, createdAt: true, updatedAt: true },
+      }),
+      prisma.weddingTemplate.findMany({
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, slug: true, name: true, arabicName: true, enabled: true, sortOrder: true },
+      }),
+      prisma.invitation.findMany({
+        orderBy: { createdAt: "desc" },
+        select: { id: true, code: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, createdAt: true, updatedAt: true },
+      }),
+      prisma.guestRsvp.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: { id: true, name: true, phone: true, status: true, createdAt: true },
+      }),
+      prisma.orderRequest.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: { id: true, groomName: true, brideName: true, phone: true, status: true, createdAt: true, updatedAt: true },
+      }),
+      prisma.analyticsEvent.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: { id: true, eventType: true, invitationId: true, createdAt: true },
+      }),
+      prisma.backupJob.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: { id: true, type: true, status: true, fileName: true, sizeBytes: true, createdAt: true },
+      }),
     ]);
     return { customers, templates, invitations, guests, orders, analyticsEvents, backupJobs };
   } catch (error) {
     console.error("Failed to read database backup snapshot", error);
     return null;
+  }
+}
+
+async function cleanupOldBackups() {
+  try {
+    if (!(await exists(backupDir))) return;
+
+    const entries = await readdir(backupDir, { withFileTypes: true });
+    const backupsByType = new Map<string, Array<{ name: string; time: number }>>();
+
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+
+      const filePath = path.join(backupDir, entry.name);
+      const fileStat = await stat(filePath);
+      const type = entry.name.split("-")[0] || "manual";
+      backupsByType.set(type, [...(backupsByType.get(type) || []), { name: entry.name, time: fileStat.mtime.getTime() }]);
+    }
+
+    const now = Date.now();
+    for (const files of backupsByType.values()) {
+      const sortedFiles = files.sort((a, b) => b.time - a.time);
+
+      for (let index = 0; index < sortedFiles.length; index += 1) {
+        const file = sortedFiles[index];
+        if (now - file.time <= maxBackupAgeMs && index < maxBackupsPerType) continue;
+
+        await unlink(path.join(backupDir, file.name)).catch((error) => {
+          console.error(`[Backup Cleanup] Failed to delete ${file.name}`, error);
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Failed to cleanup old backups", error);
   }
 }
 
@@ -157,6 +220,8 @@ export async function createBackupSnapshot(type = "manual") {
       })
       .catch((error: any) => console.error("Failed to record backup job", error));
   }
+
+  cleanupOldBackups().catch((error) => console.error("Failed to cleanup old backups", error));
 
   return toBackupSummary(fileName, Buffer.byteLength(json), createdAt.toISOString(), database ? "database" : "files", Object.keys(dataFiles).length + uploads.length);
 }

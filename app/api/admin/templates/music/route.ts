@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { updateTemplateSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/admin/templates");
     revalidatePath("/templates");
     revalidatePath(`/templates/${slug}/preview`);
-    await syncAdminStateToGitHub(`Template settings updated: ${slug}.`, { createSnapshot: true });
+    queueGitHubSync(`Template settings updated: ${slug}.`, { createSnapshot: true });
   }
 
   const url = new URL("/admin/templates", request.url);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { sendPushNotification } from "@/lib/push-notifications";
 import { getPublicUrl } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await sendPushNotification({ title, body, url });
     if (result.ok) {
-      await syncAdminStateToGitHub("Admin notification sent.", { createSnapshot: true });
+      queueGitHubSync("Admin notification sent.", { createSnapshot: true });
     }
     const status = result.ok ? `sent-${result.successCount}-${result.failureCount}` : "demo";
     return NextResponse.redirect(new URL(`/admin?notify=${status}`, request.url), 303);

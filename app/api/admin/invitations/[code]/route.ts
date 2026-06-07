@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { deleteFileInvitation, setFileInvitationActive } from "@/lib/file-store";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getPublicUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     safeRevalidatePath("/admin");
     safeRevalidatePath(`/${code}`);
     safeRevalidatePath(`/${code}/ad_3399`);
-    await syncAdminStateToGitHub(`Client invitation ${action}: ${code}.`, { createSnapshot: true });
+    queueGitHubSync(`Client invitation ${action}: ${code}.`, { createSnapshot: true });
   }
 
   return redirectBack(request, changed ? action : "missing");

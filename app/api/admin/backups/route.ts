@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createBackupSnapshot, listBackupSnapshots } from "@/lib/backups";
-import { syncAdminStateToGitHub } from "@/lib/github-sync";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getPublicUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -24,6 +24,6 @@ export async function POST(request: NextRequest) {
   }
 
   const backup = await createBackupSnapshot("manual");
-  await syncAdminStateToGitHub(`Manual backup created: ${backup.fileName}`);
+  queueGitHubSync(`Manual backup created: ${backup.fileName}`);
   return NextResponse.redirect(new URL(`/admin/backups?created=${encodeURIComponent(backup.fileName)}`, request.url), 303);
 }
