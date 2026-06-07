@@ -1,4 +1,6 @@
+import { after } from "next/server";
 import { syncAdminStateToGitHub } from "./github-sync";
+import type { GitHubSyncResult } from "./github-sync";
 
 type SyncQueueStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -9,6 +11,7 @@ type SyncQueueItem = {
   timestamp: number;
   status: SyncQueueStatus;
   error?: string;
+  result?: GitHubSyncResult;
   completedAt?: number;
 };
 
@@ -24,6 +27,13 @@ function scheduleQueueProcessing() {
       console.error("Failed to process GitHub sync queue", error);
     });
   };
+
+  try {
+    after(runner);
+    return;
+  } catch {
+    // Outside a Next request context, fall back to the normal Node scheduler.
+  }
 
   if (typeof setImmediate === "function") {
     setImmediate(runner);
@@ -77,8 +87,10 @@ async function processSyncQueue() {
         const result = await syncAdminStateToGitHub(item.reason, {
           createSnapshot: item.createSnapshot,
         });
-        item.status = "completed";
+        item.result = result;
+        item.status = result.status === "failed" ? "failed" : "completed";
         item.completedAt = Date.now();
+        if (result.status === "failed") item.error = result.message;
         console.log(`[GitHub Sync] ${item.reason}:`, result);
       } catch (error) {
         item.status = "failed";
@@ -105,6 +117,8 @@ export function getSyncQueueStatus() {
       status: item.status,
       age: Date.now() - item.timestamp,
       error: item.error,
+      result: item.result,
+      completedAt: item.completedAt,
     })),
   };
 }
