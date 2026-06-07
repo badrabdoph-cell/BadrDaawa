@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, Eye, ImagePlus, Link2, Loader2, Music2, Save, Send, UploadCloud, UserRound, WandSparkles } from "lucide-react";
+import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getTemplateTextBindings, unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { TemplateDefinition } from "@/lib/types";
@@ -54,6 +55,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
   const [dirty, setDirty] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const photographerLogoInputRef = useRef<HTMLInputElement | null>(null);
   const fieldRefs = {
     groomName: useRef<HTMLInputElement | null>(null),
     brideName: useRef<HTMLInputElement | null>(null),
@@ -66,27 +68,37 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
 
   const previewUrl = useMemo(() => {
-    const params = new URLSearchParams({
-      builderPreview: "1",
+    const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
+    return `/templates/${templateSlug}/preview?${params.toString()}`;
+  }, [templateSlug]);
+
+  const previewPayload = useMemo<LiveInvitationPreviewPayload>(
+    () => ({
       groomName,
       brideName,
       weddingDate,
+      weddingTime: "07:00 مساءً",
       venue,
-    });
-    if (mapUrl) params.set("mapUrl", mapUrl);
-    if (!musicEnabled) params.set("silentPreview", "1");
-    const gallery = images.map((image) => image.previewUrl).filter(Boolean);
-    if (gallery.length) params.set("gallery", gallery.join(","));
-    if (photographerEnabled) {
-      params.set("photographerEnabled", "1");
-      if (photographerName) params.set("photographerName", photographerName);
-      if (photographerFacebookUrl) params.set("photographerFacebookUrl", photographerFacebookUrl);
-      if (photographerInstagramUrl) params.set("photographerInstagramUrl", photographerInstagramUrl);
-      if (photographerLogo.previewUrl) params.set("photographerLogoUrl", photographerLogo.previewUrl);
-    }
-    if (musicEnabled && musicUrl) params.set("musicUrl", musicUrl);
-    return `/templates/${templateSlug}/preview?${params.toString()}`;
-  }, [brideName, groomName, images, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, templateSlug, venue, weddingDate]);
+      city: "",
+      mapUrl,
+      gallery: images.map((image) => image.previewUrl).filter(Boolean),
+      musicEnabled,
+      musicUrl,
+      disableMusic: !musicEnabled,
+      photographer: {
+        enabled: photographerEnabled,
+        name: photographerName,
+        logoUrl: photographerLogo.previewUrl,
+        facebookUrl: photographerFacebookUrl,
+        instagramUrl: photographerInstagramUrl,
+      },
+    }),
+    [brideName, groomName, images, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate],
+  );
+
+  const postPreviewUpdate = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage({ source: "badr-admin-preview", type: "preview:update", payload: previewPayload }, window.location.origin);
+  }, [previewPayload]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
@@ -98,19 +110,35 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty]);
 
+  useEffect(() => {
+    postPreviewUpdate();
+  }, [postPreviewUpdate]);
+
+  useEffect(() => {
+    function onPreviewReady(event: MessageEvent<{ source?: string; type?: string }>) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.source === "badr-admin-preview" && event.data.type === "preview:ready") postPreviewUpdate();
+    }
+
+    window.addEventListener("message", onPreviewReady);
+    return () => window.removeEventListener("message", onPreviewReady);
+  }, [postPreviewUpdate]);
+
   function markDirty() {
     setDirty(true);
     if (message) setMessage("");
   }
 
-  async function uploadPreviewImage(dataUrl: string, folderSetter: (url: string) => void) {
+  async function uploadPreviewImage(dataUrl: string) {
     const response = await fetch("/api/orders/preview-images", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ images: [dataUrl] }),
     });
     const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
-    folderSetter(data?.imageUrls?.[0] || "");
+    const url = data?.imageUrls?.[0] || "";
+    if (!response.ok || !url) throw new Error("preview-image-upload-failed");
+    return url;
   }
 
   async function handleImageFile(index: number, file?: File | null) {
@@ -118,9 +146,14 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     markDirty();
     const dataUrl = await readFileAsDataUrl(file);
     setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, dataUrl, name: file.name, loading: true } : item)));
-    await uploadPreviewImage(dataUrl, (url) => {
+    try {
+      const url = await uploadPreviewImage(dataUrl);
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, previewUrl: url, loading: false } : item)));
-    });
+    } catch {
+      setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, loading: false } : item)));
+      setStatus("error");
+      setMessage("تعذر رفع الصورة. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
+    }
   }
 
   async function handleLogoFile(file?: File | null) {
@@ -128,7 +161,14 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     markDirty();
     const dataUrl = await readFileAsDataUrl(file);
     setPhotographerLogo({ dataUrl, previewUrl: "", name: file.name, loading: true });
-    await uploadPreviewImage(dataUrl, (url) => setPhotographerLogo({ dataUrl, previewUrl: url, name: file.name, loading: false }));
+    try {
+      const url = await uploadPreviewImage(dataUrl);
+      setPhotographerLogo({ dataUrl, previewUrl: url, name: file.name, loading: false });
+    } catch {
+      setPhotographerLogo({ dataUrl, previewUrl: "", name: file.name, loading: false });
+      setStatus("error");
+      setMessage("تعذر رفع شعار المصور. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
+    }
   }
 
   async function handleMusicFile(file?: File | null) {
@@ -157,16 +197,36 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     const frame = iframeRef.current;
     const doc = frame?.contentDocument;
     if (!doc) return;
-    doc.querySelectorAll("img").forEach((img, index) => {
-      img.style.cursor = "pointer";
-      img.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        imageInputRefs.current[Math.min(index, 2)]?.click();
-      });
-    });
-    doc.querySelectorAll("h1,h2,p,strong,span").forEach((element) => {
-      element.addEventListener("click", (event) => {
+    postPreviewUpdate();
+    if (doc.body.dataset.builderPreviewWired === "1") return;
+    doc.body.dataset.builderPreviewWired = "1";
+    doc.addEventListener(
+      "click",
+      (event) => {
+        const FrameElement = doc.defaultView?.Element;
+        const target = FrameElement && event.target instanceof FrameElement ? event.target : null;
+        if (!target) return;
+
+        const image = target.closest("img") as HTMLImageElement | null;
+        if (image) {
+          if (image.closest(".qr-card")) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (image.closest('[class*="photographer"]') || image.classList.contains("photographer-logo-image")) {
+            photographerLogoInputRef.current?.click();
+            return;
+          }
+
+          const editableImages = Array.from(doc.querySelectorAll<HTMLImageElement>("img")).filter(
+            (item) => !item.closest(".qr-card") && !item.closest('[class*="photographer"]') && !item.classList.contains("photographer-logo-image"),
+          );
+          const imageIndex = editableImages.indexOf(image);
+          imageInputRefs.current[Math.max(0, Math.min(imageIndex, 2))]?.click();
+          return;
+        }
+
+        const element = target.closest("h1,h2,p,strong,span");
+        if (!element) return;
         const text = element.textContent || "";
         if (!text.trim()) return;
         event.preventDefault();
@@ -175,8 +235,9 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
         else if (text.includes(brideName)) fieldRefs.brideName.current?.focus();
         else if (text.includes(venue)) fieldRefs.venue.current?.focus();
         else fieldRefs.weddingDate.current?.focus();
-      });
-    });
+      },
+      true,
+    );
   }
 
   async function save(action: "draft" | "publish") {
@@ -203,7 +264,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
         weddingDate,
         venue,
         mapUrl,
-        gallery: images.map((image) => image.dataUrl || image.previewUrl).filter(Boolean),
+        gallery: images.map((image) => image.previewUrl || image.dataUrl).filter(Boolean),
         musicEnabled,
         musicUrl,
         musicDataUrl,
@@ -317,7 +378,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
                 <label className="builder-logo-upload">
                   <UploadCloud size={17} />
                   <span>{photographerLogo.name || "رفع شعار المصور أو صورته"}</span>
-                  <input type="file" accept={acceptedImageFormats} onChange={(event) => handleLogoFile(event.target.files?.[0])} />
+                  <input ref={photographerLogoInputRef} type="file" accept={acceptedImageFormats} onChange={(event) => handleLogoFile(event.target.files?.[0])} />
                 </label>
               </div>
             ) : null}

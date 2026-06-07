@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
+import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { getTemplateWithSettings } from "@/lib/template-settings";
@@ -102,7 +103,11 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
 
   return (
     <>
-      <InvitationExperience invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
+      {query?.builderPreview === "1" ? (
+        <LiveInvitationPreview invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
+      ) : (
+        <InvitationExperience invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
+      )}
       {!hidePreviewActions ? (
         <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
           <Link className="template-preview-action template-preview-action-soft" href="/">

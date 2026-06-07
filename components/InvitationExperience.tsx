@@ -1,3 +1,5 @@
+"use client";
+
 import { Calendar, CalendarHeart, Camera, ChevronDown, Clock, Facebook, Flower2, Heart, Instagram, Leaf, MapPin, Music2, Share2, Sparkles } from "lucide-react";
 import { Countdown } from "./Countdown";
 import { InviteOpening } from "./InviteOpening";
@@ -64,7 +66,7 @@ function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer:
   return photographer.logoUrl ? <img className="photographer-logo-image" src={photographer.logoUrl} alt={photographer.name} /> : <span>{fallback}</span>;
 }
 
-export async function InvitationExperience({ invitation, template, disableMusic = false }: { invitation: Invitation; template: TemplateDefinition; disableMusic?: boolean }) {
+export function InvitationExperience({ invitation, template, disableMusic = false }: { invitation: Invitation; template: TemplateDefinition; disableMusic?: boolean }) {
   const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : invitation.musicUrl || template.musicUrl;
   const photographer = getTemplatePhotographer(template, invitation);
 
@@ -265,7 +267,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
   return output.includes("</body>") ? output.replace("</body>", `${bridge}</body>`) : `${output}${bridge}`;
 }
 
-async function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { invitation: Invitation; template: TemplateDefinition; musicUrl?: string | null }) {
+function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { invitation: Invitation; template: TemplateDefinition; musicUrl?: string | null }) {
   const srcDoc = injectCustomTemplateData(template.customHtml || "", invitation, musicUrl);
 
   return (
@@ -283,7 +285,7 @@ async function CustomHtmlInvitationExperience({ invitation, template, musicUrl }
   );
 }
 
-async function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -390,7 +392,7 @@ async function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer
   );
 }
 
-async function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -497,7 +499,7 @@ async function IvoryArchesInvitationExperience({ invitation, musicUrl, photograp
   );
 }
 
-async function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -613,7 +615,7 @@ async function MobileGoldInvitationExperience({ invitation, musicUrl, photograph
   );
 }
 
-async function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -725,7 +727,7 @@ async function BohoChicInvitationExperience({ invitation, musicUrl, photographer
   );
 }
 
-async function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -871,7 +873,7 @@ async function GardenEleganceInvitationExperience({ invitation, musicUrl, photog
   );
 }
 
-async function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -1013,7 +1015,7 @@ async function FeaturedOneInvitationExperience({ invitation, musicUrl, photograp
   );
 }
 
-async function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -1128,7 +1130,7 @@ async function CinematicRoseInvitationExperience({ invitation, musicUrl, photogr
   );
 }
 
-async function ModernCinematicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function ModernCinematicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -1240,7 +1242,7 @@ async function ModernCinematicInvitationExperience({ invitation, musicUrl, photo
   );
 }
 
-async function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -1354,7 +1356,7 @@ async function EtherealGlassInvitationExperience({ invitation, musicUrl, photogr
   );
 }
 
-async function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
@@ -1431,7 +1433,7 @@ async function BotanicalThemeInvitationExperience({ invitation, musicUrl, photog
   );
 }
 
-async function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1493,7 +1495,7 @@ async function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitat
   );
 }
 
-async function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1552,7 +1554,7 @@ async function BohoSandInvitationExperience({ invitation, musicUrl }: { invitati
   );
 }
 
-async function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1612,7 +1614,7 @@ async function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitat
   );
 }
 
-async function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1669,7 +1671,7 @@ async function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitat
   );
 }
 
-async function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1728,7 +1730,7 @@ async function VintageThemeInvitationExperience({ invitation, musicUrl }: { invi
   );
 }
 
-async function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1787,7 +1789,7 @@ async function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { in
   );
 }
 
-async function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1851,7 +1853,7 @@ async function OceanThemeInvitationExperience({ invitation, musicUrl }: { invita
   );
 }
 
-async function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1912,7 +1914,7 @@ async function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invi
   );
 }
 
-async function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1970,7 +1972,7 @@ async function MagazineThemeInvitationExperience({ invitation, musicUrl }: { inv
   );
 }
 
-async function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
+function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;

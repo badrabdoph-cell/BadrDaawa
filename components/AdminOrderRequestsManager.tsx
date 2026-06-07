@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Clock3, Copy, Eye, ImagePlus, Link2, Loader2, Music2, Send, SlidersHorizontal, UploadCloud, UserRound, XCircle } from "lucide-react";
+import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { OrderRequest, TemplateDefinition } from "@/lib/types";
@@ -108,6 +109,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
   const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
   const imageInputs = useRef<Array<HTMLInputElement | null>>([]);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
 
   useEffect(() => {
@@ -124,27 +126,51 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
   }, [cleanSiteUrl, fallbackTemplate, selectedOrder]);
 
   const previewUrl = useMemo(() => {
-    const params = new URLSearchParams({
-      builderPreview: "1",
+    const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
+    return `/templates/${form.templateSlug || fallbackTemplate}/preview?${params.toString()}`;
+  }, [fallbackTemplate, form.templateSlug]);
+
+  const previewPayload = useMemo<LiveInvitationPreviewPayload>(
+    () => ({
       groomName: form.groomName,
       brideName: form.brideName,
       weddingDate: form.weddingDate,
+      weddingTime: "07:00 مساءً",
       venue: form.venue,
-    });
-    if (form.mapUrl) params.set("mapUrl", form.mapUrl);
-    const gallery = form.imageUrls.map((image) => image.url).filter(Boolean);
-    if (gallery.length) params.set("gallery", gallery.join(","));
-    if (!form.musicEnabled) params.set("silentPreview", "1");
-    if (form.musicEnabled && form.musicUrl && form.musicChoice !== "default") params.set("musicUrl", form.musicUrl);
-    if (form.photographerEnabled) {
-      params.set("photographerEnabled", "1");
-      if (form.photographerName) params.set("photographerName", form.photographerName);
-      if (form.photographerLogoUrl) params.set("photographerLogoUrl", form.photographerLogoUrl);
-      if (form.photographerFacebookUrl) params.set("photographerFacebookUrl", form.photographerFacebookUrl);
-      if (form.photographerInstagramUrl) params.set("photographerInstagramUrl", form.photographerInstagramUrl);
+      city: "",
+      mapUrl: form.mapUrl,
+      gallery: form.imageUrls.map((image) => image.url).filter(Boolean),
+      musicEnabled: form.musicEnabled,
+      musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
+      disableMusic: !form.musicEnabled,
+      photographer: {
+        enabled: form.photographerEnabled,
+        name: form.photographerName,
+        logoUrl: form.photographerLogoUrl,
+        facebookUrl: form.photographerFacebookUrl,
+        instagramUrl: form.photographerInstagramUrl,
+      },
+    }),
+    [form],
+  );
+
+  const postPreviewUpdate = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage({ source: "badr-admin-preview", type: "preview:update", payload: previewPayload }, window.location.origin);
+  }, [previewPayload]);
+
+  useEffect(() => {
+    postPreviewUpdate();
+  }, [postPreviewUpdate]);
+
+  useEffect(() => {
+    function onPreviewReady(event: MessageEvent<{ source?: string; type?: string }>) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.source === "badr-admin-preview" && event.data.type === "preview:ready") postPreviewUpdate();
     }
-    return `/templates/${form.templateSlug || fallbackTemplate}/preview?${params.toString()}`;
-  }, [fallbackTemplate, form]);
+
+    window.addEventListener("message", onPreviewReady);
+    return () => window.removeEventListener("message", onPreviewReady);
+  }, [postPreviewUpdate]);
 
   const openCount = items.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
 
@@ -495,7 +521,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       <aside className="orders-live-preview builder-preview-panel">
         <div className="builder-phone-frame">
           <div className="builder-phone-speaker" />
-          <iframe src={previewUrl} title="معاينة الطلب الحية" />
+          <iframe ref={iframeRef} src={previewUrl} title="معاينة الطلب الحية" onLoad={postPreviewUpdate} />
         </div>
         <div className="builder-preview-hint">
           <Eye size={16} />

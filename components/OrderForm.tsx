@@ -563,6 +563,12 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         });
         const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
         imageUrls = Array.isArray(data?.imageUrls) ? data.imageUrls : [];
+        if (!response.ok || !imageUrls.length) {
+          setState("error");
+          setMessage("تعذر تجهيز الصور للمعاينة. جرّب صورًا أوضح أو أقل حجمًا ثم أعد المحاولة.");
+          setIsPreviewing(false);
+          return;
+        }
       }
 
       if (form.musicEnabled && form.musicChoice !== "default" && (orderMusic || currentForm.musicUrl)) {

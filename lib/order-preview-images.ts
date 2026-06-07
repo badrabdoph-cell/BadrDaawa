@@ -5,7 +5,7 @@ import { normalizeImageForDisplay } from "./display-images";
 import { imageExtensionFromDataMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
 import { ensureDirectory } from "./runtime-paths";
 
-const maxPreviewImageBytes = 12 * 1024 * 1024;
+const maxPreviewImageBytes = 80 * 1024 * 1024;
 
 export async function saveOrderPreviewImages(images: string[], folder = "order-previews") {
   const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
