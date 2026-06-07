@@ -146,45 +146,44 @@ export function ClientInvitationEditor({
     markDirty();
   }
 
-  async function uploadPreviewImage(dataUrl: string) {
+  async function uploadPreviewImage(file: File) {
+    const formData = new FormData();
+    formData.append("images", file);
     const response = await fetch("/api/orders/preview-images", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ images: [dataUrl] }),
+      body: formData,
     });
-    const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
+    const data = (await response.json().catch(() => null)) as { imageUrls?: string[]; error?: string } | null;
     const url = data?.imageUrls?.[0] || "";
-    if (!response.ok || !url) throw new Error("preview-image-upload-failed");
+    if (!response.ok || !url) throw new Error(data?.error || "preview-image-upload-failed");
     return url;
   }
 
   async function handleImageFile(index: number, file?: File | null) {
     if (!file) return;
     markDirty();
-    const dataUrl = await readFileAsDataUrl(file);
-    setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, dataUrl, name: file.name, loading: true } : item)));
+    setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, dataUrl: "", name: file.name, loading: true } : item)));
     try {
-      const url = await uploadPreviewImage(dataUrl);
+      const url = await uploadPreviewImage(file);
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, previewUrl: url, loading: false } : item)));
-    } catch {
+    } catch (error) {
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, loading: false } : item)));
       setStatus("error");
-      setMessage("تعذر رفع الصورة. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
+      setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع الصورة. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
     }
   }
 
   async function handleLogoFile(file?: File | null) {
     if (!file) return;
     markDirty();
-    const dataUrl = await readFileAsDataUrl(file);
-    setPhotographerLogo({ dataUrl, previewUrl: "", name: file.name, loading: true });
+    setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: true });
     try {
-      const url = await uploadPreviewImage(dataUrl);
-      setPhotographerLogo({ dataUrl, previewUrl: url, name: file.name, loading: false });
-    } catch {
-      setPhotographerLogo({ dataUrl, previewUrl: "", name: file.name, loading: false });
+      const url = await uploadPreviewImage(file);
+      setPhotographerLogo({ dataUrl: "", previewUrl: url, name: file.name, loading: false });
+    } catch (error) {
+      setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: false });
       setStatus("error");
-      setMessage("تعذر رفع شعار المصور. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
+      setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع شعار المصور. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
     }
   }
 
@@ -270,6 +269,21 @@ export function ClientInvitationEditor({
       setMessage("رابط الموسيقى لازم يكون ملف صوت مباشر.");
       return;
     }
+    if (images.some((image) => image.loading) || photographerLogo.loading) {
+      setStatus("error");
+      setMessage("استنى لحظة لحد ما رفع الصور يخلص قبل الحفظ.");
+      return;
+    }
+    if (images.some((image) => image.name && !image.previewUrl)) {
+      setStatus("error");
+      setMessage("في صورة مختارة لكنها لم تُرفع بنجاح. ارفعها مرة أخرى قبل حفظ الدعوة.");
+      return;
+    }
+    if (photographerEnabled && photographerLogo.name && !photographerLogo.previewUrl) {
+      setStatus("error");
+      setMessage("شعار المصور لم يُرفع بنجاح. ارفعه مرة أخرى أو احذف الاختيار قبل الحفظ.");
+      return;
+    }
     setBusy(true);
     const response = await fetch(`/api/client/invitations/${invitation.code}`, {
       method: "POST",
@@ -282,7 +296,7 @@ export function ClientInvitationEditor({
         venue,
         city,
         mapUrl,
-        gallery: images.map((image) => image.previewUrl || image.dataUrl).filter(Boolean),
+        gallery: images.map((image) => image.previewUrl).filter(Boolean),
         musicEnabled,
         musicUrl,
         musicDataUrl,
@@ -291,7 +305,7 @@ export function ClientInvitationEditor({
           enabled: photographerEnabled,
           name: photographerName,
           logoUrl: photographerLogo.previewUrl,
-          logoDataUrl: photographerLogo.dataUrl,
+          logoDataUrl: "",
           facebookUrl: photographerFacebookUrl,
           instagramUrl: photographerInstagramUrl,
         },
