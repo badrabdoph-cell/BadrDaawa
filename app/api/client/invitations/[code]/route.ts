@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
+import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveAudioDataUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
@@ -11,11 +11,193 @@ function isClientAllowed(request: NextRequest, code: string) {
   return request.cookies.get("bd_client_session")?.value === `${expected}:${code}`;
 }
 
+type ClientInvitationPayload = {
+  groomName?: string;
+  brideName?: string;
+  weddingDate?: string;
+  weddingTime?: string;
+  venue?: string;
+  city?: string;
+  mapUrl?: string;
+  gallery?: string[];
+  musicEnabled?: boolean;
+  musicUrl?: string;
+  musicDataUrl?: string;
+  photographer?: {
+    enabled?: boolean;
+    name?: string;
+    logoUrl?: string;
+    logoDataUrl?: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
+  };
+};
+
+function cleanText(value: unknown, maxLength = 180) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function cleanUrl(value: unknown) {
+  const clean = cleanText(value, 300);
+  if (!clean) return "";
+  try {
+    const url = new URL(clean);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+async function getCurrentMusicUrl(code: string) {
+  if (prisma) {
+    const existing = await prisma.invitation.findUnique({ where: { code }, select: { musicUrl: true } }).catch(() => null);
+    if (existing?.musicUrl) return existing.musicUrl;
+  }
+  return (await getFileInvitationByCode(code))?.musicUrl || "";
+}
+
+async function resolveJsonMusic(code: string, payload: ClientInvitationPayload) {
+  if (payload.musicEnabled === false) return { musicUrl: undefined, error: "" };
+  if (payload.musicEnabled !== true) return { musicUrl: undefined, error: "" };
+
+  const currentMusicUrl = await getCurrentMusicUrl(code);
+  const uploadedMusicUrl = payload.musicDataUrl ? await saveAudioDataUrl(payload.musicDataUrl, currentMusicUrl) : "";
+  const rawMusicUrl = cleanText(payload.musicUrl, 500);
+  const directMusicUrl = cleanPlayableAudioUrl(rawMusicUrl);
+  const nextMusicUrl = uploadedMusicUrl || directMusicUrl;
+
+  if ((payload.musicDataUrl || rawMusicUrl) && !nextMusicUrl) {
+    return { musicUrl: "", error: "ملف أو رابط الموسيقى غير قابل للتشغيل." };
+  }
+  if (!uploadedMusicUrl && directMusicUrl && directMusicUrl !== currentMusicUrl) {
+    await deleteUploadedMusicFile(currentMusicUrl);
+  }
+  return { musicUrl: nextMusicUrl, error: "" };
+}
+
+async function resolveJsonPhotographer(payload: ClientInvitationPayload) {
+  const photographer = payload.photographer;
+  if (!photographer) return undefined;
+  if (!photographer.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "" };
+
+  const logoGallery = photographer.logoDataUrl ? await saveInvitationGalleryImages([photographer.logoDataUrl]) : [];
+  return {
+    enabled: true,
+    name: cleanText(photographer.name, 100) || "المصور الفوتوغرافي",
+    logoUrl: logoGallery[0] || cleanText(photographer.logoUrl, 300),
+    facebookUrl: cleanUrl(photographer.facebookUrl) || "https://www.facebook.com/",
+    instagramUrl: cleanUrl(photographer.instagramUrl) || "https://www.instagram.com/",
+  };
+}
+
+async function handleJsonUpdate(request: NextRequest, code: string) {
+  const payload = (await request.json().catch(() => null)) as ClientInvitationPayload | null;
+  if (!payload) return NextResponse.json({ error: "بيانات غير صالحة." }, { status: 400 });
+
+  const data: Record<string, unknown> = {};
+  const fileData: Record<string, unknown> = {};
+  const groomName = cleanText(payload.groomName);
+  const brideName = cleanText(payload.brideName);
+  const weddingDate = cleanText(payload.weddingDate);
+  const weddingTime = cleanText(payload.weddingTime);
+  const venue = cleanText(payload.venue);
+  const city = cleanText(payload.city);
+  const mapUrl = cleanText(payload.mapUrl, 500);
+
+  if (groomName) {
+    data.groomName = groomName;
+    fileData.groomName = groomName;
+  }
+  if (brideName) {
+    data.brideName = brideName;
+    fileData.brideName = brideName;
+  }
+  if (weddingDate) {
+    const parsedDate = new Date(weddingDate);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      data.weddingDate = parsedDate;
+      fileData.weddingDate = weddingDate;
+    }
+  }
+  if (weddingTime) {
+    data.weddingTime = weddingTime;
+    fileData.weddingTime = weddingTime;
+  }
+  if (venue) {
+    data.venue = venue;
+    fileData.venue = venue;
+  }
+  data.city = city;
+  fileData.city = city;
+  data.mapUrl = mapUrl;
+  fileData.mapUrl = mapUrl;
+
+  if (Array.isArray(payload.gallery)) {
+    const galleryInput = payload.gallery.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3);
+    const savedGallery = await saveInvitationGalleryImages(galleryInput);
+    if (galleryInput.length && !savedGallery.length) {
+      console.error(`[Client Invitation] JSON image save failed for ${code}. Received ${galleryInput.length}, saved 0.`);
+      return NextResponse.json({ error: "الصور لم يتم حفظها. جرّب صورة أخرى أو صيغة مختلفة." }, { status: 400 });
+    }
+    if (savedGallery.length) {
+      data.gallery = savedGallery;
+      data.heroPhoto = savedGallery[0];
+      fileData.gallery = savedGallery;
+      fileData.heroPhoto = savedGallery[0];
+    }
+  }
+
+  if (typeof payload.musicEnabled === "boolean") {
+    data.musicEnabled = payload.musicEnabled;
+    fileData.musicEnabled = payload.musicEnabled;
+    const music = await resolveJsonMusic(code, payload);
+    if (music.error) return NextResponse.json({ error: music.error }, { status: 400 });
+    if (typeof music.musicUrl === "string") {
+      data.musicUrl = music.musicUrl;
+      fileData.musicUrl = music.musicUrl;
+    }
+  }
+
+  const photographer = await resolveJsonPhotographer(payload);
+  if (photographer) {
+    data.photographer = photographer;
+    fileData.photographer = photographer;
+  }
+
+  let updated = false;
+  if (prisma) {
+    try {
+      if (Object.keys(data).length) {
+        await prisma.invitation.update({ where: { code }, data });
+        updated = true;
+      }
+    } catch (error) {
+      console.error("Failed to update database invitation from client JSON editor", error);
+    }
+  }
+
+  if (!updated && Object.keys(fileData).length) {
+    updated = await updateFileInvitation(code, fileData);
+  }
+
+  revalidatePath(`/${code}`);
+  revalidatePath(`/${code}/ad_3399`);
+  queueGitHubSync(`Client invitation live editor updated: ${code}.`, { createSnapshot: true });
+  return NextResponse.json({ ok: true, updated });
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
   if (!isClientAllowed(request, code)) {
+    if (request.headers.get("content-type")?.includes("application/json")) {
+      return NextResponse.json({ error: "سجل الدخول للوحة الدعوة أولًا." }, { status: 401 });
+    }
     return NextResponse.redirect(new URL(`/${code}/ad_3399/login`, request.url), 303);
+  }
+
+  if (request.headers.get("content-type")?.includes("application/json")) {
+    return handleJsonUpdate(request, code);
   }
 
   const formData = await request.formData();

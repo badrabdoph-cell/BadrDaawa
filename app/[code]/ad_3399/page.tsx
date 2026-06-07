@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { headers } from "next/headers";
-import { Download, ExternalLink, ImagePlus, LogOut, MessageSquareText, Music2, QrCode, Save, Settings2 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { Download, ExternalLink, LogOut, QrCode } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
 import { CopyButton } from "@/components/CopyButton";
 import { GuestTable } from "@/components/GuestTable";
-import { ImageCropUploader } from "@/components/ImageCropUploader";
 import { QrCodeBlock } from "@/components/QrCodeBlock";
 import { StatsGrid } from "@/components/StatsGrid";
+import { listUploadedMusicFiles } from "@/lib/audio-files";
+import { getClientSessionSecret } from "@/lib/auth-config";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
+import { getTemplateWithSettings } from "@/lib/template-settings";
 import { calculateAttendance, getPublicSiteUrl } from "@/lib/utils";
 
 export default async function CustomerAdminPage({
@@ -18,13 +21,25 @@ export default async function CustomerAdminPage({
   searchParams: Promise<{ saved?: string }>;
 }) {
   const { code } = await params;
-  const [query, requestHeaders] = await Promise.all([searchParams, headers()]);
+  const [query, requestHeaders, cookieStore] = await Promise.all([searchParams, headers(), cookies()]);
   const invitation = await getInvitationByCode(code);
   if (!invitation) {
     notFound();
   }
 
-  const guests = await getGuestsByInvitation(invitation.code);
+  const session = cookieStore.get("bd_client_session")?.value;
+  if (session !== `${getClientSessionSecret()}:${invitation.code}`) {
+    redirect(`/${invitation.code}/ad_3399/login`);
+  }
+
+  const [guests, template, musicFiles] = await Promise.all([
+    getGuestsByInvitation(invitation.code),
+    getTemplateWithSettings(invitation.templateSlug),
+    listUploadedMusicFiles(),
+  ]);
+  if (!template) {
+    notFound();
+  }
   const summary = calculateAttendance(guests);
   const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${invitation.code}`;
 
@@ -70,91 +85,12 @@ export default async function CustomerAdminPage({
         <div className="notice success customer-notice">تم حفظ التعديلات المتاحة لهذه الدعوة.</div>
       ) : null}
 
-      <section className="customer-control-grid">
+      <section className="customer-control-grid customer-admin-tools">
         <article className="panel">
           <QrCode size={24} />
           <h2>الرابط والـ QR</h2>
           <p>أي تعديل على رابط الدعوة يتزامن تلقائيًا مع QR لأنه مبني من نفس الكود.</p>
           <QrCodeBlock value={url} />
-        </article>
-
-        <article className="panel control-panel-wide">
-          <Settings2 size={24} />
-          <h2>تعديل بيانات الدعوة</h2>
-          <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post">
-            <label className="field">
-              <span>اسم العريس</span>
-              <input name="groomName" defaultValue={invitation.groomName} />
-            </label>
-            <label className="field">
-              <span>اسم العروسة</span>
-              <input name="brideName" defaultValue={invitation.brideName} />
-            </label>
-            <label className="field">
-              <span>تاريخ الفرح</span>
-              <input name="weddingDate" type="date" defaultValue={invitation.weddingDate.slice(0, 10)} />
-            </label>
-            <label className="field">
-              <span>وقت الفرح</span>
-              <input name="weddingTime" defaultValue={invitation.weddingTime} />
-            </label>
-            <label className="field">
-              <span>القاعة والعنوان</span>
-              <input name="venue" defaultValue={invitation.venue} />
-            </label>
-            <label className="field">
-              <span>المدينة</span>
-              <input name="city" defaultValue={invitation.city} />
-            </label>
-            <label className="field">
-              <span>رابط الخريطة</span>
-              <input name="mapUrl" defaultValue={invitation.mapUrl} />
-            </label>
-            <button className="btn btn-gold admin-submit" type="submit">
-              <Save size={17} />
-              حفظ التعديلات
-            </button>
-          </form>
-        </article>
-
-        <article className="panel control-panel-wide">
-          <ImagePlus size={24} />
-          <h2>استبدال الصور</h2>
-          <p>ارفع الصور بعد الكروب والضغط بنفس أبعاد القالب حتى تظهر في الدعوة بدون قص عشوائي.</p>
-          <form action={`/api/client/invitations/${invitation.code}`} method="post" encType="multipart/form-data">
-            <ImageCropUploader label="صور الدعوة" name="galleryImage" maxFiles={3} defaultImages={invitation.gallery} />
-            <button className="btn btn-gold admin-submit" type="submit">
-              <Save size={17} />
-              حفظ الصور
-            </button>
-          </form>
-        </article>
-
-        <article className="panel control-panel-wide">
-          <Music2 size={24} />
-          <h2>موسيقى الدعوة</h2>
-          <p>اتركها فارغة لتشغيل موسيقى القالب، أو ارفع ملفًا/رابط صوت مباشر خاص بهذه الدعوة فقط.</p>
-          <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post" encType="multipart/form-data">
-            <label className="field full">
-              <span>رفع ملف صوت</span>
-              <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac" />
-            </label>
-            <label className="field full">
-              <span>رابط صوت مباشر</span>
-              <input name="musicUrl" defaultValue={invitation.musicUrl || ""} placeholder="https://example.com/song.mp3" />
-              <small>روابط YouTube لا تعمل كموسيقى مباشرة داخل الدعوة.</small>
-            </label>
-            <button className="btn btn-gold admin-submit" type="submit">
-              <Save size={17} />
-              حفظ الموسيقى
-            </button>
-          </form>
-        </article>
-
-        <article className="panel control-panel-wide">
-          <MessageSquareText size={24} />
-          <h2>نصوص الدعوة</h2>
-          <textarea defaultValue="حضورك هيفرحني، بتمنى إنك تحضر معايا أفضل يوم في عمري. أنا مستنيك تكون جزء من يومي المفضل." rows={4} />
         </article>
 
         <article className="panel">
@@ -171,6 +107,8 @@ export default async function CustomerAdminPage({
           </div>
         </article>
       </section>
+
+      <ClientInvitationEditor invitation={invitation} template={template} musicFiles={musicFiles} publicUrl={url} />
 
       <section className="section compact">
         <div className="dashboard-head">
