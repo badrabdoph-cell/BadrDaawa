@@ -1,16 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Clock3, Copy, Eye, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Send, SlidersHorizontal, UploadCloud, UserRound, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, XCircle } from "lucide-react";
+import {
+  AdminInvitationTools,
+  emptyAdminToolImages,
+  emptyAdminToolUpload,
+  uploadAdminMusic,
+  uploadAdminPreviewImage,
+  validateAdminInvitationTools,
+  type AdminInvitationToolValues,
+  type AdminToolImageSlot,
+  type AdminToolMusicChoice,
+  type AdminToolMusicFile,
+  type AdminToolTemplate,
+  type AdminToolUploadSlot,
+} from "@/components/AdminInvitationTools";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
-import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
-import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { InvitationTexts, OrderRequest, TemplateDefinition } from "@/lib/types";
+import type { InvitationTexts, OrderRequest } from "@/lib/types";
 
-type BuilderTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
-type MusicFile = { url: string; modifiedAt: number };
-type ImageSlotState = { url: string; name: string; loading: boolean };
+type BuilderTemplate = AdminToolTemplate;
+type MusicFile = AdminToolMusicFile;
 type StatusKind = OrderRequest["status"];
 
 type OrderFormState = {
@@ -22,21 +33,22 @@ type OrderFormState = {
   mapUrl: string;
   notes: string;
   templateSlug: string;
-  imageUrls: ImageSlotState[];
+  imageUrls: AdminToolImageSlot[];
   musicEnabled: boolean;
-  musicChoice: "default" | "upload" | "url";
+  musicChoice: AdminToolMusicChoice;
   musicUrl: string;
   musicBusy: boolean;
+  musicFileName: string;
   invitationTexts: Required<InvitationTexts>;
   photographerEnabled: boolean;
   photographerName: string;
-  photographerLogoUrl: string;
+  photographerLogo: AdminToolUploadSlot;
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
   rejectionReason: string;
 };
 
-const emptyImages: ImageSlotState[] = unifiedImageSlots.map(() => ({ url: "", name: "", loading: false }));
+const emptyImages: AdminToolImageSlot[] = emptyAdminToolImages;
 
 const statusMap: Record<StatusKind, { label: string; className: string }> = {
   new: { label: "جديد", className: "new" },
@@ -62,18 +74,10 @@ function formatDateTime(value?: string) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-    reader.onerror = () => resolve("");
-    reader.readAsDataURL(file);
-  });
-}
-
 function formFromOrder(order: OrderRequest, fallbackTemplate: string): OrderFormState {
   const photographer = order.photographer;
   const imageUrls = [...(order.imageUrls || [])].slice(0, 3);
+  const photographerLogoUrl = photographer?.logoUrl || "";
   return {
     groomName: order.groomName || "",
     brideName: order.brideName || "",
@@ -88,10 +92,11 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string): OrderForm
     musicChoice: order.musicChoice || (order.musicUrl ? "url" : "default"),
     musicUrl: order.musicUrl || "",
     musicBusy: false,
+    musicFileName: order.musicUrl?.split("/").pop() || "",
     invitationTexts: normalizeInvitationTexts(order.texts),
     photographerEnabled: Boolean(photographer?.enabled),
     photographerName: photographer?.name || "",
-    photographerLogoUrl: photographer?.logoUrl || "",
+    photographerLogo: { ...emptyAdminToolUpload, url: photographerLogoUrl, name: photographerLogoUrl.split("/").pop() || "" },
     photographerFacebookUrl: photographer?.facebookUrl || "",
     photographerInstagramUrl: photographer?.instagramUrl || "",
     rejectionReason: order.rejectionReason || "",
@@ -150,10 +155,35 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       photographer: {
         enabled: form.photographerEnabled,
         name: form.photographerName,
-        logoUrl: form.photographerLogoUrl,
+        logoUrl: form.photographerLogo.url,
         facebookUrl: form.photographerFacebookUrl,
         instagramUrl: form.photographerInstagramUrl,
       },
+    }),
+    [form],
+  );
+
+  const toolValues = useMemo<AdminInvitationToolValues>(
+    () => ({
+      templateSlug: form.templateSlug,
+      groomName: form.groomName,
+      brideName: form.brideName,
+      phone: form.phone,
+      weddingDate: form.weddingDate,
+      venue: form.venue,
+      mapUrl: form.mapUrl,
+      images: form.imageUrls,
+      photographerEnabled: form.photographerEnabled,
+      photographerName: form.photographerName,
+      photographerLogo: form.photographerLogo,
+      photographerFacebookUrl: form.photographerFacebookUrl,
+      photographerInstagramUrl: form.photographerInstagramUrl,
+      musicEnabled: form.musicEnabled,
+      musicChoice: form.musicChoice,
+      musicUrl: form.musicUrl,
+      musicBusy: form.musicBusy,
+      musicFileName: form.musicFileName,
+      invitationTexts: form.invitationTexts,
     }),
     [form],
   );
@@ -181,6 +211,30 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
   function patchForm(update: Partial<OrderFormState>) {
     setForm((current) => ({ ...current, ...update }));
     setNotice(null);
+  }
+
+  function patchToolValues(patch: Partial<AdminInvitationToolValues>) {
+    const update: Partial<OrderFormState> = {};
+    if (patch.templateSlug !== undefined) update.templateSlug = patch.templateSlug;
+    if (patch.groomName !== undefined) update.groomName = patch.groomName;
+    if (patch.brideName !== undefined) update.brideName = patch.brideName;
+    if (patch.phone !== undefined) update.phone = patch.phone;
+    if (patch.weddingDate !== undefined) update.weddingDate = patch.weddingDate;
+    if (patch.venue !== undefined) update.venue = patch.venue;
+    if (patch.mapUrl !== undefined) update.mapUrl = patch.mapUrl;
+    if (patch.images !== undefined) update.imageUrls = patch.images;
+    if (patch.musicEnabled !== undefined) update.musicEnabled = patch.musicEnabled;
+    if (patch.musicChoice !== undefined) update.musicChoice = patch.musicChoice;
+    if (patch.musicUrl !== undefined) update.musicUrl = patch.musicUrl;
+    if (patch.musicBusy !== undefined) update.musicBusy = patch.musicBusy;
+    if (patch.musicFileName !== undefined) update.musicFileName = patch.musicFileName;
+    if (patch.invitationTexts !== undefined) update.invitationTexts = patch.invitationTexts;
+    if (patch.photographerEnabled !== undefined) update.photographerEnabled = patch.photographerEnabled;
+    if (patch.photographerName !== undefined) update.photographerName = patch.photographerName;
+    if (patch.photographerLogo !== undefined) update.photographerLogo = patch.photographerLogo;
+    if (patch.photographerFacebookUrl !== undefined) update.photographerFacebookUrl = patch.photographerFacebookUrl;
+    if (patch.photographerInstagramUrl !== undefined) update.photographerInstagramUrl = patch.photographerInstagramUrl;
+    patchForm(update);
   }
 
   function updateInvitationText(key: keyof InvitationTexts, value: string) {
@@ -213,7 +267,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       photographer: {
         enabled: form.photographerEnabled,
         name: form.photographerName,
-        logoUrl: form.photographerLogoUrl,
+        logoUrl: form.photographerLogo.url,
         facebookUrl: form.photographerFacebookUrl,
         instagramUrl: form.photographerInstagramUrl,
       },
@@ -241,8 +295,9 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
 
   async function runAction(action: "update" | "publish" | "reject") {
     if (!selectedOrder) return;
-    if (!form.groomName.trim() || !form.brideName.trim() || !form.weddingDate || !form.venue.trim()) {
-      setNotice({ kind: "error", text: "اكتب اسم العريس والعروسة والتاريخ والعنوان قبل الحفظ أو النشر." });
+    const validationError = validateAdminInvitationTools(toolValues);
+    if (validationError) {
+      setNotice({ kind: "error", text: validationError });
       return;
     }
     if (action === "reject" && !form.rejectionReason.trim()) {
@@ -273,42 +328,50 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
 
   async function handleImageFile(index: number, file?: File | null) {
     if (!file) return;
-    const dataUrl = await readFileAsDataUrl(file);
     setForm((current) => ({
       ...current,
       imageUrls: current.imageUrls.map((image, imageIndex) => (imageIndex === index ? { ...image, name: file.name, loading: true } : image)),
     }));
-    const response = await fetch("/api/orders/preview-images", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ images: [dataUrl] }),
-    });
-    const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
-    const url = data?.imageUrls?.[0] || "";
-    setForm((current) => ({
-      ...current,
-      imageUrls: current.imageUrls.map((image, imageIndex) => (imageIndex === index ? { ...image, url, name: file.name, loading: false } : image)),
-    }));
-    setNotice(url ? { kind: "success", text: `تم رفع Photo ${index + 1} وظهرت في المعاينة.` } : { kind: "error", text: "تعذر رفع الصورة. جرّب صيغة أخرى أو صورة أصغر." });
+    try {
+      const url = await uploadAdminPreviewImage(file);
+      setForm((current) => ({
+        ...current,
+        imageUrls: current.imageUrls.map((image, imageIndex) => (imageIndex === index ? { ...image, url, name: file.name, loading: false } : image)),
+      }));
+      setNotice({ kind: "success", text: `تم رفع Photo ${index + 1} وظهرت في المعاينة.` });
+    } catch (error) {
+      setForm((current) => ({
+        ...current,
+        imageUrls: current.imageUrls.map((image, imageIndex) => (imageIndex === index ? { ...image, url: "", name: file.name, loading: false } : image)),
+      }));
+      setNotice({ kind: "error", text: error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع الصورة. جرّب صيغة أخرى أو صورة أصغر." });
+    }
+  }
+
+  async function handlePhotographerLogoFile(file?: File | null) {
+    if (!file) return;
+    patchForm({ photographerLogo: { url: "", name: file.name, loading: true } });
+    try {
+      const url = await uploadAdminPreviewImage(file);
+      patchForm({ photographerLogo: { url, name: file.name, loading: false } });
+      setNotice({ kind: "success", text: "تم رفع شعار المصور وظهر في المعاينة." });
+    } catch (error) {
+      patchForm({ photographerLogo: { url: "", name: file.name, loading: false } });
+      setNotice({ kind: "error", text: error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع شعار المصور." });
+    }
   }
 
   async function handleMusicFile(file?: File | null) {
     if (!file) return;
     patchForm({ musicBusy: true, musicEnabled: true, musicChoice: "upload" });
-    const dataUrl = await readFileAsDataUrl(file);
-    const response = await fetch("/api/orders/preview-music", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ music: dataUrl }),
-    });
-    const data = (await response.json().catch(() => null)) as { musicUrl?: string; error?: string } | null;
-    if (!response.ok || !data?.musicUrl) {
+    try {
+      const musicUrl = await uploadAdminMusic(file);
+      patchForm({ musicBusy: false, musicUrl, musicFileName: file.name });
+      setNotice({ kind: "success", text: "تم رفع الموسيقى وربطها بهذا الطلب." });
+    } catch (error) {
       patchForm({ musicBusy: false });
-      setNotice({ kind: "error", text: data?.error || "ملف الموسيقى غير قابل للتشغيل." });
-      return;
+      setNotice({ kind: "error", text: error instanceof Error ? error.message : "ملف الموسيقى غير قابل للتشغيل." });
     }
-    patchForm({ musicBusy: false, musicUrl: data.musicUrl });
-    setNotice({ kind: "success", text: "تم رفع الموسيقى وربطها بهذا الطلب." });
   }
 
   async function copy(value: string) {
@@ -364,157 +427,23 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
 
         {notice ? <div className={notice.kind === "error" ? "notice danger" : "notice success"}>{notice.text}</div> : null}
 
-        <div className="orders-editor-grid">
-          <label className="field">
-            <span>اختيار القالب</span>
-            <select value={form.templateSlug} onChange={(event) => patchForm({ templateSlug: event.target.value })}>
-              {templates.map((template) => (
-                <option key={template.slug} value={template.slug}>
-                  {template.arabicName} - {template.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>اسم العريس</span>
-            <input value={form.groomName} onChange={(event) => patchForm({ groomName: event.target.value })} />
-          </label>
-          <label className="field">
-            <span>اسم العروسة</span>
-            <input value={form.brideName} onChange={(event) => patchForm({ brideName: event.target.value })} />
-          </label>
-          <label className="field">
-            <span>رقم التواصل</span>
-            <input value={form.phone} onChange={(event) => patchForm({ phone: event.target.value })} />
-          </label>
-          <label className="field">
-            <span>تاريخ المناسبة</span>
-            <input type="date" value={form.weddingDate} onChange={(event) => patchForm({ weddingDate: event.target.value })} />
-          </label>
-          <label className="field wide">
-            <span>عنوان المناسبة</span>
-            <input value={form.venue} onChange={(event) => patchForm({ venue: event.target.value })} />
-          </label>
-          <label className="field wide">
-            <span><Link2 size={15} /> رابط اللوكيشن</span>
-            <input value={form.mapUrl} onChange={(event) => patchForm({ mapUrl: event.target.value })} placeholder="انسخ رابط اللوكيشن من على خريطة جوجل" />
-            <small>انسخ رابط اللوكيشن من على خريطة جوجل.</small>
-          </label>
-        </div>
-
-        <div className="orders-edit-section">
-          <div className="builder-section-head">
-            <ImagePlus size={18} />
-            <strong>الصور المرفوعة</strong>
-          </div>
-          <div className="builder-photo-grid orders-photo-grid">
-            {unifiedImageSlots.map((slot, index) => (
-              <label className="builder-photo-slot" key={slot.id}>
-                <span>{slot.label}</span>
-                {form.imageUrls[index]?.url ? <img src={form.imageUrls[index].url} alt={slot.label} /> : <i><ImagePlus size={18} /> {slot.role}</i>}
-                <small>{form.imageUrls[index]?.loading ? "جاري الرفع" : form.imageUrls[index]?.name || "اضغط للتغيير"}</small>
-                <input ref={(node) => { imageInputs.current[index] = node; }} type="file" accept={acceptedImageFormats} onChange={(event) => handleImageFile(index, event.target.files?.[0])} />
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="orders-edit-section">
-          <button className={form.photographerEnabled ? "builder-toggle active" : "builder-toggle"} type="button" onClick={() => patchForm({ photographerEnabled: !form.photographerEnabled })}>
-            <UserRound size={17} />
-            إضافة بيانات المصور
-          </button>
-          {form.photographerEnabled ? (
-            <div className="orders-editor-grid">
-              <label className="field">
-                <span>اسم المصور</span>
-                <input value={form.photographerName} onChange={(event) => patchForm({ photographerName: event.target.value })} />
-              </label>
-              <label className="field">
-                <span>شعار/صورة المصور</span>
-                <input value={form.photographerLogoUrl} onChange={(event) => patchForm({ photographerLogoUrl: event.target.value })} placeholder="/uploads/..." />
-              </label>
-              <label className="field">
-                <span>Facebook</span>
-                <input value={form.photographerFacebookUrl} onChange={(event) => patchForm({ photographerFacebookUrl: event.target.value })} />
-              </label>
-              <label className="field">
-                <span>Instagram</span>
-                <input value={form.photographerInstagramUrl} onChange={(event) => patchForm({ photographerInstagramUrl: event.target.value })} />
-              </label>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="orders-edit-section">
-          <div className="builder-section-head">
-            <Music2 size={18} />
-            <strong>موسيقى الدعوة</strong>
-          </div>
-          <label className="builder-checkline">
-            <input type="checkbox" checked={form.musicEnabled} onChange={(event) => patchForm({ musicEnabled: event.target.checked })} />
-            تشغيل الموسيقى عند فتح الدعوة
-          </label>
-          {form.musicEnabled ? (
-            <div className="orders-music-grid">
-              <label className={form.musicChoice === "default" ? "orders-radio-card active" : "orders-radio-card"}>
-                <input type="radio" checked={form.musicChoice === "default"} onChange={() => patchForm({ musicChoice: "default", musicUrl: "" })} />
-                <strong>موسيقى أساسية</strong>
-                <span>تستخدم موسيقى القالب أو الموسيقى العامة.</span>
-              </label>
-              <label className={form.musicChoice === "upload" ? "orders-radio-card active" : "orders-radio-card"}>
-                <input type="radio" checked={form.musicChoice === "upload"} onChange={() => patchForm({ musicChoice: "upload" })} />
-                <strong>رفع ملف موسيقى</strong>
-                <span>{form.musicBusy ? "جاري الرفع..." : "يرتبط بهذا الطلب فقط."}</span>
-                <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac" onChange={(event) => handleMusicFile(event.target.files?.[0])} />
-              </label>
-              <label className={form.musicChoice === "url" ? "orders-radio-card active" : "orders-radio-card"}>
-                <input type="radio" checked={form.musicChoice === "url"} onChange={() => patchForm({ musicChoice: "url" })} />
-                <strong>رابط أغنية مباشر</strong>
-                <span>رابط ملف صوت مثل mp3 أو m4a.</span>
-              </label>
-              <label className="field">
-                <span>اختيار من الملفات المحفوظة</span>
-                <select value={form.musicUrl} onChange={(event) => patchForm({ musicUrl: event.target.value, musicChoice: event.target.value ? "upload" : form.musicChoice })}>
-                  <option value="">اختار ملف محفوظ</option>
-                  {musicFiles.map((file) => (
-                    <option key={file.url} value={file.url}>{file.url.split("/").pop()}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>رابط الموسيقى</span>
-                <input value={form.musicUrl} onChange={(event) => patchForm({ musicUrl: event.target.value, musicChoice: "url" })} placeholder="https://example.com/song.mp3" />
-              </label>
-              {form.musicUrl ? <audio controls preload="metadata" src={form.musicUrl} /> : null}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="orders-edit-section">
-          <div className="builder-section-head">
-            <MessageSquareText size={18} />
-            <strong>نصوص داخل الدعوة</strong>
-          </div>
-          <div className="orders-editor-grid">
-            <label className="field">
-              <span>سؤال تأكيد الحضور</span>
-              <input value={form.invitationTexts.rsvpQuestion} onChange={(event) => updateInvitationText("rsvpQuestion", event.target.value)} />
-            </label>
-            <label className="field wide">
-              <span>رسالة الدعوة</span>
-              <textarea value={form.invitationTexts.inviteMessage} onChange={(event) => updateInvitationText("inviteMessage", event.target.value)} rows={3} />
-            </label>
-            <label className="field">
-              <span>رسالة إضافية</span>
-              <textarea value={form.invitationTexts.inviteMessageSecondary} onChange={(event) => updateInvitationText("inviteMessageSecondary", event.target.value)} rows={2} />
-            </label>
-            <label className="field">
-              <span>رسالة الاعتذار عن الحضور</span>
-              <input value={form.invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateInvitationText("rsvpDeclinedMessage", event.target.value)} />
-            </label>
-          </div>
-        </div>
+        <AdminInvitationTools
+          values={toolValues}
+          templates={templates}
+          musicFiles={musicFiles}
+          refs={{ imageInputRefs: imageInputs }}
+          showPhone
+          sectionClassName="orders-edit-section"
+          gridClassName="orders-editor-grid"
+          imageGridClassName="builder-photo-grid orders-photo-grid"
+          imageTitle="الصور المرفوعة"
+          musicLabel="تشغيل الموسيقى عند فتح الدعوة"
+          onPatch={patchToolValues}
+          onImageFile={handleImageFile}
+          onPhotographerLogoFile={handlePhotographerLogoFile}
+          onInvitationTextChange={updateInvitationText}
+          onMusicFile={handleMusicFile}
+        />
 
         <div className="orders-edit-section">
           <label className="field">

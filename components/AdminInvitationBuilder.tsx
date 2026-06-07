@@ -1,35 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Eye, ImagePlus, Loader2, MessageSquareText, Music2, Save, Send, UploadCloud, UserRound } from "lucide-react";
+import { Copy, Eye, Loader2, Save, Send } from "lucide-react";
+import {
+  AdminInvitationTools,
+  emptyAdminToolImages,
+  emptyAdminToolUpload,
+  uploadAdminMusic,
+  uploadAdminPreviewImage,
+  validateAdminInvitationTools,
+  type AdminToolImageSlot,
+  type AdminToolMusicChoice,
+  type AdminToolMusicFile,
+  type AdminToolTemplate,
+  type AdminToolUploadSlot,
+  type AdminInvitationToolValues,
+} from "@/components/AdminInvitationTools";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
-import { acceptedImageFormats } from "@/lib/image-formats";
 import { defaultInvitationTexts } from "@/lib/invitation-texts";
-import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { InvitationTexts } from "@/lib/types";
 
-type BuilderTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
-type MusicFile = { url: string; modifiedAt: number };
-type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
-
-const emptyImages: ImageSlotState[] = unifiedImageSlots.map(() => ({ previewUrl: "", dataUrl: "", name: "", loading: false }));
+type BuilderTemplate = AdminToolTemplate;
+type MusicFile = AdminToolMusicFile;
 
 function todayDate() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-    reader.onerror = () => resolve("");
-    reader.readAsDataURL(file);
-  });
-}
-
-function isPlayableAudioUrl(value: string) {
-  if (!value.trim()) return true;
-  return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(value.trim());
 }
 
 export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { templates: BuilderTemplate[]; siteUrl: string; musicFiles: MusicFile[] }) {
@@ -39,13 +34,14 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   const [weddingDate, setWeddingDate] = useState(todayDate());
   const [venue, setVenue] = useState("عنوان المناسبة");
   const [mapUrl, setMapUrl] = useState("");
-  const [images, setImages] = useState<ImageSlotState[]>(emptyImages);
+  const [images, setImages] = useState<AdminToolImageSlot[]>(emptyAdminToolImages);
   const [photographerEnabled, setPhotographerEnabled] = useState(false);
   const [photographerName, setPhotographerName] = useState("");
-  const [photographerLogo, setPhotographerLogo] = useState<ImageSlotState>({ previewUrl: "", dataUrl: "", name: "", loading: false });
+  const [photographerLogo, setPhotographerLogo] = useState<AdminToolUploadSlot>(emptyAdminToolUpload);
   const [photographerFacebookUrl, setPhotographerFacebookUrl] = useState("");
   const [photographerInstagramUrl, setPhotographerInstagramUrl] = useState("");
   const [musicEnabled, setMusicEnabled] = useState(false);
+  const [musicChoice, setMusicChoice] = useState<AdminToolMusicChoice>("default");
   const [musicUrl, setMusicUrl] = useState("");
   const [musicDataUrl, setMusicDataUrl] = useState("");
   const [musicFileName, setMusicFileName] = useState("");
@@ -85,20 +81,44 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
       venue,
       city: "",
       mapUrl,
-      gallery: images.map((image) => image.previewUrl).filter(Boolean),
+      gallery: images.map((image) => image.url).filter(Boolean),
       musicEnabled,
-      musicUrl,
+      musicUrl: musicChoice === "default" ? "" : musicUrl,
       disableMusic: !musicEnabled,
       texts: invitationTexts,
       photographer: {
         enabled: photographerEnabled,
         name: photographerName,
-        logoUrl: photographerLogo.previewUrl,
+        logoUrl: photographerLogo.url,
         facebookUrl: photographerFacebookUrl,
         instagramUrl: photographerInstagramUrl,
       },
     }),
-    [brideName, groomName, images, invitationTexts, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate],
+    [brideName, groomName, images, invitationTexts, mapUrl, musicChoice, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.url, photographerName, venue, weddingDate],
+  );
+
+  const toolValues = useMemo<AdminInvitationToolValues>(
+    () => ({
+      templateSlug,
+      groomName,
+      brideName,
+      weddingDate,
+      venue,
+      mapUrl,
+      images,
+      photographerEnabled,
+      photographerName,
+      photographerLogo,
+      photographerFacebookUrl,
+      photographerInstagramUrl,
+      musicEnabled,
+      musicChoice,
+      musicUrl,
+      musicBusy,
+      musicFileName,
+      invitationTexts,
+    }),
+    [brideName, groomName, images, invitationTexts, mapUrl, musicBusy, musicChoice, musicEnabled, musicFileName, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo, photographerName, templateSlug, venue, weddingDate],
   );
 
   const postPreviewUpdate = useCallback(() => {
@@ -134,31 +154,41 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     if (message) setMessage("");
   }
 
+  function patchToolValues(patch: Partial<AdminInvitationToolValues>) {
+    if (patch.templateSlug !== undefined) setTemplateSlug(patch.templateSlug);
+    if (patch.groomName !== undefined) setGroomName(patch.groomName);
+    if (patch.brideName !== undefined) setBrideName(patch.brideName);
+    if (patch.weddingDate !== undefined) setWeddingDate(patch.weddingDate);
+    if (patch.venue !== undefined) setVenue(patch.venue);
+    if (patch.mapUrl !== undefined) setMapUrl(patch.mapUrl);
+    if (patch.images !== undefined) setImages(patch.images);
+    if (patch.photographerEnabled !== undefined) setPhotographerEnabled(patch.photographerEnabled);
+    if (patch.photographerName !== undefined) setPhotographerName(patch.photographerName);
+    if (patch.photographerLogo !== undefined) setPhotographerLogo(patch.photographerLogo);
+    if (patch.photographerFacebookUrl !== undefined) setPhotographerFacebookUrl(patch.photographerFacebookUrl);
+    if (patch.photographerInstagramUrl !== undefined) setPhotographerInstagramUrl(patch.photographerInstagramUrl);
+    if (patch.musicEnabled !== undefined) setMusicEnabled(patch.musicEnabled);
+    if (patch.musicChoice !== undefined) setMusicChoice(patch.musicChoice);
+    if (patch.musicUrl !== undefined) setMusicUrl(patch.musicUrl);
+    if (patch.musicBusy !== undefined) setMusicBusy(patch.musicBusy);
+    if (patch.musicFileName !== undefined) setMusicFileName(patch.musicFileName);
+    if (patch.invitationTexts !== undefined) setInvitationTexts(patch.invitationTexts);
+    if (patch.musicUrl !== undefined || patch.musicChoice !== undefined) setMusicDataUrl("");
+    markDirty();
+  }
+
   function updateInvitationText(key: keyof InvitationTexts, value: string) {
     setInvitationTexts((current) => ({ ...current, [key]: value }));
     markDirty();
   }
 
-  async function uploadPreviewImage(file: File) {
-    const formData = new FormData();
-    formData.append("images", file);
-    const response = await fetch("/api/orders/preview-images", {
-      method: "POST",
-      body: formData,
-    });
-    const data = (await response.json().catch(() => null)) as { imageUrls?: string[]; error?: string } | null;
-    const url = data?.imageUrls?.[0] || "";
-    if (!response.ok || !url) throw new Error(data?.error || "preview-image-upload-failed");
-    return url;
-  }
-
   async function handleImageFile(index: number, file?: File | null) {
     if (!file) return;
     markDirty();
-    setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, dataUrl: "", name: file.name, loading: true } : item)));
+    setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, name: file.name, loading: true } : item)));
     try {
-      const url = await uploadPreviewImage(file);
-      setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, previewUrl: url, loading: false } : item)));
+      const url = await uploadAdminPreviewImage(file);
+      setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, url, loading: false } : item)));
     } catch (error) {
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, loading: false } : item)));
       setStatus("error");
@@ -169,12 +199,12 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   async function handleLogoFile(file?: File | null) {
     if (!file) return;
     markDirty();
-    setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: true });
+    setPhotographerLogo({ url: "", name: file.name, loading: true });
     try {
-      const url = await uploadPreviewImage(file);
-      setPhotographerLogo({ dataUrl: "", previewUrl: url, name: file.name, loading: false });
+      const url = await uploadAdminPreviewImage(file);
+      setPhotographerLogo({ url, name: file.name, loading: false });
     } catch (error) {
-      setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: false });
+      setPhotographerLogo({ url: "", name: file.name, loading: false });
       setStatus("error");
       setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع شعار المصور. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
     }
@@ -184,22 +214,19 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     if (!file) return;
     markDirty();
     setMusicBusy(true);
-    const dataUrl = await readFileAsDataUrl(file);
-    const response = await fetch("/api/orders/preview-music", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ music: dataUrl }),
-    });
-    const data = (await response.json().catch(() => null)) as { musicUrl?: string; error?: string } | null;
-    setMusicBusy(false);
-    if (!response.ok || !data?.musicUrl) {
+    try {
+      const uploadedUrl = await uploadAdminMusic(file);
+      setMusicBusy(false);
+      setMusicDataUrl("");
+      setMusicEnabled(true);
+      setMusicChoice("upload");
+      setMusicUrl(uploadedUrl);
+      setMusicFileName(file.name);
+    } catch (error) {
+      setMusicBusy(false);
       setStatus("error");
-      setMessage(data?.error || "ملف الموسيقى غير قابل للتشغيل.");
-      return;
+      setMessage(error instanceof Error ? error.message : "ملف الموسيقى غير قابل للتشغيل.");
     }
-    setMusicDataUrl(dataUrl);
-    setMusicUrl(data.musicUrl);
-    setMusicFileName(file.name);
   }
 
   function wirePreviewClicks() {
@@ -252,29 +279,10 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   }
 
   async function save(action: "draft" | "publish") {
-    if (!groomName.trim() || !brideName.trim() || !weddingDate || !venue.trim()) {
+    const validationError = validateAdminInvitationTools(toolValues, { requireReuploadText: "في صورة مختارة لكنها لم تُرفع بنجاح. ارفعها مرة أخرى قبل نشر الدعوة." });
+    if (validationError) {
       setStatus("error");
-      setMessage("اكتب اسم العريس والعروسة والتاريخ والعنوان قبل الحفظ.");
-      return;
-    }
-    if (musicEnabled && musicUrl && !isPlayableAudioUrl(musicUrl)) {
-      setStatus("error");
-      setMessage("رابط الموسيقى لازم يكون ملف صوت مباشر.");
-      return;
-    }
-    if (images.some((image) => image.loading) || photographerLogo.loading) {
-      setStatus("error");
-      setMessage("استنى لحظة لحد ما رفع الصور يخلص قبل الحفظ.");
-      return;
-    }
-    if (images.some((image) => image.name && !image.previewUrl)) {
-      setStatus("error");
-      setMessage("في صورة مختارة لكنها لم تُرفع بنجاح. ارفعها مرة أخرى قبل نشر الدعوة.");
-      return;
-    }
-    if (photographerEnabled && photographerLogo.name && !photographerLogo.previewUrl) {
-      setStatus("error");
-      setMessage("شعار المصور لم يُرفع بنجاح. ارفعه مرة أخرى أو احذف الاختيار قبل الحفظ.");
+      setMessage(validationError);
       return;
     }
     setStatus(action === "draft" ? "saving" : "publishing");
@@ -290,15 +298,15 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
         weddingDate,
         venue,
         mapUrl,
-        gallery: images.map((image) => image.previewUrl).filter(Boolean),
+        gallery: images.map((image) => image.url).filter(Boolean),
         musicEnabled,
-        musicUrl,
+        musicUrl: musicChoice === "default" ? "" : musicUrl,
         musicDataUrl,
         texts: invitationTexts,
         photographer: {
           enabled: photographerEnabled,
           name: photographerName,
-          logoUrl: photographerLogo.previewUrl,
+          logoUrl: photographerLogo.url,
           logoDataUrl: "",
           facebookUrl: photographerFacebookUrl,
           instagramUrl: photographerInstagramUrl,
@@ -325,16 +333,6 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   return (
     <section className="builder-shell">
       <div className="builder-top-card">
-        <div className="field builder-template-field">
-          <label htmlFor="builder-template">اختيار القالب</label>
-          <select id="builder-template" value={templateSlug} onChange={(event) => { setTemplateSlug(event.target.value); markDirty(); }}>
-            {templates.map((template) => (
-              <option key={template.slug} value={template.slug}>
-                {template.arabicName} - {template.name}
-              </option>
-            ))}
-          </select>
-        </div>
         <div className={dirty ? "builder-save-state dirty" : "builder-save-state"}>
           {dirty ? "توجد تعديلات غير محفوظة" : "كل التعديلات محفوظة"}
         </div>
@@ -342,142 +340,17 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
 
       <div className="builder-layout">
         <div className="builder-editor-panel">
-          <div className="builder-mini-grid">
-            <label className="field">
-              <span>اسم العريس</span>
-              <input ref={fieldRefs.groomName} value={groomName} onChange={(event) => { setGroomName(event.target.value); markDirty(); }} />
-            </label>
-            <label className="field">
-              <span>اسم العروسة</span>
-              <input ref={fieldRefs.brideName} value={brideName} onChange={(event) => { setBrideName(event.target.value); markDirty(); }} />
-            </label>
-            <label className="field">
-              <span>التاريخ</span>
-              <input ref={fieldRefs.weddingDate} type="date" value={weddingDate} onChange={(event) => { setWeddingDate(event.target.value); markDirty(); }} />
-            </label>
-            <label className="field">
-              <span>العنوان</span>
-              <input ref={fieldRefs.venue} value={venue} onChange={(event) => { setVenue(event.target.value); markDirty(); }} />
-            </label>
-            <label className="field">
-              <span>رابط اللوكيشن</span>
-              <input value={mapUrl} onChange={(event) => { setMapUrl(event.target.value); markDirty(); }} placeholder="انسخ رابط اللوكيشن من على خريطة جوجل" />
-              <small>انسخ رابط اللوكيشن من على خريطة جوجل.</small>
-            </label>
-          </div>
-
-          <div className="builder-section">
-            <div className="builder-section-head">
-              <ImagePlus size={18} />
-              <strong>نظام الصور الموحد</strong>
-            </div>
-            <div className="builder-photo-grid">
-              {unifiedImageSlots.map((slot, index) => (
-                <label className="builder-photo-slot" key={slot.id}>
-                  <span>{slot.label}</span>
-                  {images[index]?.previewUrl ? <img src={images[index].previewUrl} alt={slot.label} /> : <i><ImagePlus size={18} /> {slot.role}</i>}
-                  <small>{images[index]?.loading ? "جاري الرفع" : images[index]?.name || "Smart crop + cover"}</small>
-                  <input ref={(node) => { imageInputRefs.current[index] = node; }} type="file" accept={acceptedImageFormats} onChange={(event) => handleImageFile(index, event.target.files?.[0])} />
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="builder-section">
-            <button className={photographerEnabled ? "builder-toggle active" : "builder-toggle"} type="button" onClick={() => { setPhotographerEnabled(!photographerEnabled); markDirty(); }}>
-              <UserRound size={17} />
-              إضافة بيانات المصور
-            </button>
-            {photographerEnabled ? (
-              <div className="builder-mini-grid">
-                <label className="field">
-                  <span>اسم المصور الفوتوغرافي</span>
-                  <input value={photographerName} onChange={(event) => { setPhotographerName(event.target.value); markDirty(); }} />
-                </label>
-                <label className="field">
-                  <span>Facebook</span>
-                  <input value={photographerFacebookUrl} onChange={(event) => { setPhotographerFacebookUrl(event.target.value); markDirty(); }} />
-                </label>
-                <label className="field">
-                  <span>Instagram</span>
-                  <input value={photographerInstagramUrl} onChange={(event) => { setPhotographerInstagramUrl(event.target.value); markDirty(); }} />
-                </label>
-                <label className="builder-logo-upload">
-                  <UploadCloud size={17} />
-                  <span>{photographerLogo.name || "رفع شعار المصور أو صورته"}</span>
-                  <input ref={photographerLogoInputRef} type="file" accept={acceptedImageFormats} onChange={(event) => handleLogoFile(event.target.files?.[0])} />
-                </label>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="builder-section">
-            <div className="builder-section-head">
-              <Music2 size={18} />
-              <strong>موسيقى الدعوة</strong>
-            </div>
-            <label className="builder-checkline">
-              <input type="checkbox" checked={musicEnabled} onChange={(event) => { setMusicEnabled(event.target.checked); markDirty(); }} />
-              تشغيل الموسيقى داخل الدعوة
-            </label>
-            {musicEnabled ? (
-              <div className="builder-mini-grid">
-                <label className="field">
-                  <span>اختيار من الملفات المحفوظة</span>
-                  <select value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); markDirty(); }}>
-                    <option value="">اختار ملف محفوظ</option>
-                    {musicFiles.map((file) => (
-                      <option key={file.url} value={file.url}>{file.url.split("/").pop()}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="builder-logo-upload">
-                  {musicBusy ? <Loader2 size={17} /> : <UploadCloud size={17} />}
-                  <span>{musicFileName || "رفع ملف جديد"}</span>
-                  <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac" onChange={(event) => handleMusicFile(event.target.files?.[0])} />
-                </label>
-                <label className="field">
-                  <span>رابط ملف صوتي خارجي</span>
-                  <input value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); markDirty(); }} placeholder="https://example.com/song.mp3" />
-                </label>
-                {musicUrl ? <audio controls preload="metadata" src={musicUrl} /> : null}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="builder-section">
-            <div className="builder-section-head">
-              <MessageSquareText size={18} />
-              <strong>نصوص داخل الدعوة</strong>
-            </div>
-            <div className="builder-text-list">
-              <label className="field">
-                <span>سؤال تأكيد الحضور</span>
-                <input
-                  ref={textFieldRefs.rsvpQuestion}
-                  value={invitationTexts.rsvpQuestion}
-                  onChange={(event) => updateInvitationText("rsvpQuestion", event.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>رسالة الدعوة</span>
-                <textarea
-                  ref={textFieldRefs.inviteMessage}
-                  value={invitationTexts.inviteMessage}
-                  onChange={(event) => updateInvitationText("inviteMessage", event.target.value)}
-                  rows={3}
-                />
-              </label>
-              <label className="field">
-                <span>رسالة إضافية</span>
-                <textarea value={invitationTexts.inviteMessageSecondary} onChange={(event) => updateInvitationText("inviteMessageSecondary", event.target.value)} rows={2} />
-              </label>
-              <label className="field">
-                <span>رسالة الاعتذار عن الحضور</span>
-                <input value={invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateInvitationText("rsvpDeclinedMessage", event.target.value)} />
-              </label>
-            </div>
-          </div>
+          <AdminInvitationTools
+            values={toolValues}
+            templates={templates}
+            musicFiles={musicFiles}
+            refs={{ imageInputRefs, photographerLogoInputRef, fieldRefs, textFieldRefs }}
+            onPatch={patchToolValues}
+            onImageFile={handleImageFile}
+            onPhotographerLogoFile={handleLogoFile}
+            onInvitationTextChange={updateInvitationText}
+            onMusicFile={handleMusicFile}
+          />
 
           {message ? <div className={status === "error" ? "notice danger" : "notice success"}>{message}</div> : null}
 

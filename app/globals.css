@@ -1092,18 +1092,6 @@ img {
   will-change: transform;
 }
 
-.live-preview-open {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: 24px;
-}
-
-.live-preview-open:focus-visible {
-  outline: 3px solid rgba(243, 207, 115, 0.86);
-  outline-offset: -16px;
-}
-
 .live-preview-stack {
   display: grid;
   justify-items: center;
@@ -15456,7 +15444,8 @@ body:has(.template-preview-floating-actions) .music-control {
     border-radius: 30px;
   }
 
-  .live-phone-frame iframe {
+  .live-phone-frame iframe,
+  .live-preview-media {
     height: 620px;
   }
 

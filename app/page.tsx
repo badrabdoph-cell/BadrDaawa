@@ -9,6 +9,9 @@ import { getHomePreviewSettings } from "@/lib/preview-settings";
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
   const [previewSettings, content] = await Promise.all([getHomePreviewSettings(), getHomeContent()]);
@@ -106,7 +109,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 ) : (
                   <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" allow="geolocation; notifications" />
                 )}
-                <Link className="live-preview-open" href="/templates" aria-label="افتح صفحة القوالب واختر استايلك الخاص" />
               </div>
               <div className="button-row live-preview-actions">
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/badr-sarah-1">
