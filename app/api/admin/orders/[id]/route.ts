@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
@@ -7,6 +8,7 @@ import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
+import { validateOrderUpdate } from "@/lib/validation-enhanced";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -114,7 +116,7 @@ async function convertPrismaOrder(id: string) {
   const existing = await prisma.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } });
   const code = makeNumberedInvitationSlug(
     baseSlug,
-    existing.map((item) => item.code),
+      existing.map((item: { code: string }) => item.code),
   );
   const digits = digitsOnly(order.phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
@@ -173,6 +175,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (action === "delete") {
     if (prisma) await prisma.orderRequest.delete({ where: { id } }).catch(() => null);
     else await deleteFileOrder(id);
+
+    // Revalidate cache
+    try {
+      revalidatePath("/admin/orders");
+    } catch (error) {
+      console.error("Failed to revalidate orders page", error);
+    }
+
     await syncAdminStateToGitHub(`Order deleted from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, "deleted");
   }
@@ -181,17 +191,35 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const status = action === "accept" ? "accepted" : "rejected";
     if (prisma) await prisma.orderRequest.update({ where: { id }, data: { status: status.toUpperCase() as "ACCEPTED" | "REJECTED" } }).catch(() => null);
     else await updateFileOrder(id, { status });
+
+    // Revalidate cache
+    try {
+      revalidatePath("/admin/orders");
+    } catch (error) {
+      console.error("Failed to revalidate orders page", error);
+    }
+
     await syncAdminStateToGitHub(`Order ${status} from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, status);
   }
 
   if (action === "convert") {
     const code = prisma ? await convertPrismaOrder(id) : await convertFileOrder(id);
-    if (code) await syncAdminStateToGitHub(`Order converted to invitation: ${code}.`, { createSnapshot: true });
+    if (code) {
+      // Revalidate cache
+      try {
+        revalidatePath("/admin/orders");
+        revalidatePath("/admin/client-invitations");
+      } catch (error) {
+        console.error("Failed to revalidate pages", error);
+      }
+
+      await syncAdminStateToGitHub(`Order converted to invitation: ${code}.`, { createSnapshot: true });
+    }
     return redirectBack(request, code ? `converted-${code}` : "missing");
   }
 
-  if (action === "update") {
+    if (action === "update") {
     const groomName = String(formData.get("groomName") || "").trim();
     const brideName = String(formData.get("brideName") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
@@ -200,7 +228,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const notes = String(formData.get("notes") || "").trim();
     const templateSlug = String(formData.get("templateSlug") || "").trim();
 
-    if (!groomName || !brideName || !weddingDate) return redirectBack(request, "missing");
+    // Validate input data
+    const validation = validateOrderUpdate({ groomName, brideName, phone, weddingDate, venue, notes, templateSlug });
+    if (!validation.success) {
+      return redirectBack(request, `error:${validation.error}`);
+    }
 
     if (!prisma) {
       const existing = await getFileOrder(id);
@@ -264,6 +296,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
         ...(template ? { templateId: template.id } : {}),
       },
     });
+
+    // Revalidate cache
+    try {
+      revalidatePath("/admin/orders");
+    } catch (error) {
+      console.error("Failed to revalidate orders page", error);
+    }
+
     await syncAdminStateToGitHub(`Order updated from admin: ${id}.`, { createSnapshot: true });
     return redirectBack(request, "updated");
   }

@@ -155,7 +155,7 @@ export async function createBackupSnapshot(type = "manual") {
           finishedAt: new Date(),
         },
       })
-      .catch((error) => console.error("Failed to record backup job", error));
+      .catch((error: any) => console.error("Failed to record backup job", error));
   }
 
   return toBackupSummary(fileName, Buffer.byteLength(json), createdAt.toISOString(), database ? "database" : "files", Object.keys(dataFiles).length + uploads.length);

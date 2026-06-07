@@ -72,6 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (changed) {
     safeRevalidatePath("/admin/client-invitations");
+    safeRevalidatePath("/admin");
     safeRevalidatePath(`/${code}`);
     safeRevalidatePath(`/${code}/ad_3399`);
     await syncAdminStateToGitHub(`Client invitation ${action}: ${code}.`, { createSnapshot: true });

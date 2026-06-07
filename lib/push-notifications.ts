@@ -197,7 +197,7 @@ export async function sendPushNotification({ title, body, url }: { title: string
   let failureCount = 0;
 
   await Promise.all(
-    subscriptions.map(async (subscription) => {
+    subscriptions.map(async (subscription: StoredSubscription) => {
       try {
         const response = await notifySubscription(subscription);
         if (response.ok) {

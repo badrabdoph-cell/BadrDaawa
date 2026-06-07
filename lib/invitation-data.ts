@@ -108,7 +108,7 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
       orderBy: { createdAt: "desc" },
     });
 
-    if (guests.length) return guests.map((guest) => toGuestRsvp(guest as DatabaseGuest));
+    if (guests.length) return guests.map((guest: any) => toGuestRsvp(guest as DatabaseGuest));
     const fileGuests = await getFileGuestsByInvitation(code);
     return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
   } catch (error) {

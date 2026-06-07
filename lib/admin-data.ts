@@ -140,8 +140,8 @@ export async function getAdminInvitations(): Promise<Invitation[]> {
       getFileInvitations(),
     ]);
     const databaseInvitations = invitations.map(toInvitation);
-    const databaseCodes = new Set(databaseInvitations.map((invitation) => invitation.code.toLowerCase()));
-    return [...fileInvitations.filter((invitation) => !databaseCodes.has(invitation.code.toLowerCase())), ...databaseInvitations];
+    const databaseCodes = new Set(databaseInvitations.map((invitation: Invitation) => invitation.code.toLowerCase()));
+    return [...fileInvitations.filter((invitation: Invitation) => !databaseCodes.has(invitation.code.toLowerCase())), ...databaseInvitations];
   } catch (error) {
     console.error("Failed to load admin invitations", error);
     return getFileInvitations();

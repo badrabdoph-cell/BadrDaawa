@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     });
     const code = makeNumberedInvitationSlug(
       baseSlug,
-      existing.map((item) => item.code),
+      existing.map((item: { code: string }) => item.code),
     );
 
     const template = await prisma.weddingTemplate.upsert({
