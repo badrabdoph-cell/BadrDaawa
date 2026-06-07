@@ -362,6 +362,12 @@ async function attemptSync(
     };
   }
 
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+  console.log(`[GitHub Sync] Collected ${files.length} file(s) totalling ${Math.round(totalBytes / 1024)} KB from: ${syncRoots.join(", ")}`);
+  for (const file of files) {
+    console.log(`[GitHub Sync]   → ${file.repoPath} (${Math.round(file.size / 1024)} KB)`);
+  }
+
   const { owner, repo } = config.repo;
   const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
   const headCommit = await githubRequest<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, { method: "GET" }, config.token);
@@ -379,6 +385,7 @@ async function attemptSync(
   );
 
   if (tree.sha === headCommit.tree.sha) {
+    console.log(`[GitHub Sync] Tree unchanged — no new commit needed (${files.length} file(s) already up to date)`);
     return {
       startedAt,
       status: "unchanged",
@@ -413,6 +420,12 @@ async function attemptSync(
     config.token,
   );
 
+  const duration = Date.now() - startedAt;
+  console.log(`[GitHub Sync] Committed ${files.length} file(s) in ${duration}ms — SHA: ${commit.sha}`);
+  if (commit.html_url) {
+    console.log(`[GitHub Sync] Commit URL: ${commit.html_url}`);
+  }
+
   return {
     startedAt,
     status: "synced",
@@ -420,7 +433,7 @@ async function attemptSync(
     commitUrl: commit.html_url,
     commitSha: commit.sha,
     files: files.length,
-    duration: Date.now() - startedAt,
+    duration,
   };
 }
 

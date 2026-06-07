@@ -90,7 +90,9 @@ export function ImageCropUploader({
   const queueOptimize = (nextItem: CropItem) => {
     window.clearTimeout(timers.current[nextItem.id]);
     timers.current[nextItem.id] = window.setTimeout(async () => {
+      console.log(`[ImageCropUploader] Optimizing "${nextItem.fileName}" for slot "${name}" (${targetWidth}x${targetHeight})`);
       const optimized = await optimizeImage(nextItem, targetWidth, targetHeight, 0.84);
+      console.log(`[ImageCropUploader] Optimized "${nextItem.fileName}" → ${Math.round(optimized.size / 1024)} KB (slot: ${name})`);
       setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, optimizedUrl: optimized.url, optimizedSize: optimized.size } : item)));
     }, 160);
   };
@@ -115,6 +117,8 @@ export function ImageCropUploader({
     const selected = Array.from(files)
       .filter((file) => file.type.startsWith("image/"))
       .slice(0, maxFiles);
+
+    console.log(`[ImageCropUploader] ${selected.length} file(s) selected for slot "${name}":`, selected.map((f) => `${f.name} (${Math.round(f.size / 1024)} KB)`));
 
     const nextItems = selected.map((file) => {
       const sourceUrl = URL.createObjectURL(file);
@@ -190,7 +194,18 @@ export function ImageCropUploader({
                   <RotateCcw size={16} />
                   إعادة ضبط
                 </button>
-                {item.optimizedUrl ? <input name={name} type="hidden" value={item.optimizedUrl} /> : null}
+                {/* Always render the hidden input once an image is loaded so the
+                    optimized data URL is included in the form submission.
+                    The `name` prop already carries the indexed slot name (e.g.
+                    "galleryImage0") so getInvitationGalleryEntries() finds it. */}
+                {items.length > 0 && (
+                  <input
+                    name={name}
+                    type="hidden"
+                    value={item.optimizedUrl}
+                    data-optimized={item.optimizedUrl ? "true" : "pending"}
+                  />
+                )}
               </div>
             </article>
           ))}

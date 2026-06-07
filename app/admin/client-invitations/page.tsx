@@ -40,6 +40,13 @@ export default async function ClientInvitationsPage({
       <div id="create-invitation">
         <AdminCreateInvitationForm created={params.created} error={params.error} demo={params.demo} templates={templates} siteUrl={siteUrl} />
       </div>
+      {params.created && !params.error ? (
+        <div className="notice success">
+          تم إنشاء الدعوة <strong>{params.created}</strong> بنجاح.{" "}
+          {params.demo ? "تم الحفظ في ملف احتياطي (قاعدة البيانات لم تكمل العملية)." : "تم الحفظ في قاعدة البيانات."}{" "}
+          جاري مزامنة البيانات مع GitHub في الخلفية.
+        </div>
+      ) : null}
       {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
       <div className="table-shell">
         <table className="data-table">

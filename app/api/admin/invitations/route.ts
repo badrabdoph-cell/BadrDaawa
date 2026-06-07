@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { exportInvitationData } from "@/lib/invitation-export";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
@@ -82,10 +83,38 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
     });
+
+    console.log(`[Invitations] File-store invitation created: ${invitation.code} (template: ${selectedTemplate.slug}, gallery: ${gallery.length} image(s))`);
+
+    const exported = await exportInvitationData({
+      code: invitation.code,
+      templateSlug: selectedTemplate.slug,
+      groomName,
+      brideName,
+      weddingDate,
+      weddingTime,
+      venue,
+      city,
+      mapUrl,
+      heroPhoto: gallery[0] || "",
+      gallery,
+      musicUrl: musicUrl || "",
+      exportedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    });
+
+    if (!exported) {
+      console.warn(`[Invitations] Data export failed for ${invitation.code}; GitHub sync will proceed without JSON metadata`);
+    }
+
     revalidatePath(`/${invitation.code}`);
     revalidatePath(`/${invitation.code}/ad_3399`);
     revalidatePath("/admin/client-invitations");
-    queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
+    queueGitHubSync(`Client invitation created: ${invitation.code}.`, {
+      createSnapshot: true,
+      changeType: "invitation_created",
+      affectedResource: invitation.code,
+    });
     return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.headers, request.nextUrl.origin), 303);
   }
 
@@ -173,10 +202,37 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log(`[Invitations] Database invitation created: ${code} (template: ${selectedTemplate.slug}, gallery: ${gallery.length} image(s))`);
+
+    const exported = await exportInvitationData({
+      code,
+      templateSlug: selectedTemplate.slug,
+      groomName,
+      brideName,
+      weddingDate,
+      weddingTime,
+      venue,
+      city,
+      mapUrl,
+      heroPhoto: gallery[0] || "",
+      gallery,
+      musicUrl: musicUrl || "",
+      exportedAt: new Date().toISOString(),
+      createdAt: parsedWeddingDate.toISOString(),
+    });
+
+    if (!exported) {
+      console.warn(`[Invitations] Data export failed for ${code}; GitHub sync will proceed without JSON metadata`);
+    }
+
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);
     revalidatePath("/admin/client-invitations");
-    queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
+    queueGitHubSync(`Client invitation created: ${code}.`, {
+      createSnapshot: true,
+      changeType: "invitation_created",
+      affectedResource: code,
+    });
     return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${code}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("Failed to create database invitation, falling back to file store", error);
