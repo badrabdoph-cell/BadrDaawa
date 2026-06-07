@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
@@ -31,6 +33,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="ar" dir="rtl">
       <body>
         <ScrollToTopOnRouteChange />
+        <Suspense fallback={null}>
+          <GlobalNotifications />
+        </Suspense>
         {children}
       </body>
     </html>

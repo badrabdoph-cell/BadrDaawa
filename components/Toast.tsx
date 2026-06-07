@@ -1,25 +1,34 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Info, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
-interface ToastProps {
+export interface ToastItem {
   id: string;
   message: string;
   type: ToastType;
+  title?: string;
+  details?: string;
   duration?: number;
-  onClose: (id: string) => void;
+  copyLabel?: string;
 }
 
-export function Toast({ id, message, type, duration = 3000, onClose }: ToastProps) {
+interface ToastProps extends ToastItem {
+  onClose: (id: string) => void;
+  onCopy?: (id: string) => void;
+}
+
+export function Toast({ id, message, type, title, details, duration, copyLabel, onClose, onCopy }: ToastProps) {
+  const autoCloseDuration = duration ?? (details ? 0 : 3000);
+
   useEffect(() => {
-    if (duration > 0) {
-      const timer = setTimeout(() => onClose(id), duration);
+    if (autoCloseDuration > 0) {
+      const timer = setTimeout(() => onClose(id), autoCloseDuration);
       return () => clearTimeout(timer);
     }
-  }, [id, duration, onClose]);
+  }, [id, autoCloseDuration, onClose]);
 
   const getIcon = () => {
     switch (type) {
@@ -36,9 +45,20 @@ export function Toast({ id, message, type, duration = 3000, onClose }: ToastProp
   };
 
   return (
-    <div className={`toast toast-${type}`} role="alert">
+    <div className={`toast toast-${type}`} role={type === "error" ? "alert" : "status"} dir="rtl">
       <div className="toast-icon">{getIcon()}</div>
-      <div className="toast-message">{message}</div>
+      <div className="toast-content">
+        {title ? <strong className="toast-title">{title}</strong> : null}
+        <div className="toast-message">{message}</div>
+        {details ? (
+          <div className="toast-actions">
+            <button className="toast-copy" onClick={() => onCopy?.(id)} type="button">
+              <Copy size={14} />
+              {copyLabel || "نسخ التفاصيل"}
+            </button>
+          </div>
+        ) : null}
+      </div>
       <button
         className="toast-close"
         onClick={() => onClose(id)}
@@ -52,20 +72,20 @@ export function Toast({ id, message, type, duration = 3000, onClose }: ToastProp
 }
 
 interface ToastContainerProps {
-  toasts: Array<{ id: string; message: string; type: ToastType }>;
+  toasts: ToastItem[];
   onClose: (id: string) => void;
+  onCopy?: (id: string) => void;
 }
 
-export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
+export function ToastContainer({ toasts, onClose, onCopy }: ToastContainerProps) {
   return (
     <div className="toast-container">
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
-          id={toast.id}
-          message={toast.message}
-          type={toast.type}
+          {...toast}
           onClose={onClose}
+          onCopy={onCopy}
         />
       ))}
     </div>
@@ -73,11 +93,11 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
 }
 
 export function useToast() {
-  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: ToastType }>>([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const addToast = (message: string, type: ToastType = "info") => {
+  const addToast = (message: string, type: ToastType = "info", options: Omit<Partial<ToastItem>, "id" | "message" | "type"> = {}) => {
     const id = `${Date.now()}-${Math.random()}`;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, ...options }]);
     return id;
   };
 
@@ -85,10 +105,10 @@ export function useToast() {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
-  const success = (message: string) => addToast(message, "success");
-  const error = (message: string) => addToast(message, "error");
-  const info = (message: string) => addToast(message, "info");
-  const warning = (message: string) => addToast(message, "warning");
+  const success = (message: string, options?: Omit<Partial<ToastItem>, "id" | "message" | "type">) => addToast(message, "success", options);
+  const error = (message: string, options?: Omit<Partial<ToastItem>, "id" | "message" | "type">) => addToast(message, "error", options);
+  const info = (message: string, options?: Omit<Partial<ToastItem>, "id" | "message" | "type">) => addToast(message, "info", options);
+  const warning = (message: string, options?: Omit<Partial<ToastItem>, "id" | "message" | "type">) => addToast(message, "warning", options);
 
   return { toasts, addToast, removeToast, success, error, info, warning };
 }

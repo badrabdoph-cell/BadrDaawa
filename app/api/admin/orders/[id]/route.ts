@@ -16,6 +16,17 @@ type RouteContext = {
 
 const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
+type OrderConversionDraft = {
+  groomName?: string;
+  brideName?: string;
+  phone?: string;
+  weddingDate?: string;
+  venue?: string;
+  notes?: string;
+  templateSlug?: string;
+  imageUrls?: string[];
+};
+
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }
@@ -42,34 +53,74 @@ function normalizeDate(value: string) {
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
-async function convertFileOrder(id: string) {
+function getOrderDraftFromForm(formData: FormData): OrderConversionDraft {
+  const notes = String(formData.get("notes") || "").trim();
+  return {
+    groomName: String(formData.get("groomName") || "").trim(),
+    brideName: String(formData.get("brideName") || "").trim(),
+    phone: String(formData.get("phone") || "").trim(),
+    weddingDate: String(formData.get("weddingDate") || "").trim(),
+    venue: String(formData.get("venue") || "").trim(),
+    notes,
+    templateSlug: String(formData.get("templateSlug") || "").trim(),
+    imageUrls: parseImageUrls(notes),
+  };
+}
+
+function mergeImageUrls(...groups: Array<Array<string | undefined> | undefined>) {
+  const seen = new Set<string>();
+  const urls: string[] = [];
+
+  for (const group of groups) {
+    for (const item of group || []) {
+      const url = normalizeInternalAssetUrl(item);
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      urls.push(url);
+    }
+  }
+
+  return urls.slice(0, 3);
+}
+
+async function getSafeTemplate(slug?: string | null) {
+  return (slug ? await getTemplateWithSettings(slug) : null) || (await getTemplateWithSettings("royal-envelope"));
+}
+
+async function convertFileOrder(id: string, draft: OrderConversionDraft) {
   const order = await getFileOrder(id);
   if (!order) return null;
-  const gallery = order.imageUrls?.length ? order.imageUrls : parseImageUrls(order.notes);
-  const digits = digitsOnly(order.phone);
+  const groomName = draft.groomName || order.groomName;
+  const brideName = draft.brideName || order.brideName;
+  const phone = draft.phone || order.phone || "";
+  const weddingDate = draft.weddingDate || order.weddingDate;
+  const venue = draft.venue || order.venue || "يحدد لاحقًا";
+  const templateSlug = draft.templateSlug || order.templateSlug || "royal-envelope";
+  const gallery = mergeImageUrls(draft.imageUrls, order.imageUrls, parseImageUrls(order.notes), parseImageUrls(draft.notes));
+  const digits = digitsOnly(phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
   const password = digits.slice(-6) || order.id.slice(-6) || "123456";
   const invitation = await createFileInvitation({
-    baseSlug: buildInvitationBaseSlug(order.groomName, order.brideName),
-    templateSlug: order.templateSlug,
-    groomName: order.groomName,
-    brideName: order.brideName,
-    phone: order.phone,
+    baseSlug: buildInvitationBaseSlug(groomName, brideName),
+    templateSlug,
+    groomName,
+    brideName,
+    phone,
     username,
     password,
-    weddingDate: order.weddingDate,
+    weddingDate,
     weddingTime: "07:00 مساءً",
-    venue: order.venue || "يحدد لاحقًا",
+    venue,
     city: "",
     mapUrl: "",
     gallery: gallery.length ? gallery : fallbackGallery,
     musicUrl: "",
   });
-  await updateFileOrder(id, { status: "converted" });
+  await updateFileOrder(id, { groomName, brideName, phone, weddingDate, venue, notes: draft.notes || order.notes, imageUrls: gallery, templateSlug, status: "converted" });
   return invitation.code;
 }
 
-async function convertPrismaOrder(id: string) {
+async function convertPrismaOrder(id: string, draft: OrderConversionDraft) {
   if (!prisma) return null;
   const order = await prisma.orderRequest.findUnique({
     where: { id },
@@ -77,8 +128,14 @@ async function convertPrismaOrder(id: string) {
   });
   if (!order) return null;
 
-  const templateSlug = order.template?.slug || "royal-envelope";
-  const selectedTemplate = await getTemplateWithSettings(templateSlug);
+  const groomName = draft.groomName || order.groomName;
+  const brideName = draft.brideName || order.brideName;
+  const phone = draft.phone || order.phone || "";
+  const weddingDate = draft.weddingDate ? normalizeDate(draft.weddingDate) : order.weddingDate;
+  const venue = draft.venue || order.venue || "يحدد لاحقًا";
+  const notes = draft.notes ?? order.notes ?? "";
+  const templateSlug = draft.templateSlug || order.template?.slug || "royal-envelope";
+  const selectedTemplate = await getSafeTemplate(templateSlug);
   if (!selectedTemplate) return null;
 
   const template = await prisma.weddingTemplate.upsert({
@@ -114,28 +171,28 @@ async function convertPrismaOrder(id: string) {
     },
   });
 
-  const baseSlug = buildInvitationBaseSlug(order.groomName, order.brideName);
+  const baseSlug = buildInvitationBaseSlug(groomName, brideName);
   const existing = await prisma.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } });
   const code = makeNumberedInvitationSlug(
     baseSlug,
       existing.map((item: { code: string }) => item.code),
   );
-  const digits = digitsOnly(order.phone);
+  const digits = digitsOnly(phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
   const password = digits.slice(-6) || order.id.slice(-6) || "123456";
-  const gallery = parseImageUrls(order.notes);
+  const gallery = mergeImageUrls(draft.imageUrls, parseImageUrls(order.notes), parseImageUrls(notes));
 
   const customer = await prisma.customer.upsert({
     where: { username },
     update: {
-      name: `${order.groomName} و ${order.brideName}`,
-      phone: order.phone,
+      name: `${groomName} و ${brideName}`,
+      phone,
       passwordHash: hashPassword(password),
       isActive: true,
     },
     create: {
-      name: `${order.groomName} و ${order.brideName}`,
-      phone: order.phone,
+      name: `${groomName} و ${brideName}`,
+      phone,
       username,
       passwordHash: hashPassword(password),
       isActive: true,
@@ -147,11 +204,11 @@ async function convertPrismaOrder(id: string) {
       code,
       status: "ACTIVE",
       language: order.language,
-      groomName: order.groomName,
-      brideName: order.brideName,
-      weddingDate: order.weddingDate,
+      groomName,
+      brideName,
+      weddingDate,
       weddingTime: "07:00 مساءً",
-      venue: order.venue || "يحدد لاحقًا",
+      venue,
       city: "",
       mapUrl: "",
       heroPhoto: gallery[0] || fallbackGallery[0],
@@ -161,7 +218,20 @@ async function convertPrismaOrder(id: string) {
     },
   });
 
-  await prisma.orderRequest.update({ where: { id }, data: { status: "CONVERTED", customerId: customer.id } });
+  await prisma.orderRequest.update({
+    where: { id },
+    data: {
+      groomName,
+      brideName,
+      phone,
+      weddingDate,
+      venue,
+      notes,
+      status: "CONVERTED",
+      customerId: customer.id,
+      templateId: template.id,
+    },
+  });
   return code;
 }
 
@@ -205,7 +275,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     if (action === "convert") {
-      const code = prisma ? await convertPrismaOrder(id) : await convertFileOrder(id);
+      const draft = getOrderDraftFromForm(formData);
+      const validation = validateOrderUpdate({
+        groomName: draft.groomName,
+        brideName: draft.brideName,
+        phone: draft.phone,
+        weddingDate: draft.weddingDate,
+        venue: draft.venue,
+        notes: draft.notes,
+        templateSlug: draft.templateSlug,
+      });
+      if (!validation.success) {
+        return redirectBack(request, `error:${validation.error}`);
+      }
+
+      const code = prisma ? await convertPrismaOrder(id, draft) : await convertFileOrder(id, draft);
       if (code) {
         try {
           revalidatePath("/admin/orders");
