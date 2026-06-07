@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Archive, ArrowUpLeft, BarChart3, Database, DatabaseBackup, FileText, Github, MonitorPlay, Music2, Palette, Plus, Sparkles, UsersRound } from "lucide-react";
+import { Archive, ArrowUpLeft, BarChart3, Database, DatabaseBackup, FileText, MonitorPlay, Music2, Palette, Plus, Sparkles, UsersRound } from "lucide-react";
 import { getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { listBackupSnapshots } from "@/lib/backups";
 import { hasDatabaseConfig } from "@/lib/database-url";
-import { getGitHubSyncReadiness } from "@/lib/github-sync";
 import { getMusicLibrary } from "@/lib/music-library";
 import { formatArabicNumber } from "@/lib/utils";
+import { SyncStatus } from "@/app/admin/components/sync-status";
 
 function formatOrderDate(value: string) {
   const date = new Date(value);
@@ -27,7 +27,6 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const newOrders = orders.filter((order) => order.status === "new");
   const recentOrders = orders.slice(0, 4);
   const hasDatabase = hasDatabaseConfig();
-  const githubSync = getGitHubSyncReadiness();
   const activeMusicSlots = musicLibrary.slots.filter((slot) => slot.enabled && slot.url).length;
   const latestBackup = backups[0];
 
@@ -119,17 +118,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <strong>قاعدة البيانات</strong>
             <small>{hasDatabase ? "الطلبات والدعوات تقرأ من قاعدة البيانات." : "اربط DATABASE_URL للبيانات الحقيقية على الإنتاج."}</small>
           </div>
-          <div className="admin-health-card">
-            <Github size={19} />
-            <span className={githubSync.configured ? "admin-health-pill good" : "admin-health-pill danger"}>{githubSync.label}</span>
-            <strong>مزامنة GitHub</strong>
-            <small>{githubSync.detail}</small>
-            <form action="/api/admin/sync-status" method="post">
-              <button className="btn btn-soft btn-glass" type="submit">
-                مزامنة الآن
-              </button>
-            </form>
-          </div>
+          <SyncStatus />
           <div className="admin-health-card">
             <DatabaseBackup size={19} />
             <span className={backups.length ? "admin-health-pill good" : "admin-health-pill danger"}>{formatArabicNumber(backups.length)}</span>
@@ -187,6 +176,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           <div className="admin-mini-links">
             <Link href="/admin/customers">حسابات العملاء</Link>
             <Link href="/admin/backups">النسخ الاحتياطي</Link>
+            <Link href="/admin/sync-history">سجل المزامنة</Link>
             <Link href="/admin/analytics">
               <BarChart3 size={16} />
               التحليلات والأرقام

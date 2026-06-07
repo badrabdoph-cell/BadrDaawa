@@ -183,3 +183,22 @@ model BackupJob {
   @@index([type, createdAt])
   @@index([status])
 }
+
+model SyncLog {
+  id           String    @id @default(cuid())
+  timestamp    DateTime  @default(now())
+  reason       String
+  status       String
+  filesCount   Int?
+  commitSha    String?
+  commitUrl    String?
+  errorMessage String?
+  duration     Int?
+  retryCount   Int       @default(0)
+  nextRetryAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
