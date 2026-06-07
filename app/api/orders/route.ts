@@ -4,6 +4,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { createFileOrder } from "@/lib/file-store";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { getPublicUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
@@ -132,5 +133,6 @@ export async function POST(request: Request) {
     }
   }
 
+  queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
   return NextResponse.json({ ok: true, orderId, imageUrls });
 }

@@ -33,12 +33,22 @@ function makeItemId(prefix: string, text: string, existingIds: string[]) {
   return candidate;
 }
 
+function hasOwn<T extends object>(target: T, key: PropertyKey): key is keyof T {
+  return Object.prototype.hasOwnProperty.call(target, key);
+}
+
+function isPricingTextField(field: string): field is Exclude<keyof HomeContent["pricing"], "rows"> {
+  return field === "eyebrow" || field === "title" || field === "invitationPlanName" || field === "invitationPrice" || field === "plusPlanName" || field === "plusPrice";
+}
+
 function updateTextContent(content: HomeContent, key: string, value: string) {
   const text = cleanText(value);
   const next = structuredClone(content);
 
-  if (key.startsWith("hero.") && key in next.hero) {
-    next.hero[key.slice("hero.".length) as keyof HomeContent["hero"]] = text;
+  if (key.startsWith("hero.")) {
+    const field = key.slice("hero.".length);
+    if (!hasOwn(next.hero, field)) return null;
+    next.hero[field] = text;
     return next;
   }
 
@@ -47,32 +57,37 @@ function updateTextContent(content: HomeContent, key: string, value: string) {
     return next;
   }
 
-  if (key.startsWith("features.points.")) {
+  if (key.startsWith("features.points.") && key.endsWith(".text")) {
     const id = key.replace(/^features\.points\./, "").replace(/\.text$/, "");
     const point = next.features.points.find((item) => item.id === id);
-    if (point) point.text = text;
+    if (!point) return null;
+    point.text = text;
     return next;
   }
 
-  if (key.startsWith("preview.") && key in next.preview) {
-    next.preview[key.slice("preview.".length) as keyof HomeContent["preview"]] = text;
+  if (key.startsWith("preview.")) {
+    const field = key.slice("preview.".length);
+    if (!hasOwn(next.preview, field)) return null;
+    next.preview[field] = text;
     return next;
   }
 
-  if (key.startsWith("pricing.") && key in next.pricing) {
-    const field = key.slice("pricing.".length) as keyof Omit<HomeContent["pricing"], "rows">;
+  if (key.startsWith("pricing.") && !key.startsWith("pricing.rows.")) {
+    const field = key.slice("pricing.".length);
+    if (!isPricingTextField(field)) return null;
     next.pricing[field] = text;
     return next;
   }
 
-  if (key.startsWith("pricing.rows.")) {
+  if (key.startsWith("pricing.rows.") && key.endsWith(".feature")) {
     const id = key.replace(/^pricing\.rows\./, "").replace(/\.feature$/, "");
     const row = next.pricing.rows.find((item) => item.id === id);
-    if (row) row.feature = text;
+    if (!row) return null;
+    row.feature = text;
     return next;
   }
 
-  return next;
+  return null;
 }
 
 function inferPreviewMode(value: string) {
@@ -158,7 +173,9 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
   } else {
     const key = "key" in payload ? String(payload.key || "") : "";
     if (!key) throw new Error("missing_key");
-    content = await updateHomeContent(updateTextContent(content, key, String(("value" in payload && payload.value) || "")));
+    const nextContent = updateTextContent(content, key, String(("value" in payload && payload.value) || ""));
+    if (!nextContent) throw new Error("unknown_broadcast_key");
+    content = await updateHomeContent(nextContent);
   }
 
   revalidatePath("/");

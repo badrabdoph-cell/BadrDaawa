@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 
 function isClientAllowed(request: NextRequest, code: string) {
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       revalidatePath(`/${code}`);
       revalidatePath(`/${code}/ad_3399`);
+      queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
       return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
     } catch (error) {
       console.error("Failed to update database invitation from client admin", error);
@@ -123,5 +125,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);
+  queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
   return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
 }

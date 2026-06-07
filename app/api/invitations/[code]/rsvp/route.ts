@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { addFileGuest, getFileInvitationByCode } from "@/lib/file-store";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationByCode as getDemoInvitationByCode } from "@/lib/demo-data";
 import { rsvpSchema } from "@/lib/validation";
 
@@ -31,7 +32,8 @@ async function saveFileRsvp(code: string, data: {
   }
 
   if (fileInvitation) {
-    await addFileGuest(code, data);
+    const saved = await addFileGuest(code, data);
+    if (saved) queueGitHubSync(`RSVP saved for invitation: ${code}.`, { createSnapshot: true });
   }
 
   revalidatePath(`/${code}/ad_3399`);
@@ -68,6 +70,7 @@ export async function POST(request: Request, context: RouteContext) {
           note: parsed.data.note,
         },
       });
+      queueGitHubSync(`RSVP saved for invitation: ${code}.`, { createSnapshot: true });
       revalidatePath(`/${code}/ad_3399`);
       revalidatePath("/admin/analytics");
       return NextResponse.json({ ok: true });
