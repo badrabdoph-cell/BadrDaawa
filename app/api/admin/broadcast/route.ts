@@ -4,7 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getHomeContent, updateHomeContent, type HomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -67,7 +67,7 @@ function inferPreviewMode(value: string) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   const kind = String(formData.get("kind") || "text");
 
   if (!key) {
-    return NextResponse.redirect(new URL("/admin/broadcast?error=missing", request.url), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/broadcast?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
   if (kind === "media" || key === "preview.media") {
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   revalidatePath("/admin/broadcast");
   queueGitHubSync(`Broadcast screen updated: ${key}.`, { createSnapshot: true });
 
-  const url = new URL("/admin/broadcast", request.url);
+  const url = getRedirectUrl("/admin/broadcast", request.headers, request.nextUrl.origin);
   url.searchParams.set("saved", key);
   return NextResponse.redirect(url, 303);
 }

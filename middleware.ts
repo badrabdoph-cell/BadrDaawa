@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getClientSessionSecret } from "@/lib/auth-config";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const session = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
     if (!(await verifyAdminSessionCookie(session))) {
-      const url = getPublicUrl("/admin/login", request.headers, request.nextUrl.origin);
+      const url = getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin);
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }

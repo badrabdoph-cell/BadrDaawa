@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -41,7 +41,7 @@ async function savePreviewMedia(file: File | null) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();
@@ -70,5 +70,5 @@ export async function POST(request: NextRequest) {
   revalidatePath("/admin/preview");
   queueGitHubSync("Homepage preview settings updated from admin.", { createSnapshot: true });
 
-  return NextResponse.redirect(new URL("/admin/preview?saved=1", request.url), 303);
+  return NextResponse.redirect(getRedirectUrl("/admin/preview?saved=1", request.headers, request.nextUrl.origin), 303);
 }

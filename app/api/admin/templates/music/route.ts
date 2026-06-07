@@ -6,7 +6,7 @@ import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { updateTemplateSettings } from "@/lib/template-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getPublicUrl, getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -32,7 +32,7 @@ async function saveTemplateImage(image: string, request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     queueGitHubSync(`Template settings updated: ${slug}.`, { createSnapshot: true });
   }
 
-  const url = new URL("/admin/templates", request.url);
+  const url = getRedirectUrl("/admin/templates", request.headers, request.nextUrl.origin);
   url.searchParams.set("saved", updated ? slug : "0");
   url.hash = `template-${slug}`;
   return NextResponse.redirect(url, 303);

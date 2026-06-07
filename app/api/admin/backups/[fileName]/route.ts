@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getBackupFile } from "@/lib/backups";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,7 @@ async function isAdmin(request: NextRequest) {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const { fileName } = await context.params;

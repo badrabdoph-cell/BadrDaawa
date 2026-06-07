@@ -4,14 +4,14 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { prisma } from "@/lib/db";
 import { deleteFileInvitation, setFileInvitationActive } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
 function redirectBack(request: NextRequest, status: string) {
-  const url = new URL("/admin/client-invitations", request.url);
+  const url = getRedirectUrl("/admin/client-invitations", request.headers, request.nextUrl.origin);
   url.searchParams.set("status", status);
   return NextResponse.redirect(url, 303);
 }
@@ -56,7 +56,7 @@ async function updateFileInvitationAction(code: string, action: string) {
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const { code } = await params;

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createCustomTemplateFromHtml } from "@/lib/custom-templates";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -11,7 +11,7 @@ async function isAdmin(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     queueGitHubSync(`Custom template imported: ${result.template.slug}.`, { createSnapshot: true });
   }
 
-  const url = new URL("/admin/templates", request.url);
+  const url = getRedirectUrl("/admin/templates", request.headers, request.nextUrl.origin);
   url.searchParams.set("imported", result.ok ? result.template.slug : "0");
   return NextResponse.redirect(url, 303);
 }

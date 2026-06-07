@@ -8,7 +8,7 @@ import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -16,7 +16,7 @@ async function isAdmin(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   const parsedWeddingDate = new Date(weddingDate);
   if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue) {
-    return NextResponse.redirect(new URL("/admin/client-invitations?error=missing", request.url), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
   const savedGallery = await saveInvitationGalleryImages(galleryImages, request.headers, request.nextUrl.origin);
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       musicUrl,
     });
     queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
-    return NextResponse.redirect(new URL(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.url), 303);
+    return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.headers, request.nextUrl.origin), 303);
   }
 
   if (!prisma) {
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     });
 
     queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
-    return NextResponse.redirect(new URL(`/admin/client-invitations?created=${code}`, request.url), 303);
+    return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${code}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("Failed to create database invitation, falling back to file store", error);
     return createFallbackInvitation();

@@ -7,7 +7,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 import { validateOrderUpdate } from "@/lib/validation-enhanced";
 
 type RouteContext = {
@@ -21,7 +21,7 @@ async function isAdmin(request: NextRequest) {
 }
 
 function redirectBack(request: NextRequest, status: string) {
-  const url = new URL("/admin/orders", request.url);
+  const url = getRedirectUrl("/admin/orders", request.headers, request.nextUrl.origin);
   url.searchParams.set("status", status);
   return NextResponse.redirect(url, 303);
 }
@@ -165,7 +165,7 @@ async function convertPrismaOrder(id: string) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const { id } = await context.params;

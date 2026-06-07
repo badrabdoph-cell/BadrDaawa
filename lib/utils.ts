@@ -69,6 +69,41 @@ export function getPublicUrl(path: string, headers?: Headers, fallbackOrigin?: s
   return new URL(path, getPublicSiteUrl(headers, fallbackOrigin));
 }
 
+function getHeaderOrigin(value?: string | null) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (!url.hostname || url.hostname.includes("..") || (!isLocalhost && !url.hostname.includes("."))) return "";
+    url.pathname = "/";
+    url.hash = "";
+    url.search = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+}
+
+function isLocalhostOrigin(value: string) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
+export function getRedirectUrl(path: string, headers?: Headers, fallbackOrigin = "http://localhost:3000") {
+  const safePath = path.startsWith("/") && !path.startsWith("//") ? path : "/";
+  const publicSiteUrl = getPublicSiteUrl(headers, fallbackOrigin);
+  const publicOrigin = new URL(publicSiteUrl).origin;
+  const browserOrigin = getHeaderOrigin(headers?.get("origin")) || getHeaderOrigin(headers?.get("referer"));
+  const canUseBrowserOrigin = browserOrigin && (new URL(browserOrigin).origin === publicOrigin || (isLocalhostOrigin(browserOrigin) && isLocalhostOrigin(publicOrigin)));
+  return new URL(safePath, canUseBrowserOrigin ? browserOrigin : publicSiteUrl);
+}
+
 export function getMetadataBaseUrl() {
   return new URL(normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL));
 }

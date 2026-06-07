@@ -7,7 +7,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getMusicLibrary, updateMusicSlot } from "@/lib/music-library";
 import { getTemplatesWithSettings, updateTemplatesMusicState } from "@/lib/template-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -56,7 +56,7 @@ async function saveAudioFile(file: File | null) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getPublicUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const formData = await request.formData();
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   const uploadedUrl = await saveAudioFile(uploadedFile instanceof File ? uploadedFile : null);
   const audioUrl = uploadedUrl || cleanAudioUrl(String(formData.get("audioUrl") || "")) || cleanAudioUrl(String(formData.get("existingAudioUrl") || "")) || currentSlot?.url || "";
   const selectedTemplateSlugs = applyToAll ? allTemplateSlugs : formData.getAll("templateSlugs").map((value) => String(value));
-  const url = new URL("/admin/music", request.url);
+  const url = getRedirectUrl("/admin/music", request.headers, request.nextUrl.origin);
 
   if (!currentSlot || (trackEnabled && !audioUrl)) {
     url.searchParams.set("error", trackEnabled && !audioUrl ? "audio" : "slot");
