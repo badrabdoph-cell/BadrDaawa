@@ -244,6 +244,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
+      musicEnabled: params.get("musicEnabled") === "1" || undefined,
+      musicChoice: params.get("musicChoice") === "upload" || params.get("musicChoice") === "url" ? (params.get("musicChoice") as MusicChoice) : undefined,
+      musicUrl: params.get("musicUrl") || undefined,
       imageUrls,
     };
   }
@@ -263,12 +266,17 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       "photographerName",
       "photographerFacebookUrl",
       "photographerInstagramUrl",
+      "musicUrl",
     ];
     fields.forEach((field) => {
       const value = String(nextForm[field] || "").trim();
       if (value) params.set(field, value);
     });
     if (nextForm.photographerEnabled) params.set("photographerEnabled", "1");
+    if (nextForm.musicEnabled) {
+      params.set("musicEnabled", "1");
+      params.set("musicChoice", nextForm.musicChoice || "default");
+    }
     if (nextImageUrls.length) params.set("gallery", nextImageUrls.join(","));
     window.history.replaceState(window.history.state, "", `/order?${params.toString()}`);
   }
@@ -289,7 +297,16 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     const currentForm = getCurrentFormFromDom();
     const formData = new FormData(formRef.current);
     const currentTemplateSlug = String(formData.get("templateSlug") || selectedTemplate.slug);
-    persistDraft({ ...currentForm, templateSlug: currentTemplateSlug, photographerEnabled: form.photographerEnabled }, draftImageUrls);
+    persistDraft(
+      {
+        ...currentForm,
+        templateSlug: currentTemplateSlug,
+        photographerEnabled: form.photographerEnabled,
+        musicEnabled: form.musicEnabled,
+        musicChoice: form.musicChoice,
+      },
+      draftImageUrls,
+    );
   }
 
   function getStoredDraft() {
@@ -328,6 +345,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         photographerName: typeof draft.photographerName === "string" ? draft.photographerName : current.photographerName,
         photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
         photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
+        musicEnabled: Boolean(draft.musicEnabled),
+        musicChoice: draft.musicChoice === "upload" || draft.musicChoice === "url" ? draft.musicChoice : "default",
+        musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
       }));
       setDraftImageUrls(cleanOrderDraftImageUrls(draft.imageUrls));
     } catch {
@@ -403,7 +423,14 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (values.photographerInstagramUrl) params.set("photographerInstagramUrl", values.photographerInstagramUrl);
   }
 
-  function previewHref(values: Partial<FormState> = form, imageUrls: string[] = []) {
+  function applyMusicParams(params: URLSearchParams, values: Partial<FormState>, musicUrl = values.musicUrl || "") {
+    if (!values.musicEnabled) return;
+    params.set("musicEnabled", "1");
+    params.set("musicChoice", values.musicChoice || "default");
+    if (musicUrl) params.set("musicUrl", musicUrl);
+  }
+
+  function previewHref(values: Partial<FormState> = form, imageUrls: string[] = [], musicUrl = "") {
     const params = new URLSearchParams();
     params.set("groomName", values.groomName || "اسم العريس");
     params.set("brideName", values.brideName || "اسم العروسة");
@@ -412,6 +439,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (values.venue) params.set("venue", values.venue);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
     applyPhotographerParams(params, values);
+    applyMusicParams(params, values, musicUrl);
     return `/templates/${values.templateSlug || form.templateSlug}/preview?${params.toString()}`;
   }
 
@@ -428,6 +456,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
       photographerInstagramUrl: String(formData.get("photographerInstagramUrl") || "").trim(),
+      musicUrl: String(formData.get("musicUrl") || "").trim(),
     };
   }
 
@@ -458,7 +487,14 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     return slotImages.filter(Boolean).slice(0, 3);
   }
 
-  function validateOrder(values: OrderFormValues, photographerEnabled = form.photographerEnabled) {
+  async function getOrderMusicDataUrl(formData: FormData) {
+    if (!form.musicEnabled || form.musicChoice !== "upload") return "";
+    const rawFile = formData.get("orderMusicFile");
+    if (rawFile instanceof File && rawFile.size > 0) return readFileAsDataUrl(rawFile);
+    return "";
+  }
+
+  function validateOrder(values: OrderFormValues, photographerEnabled = form.photographerEnabled, musicEnabled = form.musicEnabled, musicChoice = form.musicChoice) {
     const nextErrors: FieldErrors = {};
     if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
     if (!values.brideName) nextErrors.brideName = "اكتب اسم العروسة كما تحب ظهوره في الدعوة.";
@@ -467,6 +503,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (!values.venue) nextErrors.venue = "اكتب عنوان المناسبة أو اسم القاعة.";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerFacebookUrl)) nextErrors.photographerFacebookUrl = "رابط Facebook لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerInstagramUrl)) nextErrors.photographerInstagramUrl = "رابط Instagram لازم يبدأ بـ https://";
+    if (musicEnabled && musicChoice === "url" && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) nextErrors.musicUrl = "رابط الموسيقى لازم يكون مباشر مثل mp3 أو m4a أو wav.";
     return nextErrors;
   }
 
@@ -496,6 +533,13 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     return lines.length > 1 ? lines.join("\n") : "";
   }
 
+  function getMusicNotes(values: Partial<FormState>, musicUrl = values.musicUrl || "") {
+    if (!values.musicEnabled) return "";
+    if (values.musicChoice === "default") return "موسيقى الدعوة:\nاختيار العميل: الموسيقى الأساسية.";
+    if (musicUrl) return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "ملف مرفوع" : "رابط أغنية"}\nرابط الموسيقى: ${musicUrl}`;
+    return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "رفع ملف موسيقى" : "رابط أغنية"}`;
+  }
+
   async function openPreview() {
     const currentForm = getCurrentFormFromDom();
     if (showValidationErrors(validateOrder(currentForm))) return;
@@ -505,7 +549,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     try {
       const formData = new FormData(formRef.current || undefined);
       const orderImages = await getOrderImageDataUrls(formData);
+      const orderMusic = await getOrderMusicDataUrl(formData);
       let imageUrls: string[] = [];
+      let musicUrl = form.musicEnabled && form.musicChoice === "url" ? currentForm.musicUrl : form.musicEnabled && form.musicChoice === "upload" ? form.musicUrl : "";
 
       if (orderImages.length) {
         const response = await fetch("/api/orders/preview-images", {
@@ -517,16 +563,36 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         imageUrls = Array.isArray(data?.imageUrls) ? data.imageUrls : [];
       }
 
+      if (form.musicEnabled && form.musicChoice !== "default" && (orderMusic || currentForm.musicUrl)) {
+        const response = await fetch("/api/orders/preview-music", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ music: orderMusic, musicUrl: form.musicChoice === "url" ? currentForm.musicUrl : form.musicUrl }),
+        });
+        const data = (await response.json().catch(() => null)) as { musicUrl?: string; error?: string } | null;
+        if (!response.ok) {
+          setState("error");
+          setMessage(data?.error || "رابط أو ملف الموسيقى غير قابل للتشغيل.");
+          setIsPreviewing(false);
+          return;
+        }
+        musicUrl = data?.musicUrl || "";
+      }
+
       const nextImageUrls = imageUrls.length ? imageUrls : draftImageUrls;
       const nextForm = {
         ...currentForm,
         weddingDate: normalizeWeddingDate(currentForm.weddingDate),
         templateSlug: selectedTemplate.slug,
         photographerEnabled: form.photographerEnabled,
+        musicEnabled: form.musicEnabled,
+        musicChoice: form.musicChoice,
+        musicUrl,
       };
+      if (musicUrl) updateField("musicUrl", musicUrl);
       if (nextImageUrls.length) setDraftImageUrls(nextImageUrls);
       persistDraft(nextForm, nextImageUrls);
-      window.location.href = previewHref(nextForm, nextImageUrls);
+      window.location.href = previewHref(nextForm, nextImageUrls, musicUrl);
     } catch {
       setState("error");
       setMessage("تعذر تجهيز المعاينة. جرّب مرة أخرى أو اضغط تأكيد إنشاء الدعوة.");
@@ -538,6 +604,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const orderImages = await getOrderImageDataUrls(formData);
+    const orderMusic = await getOrderMusicDataUrl(formData);
     const rawWeddingDate = String(formData.get("weddingDate") || "").trim();
     const currentForm: FormState = {
       ...form,
@@ -552,12 +619,14 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
       photographerInstagramUrl: String(formData.get("photographerInstagramUrl") || "").trim(),
+      musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
-    if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled))) return;
+    if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled, currentForm.musicEnabled, currentForm.musicChoice))) return;
     setState("loading");
     setMessage("");
 
     const photographerNotes = getPhotographerNotes(currentForm);
+    const clientMusicNotes = getMusicNotes(currentForm);
     const baseMessage = [
       "طلب دعوة جديد من BadrDaawa",
       `القالب: ${selectedTemplate.arabicName} - ${selectedTemplate.name}`,
@@ -566,6 +635,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       `تاريخ المناسبة: ${displayWeddingDate(currentForm.weddingDate)}`,
       `عنوان المناسبة: ${fieldValue(currentForm.venue)}`,
       photographerNotes,
+      clientMusicNotes,
     ]
       .filter(Boolean)
       .join("\n");
@@ -576,8 +646,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...currentForm,
-          notes: photographerNotes,
+          notes: [photographerNotes, clientMusicNotes].filter(Boolean).join("\n\n"),
           orderImages,
+          orderMusic,
         }),
       });
 
@@ -588,12 +659,13 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         return;
       }
 
-      const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
+      const data = (await response.json().catch(() => null)) as { imageUrls?: string[]; musicUrl?: string } | null;
       const imageLines = data?.imageUrls?.length ? `\n\nصور الدعوة بالترتيب:\n${data.imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
+      const musicLine = data?.musicUrl ? `\n\nرابط موسيقى الدعوة:\n${data.musicUrl}` : "";
       try {
         window.sessionStorage?.removeItem(orderDraftStorageKey);
       } catch {}
-      window.location.href = getWhatsAppOrderUrl(`${baseMessage}${imageLines}`);
+      window.location.href = getWhatsAppOrderUrl(`${baseMessage}${imageLines}${musicLine}`);
     } catch {
       setState("error");
       setMessage("تعذر إرسال الطلب للخادم. حاول مرة أخرى.");
