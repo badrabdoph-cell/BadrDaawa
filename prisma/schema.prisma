@@ -142,6 +142,7 @@ model OrderRequest {
   weddingDate DateTime
   venue       String
   notes       String?
+  imageUrls   Json            @default("[]")
   language    String          @default("ar")
   status      OrderStatus     @default(NEW)
   templateId  String?
