@@ -3384,6 +3384,22 @@ img {
   background: #f3cf73;
 }
 
+.dashboard-nav-badge {
+  margin-inline-start: auto;
+  min-width: 26px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f3cf73, #b9862f);
+  color: #17120a;
+  font-size: 0.76rem;
+  font-weight: 950;
+  box-shadow: 0 10px 20px rgba(185, 134, 47, 0.2);
+}
+
 .dashboard-sidebar-footer {
   display: grid;
   gap: 8px;
@@ -5289,6 +5305,298 @@ img {
 
 .admin-order-actions .btn {
   min-height: 42px;
+}
+
+.admin-orders-workspace {
+  display: grid;
+  grid-template-columns: minmax(230px, 310px) minmax(0, 1fr) minmax(300px, 410px);
+  gap: 16px;
+  align-items: start;
+}
+
+.orders-queue-panel,
+.orders-editor-panel,
+.orders-live-preview {
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(24, 27, 34, 0.94), rgba(12, 14, 19, 0.92)),
+    radial-gradient(circle at 8% 0%, rgba(243, 207, 115, 0.08), transparent 15rem);
+  color: #f5ead6;
+  box-shadow: 0 22px 62px rgba(0, 0, 0, 0.24);
+}
+
+.orders-queue-panel,
+.orders-live-preview {
+  position: sticky;
+  top: 18px;
+}
+
+.orders-queue-panel {
+  display: grid;
+  gap: 12px;
+  max-height: calc(100vh - 130px);
+  padding: 14px;
+  overflow: hidden;
+}
+
+.orders-queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.orders-queue-head h2,
+.orders-editor-head h2 {
+  margin: 5px 0 0;
+  color: #fff7e8;
+  font-size: 1.18rem;
+}
+
+.orders-queue-head > strong {
+  min-width: 42px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(243, 207, 115, 0.14);
+  color: #ffe29b;
+  font-weight: 950;
+}
+
+.orders-queue-list {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding-inline-end: 3px;
+}
+
+.orders-queue-item {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid rgba(245, 234, 214, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 247, 232, 0.84);
+  text-align: start;
+  cursor: pointer;
+}
+
+.orders-queue-item:hover,
+.orders-queue-item.active {
+  border-color: rgba(243, 207, 115, 0.26);
+  background: rgba(243, 207, 115, 0.09);
+}
+
+.orders-queue-item strong,
+.orders-queue-item small {
+  overflow-wrap: anywhere;
+}
+
+.orders-queue-item small {
+  color: rgba(245, 234, 214, 0.52);
+  font-weight: 850;
+}
+
+.order-status-chip {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 234, 214, 0.78);
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.order-status-chip.new {
+  background: rgba(87, 141, 255, 0.14);
+  color: #c9dcff;
+}
+
+.order-status-chip.reviewing {
+  background: rgba(243, 207, 115, 0.14);
+  color: #ffe29b;
+}
+
+.order-status-chip.edited {
+  background: rgba(134, 106, 255, 0.16);
+  color: #d6ccff;
+}
+
+.order-status-chip.published {
+  background: rgba(75, 178, 128, 0.16);
+  color: #bff5d0;
+}
+
+.order-status-chip.rejected {
+  background: rgba(221, 87, 87, 0.16);
+  color: #ffc0bd;
+}
+
+.orders-editor-panel {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.orders-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orders-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.orders-editor-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.orders-edit-section {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(245, 234, 214, 0.08);
+}
+
+.orders-photo-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.orders-music-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.orders-radio-card {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  min-height: 86px;
+  padding: 11px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 247, 232, 0.82);
+  cursor: pointer;
+}
+
+.orders-radio-card.active {
+  border-color: rgba(243, 207, 115, 0.36);
+  background: rgba(243, 207, 115, 0.1);
+}
+
+.orders-radio-card input[type="radio"] {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 10px;
+  accent-color: #f3cf73;
+}
+
+.orders-radio-card input[type="file"] {
+  margin-top: 4px;
+  width: 100%;
+  color: rgba(245, 234, 214, 0.62);
+  font-size: 0.75rem;
+}
+
+.orders-radio-card strong {
+  padding-inline-end: 28px;
+  color: #fff7e8;
+}
+
+.orders-radio-card span {
+  color: rgba(245, 234, 214, 0.56);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.orders-music-grid .field,
+.orders-music-grid audio {
+  grid-column: 1 / -1;
+}
+
+.orders-music-grid audio {
+  width: 100%;
+}
+
+.orders-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.orders-action-row .btn {
+  min-height: 44px;
+}
+
+.orders-links h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orders-live-preview {
+  padding: 16px;
+}
+
+.orders-empty-state {
+  min-height: 180px;
+  align-content: center;
+}
+
+@media (max-width: 1180px) {
+  .admin-orders-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-queue-panel,
+  .orders-live-preview {
+    position: static;
+    max-height: none;
+  }
+
+  .orders-queue-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .orders-queue-list,
+  .orders-editor-grid,
+  .orders-music-grid,
+  .builder-links.orders-links div {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-editor-head,
+  .orders-action-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .orders-photo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .orders-photo-grid .builder-photo-slot {
+    padding: 7px;
+  }
 }
 
 .danger-button {

@@ -7,6 +7,7 @@ export const orderUpdateSchema = z.object({
   phone: z.string().optional().default(""),
   weddingDate: z.string().refine((date) => !Number.isNaN(new Date(date).getTime()), "تاريخ الفرح غير صحيح"),
   venue: z.string().optional().default(""),
+  mapUrl: z.string().url("رابط اللوكيشن غير صحيح").optional().or(z.literal("")),
   notes: z.string().optional().default(""),
   templateSlug: z.string().optional().default("royal-envelope"),
 });

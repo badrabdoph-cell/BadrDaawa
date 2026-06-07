@@ -16,6 +16,9 @@ enum InvitationStatus {
 
 enum OrderStatus {
   NEW
+  REVIEWING
+  EDITED
+  PUBLISHED
   ACCEPTED
   REJECTED
   CONVERTED
@@ -138,15 +141,25 @@ model GuestRsvp {
 
 model OrderRequest {
   id          String          @id @default(cuid())
+  orderNumber String?         @unique
+  dedupeKey   String?         @unique
   groomName   String
   brideName   String
   phone       String
   weddingDate DateTime
   venue       String
+  mapUrl      String?
   notes       String?
   imageUrls   Json            @default("[]")
+  musicEnabled Boolean         @default(false)
+  musicChoice  String?
+  musicUrl     String?
+  photographer Json?
+  rejectionReason String?
+  publishedInvitationCode String?
   language    String          @default("ar")
   status      OrderStatus     @default(NEW)
+  submittedAt DateTime        @default(now())
   templateId  String?
   template    WeddingTemplate? @relation(fields: [templateId], references: [id])
   customerId  String?
@@ -156,6 +169,7 @@ model OrderRequest {
 
   @@index([status, createdAt])
   @@index([phone])
+  @@index([submittedAt])
 }
 
 model AnalyticsEvent {

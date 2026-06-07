@@ -42,17 +42,27 @@ type AdminInvitationRow = {
 
 type AdminOrderRow = {
   id: string;
+  orderNumber?: string | null;
+  dedupeKey?: string | null;
   groomName: string;
   brideName: string;
   phone: string;
   weddingDate: Date | string;
   venue: string;
+  mapUrl?: string | null;
   notes?: string | null;
   imageUrls?: unknown;
+  musicEnabled?: boolean | null;
+  musicChoice?: string | null;
+  musicUrl?: string | null;
+  photographer?: unknown;
+  rejectionReason?: string | null;
+  publishedInvitationCode?: string | null;
   template?: { slug: string } | null;
   templateSlug?: string;
   language: string;
   status: string;
+  submittedAt?: Date | string | null;
   createdAt: Date | string;
 };
 
@@ -107,6 +117,34 @@ function toPhotographer(value: unknown): Invitation["photographer"] | undefined 
   };
 }
 
+function normalizeOrderStatus(status: string): OrderRequest["status"] {
+  const clean = status.toLowerCase();
+  if (clean === "accepted") return "reviewing";
+  if (clean === "converted") return "published";
+  if (["new", "reviewing", "edited", "published", "rejected"].includes(clean)) return clean as OrderRequest["status"];
+  return "new";
+}
+
+function parseMusicUrlFromNotes(notes?: string | null) {
+  if (!notes) return "";
+  const directMatch = notes.match(/رابط الموسيقى:\s*(\S+)/);
+  const candidates = directMatch ? [directMatch[1]] : Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/music\/[^\s]+/g)).map((match) => match[0]);
+  return candidates.find((candidate) => candidate.includes("/uploads/music/") || /\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(candidate)) || "";
+}
+
+function parsePhotographerFromNotes(notes?: string | null): OrderRequest["photographer"] | undefined {
+  if (!notes?.includes("بيانات المصور")) return undefined;
+  const name = notes.match(/الاسم:\s*(.+)/)?.[1]?.trim() || "";
+  const facebookUrl = notes.match(/Facebook:\s*(\S+)/)?.[1]?.trim() || "";
+  const instagramUrl = notes.match(/Instagram:\s*(\S+)/)?.[1]?.trim() || "";
+  return {
+    enabled: true,
+    name: name || "المصور الفوتوغرافي",
+    facebookUrl: facebookUrl || "https://www.facebook.com/",
+    instagramUrl: instagramUrl || "https://www.instagram.com/",
+  };
+}
+
 function toInvitation(row: AdminInvitationRow): Invitation {
   const gallery = toStringArray(row.gallery);
   const heroPhoto = normalizeInternalAssetUrl(row.heroPhoto);
@@ -144,16 +182,26 @@ function toOrder(row: AdminOrderRow): OrderRequest {
 
   return {
     id: row.id,
+    orderNumber: row.orderNumber || undefined,
+    dedupeKey: row.dedupeKey || undefined,
     groomName: row.groomName,
     brideName: row.brideName,
     phone: row.phone,
     weddingDate: row.weddingDate instanceof Date ? row.weddingDate.toISOString() : row.weddingDate,
     venue: row.venue,
+    mapUrl: row.mapUrl || undefined,
     notes: notes || undefined,
     imageUrls,
+    musicEnabled: row.musicEnabled ?? Boolean(row.musicUrl || parseMusicUrlFromNotes(notes)),
+    musicChoice: row.musicChoice === "upload" || row.musicChoice === "url" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
+    musicUrl: row.musicUrl || parseMusicUrlFromNotes(notes) || undefined,
+    photographer: toPhotographer(row.photographer) || parsePhotographerFromNotes(notes),
+    rejectionReason: row.rejectionReason || undefined,
+    publishedInvitationCode: row.publishedInvitationCode || undefined,
     templateSlug: row.template?.slug || row.templateSlug || "royal-envelope",
     language: row.language === "en" ? "en" : "ar",
-    status: String(row.status || "new").toLowerCase() as OrderRequest["status"],
+    status: normalizeOrderStatus(String(row.status || "new")),
+    submittedAt: row.submittedAt instanceof Date ? row.submittedAt.toISOString() : row.submittedAt || undefined,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
   };
 }
@@ -184,7 +232,7 @@ export async function getAdminOrders(): Promise<OrderRequest[]> {
   try {
     const orders = await prisma.orderRequest.findMany({
       include: { template: { select: { slug: true } } },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
     });
     return orders.map(toOrder);
   } catch (error) {

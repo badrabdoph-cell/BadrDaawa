@@ -36,6 +36,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
   const [brideName, setBrideName] = useState("اسم العروسة");
   const [weddingDate, setWeddingDate] = useState(todayDate());
   const [venue, setVenue] = useState("عنوان المناسبة");
+  const [mapUrl, setMapUrl] = useState("");
   const [images, setImages] = useState<ImageSlotState[]>(emptyImages);
   const [photographerEnabled, setPhotographerEnabled] = useState(false);
   const [photographerName, setPhotographerName] = useState("");
@@ -72,6 +73,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
       weddingDate,
       venue,
     });
+    if (mapUrl) params.set("mapUrl", mapUrl);
     if (!musicEnabled) params.set("silentPreview", "1");
     const gallery = images.map((image) => image.previewUrl).filter(Boolean);
     if (gallery.length) params.set("gallery", gallery.join(","));
@@ -84,7 +86,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
     }
     if (musicEnabled && musicUrl) params.set("musicUrl", musicUrl);
     return `/templates/${templateSlug}/preview?${params.toString()}`;
-  }, [brideName, groomName, images, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, templateSlug, venue, weddingDate]);
+  }, [brideName, groomName, images, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, templateSlug, venue, weddingDate]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
@@ -200,6 +202,7 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
         brideName,
         weddingDate,
         venue,
+        mapUrl,
         gallery: images.map((image) => image.dataUrl || image.previewUrl).filter(Boolean),
         musicEnabled,
         musicUrl,
@@ -267,6 +270,11 @@ export function AdminInvitationBuilder({ templates, siteUrl, musicFiles }: { tem
             <label className="field">
               <span>العنوان</span>
               <input ref={fieldRefs.venue} value={venue} onChange={(event) => { setVenue(event.target.value); markDirty(); }} />
+            </label>
+            <label className="field">
+              <span>رابط اللوكيشن</span>
+              <input value={mapUrl} onChange={(event) => { setMapUrl(event.target.value); markDirty(); }} placeholder="انسخ رابط اللوكيشن من على خريطة جوجل" />
+              <small>انسخ رابط اللوكيشن من على خريطة جوجل.</small>
             </label>
           </div>
 

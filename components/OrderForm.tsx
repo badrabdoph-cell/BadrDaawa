@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Camera, Check, Eye, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Trash2, UploadCloud, UserRound } from "lucide-react";
 import type { TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 type FormState = {
   groomName: string;
@@ -221,6 +220,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   const [musicFileName, setMusicFileName] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const orderSubmitKeyRef = useRef("");
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
@@ -437,6 +437,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     const weddingDate = normalizeWeddingDate(values.weddingDate || "");
     if (weddingDate) params.set("weddingDate", weddingDate);
     if (values.venue) params.set("venue", values.venue);
+    if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
     applyPhotographerParams(params, values);
     applyMusicParams(params, values, musicUrl);
@@ -451,7 +452,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       phone: "",
       weddingDate: String(formData.get("weddingDate") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
-      mapUrl: "",
+      mapUrl: String(formData.get("mapUrl") || "").trim(),
       notes: "",
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
@@ -501,6 +502,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (!values.weddingDate) nextErrors.weddingDate = "اختار تاريخ المناسبة من التقويم.";
     else if (!normalizeWeddingDate(values.weddingDate)) nextErrors.weddingDate = "اختار تاريخ صحيح من التقويم.";
     if (!values.venue) nextErrors.venue = "اكتب عنوان المناسبة أو اسم القاعة.";
+    if (values.mapUrl && !isValidOptionalUrl(values.mapUrl)) nextErrors.mapUrl = "رابط اللوكيشن لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerFacebookUrl)) nextErrors.photographerFacebookUrl = "رابط Facebook لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerInstagramUrl)) nextErrors.photographerInstagramUrl = "رابط Instagram لازم يبدأ بـ https://";
     if (musicEnabled && musicChoice === "url" && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) nextErrors.musicUrl = "رابط الموسيقى لازم يكون مباشر مثل mp3 أو m4a أو wav.";
@@ -602,6 +604,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (state === "loading") return;
+    if (!orderSubmitKeyRef.current) {
+      orderSubmitKeyRef.current = `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
     const formData = new FormData(event.currentTarget);
     const orderImages = await getOrderImageDataUrls(formData);
     const orderMusic = await getOrderMusicDataUrl(formData);
@@ -613,7 +619,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       brideName: String(formData.get("brideName") || "").trim(),
       phone: "",
       weddingDate: normalizeWeddingDate(rawWeddingDate) || rawWeddingDate,
-      mapUrl: "",
+      mapUrl: String(formData.get("mapUrl") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
       notes: "",
       photographerName: String(formData.get("photographerName") || "").trim(),
@@ -627,18 +633,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
     const photographerNotes = getPhotographerNotes(currentForm);
     const clientMusicNotes = getMusicNotes(currentForm);
-    const baseMessage = [
-      "طلب دعوة جديد من BadrDaawa",
-      `القالب: ${selectedTemplate.arabicName} - ${selectedTemplate.name}`,
-      `العريس: ${fieldValue(currentForm.groomName)}`,
-      `العروسة: ${fieldValue(currentForm.brideName)}`,
-      `تاريخ المناسبة: ${displayWeddingDate(currentForm.weddingDate)}`,
-      `عنوان المناسبة: ${fieldValue(currentForm.venue)}`,
-      photographerNotes,
-      clientMusicNotes,
-    ]
-      .filter(Boolean)
-      .join("\n");
 
     try {
       const response = await fetch("/api/orders", {
@@ -649,6 +643,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           notes: [photographerNotes, clientMusicNotes].filter(Boolean).join("\n\n"),
           orderImages,
           orderMusic,
+          idempotencyKey: orderSubmitKeyRef.current,
         }),
       });
 
@@ -659,13 +654,12 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         return;
       }
 
-      const data = (await response.json().catch(() => null)) as { imageUrls?: string[]; musicUrl?: string } | null;
-      const imageLines = data?.imageUrls?.length ? `\n\nصور الدعوة بالترتيب:\n${data.imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
-      const musicLine = data?.musicUrl ? `\n\nرابط موسيقى الدعوة:\n${data.musicUrl}` : "";
+      const data = (await response.json().catch(() => null)) as { whatsappUrl?: string; imageUrls?: string[]; musicUrl?: string } | null;
       try {
         window.sessionStorage?.removeItem(orderDraftStorageKey);
       } catch {}
-      window.location.href = getWhatsAppOrderUrl(`${baseMessage}${imageLines}${musicLine}`);
+      orderSubmitKeyRef.current = "";
+      window.location.href = data?.whatsappUrl || "https://wa.me/";
     } catch {
       setState("error");
       setMessage("تعذر إرسال الطلب للخادم. حاول مرة أخرى.");
@@ -729,6 +723,16 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             <label htmlFor="venue">عنوان المناسبة</label>
             <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required aria-invalid={Boolean(errors.venue)} aria-describedby={errors.venue ? "venue-error" : undefined} />
             {errors.venue ? <small className="field-error" id="venue-error">{errors.venue}</small> : null}
+          </div>
+
+          <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
+            <label htmlFor="mapUrl">
+              <Link2 size={16} />
+              رابط اللوكيشن
+            </label>
+            <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط اللوكيشن من على خريطة جوجل" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
+            <small className="field-preview" id="mapUrl-hint">انسخ رابط اللوكيشن من على خريطة جوجل.</small>
+            {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
           </div>
         </div>
 

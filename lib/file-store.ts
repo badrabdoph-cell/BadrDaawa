@@ -51,7 +51,30 @@ type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & 
   status?: OrderRequest["status"];
 };
 
-type FileOrderUpdate = Partial<Pick<OrderRequest, "groomName" | "brideName" | "phone" | "weddingDate" | "venue" | "notes" | "imageUrls" | "templateSlug" | "status">>;
+type FileOrderUpdate = Partial<
+  Pick<
+    OrderRequest,
+    | "groomName"
+    | "brideName"
+    | "phone"
+    | "weddingDate"
+    | "venue"
+    | "mapUrl"
+    | "notes"
+    | "imageUrls"
+    | "templateSlug"
+    | "status"
+    | "musicEnabled"
+    | "musicChoice"
+    | "musicUrl"
+    | "photographer"
+    | "rejectionReason"
+    | "publishedInvitationCode"
+    | "orderNumber"
+    | "dedupeKey"
+    | "submittedAt"
+  >
+>;
 
 const storePath = path.join(process.cwd(), "data", "runtime-store.json");
 
@@ -112,16 +135,26 @@ export async function getFileInvitations() {
 
 export async function getFileOrders() {
   const store = await readStore();
-  return store.orders.map(normalizeOrderImages);
+  return store.orders
+    .map(normalizeOrderImages)
+    .sort((a, b) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime());
 }
 
 export async function createFileOrder(input: CreateFileOrderInput) {
   const store = await readStore();
+  if (input.dedupeKey) {
+    const existing = store.orders.find((order) => order.dedupeKey === input.dedupeKey);
+    if (existing) return normalizeOrderImages(existing);
+  }
+  const submittedAt = input.submittedAt || new Date().toISOString();
+  const orderNumber = input.orderNumber || `ORD-${Date.now().toString(36).toUpperCase()}`;
   const order: OrderRequest = {
-    id: `ord_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
-    status: input.status || "new",
-    createdAt: new Date().toISOString(),
     ...input,
+    id: `ord_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    orderNumber,
+    status: input.status || "new",
+    submittedAt,
+    createdAt: submittedAt,
   };
   store.orders.unshift(order);
   await writeStore(store);

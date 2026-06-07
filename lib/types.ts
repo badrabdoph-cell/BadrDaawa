@@ -77,15 +77,31 @@ export type GuestRsvp = {
 
 export type OrderRequest = {
   id: string;
+  orderNumber?: string;
+  dedupeKey?: string;
   groomName: string;
   brideName: string;
   phone: string;
   weddingDate: string;
   venue: string;
+  mapUrl?: string;
   notes?: string;
   imageUrls?: string[];
+  musicEnabled?: boolean;
+  musicChoice?: "default" | "upload" | "url";
+  musicUrl?: string;
+  photographer?: {
+    enabled: boolean;
+    name: string;
+    logoUrl?: string;
+    instagramUrl: string;
+    facebookUrl: string;
+  };
+  rejectionReason?: string;
+  publishedInvitationCode?: string;
   templateSlug: string;
   language: Language;
-  status: "new" | "accepted" | "rejected" | "converted";
+  status: "new" | "reviewing" | "edited" | "published" | "rejected" | "accepted" | "converted";
+  submittedAt?: string;
   createdAt: string;
 };

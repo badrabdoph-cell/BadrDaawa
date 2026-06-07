@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FilePlus2, FileText, Github, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, RadioTower, ShieldCheck, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/new-invitation", label: "دعوة جديدة", icon: FilePlus2 },
-  { href: "/admin/orders", label: "الطلبات", icon: FileText },
+  { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
   { href: "/admin/client-invitations", label: "دعوات العملاء", icon: Archive },
   { href: "/admin/templates", label: "القوالب", icon: Palette },
   { href: "/admin/music", label: "الموسيقى", icon: Music2 },
@@ -25,6 +25,25 @@ const adminLinks = [
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const activeLink = adminLinks.find((link) => (link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href))) || adminLinks[0];
+  const [ordersBadge, setOrdersBadge] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    async function loadCount() {
+      const response = await fetch("/api/admin/orders/count", { cache: "no-store" }).catch(() => null);
+      if (!alive || !response?.ok) return;
+      const data = (await response.json().catch(() => null)) as { count?: number } | null;
+      setOrdersBadge(Math.max(0, Number(data?.count || 0)));
+    }
+    loadCount();
+    window.addEventListener("admin-orders-count-refresh", loadCount);
+    const timer = window.setInterval(loadCount, 30000);
+    return () => {
+      alive = false;
+      window.removeEventListener("admin-orders-count-refresh", loadCount);
+      window.clearInterval(timer);
+    };
+  }, []);
 
   return (
     <div className="dashboard-layout">
@@ -56,6 +75,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
                   <Icon size={18} />
                   <span>{link.label}</span>
+                  {"badgeKey" in link && link.badgeKey === "orders" && ordersBadge > 0 ? <strong className="dashboard-nav-badge">{ordersBadge}</strong> : null}
                 </Link>
               );
             })}
