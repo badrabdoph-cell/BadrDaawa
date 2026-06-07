@@ -72,6 +72,26 @@ export function getPublicUrl(path: string, headers?: Headers, fallbackOrigin?: s
   return new URL(path, getPublicSiteUrl(headers, fallbackOrigin));
 }
 
+export function normalizeInternalAssetUrl(value?: string | null) {
+  const raw = value?.trim();
+  if (!raw) return "";
+  if (raw.startsWith("/uploads/") || raw.startsWith("/assets/")) return raw;
+
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    try {
+      const url = new URL(raw);
+      if (url.pathname.startsWith("/uploads/") || url.pathname.startsWith("/assets/")) {
+        return `${url.pathname}${url.search}${url.hash}`;
+      }
+      return url.toString();
+    } catch {
+      return "";
+    }
+  }
+
+  return "";
+}
+
 function getHeaderOrigin(value?: string | null) {
   if (!value) return "";
 
@@ -102,8 +122,15 @@ export function getRedirectUrl(path: string, headers?: Headers, fallbackOrigin =
   const safePath = path.startsWith("/") && !path.startsWith("//") ? path : "/";
   const publicSiteUrl = getPublicSiteUrl(headers, fallbackOrigin);
   const publicOrigin = new URL(publicSiteUrl).origin;
+  const requestOrigin = getHeaderOrigin(fallbackOrigin);
   const browserOrigin = getHeaderOrigin(headers?.get("origin")) || getHeaderOrigin(headers?.get("referer"));
-  const canUseBrowserOrigin = browserOrigin && (new URL(browserOrigin).origin === publicOrigin || (isLocalhostOrigin(browserOrigin) && isLocalhostOrigin(publicOrigin)));
+  const browserOriginValue = browserOrigin ? new URL(browserOrigin).origin : "";
+  const requestOriginValue = requestOrigin ? new URL(requestOrigin).origin : "";
+  const canUseBrowserOrigin =
+    browserOrigin &&
+    (browserOriginValue === publicOrigin ||
+      browserOriginValue === requestOriginValue ||
+      (isLocalhostOrigin(browserOrigin) && (isLocalhostOrigin(publicOrigin) || isLocalhostOrigin(requestOrigin))));
   return new URL(safePath, canUseBrowserOrigin ? browserOrigin : publicSiteUrl);
 }
 

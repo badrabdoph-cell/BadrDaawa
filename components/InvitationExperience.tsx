@@ -8,24 +8,12 @@ import { InvitePermissions } from "./InvitePermissions";
 import { QrCodeBlock } from "./QrCodeBlock";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { shouldShowPhotographerCard } from "@/lib/site-settings";
-import { formatArabicDate, getInvitationUrl } from "@/lib/utils";
+import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
 function cleanInviteImage(value?: string | null) {
-  const image = value?.trim();
-  if (!image) return "";
-  if (image.startsWith("/")) return image;
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    try {
-      const url = new URL(image);
-      const isLocalUpload = (url.hostname === "localhost" || url.hostname === "127.0.0.1") && url.pathname.startsWith("/uploads/");
-      return isLocalUpload ? url.pathname : url.toString();
-    } catch {
-      return "";
-    }
-  }
-  return "";
+  return normalizeInternalAssetUrl(value);
 }
 
 function getInvitationImages(invitation: Invitation) {

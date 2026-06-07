@@ -2,6 +2,7 @@ import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode
 import { prisma } from "./db";
 import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
 import type { GuestRsvp, Invitation } from "./types";
+import { normalizeInternalAssetUrl } from "./utils";
 
 type DatabaseInvitation = {
   id: string;
@@ -39,11 +40,11 @@ type DatabaseGuest = {
 };
 
 function toStringArray(value: unknown) {
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean);
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value) as unknown;
-      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean) : [];
     } catch {
       return [];
     }
@@ -53,7 +54,7 @@ function toStringArray(value: unknown) {
 
 function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
   const gallery = toStringArray(invitation.gallery);
-  const heroPhoto = invitation.heroPhoto || gallery[0] || "/assets/brand/hero-luxury.png";
+  const heroPhoto = normalizeInternalAssetUrl(invitation.heroPhoto) || gallery[0] || "/assets/brand/hero-luxury.png";
   return {
     id: invitation.id,
     code: invitation.code,

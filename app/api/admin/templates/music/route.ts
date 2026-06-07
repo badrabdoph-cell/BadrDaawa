@@ -7,7 +7,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "@/lib/image-formats";
 import { updateTemplateSettings } from "@/lib/template-settings";
-import { getPublicUrl, getRedirectUrl } from "@/lib/utils";
+import { getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -22,12 +22,11 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
     const extension = imageExtensionForUpload(image.type, image.name);
     const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
     await writeFile(path.join(uploadDir, fileName), Buffer.from(await image.arrayBuffer()));
-    return getPublicUrl(`/uploads/template-previews/${fileName}`, request.headers, request.nextUrl.origin).toString();
+    return `/uploads/template-previews/${fileName}`;
   }
 
   if (!image) return "";
-  if (image.startsWith("/")) return image;
-  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  if (image.startsWith("/") || image.startsWith("http://") || image.startsWith("https://")) return normalizeInternalAssetUrl(image) || image;
   if (!isSupportedImageUrl(image)) return "";
 
   const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
@@ -39,7 +38,7 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
 
   const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
   await writeFile(path.join(uploadDir, fileName), bytes);
-  return getPublicUrl(`/uploads/template-previews/${fileName}`, request.headers, request.nextUrl.origin).toString();
+  return `/uploads/template-previews/${fileName}`;
 }
 
 export async function POST(request: NextRequest) {

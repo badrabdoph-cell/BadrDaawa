@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { getFileCustomers, getFileGuestsByInvitation, getFileInvitations, getFileOrders } from "./file-store";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
+import { normalizeInternalAssetUrl } from "./utils";
 
 export type AdminCustomer = {
   id: string;
@@ -74,11 +75,11 @@ type AdminCustomerRow = {
 };
 
 function toStringArray(value: unknown) {
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean);
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value) as unknown;
-      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean) : [];
     } catch {
       return [];
     }
@@ -99,7 +100,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     venue: row.venue,
     city: row.city || "",
     mapUrl: row.mapUrl || "",
-    heroPhoto: row.heroPhoto || "/assets/invite/badr-sarah-1.jpeg",
+    heroPhoto: normalizeInternalAssetUrl(row.heroPhoto) || "/assets/invite/badr-sarah-1.jpeg",
     gallery: toStringArray(row.gallery),
     musicUrl: row.musicUrl || undefined,
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
@@ -110,7 +111,9 @@ function toInvitation(row: AdminInvitationRow): Invitation {
 
 function toOrder(row: AdminOrderRow): OrderRequest {
   const notes = row.notes || "";
-  const imageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/order-requests\/\S+/g)).map((match) => match[0].trim());
+  const imageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
+    .map((match) => normalizeInternalAssetUrl(match[0]))
+    .filter(Boolean);
 
   return {
     id: row.id,

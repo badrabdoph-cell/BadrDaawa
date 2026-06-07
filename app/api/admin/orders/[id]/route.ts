@@ -7,7 +7,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
-import { getRedirectUrl } from "@/lib/utils";
+import { getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { validateOrderUpdate } from "@/lib/validation-enhanced";
 
 type RouteContext = {
@@ -28,7 +28,9 @@ function redirectBack(request: NextRequest, status: string) {
 
 function parseImageUrls(notes?: string | null) {
   if (!notes) return [];
-  return Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/order-requests\/\S+/g)).map((match) => match[0].trim());
+  return Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
+    .map((match) => normalizeInternalAssetUrl(match[0]))
+    .filter(Boolean);
 }
 
 function digitsOnly(value: string) {
@@ -172,141 +174,142 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const formData = await request.formData();
   const action = String(formData.get("action") || "");
 
-  if (action === "delete") {
-    if (prisma) await prisma.orderRequest.delete({ where: { id } }).catch(() => null);
-    else await deleteFileOrder(id);
+  try {
+    if (action === "delete") {
+      if (prisma) await prisma.orderRequest.delete({ where: { id } }).catch(() => null);
+      else await deleteFileOrder(id);
 
-    // Revalidate cache
-    try {
-      revalidatePath("/admin/orders");
-    } catch (error) {
-      console.error("Failed to revalidate orders page", error);
-    }
-
-    queueGitHubSync(`Order deleted from admin: ${id}.`, { createSnapshot: true });
-    return redirectBack(request, "deleted");
-  }
-
-  if (action === "accept" || action === "reject") {
-    const status = action === "accept" ? "accepted" : "rejected";
-    if (prisma) await prisma.orderRequest.update({ where: { id }, data: { status: status.toUpperCase() as "ACCEPTED" | "REJECTED" } }).catch(() => null);
-    else await updateFileOrder(id, { status });
-
-    // Revalidate cache
-    try {
-      revalidatePath("/admin/orders");
-    } catch (error) {
-      console.error("Failed to revalidate orders page", error);
-    }
-
-    queueGitHubSync(`Order ${status} from admin: ${id}.`, { createSnapshot: true });
-    return redirectBack(request, status);
-  }
-
-  if (action === "convert") {
-    const code = prisma ? await convertPrismaOrder(id) : await convertFileOrder(id);
-    if (code) {
-      // Revalidate cache
       try {
         revalidatePath("/admin/orders");
-        revalidatePath("/admin/client-invitations");
       } catch (error) {
-        console.error("Failed to revalidate pages", error);
+        console.error("Failed to revalidate orders page", error);
       }
 
-      queueGitHubSync(`Order converted to invitation: ${code}.`, { createSnapshot: true });
+      queueGitHubSync(`Order deleted from admin: ${id}.`, { createSnapshot: true });
+      return redirectBack(request, "deleted");
     }
-    return redirectBack(request, code ? `converted-${code}` : "missing");
-  }
+
+    if (action === "accept" || action === "reject") {
+      const status = action === "accept" ? "accepted" : "rejected";
+      if (prisma) await prisma.orderRequest.update({ where: { id }, data: { status: status.toUpperCase() as "ACCEPTED" | "REJECTED" } }).catch(() => null);
+      else await updateFileOrder(id, { status });
+
+      try {
+        revalidatePath("/admin/orders");
+      } catch (error) {
+        console.error("Failed to revalidate orders page", error);
+      }
+
+      queueGitHubSync(`Order ${status} from admin: ${id}.`, { createSnapshot: true });
+      return redirectBack(request, status);
+    }
+
+    if (action === "convert") {
+      const code = prisma ? await convertPrismaOrder(id) : await convertFileOrder(id);
+      if (code) {
+        try {
+          revalidatePath("/admin/orders");
+          revalidatePath("/admin/client-invitations");
+        } catch (error) {
+          console.error("Failed to revalidate pages", error);
+        }
+
+        queueGitHubSync(`Order converted to invitation: ${code}.`, { createSnapshot: true });
+      }
+      return redirectBack(request, code ? `converted-${code}` : "missing");
+    }
 
     if (action === "update") {
-    const groomName = String(formData.get("groomName") || "").trim();
-    const brideName = String(formData.get("brideName") || "").trim();
-    const phone = String(formData.get("phone") || "").trim();
-    const weddingDate = String(formData.get("weddingDate") || "").trim();
-    const venue = String(formData.get("venue") || "").trim();
-    const notes = String(formData.get("notes") || "").trim();
-    const templateSlug = String(formData.get("templateSlug") || "").trim();
+      const groomName = String(formData.get("groomName") || "").trim();
+      const brideName = String(formData.get("brideName") || "").trim();
+      const phone = String(formData.get("phone") || "").trim();
+      const weddingDate = String(formData.get("weddingDate") || "").trim();
+      const venue = String(formData.get("venue") || "").trim();
+      const notes = String(formData.get("notes") || "").trim();
+      const templateSlug = String(formData.get("templateSlug") || "").trim();
 
-    // Validate input data
-    const validation = validateOrderUpdate({ groomName, brideName, phone, weddingDate, venue, notes, templateSlug });
-    if (!validation.success) {
-      return redirectBack(request, `error:${validation.error}`);
-    }
+      const validation = validateOrderUpdate({ groomName, brideName, phone, weddingDate, venue, notes, templateSlug });
+      if (!validation.success) {
+        return redirectBack(request, `error:${validation.error}`);
+      }
 
-    if (!prisma) {
-      const existing = await getFileOrder(id);
-      await updateFileOrder(id, { groomName, brideName, phone, weddingDate, venue, notes, imageUrls: existing?.imageUrls || [], templateSlug });
+      if (!prisma) {
+        const existing = await getFileOrder(id);
+        await updateFileOrder(id, { groomName, brideName, phone, weddingDate, venue, notes, imageUrls: existing?.imageUrls || [], templateSlug });
+        queueGitHubSync(`Order updated from admin: ${id}.`, { createSnapshot: true });
+        return redirectBack(request, "updated");
+      }
+
+      const existingOrder = await prisma.orderRequest.findUnique({ where: { id }, select: { notes: true } });
+      const existingImages = parseImageUrls(existingOrder?.notes);
+      const nextNotes =
+        existingImages.length && !existingImages.every((url) => notes.includes(url))
+          ? [notes, `صور الطلب:\n${existingImages.map((url, index) => `${index + 1}. ${url}`).join("\n")}`].filter(Boolean).join("\n\n")
+          : notes;
+
+      const selectedTemplate = templateSlug ? await getTemplateWithSettings(templateSlug) : null;
+      const template = selectedTemplate
+        ? await prisma.weddingTemplate.upsert({
+            where: { slug: selectedTemplate.slug },
+            update: {
+              name: selectedTemplate.name,
+              arabicName: selectedTemplate.arabicName,
+              category: selectedTemplate.category,
+              style: selectedTemplate.style,
+              concept: selectedTemplate.concept,
+              opening: selectedTemplate.opening,
+              layout: selectedTemplate.layout,
+              typography: selectedTemplate.typography,
+              palette: selectedTemplate.palette,
+              previewUrl: selectedTemplate.previewImage,
+              enabled: selectedTemplate.enabled,
+              sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+            },
+            create: {
+              slug: selectedTemplate.slug,
+              name: selectedTemplate.name,
+              arabicName: selectedTemplate.arabicName,
+              category: selectedTemplate.category,
+              style: selectedTemplate.style,
+              concept: selectedTemplate.concept,
+              opening: selectedTemplate.opening,
+              layout: selectedTemplate.layout,
+              typography: selectedTemplate.typography,
+              palette: selectedTemplate.palette,
+              previewUrl: selectedTemplate.previewImage,
+              enabled: selectedTemplate.enabled,
+              sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+            },
+            select: { id: true },
+          })
+        : null;
+
+      await prisma.orderRequest.update({
+        where: { id },
+        data: {
+          groomName,
+          brideName,
+          phone,
+          weddingDate: normalizeDate(weddingDate),
+          venue,
+          notes: nextNotes,
+          ...(template ? { templateId: template.id } : {}),
+        },
+      });
+
+      try {
+        revalidatePath("/admin/orders");
+      } catch (error) {
+        console.error("Failed to revalidate orders page", error);
+      }
+
       queueGitHubSync(`Order updated from admin: ${id}.`, { createSnapshot: true });
       return redirectBack(request, "updated");
     }
 
-    const existingOrder = await prisma.orderRequest.findUnique({ where: { id }, select: { notes: true } });
-    const existingImages = parseImageUrls(existingOrder?.notes);
-    const nextNotes = existingImages.length && !existingImages.every((url) => notes.includes(url))
-      ? [notes, `صور الطلب:\n${existingImages.map((url, index) => `${index + 1}. ${url}`).join("\n")}`].filter(Boolean).join("\n\n")
-      : notes;
-
-    const selectedTemplate = templateSlug ? await getTemplateWithSettings(templateSlug) : null;
-    const template = selectedTemplate
-      ? await prisma.weddingTemplate.upsert({
-          where: { slug: selectedTemplate.slug },
-          update: {
-            name: selectedTemplate.name,
-            arabicName: selectedTemplate.arabicName,
-            category: selectedTemplate.category,
-            style: selectedTemplate.style,
-            concept: selectedTemplate.concept,
-            opening: selectedTemplate.opening,
-            layout: selectedTemplate.layout,
-            typography: selectedTemplate.typography,
-            palette: selectedTemplate.palette,
-            previewUrl: selectedTemplate.previewImage,
-            enabled: selectedTemplate.enabled,
-            sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
-          },
-          create: {
-            slug: selectedTemplate.slug,
-            name: selectedTemplate.name,
-            arabicName: selectedTemplate.arabicName,
-            category: selectedTemplate.category,
-            style: selectedTemplate.style,
-            concept: selectedTemplate.concept,
-            opening: selectedTemplate.opening,
-            layout: selectedTemplate.layout,
-            typography: selectedTemplate.typography,
-            palette: selectedTemplate.palette,
-            previewUrl: selectedTemplate.previewImage,
-            enabled: selectedTemplate.enabled,
-            sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
-          },
-          select: { id: true },
-        })
-      : null;
-
-    await prisma.orderRequest.update({
-      where: { id },
-      data: {
-        groomName,
-        brideName,
-        phone,
-        weddingDate: normalizeDate(weddingDate),
-        venue,
-        notes: nextNotes,
-        ...(template ? { templateId: template.id } : {}),
-      },
-    });
-
-    // Revalidate cache
-    try {
-      revalidatePath("/admin/orders");
-    } catch (error) {
-      console.error("Failed to revalidate orders page", error);
-    }
-
-    queueGitHubSync(`Order updated from admin: ${id}.`, { createSnapshot: true });
-    return redirectBack(request, "updated");
+    return redirectBack(request, "unknown");
+  } catch (error) {
+    console.error("Failed to handle admin order action", { id, action, error });
+    return redirectBack(request, "failed");
   }
-
-  return redirectBack(request, "unknown");
 }

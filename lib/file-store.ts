@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { hashPassword, verifyPassword } from "./password";
 import { makeNumberedInvitationSlug } from "./slug";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
+import { normalizeInternalAssetUrl } from "./utils";
 
 type FileCustomer = {
   id: string;
@@ -82,14 +83,24 @@ async function writeStore(store: FileStoreData) {
   await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 }
 
+function normalizeInvitationImages(invitation: Invitation): Invitation {
+  const gallery = invitation.gallery.map(normalizeInternalAssetUrl).filter(Boolean);
+  const heroPhoto = normalizeInternalAssetUrl(invitation.heroPhoto) || gallery[0] || invitation.heroPhoto;
+  return { ...invitation, heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
+}
+
+function normalizeOrderImages(order: OrderRequest): OrderRequest {
+  return { ...order, imageUrls: order.imageUrls?.map(normalizeInternalAssetUrl).filter(Boolean) };
+}
+
 export async function getFileInvitations() {
   const store = await readStore();
-  return store.invitations;
+  return store.invitations.map(normalizeInvitationImages);
 }
 
 export async function getFileOrders() {
   const store = await readStore();
-  return store.orders;
+  return store.orders.map(normalizeOrderImages);
 }
 
 export async function createFileOrder(input: CreateFileOrderInput) {
@@ -125,7 +136,8 @@ export async function deleteFileOrder(id: string) {
 
 export async function getFileOrder(id: string) {
   const store = await readStore();
-  return store.orders.find((order) => order.id === id) || null;
+  const order = store.orders.find((order) => order.id === id);
+  return order ? normalizeOrderImages(order) : null;
 }
 
 export async function getFileCustomers() {
@@ -143,7 +155,8 @@ export async function getFileCustomers() {
 
 export async function getFileInvitationByCode(code: string) {
   const store = await readStore();
-  return store.invitations.find((invitation) => invitation.code.toLowerCase() === code.toLowerCase());
+  const invitation = store.invitations.find((invitation) => invitation.code.toLowerCase() === code.toLowerCase());
+  return invitation ? normalizeInvitationImages(invitation) : undefined;
 }
 
 export async function getFileGuestsByInvitation(code: string) {

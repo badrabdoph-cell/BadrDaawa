@@ -6,6 +6,7 @@ import { getCustomTemplates } from "./custom-templates";
 import { getActiveMusicSlot, getMusicLibrary } from "./music-library";
 import { getTemplateBySlug, invitationTemplates } from "./templates";
 import type { TemplateDefinition } from "./types";
+import { normalizeInternalAssetUrl } from "./utils";
 
 type TemplateSettings = Record<
   string,
@@ -103,8 +104,8 @@ function applyTemplateSettings(template: TemplateDefinition, settings: TemplateS
     layout: override.layout || template.layout,
     typography: override.typography || template.typography,
     enabled: typeof override.enabled === "boolean" ? override.enabled : template.enabled,
-    previewImage: override.previewImage || template.previewImage,
-    accentImage: override.accentImage || template.accentImage,
+    previewImage: normalizeInternalAssetUrl(override.previewImage) || override.previewImage || template.previewImage,
+    accentImage: normalizeInternalAssetUrl(override.accentImage) || override.accentImage || template.accentImage,
     palette,
     musicUrl: typeof globalMusicUrl === "string" ? globalMusicUrl : override.musicMuted ? "" : override.musicUrl || template.musicUrl,
     photographer: {
@@ -240,8 +241,8 @@ export async function updateTemplateSettings(
   const opening = cleanText(input.opening || "", 240);
   const layout = cleanText(input.layout || "", 240);
   const typography = cleanText(input.typography || "", 240);
-  const previewImage = cleanUrl(input.previewImage || "");
-  const accentImage = cleanUrl(input.accentImage || "");
+  const previewImage = normalizeInternalAssetUrl(input.previewImage) || cleanUrl(input.previewImage || "");
+  const accentImage = normalizeInternalAssetUrl(input.accentImage) || cleanUrl(input.accentImage || "");
   const musicUrl = cleanAudioUrl(input.musicUrl || "");
   const instagramUrl = cleanUrl(input.photographer?.instagramUrl || "");
   const facebookUrl = cleanUrl(input.photographer?.facebookUrl || "");

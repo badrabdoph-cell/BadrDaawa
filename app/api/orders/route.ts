@@ -7,7 +7,7 @@ import { createFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionFromDataMime, isSupportedImageUrl } from "@/lib/image-formats";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
-import { getPublicUrl } from "@/lib/utils";
+import { getPublicUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ async function saveOrderImages(images: string[], request: Request) {
 
   for (const image of images.slice(0, 3)) {
     if (image.startsWith("/") || image.startsWith("http://") || image.startsWith("https://")) {
-      savedUrls.push(getPublicUrl(image, request.headers, new URL(request.url).origin).toString());
+      savedUrls.push(normalizeInternalAssetUrl(image) || getPublicUrl(image, request.headers, new URL(request.url).origin).toString());
       continue;
     }
 
@@ -34,7 +34,7 @@ async function saveOrderImages(images: string[], request: Request) {
     await mkdir(uploadDir, { recursive: true });
     const fileName = `order-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
     await writeFile(path.join(uploadDir, fileName), bytes);
-    savedUrls.push(getPublicUrl(`/uploads/order-requests/${fileName}`, request.headers, new URL(request.url).origin).toString());
+    savedUrls.push(`/uploads/order-requests/${fileName}`);
   }
 
   return savedUrls;

@@ -23,6 +23,8 @@ function statusMessage(value?: string) {
   if (value === "rejected") return "تم رفض الطلب.";
   if (value === "deleted") return "تم حذف الطلب.";
   if (value === "missing") return "راجع البيانات المطلوبة.";
+  if (value === "failed") return "تعذر تنفيذ الإجراء. راجع البيانات أو حاول مرة أخرى.";
+  if (value.startsWith("error:")) return value.replace("error:", "") || "تعذر تنفيذ الإجراء.";
   if (value.startsWith("converted-")) return `تم نشر الدعوة: ${value.replace("converted-", "")}`;
   return "";
 }
@@ -42,7 +44,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
         </div>
       </div>
 
-      {message ? <p className={params.status === "missing" ? "status danger" : "status success"}>{message}</p> : null}
+      {message ? <p className={params.status === "missing" || params.status === "failed" || params.status?.startsWith("error:") ? "status danger" : "status success"}>{message}</p> : null}
 
       <div className="admin-orders-list">
         {orders.length ? (

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "./image-formats";
+import { normalizeInternalAssetUrl } from "./utils";
 
 const maxGalleryImageBytes = 3 * 1024 * 1024;
 const maxRawGalleryImageBytes = 80 * 1024 * 1024;
@@ -41,7 +42,7 @@ async function saveGalleryImage(image: string | File) {
   if (!value) return "";
 
   if (isExistingImageUrl(value)) {
-    return value;
+    return normalizeInternalAssetUrl(value) || value;
   }
 
   const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
