@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -34,6 +35,7 @@ type AdminOrderPayload = {
   musicChoice?: "default" | "upload" | "url";
   musicUrl?: string;
   musicDataUrl?: string;
+  texts?: Invitation["texts"];
   photographer?: Invitation["photographer"];
   rejectionReason?: string;
 };
@@ -186,6 +188,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
     musicEnabled: payload.musicEnabled ?? existing?.musicEnabled ?? false,
     musicChoice,
     musicUrl: cleanText(payload.musicUrl, existing?.musicUrl || "", 500),
+    texts: normalizeInvitationTexts(payload.texts ?? existing?.texts),
     photographer: cleanPhotographer(payload.photographer ?? existing?.photographer),
     rejectionReason: cleanText(payload.rejectionReason, existing?.rejectionReason || "", 500),
   };
@@ -238,6 +241,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     musicEnabled: order.musicEnabled,
     musicChoice: order.musicChoice === "upload" || order.musicChoice === "url" || order.musicChoice === "default" ? order.musicChoice : "default",
     musicUrl: order.musicUrl || undefined,
+    texts: normalizeInvitationTexts(order.texts),
     photographer: cleanPhotographer(order.photographer),
     rejectionReason: order.rejectionReason || undefined,
     publishedInvitationCode: order.publishedInvitationCode || undefined,
@@ -318,6 +322,7 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
     gallery: gallery.length ? gallery : fallbackGallery,
     musicUrl,
     musicEnabled: Boolean(draft.musicEnabled),
+    texts: draft.texts,
     photographer: draft.photographer,
   });
   await updateFileOrder(id, {
@@ -333,6 +338,7 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
     musicEnabled: Boolean(draft.musicEnabled),
     musicChoice: draft.musicChoice,
     musicUrl,
+    texts: draft.texts,
     photographer: draft.photographer,
     status: "published",
     publishedInvitationCode: invitation.code,
@@ -359,6 +365,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     musicEnabled: order.musicEnabled,
     musicChoice: order.musicChoice === "upload" || order.musicChoice === "url" || order.musicChoice === "default" ? order.musicChoice : "default",
     musicUrl: order.musicUrl || undefined,
+    texts: normalizeInvitationTexts(order.texts),
     photographer: cleanPhotographer(order.photographer),
     rejectionReason: order.rejectionReason || undefined,
     templateSlug: order.template?.slug || "featured-1",
@@ -417,6 +424,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     gallery: finalGallery,
     musicUrl: musicUrl || undefined,
     musicEnabled: Boolean(draft.musicEnabled),
+    texts: draft.texts,
     photographer: draft.photographer,
     customerId: customer.id,
     templateId: template.dbTemplate.id,
@@ -442,6 +450,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
       musicEnabled: Boolean(draft.musicEnabled),
       musicChoice: draft.musicChoice,
       musicUrl,
+      texts: draft.texts,
       photographer: draft.photographer,
       status: "PUBLISHED" as never,
       publishedInvitationCode: code,
@@ -472,6 +481,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         musicEnabled: existingPrisma.musicEnabled,
         musicChoice: existingPrisma.musicChoice === "upload" || existingPrisma.musicChoice === "url" || existingPrisma.musicChoice === "default" ? existingPrisma.musicChoice : "default",
         musicUrl: existingPrisma.musicUrl || undefined,
+        texts: normalizeInvitationTexts(existingPrisma.texts),
         photographer: cleanPhotographer(existingPrisma.photographer),
         rejectionReason: existingPrisma.rejectionReason || undefined,
         templateSlug: existingPrisma.template?.slug || "featured-1",
@@ -499,6 +509,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         musicEnabled: Boolean(draft.musicEnabled),
         musicChoice: draft.musicChoice,
         musicUrl,
+        texts: draft.texts,
         photographer: draft.photographer,
         ...(status ? { status: status as never } : {}),
         ...(status === "REJECTED" ? { rejectionReason: draft.rejectionReason || "تم رفض الطلب من لوحة الإدارة." } : { rejectionReason: null }),
@@ -522,6 +533,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
     musicEnabled: Boolean(draft.musicEnabled),
     musicChoice: draft.musicChoice,
     musicUrl,
+    texts: draft.texts,
     photographer: draft.photographer,
     rejectionReason: status === "REJECTED" ? draft.rejectionReason || "تم رفض الطلب من لوحة الإدارة." : undefined,
     ...(fileStatus ? { status: fileStatus as OrderRequest["status"] } : {}),

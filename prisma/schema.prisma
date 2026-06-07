@@ -102,7 +102,8 @@ model Invitation {
   heroPhoto   String?
   gallery     Json              @default("[]")
   musicUrl    String?
-  musicEnabled Boolean          @default(true)
+  musicEnabled Boolean          @default(false)
+  texts       Json?
   photographer Json?
   qrCodeUrl   String?
   viewCount   Int               @default(0)
@@ -154,6 +155,7 @@ model OrderRequest {
   musicEnabled Boolean         @default(false)
   musicChoice  String?
   musicUrl     String?
+  texts       Json?
   photographer Json?
   rejectionReason String?
   publishedInvitationCode String?

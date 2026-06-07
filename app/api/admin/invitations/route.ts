@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       mapUrl,
       gallery,
       musicUrl,
+      musicEnabled: Boolean(musicUrl),
     });
     console.log(`[Admin Invitation] File invitation ${invitation.code} saved with heroPhoto=${gallery[0]}.`);
     revalidatePath(`/${invitation.code}`);
@@ -171,6 +172,7 @@ export async function POST(request: NextRequest) {
         heroPhoto: gallery[0],
         gallery,
         musicUrl,
+        musicEnabled: Boolean(musicUrl),
         customerId: customer.id,
         templateId: template.id,
       },

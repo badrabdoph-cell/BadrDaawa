@@ -6,9 +6,11 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation, getFileInvitationByCode, setFileInvitationActive, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
+import type { Invitation } from "@/lib/types";
 import { getPublicSiteUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -28,6 +30,7 @@ type BuilderPayload = {
   musicEnabled?: boolean;
   musicUrl?: string;
   musicDataUrl?: string;
+  texts?: Invitation["texts"];
   photographer?: {
     enabled?: boolean;
     name?: string;
@@ -124,6 +127,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ملف أو رابط الموسيقى غير قابل للتشغيل." }, { status: 400 });
   }
   const photographer = await resolvePhotographer(input);
+  const texts = normalizeInvitationTexts(input.texts);
   const status: "ACTIVE" | "DRAFT" = action === "publish" ? "ACTIVE" : "DRAFT";
   const isActive = status === "ACTIVE";
   const baseSlug = buildInvitationBaseSlug(groomName, brideName);
@@ -144,6 +148,7 @@ export async function POST(request: NextRequest) {
         heroPhoto: gallery[0],
         musicUrl,
         musicEnabled: Boolean(input.musicEnabled),
+        texts,
         photographer,
         isActive,
       });
@@ -166,6 +171,7 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
       musicEnabled: Boolean(input.musicEnabled),
+      texts,
       photographer,
     });
     if (!isActive) await setFileInvitationActive(storeInvitation.code, false);
@@ -249,6 +255,7 @@ export async function POST(request: NextRequest) {
       gallery,
       musicUrl,
       musicEnabled: Boolean(input.musicEnabled),
+      texts,
       photographer,
       customerId: customer.id,
       templateId: template.id,

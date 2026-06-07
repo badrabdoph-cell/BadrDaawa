@@ -9,6 +9,7 @@ import { InvitePoll } from "./InvitePoll";
 import { InvitePermissions } from "./InvitePermissions";
 import { QrCodeBlock } from "./QrCodeBlock";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { shouldShowPhotographerCard } from "@/lib/site-settings";
 import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
@@ -23,8 +24,8 @@ function cleanInviteImage(value?: string | null) {
 function getInvitationImages(invitation: Invitation) {
   const uploaded = invitation.gallery.map(cleanInviteImage).filter(Boolean);
   const hero = uploaded[0] || cleanInviteImage(invitation.heroPhoto) || galleryImages[0];
-  const secondary = uploaded[1] || uploaded[0] || hero;
-  const detail = uploaded[2] || uploaded[1] || secondary;
+  const secondary = uploaded[1] || galleryImages[1];
+  const detail = uploaded[2] || galleryImages[2];
 
   return {
     hero,
@@ -32,6 +33,23 @@ function getInvitationImages(invitation: Invitation) {
     detail,
     gallery: [hero, secondary, detail],
   };
+}
+
+function getInvitationTexts(invitation: Invitation) {
+  return normalizeInvitationTexts(invitation.texts);
+}
+
+function PrimaryInvitationMessage({ invitation }: { invitation: Invitation }) {
+  return <>{getInvitationTexts(invitation).inviteMessage}</>;
+}
+
+function SecondaryInvitationMessage({ invitation }: { invitation: Invitation }) {
+  return <>{getInvitationTexts(invitation).inviteMessageSecondary}</>;
+}
+
+function InvitationPoll({ invitation }: { invitation: Invitation }) {
+  const texts = getInvitationTexts(invitation);
+  return <InvitePoll code={invitation.code} question={texts.rsvpQuestion} declinedMessage={texts.rsvpDeclinedMessage} />;
 }
 
 function getSocialShareLinks(invitationUrl: string) {
@@ -53,8 +71,9 @@ type PhotographerConfig = {
 
 function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation): PhotographerConfig {
   const invitationPhotographer = invitation?.photographer;
+  const enabled = shouldShowPhotographerCard() && invitationPhotographer?.enabled === true;
   return {
-    enabled: shouldShowPhotographerCard() && (invitationPhotographer?.enabled ?? template.photographer?.enabled ?? true),
+    enabled,
     name: invitationPhotographer?.name || template.photographer?.name || "badrabdoph",
     logoUrl: invitationPhotographer?.logoUrl || template.photographer?.logoUrl,
     instagramUrl: invitationPhotographer?.instagramUrl || template.photographer?.instagramUrl || "https://www.instagram.com/",
@@ -67,7 +86,7 @@ function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer:
 }
 
 export function InvitationExperience({ invitation, template, disableMusic = false }: { invitation: Invitation; template: TemplateDefinition; disableMusic?: boolean }) {
-  const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : invitation.musicUrl || template.musicUrl;
+  const templateMusicUrl = disableMusic || invitation.musicEnabled !== true ? null : invitation.musicUrl || template.musicUrl;
   const photographer = getTemplatePhotographer(template, invitation);
 
   if (template.customHtml) {
@@ -176,8 +195,12 @@ export function InvitationExperience({ invitation, template, disableMusic = fals
 
         <section className="invite-card invite-message">
           <Music2 size={22} />
-          <p>حضورك هيفرحني، بتمنى إنك تحضر معايا أفضل يوم في عمري.</p>
-          <p>أنا مستنيك تكون جزء من يومي المفضل.</p>
+          <p>
+            <PrimaryInvitationMessage invitation={invitation} />
+          </p>
+          <p>
+            <SecondaryInvitationMessage invitation={invitation} />
+          </p>
         </section>
 
         <section className="invite-card map-card">
@@ -210,7 +233,7 @@ export function InvitationExperience({ invitation, template, disableMusic = fals
           </section>
         ) : null}
 
-        <InvitePoll code={invitation.code} />
+        <InvitationPoll invitation={invitation} />
 
         <section className="invite-card qr-share-card">
           <QrCodeBlock value={invitationUrl} />
@@ -240,6 +263,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
   const invitationUrl = getInvitationUrl(invitation.code);
   const imageSet = getInvitationImages(invitation);
   const images = imageSet.gallery;
+  const texts = getInvitationTexts(invitation);
   const data = {
     groomName: invitation.groomName,
     brideName: invitation.brideName,
@@ -252,6 +276,10 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     mapUrl: invitation.mapUrl,
     invitationUrl,
     musicUrl: musicUrl || "",
+    inviteMessage: texts.inviteMessage,
+    inviteMessageSecondary: texts.inviteMessageSecondary,
+    rsvpQuestion: texts.rsvpQuestion,
+    rsvpDeclinedMessage: texts.rsvpDeclinedMessage,
     heroPhoto: imageSet.hero,
     gallery1: images[0] || "",
     gallery2: images[1] || images[0] || "",
@@ -321,8 +349,10 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
             <Music2 size={28} strokeWidth={1.5} />
           </span>
           <p>
-            حضورك هيفرحني، بتمنى إنك تحضر معايا أفضل يوم في عمري.
-            <strong>أنا مستنيك تكون جزء من يومي المفضل.</strong>
+            <PrimaryInvitationMessage invitation={invitation} />
+            <strong>
+              <SecondaryInvitationMessage invitation={invitation} />
+            </strong>
           </p>
         </section>
 
@@ -374,7 +404,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           </section>
         ) : null}
 
-        <InvitePoll code={invitation.code} />
+        <InvitationPoll invitation={invitation} />
 
         <section className="noir-qr-card">
           <p>شارك الدعوة مع من تحب</p>
@@ -426,8 +456,12 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
 
         <section className="ivory-quote">
           <Heart size={36} strokeWidth={1.2} />
-          <h2>حضورك هيفرحني، بتمنى إنك تحضر معايا أفضل يوم في عمري.</h2>
-          <p>أنا مستنيك تكون جزء من يومي المفضل</p>
+          <h2>
+            <PrimaryInvitationMessage invitation={invitation} />
+          </h2>
+          <p>
+            <SecondaryInvitationMessage invitation={invitation} />
+          </p>
         </section>
 
         <section className="ivory-gallery" aria-label="صور الدعوة">
@@ -480,7 +514,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
         ) : null}
 
         <div className="ivory-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="ivory-qr-card">
@@ -551,7 +585,9 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
 
         <div className="mobile-gold-message">
           <Heart size={24} />
-          <p>"حضورك هيفرحني، بتمنى إنك تحضر معايا أفضل يوم في عمري. أنا مستنيك تكون جزء من يومي المفضل."</p>
+          <p>
+            "<PrimaryInvitationMessage invitation={invitation} /> <SecondaryInvitationMessage invitation={invitation} />"
+          </p>
         </div>
 
         <section className="mobile-gold-map-card">
@@ -594,7 +630,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
         ) : null}
 
         <div className="mobile-gold-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="mobile-gold-qr-card">
@@ -704,7 +740,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
         ) : null}
 
         <div className="boho-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="boho-qr-card">
@@ -848,7 +884,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
         ) : null}
 
         <div className="garden-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="garden-qr-ticket">
@@ -994,7 +1030,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
         ) : null}
 
         <div className="featured-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="featured-qr-card">
@@ -1060,7 +1096,9 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
       <section className="cinema-rose-content">
         <div className="cinema-rose-message">
           <Heart size={34} />
-          <h2>"يومنا لن يكتمل إلا بحضوركم، ننتظركم لنصنع معاً ذكريات لا تنسى في أفضل يوم في عمرنا."</h2>
+          <h2>
+            "<PrimaryInvitationMessage invitation={invitation} />"
+          </h2>
         </div>
 
         <section className="cinema-rose-gallery" aria-label="صور الدعوة">
@@ -1109,7 +1147,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
         ) : null}
 
         <div className="cinema-rose-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="cinema-rose-qr-card">
@@ -1176,15 +1214,15 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
 
         <div className="modern-cinema-message">
           <h2>
-            "يومنا لا يكتمل إلا بوجودكم،
-            <span> حضوركم هو أجمل لقطة في قصتنا.</span>"
+            "<PrimaryInvitationMessage invitation={invitation} />
+            <span> <SecondaryInvitationMessage invitation={invitation} /></span>"
           </h2>
         </div>
 
         <section className="modern-cinema-gallery" aria-label="صور الدعوة">
-          {(images.length > 1 ? images.slice(1) : galleryImages.slice(1)).map((image, index) => (
+          {images.map((image, index) => (
             <figure key={`${image}-${index}`}>
-              <img src={image} alt={`صورة من الدعوة ${index + 2}`} />
+              <img src={image} alt={`صورة من الدعوة ${index + 1}`} />
             </figure>
           ))}
         </section>
@@ -1221,7 +1259,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
         ) : null}
 
         <div className="modern-cinema-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="modern-cinema-qr-card">
@@ -1302,9 +1340,9 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
         <div className="ethereal-glass-message">
           <Heart size={24} fill="currentColor" />
           <p>
-            "يومنا المفضل مش هيكمل غير بوجودكم،
+            "<PrimaryInvitationMessage invitation={invitation} />
             <br />
-            مستنيينكم نشارك مع بعض أحلى لحظات عمرنا."
+            <SecondaryInvitationMessage invitation={invitation} />"
           </p>
         </div>
 
@@ -1335,7 +1373,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
         ) : null}
 
         <div className="ethereal-glass-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="ethereal-glass-card ethereal-glass-qr-card">
@@ -1412,7 +1450,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
         ) : null}
 
         <div className="botanical-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="botanical-qr-card">
@@ -1474,7 +1512,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: I
         </section>
 
         <div className="royal-gold-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="royal-gold-qr-card">
@@ -1533,7 +1571,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: In
         </section>
 
         <div className="boho-sand-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="boho-sand-qr-card">
@@ -1593,7 +1631,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: I
         </section>
 
         <div className="pure-white-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="pure-white-qr-card">
@@ -1651,7 +1689,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: I
         </section>
 
         <div className="neon-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="neon-qr-card">
@@ -1710,7 +1748,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation
         </section>
 
         <div className="vintage-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="vintage-qr-card">
@@ -1769,7 +1807,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitati
         </section>
 
         <div className="fairytale-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="fairytale-qr-card">
@@ -1833,7 +1871,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: 
         </section>
 
         <div className="ocean-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="ocean-qr-card">
@@ -1894,7 +1932,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation
         </section>
 
         <div className="artdeco-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="artdeco-qr-card">
@@ -1952,7 +1990,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitatio
           </section>
 
           <div className="magazine-poll-wrap">
-            <InvitePoll code={invitation.code} />
+            <InvitationPoll invitation={invitation} />
           </div>
 
           <section className="magazine-qr-card">
@@ -2060,7 +2098,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
         ) : null}
 
         <div className="cinematic-poll-wrap">
-          <InvitePoll code={invitation.code} />
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="cinematic-qr-section">

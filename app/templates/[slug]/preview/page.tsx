@@ -27,6 +27,7 @@ type PageProps = {
     photographerFacebookUrl?: string;
     photographerInstagramUrl?: string;
     photographerLogoUrl?: string;
+    musicEnabled?: string;
     musicUrl?: string;
   }>;
 };
@@ -63,20 +64,23 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   if (!template) notFound();
   const previewGallery = cleanPreviewGallery(query?.gallery);
   const previewMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
-  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
-  const previewTemplate =
+  const previewMusicEnabled = query?.musicEnabled === "1";
+  const previewPhotographer =
     query?.photographerEnabled === "1"
       ? {
-          ...template,
-          photographer: {
-            enabled: true,
-            name: cleanPreviewText(query.photographerName, "المصور الفوتوغرافي"),
-            logoUrl: query.photographerLogoUrl?.trim() || undefined,
-            facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
-            instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
-          },
+          enabled: true,
+          name: cleanPreviewText(query.photographerName, "المصور الفوتوغرافي"),
+          logoUrl: query.photographerLogoUrl?.trim() || undefined,
+          facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
+          instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
         }
-      : template;
+      : {
+          enabled: false,
+          name: "",
+          facebookUrl: "",
+          instagramUrl: "",
+        };
+  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
@@ -93,6 +97,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     heroPhoto: previewGallery[0] || fallbackGallery[0],
     gallery: previewGallery.length ? previewGallery : fallbackGallery,
     musicUrl: previewMusicUrl,
+    musicEnabled: previewMusicEnabled,
+    photographer: previewPhotographer,
     isActive: true,
     views: 0,
     customerId: "preview",
@@ -104,9 +110,9 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   return (
     <>
       {query?.builderPreview === "1" ? (
-        <LiveInvitationPreview invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
+        <LiveInvitationPreview invitation={invitation} template={template} disableMusic={isSilentPreview} />
       ) : (
-        <InvitationExperience invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
+        <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />
       )}
       {!hidePreviewActions ? (
         <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">

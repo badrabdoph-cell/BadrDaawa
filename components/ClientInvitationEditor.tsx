@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Eye, ImagePlus, Loader2, Music2, Save, UploadCloud, UserRound, WandSparkles } from "lucide-react";
+import { Copy, Eye, ImagePlus, Loader2, MessageSquareText, Music2, Save, UploadCloud, UserRound } from "lucide-react";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { getTemplateTextBindings, unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { Invitation, TemplateDefinition } from "@/lib/types";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
+import type { Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 type MusicFile = { url: string; modifiedAt: number };
 type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
@@ -58,6 +59,7 @@ export function ClientInvitationEditor({
   const [musicUrl, setMusicUrl] = useState(invitation.musicUrl || "");
   const [musicDataUrl, setMusicDataUrl] = useState("");
   const [musicFileName, setMusicFileName] = useState("");
+  const [invitationTexts, setInvitationTexts] = useState<Required<InvitationTexts>>(() => normalizeInvitationTexts(invitation.texts));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -71,7 +73,10 @@ export function ClientInvitationEditor({
     weddingDate: useRef<HTMLInputElement | null>(null),
     venue: useRef<HTMLInputElement | null>(null),
   };
-  const textBindings = useMemo(() => getTemplateTextBindings(template), [template]);
+  const textFieldRefs = {
+    inviteMessage: useRef<HTMLTextAreaElement | null>(null),
+    rsvpQuestion: useRef<HTMLInputElement | null>(null),
+  };
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
@@ -91,6 +96,7 @@ export function ClientInvitationEditor({
       musicEnabled,
       musicUrl,
       disableMusic: !musicEnabled,
+      texts: invitationTexts,
       photographer: {
         enabled: photographerEnabled,
         name: photographerName,
@@ -99,7 +105,7 @@ export function ClientInvitationEditor({
         instagramUrl: photographerInstagramUrl,
       },
     }),
-    [brideName, city, groomName, images, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate, weddingTime],
+    [brideName, city, groomName, images, invitationTexts, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate, weddingTime],
   );
 
   const postPreviewUpdate = useCallback(() => {
@@ -133,6 +139,11 @@ export function ClientInvitationEditor({
   function markDirty() {
     setDirty(true);
     if (message) setMessage("");
+  }
+
+  function updateInvitationText(key: keyof InvitationTexts, value: string) {
+    setInvitationTexts((current) => ({ ...current, [key]: value }));
+    markDirty();
   }
 
   async function uploadPreviewImage(dataUrl: string) {
@@ -240,6 +251,8 @@ export function ClientInvitationEditor({
         if (text.includes(groomName)) fieldRefs.groomName.current?.focus();
         else if (text.includes(brideName)) fieldRefs.brideName.current?.focus();
         else if (text.includes(venue)) fieldRefs.venue.current?.focus();
+        else if (text.includes(invitationTexts.rsvpQuestion)) textFieldRefs.rsvpQuestion.current?.focus();
+        else if (text.includes(invitationTexts.inviteMessage.slice(0, 24))) textFieldRefs.inviteMessage.current?.focus();
         else fieldRefs.weddingDate.current?.focus();
       },
       true,
@@ -273,6 +286,7 @@ export function ClientInvitationEditor({
         musicEnabled,
         musicUrl,
         musicDataUrl,
+        texts: invitationTexts,
         photographer: {
           enabled: photographerEnabled,
           name: photographerName,
@@ -415,16 +429,26 @@ export function ClientInvitationEditor({
 
         <div className="builder-section">
           <div className="builder-section-head">
-            <WandSparkles size={18} />
-            <strong>النصوص المكتشفة من القالب</strong>
+            <MessageSquareText size={18} />
+            <strong>نصوص داخل الدعوة</strong>
           </div>
           <div className="builder-text-list">
-            {textBindings.map((item) => (
-              <label className="field" key={item.id}>
-                <span>{item.label}</span>
-                <textarea value={item.value} readOnly rows={2} />
-              </label>
-            ))}
+            <label className="field">
+              <span>سؤال تأكيد الحضور</span>
+              <input ref={textFieldRefs.rsvpQuestion} value={invitationTexts.rsvpQuestion} onChange={(event) => updateInvitationText("rsvpQuestion", event.target.value)} />
+            </label>
+            <label className="field">
+              <span>رسالة الدعوة</span>
+              <textarea ref={textFieldRefs.inviteMessage} value={invitationTexts.inviteMessage} onChange={(event) => updateInvitationText("inviteMessage", event.target.value)} rows={3} />
+            </label>
+            <label className="field">
+              <span>رسالة إضافية</span>
+              <textarea value={invitationTexts.inviteMessageSecondary} onChange={(event) => updateInvitationText("inviteMessageSecondary", event.target.value)} rows={2} />
+            </label>
+            <label className="field">
+              <span>رسالة الاعتذار عن الحضور</span>
+              <input value={invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateInvitationText("rsvpDeclinedMessage", event.target.value)} />
+            </label>
           </div>
         </div>
 

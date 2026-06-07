@@ -52,6 +52,7 @@ export type Invitation = {
   gallery: string[];
   musicUrl?: string;
   musicEnabled?: boolean;
+  texts?: InvitationTexts;
   photographer?: {
     enabled: boolean;
     name: string;
@@ -62,6 +63,13 @@ export type Invitation = {
   isActive: boolean;
   views: number;
   customerId: string;
+};
+
+export type InvitationTexts = {
+  inviteMessage?: string;
+  inviteMessageSecondary?: string;
+  rsvpQuestion?: string;
+  rsvpDeclinedMessage?: string;
 };
 
 export type GuestRsvp = {
@@ -90,6 +98,7 @@ export type OrderRequest = {
   musicEnabled?: boolean;
   musicChoice?: "default" | "upload" | "url";
   musicUrl?: string;
+  texts?: InvitationTexts;
   photographer?: {
     enabled: boolean;
     name: string;

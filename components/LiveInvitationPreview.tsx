@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { InvitationExperience } from "./InvitationExperience";
 
@@ -25,6 +26,7 @@ export type LiveInvitationPreviewPayload = {
   musicUrl?: string;
   musicEnabled?: boolean;
   disableMusic?: boolean;
+  texts?: Invitation["texts"];
   photographer?: PreviewPhotographer;
 };
 
@@ -95,6 +97,7 @@ function applyPayload(invitation: Invitation, payload: LiveInvitationPreviewPayl
     gallery,
     musicUrl,
     musicEnabled,
+    texts: normalizeInvitationTexts(payload.texts || invitation.texts),
     photographer,
   };
 }

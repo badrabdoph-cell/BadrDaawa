@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { getFileCustomers, getFileGuestsByInvitation, getFileInvitations, getFileOrders } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
+import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
 
@@ -32,6 +33,7 @@ type AdminInvitationRow = {
   gallery?: unknown;
   musicUrl?: string | null;
   musicEnabled?: boolean | null;
+  texts?: unknown;
   photographer?: unknown;
   status?: string;
   isActive?: boolean;
@@ -55,6 +57,7 @@ type AdminOrderRow = {
   musicEnabled?: boolean | null;
   musicChoice?: string | null;
   musicUrl?: string | null;
+  texts?: unknown;
   photographer?: unknown;
   rejectionReason?: string | null;
   publishedInvitationCode?: string | null;
@@ -164,6 +167,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     gallery,
     musicUrl: row.musicUrl || undefined,
     musicEnabled: row.musicEnabled !== false,
+    texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer),
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
     views: row.viewCount ?? row.views ?? 0,
@@ -195,6 +199,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     musicEnabled: row.musicEnabled ?? Boolean(row.musicUrl || parseMusicUrlFromNotes(notes)),
     musicChoice: row.musicChoice === "upload" || row.musicChoice === "url" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
     musicUrl: row.musicUrl || parseMusicUrlFromNotes(notes) || undefined,
+    texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer) || parsePhotographerFromNotes(notes),
     rejectionReason: row.rejectionReason || undefined,
     publishedInvitationCode: row.publishedInvitationCode || undefined,

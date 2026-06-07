@@ -2,6 +2,7 @@ import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode
 import { prisma } from "./db";
 import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
+import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
 
@@ -20,6 +21,7 @@ type DatabaseInvitation = {
   gallery: unknown;
   musicUrl: string | null;
   musicEnabled?: boolean | null;
+  texts?: unknown;
   photographer?: unknown;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
   viewCount: number;
@@ -91,6 +93,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     gallery: gallery.length ? gallery : [heroPhoto],
     musicUrl: invitation.musicUrl || undefined,
     musicEnabled: invitation.musicEnabled !== false,
+    texts: normalizeInvitationTexts(invitation.texts),
     photographer: toPhotographer(invitation.photographer),
     isActive: invitation.status === "ACTIVE",
     views: invitation.viewCount,

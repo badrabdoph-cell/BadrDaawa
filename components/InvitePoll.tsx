@@ -5,7 +5,15 @@ import { Check, Loader2, X } from "lucide-react";
 
 type PollState = "idle" | "attending" | "declined";
 
-export function InvitePoll({ code }: { code: string }) {
+export function InvitePoll({
+  code,
+  question = "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+  declinedMessage = "حزين إنك مش معايا في يومي المفضل 🥹",
+}: {
+  code: string;
+  question?: string;
+  declinedMessage?: string;
+}) {
   const [choice, setChoice] = useState<PollState>("idle");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,7 +52,7 @@ export function InvitePoll({ code }: { code: string }) {
   return (
     <section id="rsvp" className="invite-card invite-poll">
       <span className="invite-kicker">RSVP</span>
-      <h2>ناوي تحضر وتشاركنا فرحه عمرنا؟</h2>
+      <h2>{question}</h2>
       <div className="poll-actions">
         <button className={`poll-choice ${choice === "attending" ? "selected" : ""}`} type="button" onClick={() => setChoice("attending")}>
           <Check size={18} />
@@ -56,7 +64,7 @@ export function InvitePoll({ code }: { code: string }) {
         </button>
       </div>
 
-      {choice === "declined" ? <p className="sad-message">حزين إنك مش معايا في يومي المفضل 🥹</p> : null}
+      {choice === "declined" ? <p className="sad-message">{declinedMessage}</p> : null}
 
       {choice === "attending" ? (
         <form className="poll-form" onSubmit={submit}>

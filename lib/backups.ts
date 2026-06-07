@@ -131,7 +131,7 @@ async function readDatabaseSnapshot() {
       }),
       prisma.invitation.findMany({
         orderBy: { createdAt: "desc" },
-        select: { id: true, code: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, heroPhoto: true, gallery: true, musicUrl: true, createdAt: true, updatedAt: true },
+        select: { id: true, code: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, heroPhoto: true, gallery: true, musicEnabled: true, musicUrl: true, texts: true, photographer: true, createdAt: true, updatedAt: true },
       }),
       prisma.guestRsvp.findMany({
         orderBy: { createdAt: "desc" },
@@ -141,7 +141,7 @@ async function readDatabaseSnapshot() {
       prisma.orderRequest.findMany({
         orderBy: { createdAt: "desc" },
         take: 50,
-        select: { id: true, groomName: true, brideName: true, phone: true, status: true, imageUrls: true, createdAt: true, updatedAt: true },
+        select: { id: true, groomName: true, brideName: true, phone: true, status: true, imageUrls: true, musicEnabled: true, musicChoice: true, musicUrl: true, texts: true, photographer: true, createdAt: true, updatedAt: true },
       }),
       prisma.analyticsEvent.findMany({
         orderBy: { createdAt: "desc" },

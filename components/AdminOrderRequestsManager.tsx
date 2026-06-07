@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Clock3, Copy, Eye, ImagePlus, Link2, Loader2, Music2, Send, SlidersHorizontal, UploadCloud, UserRound, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Copy, Eye, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Send, SlidersHorizontal, UploadCloud, UserRound, XCircle } from "lucide-react";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { acceptedImageFormats } from "@/lib/image-formats";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { OrderRequest, TemplateDefinition } from "@/lib/types";
+import type { InvitationTexts, OrderRequest, TemplateDefinition } from "@/lib/types";
 
 type BuilderTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
 type MusicFile = { url: string; modifiedAt: number };
@@ -26,6 +27,7 @@ type OrderFormState = {
   musicChoice: "default" | "upload" | "url";
   musicUrl: string;
   musicBusy: boolean;
+  invitationTexts: Required<InvitationTexts>;
   photographerEnabled: boolean;
   photographerName: string;
   photographerLogoUrl: string;
@@ -86,6 +88,7 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string): OrderForm
     musicChoice: order.musicChoice || (order.musicUrl ? "url" : "default"),
     musicUrl: order.musicUrl || "",
     musicBusy: false,
+    invitationTexts: normalizeInvitationTexts(order.texts),
     photographerEnabled: Boolean(photographer?.enabled),
     photographerName: photographer?.name || "",
     photographerLogoUrl: photographer?.logoUrl || "",
@@ -143,6 +146,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       musicEnabled: form.musicEnabled,
       musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
       disableMusic: !form.musicEnabled,
+      texts: form.invitationTexts,
       photographer: {
         enabled: form.photographerEnabled,
         name: form.photographerName,
@@ -179,6 +183,17 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
     setNotice(null);
   }
 
+  function updateInvitationText(key: keyof InvitationTexts, value: string) {
+    setForm((current) => ({
+      ...current,
+      invitationTexts: {
+        ...current.invitationTexts,
+        [key]: value,
+      },
+    }));
+    setNotice(null);
+  }
+
   function payload(action: "review" | "update" | "publish" | "reject") {
     return {
       action,
@@ -194,6 +209,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       musicEnabled: form.musicEnabled,
       musicChoice: form.musicChoice,
       musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
+      texts: form.invitationTexts,
       photographer: {
         enabled: form.photographerEnabled,
         name: form.photographerName,
@@ -473,6 +489,31 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
               {form.musicUrl ? <audio controls preload="metadata" src={form.musicUrl} /> : null}
             </div>
           ) : null}
+        </div>
+
+        <div className="orders-edit-section">
+          <div className="builder-section-head">
+            <MessageSquareText size={18} />
+            <strong>نصوص داخل الدعوة</strong>
+          </div>
+          <div className="orders-editor-grid">
+            <label className="field">
+              <span>سؤال تأكيد الحضور</span>
+              <input value={form.invitationTexts.rsvpQuestion} onChange={(event) => updateInvitationText("rsvpQuestion", event.target.value)} />
+            </label>
+            <label className="field wide">
+              <span>رسالة الدعوة</span>
+              <textarea value={form.invitationTexts.inviteMessage} onChange={(event) => updateInvitationText("inviteMessage", event.target.value)} rows={3} />
+            </label>
+            <label className="field">
+              <span>رسالة إضافية</span>
+              <textarea value={form.invitationTexts.inviteMessageSecondary} onChange={(event) => updateInvitationText("inviteMessageSecondary", event.target.value)} rows={2} />
+            </label>
+            <label className="field">
+              <span>رسالة الاعتذار عن الحضور</span>
+              <input value={form.invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateInvitationText("rsvpDeclinedMessage", event.target.value)} />
+            </label>
+          </div>
         </div>
 
         <div className="orders-edit-section">

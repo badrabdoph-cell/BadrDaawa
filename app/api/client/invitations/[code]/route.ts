@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import type { Invitation } from "@/lib/types";
 
 function isClientAllowed(request: NextRequest, code: string) {
   const expected = process.env.CLIENT_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-client-local";
@@ -23,6 +25,7 @@ type ClientInvitationPayload = {
   musicEnabled?: boolean;
   musicUrl?: string;
   musicDataUrl?: string;
+  texts?: Invitation["texts"];
   photographer?: {
     enabled?: boolean;
     name?: string;
@@ -162,6 +165,11 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   if (photographer) {
     data.photographer = photographer;
     fileData.photographer = photographer;
+  }
+  if (payload.texts) {
+    const texts = normalizeInvitationTexts(payload.texts);
+    data.texts = texts;
+    fileData.texts = texts;
   }
 
   let updated = false;
