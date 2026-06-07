@@ -1,6 +1,61 @@
 {
-  "invitations": [],
+  "invitations": [
+    {
+      "id": "inv_wedding_invitation_2",
+      "code": "wedding-invitation-2",
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "groomName": "نتز",
+      "brideName": "يبسبب",
+      "weddingDate": "2026-06-25",
+      "weddingTime": "sdf",
+      "venue": "sdffsd",
+      "city": "sdfsfd",
+      "mapUrl": "dssffsfddf",
+      "heroPhoto": "/assets/invite/badr-sarah-1.jpeg",
+      "gallery": [
+        "/assets/invite/badr-sarah-1.jpeg",
+        "/assets/invite/badr-sarah-2.jpeg",
+        "/assets/invite/badr-sarah-3.jpeg"
+      ],
+      "isActive": true,
+      "views": 0,
+      "customerId": "cus__"
+    },
+    {
+      "id": "inv_wedding_invitation_1",
+      "code": "wedding-invitation-1",
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "groomName": "نتز",
+      "brideName": "يبسبب",
+      "weddingDate": "2026-06-25",
+      "weddingTime": "sdf",
+      "venue": "sdffsd",
+      "city": "sdfsfd",
+      "mapUrl": "dssffsfddf",
+      "heroPhoto": "/assets/invite/badr-sarah-1.jpeg",
+      "gallery": [
+        "/assets/invite/badr-sarah-1.jpeg",
+        "/assets/invite/badr-sarah-2.jpeg",
+        "/assets/invite/badr-sarah-3.jpeg"
+      ],
+      "isActive": true,
+      "views": 0,
+      "customerId": "cus__"
+    }
+  ],
   "guests": [],
-  "customers": [],
+  "customers": [
+    {
+      "id": "cus__",
+      "name": "نتز و يبسبب",
+      "phone": "سيبسيب",
+      "username": "سيب",
+      "passwordHash": "76d82bb8ae89ca487965b75430789a8a228dfe6229dea7d21434572f03dcce19",
+      "isActive": true,
+      "createdAt": "2026-06-07T01:33:21.324Z"
+    }
+  ],
   "orders": []
 }
