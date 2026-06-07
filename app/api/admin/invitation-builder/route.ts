@@ -97,13 +97,14 @@ export async function POST(request: NextRequest) {
 
   const payload = (await request.json().catch(() => null)) as BuilderPayload | null;
   if (!payload) return NextResponse.json({ error: "بيانات غير صالحة." }, { status: 400 });
+  const input = payload;
 
-  const action = payload.action === "draft" ? "draft" : "publish";
-  const groomName = cleanText(payload.groomName);
-  const brideName = cleanText(payload.brideName);
-  const weddingDate = cleanText(payload.weddingDate);
-  const venue = cleanText(payload.venue);
-  const templateSlug = cleanText(payload.templateSlug, "featured-1");
+  const action = input.action === "draft" ? "draft" : "publish";
+  const groomName = cleanText(input.groomName);
+  const brideName = cleanText(input.brideName);
+  const weddingDate = cleanText(input.weddingDate);
+  const venue = cleanText(input.venue);
+  const templateSlug = cleanText(input.templateSlug, "featured-1");
   const parsedDate = normalizeDate(weddingDate);
 
   if (!groomName || !brideName || !parsedDate || !venue) {
@@ -112,19 +113,21 @@ export async function POST(request: NextRequest) {
 
   const selectedTemplate = await getTemplateWithSettings(templateSlug);
   if (!selectedTemplate) return NextResponse.json({ error: "القالب المختار غير موجود." }, { status: 400 });
+  const templateDefinition = selectedTemplate;
+  const safeWeddingDate = parsedDate;
 
-  const galleryInput = Array.isArray(payload.gallery) ? payload.gallery.filter((item): item is string => typeof item === "string" && item.trim()).slice(0, 3) : [];
+  const galleryInput = Array.isArray(input.gallery) ? input.gallery.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3) : [];
   const savedGallery = await saveInvitationGalleryImages(galleryInput);
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
-  const musicUrl = await resolveMusic(payload);
-  if (payload.musicEnabled && (payload.musicDataUrl || payload.musicUrl) && !musicUrl) {
+  const musicUrl = await resolveMusic(input);
+  if (input.musicEnabled && (input.musicDataUrl || input.musicUrl) && !musicUrl) {
     return NextResponse.json({ error: "ملف أو رابط الموسيقى غير قابل للتشغيل." }, { status: 400 });
   }
-  const photographer = await resolvePhotographer(payload);
-  const status = action === "publish" ? "ACTIVE" : "DRAFT";
+  const photographer = await resolvePhotographer(input);
+  const status: "ACTIVE" | "DRAFT" = action === "publish" ? "ACTIVE" : "DRAFT";
   const isActive = status === "ACTIVE";
   const baseSlug = buildInvitationBaseSlug(groomName, brideName);
-  const existingCode = cleanText(payload.code);
+  const existingCode = cleanText(input.code);
 
   async function createOrUpdateFileInvitation() {
     if (existingCode && (await getFileInvitationByCode(existingCode))) {
