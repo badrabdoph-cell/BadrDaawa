@@ -166,7 +166,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     heroPhoto: (heroPhoto && isBrowserDisplayImageUrl(heroPhoto) ? heroPhoto : "") || gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
     gallery,
     musicUrl: row.musicUrl || undefined,
-    musicEnabled: row.musicEnabled !== false,
+    musicEnabled: row.musicEnabled === true || (row.musicEnabled == null && Boolean(row.musicUrl)),
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer),
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),

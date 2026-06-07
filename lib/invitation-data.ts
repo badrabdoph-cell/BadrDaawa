@@ -92,7 +92,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     heroPhoto,
     gallery: gallery.length ? gallery : [heroPhoto],
     musicUrl: invitation.musicUrl || undefined,
-    musicEnabled: invitation.musicEnabled !== false,
+    musicEnabled: invitation.musicEnabled === true && Boolean(invitation.musicUrl),
     texts: normalizeInvitationTexts(invitation.texts),
     photographer: toPhotographer(invitation.photographer),
     isActive: invitation.status === "ACTIVE",
