@@ -1001,6 +1001,9 @@ img {
   border-radius: 34px;
   background: #17110c;
   box-shadow: 0 30px 90px rgba(48, 31, 11, 0.26);
+  transform-origin: center;
+  animation: live-preview-float 8s ease-in-out infinite;
+  will-change: transform;
 }
 
 .live-phone-frame:hover {
@@ -1016,6 +1019,19 @@ img {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.34);
   content: "";
+}
+
+.live-phone-frame::after {
+  position: absolute;
+  inset: 10px;
+  z-index: 2;
+  border-radius: 24px;
+  background:
+    linear-gradient(115deg, transparent 0 28%, rgba(255, 255, 255, 0.22) 36%, transparent 46% 100%),
+    radial-gradient(circle at 18% 12%, rgba(255, 240, 181, 0.18), transparent 10rem);
+  content: "";
+  pointer-events: none;
+  animation: live-preview-gloss 5.8s ease-in-out infinite;
 }
 
 .live-preview-badge {
@@ -1059,6 +1075,9 @@ img {
   border: 0;
   border-radius: 24px;
   background: #fbf4e8;
+  transform-origin: center top;
+  animation: live-preview-pan 13s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .live-preview-media {
@@ -1068,6 +1087,9 @@ img {
   border-radius: 24px;
   background: #17110c;
   object-fit: cover;
+  transform-origin: center;
+  animation: live-preview-pan 13s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .live-preview-open {
@@ -13417,6 +13439,43 @@ body:has(.template-preview-floating-actions) .music-control {
   }
   100% {
     transform: translateX(360%) rotate(18deg);
+  }
+}
+
+@keyframes live-preview-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-0.45deg);
+  }
+}
+
+@keyframes live-preview-pan {
+  0% {
+    transform: scale(1.015) translateY(0);
+  }
+  45% {
+    transform: scale(1.045) translateY(-1.5%);
+  }
+  100% {
+    transform: scale(1.03) translateY(1%);
+  }
+}
+
+@keyframes live-preview-gloss {
+  0%,
+  48% {
+    opacity: 0;
+    transform: translateX(-42%) skewX(-14deg);
+  }
+  58% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(48%) skewX(-14deg);
   }
 }
 

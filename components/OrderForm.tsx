@@ -52,6 +52,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     language: "ar",
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -120,7 +121,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   const normalizedDate = normalizeWeddingDate(form.weddingDate);
   const readableDate = normalizedDate ? displayWeddingDate(normalizedDate) : "";
 
-  function previewHref(values: Partial<FormState> = form) {
+  function previewHref(values: Partial<FormState> = form, imageUrls: string[] = []) {
     const params = new URLSearchParams();
     params.set("groomName", values.groomName || "اسم العريس");
     params.set("brideName", values.brideName || "اسم العروسة");
@@ -128,6 +129,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     if (weddingDate) params.set("weddingDate", weddingDate);
     if (values.venue) params.set("venue", values.venue);
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
+    if (imageUrls.length) params.set("gallery", imageUrls.join(","));
     return `/templates/${form.templateSlug}/preview?${params.toString()}`;
   }
 
@@ -144,12 +146,36 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     };
   }
 
+  function readFileAsDataUrl(file: File) {
+    return new Promise<string>((resolve) => {
+      if (!file.size) {
+        resolve("");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function getOrderImageDataUrls(formData: FormData) {
+    const optimized = formData.getAll("orderImage").map((value) => String(value)).filter(Boolean).slice(0, 3);
+    const rawFiles = formData.getAll("orderImageRaw").filter((value): value is File => value instanceof File && value.size > 0).slice(0, 3);
+
+    if (!rawFiles.length || optimized.length >= rawFiles.length) return optimized;
+
+    const rawDataUrls = (await Promise.all(rawFiles.slice(optimized.length).map(readFileAsDataUrl))).filter(Boolean);
+    return [...optimized, ...rawDataUrls].slice(0, 3);
+  }
+
   function validateOrder(values: OrderFormValues) {
     const nextErrors: FieldErrors = {};
     if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
     if (!values.brideName) nextErrors.brideName = "اكتب اسم العروسة كما تحب ظهوره في الدعوة.";
     if (!values.weddingDate) nextErrors.weddingDate = "اكتب تاريخ الفرح عشان نجهز الدعوة والعداد.";
-    else if (!normalizeWeddingDate(values.weddingDate)) nextErrors.weddingDate = "اكتب التاريخ بالشكل ده: 26 / 10 / 2026.";
+    else if (!normalizeWeddingDate(values.weddingDate)) nextErrors.weddingDate = "اختار تاريخ صحيح من التقويم.";
     if (values.phone && values.phone.replace(/\D/g, "").length < 8) nextErrors.phone = "رقم الموبايل قصير. اكتب رقم صحيح أو اتركه فارغ.";
     if (values.mapUrl && !/^https?:\/\/\S+\.\S+/.test(values.mapUrl)) nextErrors.mapUrl = "رابط اللوكيشن غير واضح. انسخ رابط Google Maps كامل أو اترك الخانة فارغة.";
     return nextErrors;
@@ -170,16 +196,39 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     return true;
   }
 
-  function openPreview() {
+  async function openPreview() {
     const currentForm = getCurrentFormFromDom();
     if (showValidationErrors(validateOrder(currentForm))) return;
-    window.location.href = previewHref({ ...currentForm, weddingDate: normalizeWeddingDate(currentForm.weddingDate) });
+    setIsPreviewing(true);
+    setMessage("");
+
+    try {
+      const formData = new FormData(formRef.current || undefined);
+      const orderImages = await getOrderImageDataUrls(formData);
+      let imageUrls: string[] = [];
+
+      if (orderImages.length) {
+        const response = await fetch("/api/orders/preview-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: orderImages }),
+        });
+        const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
+        imageUrls = Array.isArray(data?.imageUrls) ? data.imageUrls : [];
+      }
+
+      window.location.href = previewHref({ ...currentForm, weddingDate: normalizeWeddingDate(currentForm.weddingDate) }, imageUrls);
+    } catch {
+      setState("error");
+      setMessage("تعذر تجهيز صور المعاينة. جرّب مرة أخرى أو اضغط تأكيد الطلب.");
+      setIsPreviewing(false);
+    }
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const orderImages = formData.getAll("orderImage").map((value) => String(value)).filter(Boolean).slice(0, 3);
+    const orderImages = await getOrderImageDataUrls(formData);
     const rawWeddingDate = String(formData.get("weddingDate") || "").trim();
     const currentForm: FormState = {
       ...form,
@@ -292,8 +341,8 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
             </div>
             <div className={`field ${errors.weddingDate ? "has-error" : ""}`}>
               <label htmlFor="weddingDate">تاريخ الفرح *</label>
-              <input id="weddingDate" name="weddingDate" inputMode="numeric" placeholder="مثال: 26 / 10 / 2026" value={form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
-              <small className="field-hint" id="weddingDate-hint">اكتب اليوم / الشهر / السنة. ينفع تكتب بالأرقام العربية أو الإنجليزية.</small>
+              <input id="weddingDate" name="weddingDate" type="date" value={normalizedDate || form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
+              <small className="field-hint" id="weddingDate-hint">اختار اليوم من التقويم، وهيظهر داخل الدعوة بصيغة عربية.</small>
               {readableDate ? <small className="field-preview">هيظهر في الدعوة: {readableDate}</small> : null}
               {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
             </div>
@@ -349,9 +398,9 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
           </a>
 
           <div className="order-action-grid">
-            <button className="btn btn-gold btn-glow order-preview-button" type="button" onClick={openPreview}>
-              <Eye size={19} />
-              معاينة الدعوة
+            <button className="btn btn-gold btn-glow order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
+              {isPreviewing ? <Loader2 size={19} className="animate-float" /> : <Eye size={19} />}
+              {isPreviewing ? "جاري تجهيز المعاينة" : "معاينة الدعوة"}
             </button>
 
             <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>

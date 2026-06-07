@@ -1,4 +1,5 @@
 import { Image, Link2, MonitorPlay, Save, UploadCloud, Video } from "lucide-react";
+import { acceptedImageFormats } from "@/lib/image-formats";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
@@ -75,10 +76,10 @@ export default async function AdminPreviewPage({ searchParams }: { searchParams:
                 </div>
               </div>
               <label className="preview-media-dropzone">
-                <input name="previewMedia" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" />
+                <input name="previewMedia" type="file" accept={`${acceptedImageFormats},video/mp4,video/webm,video/quicktime`} />
                 <UploadCloud size={24} />
                 <strong>اختار ملف صورة أو فيديو</strong>
-                <small>الصورة حتى 8MB، والفيديو حتى 35MB. الأفضل مقاس عمودي.</small>
+                <small>الصورة حتى 80MB، والفيديو حتى 35MB. الأفضل مقاس عمودي.</small>
               </label>
             </div>
 

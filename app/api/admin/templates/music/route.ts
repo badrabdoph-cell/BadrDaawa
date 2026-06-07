@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { imageExtensionFromDataMime, isSupportedImageUrl } from "@/lib/image-formats";
+import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "@/lib/image-formats";
 import { updateTemplateSettings } from "@/lib/template-settings";
 import { getPublicUrl, getRedirectUrl } from "@/lib/utils";
 
@@ -13,7 +13,18 @@ async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
-async function saveTemplateImage(image: string, request: NextRequest) {
+async function saveTemplateImage(image: string | File, request: NextRequest) {
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "template-previews");
+  await mkdir(uploadDir, { recursive: true });
+
+  if (image instanceof File) {
+    if (!isSupportedImageFile(image) || image.size > 80 * 1024 * 1024) return "";
+    const extension = imageExtensionForUpload(image.type, image.name);
+    const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
+    await writeFile(path.join(uploadDir, fileName), Buffer.from(await image.arrayBuffer()));
+    return getPublicUrl(`/uploads/template-previews/${fileName}`, request.headers, request.nextUrl.origin).toString();
+  }
+
   if (!image) return "";
   if (image.startsWith("/")) return image;
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
@@ -26,8 +37,6 @@ async function saveTemplateImage(image: string, request: NextRequest) {
   if (!bytes.length || bytes.length > 12 * 1024 * 1024) return "";
   const extension = imageExtensionFromDataMime(match[1]) || "jpg";
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "template-previews");
-  await mkdir(uploadDir, { recursive: true });
   const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
   await writeFile(path.join(uploadDir, fileName), bytes);
   return getPublicUrl(`/uploads/template-previews/${fileName}`, request.headers, request.nextUrl.origin).toString();
@@ -40,7 +49,10 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const slug = String(formData.get("slug") || "").trim();
-  const uploadedImages = await Promise.all(formData.getAll("templateImage").map((value) => saveTemplateImage(String(value), request)));
+  const optimizedImages = formData.getAll("templateImage").filter((value): value is string => typeof value === "string" && Boolean(value));
+  const rawImages = formData.getAll("templateImageRaw").filter((value): value is File => value instanceof File && isSupportedImageFile(value));
+  const imageInputs = optimizedImages.length >= rawImages.length ? optimizedImages : rawImages;
+  const uploadedImages = await Promise.all(imageInputs.map((value) => saveTemplateImage(value, request)));
   const cleanUploadedImages = uploadedImages.filter(Boolean);
   const updated = await updateTemplateSettings(slug, {
     arabicName: String(formData.get("arabicName") || ""),

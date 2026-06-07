@@ -17,6 +17,7 @@ type PageProps = {
     venue?: string;
     city?: string;
     mapUrl?: string;
+    gallery?: string;
   }>;
 };
 
@@ -31,11 +32,21 @@ function cleanPreviewDate(value: string | undefined) {
   return clean;
 }
 
+function cleanPreviewGallery(value: string | undefined) {
+  return (value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.startsWith("/uploads/order-previews/") || item.startsWith("/uploads/order-requests/") || item.startsWith("/uploads/client-invitations/"))
+    .slice(0, 3);
+}
+
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const query = await searchParams;
   const template = await getTemplateWithSettings(slug);
   if (!template) notFound();
+  const previewGallery = cleanPreviewGallery(query?.gallery);
+  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
@@ -49,8 +60,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     venue: cleanPreviewText(query?.venue, "قاعة رويال"),
     city: cleanPreviewText(query?.city, "البحيرة"),
     mapUrl: cleanPreviewText(query?.mapUrl, "https://maps.google.com/?q=Royal+Hall+Beheira"),
-    heroPhoto: "/assets/invite/badr-sarah-1.jpeg",
-    gallery: ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"],
+    heroPhoto: previewGallery[0] || fallbackGallery[0],
+    gallery: previewGallery.length ? previewGallery : fallbackGallery,
     musicUrl: "",
     isActive: true,
     views: 0,

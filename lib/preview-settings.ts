@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { imageExtensionFromName } from "./image-formats";
 import { getTemplateWithSettings } from "./template-settings";
 
 export type HomePreviewMode = "template" | "image" | "video";
@@ -25,7 +26,7 @@ function cleanMediaUrl(value: string, allowDataImage = false) {
   const trimmed = value.trim();
   if (!trimmed) return "";
   if (trimmed.startsWith("/")) return trimmed;
-  if (allowDataImage && trimmed.startsWith("data:image/jpeg")) return trimmed;
+  if (allowDataImage && /^data:image\/[a-z0-9.+-]+;base64,/i.test(trimmed)) return trimmed;
 
   try {
     const url = new URL(trimmed);
@@ -39,7 +40,7 @@ function inferMediaMode(value: string): HomePreviewMode | "" {
   const clean = value.trim().split("?")[0]?.toLowerCase() || "";
   if (!clean) return "";
   if (/\.(mp4|webm|mov|m4v)$/.test(clean)) return "video";
-  if (/\.(jpg|jpeg|png|webp|gif|svg)$/.test(clean) || clean.startsWith("data:image/jpeg")) return "image";
+  if (imageExtensionFromName(clean) || /^data:image\/[a-z0-9.+-]+;base64,/i.test(clean)) return "image";
   return "";
 }
 
