@@ -11,10 +11,26 @@ function isExistingImageUrl(value: string) {
   return value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://");
 }
 
-function imageExtension(type: string) {
+const allowedImageExtensions = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif", "svg", "bmp", "tif", "tiff", "heic", "heif"]);
+
+function cleanImageExtension(value?: string) {
+  const extension = value?.split("?")[0]?.split("#")[0]?.replace(/^\./, "").trim().toLowerCase() || "";
+  if (!allowedImageExtensions.has(extension)) return "";
+  return extension === "jpeg" ? "jpg" : extension;
+}
+
+function imageExtension(type: string, fileName = "") {
   if (type === "image/png") return "png";
   if (type === "image/webp") return "webp";
   if (type === "image/gif") return "gif";
+  if (type === "image/avif") return "avif";
+  if (type === "image/svg+xml") return "svg";
+  if (type === "image/bmp") return "bmp";
+  if (type === "image/tiff") return "tiff";
+  if (type === "image/heic") return "heic";
+  if (type === "image/heif") return "heif";
+  const nameExtension = cleanImageExtension(fileName.split(".").pop());
+  if (nameExtension) return nameExtension;
   return "jpg";
 }
 
@@ -32,7 +48,7 @@ async function saveGalleryImage(image: string | File) {
     try {
       const bytes = Buffer.from(await image.arrayBuffer());
       if (!bytes.length) return "";
-      return saveImageBytes(bytes, imageExtension(image.type));
+      return saveImageBytes(bytes, imageExtension(image.type, image.name));
     } catch (error) {
       console.error("Failed to save uploaded invitation image", error);
       return "";
@@ -46,14 +62,14 @@ async function saveGalleryImage(image: string | File) {
     return value;
   }
 
-  const match = value.match(/^data:image\/(?:jpeg|jpg);base64,([a-zA-Z0-9+/=]+)$/);
+  const match = value.match(/^data:image\/([a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
   if (!match) return "";
 
-  const bytes = Buffer.from(match[1], "base64");
+  const bytes = Buffer.from(match[2], "base64");
   if (!bytes.length || bytes.length > maxGalleryImageBytes) return "";
 
   try {
-    return saveImageBytes(bytes, "jpg");
+    return saveImageBytes(bytes, imageExtension(`image/${match[1].toLowerCase()}`));
   } catch (error) {
     console.error("Failed to save invitation gallery image", error);
     return "";

@@ -15,6 +15,8 @@ type CropItem = {
   optimizedSize: number;
 };
 
+const acceptedImageFormats = "image/*,.jpg,.jpeg,.png,.webp,.gif,.avif,.svg,.bmp,.tif,.tiff,.heic,.heif";
+
 function formatKb(bytes: number) {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
@@ -142,7 +144,7 @@ export function ImageCropUploader({
         <span>
           {targetWidth}x{targetHeight}px - كروب إجباري قبل الرفع وضغط تلقائي
         </span>
-        <input name={`${name}Raw`} type="file" accept="image/*" multiple={maxFiles > 1} onChange={(event) => handleFiles(event.target.files)} />
+        <input name={`${name}Raw`} type="file" accept={acceptedImageFormats} multiple={maxFiles > 1} onChange={(event) => handleFiles(event.target.files)} />
       </label>
 
       {!items.length && defaultImages.length ? (

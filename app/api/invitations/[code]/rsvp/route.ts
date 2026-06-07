@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { addFileGuest, getFileInvitationByCode } from "@/lib/file-store";
-import { getInvitationByCode } from "@/lib/demo-data";
+import { getInvitationByCode as getDemoInvitationByCode } from "@/lib/demo-data";
 import { rsvpSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -9,6 +10,34 @@ export const runtime = "nodejs";
 type RouteContext = {
   params: Promise<{ code: string }>;
 };
+
+async function saveFileRsvp(code: string, data: {
+  name: string;
+  phone: string;
+  attendees: number;
+  status: "confirmed" | "declined";
+  note?: string;
+}) {
+  const fileInvitation = await getFileInvitationByCode(code);
+  const demoInvitation = fileInvitation ? undefined : getDemoInvitationByCode(code);
+  const invitation = fileInvitation || demoInvitation;
+
+  if (!invitation) {
+    return NextResponse.json({ error: "الدعوة غير موجودة" }, { status: 404 });
+  }
+
+  if (!invitation.isActive) {
+    return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
+  }
+
+  if (fileInvitation) {
+    await addFileGuest(code, data);
+  }
+
+  revalidatePath(`/${code}/ad_3399`);
+  revalidatePath("/admin/analytics");
+  return NextResponse.json({ ok: true });
+}
 
 export async function POST(request: Request, context: RouteContext) {
   const { code } = await context.params;
@@ -20,36 +49,33 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   if (prisma) {
-    const invitation = await prisma.invitation.findUnique({ where: { code } });
-    if (!invitation || invitation.status !== "ACTIVE") {
-      return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
-    }
+    try {
+      const invitation = await prisma.invitation.findUnique({ where: { code } });
+      if (!invitation) {
+        return saveFileRsvp(code, parsed.data);
+      }
+      if (invitation.status !== "ACTIVE") {
+        return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
+      }
 
-    await prisma.guestRsvp.create({
-      data: {
-        invitationId: invitation.id,
-        name: parsed.data.name,
-        phone: parsed.data.phone,
-        attendees: parsed.data.attendees,
-        status: parsed.data.status === "confirmed" ? "CONFIRMED" : "DECLINED",
-        note: parsed.data.note,
-      },
-    });
-  } else {
-    const invitation = (await getFileInvitationByCode(code)) || getInvitationByCode(code);
-    if (!invitation) {
-      return NextResponse.json({ error: "الدعوة غير موجودة" }, { status: 404 });
-    }
-    if (await getFileInvitationByCode(code)) {
-      await addFileGuest(code, {
-        name: parsed.data.name,
-        phone: parsed.data.phone,
-        attendees: parsed.data.attendees,
-        status: parsed.data.status,
-        note: parsed.data.note,
+      await prisma.guestRsvp.create({
+        data: {
+          invitationId: invitation.id,
+          name: parsed.data.name,
+          phone: parsed.data.phone,
+          attendees: parsed.data.attendees,
+          status: parsed.data.status === "confirmed" ? "CONFIRMED" : "DECLINED",
+          note: parsed.data.note,
+        },
       });
+      revalidatePath(`/${code}/ad_3399`);
+      revalidatePath("/admin/analytics");
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      console.error("Failed to save database RSVP", error);
+      return saveFileRsvp(code, parsed.data);
     }
   }
 
-  return NextResponse.json({ ok: true });
+  return saveFileRsvp(code, parsed.data);
 }
