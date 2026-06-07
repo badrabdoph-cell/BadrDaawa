@@ -26,7 +26,7 @@ export default async function PricingPage() {
           <div className="pricing-page-actions" aria-label="إجراءات الأسعار">
             <Link className="btn btn-gold btn-glow" href="/order">
               <WandSparkles size={18} />
-              طلب دعوه
+              ابدأ إنشاء دعوتك
             </Link>
             <Link className="btn btn-soft" href="/templates">
               <Sparkles size={18} />

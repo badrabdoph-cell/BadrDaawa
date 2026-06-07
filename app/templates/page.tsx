@@ -18,7 +18,7 @@ export default async function TemplatesPage() {
       <main className="section compact">
         <div className="container">
           <div className="section-title-block templates-title-block">
-            <span className="eyebrow">شوف الأشكال</span>
+            <span className="eyebrow">شاهد التصاميم المختلفة</span>
             <h1 className="section-title">اختار قالب يحكي فرحتك</h1>
             <p className="section-lead">عاين أي قالب براحتك، ولما تستقر على الشكل اضغط اختار وكمّل بيانات الدعوة في خطوة هادية وسريعة.</p>
           </div>

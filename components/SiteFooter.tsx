@@ -12,7 +12,7 @@ export function SiteFooter() {
             </span>
             <span>BadrDaawa</span>
           </Link>
-          <p>Royal Envelope. دعوة واضحة، أنيقة، وسهلة المشاركة.</p>
+          <p>Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك.</p>
         </div>
         <div className="button-row">
           <Link className="btn btn-soft btn-icon" href="/contact" title="تواصل معنا">
