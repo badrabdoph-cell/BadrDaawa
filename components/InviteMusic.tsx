@@ -111,17 +111,6 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     const retryDelays = [120, 700, 1600, 3200];
     retryTimersRef.current = retryDelays.map((delay) => window.setTimeout(attemptStart, delay));
 
-    const startAfterInteraction = () => {
-      void start();
-    };
-
-    window.addEventListener("pointerdown", startAfterInteraction, { passive: true });
-    window.addEventListener("touchstart", startAfterInteraction, { passive: true });
-    window.addEventListener("click", startAfterInteraction);
-    window.addEventListener("keydown", startAfterInteraction);
-    window.addEventListener("scroll", startAfterInteraction, { passive: true });
-    window.addEventListener("focus", startAfterInteraction);
-
     const restartWhenVisible = () => {
       if (document.visibilityState === "visible" && audioRef.current?.paused && !userPausedRef.current) {
         void start();
@@ -139,12 +128,6 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
 
     return () => {
       hardStop(true);
-      window.removeEventListener("pointerdown", startAfterInteraction);
-      window.removeEventListener("touchstart", startAfterInteraction);
-      window.removeEventListener("click", startAfterInteraction);
-      window.removeEventListener("keydown", startAfterInteraction);
-      window.removeEventListener("scroll", startAfterInteraction);
-      window.removeEventListener("focus", startAfterInteraction);
       document.removeEventListener("visibilitychange", restartWhenVisible);
       window.removeEventListener("pagehide", stopWhenLeavingPage);
       window.removeEventListener("beforeunload", stopWhenLeavingPage);
@@ -191,7 +174,11 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       <button
         className={`music-button ${needsInteraction ? "attention" : ""} ${isPlaying ? "playing" : ""}`}
         type="button"
-        onClick={() => {
+        onPointerDown={(event) => {
+          event.stopPropagation();
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
           if (isPlaying) {
             stopByUser();
           } else {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { cleanPlayableAudioUrl, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
@@ -32,7 +33,8 @@ export async function POST(request: NextRequest) {
   const venue = String(formData.get("venue") || "").trim();
   const city = String(formData.get("city") || "").trim();
   const mapUrl = String(formData.get("mapUrl") || "").trim();
-  const musicUrl = String(formData.get("musicUrl") || "").trim();
+  const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
+  const uploadedAudio = formData.get("audioFile");
   const templateSlug = String(formData.get("templateSlug") || royalEnvelopeTemplate.slug).trim();
   const selectedTemplate = (await getTemplateWithSettings(templateSlug)) || royalEnvelopeTemplate;
   const galleryImages = formData
@@ -45,7 +47,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
+  if (rawMusicUrl && isYouTubeUrl(rawMusicUrl)) {
+    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
+  }
+
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
+  const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null);
+  const musicUrl = uploadedMusicUrl || cleanPlayableAudioUrl(rawMusicUrl);
+  if (rawMusicUrl && !musicUrl) {
+    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
+  }
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
 

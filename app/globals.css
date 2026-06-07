@@ -5040,6 +5040,30 @@ img {
   gap: 10px;
 }
 
+.admin-audio-field {
+  gap: 10px;
+}
+
+.admin-audio-field > p {
+  margin: 0;
+  max-width: 860px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 850;
+  line-height: 1.6;
+}
+
+.admin-audio-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.admin-audio-upload {
+  min-height: 112px;
+}
+
 .admin-gallery-title {
   display: inline-flex;
   align-items: center;
@@ -13288,7 +13312,8 @@ body:has(.template-preview-floating-actions) .music-control {
 
   .music-slot-summary,
   .music-form-topline,
-  .music-source-grid {
+  .music-source-grid,
+  .admin-audio-grid {
     grid-template-columns: 1fr;
   }
 

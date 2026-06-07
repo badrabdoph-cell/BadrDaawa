@@ -1,7 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { cleanPlayableAudioUrl } from "./audio-files";
 import { getCustomTemplates } from "./custom-templates";
+import { getMusicLibrary } from "./music-library";
 import { getTemplateBySlug, invitationTemplates } from "./templates";
 import type { TemplateDefinition } from "./types";
 
@@ -45,6 +47,10 @@ function cleanUrl(value: string) {
   }
 }
 
+function cleanAudioUrl(value: string) {
+  return cleanPlayableAudioUrl(value);
+}
+
 function cleanText(value: string, maxLength = 800) {
   return value.trim().slice(0, maxLength);
 }
@@ -70,9 +76,19 @@ async function writeTemplateSettings(settings: TemplateSettings) {
   await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
 }
 
-function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings): TemplateDefinition {
+async function getGlobalMusicOverride() {
+  const library = await getMusicLibrary();
+  const slot = library.slots[0];
+  if (!slot) return undefined;
+  if (!slot.enabled) return "";
+  return slot.url || undefined;
+}
+
+function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings, globalMusicUrl?: string): TemplateDefinition {
   const override = settings[template.slug];
-  if (!override) return template;
+  if (!override) {
+    return typeof globalMusicUrl === "string" ? { ...template, musicUrl: globalMusicUrl } : template;
+  }
 
   const palette = override.palette
     ? {
@@ -93,7 +109,7 @@ function applyTemplateSettings(template: TemplateDefinition, settings: TemplateS
     previewImage: override.previewImage || template.previewImage,
     accentImage: override.accentImage || template.accentImage,
     palette,
-    musicUrl: override.musicMuted ? "" : override.musicUrl || template.musicUrl,
+    musicUrl: typeof globalMusicUrl === "string" ? globalMusicUrl : override.musicMuted ? "" : override.musicUrl || template.musicUrl,
     photographer: {
       enabled: override.photographer?.enabled ?? template.photographer?.enabled ?? true,
       name: override.photographer?.name || template.photographer?.name || "badrabdoph",
@@ -104,9 +120,8 @@ function applyTemplateSettings(template: TemplateDefinition, settings: TemplateS
 }
 
 export async function getTemplatesWithSettings() {
-  const settings = await readTemplateSettings();
-  const customTemplates = await getCustomTemplates();
-  return [...invitationTemplates, ...customTemplates].map((template) => applyTemplateSettings(template, settings));
+  const [settings, customTemplates, globalMusicUrl] = await Promise.all([readTemplateSettings(), getCustomTemplates(), getGlobalMusicOverride()]);
+  return [...invitationTemplates, ...customTemplates].map((template) => applyTemplateSettings(template, settings, globalMusicUrl));
 }
 
 export async function getPublicTemplatesWithSettings() {
@@ -118,8 +133,8 @@ export async function getTemplateWithSettings(slug: string) {
   const customTemplates = await getCustomTemplates();
   const template = getTemplateBySlug(slug) || customTemplates.find((item) => item.slug === slug);
   if (!template) return undefined;
-  const settings = await readTemplateSettings();
-  return applyTemplateSettings(template, settings);
+  const [settings, globalMusicUrl] = await Promise.all([readTemplateSettings(), getGlobalMusicOverride()]);
+  return applyTemplateSettings(template, settings, globalMusicUrl);
 }
 
 export async function getPublicTemplateWithSettings(slug: string) {
@@ -133,7 +148,7 @@ export async function updateTemplateMusic(slug: string, musicUrl: string) {
   if (!template) return false;
 
   const settings = await readTemplateSettings();
-  const cleanedMusicUrl = cleanUrl(musicUrl);
+  const cleanedMusicUrl = cleanAudioUrl(musicUrl);
 
   if (cleanedMusicUrl) {
     settings[slug] = { ...(settings[slug] || {}), musicUrl: cleanedMusicUrl };
@@ -156,7 +171,7 @@ export async function updateTemplatesMusic(slugs: string[], musicUrl: string) {
   const templates = await getTemplatesWithSettings();
   const validSlugs = new Set(templates.map((template) => template.slug));
   const selectedSlugs = Array.from(new Set(slugs.map((slug) => slug.trim()).filter((slug) => validSlugs.has(slug))));
-  const cleanedMusicUrl = cleanUrl(musicUrl);
+  const cleanedMusicUrl = cleanAudioUrl(musicUrl);
   if (!selectedSlugs.length || !cleanedMusicUrl) return [];
 
   const settings = await readTemplateSettings();
@@ -176,7 +191,7 @@ export async function updateTemplatesMusicState(slugs: string[], input: { musicU
   const templates = await getTemplatesWithSettings();
   const validSlugs = new Set(templates.map((template) => template.slug));
   const selectedSlugs = Array.from(new Set(slugs.map((slug) => slug.trim()).filter((slug) => validSlugs.has(slug))));
-  const cleanedMusicUrl = cleanUrl(input.musicUrl || "");
+  const cleanedMusicUrl = cleanAudioUrl(input.musicUrl || "");
   if (!selectedSlugs.length) return [];
   if (input.enabled && !cleanedMusicUrl) return [];
 
@@ -230,7 +245,7 @@ export async function updateTemplateSettings(
   const typography = cleanText(input.typography || "", 240);
   const previewImage = cleanUrl(input.previewImage || "");
   const accentImage = cleanUrl(input.accentImage || "");
-  const musicUrl = cleanUrl(input.musicUrl || "");
+  const musicUrl = cleanAudioUrl(input.musicUrl || "");
   const instagramUrl = cleanUrl(input.photographer?.instagramUrl || "");
   const facebookUrl = cleanUrl(input.photographer?.facebookUrl || "");
 

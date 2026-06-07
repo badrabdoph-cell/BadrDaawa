@@ -1,4 +1,4 @@
-import { ImagePlus, Link2, WandSparkles } from "lucide-react";
+import { ImagePlus, Link2, UploadCloud, WandSparkles } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
 import type { TemplateDefinition } from "@/lib/types";
@@ -62,8 +62,8 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
           </div>
         </div>
       ) : null}
-      {error ? <div className="notice danger">راجع البيانات المطلوبة قبل الإنشاء، خصوصا تاريخ الفرح والحقول الأساسية.</div> : null}
-      <form className="admin-form-grid" action="/api/admin/invitations" method="post">
+      {error ? <div className="notice danger">{error === "music" ? "رابط الموسيقى غير قابل للتشغيل. استخدم ملف مرفوع أو رابط صوت مباشر مثل MP3/WAV، وليس YouTube." : "راجع البيانات المطلوبة قبل الإنشاء، خصوصا تاريخ الفرح والحقول الأساسية."}</div> : null}
+      <form className="admin-form-grid" action="/api/admin/invitations" method="post" encType="multipart/form-data">
         <label className="field">
           <span>اسم العريس</span>
           <input name="groomName" placeholder="بدر" required />
@@ -113,10 +113,6 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
           <input name="mapUrl" placeholder="https://maps.google.com/..." />
         </label>
         <label className="field">
-          <span>رابط الأغنية</span>
-          <input name="musicUrl" placeholder="اتركه فارغًا لاستخدام موسيقى القالب الافتراضية" />
-        </label>
-        <label className="field">
           <span>القالب</span>
           <select name="templateSlug" defaultValue={templates[0]?.slug || "featured-1"}>
             {templates.map((template) => (
@@ -126,6 +122,26 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
             ))}
           </select>
         </label>
+        <div className="field full admin-audio-field">
+          <span className="admin-gallery-title">
+            <UploadCloud size={17} />
+            موسيقى خاصة بالدعوة
+          </span>
+          <p>اختياري. لو رفعت ملف أو أضفت رابط صوت مباشر هنا، هيشتغل لهذه الدعوة فقط بدل موسيقى القالب. روابط YouTube لا تعمل كصوت مباشر.</p>
+          <div className="admin-audio-grid">
+            <label className="music-upload-box admin-audio-upload">
+              <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac" />
+              <UploadCloud size={22} />
+              <strong>رفع صوت للدعوة</strong>
+              <small>MP3, WAV, OGG, WEBM, M4A حتى 35MB</small>
+            </label>
+            <label className="field music-url-field">
+              <span>أو رابط صوت مباشر</span>
+              <input name="musicUrl" placeholder="https://example.com/song.mp3" />
+              <small>اتركه فارغًا لاستخدام موسيقى القالب أو الموسيقى العامة.</small>
+            </label>
+          </div>
+        </div>
         <div className="field full admin-gallery-field">
           <span className="admin-gallery-title">
             <ImagePlus size={17} />

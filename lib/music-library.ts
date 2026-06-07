@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { cleanPlayableAudioUrl } from "./audio-files";
 
 export type MusicSlot = {
   id: string;
@@ -17,9 +18,22 @@ export type MusicLibrary = {
 };
 
 const libraryPath = path.join(process.cwd(), "data", "music-library.json");
-const slotIds = ["track-1", "track-2", "track-3", "track-4", "track-5"];
+const globalSlotId = "global-track";
 
-export const defaultMusicSlots: MusicSlot[] = slotIds.map((id, index) => ({
+export const defaultMusicSlots: MusicSlot[] = [
+  {
+    id: globalSlotId,
+    name: "الموسيقى العامة",
+    url: "",
+    enabled: true,
+    applyToAll: true,
+    templateSlugs: [],
+    updatedAt: "",
+  },
+];
+
+const legacySlotIds = ["track-1", "track-2", "track-3", "track-4", "track-5"];
+const legacyMusicSlots: MusicSlot[] = legacySlotIds.map((id, index) => ({
   id,
   name: `مقطع ${index + 1}`,
   url: "",
@@ -30,21 +44,17 @@ export const defaultMusicSlots: MusicSlot[] = slotIds.map((id, index) => ({
 }));
 
 function cleanUrl(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (trimmed.startsWith("/")) return trimmed;
-
-  try {
-    const url = new URL(trimmed);
-    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : "";
-  } catch {
-    return "";
-  }
+  return cleanPlayableAudioUrl(value);
 }
 
 function cleanText(value: string, fallback: string) {
   const text = value.trim().slice(0, 90);
   return text || fallback;
+}
+
+function timestamp(value?: string) {
+  const parsed = Date.parse(value || "");
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 async function readMusicLibraryFile(): Promise<Partial<MusicLibrary>> {
@@ -58,15 +68,20 @@ async function readMusicLibraryFile(): Promise<Partial<MusicLibrary>> {
 }
 
 function normalizeMusicLibrary(input: Partial<MusicLibrary>): MusicLibrary {
+  const inputSlots = Array.isArray(input.slots) ? input.slots : [];
+  const legacyFallback = [...inputSlots, ...legacyMusicSlots]
+    .filter((slot) => slot?.url)
+    .sort((a, b) => timestamp(b.updatedAt) - timestamp(a.updatedAt))[0];
+
   const slots = defaultMusicSlots.map((fallback) => {
-    const incoming = Array.isArray(input.slots) ? input.slots.find((slot) => slot?.id === fallback.id) : undefined;
+    const incoming = inputSlots.find((slot) => slot?.id === fallback.id) || legacyFallback;
     return {
       id: fallback.id,
       name: cleanText(incoming?.name || "", fallback.name),
       url: cleanUrl(incoming?.url || ""),
       enabled: incoming?.enabled !== false,
-      applyToAll: incoming?.applyToAll === true,
-      templateSlugs: Array.isArray(incoming?.templateSlugs) ? Array.from(new Set(incoming.templateSlugs.map((slug) => String(slug).trim()).filter(Boolean))) : [],
+      applyToAll: true,
+      templateSlugs: [],
       updatedAt: typeof incoming?.updatedAt === "string" ? incoming.updatedAt : "",
     };
   });
@@ -102,8 +117,8 @@ export async function updateMusicSlot(input: {
     name: cleanText(input.name, fallback.name),
     url: cleanUrl(input.url),
     enabled: input.enabled,
-    applyToAll: input.applyToAll,
-    templateSlugs: Array.from(new Set(input.templateSlugs.map((slug) => slug.trim()).filter(Boolean))),
+    applyToAll: true,
+    templateSlugs: [],
     updatedAt: new Date().toISOString(),
   };
 

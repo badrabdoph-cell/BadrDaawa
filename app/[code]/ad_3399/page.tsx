@@ -61,7 +61,11 @@ export default async function CustomerAdminPage({
         ]}
       />
 
-      {query.saved ? <div className="notice success customer-notice">تم حفظ التعديلات المتاحة لهذه الدعوة.</div> : null}
+      {query.saved === "music-error" ? (
+        <div className="notice danger customer-notice">رابط الموسيقى غير قابل للتشغيل. استخدم ملف مرفوع أو رابط صوت مباشر مثل MP3/WAV.</div>
+      ) : query.saved ? (
+        <div className="notice success customer-notice">تم حفظ التعديلات المتاحة لهذه الدعوة.</div>
+      ) : null}
 
       <section className="customer-control-grid">
         <article className="panel">
@@ -126,11 +130,16 @@ export default async function CustomerAdminPage({
         <article className="panel control-panel-wide">
           <Music2 size={24} />
           <h2>موسيقى الدعوة</h2>
-          <p>اترك الرابط فارغًا لتشغيل موسيقى القالب الافتراضية، أو ضع رابط ملف MP3/WAV خاص بالدعوة.</p>
-          <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post">
+          <p>اتركها فارغة لتشغيل موسيقى القالب، أو ارفع ملفًا/رابط صوت مباشر خاص بهذه الدعوة فقط.</p>
+          <form className="admin-form-grid compact-controls" action={`/api/client/invitations/${invitation.code}`} method="post" encType="multipart/form-data">
             <label className="field full">
-              <span>رابط الأغنية</span>
-              <input name="musicUrl" defaultValue={invitation.musicUrl || ""} placeholder="https://..." />
+              <span>رفع ملف صوت</span>
+              <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac" />
+            </label>
+            <label className="field full">
+              <span>رابط صوت مباشر</span>
+              <input name="musicUrl" defaultValue={invitation.musicUrl || ""} placeholder="https://example.com/song.mp3" />
+              <small>روابط YouTube لا تعمل كموسيقى مباشرة داخل الدعوة.</small>
             </label>
             <button className="btn btn-gold admin-submit" type="submit">
               <Save size={17} />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { updateFileInvitation } from "@/lib/file-store";
+import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
 import { saveInvitationGalleryImages } from "@/lib/invitation-images";
 
 function isClientAllowed(request: NextRequest, code: string) {
@@ -31,7 +32,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const venue = String(formData.get("venue") || "").trim();
   const city = String(formData.get("city") || "").trim();
   const mapUrl = String(formData.get("mapUrl") || "").trim();
-  const musicUrl = String(formData.get("musicUrl") || "").trim();
+  const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
+  const uploadedAudio = formData.get("audioFile");
+  let currentMusicUrl = "";
+
+  if (formData.has("musicUrl") || uploadedAudio instanceof File) {
+    if (rawMusicUrl && isYouTubeUrl(rawMusicUrl)) {
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
+    }
+
+    if (prisma) {
+      const existing = await prisma.invitation.findUnique({ where: { code }, select: { musicUrl: true } }).catch(() => null);
+      currentMusicUrl = existing?.musicUrl || "";
+    } else {
+      currentMusicUrl = (await getFileInvitationByCode(code))?.musicUrl || "";
+    }
+  }
 
   if (groomName) {
     data.groomName = groomName;
@@ -64,9 +80,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     data.mapUrl = mapUrl;
     fileData.mapUrl = mapUrl;
   }
-  if (formData.has("musicUrl")) {
-    data.musicUrl = musicUrl;
-    fileData.musicUrl = musicUrl;
+  if (formData.has("musicUrl") || uploadedAudio instanceof File) {
+    const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null, currentMusicUrl);
+    const directMusicUrl = cleanPlayableAudioUrl(rawMusicUrl);
+    const nextMusicUrl = uploadedMusicUrl || directMusicUrl || "";
+    if (rawMusicUrl && !nextMusicUrl) {
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
+    }
+    if (!uploadedMusicUrl && directMusicUrl && directMusicUrl !== currentMusicUrl) {
+      await deleteUploadedMusicFile(currentMusicUrl);
+    }
+    data.musicUrl = nextMusicUrl;
+    fileData.musicUrl = nextMusicUrl;
   }
   if (savedGallery.length) {
     data.gallery = savedGallery;

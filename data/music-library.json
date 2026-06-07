@@ -1,53 +1,13 @@
 {
   "slots": [
     {
-      "id": "track-1",
-      "name": "المقطع الرئيسي",
-      "url": "/assets/audio/badr-sara-wedding-3.mp3",
-      "enabled": true,
-      "applyToAll": false,
-      "templateSlugs": [
-        "featured-1"
-      ],
-      "updatedAt": "2026-06-06T23:34:23.119Z"
-    },
-    {
-      "id": "track-2",
-      "name": "الموسيقى الثانية",
+      "id": "global-track",
+      "name": "الموسيقى العامة",
       "url": "/uploads/music/music-1780789271956-8fdca446.mp3",
       "enabled": true,
-      "applyToAll": false,
-      "templateSlugs": [
-        "featured-1"
-      ],
+      "applyToAll": true,
+      "templateSlugs": [],
       "updatedAt": "2026-06-06T23:41:36.175Z"
-    },
-    {
-      "id": "track-3",
-      "name": "مقطع 3",
-      "url": "",
-      "enabled": true,
-      "applyToAll": false,
-      "templateSlugs": [],
-      "updatedAt": ""
-    },
-    {
-      "id": "track-4",
-      "name": "مقطع 4",
-      "url": "",
-      "enabled": true,
-      "applyToAll": false,
-      "templateSlugs": [],
-      "updatedAt": ""
-    },
-    {
-      "id": "track-5",
-      "name": "مقطع 5",
-      "url": "",
-      "enabled": true,
-      "applyToAll": false,
-      "templateSlugs": [],
-      "updatedAt": ""
     }
   ]
 }

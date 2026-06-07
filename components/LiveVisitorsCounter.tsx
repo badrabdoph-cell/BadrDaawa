@@ -7,23 +7,39 @@ function randomVisitors() {
   return Math.floor(Math.random() * 11) + 3;
 }
 
+function randomDelay() {
+  return 6500 + Math.floor(Math.random() * 9500);
+}
+
 export function LiveVisitorsCounter() {
   const [count, setCount] = useState(7);
 
   useEffect(() => {
-    setCount(randomVisitors());
-    const timer = window.setInterval(() => {
-      setCount((current) => {
-        const direction = Math.random() > 0.48 ? 1 : -1;
-        const step = Math.random() > 0.72 ? 2 : 1;
-        const next = current + direction * step;
-        if (next < 3) return 3 + Math.floor(Math.random() * 3);
-        if (next > 13) return 11 - Math.floor(Math.random() * 3);
-        return next;
-      });
-    }, 1900 + Math.floor(Math.random() * 900));
+    let timer: number | undefined;
+    let cancelled = false;
 
-    return () => window.clearInterval(timer);
+    const scheduleNextChange = () => {
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        setCount((current) => {
+          const direction = Math.random() > 0.52 ? 1 : -1;
+          const step = Math.random() > 0.84 ? 2 : 1;
+          const next = current + direction * step;
+          if (next < 3) return 3 + Math.floor(Math.random() * 3);
+          if (next > 13) return 11 - Math.floor(Math.random() * 3);
+          return next;
+        });
+        scheduleNextChange();
+      }, randomDelay());
+    };
+
+    setCount(randomVisitors());
+    scheduleNextChange();
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
   }, []);
 
   return (
