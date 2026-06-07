@@ -29,16 +29,16 @@ async function updateDatabaseInvitation(code: string, action: string) {
 
   try {
     if (action === "delete") {
-      await prisma.invitation.delete({ where: { code } });
-      return true;
+      const result = await prisma.invitation.deleteMany({ where: { code } });
+      return result.count > 0;
     }
 
     if (action === "pause" || action === "resume") {
-      await prisma.invitation.update({
+      const result = await prisma.invitation.updateMany({
         where: { code },
         data: { status: action === "pause" ? "PAUSED" : "ACTIVE" },
       });
-      return true;
+      return result.count > 0;
     }
   } catch (error) {
     console.error("Failed to update database invitation from admin", error);

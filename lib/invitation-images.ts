@@ -1,7 +1,15 @@
 import crypto from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "./image-formats";
+import { normalizeImageForDisplay } from "./display-images";
+import {
+  imageExtensionForUpload,
+  imageExtensionFromDataMime,
+  imageExtensionFromName,
+  isBrowserDisplayImageUrl,
+  isSupportedImageFile,
+  isSupportedImageUrl,
+} from "./image-formats";
 import { ensureDirectory } from "./runtime-paths";
 import { normalizeInternalAssetUrl } from "./utils";
 
@@ -18,15 +26,38 @@ function imageExtension(type: string, fileName = "") {
   return imageExtensionForUpload(type, fileName);
 }
 
-async function saveImageBytes(bytes: Buffer, extension: string) {
+async function saveImageBytes(bytes: Buffer, extension: string, sourceLabel: string) {
+  const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
+  if (!normalized) return "";
+
   const uploadDir = path.join(process.cwd(), "public", "uploads", "client-invitations");
   ensureDirectory(uploadDir);
   await mkdir(uploadDir, { recursive: true });
-  const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-  await writeFile(path.join(uploadDir, fileName), bytes);
+  const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
+  await writeFile(path.join(uploadDir, fileName), normalized.bytes);
   const url = `/uploads/client-invitations/${fileName}`;
-  console.log(`[Invitation Images] Saved ${url} (${bytes.length} bytes).`);
+  const convertedSuffix = normalized.converted ? ` converted from ${normalized.originalExtension}` : "";
+  console.log(`[Invitation Images] Saved ${url} (${normalized.bytes.length} bytes${convertedSuffix}).`);
   return url;
+}
+
+async function saveExistingInternalImageUrl(value: string) {
+  const normalized = normalizeInternalAssetUrl(value) || value;
+  if (isBrowserDisplayImageUrl(normalized)) return normalized;
+  if (!normalized.startsWith("/uploads/") && !normalized.startsWith("/assets/")) {
+    console.error(`[Invitation Images] Existing image is not browser-displayable and cannot be converted without a local file: ${normalized}`);
+    return "";
+  }
+
+  try {
+    const diskPath = path.join(process.cwd(), "public", normalized.replace(/^\/+/, ""));
+    const bytes = await readFile(diskPath);
+    const extension = imageExtensionFromName(normalized) || "jpg";
+    return saveImageBytes(bytes, extension, `existing:${normalized}`);
+  } catch (error) {
+    console.error(`[Invitation Images] Failed to convert existing non-displayable image: ${normalized}`, error);
+    return "";
+  }
 }
 
 async function saveGalleryImage(image: string | File) {
@@ -45,7 +76,7 @@ async function saveGalleryImage(image: string | File) {
         console.error(`[Invitation Images] Uploaded image is empty: ${image.name || "unnamed"}.`);
         return "";
       }
-      return saveImageBytes(bytes, imageExtension(image.type, image.name));
+      return saveImageBytes(bytes, imageExtension(image.type, image.name), image.name || image.type || "uploaded invitation image");
     } catch (error) {
       console.error("[Invitation Images] Failed to save uploaded invitation image", error);
       return "";
@@ -56,7 +87,7 @@ async function saveGalleryImage(image: string | File) {
   if (!value) return "";
 
   if (isExistingImageUrl(value)) {
-    return normalizeInternalAssetUrl(value) || value;
+    return saveExistingInternalImageUrl(value);
   }
 
   const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
@@ -72,7 +103,7 @@ async function saveGalleryImage(image: string | File) {
   }
 
   try {
-    return saveImageBytes(bytes, imageExtensionFromDataMime(match[1].toLowerCase()) || "jpg");
+    return saveImageBytes(bytes, imageExtensionFromDataMime(match[1].toLowerCase()) || "jpg", "optimized invitation image");
   } catch (error) {
     console.error("[Invitation Images] Failed to save invitation gallery image", error);
     return "";

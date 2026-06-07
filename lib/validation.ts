@@ -10,6 +10,10 @@ export const orderRequestSchema = z.object({
   venue: z.string().trim().optional().default(""),
   notes: z.string().trim().max(1000).optional(),
   orderImages: z.array(z.string()).max(3).optional().default([]),
+  musicEnabled: z.boolean().optional().default(false),
+  musicChoice: z.enum(["default", "upload", "url"]).optional().default("default"),
+  musicUrl: z.string().trim().max(500).optional().default(""),
+  orderMusic: z.string().optional().default(""),
   templateSlug: z.string().trim().min(2),
   language: z.enum(["ar", "en"]),
 });

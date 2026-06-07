@@ -1,11 +1,19 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { normalizeImageForDisplay } from "@/lib/display-images";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { imageExtensionForUpload, imageExtensionFromDataMime, isSupportedImageFile, isSupportedImageUrl } from "@/lib/image-formats";
+import {
+  imageExtensionForUpload,
+  imageExtensionFromDataMime,
+  imageExtensionFromName,
+  isBrowserDisplayImageUrl,
+  isSupportedImageFile,
+  isSupportedImageUrl,
+} from "@/lib/image-formats";
 import { updateTemplateSettings } from "@/lib/template-settings";
 import { getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
@@ -17,16 +25,33 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
   const uploadDir = path.join(process.cwd(), "public", "uploads", "template-previews");
   await mkdir(uploadDir, { recursive: true });
 
-  if (image instanceof File) {
-    if (!isSupportedImageFile(image) || image.size > 80 * 1024 * 1024) return "";
-    const extension = imageExtensionForUpload(image.type, image.name);
-    const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-    await writeFile(path.join(uploadDir, fileName), Buffer.from(await image.arrayBuffer()));
+  async function saveBytes(bytes: Buffer, extension: string, sourceLabel: string) {
+    const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
+    if (!normalized) return "";
+    const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
+    await writeFile(path.join(uploadDir, fileName), normalized.bytes);
     return `/uploads/template-previews/${fileName}`;
   }
 
+  if (image instanceof File) {
+    if (!isSupportedImageFile(image) || image.size > 80 * 1024 * 1024) return "";
+    const extension = imageExtensionForUpload(image.type, image.name);
+    return saveBytes(Buffer.from(await image.arrayBuffer()), extension, `template:${image.name || image.type}`);
+  }
+
   if (!image) return "";
-  if (image.startsWith("/") || image.startsWith("http://") || image.startsWith("https://")) return normalizeInternalAssetUrl(image) || image;
+  if (image.startsWith("/") || image.startsWith("http://") || image.startsWith("https://")) {
+    const normalized = normalizeInternalAssetUrl(image) || image;
+    if (isBrowserDisplayImageUrl(normalized)) return normalized;
+    if (!normalized.startsWith("/uploads/") && !normalized.startsWith("/assets/")) return "";
+    try {
+      const diskPath = path.join(process.cwd(), "public", normalized.replace(/^\/+/, ""));
+      return saveBytes(await readFile(diskPath), imageExtensionFromName(normalized) || "jpg", `template-existing:${normalized}`);
+    } catch (error) {
+      console.error(`[Template Images] Failed to convert existing non-displayable image: ${normalized}`, error);
+      return "";
+    }
+  }
   if (!isSupportedImageUrl(image)) return "";
 
   const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
@@ -36,9 +61,7 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
   if (!bytes.length || bytes.length > 12 * 1024 * 1024) return "";
   const extension = imageExtensionFromDataMime(match[1]) || "jpg";
 
-  const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-  await writeFile(path.join(uploadDir, fileName), bytes);
-  return `/uploads/template-previews/${fileName}`;
+  return saveBytes(bytes, extension, "template-optimized");
 }
 
 export async function POST(request: NextRequest) {

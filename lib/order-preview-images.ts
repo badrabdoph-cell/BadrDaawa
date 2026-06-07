@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { imageExtensionFromDataMime, isSupportedImageUrl } from "./image-formats";
+import { normalizeImageForDisplay } from "./display-images";
+import { imageExtensionFromDataMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
 import { ensureDirectory } from "./runtime-paths";
 
 const maxPreviewImageBytes = 12 * 1024 * 1024;
@@ -11,6 +12,20 @@ export async function saveOrderPreviewImages(images: string[], folder = "order-p
   ensureDirectory(uploadDir);
   const savedUrls: string[] = [];
 
+  async function saveBytes(bytes: Buffer, extension: string, sourceLabel: string) {
+    const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
+    if (!normalized) return "";
+
+    ensureDirectory(uploadDir);
+    await mkdir(uploadDir, { recursive: true });
+    const fileName = `order-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
+    await writeFile(path.join(uploadDir, fileName), normalized.bytes);
+    const url = `/uploads/${folder}/${fileName}`;
+    const convertedSuffix = normalized.converted ? ` converted from ${normalized.originalExtension}` : "";
+    console.log(`[Order Images] Saved ${url} (${normalized.bytes.length} bytes${convertedSuffix}).`);
+    return url;
+  }
+
   for (const image of images.slice(0, 3)) {
     const value = image.trim();
     if (!value || !isSupportedImageUrl(value)) {
@@ -18,8 +33,19 @@ export async function saveOrderPreviewImages(images: string[], folder = "order-p
       continue;
     }
 
-    if (value.startsWith("/uploads/") || value.startsWith("/assets/")) {
+    if ((value.startsWith("/uploads/") || value.startsWith("/assets/")) && isBrowserDisplayImageUrl(value)) {
       savedUrls.push(value);
+      continue;
+    }
+
+    if (value.startsWith("/uploads/") || value.startsWith("/assets/")) {
+      try {
+        const diskPath = path.join(process.cwd(), "public", value.replace(/^\/+/, ""));
+        const convertedUrl = await saveBytes(await readFile(diskPath), imageExtensionFromName(value) || "jpg", `existing:${value}`);
+        if (convertedUrl) savedUrls.push(convertedUrl);
+      } catch (error) {
+        console.error(`[Order Images] Failed to convert existing non-displayable image for ${folder}: ${value}`, error);
+      }
       continue;
     }
 
@@ -36,13 +62,8 @@ export async function saveOrderPreviewImages(images: string[], folder = "order-p
     }
 
     const extension = imageExtensionFromDataMime(match[1]) || "jpg";
-    ensureDirectory(uploadDir);
-    await mkdir(uploadDir, { recursive: true });
-    const fileName = `order-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-    await writeFile(path.join(uploadDir, fileName), bytes);
-    const url = `/uploads/${folder}/${fileName}`;
-    console.log(`[Order Images] Saved ${url} (${bytes.length} bytes).`);
-    savedUrls.push(url);
+    const url = await saveBytes(bytes, extension, `preview:${folder}`);
+    if (url) savedUrls.push(url);
   }
 
   console.log(`[Order Images] Received ${images.length}, saved ${savedUrls.length} in ${folder}.`, savedUrls);

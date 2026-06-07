@@ -43,6 +43,10 @@ export const supportedImageExtensions = [
 
 const supportedImageExtensionSet = new Set<string>(supportedImageExtensions);
 
+export const browserDisplayImageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "svg", "bmp", "ico", "avif"] as const;
+
+const browserDisplayImageExtensionSet = new Set<string>(browserDisplayImageExtensions);
+
 const imageMimeExtensions: Record<string, string> = {
   "application/illustrator": "ai",
   "application/postscript": "eps",
@@ -129,6 +133,27 @@ export function isSupportedImageUrl(value: string, allowDataImage = true) {
   if (trimmed.startsWith("/") || trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     const clean = trimmed.split("?")[0]?.split("#")[0] || "";
     return Boolean(imageExtensionFromName(clean) || /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/"));
+  }
+  return false;
+}
+
+export function isBrowserDisplayImageExtension(value?: string | null) {
+  const extension = cleanImageExtension(value);
+  return Boolean(extension && browserDisplayImageExtensionSet.has(extension));
+}
+
+export function isBrowserDisplayImageUrl(value: string, allowDataImage = true) {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (allowDataImage && /^data:image\/[a-z0-9.+-]+;base64,/i.test(trimmed)) {
+    const mime = trimmed.slice(5, trimmed.indexOf(";"));
+    return isBrowserDisplayImageExtension(imageExtensionFromDataMime(mime));
+  }
+  if (trimmed.startsWith("/") || trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    const clean = trimmed.split("?")[0]?.split("#")[0] || "";
+    const extension = imageExtensionFromName(clean);
+    if (extension) return isBrowserDisplayImageExtension(extension);
+    return /^https?:\/\//i.test(trimmed);
   }
   return false;
 }

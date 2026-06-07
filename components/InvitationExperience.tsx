@@ -6,6 +6,7 @@ import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
 import { InvitePermissions } from "./InvitePermissions";
 import { QrCodeBlock } from "./QrCodeBlock";
+import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { shouldShowPhotographerCard } from "@/lib/site-settings";
 import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
@@ -13,7 +14,8 @@ import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
 function cleanInviteImage(value?: string | null) {
-  return normalizeInternalAssetUrl(value);
+  const url = normalizeInternalAssetUrl(value);
+  return url && isBrowserDisplayImageUrl(url) ? url : "";
 }
 
 function getInvitationImages(invitation: Invitation) {

@@ -21,6 +21,13 @@ type PageProps = {
     mapUrl?: string;
     venue?: string;
     notes?: string;
+    photographerEnabled?: string;
+    photographerName?: string;
+    photographerFacebookUrl?: string;
+    photographerInstagramUrl?: string;
+    musicEnabled?: string;
+    musicChoice?: string;
+    musicUrl?: string;
     gallery?: string;
   }>;
 };
@@ -28,7 +35,7 @@ type PageProps = {
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
   const templates = await getPublicTemplatesWithSettings();
-  const selected = params.template ? templates.find((template) => template.slug === params.template) : undefined;
+  const selected = (params.template ? templates.find((template) => template.slug === params.template) : undefined) || templates[0];
   if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
   const initialDraft: OrderInitialDraft = {
@@ -39,6 +46,13 @@ export default async function OrderPage({ searchParams }: PageProps) {
     mapUrl: params.mapUrl || "",
     venue: params.venue || "",
     notes: params.notes || "",
+    photographerEnabled: params.photographerEnabled === "1",
+    photographerName: params.photographerName || "",
+    photographerFacebookUrl: params.photographerFacebookUrl || "",
+    photographerInstagramUrl: params.photographerInstagramUrl || "",
+    musicEnabled: params.musicEnabled === "1",
+    musicChoice: params.musicChoice === "upload" || params.musicChoice === "url" ? params.musicChoice : "default",
+    musicUrl: params.musicUrl || "",
     imageUrls: (params.gallery || "").split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3),
   };
 
@@ -47,7 +61,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <SiteHeader />
       <main className="section compact">
         <div className="container order-shell">
-          <SectionIntro eyebrow="الخطوة الثانية" title="كمّل بيانات دعوتك" lead="القالب اتحدد، دلوقتي اكتب البيانات الأساسية وارفع الصور اللي تحب تظهر في الدعوة. بعد التأكيد هنكمل معاك التفاصيل على واتساب." />
+          <SectionIntro eyebrow="طلب دعوة" title="بيانات الدعوة" lead="اختار القالب، اكتب بيانات المناسبة، وارفع الصور. تقدر تعاين الدعوة قبل تأكيد الطلب." />
           <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} />
         </div>
       </main>

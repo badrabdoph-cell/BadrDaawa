@@ -1,6 +1,7 @@
 import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode as getDemoInvitationByCode } from "./demo-data";
 import { prisma } from "./db";
 import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
+import { isBrowserDisplayImageUrl } from "./image-formats";
 import type { GuestRsvp, Invitation } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
 
@@ -40,11 +41,15 @@ type DatabaseGuest = {
 };
 
 function toStringArray(value: unknown) {
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean);
+  const clean = (item: string) => {
+    const url = normalizeInternalAssetUrl(item);
+    return url && isBrowserDisplayImageUrl(url) ? url : "";
+  };
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map(clean).filter(Boolean);
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value) as unknown;
-      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean) : [];
+      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").map(clean).filter(Boolean) : [];
     } catch {
       return [];
     }
@@ -54,7 +59,8 @@ function toStringArray(value: unknown) {
 
 function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
   const gallery = toStringArray(invitation.gallery);
-  const heroPhoto = normalizeInternalAssetUrl(invitation.heroPhoto) || gallery[0] || "/assets/brand/hero-luxury.png";
+  const normalizedHero = normalizeInternalAssetUrl(invitation.heroPhoto);
+  const heroPhoto = (normalizedHero && isBrowserDisplayImageUrl(normalizedHero) ? normalizedHero : "") || gallery[0] || "/assets/brand/hero-luxury.png";
   return {
     id: invitation.id,
     code: invitation.code,

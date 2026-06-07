@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
@@ -11,6 +12,25 @@ export const runtime = "nodejs";
 async function saveOrderImages(images: string[], request: Request) {
   console.log(`[Order API] Saving ${images.length} order image(s) for ${request.url}.`);
   return saveOrderPreviewImages(images, "order-requests");
+}
+
+async function resolveOrderMusic(input: { musicEnabled: boolean; musicChoice: "default" | "upload" | "url"; musicUrl?: string; orderMusic?: string }) {
+  if (!input.musicEnabled) return { musicUrl: "", error: "" };
+  if (input.musicChoice === "default") return { musicUrl: "", error: "" };
+
+  if (input.musicChoice === "upload") {
+    const uploadedUrl = input.orderMusic ? await saveAudioDataUrl(input.orderMusic) : "";
+    if (uploadedUrl) return { musicUrl: uploadedUrl, error: "" };
+    const restoredUploadUrl = cleanPlayableAudioUrl(input.musicUrl || "");
+    if (restoredUploadUrl) return { musicUrl: restoredUploadUrl, error: "" };
+    return { musicUrl: "", error: input.orderMusic || input.musicUrl ? "ملف الموسيقى غير قابل للتشغيل. جرّب mp3 أو m4a أو wav." : "" };
+  }
+
+  const directUrl = cleanPlayableAudioUrl(input.musicUrl || "");
+  if (input.musicUrl && !directUrl) {
+    return { musicUrl: "", error: "رابط الموسيقى لازم يكون رابط صوت مباشر مثل mp3 أو wav أو m4a." };
+  }
+  return { musicUrl: directUrl, error: "" };
 }
 
 export async function POST(request: Request) {
@@ -27,8 +47,20 @@ export async function POST(request: Request) {
   }
 
   const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
+  const music = await resolveOrderMusic({
+    musicEnabled: parsed.data.musicEnabled,
+    musicChoice: parsed.data.musicChoice,
+    musicUrl: parsed.data.musicUrl,
+    orderMusic: parsed.data.orderMusic,
+  });
+  if (music.error) {
+    return NextResponse.json({ error: music.error }, { status: 400 });
+  }
   const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
-  const notes = [parsed.data.notes, imageNotes].filter(Boolean).join("\n\n");
+  const musicNotes = parsed.data.musicEnabled
+    ? ["موسيقى الدعوة:", parsed.data.musicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
+    : "";
+  const notes = [parsed.data.notes, musicNotes, imageNotes].filter(Boolean).join("\n\n");
   let orderId = "";
 
   if (!prisma) {
@@ -112,5 +144,5 @@ export async function POST(request: Request) {
   }
 
   queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
-  return NextResponse.json({ ok: true, orderId, imageUrls });
+  return NextResponse.json({ ok: true, orderId, imageUrls, musicUrl: music.musicUrl });
 }

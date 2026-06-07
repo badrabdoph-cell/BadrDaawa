@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { isBrowserDisplayImageUrl } from "./image-formats";
 import { hashPassword, verifyPassword } from "./password";
 import { makeNumberedInvitationSlug } from "./slug";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
@@ -84,13 +85,22 @@ async function writeStore(store: FileStoreData) {
 }
 
 function normalizeInvitationImages(invitation: Invitation): Invitation {
-  const gallery = invitation.gallery.map(normalizeInternalAssetUrl).filter(Boolean);
-  const heroPhoto = normalizeInternalAssetUrl(invitation.heroPhoto) || gallery[0] || invitation.heroPhoto;
+  const cleanImage = (value?: string | null) => {
+    const url = normalizeInternalAssetUrl(value);
+    return url && isBrowserDisplayImageUrl(url) ? url : "";
+  };
+  const gallery = invitation.gallery.map(cleanImage).filter(Boolean);
+  const heroPhoto = cleanImage(invitation.heroPhoto) || gallery[0] || invitation.heroPhoto;
   return { ...invitation, heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
 }
 
 function normalizeOrderImages(order: OrderRequest): OrderRequest {
-  return { ...order, imageUrls: order.imageUrls?.map(normalizeInternalAssetUrl).filter(Boolean) };
+  return {
+    ...order,
+    imageUrls: order.imageUrls
+      ?.map(normalizeInternalAssetUrl)
+      .filter((url): url is string => Boolean(url && isBrowserDisplayImageUrl(url))),
+  };
 }
 
 export async function getFileInvitations() {

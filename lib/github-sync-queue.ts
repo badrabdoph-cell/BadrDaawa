@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { syncAdminStateToGitHub, createSyncLog } from "./github-sync";
+import { syncAdminStateToGitHub, createSyncLog, isGitHubSyncAuthFailure } from "./github-sync";
 import type { GitHubSyncResult } from "./github-sync";
 
 type SyncQueueStatus = "pending" | "processing" | "completed" | "failed";
@@ -152,7 +152,14 @@ async function processSyncQueue() {
         item.result = result;
 
         if (result.status === "failed") {
-          await scheduleRetry(item);
+          if (result.authFailed) {
+            item.status = "failed";
+            item.error = result.message;
+            item.completedAt = Date.now();
+            console.error(`[GitHub Sync Queue] Not retrying auth failure for: ${item.reason}`);
+          } else {
+            await scheduleRetry(item);
+          }
         } else {
           item.status = "completed";
           item.completedAt = Date.now();
@@ -162,7 +169,13 @@ async function processSyncQueue() {
       } catch (error) {
         item.error = error instanceof Error ? error.message : "Unknown error";
         console.error(`[GitHub Sync Queue Error] ${item.reason}:`, error);
-        await scheduleRetry(item);
+        if (isGitHubSyncAuthFailure(error)) {
+          item.status = "failed";
+          item.completedAt = Date.now();
+          console.error(`[GitHub Sync Queue] Not retrying thrown auth failure for: ${item.reason}`);
+        } else {
+          await scheduleRetry(item);
+        }
       }
 
       trimTrackedJobs();

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -37,16 +39,32 @@ function redirectBack(request: NextRequest, status: string) {
   return NextResponse.redirect(url, 303);
 }
 
+function cleanDisplayImageUrl(value?: string | null) {
+  const url = normalizeInternalAssetUrl(value);
+  return url && isBrowserDisplayImageUrl(url) ? url : "";
+}
+
 function parseImageUrls(notes?: string | null) {
   if (!notes) return [];
   return Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
-    .map((match) => normalizeInternalAssetUrl(match[0]))
+    .map((match) => cleanDisplayImageUrl(match[0]))
     .filter(Boolean);
+}
+
+function parseMusicUrl(notes?: string | null) {
+  if (!notes) return "";
+  const directMatch = notes.match(/رابط الموسيقى:\s*(\S+)/);
+  const candidates = directMatch ? [directMatch[1]] : Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/music\/[^\s]+/g)).map((match) => match[0]);
+  for (const candidate of candidates) {
+    const clean = cleanPlayableAudioUrl(candidate);
+    if (clean) return clean;
+  }
+  return "";
 }
 
 function parseStoredImageUrls(value: unknown) {
   if (Array.isArray(value)) {
-    return value.map((item) => normalizeInternalAssetUrl(typeof item === "string" ? item : "")).filter(Boolean);
+    return value.map((item) => cleanDisplayImageUrl(typeof item === "string" ? item : "")).filter(Boolean);
   }
 
   if (typeof value === "string") {
@@ -90,7 +108,7 @@ function mergeImageUrls(...groups: Array<Array<string | undefined> | undefined>)
 
   for (const group of groups) {
     for (const item of group || []) {
-      const url = normalizeInternalAssetUrl(item);
+      const url = cleanDisplayImageUrl(item);
       if (!url || seen.has(url)) continue;
       seen.add(url);
       urls.push(url);
@@ -114,6 +132,7 @@ async function convertFileOrder(id: string, draft: OrderConversionDraft) {
   const venue = draft.venue || order.venue || "يحدد لاحقًا";
   const templateSlug = draft.templateSlug || order.templateSlug || "royal-envelope";
   const gallery = mergeImageUrls(draft.imageUrls, order.imageUrls, parseImageUrls(order.notes), parseImageUrls(draft.notes));
+  const musicUrl = parseMusicUrl(draft.notes) || parseMusicUrl(order.notes);
   const digits = digitsOnly(phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
   const password = digits.slice(-6) || order.id.slice(-6) || "123456";
@@ -131,7 +150,7 @@ async function convertFileOrder(id: string, draft: OrderConversionDraft) {
     city: "",
     mapUrl: "",
     gallery: gallery.length ? gallery : fallbackGallery,
-    musicUrl: "",
+    musicUrl,
   });
   await updateFileOrder(id, { groomName, brideName, phone, weddingDate, venue, notes: draft.notes || order.notes, imageUrls: gallery, templateSlug, status: "converted" });
   return invitation.code;
@@ -152,6 +171,7 @@ async function convertPrismaOrder(id: string, draft: OrderConversionDraft) {
   const venue = draft.venue || order.venue || "يحدد لاحقًا";
   const notes = draft.notes ?? order.notes ?? "";
   const templateSlug = draft.templateSlug || order.template?.slug || "royal-envelope";
+  const musicUrl = parseMusicUrl(notes) || parseMusicUrl(order.notes);
   const selectedTemplate = await getSafeTemplate(templateSlug);
   if (!selectedTemplate) return null;
 
@@ -230,6 +250,7 @@ async function convertPrismaOrder(id: string, draft: OrderConversionDraft) {
       mapUrl: "",
       heroPhoto: gallery[0] || fallbackGallery[0],
       gallery: gallery.length ? gallery : fallbackGallery,
+      musicUrl: musicUrl || undefined,
       customerId: customer.id,
       templateId: template.id,
     },

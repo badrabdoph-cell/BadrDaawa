@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import { getFileCustomers, getFileGuestsByInvitation, getFileInvitations, getFileOrders } from "./file-store";
+import { isBrowserDisplayImageUrl } from "./image-formats";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
 
@@ -76,11 +77,15 @@ type AdminCustomerRow = {
 };
 
 function toStringArray(value: unknown) {
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean);
+  const clean = (item: string) => {
+    const url = normalizeInternalAssetUrl(item);
+    return url && isBrowserDisplayImageUrl(url) ? url : "";
+  };
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map(clean).filter(Boolean);
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value) as unknown;
-      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").map(normalizeInternalAssetUrl).filter(Boolean) : [];
+      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").map(clean).filter(Boolean) : [];
     } catch {
       return [];
     }
@@ -89,6 +94,8 @@ function toStringArray(value: unknown) {
 }
 
 function toInvitation(row: AdminInvitationRow): Invitation {
+  const gallery = toStringArray(row.gallery);
+  const heroPhoto = normalizeInternalAssetUrl(row.heroPhoto);
   return {
     id: row.id,
     code: row.code,
@@ -101,8 +108,8 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     venue: row.venue,
     city: row.city || "",
     mapUrl: row.mapUrl || "",
-    heroPhoto: normalizeInternalAssetUrl(row.heroPhoto) || "/assets/invite/badr-sarah-1.jpeg",
-    gallery: toStringArray(row.gallery),
+    heroPhoto: (heroPhoto && isBrowserDisplayImageUrl(heroPhoto) ? heroPhoto : "") || gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
+    gallery,
     musicUrl: row.musicUrl || undefined,
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
     views: row.viewCount ?? row.views ?? 0,
@@ -114,6 +121,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
   const notes = row.notes || "";
   const noteImageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
     .map((match) => normalizeInternalAssetUrl(match[0]))
+    .filter((url) => Boolean(url && isBrowserDisplayImageUrl(url)))
     .filter(Boolean);
   const savedImageUrls = toStringArray(row.imageUrls);
   const imageUrls = [...savedImageUrls, ...noteImageUrls].filter((url, index, list) => list.indexOf(url) === index).slice(0, 3);

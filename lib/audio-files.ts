@@ -94,9 +94,13 @@ export async function saveUploadedAudioFile(file: File | null, previousUrl?: str
   const nameExtension = file.name.split(".").pop()?.toLowerCase() || "";
   if (file.size > maxAudioBytes) return "";
   const bytes = Buffer.from(await file.arrayBuffer());
+  return saveAudioBytes(bytes, file.type, nameExtension, previousUrl);
+}
+
+async function saveAudioBytes(bytes: Buffer, mimeType = "", nameExtension = "", previousUrl?: string | null) {
   const detectedExtension = extensionFromBytes(bytes);
-  const extension = normalizeAudioExtension(detectedExtension || allowedAudioTypes[file.type] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : ""));
-  if (!extension || file.size > maxAudioBytes) return "";
+  const extension = normalizeAudioExtension(detectedExtension || allowedAudioTypes[mimeType] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : ""));
+  if (!extension || !bytes.length || bytes.length > maxAudioBytes) return "";
 
   ensureDirectory(uploadDir);
   await mkdir(uploadDir, { recursive: true });
@@ -109,6 +113,13 @@ export async function saveUploadedAudioFile(file: File | null, previousUrl?: str
     await deleteUploadedMusicFile(previousUrl);
   }
   return savedUrl;
+}
+
+export async function saveAudioDataUrl(dataUrl: string, previousUrl?: string | null) {
+  const match = dataUrl.trim().match(/^data:(audio\/[a-zA-Z0-9.+-]+|video\/mp4);base64,([a-zA-Z0-9+/=]+)$/);
+  if (!match) return "";
+  const bytes = Buffer.from(match[2], "base64");
+  return saveAudioBytes(bytes, match[1], "", previousUrl);
 }
 
 export async function listUploadedMusicFiles() {

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
+import { cleanPlayableAudioUrl } from "@/lib/audio-files";
+import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 
@@ -18,6 +20,11 @@ type PageProps = {
     city?: string;
     mapUrl?: string;
     gallery?: string;
+    photographerEnabled?: string;
+    photographerName?: string;
+    photographerFacebookUrl?: string;
+    photographerInstagramUrl?: string;
+    musicUrl?: string;
   }>;
 };
 
@@ -37,7 +44,13 @@ function cleanPreviewGallery(value: string | undefined) {
     .split(",")
     .map((item) => item.trim())
     .filter((item) => item.startsWith("/uploads/order-previews/") || item.startsWith("/uploads/order-requests/") || item.startsWith("/uploads/client-invitations/"))
+    .filter((item) => isBrowserDisplayImageUrl(item))
     .slice(0, 3);
+}
+
+function cleanPreviewUrl(value: string | undefined, fallback: string) {
+  const clean = value?.trim();
+  return clean && /^https?:\/\/\S+\.\S+/.test(clean) ? clean : fallback;
 }
 
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
@@ -46,7 +59,20 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const template = await getTemplateWithSettings(slug);
   if (!template) notFound();
   const previewGallery = cleanPreviewGallery(query?.gallery);
+  const previewMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
   const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
+  const previewTemplate =
+    query?.photographerEnabled === "1"
+      ? {
+          ...template,
+          photographer: {
+            enabled: true,
+            name: cleanPreviewText(query.photographerName, "المصور الفوتوغرافي"),
+            facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
+            instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
+          },
+        }
+      : template;
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
@@ -62,7 +88,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     mapUrl: cleanPreviewText(query?.mapUrl, "https://maps.google.com/?q=Royal+Hall+Beheira"),
     heroPhoto: previewGallery[0] || fallbackGallery[0],
     gallery: previewGallery.length ? previewGallery : fallbackGallery,
-    musicUrl: "",
+    musicUrl: previewMusicUrl,
     isActive: true,
     views: 0,
     customerId: "preview",
@@ -72,7 +98,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
 
   return (
     <>
-      <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />
+      <InvitationExperience invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
       {!isSilentPreview ? (
         <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
           <Link className="template-preview-action template-preview-action-soft" href="/">

@@ -32,7 +32,7 @@ function getUploadStatus(item: CropItem) {
   }
 
   if (!item.canPreview) {
-    return { className: "warning", text: "سيتم رفع الملف الأصلي، والمتصفح قد لا يعرض معاينة لهذه الصيغة" };
+    return { className: "warning", text: "سيتم رفع الملف الأصلي وتحويله لصورة قابلة للعرض" };
   }
 
   return { className: "loading", text: "جاري تجهيز الصورة" };
@@ -163,7 +163,7 @@ export function ImageCropUploader({
         <ImagePlus size={22} />
         <strong>{label}</strong>
         <span>
-          {targetWidth}x{targetHeight}px - الصور القابلة للمعاينة يتم قصها وضغطها، وباقي الصيغ ترفع كملف أصلي
+          {targetWidth}x{targetHeight}px - الصور القابلة للمعاينة يتم قصها وضغطها، وباقي الصيغ يحولها السيرفر عند الحفظ
         </span>
         <input name={`${name}Raw`} type="file" accept={acceptedImageFormats} multiple={maxFiles > 1} onChange={(event) => handleFiles(event.target.files)} />
       </label>
@@ -195,7 +195,7 @@ export function ImageCropUploader({
                   <div className="crop-preview-fallback">
                     <ImagePlus size={20} />
                     <strong>{item.fileName}</strong>
-                    <span>الصورة مختارة وسيتم رفعها، لكن المتصفح لا يعرض معاينة لهذه الصيغة.</span>
+                    <span>الصورة مختارة، والسيرفر سيحولها لصيغة تظهر داخل الدعوة.</span>
                   </div>
                 )}
               </div>
@@ -206,7 +206,7 @@ export function ImageCropUploader({
                 })()}
                 <strong>صورة {index + 1}</strong>
                 <span>
-                  {formatKb(item.originalSize)} إلى {item.optimizedSize ? formatKb(item.optimizedSize) : item.canPreview ? "جاري الضغط" : "رفع الملف الأصلي"}
+                  {formatKb(item.originalSize)} إلى {item.optimizedSize ? formatKb(item.optimizedSize) : item.canPreview ? "جاري الضغط" : "تحويل على السيرفر"}
                 </span>
                 <label>
                   تكبير

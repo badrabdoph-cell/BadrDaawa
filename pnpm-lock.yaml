@@ -35,6 +35,9 @@ importers:
       react-dom:
         specifier: ^19.2.1
         version: 19.2.7(react@19.2.7)
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5

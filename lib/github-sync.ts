@@ -8,6 +8,7 @@ type GitHubSyncStatus = "synced" | "skipped" | "unchanged" | "failed";
 export type GitHubSyncResult = {
   status: GitHubSyncStatus;
   message: string;
+  authFailed?: boolean;
   commitUrl?: string;
   commitSha?: string;
   files?: number;
@@ -69,6 +70,33 @@ const maxSyncFileBytes = 90 * 1024 * 1024;
 const retryDelays = [5_000, 15_000, 45_000];
 const maxRetries = 3;
 
+class GitHubSyncHttpError extends Error {
+  status: number;
+  body: string;
+
+  constructor(status: number, body: string) {
+    super(`GitHub sync failed ${status}: ${body.slice(0, 300)}`);
+    this.name = "GitHubSyncHttpError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+function getGitHubToken() {
+  return process.env.GITHUB_SYNC_TOKEN || process.env.BACKUP_GITHUB_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
+}
+
+export function isGitHubSyncAuthFailure(error: unknown) {
+  if (error instanceof GitHubSyncHttpError) {
+    return error.status === 401 || error.status === 403 || /bad credentials|requires authentication|resource not accessible/i.test(error.body);
+  }
+  return error instanceof Error && /GitHub sync failed (401|403)|bad credentials|requires authentication|resource not accessible/i.test(error.message);
+}
+
+function gitHubAuthFailureMessage(details: string) {
+  return `GitHub rejected the sync token. Update GITHUB_SYNC_TOKEN or BACKUP_GITHUB_TOKEN in Railway with a valid token that can write to the repo, then redeploy. Details: ${details}`;
+}
+
 function parseRepo(value: string) {
   const clean = value.trim().replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
   const [owner, repo] = clean.split("/");
@@ -78,7 +106,7 @@ function parseRepo(value: string) {
 function getSyncConfig() {
   if (process.env.GITHUB_SYNC_ENABLED === "false") return null;
 
-  const token = process.env.GITHUB_SYNC_TOKEN || process.env.BACKUP_GITHUB_TOKEN || "";
+  const token = getGitHubToken();
   const repo = parseRepo(process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "");
   const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
 
@@ -95,7 +123,7 @@ export function getGitHubSyncReadiness() {
     };
   }
 
-  const token = process.env.GITHUB_SYNC_TOKEN || process.env.BACKUP_GITHUB_TOKEN || "";
+  const token = getGitHubToken();
   const rawRepo = process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "";
   const repo = parseRepo(rawRepo);
   const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
@@ -206,7 +234,7 @@ async function githubRequest<T>(pathName: string, init: RequestInit, token: stri
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`GitHub sync failed ${response.status}: ${body.slice(0, 300)}`);
+    throw new GitHubSyncHttpError(response.status, body);
   }
 
   return (await response.json()) as T;
@@ -477,13 +505,15 @@ export async function syncAdminStateToGitHub(
     console.log(`[GitHub Sync ${ts()}] Done (${duration}ms): ${result.status} — ${result.message}`);
     return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown GitHub sync error.";
+    const rawMessage = error instanceof Error ? error.message : "Unknown GitHub sync error.";
+    const authFailed = isGitHubSyncAuthFailure(error);
+    const message = authFailed ? gitHubAuthFailureMessage(rawMessage) : rawMessage;
     const retryCount = options.retryCount ?? 0;
-    const canRetry = retryCount < maxRetries;
+    const canRetry = !authFailed && retryCount < maxRetries;
     const nextRetryDelay = canRetry ? retryDelays[retryCount] : null;
     const nextRetryAt = nextRetryDelay ? new Date(Date.now() + nextRetryDelay) : null;
 
-    console.error(`[GitHub Sync ${ts()}] Failed (retry ${retryCount}/${maxRetries}): ${message}`);
+    console.error(`[GitHub Sync ${ts()}] Failed (retry ${retryCount}/${maxRetries}, authFailed=${authFailed}): ${message}`);
 
     if (logId) {
       await updateSyncLog(logId, {
@@ -497,6 +527,7 @@ export async function syncAdminStateToGitHub(
     return {
       status: "failed",
       message,
+      authFailed,
     };
   }
 }
