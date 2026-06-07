@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   description: "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
   keywords: ["دعوة فرح", "دعوات زفاف رقمية", "RSVP", "QR Code", "BadrDaawa"],
   openGraph: {
-    title: "BadrDaawa | دعوة فرحك بشكل يليق بفرحتك",
-    description: "دعوة زفاف رقمية فاخرة بقالب Royal Envelope وصفحة خاصة بكل عميل مع متابعة حضور كاملة.",
+    title: "BadrDaawa | الجيل الجديد من دعوات الزفاف بدأ هنا",
+    description: "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة.",
     siteName: "BadrDaawa",
     locale: "ar_EG",
     type: "website",

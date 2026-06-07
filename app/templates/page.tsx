@@ -6,7 +6,7 @@ import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
   title: "قوالب الدعوات",
-  description: "اختار قالب دعوة فرحك من BadrDaawa.",
+  description: "شاهد التصاميم المختلفة واختر قالب دعوتك الرقمية من BadrDaawa.",
 };
 
 export default async function TemplatesPage() {
