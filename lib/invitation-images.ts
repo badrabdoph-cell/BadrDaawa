@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { getPublicUrl } from "./utils";
 
 const maxGalleryImageBytes = 3 * 1024 * 1024;
 
@@ -11,7 +10,7 @@ function isExistingImageUrl(value: string) {
   return value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://");
 }
 
-export async function saveInvitationGalleryImages(images: string[], headers?: Headers, fallbackOrigin = "http://localhost:3000") {
+export async function saveInvitationGalleryImages(images: string[]) {
   const uploadDir = path.join(process.cwd(), "public", "uploads", "client-invitations");
   const savedUrls: string[] = [];
 
@@ -34,7 +33,7 @@ export async function saveInvitationGalleryImages(images: string[], headers?: He
       await mkdir(uploadDir, { recursive: true });
       const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.jpg`;
       await writeFile(path.join(uploadDir, fileName), bytes);
-      savedUrls.push(getPublicUrl(`/uploads/client-invitations/${fileName}`, headers, fallbackOrigin).toString());
+      savedUrls.push(`/uploads/client-invitations/${fileName}`);
     } catch (error) {
       console.error("Failed to save invitation gallery image", error);
     }

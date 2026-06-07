@@ -1,7 +1,7 @@
 "use client";
 
-import { ExternalLink, Laptop, Pencil, RefreshCw, Save, Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ExternalLink, Laptop, Pencil, RefreshCw, Save, Search, Smartphone, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export type BroadcastField = {
   key: string;
@@ -15,6 +15,21 @@ type BroadcastMarker = BroadcastField & {
   left?: number;
 };
 
+const searchStorageKey = "badr-broadcast-search";
+const selectedStorageKey = "badr-broadcast-selected";
+
+function getFieldGroup(field: BroadcastField) {
+  if (field.key.startsWith("hero.")) return "واجهة البداية";
+  if (field.key.startsWith("features.")) return "المميزات";
+  if (field.key.startsWith("preview.")) return "المعاينة";
+  if (field.key.startsWith("pricing.")) return "الباقات";
+  return field.kind === "media" ? "الميديا" : "نصوص أخرى";
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase();
+}
+
 export function BroadcastStudio({
   fields,
   previewTemplateSlug,
@@ -26,7 +41,25 @@ export function BroadcastStudio({
 }) {
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [selectedKey, setSelectedKey] = useState(fields[0]?.key || "");
+  const [query, setQuery] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    const storedQuery = window.localStorage.getItem(searchStorageKey) || "";
+    const storedSelectedKey = window.localStorage.getItem(selectedStorageKey) || "";
+    if (storedQuery) setQuery(storedQuery);
+    if (storedSelectedKey && fields.some((field) => field.key === storedSelectedKey)) {
+      setSelectedKey(storedSelectedKey);
+    }
+  }, [fields]);
+
+  useEffect(() => {
+    window.localStorage.setItem(searchStorageKey, query);
+  }, [query]);
+
+  useEffect(() => {
+    if (selectedKey) window.localStorage.setItem(selectedStorageKey, selectedKey);
+  }, [selectedKey]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -41,6 +74,24 @@ export function BroadcastStudio({
   }, []);
 
   const selectedField = fields.find((field) => field.key === selectedKey) || fields[0];
+  const filteredGroups = useMemo(() => {
+    const normalized = normalizeSearch(query);
+    const matches = normalized
+      ? fields.filter((field) => `${field.label} ${field.value} ${field.key} ${getFieldGroup(field)}`.toLowerCase().includes(normalized))
+      : fields;
+    const groups = new Map<string, BroadcastField[]>();
+    for (const field of matches) {
+      const group = getFieldGroup(field);
+      groups.set(group, [...(groups.get(group) || []), field]);
+    }
+    return Array.from(groups.entries());
+  }, [fields, query]);
+
+  const selectedGroup = selectedField ? getFieldGroup(selectedField) : "";
+
+  function selectField(key: string) {
+    setSelectedKey(key);
+  }
 
   return (
     <section className="broadcast-admin-shell">
@@ -48,6 +99,7 @@ export function BroadcastStudio({
         <div>
           <span className="eyebrow">Live Site Broadcast</span>
           <h2>معاينة الموقع الحقيقي</h2>
+          <p>كل تعديل محفوظ هنا بيتزامن تلقائيًا مع ملفات المشروع وصفحات الموقع.</p>
         </div>
         <div className="broadcast-toolbar-actions">
           <button className={viewport === "desktop" ? "btn btn-gold btn-glow" : "btn btn-soft"} type="button" onClick={() => setViewport("desktop")}>
@@ -80,6 +132,7 @@ export function BroadcastStudio({
             <div>
               <span className="eyebrow">Quick Edit</span>
               <h2>تعديل العنصر المحدد</h2>
+              {selectedField ? <p>{selectedGroup}</p> : null}
             </div>
           </div>
 
@@ -137,13 +190,48 @@ export function BroadcastStudio({
           )}
 
           <div className="broadcast-field-list">
-            <strong>كل العناصر القابلة للتعديل</strong>
-            {fields.map((field) => (
-              <button className={field.key === selectedField?.key ? "active" : ""} type="button" key={field.key} onClick={() => setSelectedKey(field.key)}>
-                <span>{field.label}</span>
-                <small>{field.kind === "media" ? "ميديا" : "نص"}</small>
-              </button>
-            ))}
+            <div className="broadcast-list-head">
+              <div>
+                <strong>العناصر القابلة للتعديل</strong>
+                <small>
+                  {filteredGroups.reduce((total, [, items]) => total + items.length, 0)} من {fields.length}
+                </small>
+              </div>
+              {query ? (
+                <button className="broadcast-clear-search" type="button" title="مسح البحث" onClick={() => setQuery("")}>
+                  <X size={16} />
+                </button>
+              ) : null}
+            </div>
+
+            <label className="broadcast-search">
+              <Search size={17} />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث عن نص أو اسم عنصر" />
+            </label>
+
+            <div className="broadcast-search-note">البحث يفضل ثابت أثناء التعديل وبعد الحفظ.</div>
+
+            {filteredGroups.length ? (
+              filteredGroups.map(([group, items]) => (
+                <div className="broadcast-field-group" key={group}>
+                  <div className="broadcast-field-group-title">
+                    <span>{group}</span>
+                    <small>{items.length}</small>
+                  </div>
+                  {items.map((field) => (
+                    <button className={field.key === selectedField?.key ? "active" : ""} type="button" key={field.key} onClick={() => selectField(field.key)}>
+                      <span>{field.label}</span>
+                      <small>{field.kind === "media" ? "ميديا" : "نص"}</small>
+                    </button>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <div className="broadcast-no-results">
+                <strong>لا توجد نتائج</strong>
+                <span>جرّب كلمة أبسط أو امسح البحث.</span>
+              </div>
+            )}
           </div>
         </aside>
       </div>

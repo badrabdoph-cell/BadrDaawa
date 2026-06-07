@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, RadioTower, ShieldCheck, UsersRound } from "lucide-react";
+import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, RadioTower, ShieldCheck, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const adminLinks = [
   { href: "/admin/templates", label: "القوالب", icon: Palette },
   { href: "/admin/music", label: "الموسيقى", icon: Music2 },
   { href: "/admin/broadcast", label: "شاشة بث الموقع", icon: RadioTower },
+  { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
   { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },

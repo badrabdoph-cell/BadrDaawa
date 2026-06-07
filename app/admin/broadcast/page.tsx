@@ -42,7 +42,7 @@ export default async function AdminBroadcastPage({ searchParams }: { searchParam
         </div>
       </div>
 
-      {params.saved ? <div className="notice success">تم حفظ التعديل وتحديث الموقع.</div> : null}
+      {params.saved ? <div className="notice success">تم حفظ التعديل وتحديث الموقع وإرساله للمزامنة التلقائية.</div> : null}
       {params.error ? <div className="notice danger">تعذر حفظ التعديل. اختر عنصرًا صالحًا وحاول مرة أخرى.</div> : null}
 
       <BroadcastStudio

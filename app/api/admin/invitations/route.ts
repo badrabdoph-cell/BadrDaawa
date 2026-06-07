@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
-  const savedGallery = await saveInvitationGalleryImages(galleryImages, request.headers, request.nextUrl.origin);
+  const savedGallery = await saveInvitationGalleryImages(galleryImages);
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
 

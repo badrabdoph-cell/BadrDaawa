@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .getAll("galleryImage")
     .map((value) => String(value))
     .filter((value) => value.startsWith("data:image/") || value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://"));
-  const savedGallery = await saveInvitationGalleryImages(galleryImages, request.headers, request.nextUrl.origin);
+  const savedGallery = await saveInvitationGalleryImages(galleryImages);
 
   const data: Record<string, unknown> = {};
   const fileData: Record<string, unknown> = {};

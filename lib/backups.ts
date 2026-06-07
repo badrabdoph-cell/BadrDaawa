@@ -20,6 +20,16 @@ type BackupUploadFile = {
   base64: string;
 };
 
+type BackupPayload = {
+  version?: number;
+  type?: string;
+  createdAt?: string;
+  source?: "database" | "files";
+  database?: unknown;
+  dataFiles?: Record<string, unknown>;
+  uploads?: BackupUploadFile[];
+};
+
 const backupDir = path.join(process.cwd(), "data", "backups");
 const dataDir = path.join(process.cwd(), "data");
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
@@ -278,5 +288,64 @@ export async function getBackupFile(fileName: string) {
   return {
     fileName,
     bytes: await readFile(filePath),
+  };
+}
+
+async function readBackupPayload(fileName: string): Promise<BackupPayload | null> {
+  const backup = await getBackupFile(fileName);
+  if (!backup) return null;
+
+  try {
+    const parsed = JSON.parse(backup.bytes.toString("utf8")) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as BackupPayload) : null;
+  } catch {
+    return null;
+  }
+}
+
+function isSafeDataFileName(fileName: string) {
+  return /^[a-z0-9._-]+\.json$/i.test(fileName) && !fileName.includes("..") && !fileName.startsWith("backup");
+}
+
+function isSafeUploadPath(filePath: string) {
+  return /^[a-z0-9._\-\/]+$/i.test(filePath) && !path.isAbsolute(filePath) && !filePath.split(/[\\/]+/).includes("..");
+}
+
+export async function restoreBackupSnapshot(fileName: string) {
+  noStore();
+
+  const payload = await readBackupPayload(fileName);
+  if (!payload?.dataFiles || typeof payload.dataFiles !== "object") return null;
+
+  const beforeRestore = await createBackupSnapshot("restore-before");
+  let restoredDataFiles = 0;
+  let restoredUploads = 0;
+
+  await mkdir(dataDir, { recursive: true });
+  for (const [name, value] of Object.entries(payload.dataFiles)) {
+    if (!isSafeDataFileName(name)) continue;
+    await writeFile(path.join(dataDir, name), `${JSON.stringify(value, null, 2)}\n`, "utf8");
+    restoredDataFiles += 1;
+  }
+
+  if (Array.isArray(payload.uploads)) {
+    await mkdir(uploadsDir, { recursive: true });
+    for (const upload of payload.uploads) {
+      if (!upload?.path || !upload.base64 || !isSafeUploadPath(upload.path)) continue;
+      const targetPath = path.join(uploadsDir, upload.path);
+      if (!targetPath.startsWith(uploadsDir)) continue;
+      await mkdir(path.dirname(targetPath), { recursive: true });
+      await writeFile(targetPath, Buffer.from(upload.base64, "base64"));
+      restoredUploads += 1;
+    }
+  }
+
+  return {
+    fileName,
+    beforeRestoreFileName: beforeRestore.fileName,
+    restoredDataFiles,
+    restoredUploads,
+    source: payload.source || "files",
+    includesDatabaseDump: Boolean(payload.source === "database" && payload.database),
   };
 }

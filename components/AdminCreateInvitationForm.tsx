@@ -5,6 +5,30 @@ import type { TemplateDefinition } from "@/lib/types";
 import { getCustomerAdminPath } from "@/lib/slug";
 import { getInvitationUrl, getSiteUrl } from "@/lib/utils";
 
+const invitationImageSlots = [
+  {
+    title: "الغلاف",
+    hint: "الصورة الأساسية",
+    uploadLabel: "رفع الغلاف",
+    targetWidth: 1200,
+    targetHeight: 1600,
+  },
+  {
+    title: "لقطة ثانية",
+    hint: "تظهر في المعرض",
+    uploadLabel: "رفع صورة ثانية",
+    targetWidth: 1200,
+    targetHeight: 1500,
+  },
+  {
+    title: "تفاصيل",
+    hint: "تستخدمها القوالب كصورة إضافية",
+    uploadLabel: "رفع التفاصيل",
+    targetWidth: 1200,
+    targetHeight: 1500,
+  },
+];
+
 export function AdminCreateInvitationForm({ created, error, demo, templates }: { created?: string; error?: string; demo?: string; templates: TemplateDefinition[] }) {
   const invitationUrl = created ? getInvitationUrl(created) : "";
   const clientAdminUrl = created ? `${getSiteUrl().replace(/\/$/, "")}${getCustomerAdminPath(created)}` : "";
@@ -107,13 +131,14 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
             <ImagePlus size={17} />
             صور الدعوة
           </span>
-          <p>اختار 3 صور بالترتيب: الغلاف، لقطة ثانية، ولقطة ثالثة. الصور تتحفظ كرابط خفيف وتظهر للعميل مباشرة.</p>
+          <p>ارفع الصور حسب دورها. كل القوالب هتقرأ نفس الترتيب: الغلاف ثم صورة ثانية ثم صورة تفاصيل، ولو صورة ناقصة هنكمل من صور نفس الدعوة بدل صور الديمو.</p>
           <div className="admin-gallery-slots">
-            {["الغلاف", "الصورة الثانية", "الصورة الثالثة"].map((label, index) => (
-              <div className="admin-gallery-slot" key={label}>
+            {invitationImageSlots.map((slot, index) => (
+              <div className="admin-gallery-slot" key={slot.title}>
                 <strong>{index + 1}</strong>
-                <span>{label}</span>
-                <ImageCropUploader label="اختار صورة" name="galleryImage" targetWidth={1200} targetHeight={1500} maxFiles={1} />
+                <span>{slot.title}</span>
+                <small>{slot.hint}</small>
+                <ImageCropUploader label={slot.uploadLabel} name="galleryImage" targetWidth={slot.targetWidth} targetHeight={slot.targetHeight} maxFiles={1} />
               </div>
             ))}
           </div>
