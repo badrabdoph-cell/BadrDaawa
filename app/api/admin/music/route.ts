@@ -71,7 +71,15 @@ export async function POST(request: NextRequest) {
   const uploadedUrl = await saveAudioFile(uploadedFile instanceof File ? uploadedFile : null);
   const audioUrl = uploadedUrl || cleanAudioUrl(String(formData.get("audioUrl") || "")) || cleanAudioUrl(String(formData.get("existingAudioUrl") || "")) || currentSlot?.url || "";
   const selectedTemplateSlugs = applyToAll ? allTemplateSlugs : formData.getAll("templateSlugs").map((value) => String(value));
-  const appliedTemplateSlugs = await updateTemplatesMusicState(selectedTemplateSlugs, { musicUrl: audioUrl, enabled: trackEnabled });
+  const url = new URL("/admin/music", request.url);
+
+  if (!currentSlot || (trackEnabled && !audioUrl)) {
+    url.searchParams.set("error", trackEnabled && !audioUrl ? "audio" : "slot");
+    if (slotId) url.searchParams.set("open", slotId);
+    return NextResponse.redirect(url, 303);
+  }
+
+  const appliedTemplateSlugs = selectedTemplateSlugs.length ? await updateTemplatesMusicState(selectedTemplateSlugs, { musicUrl: audioUrl, enabled: trackEnabled }) : [];
 
   const savedSlot = await updateMusicSlot({
     id: slotId,
@@ -82,22 +90,20 @@ export async function POST(request: NextRequest) {
     templateSlugs: applyToAll ? allTemplateSlugs : appliedTemplateSlugs,
   });
 
-  if (savedSlot && appliedTemplateSlugs.length) {
+  if (savedSlot) {
     revalidatePath("/admin/music");
-    revalidatePath("/admin/templates");
-    revalidatePath("/templates");
-    for (const slug of appliedTemplateSlugs) {
-      revalidatePath(`/templates/${slug}/preview`);
+    if (appliedTemplateSlugs.length) {
+      revalidatePath("/admin/templates");
+      revalidatePath("/templates");
+      for (const slug of appliedTemplateSlugs) {
+        revalidatePath(`/templates/${slug}/preview`);
+      }
     }
     await syncAdminStateToGitHub(`Music slot ${savedSlot.id} ${trackEnabled ? "enabled" : "disabled"} for ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
   }
 
-  const url = new URL("/admin/music", request.url);
-  if (!savedSlot || !appliedTemplateSlugs.length || (trackEnabled && !audioUrl)) {
-    url.searchParams.set("error", "1");
-  } else {
-    url.searchParams.set("saved", savedSlot.id);
-    url.searchParams.set("count", String(appliedTemplateSlugs.length));
-  }
+  if (!savedSlot) url.searchParams.set("error", "slot");
+  else url.searchParams.set("saved", savedSlot.id);
+  url.searchParams.set("count", String(appliedTemplateSlugs.length));
   return NextResponse.redirect(url, 303);
 }

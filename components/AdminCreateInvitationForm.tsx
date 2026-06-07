@@ -24,7 +24,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
           <div className="admin-created-links-head">
             <Link2 size={18} />
             <strong>تم إنشاء الدعوة بنجاح</strong>
-            {demo ? <span>وضع ديمو بدون حفظ في قاعدة البيانات.</span> : null}
+            {demo ? <span>تم حفظها احتياطيا لأن قاعدة البيانات لم تكمل العملية.</span> : null}
           </div>
           <div className="admin-created-link-box">
             <span>رابط الدعوة للعميل</span>
@@ -38,7 +38,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
           </div>
         </div>
       ) : null}
-      {error ? <div className="notice danger">راجع البيانات المطلوبة قبل الإنشاء.</div> : null}
+      {error ? <div className="notice danger">راجع البيانات المطلوبة قبل الإنشاء، خصوصا تاريخ الفرح والحقول الأساسية.</div> : null}
       <form className="admin-form-grid" action="/api/admin/invitations" method="post">
         <label className="field">
           <span>اسم العريس</span>

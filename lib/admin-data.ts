@@ -119,11 +119,16 @@ export async function getAdminInvitations(): Promise<Invitation[]> {
   if (!prisma) return getFileInvitations();
 
   try {
-    const invitations = await prisma.invitation.findMany({
-      include: { template: { select: { slug: true } } },
-      orderBy: { createdAt: "desc" },
-    });
-    return invitations.map(toInvitation);
+    const [invitations, fileInvitations] = await Promise.all([
+      prisma.invitation.findMany({
+        include: { template: { select: { slug: true } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      getFileInvitations(),
+    ]);
+    const databaseInvitations = invitations.map(toInvitation);
+    const databaseCodes = new Set(databaseInvitations.map((invitation) => invitation.code.toLowerCase()));
+    return [...fileInvitations.filter((invitation) => !databaseCodes.has(invitation.code.toLowerCase())), ...databaseInvitations];
   } catch (error) {
     console.error("Failed to load admin invitations", error);
     return getFileInvitations();

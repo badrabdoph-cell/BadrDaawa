@@ -21,9 +21,10 @@ function getAssignedTemplates(slotTemplateSlugs: string[], templates: Awaited<Re
   return templates.filter((template) => assigned.has(template.slug));
 }
 
-export default async function AdminMusicPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; count?: string }> }) {
+export default async function AdminMusicPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; count?: string; open?: string }> }) {
   const [params, library, templates] = await Promise.all([searchParams, getMusicLibrary(), getTemplatesWithSettings()]);
   const enabledTemplates = templates.filter((template) => template.enabled);
+  const appliedCount = Number(params.count || 0);
 
   return (
     <>
@@ -38,13 +39,15 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
       {params.saved ? (
         <div className="notice success">
           <CheckCircle2 size={18} />
-          تم حفظ المقطع وتطبيقه على {params.count || "0"} قالب.
+          {appliedCount > 0 ? `تم حفظ المقطع وتطبيقه على ${params.count} قالب.` : "تم حفظ المقطع. اختار قوالب أو فعل تطبيقه على كل القوالب لما تحب تشغله في الدعوات."}
         </div>
       ) : null}
 
       {params.error ? (
         <div className="notice danger">
-          تأكد من اختيار قالب واحد على الأقل. ولو المقطع في وضع التشغيل لازم يكون فيه ملف صوت أو رابط مباشر.
+          {params.error === "audio"
+            ? "ارفع ملف صوت صالح أو أضف رابط صوت مباشر قبل تشغيل المقطع."
+            : "لم يتم حفظ المقطع. افتح الخانة المطلوبة وراجع البيانات مرة أخرى."}
         </div>
       ) : null}
 
@@ -72,7 +75,7 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
           const slotLabel = slotLabels[index] || `الموسيقى ${index + 1}`;
 
           return (
-            <details className="panel music-slot-card" key={slot.id} open={params.saved === slot.id}>
+            <details className="panel music-slot-card" key={slot.id} open={params.saved === slot.id || params.open === slot.id}>
               <summary className="music-slot-summary">
                 <span className="music-slot-number">{index + 1}</span>
                 <div className="music-slot-summary-copy">
@@ -132,7 +135,7 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
                   </div>
 
                   <label className="admin-toggle-row music-apply-all">
-                    <input name="applyToAll" type="checkbox" defaultChecked={slot.applyToAll} />
+                    <input name="applyToAll" type="checkbox" defaultChecked={slot.applyToAll || (!slot.url && !slot.templateSlugs.length)} />
                     <span>تطبيق هذا المقطع على كل القوالب دفعة واحدة</span>
                   </label>
 
@@ -156,7 +159,7 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
 
                   <button className="btn btn-gold btn-glow music-save-button" type="submit">
                     <Save size={18} />
-                    حفظ وتطبيق المقطع
+                    حفظ المقطع وتطبيق الاختيارات
                   </button>
                 </form>
 

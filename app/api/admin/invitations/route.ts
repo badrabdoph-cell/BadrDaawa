@@ -37,10 +37,14 @@ async function saveInvitationGalleryImages(images: string[], request: NextReques
     const bytes = Buffer.from(match[1], "base64");
     if (!bytes.length || bytes.length > 3 * 1024 * 1024) continue;
 
-    await mkdir(uploadDir, { recursive: true });
-    const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.jpg`;
-    await writeFile(path.join(uploadDir, fileName), bytes);
-    savedUrls.push(getPublicUrl(`/uploads/client-invitations/${fileName}`, request.headers, request.nextUrl.origin).toString());
+    try {
+      await mkdir(uploadDir, { recursive: true });
+      const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.jpg`;
+      await writeFile(path.join(uploadDir, fileName), bytes);
+      savedUrls.push(getPublicUrl(`/uploads/client-invitations/${fileName}`, request.headers, request.nextUrl.origin).toString());
+    } catch (error) {
+      console.error("Failed to save invitation gallery image", error);
+    }
   }
 
   return savedUrls;
@@ -71,17 +75,18 @@ export async function POST(request: NextRequest) {
     .getAll("galleryImage")
     .map((value) => String(value))
     .filter((value) => value.startsWith("data:image/jpeg") || value.startsWith("/"));
-  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
-  const savedGallery = await saveInvitationGalleryImages(galleryImages, request);
-  const gallery = savedGallery.length ? savedGallery : fallbackGallery;
 
-  if (!groomName || !brideName || !phone || !username || !password || !weddingDate || !venue) {
+  const parsedWeddingDate = new Date(weddingDate);
+  if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue) {
     return NextResponse.redirect(new URL("/admin/client-invitations?error=missing", request.url), 303);
   }
 
+  const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
+  const savedGallery = await saveInvitationGalleryImages(galleryImages, request);
+  const gallery = savedGallery.length ? savedGallery : fallbackGallery;
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
 
-  if (!prisma) {
+  async function createFallbackInvitation() {
     const invitation = await createFileInvitation({
       baseSlug,
       templateSlug: selectedTemplate.slug,
@@ -99,88 +104,97 @@ export async function POST(request: NextRequest) {
       musicUrl,
     });
     await syncAdminStateToGitHub(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
-    return NextResponse.redirect(new URL(`/admin/client-invitations?created=${invitation.code}`, request.url), 303);
+    return NextResponse.redirect(new URL(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.url), 303);
   }
 
-  const existing = await prisma.invitation.findMany({
-    where: { code: { startsWith: baseSlug } },
-    select: { code: true },
-  });
-  const code = makeNumberedInvitationSlug(
-    baseSlug,
-    existing.map((item) => item.code),
-  );
+  if (!prisma) {
+    return createFallbackInvitation();
+  }
 
-  const template = await prisma.weddingTemplate.upsert({
-    where: { slug: selectedTemplate.slug },
-    update: {
-      name: selectedTemplate.name,
-      arabicName: selectedTemplate.arabicName,
-      category: selectedTemplate.category,
-      style: selectedTemplate.style,
-      concept: selectedTemplate.concept,
-      opening: selectedTemplate.opening,
-      layout: selectedTemplate.layout,
-      typography: selectedTemplate.typography,
-      palette: selectedTemplate.palette,
-      previewUrl: selectedTemplate.previewImage,
-      enabled: selectedTemplate.enabled,
-      sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
-    },
-    create: {
-      slug: selectedTemplate.slug,
-      name: selectedTemplate.name,
-      arabicName: selectedTemplate.arabicName,
-      category: selectedTemplate.category,
-      style: selectedTemplate.style,
-      concept: selectedTemplate.concept,
-      opening: selectedTemplate.opening,
-      layout: selectedTemplate.layout,
-      typography: selectedTemplate.typography,
-      palette: selectedTemplate.palette,
-      previewUrl: selectedTemplate.previewImage,
-      enabled: selectedTemplate.enabled,
-      sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
-    },
-  });
+  try {
+    const existing = await prisma.invitation.findMany({
+      where: { code: { startsWith: baseSlug } },
+      select: { code: true },
+    });
+    const code = makeNumberedInvitationSlug(
+      baseSlug,
+      existing.map((item) => item.code),
+    );
 
-  const customer = await prisma.customer.upsert({
-    where: { username },
-    update: {
-      name: `${groomName} و ${brideName}`,
-      phone,
-      passwordHash: hashPassword(password),
-      isActive: true,
-    },
-    create: {
-      name: `${groomName} و ${brideName}`,
-      phone,
-      username,
-      passwordHash: hashPassword(password),
-      isActive: true,
-    },
-  });
+    const template = await prisma.weddingTemplate.upsert({
+      where: { slug: selectedTemplate.slug },
+      update: {
+        name: selectedTemplate.name,
+        arabicName: selectedTemplate.arabicName,
+        category: selectedTemplate.category,
+        style: selectedTemplate.style,
+        concept: selectedTemplate.concept,
+        opening: selectedTemplate.opening,
+        layout: selectedTemplate.layout,
+        typography: selectedTemplate.typography,
+        palette: selectedTemplate.palette,
+        previewUrl: selectedTemplate.previewImage,
+        enabled: selectedTemplate.enabled,
+        sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+      },
+      create: {
+        slug: selectedTemplate.slug,
+        name: selectedTemplate.name,
+        arabicName: selectedTemplate.arabicName,
+        category: selectedTemplate.category,
+        style: selectedTemplate.style,
+        concept: selectedTemplate.concept,
+        opening: selectedTemplate.opening,
+        layout: selectedTemplate.layout,
+        typography: selectedTemplate.typography,
+        palette: selectedTemplate.palette,
+        previewUrl: selectedTemplate.previewImage,
+        enabled: selectedTemplate.enabled,
+        sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+      },
+    });
 
-  await prisma.invitation.create({
-    data: {
-      code,
-      status: "ACTIVE",
-      language: "ar",
-      groomName,
-      brideName,
-      weddingDate: new Date(weddingDate),
-      weddingTime,
-      venue,
-      city,
-      mapUrl,
-      heroPhoto: gallery[0],
-      gallery,
-      musicUrl,
-      customerId: customer.id,
-      templateId: template.id,
-    },
-  });
+    const customer = await prisma.customer.upsert({
+      where: { username },
+      update: {
+        name: `${groomName} و ${brideName}`,
+        phone,
+        passwordHash: hashPassword(password),
+        isActive: true,
+      },
+      create: {
+        name: `${groomName} و ${brideName}`,
+        phone,
+        username,
+        passwordHash: hashPassword(password),
+        isActive: true,
+      },
+    });
 
-  await syncAdminStateToGitHub(`Client invitation created: ${code}.`, { createSnapshot: true });
-  return NextResponse.redirect(new URL(`/admin/client-invitations?created=${code}`, request.url), 303);
+    await prisma.invitation.create({
+      data: {
+        code,
+        status: "ACTIVE",
+        language: "ar",
+        groomName,
+        brideName,
+        weddingDate: parsedWeddingDate,
+        weddingTime,
+        venue,
+        city,
+        mapUrl,
+        heroPhoto: gallery[0],
+        gallery,
+        musicUrl,
+        customerId: customer.id,
+        templateId: template.id,
+      },
+    });
+
+    await syncAdminStateToGitHub(`Client invitation created: ${code}.`, { createSnapshot: true });
+    return NextResponse.redirect(new URL(`/admin/client-invitations?created=${code}`, request.url), 303);
+  } catch (error) {
+    console.error("Failed to create database invitation, falling back to file store", error);
+    return createFallbackInvitation();
+  }
 }

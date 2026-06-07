@@ -88,7 +88,7 @@ export async function getInvitationByCode(code: string): Promise<Invitation | un
       include: { template: { select: { slug: true } } },
     });
 
-    return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : undefined;
+    return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
   } catch (error) {
     console.error("Failed to load invitation", error);
     return (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
@@ -108,7 +108,9 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
       orderBy: { createdAt: "desc" },
     });
 
-    return guests.map((guest) => toGuestRsvp(guest as DatabaseGuest));
+    if (guests.length) return guests.map((guest) => toGuestRsvp(guest as DatabaseGuest));
+    const fileGuests = await getFileGuestsByInvitation(code);
+    return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
   } catch (error) {
     console.error("Failed to load invitation guests", error);
     const fileGuests = await getFileGuestsByInvitation(code);
