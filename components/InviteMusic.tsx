@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Volume2, VolumeX } from "lucide-react";
 
-export const DEFAULT_INVITE_MUSIC_URL = "/assets/audio/badr-sara-wedding-3.mp3";
-
 const nonInvitationSegments = new Set(["", "admin", "api", "_next", "templates", "order", "pricing", "faq", "contact", "client", "client-invitations"]);
 
 function isTemplatePreviewPath(segments: string[]) {
@@ -29,12 +27,11 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
   const [needsInteraction, setNeedsInteraction] = useState(false);
   const [hasError, setHasError] = useState(false);
   const isEnabledInvitationPath = isMusicEnabledPath(pathname);
-  const isDisabled = musicUrl === null || !isEnabledInvitationPath;
+  const cleanedMusicUrl = typeof musicUrl === "string" ? musicUrl.trim() : "";
+  const isDisabled = !cleanedMusicUrl || !isEnabledInvitationPath;
 
   const audioSource = useMemo(() => {
-    if (musicUrl === null) return "";
-    const source = musicUrl?.trim();
-    return source || DEFAULT_INVITE_MUSIC_URL;
+    return typeof musicUrl === "string" ? musicUrl.trim() : "";
   }, [musicUrl]);
 
   const clearRetryTimer = useCallback(() => {

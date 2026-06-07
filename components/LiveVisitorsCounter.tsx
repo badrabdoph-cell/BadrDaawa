@@ -8,9 +8,9 @@ function randomVisitors() {
 }
 
 function randomDelay() {
-  const normalDelay = 30000 + Math.floor(Math.random() * 65000);
-  const occasionalLongPause = 95000 + Math.floor(Math.random() * 25000);
-  return Math.random() > 0.84 ? occasionalLongPause : normalDelay;
+  const normalDelay = 22000 + Math.floor(Math.random() * 48000);
+  const occasionalLongPause = 75000 + Math.floor(Math.random() * 25000);
+  return Math.random() > 0.86 ? occasionalLongPause : normalDelay;
 }
 
 export function LiveVisitorsCounter() {

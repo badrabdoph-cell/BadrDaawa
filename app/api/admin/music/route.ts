@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAdminInvitations } from "@/lib/admin-data";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteMusicSlot, getMusicLibrary, saveMusicSlot, setMusicSlotEnabled } from "@/lib/music-library";
@@ -13,12 +14,18 @@ async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
-function revalidateMusicPages(templateSlugs: string[]) {
+async function revalidateMusicPages(templateSlugs: string[]) {
   revalidatePath("/admin/music");
   revalidatePath("/admin/templates");
   revalidatePath("/templates");
   for (const slug of templateSlugs) {
     revalidatePath(`/templates/${slug}/preview`);
+  }
+
+  const invitations = await getAdminInvitations().catch(() => []);
+  for (const invitation of invitations) {
+    revalidatePath(`/${invitation.code}`);
+    revalidatePath(`/${invitation.code}/ad_3399`);
   }
 }
 
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   if (action === "disable") {
     const savedSlot = await setMusicSlotEnabled(slotId, false);
-    revalidateMusicPages(allTemplateSlugs);
+    await revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Global music disabled: ${savedSlot?.id || slotId}.`, { createSnapshot: true });
     url.searchParams.set("saved", "disabled");
     url.searchParams.set("count", String(allTemplateSlugs.length));
@@ -61,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(url, 303);
     }
     const savedSlot = await setMusicSlotEnabled(slotId, true);
-    revalidateMusicPages(allTemplateSlugs);
+    await revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Global music enabled: ${savedSlot?.id || slotId}.`, { createSnapshot: true });
     url.searchParams.set("saved", "enabled");
     url.searchParams.set("count", String(allTemplateSlugs.length));
@@ -71,7 +78,7 @@ export async function POST(request: NextRequest) {
   if (action === "clear" || action === "delete") {
     await deleteUploadedMusicFile(currentSlot.url);
     const savedSlot = await deleteMusicSlot(slotId);
-    revalidateMusicPages(allTemplateSlugs);
+    await revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Global music cleared: ${savedSlot?.id || slotId}.`, { createSnapshot: true });
     url.searchParams.set("saved", "cleared");
     url.searchParams.set("count", String(allTemplateSlugs.length));
@@ -120,7 +127,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (savedSlot) {
-    revalidateMusicPages(appliedTemplateSlugs);
+    await revalidateMusicPages(appliedTemplateSlugs);
     queueGitHubSync(`Music slot ${savedSlot.id} ${trackEnabled ? "enabled" : "disabled"} for ${appliedTemplateSlugs.length} template(s).`, { createSnapshot: true });
   }
 

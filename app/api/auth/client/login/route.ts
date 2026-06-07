@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getClientSessionSecret } from "@/lib/auth-config";
 import { validateFileClientLogin } from "@/lib/file-store";
 import { verifyPassword } from "@/lib/password";
+import { getRedirectUrl } from "@/lib/utils";
 
 async function isValidClientLogin(code: string, username: string, password: string) {
   const envUsername = process.env.CLIENT_ADMIN_USERNAME;
@@ -40,10 +41,12 @@ export async function POST(request: NextRequest) {
   const password = String(formData.get("password") || "");
 
   if (!code || !(await isValidClientLogin(code, username, password))) {
-    return NextResponse.redirect(new URL(`/${code || "invite"}/ad_3399/login?error=1`, request.url), 303);
+    const url = getRedirectUrl(`/${code || "invite"}/ad_3399/login`, request.headers, request.nextUrl.origin);
+    url.searchParams.set("error", "1");
+    return NextResponse.redirect(url, 303);
   }
 
-  const response = NextResponse.redirect(new URL(`/${code}/ad_3399`, request.url), 303);
+  const response = NextResponse.redirect(getRedirectUrl(`/${code}/ad_3399`, request.headers, request.nextUrl.origin), 303);
   response.cookies.set("bd_client_session", `${getClientSessionSecret()}:${code}`, {
     httpOnly: true,
     sameSite: "lax",
