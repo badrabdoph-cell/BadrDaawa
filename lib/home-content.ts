@@ -111,19 +111,35 @@ function cleanText(value: unknown, fallback: string) {
 
 function normalizeFeaturePoints(value: unknown, fallback: HomeFeaturePoint[]) {
   if (!Array.isArray(value)) return fallback;
-  return fallback.map((item, index) => {
+  const seen = new Set<string>();
+  const normalized = fallback.map((item, index) => {
     const incoming = value.find((entry) => entry && typeof entry === "object" && "id" in entry && entry.id === item.id) || value[index];
+    seen.add(item.id);
     return {
       id: item.id,
       text: cleanText((incoming as Partial<HomeFeaturePoint> | undefined)?.text, item.text),
     };
   });
+
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const point = entry as Partial<HomeFeaturePoint>;
+    if (typeof point.id !== "string" || !point.id.trim() || seen.has(point.id)) continue;
+    const text = cleanText(point.text, "");
+    if (!text) continue;
+    seen.add(point.id);
+    normalized.push({ id: point.id.trim(), text });
+  }
+
+  return normalized;
 }
 
 function normalizePricingRows(value: unknown, fallback: HomePricingRow[]) {
   if (!Array.isArray(value)) return fallback;
-  return fallback.map((item, index) => {
+  const seen = new Set<string>();
+  const normalized = fallback.map((item, index) => {
     const incoming = value.find((entry) => entry && typeof entry === "object" && "id" in entry && entry.id === item.id) || value[index];
+    seen.add(item.id);
     return {
       id: item.id,
       feature: cleanText((incoming as Partial<HomePricingRow> | undefined)?.feature, item.feature),
@@ -131,6 +147,23 @@ function normalizePricingRows(value: unknown, fallback: HomePricingRow[]) {
       plus: typeof (incoming as Partial<HomePricingRow> | undefined)?.plus === "boolean" ? Boolean((incoming as Partial<HomePricingRow>).plus) : item.plus,
     };
   });
+
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const row = entry as Partial<HomePricingRow>;
+    if (typeof row.id !== "string" || !row.id.trim() || seen.has(row.id)) continue;
+    const feature = cleanText(row.feature, "");
+    if (!feature) continue;
+    seen.add(row.id);
+    normalized.push({
+      id: row.id.trim(),
+      feature,
+      invitation: typeof row.invitation === "boolean" ? row.invitation : true,
+      plus: typeof row.plus === "boolean" ? row.plus : true,
+    });
+  }
+
+  return normalized;
 }
 
 function normalizeContent(input: Partial<HomeContent>): HomeContent {

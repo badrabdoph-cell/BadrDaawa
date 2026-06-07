@@ -4,7 +4,7 @@ import { cleanPlayableAudioUrl, isYouTubeUrl, saveUploadedAudioFile } from "@/li
 import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { fallbackInvitationGallery, getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { hashPassword } from "@/lib/password";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
@@ -37,10 +37,7 @@ export async function POST(request: NextRequest) {
   const uploadedAudio = formData.get("audioFile");
   const templateSlug = String(formData.get("templateSlug") || royalEnvelopeTemplate.slug).trim();
   const selectedTemplate = (await getTemplateWithSettings(templateSlug)) || royalEnvelopeTemplate;
-  const galleryImages = formData
-    .getAll("galleryImage")
-    .map((value) => String(value))
-    .filter((value) => value.startsWith("data:image/") || value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://"));
+  const galleryImages = getInvitationGalleryEntries(formData);
 
   const parsedWeddingDate = new Date(weddingDate);
   if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue) {

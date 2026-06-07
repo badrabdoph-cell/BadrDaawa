@@ -52,6 +52,8 @@ function toStringArray(value: unknown) {
 }
 
 function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
+  const gallery = toStringArray(invitation.gallery);
+  const heroPhoto = invitation.heroPhoto || gallery[0] || "/assets/brand/hero-luxury.png";
   return {
     id: invitation.id,
     code: invitation.code,
@@ -64,8 +66,8 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     venue: invitation.venue,
     city: invitation.city || "",
     mapUrl: invitation.mapUrl || "",
-    heroPhoto: invitation.heroPhoto || "/assets/brand/hero-luxury.png",
-    gallery: toStringArray(invitation.gallery),
+    heroPhoto,
+    gallery: gallery.length ? gallery : [heroPhoto],
     musicUrl: invitation.musicUrl || undefined,
     isActive: invitation.status === "ACTIVE",
     views: invitation.viewCount,

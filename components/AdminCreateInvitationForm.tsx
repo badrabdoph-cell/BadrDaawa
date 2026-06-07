@@ -154,7 +154,7 @@ export function AdminCreateInvitationForm({ created, error, demo, templates }: {
                 <strong>{index + 1}</strong>
                 <span>{slot.title}</span>
                 <small>{slot.hint}</small>
-                <ImageCropUploader label={slot.uploadLabel} name="galleryImage" targetWidth={slot.targetWidth} targetHeight={slot.targetHeight} maxFiles={1} />
+                <ImageCropUploader label={slot.uploadLabel} name={`galleryImage${index}`} targetWidth={slot.targetWidth} targetHeight={slot.targetHeight} maxFiles={1} />
               </div>
             ))}
           </div>

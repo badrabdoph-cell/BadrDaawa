@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
-import { saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 
 function isClientAllowed(request: NextRequest, code: string) {
   const expected = process.env.CLIENT_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-client-local";
@@ -17,10 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const formData = await request.formData();
-  const galleryImages = formData
-    .getAll("galleryImage")
-    .map((value) => String(value))
-    .filter((value) => value.startsWith("data:image/") || value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://"));
+  const galleryImages = getInvitationGalleryEntries(formData);
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
 
   const data: Record<string, unknown> = {};

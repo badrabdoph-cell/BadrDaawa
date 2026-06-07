@@ -142,7 +142,7 @@ export function ImageCropUploader({
         <span>
           {targetWidth}x{targetHeight}px - كروب إجباري قبل الرفع وضغط تلقائي
         </span>
-        <input type="file" accept="image/*" multiple={maxFiles > 1} onChange={(event) => handleFiles(event.target.files)} />
+        <input name={`${name}Raw`} type="file" accept="image/*" multiple={maxFiles > 1} onChange={(event) => handleFiles(event.target.files)} />
       </label>
 
       {!items.length && defaultImages.length ? (
