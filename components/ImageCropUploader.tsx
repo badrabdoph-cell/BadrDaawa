@@ -9,6 +9,7 @@ type CropItem = {
   fileName: string;
   originalSize: number;
   sourceUrl: string;
+  canPreview: boolean;
   cropX: number;
   cropY: number;
   zoom: number;
@@ -89,9 +90,17 @@ export function ImageCropUploader({
   const queueOptimize = (nextItem: CropItem) => {
     window.clearTimeout(timers.current[nextItem.id]);
     timers.current[nextItem.id] = window.setTimeout(async () => {
-      const optimized = await optimizeImage(nextItem, targetWidth, targetHeight, 0.84).catch(() => ({ url: "", size: 0 }));
-      setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, optimizedUrl: optimized.url, optimizedSize: optimized.size } : item)));
+      try {
+        const optimized = await optimizeImage(nextItem, targetWidth, targetHeight, 0.84);
+        setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, canPreview: true, optimizedUrl: optimized.url, optimizedSize: optimized.size } : item)));
+      } catch {
+        setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, canPreview: false, optimizedUrl: "", optimizedSize: 0 } : item)));
+      }
     }, 160);
+  };
+
+  const markPreviewUnavailable = (id: string) => {
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, canPreview: false, optimizedUrl: "", optimizedSize: 0 } : item)));
   };
 
   const updateItem = (id: string, updates: Partial<CropItem>) => {
@@ -126,6 +135,7 @@ export function ImageCropUploader({
         cropX: 0,
         cropY: 0,
         zoom: 1,
+        canPreview: true,
         optimizedUrl: "",
         optimizedSize: 0,
       };
@@ -159,19 +169,28 @@ export function ImageCropUploader({
           {items.map((item, index) => (
             <article className="crop-item" key={item.id}>
               <div className="crop-preview" style={{ aspectRatio: ratio }}>
-                <img
-                  src={item.sourceUrl}
-                  alt={item.fileName}
-                  style={{
-                    objectPosition: `${50 + item.cropX * 50}% ${50 + item.cropY * 50}%`,
-                    transform: `scale(${item.zoom})`,
-                  }}
-                />
+                {item.canPreview ? (
+                  <img
+                    src={item.sourceUrl}
+                    alt={item.fileName}
+                    onError={() => markPreviewUnavailable(item.id)}
+                    style={{
+                      objectPosition: `${50 + item.cropX * 50}% ${50 + item.cropY * 50}%`,
+                      transform: `scale(${item.zoom})`,
+                    }}
+                  />
+                ) : (
+                  <div className="crop-preview-fallback">
+                    <ImagePlus size={20} />
+                    <strong>{item.fileName}</strong>
+                    <span>الصورة مختارة وسيتم رفعها، لكن المتصفح لا يعرض معاينة لهذه الصيغة.</span>
+                  </div>
+                )}
               </div>
               <div className="crop-controls">
                 <strong>صورة {index + 1}</strong>
                 <span>
-                  {formatKb(item.originalSize)} إلى {item.optimizedSize ? formatKb(item.optimizedSize) : "جاري الضغط"}
+                  {formatKb(item.originalSize)} إلى {item.optimizedSize ? formatKb(item.optimizedSize) : item.canPreview ? "جاري الضغط" : "رفع الملف الأصلي"}
                 </span>
                 <label>
                   تكبير

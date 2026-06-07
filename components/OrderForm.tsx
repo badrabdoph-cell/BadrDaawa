@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarDays, Camera, Eye, Images, Loader2, MapPin, MessageCircle, UserRound } from "lucide-react";
 import { ImageCropUploader } from "@/components/ImageCropUploader";
 import type { TemplateDefinition } from "@/lib/types";
@@ -21,6 +21,10 @@ type FormState = {
 type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 type OrderFormValues = Pick<FormState, "groomName" | "brideName" | "phone" | "weddingDate" | "mapUrl" | "venue" | "notes">;
+type OrderDraft = Partial<FormState> & { imageUrls?: string[] };
+export type OrderInitialDraft = Pick<FormState, "groomName" | "brideName" | "phone" | "weddingDate" | "mapUrl" | "venue" | "notes"> & { imageUrls: string[] };
+
+const orderDraftStorageKey = "badrdaawa-order-draft";
 
 const orderImageSlots = [
   {
@@ -37,17 +41,25 @@ const orderImageSlots = [
   },
 ];
 
-export function OrderForm({ initialTemplate, templates }: { initialTemplate?: string; templates: OrderTemplateOption[] }) {
+function cleanOrderDraftImageUrls(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .filter((item) => item.startsWith("/uploads/") || item.startsWith("http://") || item.startsWith("https://"))
+    .slice(0, 3);
+}
+
+export function OrderForm({ initialTemplate, initialDraft, templates }: { initialTemplate?: string; initialDraft?: OrderInitialDraft; templates: OrderTemplateOption[] }) {
   const fallbackTemplate = templates[0] || { slug: "royal-envelope", name: "Royal Envelope", arabicName: "Royal Envelope", previewImage: "/assets/templates/royal-envelope.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
   const [form, setForm] = useState<FormState>({
-    groomName: "",
-    brideName: "",
-    phone: "",
-    weddingDate: "",
-    mapUrl: "",
-    venue: "",
-    notes: "",
+    groomName: initialDraft?.groomName || "",
+    brideName: initialDraft?.brideName || "",
+    phone: initialDraft?.phone || "",
+    weddingDate: initialDraft?.weddingDate || "",
+    mapUrl: initialDraft?.mapUrl || "",
+    venue: initialDraft?.venue || "",
+    notes: initialDraft?.notes || "",
     templateSlug: initialSlug,
     language: "ar",
   });
@@ -55,12 +67,108 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [draftImageUrls, setDraftImageUrls] = useState<string[]>(() => cleanOrderDraftImageUrls(initialDraft?.imageUrls));
+  const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
     [fallbackTemplate, form.templateSlug, templates],
   );
+
+  function getUrlDraft(): OrderDraft {
+    if (typeof window === "undefined") return {};
+    const params = new URLSearchParams(window.location.search);
+    const imageUrls = cleanOrderDraftImageUrls((params.get("gallery") || "").split(","));
+    return {
+      groomName: params.get("groomName") || undefined,
+      brideName: params.get("brideName") || undefined,
+      phone: params.get("phone") || undefined,
+      weddingDate: params.get("weddingDate") || undefined,
+      mapUrl: params.get("mapUrl") || undefined,
+      venue: params.get("venue") || undefined,
+      notes: params.get("notes") || undefined,
+      templateSlug: params.get("template") || undefined,
+      imageUrls,
+    };
+  }
+
+  function replaceDraftUrl(nextForm: Partial<FormState> = form, nextImageUrls = draftImageUrls) {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    params.set("template", nextForm.templateSlug || selectedTemplate.slug);
+    const fields: Array<keyof OrderFormValues> = ["groomName", "brideName", "phone", "weddingDate", "mapUrl", "venue", "notes"];
+    fields.forEach((field) => {
+      const value = String(nextForm[field] || "").trim();
+      if (value) params.set(field, value);
+    });
+    if (nextImageUrls.length) params.set("gallery", nextImageUrls.join(","));
+    window.history.replaceState(window.history.state, "", `/order?${params.toString()}`);
+  }
+
+  function persistDraft(nextForm: Partial<FormState> = form, nextImageUrls = draftImageUrls) {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(orderDraftStorageKey, JSON.stringify({ ...form, ...nextForm, imageUrls: nextImageUrls }));
+    } catch {
+      // Keeping the URL draft is enough to restore the form if browser storage is unavailable.
+    }
+    replaceDraftUrl({ ...form, ...nextForm }, nextImageUrls);
+  }
+
+  function persistCurrentDomDraft() {
+    if (!formRef.current) return;
+    const currentForm = getCurrentFormFromDom();
+    persistDraft({ ...currentForm, templateSlug: selectedTemplate.slug }, draftImageUrls);
+  }
+
+  function getStoredDraft() {
+    if (typeof window === "undefined") return {};
+    try {
+      const rawDraft = window.sessionStorage?.getItem(orderDraftStorageKey);
+      return rawDraft ? (JSON.parse(rawDraft) as OrderDraft) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  useEffect(() => {
+    try {
+      const storedDraft = getStoredDraft();
+      const urlDraft = getUrlDraft();
+      const draft = { ...storedDraft, ...urlDraft, imageUrls: urlDraft.imageUrls?.length ? urlDraft.imageUrls : storedDraft.imageUrls };
+      if (!Object.keys(draft).length) {
+        setDraftReady(true);
+        return;
+      }
+
+      const draftTemplate = typeof draft.templateSlug === "string" && templates.some((template) => template.slug === draft.templateSlug) ? draft.templateSlug : initialSlug;
+      setForm((current) => ({
+        ...current,
+        groomName: typeof draft.groomName === "string" ? draft.groomName : current.groomName,
+        brideName: typeof draft.brideName === "string" ? draft.brideName : current.brideName,
+        phone: typeof draft.phone === "string" ? draft.phone : current.phone,
+        weddingDate: typeof draft.weddingDate === "string" ? draft.weddingDate : current.weddingDate,
+        mapUrl: typeof draft.mapUrl === "string" ? draft.mapUrl : current.mapUrl,
+        venue: typeof draft.venue === "string" ? draft.venue : current.venue,
+        notes: typeof draft.notes === "string" ? draft.notes : current.notes,
+        templateSlug: draftTemplate,
+        language: draft.language === "en" ? "en" : "ar",
+      }));
+      setDraftImageUrls(cleanOrderDraftImageUrls(draft.imageUrls));
+    } catch {
+      try {
+        window.sessionStorage?.removeItem(orderDraftStorageKey);
+      } catch {}
+    } finally {
+      setDraftReady(true);
+    }
+  }, [initialSlug, templates]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    persistDraft();
+  }, [draftReady, form, draftImageUrls]);
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -130,7 +238,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
     if (values.venue) params.set("venue", values.venue);
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
-    return `/templates/${form.templateSlug}/preview?${params.toString()}`;
+    return `/templates/${values.templateSlug || form.templateSlug}/preview?${params.toString()}`;
   }
 
   function getCurrentFormFromDom(): OrderFormValues {
@@ -161,9 +269,24 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
   }
 
   async function getOrderImageDataUrls(formData: FormData) {
+    const slotImages = await Promise.all(
+      orderImageSlots.map(async (_, index) => {
+        const optimized = String(formData.get(`orderImage${index}`) || "");
+        if (optimized) return optimized;
+        const rawFile = formData.get(`orderImage${index}Raw`);
+        if (rawFile instanceof File && rawFile.size > 0) return readFileAsDataUrl(rawFile);
+        if (draftImageUrls[index]) return draftImageUrls[index];
+        return "";
+      }),
+    );
+
+    const orderedSlotImages = slotImages.filter(Boolean).slice(0, 3);
+    if (orderedSlotImages.length) return orderedSlotImages;
+
     const optimized = formData.getAll("orderImage").map((value) => String(value)).filter(Boolean).slice(0, 3);
     const rawFiles = formData.getAll("orderImageRaw").filter((value): value is File => value instanceof File && value.size > 0).slice(0, 3);
 
+    if (!optimized.length && !rawFiles.length && draftImageUrls.length) return draftImageUrls;
     if (!rawFiles.length || optimized.length >= rawFiles.length) return optimized;
 
     const rawDataUrls = (await Promise.all(rawFiles.slice(optimized.length).map(readFileAsDataUrl))).filter(Boolean);
@@ -217,7 +340,10 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
         imageUrls = Array.isArray(data?.imageUrls) ? data.imageUrls : [];
       }
 
-      window.location.href = previewHref({ ...currentForm, weddingDate: normalizeWeddingDate(currentForm.weddingDate) }, imageUrls);
+      const nextImageUrls = imageUrls.length ? imageUrls : draftImageUrls;
+      if (nextImageUrls.length) setDraftImageUrls(nextImageUrls);
+      persistDraft({ ...currentForm, weddingDate: normalizeWeddingDate(currentForm.weddingDate), templateSlug: selectedTemplate.slug }, nextImageUrls);
+      window.location.href = previewHref({ ...currentForm, weddingDate: normalizeWeddingDate(currentForm.weddingDate), templateSlug: selectedTemplate.slug }, nextImageUrls);
     } catch {
       setState("error");
       setMessage("تعذر تجهيز صور المعاينة. جرّب مرة أخرى أو اضغط تأكيد الطلب.");
@@ -281,6 +407,9 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
 
       const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
       const imageLines = data?.imageUrls?.length ? `\n\nصور الدعوة بالترتيب:\n${data.imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
+      try {
+        window.sessionStorage?.removeItem(orderDraftStorageKey);
+      } catch {}
       window.location.href = getWhatsAppOrderUrl(`${baseMessage}${imageLines}`);
     } catch {
       setState("error");
@@ -295,7 +424,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
         <span className="active">2. بيانات الفرح</span>
       </div>
 
-      <form className="form-panel details-form" onSubmit={submitOrder} ref={formRef} noValidate>
+      <form className="form-panel details-form" onSubmit={submitOrder} onInput={persistCurrentDomDraft} onChange={persistCurrentDomDraft} ref={formRef} noValidate>
           <div className="selected-template-dot">
             <span aria-hidden="true" />
             <p>
@@ -382,7 +511,7 @@ export function OrderForm({ initialTemplate, templates }: { initialTemplate?: st
                         <p>{slot.hint}</p>
                       </div>
                     </div>
-                    <ImageCropUploader name="orderImage" label="اختار صورة" targetWidth={1200} targetHeight={1500} maxFiles={1} />
+                    <ImageCropUploader name={`orderImage${index}`} label="اختار صورة" targetWidth={1200} targetHeight={1500} maxFiles={1} defaultImages={draftImageUrls[index] ? [draftImageUrls[index]] : []} />
                   </div>
                 ))}
               </div>
