@@ -12,6 +12,7 @@ type PageProps = {
   searchParams?: Promise<{
     silentPreview?: string;
     embed?: string;
+    builderPreview?: string;
     groomName?: string;
     brideName?: string;
     weddingDate?: string;
@@ -24,6 +25,7 @@ type PageProps = {
     photographerName?: string;
     photographerFacebookUrl?: string;
     photographerInstagramUrl?: string;
+    photographerLogoUrl?: string;
     musicUrl?: string;
   }>;
 };
@@ -68,6 +70,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           photographer: {
             enabled: true,
             name: cleanPreviewText(query.photographerName, "المصور الفوتوغرافي"),
+            logoUrl: query.photographerLogoUrl?.trim() || undefined,
             facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
             instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
           },
@@ -95,11 +98,12 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   };
 
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
+  const hidePreviewActions = isSilentPreview || query?.builderPreview === "1";
 
   return (
     <>
       <InvitationExperience invitation={invitation} template={previewTemplate} disableMusic={isSilentPreview} />
-      {!isSilentPreview ? (
+      {!hidePreviewActions ? (
         <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
           <Link className="template-preview-action template-preview-action-soft" href="/">
             <Home size={17} />

@@ -787,6 +787,70 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           ) : null}
         </section>
 
+        <section className="order-music-box">
+          <button
+            className={`photographer-toggle-button order-music-toggle ${form.musicEnabled ? "active" : ""}`}
+            type="button"
+            aria-expanded={form.musicEnabled}
+            onClick={() => updateField("musicEnabled", !form.musicEnabled)}
+          >
+            <Music2 size={18} />
+            <span>إضافة موسيقى للدعوة</span>
+            <strong>{form.musicEnabled ? "إخفاء الموسيقى" : "إضافة موسيقى"}</strong>
+          </button>
+
+          {form.musicEnabled ? (
+            <div className="order-music-fields">
+              <p className="order-music-note">اختياري، وتشتغل تلقائيًا عند فتح الدعوة بعد النشر.</p>
+              <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
+                <button className={form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "default"} onClick={() => updateField("musicChoice", "default")}>
+                  <Music2 size={16} />
+                  موسيقى أساسية
+                </button>
+                <button className={form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "upload"} onClick={() => updateField("musicChoice", "upload")}>
+                  <UploadCloud size={16} />
+                  ارفع ملف موسيقى
+                </button>
+                <button className={form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "url"} onClick={() => updateField("musicChoice", "url")}>
+                  <Link2 size={16} />
+                  رابط أغنية
+                </button>
+              </div>
+
+              {form.musicChoice === "upload" ? (
+                <label className="order-music-upload">
+                  <UploadCloud size={17} />
+                  <span>
+                    <strong>ارفع ملف موسيقى</strong>
+                    <small>{musicFileName || form.musicUrl || "mp3 / m4a / wav / ogg"}</small>
+                  </span>
+                  <input
+                    name="orderMusicFile"
+                    type="file"
+                    accept={acceptedAudioFormats}
+                    onChange={(event) => {
+                      setMusicFileName(event.target.files?.[0]?.name || "");
+                      if (message) setMessage("");
+                    }}
+                  />
+                </label>
+              ) : null}
+
+              {form.musicChoice === "url" ? (
+                <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
+                  <label htmlFor="musicUrl">رابط أغنية مباشر</label>
+                  <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
+                  {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="field-preview">استخدم رابط ملف صوت مباشر، وليس رابط صفحة YouTube.</small>}
+                </div>
+              ) : null}
+
+              {form.musicChoice === "upload" && form.musicUrl ? (
+                <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
+              ) : null}
+            </div>
+          ) : null}
+        </section>
+
         <div className="order-final-actions">
           <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>
             {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <Check size={19} />}

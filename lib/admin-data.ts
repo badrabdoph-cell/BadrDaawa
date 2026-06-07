@@ -31,6 +31,8 @@ type AdminInvitationRow = {
   heroPhoto?: string | null;
   gallery?: unknown;
   musicUrl?: string | null;
+  musicEnabled?: boolean | null;
+  photographer?: unknown;
   status?: string;
   isActive?: boolean;
   viewCount?: number;
@@ -93,6 +95,18 @@ function toStringArray(value: unknown) {
   return [];
 }
 
+function toPhotographer(value: unknown): Invitation["photographer"] | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  return {
+    enabled: raw.enabled !== false,
+    name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "badrabdoph",
+    logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
+    instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
+    facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
+  };
+}
+
 function toInvitation(row: AdminInvitationRow): Invitation {
   const gallery = toStringArray(row.gallery);
   const heroPhoto = normalizeInternalAssetUrl(row.heroPhoto);
@@ -111,6 +125,8 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     heroPhoto: (heroPhoto && isBrowserDisplayImageUrl(heroPhoto) ? heroPhoto : "") || gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
     gallery,
     musicUrl: row.musicUrl || undefined,
+    musicEnabled: row.musicEnabled !== false,
+    photographer: toPhotographer(row.photographer),
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
     views: row.viewCount ?? row.views ?? 0,
     customerId: row.customerId,

@@ -44,22 +44,29 @@ function getSocialShareLinks(invitationUrl: string) {
 type PhotographerConfig = {
   enabled: boolean;
   name: string;
+  logoUrl?: string;
   instagramUrl: string;
   facebookUrl: string;
 };
 
-function getTemplatePhotographer(template: TemplateDefinition): PhotographerConfig {
+function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation): PhotographerConfig {
+  const invitationPhotographer = invitation?.photographer;
   return {
-    enabled: shouldShowPhotographerCard() && (template.photographer?.enabled ?? true),
-    name: template.photographer?.name || "badrabdoph",
-    instagramUrl: template.photographer?.instagramUrl || "https://www.instagram.com/",
-    facebookUrl: template.photographer?.facebookUrl || "https://www.facebook.com/",
+    enabled: shouldShowPhotographerCard() && (invitationPhotographer?.enabled ?? template.photographer?.enabled ?? true),
+    name: invitationPhotographer?.name || template.photographer?.name || "badrabdoph",
+    logoUrl: invitationPhotographer?.logoUrl || template.photographer?.logoUrl,
+    instagramUrl: invitationPhotographer?.instagramUrl || template.photographer?.instagramUrl || "https://www.instagram.com/",
+    facebookUrl: invitationPhotographer?.facebookUrl || template.photographer?.facebookUrl || "https://www.facebook.com/",
   };
 }
 
+function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer: PhotographerConfig; fallback?: string }) {
+  return photographer.logoUrl ? <img className="photographer-logo-image" src={photographer.logoUrl} alt={photographer.name} /> : <span>{fallback}</span>;
+}
+
 export async function InvitationExperience({ invitation, template, disableMusic = false }: { invitation: Invitation; template: TemplateDefinition; disableMusic?: boolean }) {
-  const templateMusicUrl = disableMusic ? null : invitation.musicUrl || template.musicUrl;
-  const photographer = getTemplatePhotographer(template);
+  const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : invitation.musicUrl || template.musicUrl;
+  const photographer = getTemplatePhotographer(template, invitation);
 
   if (template.customHtml) {
     return <CustomHtmlInvitationExperience invitation={invitation} template={template} musicUrl={templateMusicUrl} />;
@@ -183,7 +190,7 @@ export async function InvitationExperience({ invitation, template, disableMusic 
         {showPhotographer ? (
           <section className="invite-card photographer-card">
             <div className="photographer-logo" aria-hidden="true">
-              BA
+              <PhotographerLogoMark photographer={photographer} />
             </div>
             <div>
               <span className="invite-kicker">Photographer</span>
@@ -342,7 +349,9 @@ async function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer
         {showPhotographer ? (
           <section className="noir-photographer-card">
             <div className="noir-photographer-main">
-              <div className="noir-photographer-logo">BA</div>
+              <div className="noir-photographer-logo">
+                <PhotographerLogoMark photographer={photographer} />
+              </div>
               <div>
                 <span>
                   <Camera size={16} />
@@ -451,8 +460,8 @@ async function IvoryArchesInvitationExperience({ invitation, musicUrl, photograp
         {showPhotographer ? (
           <section className="ivory-photographer-card">
             <div className="ivory-photographer-logo">
-              <Camera size={24} />
-              <span>BA</span>
+              {photographer.logoUrl ? <PhotographerLogoMark photographer={photographer} /> : <Camera size={24} />}
+              {!photographer.logoUrl ? <span>BA</span> : null}
             </div>
             <span>Photography</span>
             <h2>{photographer.name}</h2>
@@ -560,7 +569,9 @@ async function MobileGoldInvitationExperience({ invitation, musicUrl, photograph
         {showPhotographer ? (
           <section className="mobile-gold-photographer">
             <div className="mobile-gold-photographer-main">
-              <div className="mobile-gold-photographer-logo">BA</div>
+              <div className="mobile-gold-photographer-logo">
+                <PhotographerLogoMark photographer={photographer} />
+              </div>
               <div>
                 <p>
                   <Camera size={12} />
@@ -963,8 +974,8 @@ async function FeaturedOneInvitationExperience({ invitation, musicUrl, photograp
         {showPhotographer ? (
           <section className="featured-photographer-card">
             <div className="featured-photographer-logo">
-              <Camera size={24} />
-              <span>BA</span>
+              {photographer.logoUrl ? <PhotographerLogoMark photographer={photographer} /> : <Camera size={24} />}
+              {!photographer.logoUrl ? <span>BA</span> : null}
             </div>
             <span>Photography</span>
             <h2>{photographer.name}</h2>
@@ -2037,7 +2048,7 @@ async function CinematicStoryInvitationExperience({ invitation, musicUrl, photog
           <section className="cinematic-photographer">
             <Camera size={120} className="cinematic-photographer-watermark" />
             <div className="cinematic-photographer-logo">
-              <span>BA</span>
+              <PhotographerLogoMark photographer={photographer} />
             </div>
             <div>
               <span>Official Photographer</span>

@@ -26,6 +26,7 @@ export type TemplateDefinition = {
   photographer?: {
     enabled: boolean;
     name: string;
+    logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;
   };
@@ -50,6 +51,14 @@ export type Invitation = {
   heroPhoto: string;
   gallery: string[];
   musicUrl?: string;
+  musicEnabled?: boolean;
+  photographer?: {
+    enabled: boolean;
+    name: string;
+    logoUrl?: string;
+    instagramUrl: string;
+    facebookUrl: string;
+  };
   isActive: boolean;
   views: number;
   customerId: string;

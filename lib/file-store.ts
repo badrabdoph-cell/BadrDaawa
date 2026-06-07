@@ -39,10 +39,12 @@ type CreateFileInvitationInput = {
   mapUrl: string;
   gallery: string[];
   musicUrl: string;
+  musicEnabled?: boolean;
+  photographer?: Invitation["photographer"];
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "gallery" | "heroPhoto" | "isActive">
+  Pick<Invitation, "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "photographer" | "gallery" | "heroPhoto" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -214,6 +216,8 @@ export async function createFileInvitation(input: CreateFileInvitationInput) {
     heroPhoto: input.gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
     gallery: input.gallery,
     musicUrl: input.musicUrl || undefined,
+    musicEnabled: input.musicEnabled !== false,
+    photographer: input.photographer,
     isActive: true,
     views: 0,
     customerId: customer.id,

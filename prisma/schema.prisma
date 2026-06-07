@@ -99,6 +99,8 @@ model Invitation {
   heroPhoto   String?
   gallery     Json              @default("[]")
   musicUrl    String?
+  musicEnabled Boolean          @default(true)
+  photographer Json?
   qrCodeUrl   String?
   viewCount   Int               @default(0)
   customerId  String

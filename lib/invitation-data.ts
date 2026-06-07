@@ -19,6 +19,8 @@ type DatabaseInvitation = {
   heroPhoto: string | null;
   gallery: unknown;
   musicUrl: string | null;
+  musicEnabled?: boolean | null;
+  photographer?: unknown;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
   viewCount: number;
   customerId: string;
@@ -57,6 +59,18 @@ function toStringArray(value: unknown) {
   return [];
 }
 
+function toPhotographer(value: unknown): Invitation["photographer"] | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  return {
+    enabled: raw.enabled !== false,
+    name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "badrabdoph",
+    logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
+    instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
+    facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
+  };
+}
+
 function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
   const gallery = toStringArray(invitation.gallery);
   const normalizedHero = normalizeInternalAssetUrl(invitation.heroPhoto);
@@ -76,6 +90,8 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     heroPhoto,
     gallery: gallery.length ? gallery : [heroPhoto],
     musicUrl: invitation.musicUrl || undefined,
+    musicEnabled: invitation.musicEnabled !== false,
+    photographer: toPhotographer(invitation.photographer),
     isActive: invitation.status === "ACTIVE",
     views: invitation.viewCount,
     customerId: invitation.customerId,
