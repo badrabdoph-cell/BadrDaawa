@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, RadioTower, ShieldCheck, UsersRound } from "lucide-react";
+import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileText, Github, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, RadioTower, ShieldCheck, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
@@ -17,6 +17,8 @@ const adminLinks = [
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
   { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
+  { href: "/admin/sync-history", label: "سجل المزامنة", icon: Github },
+  { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },
 ];
 
 export function DashboardShell({ children }: { children: ReactNode }) {
