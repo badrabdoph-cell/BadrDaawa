@@ -21,7 +21,8 @@ function statusLabel(status: string) {
   return status;
 }
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
+  const params = await searchParams;
   const [invitations, orders, backups, musicLibrary] = await Promise.all([getAdminInvitations(), getAdminOrders(), listBackupSnapshots(), getMusicLibrary()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const recentOrders = orders.slice(0, 4);
@@ -53,6 +54,18 @@ export default async function AdminDashboardPage() {
       {!hasDatabase ? (
         <div className="notice danger">
           قاعدة البيانات غير متصلة. اربط DATABASE_URL عشان الطلبات والدعوات تظهر من قاعدة البيانات الحقيقية.
+        </div>
+      ) : null}
+
+      {params?.sync ? (
+        <div className={params.sync === "failed" || params.sync === "skipped" ? "notice danger" : "notice success"}>
+          {params.sync === "synced"
+            ? "تمت مزامنة بيانات الأدمن مع GitHub."
+            : params.sync === "unchanged"
+              ? "GitHub محدث بالفعل ولا توجد تغييرات جديدة."
+              : params.sync === "skipped"
+                ? `لم تبدأ المزامنة: ${params.syncMessage || "إعدادات GitHub غير مكتملة."}`
+                : `فشلت مزامنة GitHub: ${params.syncMessage || "راجع إعدادات GitHub."}`}
         </div>
       ) : null}
 
@@ -111,6 +124,11 @@ export default async function AdminDashboardPage() {
             <span className={githubSync.configured ? "admin-health-pill good" : "admin-health-pill danger"}>{githubSync.label}</span>
             <strong>مزامنة GitHub</strong>
             <small>{githubSync.detail}</small>
+            <form action="/api/admin/sync-status" method="post">
+              <button className="btn btn-soft btn-glass" type="submit">
+                مزامنة الآن
+              </button>
+            </form>
           </div>
           <div className="admin-health-card">
             <DatabaseBackup size={19} />
