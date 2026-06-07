@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
   const selectedTemplate = await getTemplateWithSettings(templateSlug);
   if (!selectedTemplate) return NextResponse.json({ error: "القالب المختار غير موجود." }, { status: 400 });
   const templateDefinition = selectedTemplate;
-  const safeWeddingDate = parsedDate;
+  const safeWeddingDate: Date = parsedDate;
 
   const galleryInput = Array.isArray(input.gallery) ? input.gallery.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3) : [];
   const savedGallery = await saveInvitationGalleryImages(galleryInput);
@@ -132,18 +132,18 @@ export async function POST(request: NextRequest) {
   async function createOrUpdateFileInvitation() {
     if (existingCode && (await getFileInvitationByCode(existingCode))) {
       await updateFileInvitation(existingCode, {
-        templateSlug: selectedTemplate.slug,
+        templateSlug: templateDefinition.slug,
         groomName,
         brideName,
         weddingDate,
-        weddingTime: cleanText(payload.weddingTime, "07:00 مساءً"),
+        weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
         venue,
-        city: cleanText(payload.city),
-        mapUrl: cleanText(payload.mapUrl),
+        city: cleanText(input.city),
+        mapUrl: cleanText(input.mapUrl),
         gallery,
         heroPhoto: gallery[0],
         musicUrl,
-        musicEnabled: Boolean(payload.musicEnabled),
+        musicEnabled: Boolean(input.musicEnabled),
         photographer,
         isActive,
       });
@@ -152,20 +152,20 @@ export async function POST(request: NextRequest) {
 
     const storeInvitation = await createFileInvitation({
       baseSlug,
-      templateSlug: selectedTemplate.slug,
+      templateSlug: templateDefinition.slug,
       groomName,
       brideName,
       phone: "",
       username: `client_${Date.now().toString(36)}`,
       password: `bd-${Date.now().toString(36)}`,
       weddingDate,
-      weddingTime: cleanText(payload.weddingTime, "07:00 مساءً"),
+      weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
       venue,
-      city: cleanText(payload.city),
-      mapUrl: cleanText(payload.mapUrl),
+      city: cleanText(input.city),
+      mapUrl: cleanText(input.mapUrl),
       gallery,
       musicUrl,
-      musicEnabled: Boolean(payload.musicEnabled),
+      musicEnabled: Boolean(input.musicEnabled),
       photographer,
     });
     if (!isActive) await setFileInvitationActive(storeInvitation.code, false);
@@ -175,35 +175,35 @@ export async function POST(request: NextRequest) {
   async function createOrUpdatePrismaInvitation() {
     if (!prisma) return null;
     const template = await prisma.weddingTemplate.upsert({
-      where: { slug: selectedTemplate.slug },
+      where: { slug: templateDefinition.slug },
       update: {
-        name: selectedTemplate.name,
-        arabicName: selectedTemplate.arabicName,
-        category: selectedTemplate.category,
-        style: selectedTemplate.style,
-        concept: selectedTemplate.concept,
-        opening: selectedTemplate.opening,
-        layout: selectedTemplate.layout,
-        typography: selectedTemplate.typography,
-        palette: selectedTemplate.palette,
-        previewUrl: selectedTemplate.previewImage,
-        enabled: selectedTemplate.enabled,
-        sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+        name: templateDefinition.name,
+        arabicName: templateDefinition.arabicName,
+        category: templateDefinition.category,
+        style: templateDefinition.style,
+        concept: templateDefinition.concept,
+        opening: templateDefinition.opening,
+        layout: templateDefinition.layout,
+        typography: templateDefinition.typography,
+        palette: templateDefinition.palette,
+        previewUrl: templateDefinition.previewImage,
+        enabled: templateDefinition.enabled,
+        sortOrder: await getTemplateSortOrderWithSettings(templateDefinition.slug),
       },
       create: {
-        slug: selectedTemplate.slug,
-        name: selectedTemplate.name,
-        arabicName: selectedTemplate.arabicName,
-        category: selectedTemplate.category,
-        style: selectedTemplate.style,
-        concept: selectedTemplate.concept,
-        opening: selectedTemplate.opening,
-        layout: selectedTemplate.layout,
-        typography: selectedTemplate.typography,
-        palette: selectedTemplate.palette,
-        previewUrl: selectedTemplate.previewImage,
-        enabled: selectedTemplate.enabled,
-        sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+        slug: templateDefinition.slug,
+        name: templateDefinition.name,
+        arabicName: templateDefinition.arabicName,
+        category: templateDefinition.category,
+        style: templateDefinition.style,
+        concept: templateDefinition.concept,
+        opening: templateDefinition.opening,
+        layout: templateDefinition.layout,
+        typography: templateDefinition.typography,
+        palette: templateDefinition.palette,
+        previewUrl: templateDefinition.previewImage,
+        enabled: templateDefinition.enabled,
+        sortOrder: await getTemplateSortOrderWithSettings(templateDefinition.slug),
       },
     });
 
@@ -240,15 +240,15 @@ export async function POST(request: NextRequest) {
       language: "ar",
       groomName,
       brideName,
-      weddingDate: parsedDate,
-      weddingTime: cleanText(payload.weddingTime, "07:00 مساءً"),
+      weddingDate: safeWeddingDate,
+      weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
       venue,
-      city: cleanText(payload.city),
-      mapUrl: cleanText(payload.mapUrl),
+      city: cleanText(input.city),
+      mapUrl: cleanText(input.mapUrl),
       heroPhoto: gallery[0],
       gallery,
       musicUrl,
-      musicEnabled: Boolean(payload.musicEnabled),
+      musicEnabled: Boolean(input.musicEnabled),
       photographer,
       customerId: customer.id,
       templateId: template.id,
