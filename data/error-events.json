@@ -1,6 +1,15 @@
 {
   "events": [
     {
+      "id": "err-mq5vgm36-cirzt28r",
+      "route": "https://daawa.up.railway.app/admin/orders",
+      "message": "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "stack": "rD@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:35062\nrO@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:36092\n@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:118080\nix@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:122950\nik@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:114740\n@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:110727\niu@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:110826\niX@https://daawa.up.railway.app/_next/static/chunks/acfafb44-5b2d50c78ab1fa6b.js:1:132931\nw@https://daawa.up.railway.app/_next/static/chunks/8920-2cb58a4a5dc86203.js:1:98851",
+      "user": "admin:Badrabdoph3399",
+      "source": "window.error",
+      "createdAt": "2026-06-08T23:58:44.946Z"
+    },
+    {
       "id": "err-mq5v80hl-57auw86k",
       "route": "https://daawa.up.railway.app/admin?_rsc=yrDcgtHlcI4zVVYY",
       "message": "502  - /admin?_rsc=yrDcgtHlcI4zVVYY",

@@ -1,6 +1,22 @@
 {
   "notifications": [
     {
+      "signature": "orders:actionable:1:cmq5vff8000022816ocp88w4s:new",
+      "type": "orders",
+      "severity": "info",
+      "title": "وصل طلب جديد أو طلب يحتاج مراجعة",
+      "message": "يوجد 1 طلب دعوة بانتظار المتابعة داخل لوحة الطلبات.",
+      "href": "/admin/orders",
+      "meta": {
+        "count": 1,
+        "latestOrderId": "cmq5vff8000022816ocp88w4s",
+        "latestStatus": "new"
+      },
+      "id": "admin-note-78b4eac45198b0ea",
+      "createdAt": "2026-06-08T23:58:37.104Z",
+      "updatedAt": "2026-06-08T23:58:44.687Z"
+    },
+    {
       "signature": "errors:recent:1:err-mq5v80hl-57auw86k",
       "type": "errors",
       "severity": "error",
@@ -14,7 +30,7 @@
       },
       "id": "admin-note-b7f07511011a6110",
       "createdAt": "2026-06-08T23:52:04.663Z",
-      "updatedAt": "2026-06-08T23:55:09.965Z"
+      "updatedAt": "2026-06-08T23:58:44.683Z"
     }
   ]
 }
