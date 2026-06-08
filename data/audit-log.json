@@ -1,5 +1,34 @@
 [
   {
+    "id": "audit-mq5vgxb2-n3i9esvr",
+    "createdAt": "2026-06-08T23:58:59.486Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-2-1780963132535",
+      "label": "Order marked reviewing: cmq5vff8000022816ocp88w4s."
+    },
+    "newValues": {
+      "startedAt": 1780963132539,
+      "status": "synced",
+      "message": "Admin data synced to GitHub.",
+      "commitUrl": "https://github.com/badrabdoph-cell/BadrDaawa/commit/729d8c78fe6e71f3462a2726e3827c85550ae7d7",
+      "commitSha": "729d8c78fe6e71f3462a2726e3827c85550ae7d7",
+      "files": 36,
+      "duration": 6943
+    },
+    "metadata": {
+      "reason": "Order marked reviewing: cmq5vff8000022816ocp88w4s.",
+      "status": "synced",
+      "retryCount": 0,
+      "logId": "cmq5vgry100062816ieir6pxe"
+    }
+  },
+  {
     "id": "audit-mq5vfkcu-4lxhrbce",
     "createdAt": "2026-06-08T23:57:56.046Z",
     "actor": {
