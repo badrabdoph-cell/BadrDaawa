@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["pdfkit"],
+  serverExternalPackages: ["pdfkit", "heic-convert", "heic-decode", "libheif-js", "jpeg-js", "pngjs"],
   images: {
     formats: ["image/avif", "image/webp"],
   },
