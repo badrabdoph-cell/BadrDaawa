@@ -108,10 +108,17 @@ export function LiveInvitationPreview({
   invitation,
   template,
   disableMusic,
+  settings,
 }: {
   invitation: Invitation;
   template: TemplateDefinition;
   disableMusic?: boolean;
+  settings?: {
+    showPhotographerCard?: boolean;
+    photographerName?: string;
+    photographerInstagramUrl?: string;
+    photographerFacebookUrl?: string;
+  };
 }) {
   const [previewInvitation, setPreviewInvitation] = useState(invitation);
   const [previewDisableMusic, setPreviewDisableMusic] = useState(disableMusic);
@@ -135,5 +142,5 @@ export function LiveInvitationPreview({
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  return <InvitationExperience invitation={previewInvitation} template={template} disableMusic={previewDisableMusic} />;
+  return <InvitationExperience invitation={previewInvitation} template={template} disableMusic={previewDisableMusic} settings={settings} />;
 }

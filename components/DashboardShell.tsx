@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/search", label: "البحث العام", icon: Search },
+  { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
   { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
   { href: "/admin/invitations", label: "الدعوات", icon: Archive },
   { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
@@ -24,6 +25,7 @@ const adminLinks = [
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
   { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
   { href: "/admin/errors", label: "الأخطاء", icon: Bug },
+  { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
   { href: "/admin/audit-log", label: "سجل التدقيق", icon: ScrollText },
   { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
   { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },

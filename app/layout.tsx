@@ -2,25 +2,33 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: getMetadataBaseUrl(),
-  title: {
-    default: "BadrDaawa | دعوات زفاف رقمية فاخرة",
-    template: "%s | BadrDaawa",
-  },
-  description: "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
-  keywords: ["دعوة فرح", "دعوات زفاف رقمية", "RSVP", "QR Code", "BadrDaawa"],
-  openGraph: {
-    title: "BadrDaawa | الجيل الجديد من دعوات الزفاف بدأ هنا",
-    description: "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة.",
-    siteName: "BadrDaawa",
-    locale: "ar_EG",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    metadataBase: getMetadataBaseUrl(),
+    title: {
+      default: settings.seo.title,
+      template: `%s | ${settings.siteName}`,
+    },
+    description: settings.seo.description,
+    keywords: settings.seo.keywords
+      .split(",")
+      .map((keyword) => keyword.trim())
+      .filter(Boolean),
+    openGraph: {
+      title: settings.seo.ogTitle,
+      description: settings.seo.ogDescription,
+      siteName: settings.siteName,
+      locale: "ar_EG",
+      type: "website",
+      images: settings.logoUrl ? [{ url: settings.logoUrl }] : undefined,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

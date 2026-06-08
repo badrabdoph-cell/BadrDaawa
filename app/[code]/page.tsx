@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { getInvitationByCode, recordInvitationView } from "@/lib/invitation-data";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { getInvitationUrl } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     notFound();
   }
 
-  const template = await getTemplateWithSettings(invitation.templateSlug);
+  const [template, siteSettings] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getSiteSettings()]);
   if (!template) {
     notFound();
   }
@@ -40,5 +41,17 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     await recordInvitationView(invitation.code);
   }
 
-  return <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />;
+  return (
+    <InvitationExperience
+      invitation={invitation}
+      template={template}
+      disableMusic={isSilentPreview}
+      settings={{
+        showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+        photographerName: siteSettings.photographer.defaultName,
+        photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
+        photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+      }}
+    />
+  );
 }

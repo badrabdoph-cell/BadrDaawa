@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getHomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
+import { getSiteSettings } from "@/lib/site-settings";
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
 
@@ -14,9 +15,10 @@ export const revalidate = 0;
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
-  const [previewSettings, content] = await Promise.all([getHomePreviewSettings(), getHomeContent()]);
+  const [previewSettings, content, siteSettings] = await Promise.all([getHomePreviewSettings(), getHomeContent(), getSiteSettings()]);
   const previewTemplateSrc = `/templates/${previewSettings.templateSlug}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
+  const showHomePanels = siteSettings.homepage.showFeatures || siteSettings.homepage.showPreview || siteSettings.homepage.showPricing;
 
   return (
     <div className="page-shell">
@@ -48,13 +50,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <WandSparkles size={19} />
                   <span data-broadcast-key="hero.primaryCta" data-broadcast-label="زر الطلب" data-broadcast-kind="text" data-broadcast-value={content.hero.primaryCta}>
-                    {content.hero.primaryCta}
+                    {siteSettings.homepage.primaryCtaLabel || content.hero.primaryCta}
                   </span>
                 </Link>
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <Palette size={19} />
                   <span data-broadcast-key="hero.secondaryCta" data-broadcast-label="زر الأشكال" data-broadcast-kind="text" data-broadcast-value={content.hero.secondaryCta}>
-                    {content.hero.secondaryCta}
+                    {siteSettings.homepage.secondaryCtaLabel || content.hero.secondaryCta}
                   </span>
                 </Link>
               </div>
@@ -62,10 +64,12 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </section>
 
-        <section className="section compact live-template-section">
-          <div className="container live-template-wrap">
-            <div className="live-preview-stack">
-              <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
+        {showHomePanels ? (
+          <section className="section compact live-template-section">
+            <div className="container live-template-wrap">
+              <div className="live-preview-stack">
+                {siteSettings.homepage.showFeatures ? (
+                  <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
                 <div className="home-features-head">
                   <span>
                     <Sparkles size={16} />
@@ -78,7 +82,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   {content.features.points.map((item, index) => {
                     const Icon = featureIcons[index] || Sparkles;
                     return (
-                      <div className="home-feature-point" key={item.text}>
+                      <div className="home-feature-point" key={item.id}>
                         <span>
                           <Icon size={17} />
                         </span>
@@ -89,8 +93,11 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                     );
                   })}
                 </div>
-              </div>
-              <div className="live-preview-title">
+                  </div>
+                ) : null}
+                {siteSettings.homepage.showPreview ? (
+                  <>
+                    <div className="live-preview-title">
                 <span data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content.preview.eyebrow}>
                   {content.preview.eyebrow}
                 </span>
@@ -124,7 +131,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   </span>
                 </Link>
               </div>
-              <div className="home-pricing-panel" aria-label="باقات الأسعار">
+                  </>
+                ) : null}
+                {siteSettings.homepage.showPricing ? (
+                  <div className="home-pricing-panel" aria-label="باقات الأسعار">
                 <div className="home-pricing-head">
                   <span data-broadcast-key="pricing.eyebrow" data-broadcast-label="نص الباقات الصغير" data-broadcast-kind="text" data-broadcast-value={content.pricing.eyebrow}>
                     {content.pricing.eyebrow}
@@ -167,10 +177,12 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                     </div>
                   ))}
                 </div>
+                  </div>
+                ) : null}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
       </main>
       <LiveVisitorsCounter />
       <SiteFooter />

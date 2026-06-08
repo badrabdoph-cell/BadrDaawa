@@ -5,6 +5,7 @@ import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 
@@ -60,7 +61,7 @@ function cleanPreviewUrl(value: string | undefined, fallback: string) {
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const query = await searchParams;
-  const template = await getTemplateWithPreviewMusic(slug);
+  const [template, siteSettings] = await Promise.all([getTemplateWithPreviewMusic(slug), getSiteSettings()]);
   if (!template) notFound();
   const previewGallery = cleanPreviewGallery(query?.gallery);
   const hasExplicitMusicPreview = query?.musicEnabled !== undefined || query?.musicUrl !== undefined;
@@ -112,9 +113,29 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   return (
     <>
       {query?.builderPreview === "1" ? (
-        <LiveInvitationPreview invitation={invitation} template={template} disableMusic={isSilentPreview} />
+        <LiveInvitationPreview
+          invitation={invitation}
+          template={template}
+          disableMusic={isSilentPreview}
+          settings={{
+            showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+            photographerName: siteSettings.photographer.defaultName,
+            photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
+            photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+          }}
+        />
       ) : (
-        <InvitationExperience invitation={invitation} template={template} disableMusic={isSilentPreview} />
+        <InvitationExperience
+          invitation={invitation}
+          template={template}
+          disableMusic={isSilentPreview}
+          settings={{
+            showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+            photographerName: siteSettings.photographer.defaultName,
+            photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
+            photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+          }}
+        />
       )}
       {!hidePreviewActions ? (
         <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">

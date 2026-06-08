@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Crown, Headphones, Send } from "lucide-react";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const navLinks = [
@@ -10,17 +11,18 @@ const navLinks = [
   { href: "/contact", label: "تواصل" },
 ];
 
-export function SiteHeader() {
-  const supportUrl = getWhatsAppOrderUrl("محتاج مساعدة في دعوة الفرح");
+export async function SiteHeader() {
+  const settings = await getSiteSettings();
+  const supportUrl = settings.whatsappUrl || getWhatsAppOrderUrl("محتاج مساعدة في دعوة الفرح");
 
   return (
     <header className="site-header">
       <div className="container nav">
-        <Link href="/" className="brand" aria-label="BadrDaawa">
+        <Link href="/" className="brand" aria-label={settings.siteName}>
           <span className="brand-mark">
-            <Crown size={21} />
+            {settings.logoUrl ? <img className="brand-logo-image" src={settings.logoUrl} alt="" /> : <Crown size={21} />}
           </span>
-          <span>BadrDaawa</span>
+          <span>{settings.siteName}</span>
         </Link>
         <nav className="nav-links" aria-label="روابط الموقع">
           {navLinks.map((link) => (

@@ -11,7 +11,6 @@ import { QrCodeBlock } from "./QrCodeBlock";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
-import { shouldShowPhotographerCard } from "@/lib/site-settings";
 import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
@@ -69,15 +68,22 @@ type PhotographerConfig = {
   facebookUrl: string;
 };
 
-function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation): PhotographerConfig {
+type InvitationExperienceSettings = {
+  showPhotographerCard?: boolean;
+  photographerName?: string;
+  photographerInstagramUrl?: string;
+  photographerFacebookUrl?: string;
+};
+
+function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation, settings?: InvitationExperienceSettings): PhotographerConfig {
   const invitationPhotographer = invitation?.photographer;
-  const enabled = shouldShowPhotographerCard() && invitationPhotographer?.enabled === true;
+  const enabled = settings?.showPhotographerCard !== false && invitationPhotographer?.enabled === true;
   return {
     enabled,
-    name: invitationPhotographer?.name || template.photographer?.name || "badrabdoph",
+    name: invitationPhotographer?.name || template.photographer?.name || settings?.photographerName || "badrabdoph",
     logoUrl: invitationPhotographer?.logoUrl || template.photographer?.logoUrl,
-    instagramUrl: invitationPhotographer?.instagramUrl || template.photographer?.instagramUrl || "https://www.instagram.com/",
-    facebookUrl: invitationPhotographer?.facebookUrl || template.photographer?.facebookUrl || "https://www.facebook.com/",
+    instagramUrl: invitationPhotographer?.instagramUrl || template.photographer?.instagramUrl || settings?.photographerInstagramUrl || "https://www.instagram.com/",
+    facebookUrl: invitationPhotographer?.facebookUrl || template.photographer?.facebookUrl || settings?.photographerFacebookUrl || "https://www.facebook.com/",
   };
 }
 
@@ -85,9 +91,19 @@ function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer:
   return photographer.logoUrl ? <img className="photographer-logo-image" src={photographer.logoUrl} alt={photographer.name} /> : <span>{fallback}</span>;
 }
 
-export function InvitationExperience({ invitation, template, disableMusic = false }: { invitation: Invitation; template: TemplateDefinition; disableMusic?: boolean }) {
-  const templateMusicUrl = disableMusic || invitation.musicEnabled !== true ? null : invitation.musicUrl || template.musicUrl;
-  const photographer = getTemplatePhotographer(template, invitation);
+export function InvitationExperience({
+  invitation,
+  template,
+  disableMusic = false,
+  settings,
+}: {
+  invitation: Invitation;
+  template: TemplateDefinition;
+  disableMusic?: boolean;
+  settings?: InvitationExperienceSettings;
+}) {
+  const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : invitation.musicUrl || template.musicUrl;
+  const photographer = getTemplatePhotographer(template, invitation, settings);
 
   if (template.customHtml) {
     return <CustomHtmlInvitationExperience invitation={invitation} template={template} musicUrl={templateMusicUrl} />;
