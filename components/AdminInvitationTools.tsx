@@ -8,10 +8,10 @@ import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
-export type AdminToolMusicFile = { url: string; modifiedAt: number };
+export type AdminToolMusicFile = { url: string; modifiedAt?: number; name?: string; id?: string; sizeBytes?: number; extension?: string };
 export type AdminToolImageSlot = { url: string; name: string; loading: boolean };
 export type AdminToolUploadSlot = { url: string; name: string; loading: boolean };
-export type AdminToolMusicChoice = "default" | "upload" | "url";
+export type AdminToolMusicChoice = "default" | "library" | "upload" | "url";
 
 export type AdminInvitationToolValues = {
   templateSlug: string;
@@ -30,6 +30,7 @@ export type AdminInvitationToolValues = {
   musicEnabled: boolean;
   musicChoice: AdminToolMusicChoice;
   musicUrl: string;
+  musicLibraryTrackId?: string;
   musicBusy: boolean;
   musicFileName?: string;
   invitationTexts: Required<InvitationTexts>;
@@ -47,7 +48,7 @@ export const emptyAdminToolUpload: AdminToolUploadSlot = { url: "", name: "", lo
 
 export function isPlayableAudioUrl(value: string) {
   if (!value.trim()) return true;
-  return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(value.trim());
+  return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i.test(value.trim());
 }
 
 export function readAdminFileAsDataUrl(file: File) {
@@ -79,7 +80,7 @@ export function validateAdminInvitationTools(values: AdminInvitationToolValues, 
   if (!values.groomName.trim() || !values.brideName.trim() || !values.weddingDate || !values.venue.trim()) {
     return "اكتب اسم العريس والعروسة والتاريخ والعنوان قبل الحفظ أو النشر.";
   }
-  if (values.musicEnabled && values.musicChoice !== "default" && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) {
+  if (values.musicEnabled && !["default", "library"].includes(values.musicChoice) && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) {
     return "رابط الموسيقى لازم يكون ملف صوت مباشر.";
   }
   if (values.images.some((image) => image.loading) || values.photographerLogo.loading || values.musicBusy) {
@@ -233,17 +234,17 @@ export function AdminInvitationTools({
           <div className={gridClassName}>
             <label className="field">
               <span>اختيار من الملفات المحفوظة</span>
-              <select value={values.musicChoice !== "url" ? values.musicUrl : ""} onChange={(event) => onPatch({ musicUrl: event.target.value, musicChoice: event.target.value ? "upload" : values.musicChoice })}>
+              <select value={values.musicChoice === "library" || values.musicChoice === "upload" ? values.musicUrl : ""} onChange={(event) => onPatch({ musicUrl: event.target.value, musicChoice: event.target.value ? "library" : values.musicChoice, musicLibraryTrackId: musicFiles.find((file) => file.url === event.target.value)?.id || event.target.value })}>
                 <option value="">اختار ملف محفوظ</option>
                 {musicFiles.map((file) => (
-                  <option key={file.url} value={file.url}>{file.url.split("/").pop()}</option>
+                  <option key={file.url} value={file.url}>{file.name || file.url.split("/").pop()}</option>
                 ))}
               </select>
             </label>
             <label className="builder-logo-upload">
               {values.musicBusy ? <Loader2 size={17} /> : <UploadCloud size={17} />}
               <span>{values.musicFileName || "رفع ملف جديد"}</span>
-              <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac" onChange={(event) => onMusicFile(event.target.files?.[0])} />
+              <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" onChange={(event) => onMusicFile(event.target.files?.[0])} />
             </label>
             <label className="field">
               <span>رابط ملف صوتي خارجي</span>

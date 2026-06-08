@@ -117,6 +117,7 @@ function toPhotographer(value: unknown): Invitation["photographer"] | undefined 
     logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
     instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
     facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
+    whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
   };
 }
 
@@ -197,7 +198,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     notes: notes || undefined,
     imageUrls,
     musicEnabled: row.musicEnabled ?? Boolean(row.musicUrl || parseMusicUrlFromNotes(notes)),
-    musicChoice: row.musicChoice === "upload" || row.musicChoice === "url" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
+    musicChoice: row.musicChoice === "upload" || row.musicChoice === "url" || row.musicChoice === "library" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
     musicUrl: row.musicUrl || parseMusicUrlFromNotes(notes) || undefined,
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer) || parsePhotographerFromNotes(notes),

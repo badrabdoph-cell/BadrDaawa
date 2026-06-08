@@ -16,7 +16,7 @@ export const orderRequestSchema = z.object({
   photographerFacebookUrl: z.string().trim().max(500).optional().default(""),
   photographerInstagramUrl: z.string().trim().max(500).optional().default(""),
   musicEnabled: z.boolean().optional().default(false),
-  musicChoice: z.enum(["default", "upload", "url"]).optional().default("default"),
+  musicChoice: z.enum(["default", "library", "upload", "url"]).optional().default("default"),
   musicUrl: z.string().trim().max(500).optional().default(""),
   orderMusic: z.string().max(48 * 1024 * 1024).optional().default(""),
   idempotencyKey: z.string().trim().max(120).optional().default(""),

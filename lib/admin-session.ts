@@ -77,19 +77,24 @@ export async function createAdminSessionCookie(username: string) {
 }
 
 export async function verifyAdminSessionCookie(value?: string | null) {
-  if (!value) return false;
+  const session = await getAdminSessionUser(value);
+  return Boolean(session);
+}
+
+export async function getAdminSessionUser(value?: string | null) {
+  if (!value) return null;
 
   const [version, payload, signature] = value.split(".");
-  if (version !== "v1" || !payload || !signature) return false;
+  if (version !== "v1" || !payload || !signature) return null;
 
   const isValidSignature = await verifySignature(payload, signature);
-  if (!isValidSignature) return false;
+  if (!isValidSignature) return null;
 
   try {
     const session = decodeJson<AdminSessionPayload>(payload);
     const now = Math.floor(Date.now() / 1000);
-    return Boolean(session.sub && session.exp > now && session.iat <= now);
+    return session.sub && session.exp > now && session.iat <= now ? session.sub : null;
   } catch {
-    return false;
+    return null;
   }
 }

@@ -1,76 +1,130 @@
-import { AlertTriangle, CheckCircle2, FileAudio, Music2, Pause, Play, Plus, Save, Trash2, UploadCloud } from "lucide-react";
-import { getActiveMusicSlot, getMusicLibrary } from "@/lib/music-library";
-import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { AlertTriangle, CheckCircle2, Disc3, FileAudio, Library, Music2, Pencil, Plus, RefreshCw, Star, Trash2, UploadCloud } from "lucide-react";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { getAdminInvitations } from "@/lib/admin-data";
+import { isUploadedMusicUrl } from "@/lib/audio-files";
+import { getDefaultMusicSlot, getMusicLibrary, getMusicUsage, type MusicSlot } from "@/lib/music-library";
+import { formatArabicNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(value: string) {
-  if (!value) return "لم يتم الحفظ بعد";
+type MusicPageParams = {
+  saved?: string;
+  error?: string;
+  count?: string;
+  converted?: string;
+  confirmDelete?: string;
+  used?: string;
+};
+
+function formatDate(value?: string) {
+  if (!value) return "غير محدد";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-function saveMessage(saved?: string, count?: string) {
-  const templateCount = Number(count || 0);
-  if (saved === "enabled") return `تم تشغيل المقطع على ${templateCount} قالب.`;
-  if (saved === "disabled") return "تم إيقاف المقطع. باقي الملفات محفوظة.";
-  if (saved === "cleared") return "تم حذف المقطع من المكتبة.";
-  if (saved) return `تم حفظ المقطع وتطبيقه على ${templateCount} قالب.`;
+function formatBytes(value?: number) {
+  if (!value) return "غير معروف";
+  if (value < 1024 * 1024) return `${formatArabicNumber(value / 1024)} KB`;
+  return `${formatArabicNumber(value / (1024 * 1024))} MB`;
+}
+
+function formatDuration(value?: number) {
+  if (!value) return "غير معروف";
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.floor(value % 60);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function saveMessage(params: MusicPageParams) {
+  if (params.saved === "default") return "تم تعيين الموسيقى الافتراضية للموقع.";
+  if (params.saved === "disabled") return "تم إيقاف الموسيقى الافتراضية.";
+  if (params.saved === "deleted") return `تم حذف المقطع وتحويل ${formatArabicNumber(Number(params.converted || 0))} دعوة للموسيقى الافتراضية.`;
+  if (params.saved === "renamed") return "تم تعديل اسم المقطع.";
+  if (params.saved === "saved") return "تم حفظ المقطع في مكتبة الموسيقى.";
+  if (params.saved) return "تم حفظ التغييرات.";
   return "";
 }
 
-export default async function AdminMusicPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; count?: string }> }) {
-  const [params, library, templates] = await Promise.all([searchParams, getMusicLibrary(), getTemplatesWithSettings()]);
-  const enabledTemplates = templates.filter((template) => template.enabled);
+function errorMessage(error?: string) {
+  if (!error) return "";
+  if (error === "blocked-url") return "هذا الرابط ليس ملفاً صوتياً مباشراً أو من مصدر غير مدعوم مثل YouTube أو Spotify أو SoundCloud.";
+  if (error === "name") return "اكتب اسم واضح للمقطع قبل الحفظ.";
+  if (error === "audio") return "لا يوجد ملف صوت صالح. الصيغ المسموحة: mp3, wav, ogg, aac, m4a, webm, flac.";
+  if (error === "slot") return "لم يتم العثور على المقطع المطلوب.";
+  return "تعذر تنفيذ أمر الموسيقى.";
+}
+
+function trackStatus(track: MusicSlot, defaultTrack?: MusicSlot) {
+  if (defaultTrack?.id === track.id) return "الموسيقى الافتراضية";
+  return track.enabled ? "نشط" : "محفوظ";
+}
+
+export default async function AdminMusicPage({ searchParams }: { searchParams: Promise<MusicPageParams> }) {
+  const [params, library, invitations] = await Promise.all([searchParams, getMusicLibrary(), getAdminInvitations()]);
   const tracks = library.slots.filter((slot) => slot.url);
-  const activeSlot = getActiveMusicSlot(library);
-  const message = saveMessage(params.saved, params.count);
+  const defaultTrack = getDefaultMusicSlot(library);
+  const usage = getMusicUsage(invitations, library);
+  const confirmTrack = params.confirmDelete ? tracks.find((track) => track.id === params.confirmDelete) : undefined;
+  const uploadedTracks = tracks.filter((track) => isUploadedMusicUrl(track.url));
+  const totalSize = tracks.reduce((sum, track) => sum + (track.sizeBytes || 0), 0);
+  const mostUsed = usage.mostUsedTrack;
+  const success = saveMessage(params);
+  const error = errorMessage(params.error);
 
   return (
     <>
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Music Library</span>
-          <h1>مكتبة الموسيقى</h1>
-          <p>احفظ أكتر من مقطع، وشغل مقطع واحد فقط على كل القوالب. الاسم المختلف يضيف مقطع جديد ولا يستبدل القديم.</p>
+          <span className="eyebrow">Music System</span>
+          <h1>إدارة الموسيقى</h1>
+          <p>مكتبة موحدة للموسيقى مع أولوية واضحة: موسيقى الدعوة، ثم اختيار من المكتبة، ثم الموسيقى الافتراضية للموقع.</p>
         </div>
       </div>
 
-      {message ? (
-        <div className="notice success">
-          <CheckCircle2 size={18} />
-          {message}
-        </div>
+      {success ? <div className="notice success"><CheckCircle2 size={18} />{success}</div> : null}
+      {error ? <div className="notice danger"><AlertTriangle size={18} />{error}</div> : null}
+      {confirmTrack ? (
+        <section className="notice danger music-delete-warning">
+          <AlertTriangle size={20} />
+          <div>
+            <strong>المقطع مستخدم في {formatArabicNumber(Number(params.used || 0))} دعوة.</strong>
+            <span>عند تأكيد الحذف سيتم تحويل هذه الدعوات تلقائياً للموسيقى الافتراضية للموقع.</span>
+          </div>
+          <form action="/api/admin/music" method="post">
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="slotId" value={confirmTrack.id} />
+            <input type="hidden" name="forceDelete" value="1" />
+            <button className="btn btn-soft danger-button" type="submit"><Trash2 size={17} /> تأكيد الحذف</button>
+          </form>
+        </section>
       ) : null}
 
-      {params.error ? (
-        <div className="notice danger">
-          <AlertTriangle size={18} />
-          {params.error === "youtube"
-            ? "YouTube لا يعمل كصوت مباشر. استخدم ملف صوت أو رابط MP3/WAV/OGG مباشر."
-            : params.error === "name"
-              ? "اكتب اسم واضح للمقطع قبل الحفظ."
-            : params.error === "audio"
-              ? "لا يوجد ملف صوت صالح أو الصيغة غير قابلة للتشغيل. ارفع MP3 أو M4A أو WAV أو OGG أو WEBM أو FLAC، أو استخدم رابط مباشر لملف صوت."
-              : "تعذر تنفيذ أمر الموسيقى."}
-        </div>
-      ) : null}
+      <section className="music-stats-grid" aria-label="إحصائيات الموسيقى">
+        <div className="admin-list-stat"><Library size={19} /><span>عدد المقاطع</span><strong>{formatArabicNumber(tracks.length)}</strong></div>
+        <div className="admin-list-stat"><UploadCloud size={19} /><span>ملفات مرفوعة</span><strong>{formatArabicNumber(uploadedTracks.length)}</strong></div>
+        <div className="admin-list-stat"><FileAudio size={19} /><span>حجم المكتبة</span><strong>{formatBytes(totalSize)}</strong></div>
+        <div className="admin-list-stat good"><Star size={19} /><span>الأكثر استخداماً</span><strong>{mostUsed?.count ? mostUsed.slot.name : "لا يوجد"}</strong></div>
+        <div className="admin-list-stat"><Disc3 size={19} /><span>موسيقى خاصة</span><strong>{formatArabicNumber(usage.customInvitationCount)}</strong></div>
+        <div className="admin-list-stat good"><Music2 size={19} /><span>تستخدم الافتراضية</span><strong>{formatArabicNumber(usage.defaultInvitationCount)}</strong></div>
+      </section>
 
       <section className="music-control-panel panel">
-        <div className="music-control-status">
-          <span className={activeSlot ? "music-status-icon active" : "music-status-icon"}>
-            <Music2 size={24} />
-          </span>
+        <div className="admin-card-head">
+          <Music2 size={22} />
           <div>
-            <span className="eyebrow">Active Track</span>
-            <h2>{activeSlot?.name || "لا يوجد مقطع نشط"}</h2>
-            <p>{activeSlot ? `شغال على ${enabledTemplates.length} قالب` : "القوالب حاليا بدون موسيقى عامة."}</p>
+            <span className="eyebrow">Default Site Music</span>
+            <h2>الموسيقى الافتراضية للموقع</h2>
           </div>
-          <strong className={activeSlot ? "music-live-badge active" : "music-live-badge"}>{activeSlot ? "ON" : "OFF"}</strong>
+        </div>
+        <div className="music-default-card">
+          <span className={defaultTrack ? "music-status-icon active" : "music-status-icon"}><Music2 size={24} /></span>
+          <div>
+            <strong>{defaultTrack?.name || "لا يوجد مقطع افتراضي"}</strong>
+            <small>المدة: {formatDuration(defaultTrack?.durationSeconds)} · الحالة: {defaultTrack ? "مفعلة" : "غير مفعلة"}</small>
+          </div>
+          {defaultTrack ? <AudioPlayer src={defaultTrack.url} label={defaultTrack.name} /> : null}
+          <a className="btn btn-soft" href="#add-music"><RefreshCw size={17} /> تغيير المقطع</a>
         </div>
       </section>
 
@@ -78,113 +132,110 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
         <div className="admin-card-head">
           <FileAudio size={22} />
           <div>
-            <span className="eyebrow">Saved Tracks</span>
-            <h2>المقاطع المحفوظة</h2>
-            <p>المعاينة هنا من نفس رابط الملف الذي سيعمل داخل القوالب.</p>
+            <span className="eyebrow">Music Library</span>
+            <h2>مكتبة الموسيقى</h2>
           </div>
         </div>
 
         {tracks.length ? (
-          <div className="music-track-list">
-            {tracks.map((track) => {
-              const isActive = activeSlot?.id === track.id;
-              return (
-                <article className={isActive ? "music-track-card active" : "music-track-card"} key={track.id}>
-                  <div className="music-track-head">
-                    <span className={isActive ? "music-status-icon active" : "music-status-icon"}>
-                      <Music2 size={20} />
-                    </span>
-                    <div>
-                      <h3>{track.name}</h3>
-                      <p>{isActive ? "المقطع النشط على القوالب" : "محفوظ وغير مشغل حاليا"}</p>
-                    </div>
-                    <strong className={isActive ? "music-live-badge active" : "music-live-badge"}>{isActive ? "ON" : "OFF"}</strong>
-                  </div>
-
-                  <div className="music-now-playing">
-                    <div>
-                      <FileAudio size={18} />
-                      <span>{track.url}</span>
-                    </div>
-                    <audio controls preload="metadata" src={track.url} />
-                  </div>
-
-                  <div className="music-action-row">
-                    <form action="/api/admin/music" method="post">
-                      <input type="hidden" name="slotId" value={track.id} />
-                      <button className="btn btn-gold" name="action" value="enable" type="submit" disabled={isActive}>
-                        <Play size={17} />
-                        تشغيل
-                      </button>
-                    </form>
-                    <form action="/api/admin/music" method="post">
-                      <input type="hidden" name="slotId" value={track.id} />
-                      <button className="btn btn-soft" name="action" value="disable" type="submit" disabled={!isActive}>
-                        <Pause size={17} />
-                        إيقاف
-                      </button>
-                    </form>
-                    <form action="/api/admin/music" method="post">
-                      <input type="hidden" name="slotId" value={track.id} />
-                      <button className="btn btn-soft danger-button" name="action" value="delete" type="submit">
-                        <Trash2 size={17} />
-                        حذف
-                      </button>
-                    </form>
-                  </div>
-
-                  <div className="music-meta-line">
-                    <span>آخر حفظ</span>
-                    <strong>{formatDate(track.updatedAt)}</strong>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="music-table-shell">
+            <table className="data-table music-data-table">
+              <thead>
+                <tr>
+                  <th>المقطع</th>
+                  <th>المدة</th>
+                  <th>الحجم</th>
+                  <th>النوع</th>
+                  <th>تاريخ الإضافة</th>
+                  <th>الاستخدام</th>
+                  <th>الحالة</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tracks.map((track) => {
+                  const isDefault = defaultTrack?.id === track.id;
+                  const usedCount = usage.usageByUrl.get(track.url) || 0;
+                  return (
+                    <tr key={track.id}>
+                      <td>
+                        <strong>{track.name}</strong>
+                        <small>{track.url}</small>
+                      </td>
+                      <td>{formatDuration(track.durationSeconds)}</td>
+                      <td>{formatBytes(track.sizeBytes)}</td>
+                      <td>{track.extension || track.mimeType || "غير معروف"}</td>
+                      <td>{formatDate(track.createdAt || track.updatedAt)}</td>
+                      <td>{formatArabicNumber(usedCount)} دعوة</td>
+                      <td><span className={isDefault ? "status success" : "status"}>{trackStatus(track, defaultTrack)}</span></td>
+                      <td>
+                        <div className="music-row-actions">
+                          <AudioPlayer src={track.url} label={track.name} />
+                          <form action="/api/admin/music" method="post" className="music-inline-form">
+                            <input type="hidden" name="action" value="rename" />
+                            <input type="hidden" name="slotId" value={track.id} />
+                            <input name="trackName" defaultValue={track.name} aria-label="اسم المقطع" />
+                            <button className="btn btn-soft btn-icon" type="submit" title="تعديل الاسم"><Pencil size={16} /></button>
+                          </form>
+                          <form action="/api/admin/music" method="post" encType="multipart/form-data" className="music-inline-form">
+                            <input type="hidden" name="action" value="replace" />
+                            <input type="hidden" name="slotId" value={track.id} />
+                            <input type="hidden" name="trackName" value={track.name} />
+                            <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" aria-label="استبدال الملف" />
+                            <button className="btn btn-soft btn-icon" type="submit" title="استبدال الملف"><RefreshCw size={16} /></button>
+                          </form>
+                          <form action="/api/admin/music" method="post">
+                            <input type="hidden" name="action" value="default" />
+                            <input type="hidden" name="slotId" value={track.id} />
+                            <button className="btn btn-soft btn-icon" type="submit" title="تعيين كموسيقى افتراضية" disabled={isDefault}><Star size={16} /></button>
+                          </form>
+                          <form action="/api/admin/music" method="post">
+                            <input type="hidden" name="action" value="delete" />
+                            <input type="hidden" name="slotId" value={track.id} />
+                            <button className="btn btn-soft btn-icon danger-button" type="submit" title="حذف الملف"><Trash2 size={16} /></button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         ) : (
-          <div className="music-empty-box">لسه مفيش مقاطع محفوظة. أضف أول مقطع من النموذج بالأسفل.</div>
+          <div className="music-empty-box">لا توجد مقاطع محفوظة بعد.</div>
         )}
       </section>
 
-      <section className="music-replace-panel panel">
+      <section id="add-music" className="music-replace-panel panel">
         <div className="admin-card-head">
-          <UploadCloud size={22} />
+          <Plus size={22} />
           <div>
-            <span className="eyebrow">Add Or Update</span>
-            <h2>إضافة مقطع أو تحديث مقطع بنفس الاسم</h2>
-            <p>لو الاسم جديد هيتحفظ كمقطع جديد. لو الاسم موجود، هيتم تحديث نفس المقطع فقط.</p>
+            <span className="eyebrow">Add Track</span>
+            <h2>إضافة موسيقى جديدة</h2>
           </div>
         </div>
-
         <form className="music-simple-form" action="/api/admin/music" method="post" encType="multipart/form-data">
           <input type="hidden" name="action" value="save" />
-
           <label className="field">
             <span>اسم المقطع</span>
             <input name="trackName" placeholder="مثال: دخول العروسة" required />
           </label>
-
           <label className="field">
-            <span>رفع ملف صوت من الجهاز</span>
-            <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac" />
-            <small>لو الاسم جديد، الملف يضاف كمقطع جديد. لو الاسم موجود، يستبدل نفس المقطع.</small>
+            <span>رفع ملف صوت</span>
+            <input name="audioFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" />
+            <small>الصيغ المسموحة: mp3, wav, ogg, aac, m4a, webm, flac.</small>
           </label>
-
           <label className="field">
-            <span>أو رابط صوت مباشر</span>
+            <span>أو رابط مباشر لملف صوت</span>
             <input name="audioUrl" placeholder="https://example.com/song.mp3" />
-            <small>لازم الرابط يكون ملف صوت مباشر، وليس صفحة YouTube.</small>
+            <small>لا يقبل YouTube أو Spotify أو SoundCloud غير المباشر.</small>
           </label>
-
           <label className="music-checkline">
-            <input name="trackEnabled" type="checkbox" defaultChecked />
-            <span>تشغيل المقطع بعد الحفظ</span>
+            <input name="setDefault" type="checkbox" />
+            <span>تعيين كموسيقى افتراضية للموقع بعد الحفظ</span>
           </label>
-
-          <button className="btn btn-gold btn-glow music-save-button" type="submit">
-            <Plus size={18} />
-            إضافة / حفظ
-          </button>
+          <button className="btn btn-gold btn-glow music-save-button" type="submit"><Plus size={18} /> إضافة موسيقى</button>
         </form>
       </section>
     </>

@@ -9,7 +9,7 @@ import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
-type MusicFile = { url: string; modifiedAt: number };
+type MusicFile = { id?: string; name?: string; url: string; modifiedAt: number };
 type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
 
 function readFileAsDataUrl(file: File) {
@@ -27,7 +27,7 @@ function toDateInput(value: string) {
 
 function isPlayableAudioUrl(value: string) {
   if (!value.trim()) return true;
-  return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(value.trim());
+  return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i.test(value.trim());
 }
 
 export function ClientInvitationEditor({
@@ -412,13 +412,13 @@ export function ClientInvitationEditor({
                 <span>اختيار من الملفات المحفوظة</span>
                 <select value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); markDirty(); }}>
                   <option value="">اختار ملف محفوظ</option>
-                  {musicFiles.map((file) => <option key={file.url} value={file.url}>{file.url.split("/").pop()}</option>)}
+                  {musicFiles.map((file) => <option key={file.url} value={file.url}>{file.name || file.url.split("/").pop()}</option>)}
                 </select>
               </label>
               <label className="builder-logo-upload">
                 {busy ? <Loader2 size={17} /> : <UploadCloud size={17} />}
                 <span>{musicFileName || "رفع ملف جديد"}</span>
-                <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac" onChange={(event) => handleMusicFile(event.target.files?.[0])} />
+                <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" onChange={(event) => handleMusicFile(event.target.files?.[0])} />
               </label>
               <label className="field full">
                 <span>رابط ملف صوتي خارجي</span>

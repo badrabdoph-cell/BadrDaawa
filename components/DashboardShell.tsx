@@ -3,20 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FilePlus2, FileText, Github, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, RadioTower, ShieldCheck, UsersRound } from "lucide-react";
+import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileImage, FileText, Github, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, ScrollText, ShieldCheck, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
-  { href: "/admin/new-invitation", label: "دعوة جديدة", icon: FilePlus2 },
+  { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
+  { href: "/admin/invitations", label: "الدعوات", icon: Archive },
   { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
-  { href: "/admin/client-invitations", label: "دعوات العملاء", icon: Archive },
   { href: "/admin/templates", label: "القوالب", icon: Palette },
   { href: "/admin/music", label: "الموسيقى", icon: Music2 },
+  { href: "/admin/media", label: "الوسائط", icon: FileImage },
   { href: "/admin/broadcast", label: "شاشة بث الموقع", icon: RadioTower },
   { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
   { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
+  { href: "/admin/audit-log", label: "سجل التدقيق", icon: ScrollText },
   { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
   { href: "/admin/sync-history", label: "سجل المزامنة", icon: Github },
   { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },

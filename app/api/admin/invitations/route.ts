@@ -47,25 +47,25 @@ export async function POST(request: NextRequest) {
 
   const parsedWeddingDate = new Date(weddingDate);
   if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue) {
-    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=missing", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
   if (rawMusicUrl && isYouTubeUrl(rawMusicUrl)) {
-    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=music", request.headers, request.nextUrl.origin), 303);
   }
 
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
   if (galleryImages.length && !savedGallery.length) {
     console.error(`[Admin Invitation] Image save failed. Received ${galleryImages.length}, saved 0.`);
-    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=images", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=images", request.headers, request.nextUrl.origin), 303);
   }
   const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null);
   if (hasUploadedAudio && !uploadedMusicUrl) {
-    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=music", request.headers, request.nextUrl.origin), 303);
   }
   const musicUrl = uploadedMusicUrl || cleanPlayableAudioUrl(rawMusicUrl);
   if (rawMusicUrl && !musicUrl) {
-    return NextResponse.redirect(getRedirectUrl("/admin/client-invitations?error=music", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=music", request.headers, request.nextUrl.origin), 303);
   }
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
   console.log(`[Admin Invitation] Creating invitation with gallery (${gallery.length}):`, gallery);
@@ -92,9 +92,9 @@ export async function POST(request: NextRequest) {
     console.log(`[Admin Invitation] File invitation ${invitation.code} saved with heroPhoto=${gallery[0]}.`);
     revalidatePath(`/${invitation.code}`);
     revalidatePath(`/${invitation.code}/ad_3399`);
-    revalidatePath("/admin/client-invitations");
+    revalidatePath("/admin/invitations");
     queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
-    return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${invitation.code}&demo=1`, request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl(`/admin/invitations?created=${invitation.code}&demo=1`, request.headers, request.nextUrl.origin), 303);
   }
 
   if (!prisma) {
@@ -192,9 +192,9 @@ export async function POST(request: NextRequest) {
 
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);
-    revalidatePath("/admin/client-invitations");
+    revalidatePath("/admin/invitations");
     queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
-    return NextResponse.redirect(getRedirectUrl(`/admin/client-invitations?created=${code}`, request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl(`/admin/invitations?created=${code}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("Failed to create database invitation, falling back to file store", error);
     return createFallbackInvitation();

@@ -29,6 +29,7 @@ export type TemplateDefinition = {
     logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;
+    whatsappUrl?: string;
   };
   customHtml?: string;
   isCustom?: boolean;
@@ -52,6 +53,8 @@ export type Invitation = {
   gallery: string[];
   musicUrl?: string;
   musicEnabled?: boolean;
+  musicSource?: MusicSource;
+  musicLibraryTrackId?: string;
   texts?: InvitationTexts;
   photographer?: {
     enabled: boolean;
@@ -59,13 +62,18 @@ export type Invitation = {
     logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;
+    whatsappUrl?: string;
   };
   isActive: boolean;
   views: number;
   customerId: string;
 };
 
+export type MusicSource = "default" | "library" | "upload" | "url";
+
 export type InvitationTexts = {
+  groomNameEn?: string;
+  brideNameEn?: string;
   inviteMessage?: string;
   inviteMessageSecondary?: string;
   rsvpQuestion?: string;
@@ -96,8 +104,9 @@ export type OrderRequest = {
   notes?: string;
   imageUrls?: string[];
   musicEnabled?: boolean;
-  musicChoice?: "default" | "upload" | "url";
+  musicChoice?: "default" | "library" | "upload" | "url";
   musicUrl?: string;
+  musicLibraryTrackId?: string;
   texts?: InvitationTexts;
   photographer?: {
     enabled: boolean;
@@ -105,6 +114,7 @@ export type OrderRequest = {
     logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;
+    whatsappUrl?: string;
   };
   rejectionReason?: string;
   publishedInvitationCode?: string;

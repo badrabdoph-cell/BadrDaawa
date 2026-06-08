@@ -1,34 +1,35 @@
 import { headers } from "next/headers";
-import { AdminInvitationBuilder } from "@/components/AdminInvitationBuilder";
+import { AdminNewInvitationWizard } from "@/components/AdminNewInvitationWizard";
+import { getMediaCleanupReport } from "@/lib/media-cleanup";
+import { getMusicLibrary } from "@/lib/music-library";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
-import { listUploadedMusicFiles } from "@/lib/audio-files";
 import { getPublicSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvitationPage() {
-  const [templates, musicFiles, requestHeaders] = await Promise.all([getTemplatesWithSettings(), listUploadedMusicFiles(), headers()]);
-  const siteUrl = getPublicSiteUrl(requestHeaders);
-  const templateOptions = templates.map(({ slug, name, arabicName, opening, concept, layout, typography }) => ({
+  const [templates, musicLibrary, mediaReport, requestHeaders] = await Promise.all([getTemplatesWithSettings(), getMusicLibrary(), getMediaCleanupReport(), headers()]);
+  const templateOptions = templates.map(({ slug, name, arabicName, category, previewImage }) => ({
     slug,
     name,
     arabicName,
-    opening,
-    concept,
-    layout,
-    typography,
+    category,
+    previewImage,
   }));
+  const musicFiles = musicLibrary.slots
+    .filter((slot) => slot.url)
+    .map((slot) => ({
+      id: slot.id,
+      name: slot.name,
+      url: slot.url,
+      modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0,
+      sizeBytes: slot.sizeBytes,
+      extension: slot.extension,
+    }));
+  const imageFiles = mediaReport.usedFiles
+    .concat(mediaReport.unusedFiles)
+    .filter((file) => file.kind === "image")
+    .map((file) => ({ url: file.url, name: file.relativePath, sizeBytes: file.sizeBytes, extension: file.extension }));
 
-  return (
-    <>
-      <div className="dashboard-head">
-        <div>
-          <span className="eyebrow">Visual Builder</span>
-          <h1>دعوة جديدة</h1>
-          <p>أداة إنشاء دعوات العملاء بمعاينة هاتف حية ونظام موحد للصور والمصور والموسيقى لكل القوالب الحالية والقادمة.</p>
-        </div>
-      </div>
-      <AdminInvitationBuilder templates={templateOptions} musicFiles={musicFiles} siteUrl={siteUrl} />
-    </>
-  );
+  return <AdminNewInvitationWizard templates={templateOptions} musicFiles={musicFiles} imageFiles={imageFiles} siteUrl={getPublicSiteUrl(requestHeaders).replace(/\/$/, "")} />;
 }

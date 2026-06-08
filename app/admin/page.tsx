@@ -105,7 +105,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <FileText size={18} />
             الطلبات الجديدة
           </Link>
-          <Link className="btn btn-soft btn-glass" href="/admin/client-invitations">
+          <Link className="btn btn-soft btn-glass" href="/admin/new-invitation">
             <Plus size={18} />
             إنشاء دعوة
           </Link>
@@ -146,13 +146,13 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         </div>
 
         <div className="admin-metrics-grid">
-          <Link className="admin-metric-card" href="/admin/client-invitations">
+          <Link className="admin-metric-card" href="/admin/invitations">
             <Archive size={20} />
             <span>إجمالي الدعوات</span>
             <strong>{formatAdminNumber(invitations.length)}</strong>
             <small>{formatAdminNumber(activeInvitations)} نشطة / {formatAdminNumber(expiredInvitations)} منتهية</small>
           </Link>
-          <Link className="admin-metric-card" href="/admin/client-invitations">
+          <Link className="admin-metric-card" href="/admin/invitations">
             <Eye size={20} />
             <span>زيارات الدعوات</span>
             <strong>{formatAdminNumber(totalViews)}</strong>
@@ -196,7 +196,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             ) : (
               <div className="admin-empty-state">
                 <strong>لا توجد دعوات بعد</strong>
-                <p>ابدأ بإنشاء أول دعوة عميل من صفحة الدعوات.</p>
+                <p>ابدأ بإنشاء أول دعوة عميل من قسم دعوة جديدة.</p>
               </div>
             )}
           </article>
@@ -238,7 +238,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           </span>
           <ArrowUpLeft size={18} />
         </Link>
-        <Link className="admin-start-card" href="/admin/client-invitations">
+        <Link className="admin-start-card" href="/admin/invitations">
           <Archive size={22} />
           <span>
             <strong>دعوات العملاء</strong>

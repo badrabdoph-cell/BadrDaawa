@@ -11,7 +11,7 @@ async function isAdmin(request: NextRequest) {
 }
 
 function redirectBack(request: NextRequest, status: string) {
-  const url = getRedirectUrl("/admin/client-invitations", request.headers, request.nextUrl.origin);
+  const url = getRedirectUrl("/admin/invitations", request.headers, request.nextUrl.origin);
   url.searchParams.set("status", status);
   return NextResponse.redirect(url, 303);
 }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const changed = updatedDatabase || updatedFile;
 
   if (changed) {
-    safeRevalidatePath("/admin/client-invitations");
+    safeRevalidatePath("/admin/invitations");
     safeRevalidatePath("/admin");
     safeRevalidatePath(`/${code}`);
     safeRevalidatePath(`/${code}/ad_3399`);

@@ -4,14 +4,15 @@ import { Download, ExternalLink, LogOut, QrCode } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
 import { CopyButton } from "@/components/CopyButton";
+import { CustomerAnalyticsPanel } from "@/components/CustomerAnalyticsPanel";
 import { GuestTable } from "@/components/GuestTable";
 import { QrCodeBlock } from "@/components/QrCodeBlock";
-import { StatsGrid } from "@/components/StatsGrid";
-import { listUploadedMusicFiles } from "@/lib/audio-files";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
+import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
+import { getMusicLibrary } from "@/lib/music-library";
 import { getTemplateWithSettings } from "@/lib/template-settings";
-import { calculateAttendance, getPublicSiteUrl } from "@/lib/utils";
+import { getPublicSiteUrl } from "@/lib/utils";
 
 export default async function CustomerAdminPage({
   params,
@@ -35,12 +36,12 @@ export default async function CustomerAdminPage({
   const [guests, template, musicFiles] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
-    listUploadedMusicFiles(),
+    getMusicLibrary(),
   ]);
   if (!template) {
     notFound();
   }
-  const summary = calculateAttendance(guests);
+  const analytics = await getCustomerInvitationAnalytics(invitation, guests);
   const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${invitation.code}`;
 
   return (
@@ -68,14 +69,7 @@ export default async function CustomerAdminPage({
         </div>
       </section>
 
-      <StatsGrid
-        stats={[
-          { label: "إجمالي الردود", value: summary.totalResponses },
-          { label: "حضور مؤكد", value: summary.confirmedGuests },
-          { label: "معتذرون", value: summary.declinedGuests },
-          { label: "مشاهدات الدعوة", value: invitation.views },
-        ]}
-      />
+      <CustomerAnalyticsPanel analytics={analytics} />
 
       {query.saved === "music-error" ? (
         <div className="notice danger customer-notice">الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV.</div>
@@ -108,7 +102,12 @@ export default async function CustomerAdminPage({
         </article>
       </section>
 
-      <ClientInvitationEditor invitation={invitation} template={template} musicFiles={musicFiles} publicUrl={url} />
+      <ClientInvitationEditor
+        invitation={invitation}
+        template={template}
+        musicFiles={musicFiles.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0 }))}
+        publicUrl={url}
+      />
 
       <section className="section compact">
         <div className="dashboard-head">

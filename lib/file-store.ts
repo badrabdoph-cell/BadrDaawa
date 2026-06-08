@@ -274,6 +274,18 @@ export async function updateFileInvitation(code: string, update: FileInvitationU
   return true;
 }
 
+export async function updateFileInvitationsMusicUrl(fromUrl: string, update: Pick<Invitation, "musicUrl" | "musicEnabled">) {
+  const store = await readStore();
+  let count = 0;
+  store.invitations = store.invitations.map((invitation) => {
+    if (invitation.musicUrl !== fromUrl) return invitation;
+    count += 1;
+    return { ...invitation, ...update };
+  });
+  if (count > 0) await writeStore(store);
+  return count;
+}
+
 export async function setFileInvitationActive(code: string, isActive: boolean) {
   return updateFileInvitation(code, { isActive });
 }

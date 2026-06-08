@@ -26,8 +26,10 @@ const allowedAudioTypes: Record<string, string> = {
   "video/mp4": "m4a",
 };
 
-const allowedAudioExtensions = new Set(["mp3", "wav", "ogg", "webm", "m4a", "aac", "mp4", "aif", "aiff", "flac"]);
+const allowedAudioExtensions = new Set(["mp3", "wav", "ogg", "webm", "m4a", "aac", "flac"]);
 const maxAudioBytes = 35 * 1024 * 1024;
+const directAudioPattern = /\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i;
+const legacyDirectAudioPattern = /\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i;
 
 export function isYouTubeUrl(value: string) {
   try {
@@ -38,16 +40,48 @@ export function isYouTubeUrl(value: string) {
   }
 }
 
+export function isBlockedMusicPageUrl(value: string) {
+  try {
+    const hostname = new URL(value).hostname.replace(/^www\./, "").toLowerCase();
+    return (
+      hostname === "youtube.com" ||
+      hostname === "youtu.be" ||
+      hostname.endsWith(".youtube.com") ||
+      hostname === "music.youtube.com" ||
+      hostname === "spotify.com" ||
+      hostname.endsWith(".spotify.com") ||
+      hostname === "soundcloud.com" ||
+      hostname.endsWith(".soundcloud.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function cleanPlayableAudioUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
-  if (trimmed.startsWith("/")) return /\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(trimmed) ? trimmed : "";
+  if (trimmed.startsWith("/")) return legacyDirectAudioPattern.test(trimmed) ? trimmed : "";
 
   try {
     const url = new URL(trimmed);
     if (url.protocol !== "http:" && url.protocol !== "https:") return "";
-    if (isYouTubeUrl(url.toString())) return "";
-    return /\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(url.pathname + url.search) ? url.toString() : "";
+    if (isBlockedMusicPageUrl(url.toString())) return "";
+    return legacyDirectAudioPattern.test(url.pathname + url.search) ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+export function cleanNewDirectAudioUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("/")) return directAudioPattern.test(trimmed) ? trimmed : "";
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    if (isBlockedMusicPageUrl(url.toString())) return "";
+    return directAudioPattern.test(url.pathname + url.search) ? url.toString() : "";
   } catch {
     return "";
   }
@@ -100,7 +134,7 @@ export async function saveUploadedAudioFile(file: File | null, previousUrl?: str
 async function saveAudioBytes(bytes: Buffer, mimeType = "", nameExtension = "", previousUrl?: string | null) {
   const detectedExtension = extensionFromBytes(bytes);
   const extension = normalizeAudioExtension(detectedExtension || allowedAudioTypes[mimeType] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : ""));
-  if (!extension || !bytes.length || bytes.length > maxAudioBytes) return "";
+  if (!extension || !allowedAudioExtensions.has(extension) || !bytes.length || bytes.length > maxAudioBytes) return "";
 
   ensureDirectory(uploadDir);
   await mkdir(uploadDir, { recursive: true });
@@ -133,9 +167,13 @@ export async function listUploadedMusicFiles() {
       if (!entry.isFile()) continue;
       const filePath = path.join(uploadDir, entry.name);
       const fileStat = await stat(filePath);
+      const extension = entry.name.split(".").pop()?.toLowerCase() || "";
       files.push({
         url: `/uploads/music/${entry.name}`,
         modifiedAt: fileStat.mtime.getTime(),
+        sizeBytes: fileStat.size,
+        extension,
+        mimeType: extension ? `audio/${extension === "mp3" ? "mpeg" : extension}` : "",
       });
     }
     return files.sort((a, b) => b.modifiedAt - a.modifiedAt);

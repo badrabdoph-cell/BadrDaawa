@@ -12,6 +12,7 @@ type PreviewPhotographer = {
   logoUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;
+  whatsappUrl?: string;
 };
 
 export type LiveInvitationPreviewPayload = {
@@ -81,6 +82,7 @@ function applyPayload(invitation: Invitation, payload: LiveInvitationPreviewPayl
         logoUrl: cleanImageUrl(payload.photographer.logoUrl),
         facebookUrl: cleanText(payload.photographer.facebookUrl, "https://www.facebook.com/"),
         instagramUrl: cleanText(payload.photographer.instagramUrl, "https://www.instagram.com/"),
+        whatsappUrl: cleanText(payload.photographer.whatsappUrl),
       }
     : invitation.photographer;
 

@@ -12,7 +12,7 @@ async function isAdmin(request: NextRequest) {
 }
 
 function revalidateAdminState() {
-  for (const path of ["/", "/admin", "/admin/recent-edits", "/admin/broadcast", "/admin/client-invitations", "/admin/templates", "/admin/music", "/admin/backups"]) {
+  for (const path of ["/", "/admin", "/admin/recent-edits", "/admin/broadcast", "/admin/invitations", "/admin/templates", "/admin/music", "/admin/media", "/admin/backups"]) {
     try {
       revalidatePath(path);
     } catch (error) {

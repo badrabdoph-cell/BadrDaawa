@@ -13,6 +13,8 @@ import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CON
 export const runtime = "nodejs";
 export const maxDuration = 45;
 
+type OrderMusicChoice = "default" | "library" | "upload" | "url";
+
 const maxOrderRequestBytes = 36 * 1024 * 1024;
 
 async function saveOrderImages(images: string[], request: Request) {
@@ -21,7 +23,7 @@ async function saveOrderImages(images: string[], request: Request) {
   return saveOrderPreviewImages(images, "order-requests", requestId);
 }
 
-async function resolveOrderMusic(input: { musicEnabled: boolean; musicChoice: "default" | "upload" | "url"; musicUrl?: string; orderMusic?: string }) {
+async function resolveOrderMusic(input: { musicEnabled: boolean; musicChoice: OrderMusicChoice; musicUrl?: string; orderMusic?: string }) {
   if (!input.musicEnabled) return { musicUrl: "", error: "" };
   if (input.musicChoice === "default") return { musicUrl: "", error: "" };
 
@@ -75,7 +77,7 @@ function buildOrderWhatsAppMessage(input: {
   templateName: string;
   imageUrls: string[];
   musicEnabled: boolean;
-  musicChoice: "default" | "upload" | "url";
+  musicChoice: OrderMusicChoice;
   musicUrl: string;
   photographer: { enabled: boolean; name: string; facebookUrl: string; instagramUrl: string };
 }) {
@@ -89,6 +91,8 @@ function buildOrderWhatsAppMessage(input: {
     ? "لم يطلب موسيقى"
     : input.musicChoice === "default"
       ? "الموسيقى الأساسية"
+      : input.musicChoice === "library"
+        ? `مقطع من مكتبة الموقع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
       : input.musicChoice === "upload"
         ? `ملف مرفوع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
         : `رابط خارجي: ${input.musicUrl || "لم يرسل رابط"}`;
@@ -179,7 +183,7 @@ export async function POST(request: NextRequest) {
   const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
   const mapNotes = mapUrl ? `رابط اللوكيشن:\n${mapUrl}` : "";
   const musicNotes = parsed.data.musicEnabled
-    ? ["موسيقى الدعوة:", parsed.data.musicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
+    ? ["موسيقى الدعوة:", parsed.data.musicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", parsed.data.musicChoice === "library" ? "اختار العميل مقطعًا من مكتبة الموقع." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
     : "";
   const photographerNotes = parsed.data.photographerEnabled
     ? ["بيانات المصور الفوتوغرافي:", parsed.data.photographerName ? `الاسم: ${parsed.data.photographerName}` : "", photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "", photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : ""].filter(Boolean).join("\n")

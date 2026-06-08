@@ -70,6 +70,7 @@ function toPhotographer(value: unknown): Invitation["photographer"] | undefined 
     logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
     instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
     facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
+    whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
   };
 }
 
@@ -92,7 +93,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     heroPhoto,
     gallery: gallery.length ? gallery : [heroPhoto],
     musicUrl: invitation.musicUrl || undefined,
-    musicEnabled: invitation.musicEnabled === true && Boolean(invitation.musicUrl),
+    musicEnabled: invitation.musicEnabled === true || (invitation.musicEnabled == null && Boolean(invitation.musicUrl)),
     texts: normalizeInvitationTexts(invitation.texts),
     photographer: toPhotographer(invitation.photographer),
     isActive: invitation.status === "ACTIVE",

@@ -79,7 +79,7 @@ const orderImageSlots = [
   { title: "الصورة الثالثة", hint: "اختيارية" },
 ];
 
-const acceptedAudioFormats = "audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac,.aif,.aiff";
+const acceptedAudioFormats = "audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac";
 const maxClientOriginalImageBytes = 32 * 1024 * 1024;
 const maxDirectServerImageBytes = 32 * 1024 * 1024;
 const uploadRetryCount = 2;
@@ -192,11 +192,11 @@ function isValidOptionalUrl(value: string) {
 function isPlayableAudioUrl(value: string) {
   const clean = value.trim();
   if (!clean) return true;
-  if (clean.startsWith("/")) return /^\/uploads\/music\/[^?#]+\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(clean);
+  if (clean.startsWith("/")) return /^\/uploads\/music\/[^?#]+\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i.test(clean);
   try {
     const url = new URL(clean);
     if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-    return /\.(mp3|wav|ogg|webm|m4a|aac|mp4|aif|aiff|flac)(?:[?#].*)?$/i.test(url.pathname + url.search);
+    return /\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i.test(url.pathname + url.search);
   } catch {
     return false;
   }

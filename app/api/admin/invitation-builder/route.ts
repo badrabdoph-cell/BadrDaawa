@@ -28,7 +28,9 @@ type BuilderPayload = {
   mapUrl?: string;
   gallery?: string[];
   musicEnabled?: boolean;
+  musicChoice?: "default" | "library" | "upload" | "url";
   musicUrl?: string;
+  musicLibraryTrackId?: string;
   musicDataUrl?: string;
   texts?: Invitation["texts"];
   photographer?: {
@@ -38,6 +40,7 @@ type BuilderPayload = {
     logoDataUrl?: string;
     facebookUrl?: string;
     instagramUrl?: string;
+    whatsappUrl?: string;
   };
 };
 
@@ -67,6 +70,7 @@ function normalizeDate(value: string) {
 
 async function resolveMusic(payload: BuilderPayload) {
   if (!payload.musicEnabled) return "";
+  if (payload.musicChoice === "default") return "";
   const uploaded = payload.musicDataUrl ? await saveAudioDataUrl(payload.musicDataUrl) : "";
   if (uploaded) return uploaded;
   return cleanPlayableAudioUrl(payload.musicUrl || "");
@@ -82,6 +86,7 @@ async function resolvePhotographer(payload: BuilderPayload) {
     logoUrl: logoGallery[0] || cleanText(input.logoUrl),
     facebookUrl: cleanUrl(input.facebookUrl) || "https://www.facebook.com/",
     instagramUrl: cleanUrl(input.instagramUrl) || "https://www.instagram.com/",
+    whatsappUrl: cleanUrl(input.whatsappUrl) || "",
   };
 }
 
@@ -273,7 +278,7 @@ export async function POST(request: NextRequest) {
   const code = (await createOrUpdatePrismaInvitation()) || (await createOrUpdateFileInvitation());
   revalidatePath(`/${code}`);
   revalidatePath(getCustomerAdminPath(code));
-  revalidatePath("/admin/client-invitations");
+  revalidatePath("/admin/invitations");
   queueGitHubSync(`Invitation builder ${action}: ${code}.`, { createSnapshot: true });
 
   return NextResponse.json({

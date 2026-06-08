@@ -37,6 +37,7 @@ type OrderFormState = {
   musicEnabled: boolean;
   musicChoice: AdminToolMusicChoice;
   musicUrl: string;
+  musicLibraryTrackId: string;
   musicBusy: boolean;
   musicFileName: string;
   invitationTexts: Required<InvitationTexts>;
@@ -74,10 +75,18 @@ function formatDateTime(value?: string) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-function formFromOrder(order: OrderRequest, fallbackTemplate: string): OrderFormState {
+function normalizeOrderMusicChoice(order: OrderRequest, musicFiles: MusicFile[]): AdminToolMusicChoice {
+  if (order.musicChoice === "default" || order.musicChoice === "library" || order.musicChoice === "upload" || order.musicChoice === "url") return order.musicChoice;
+  if (order.musicUrl && musicFiles.some((file) => file.url === order.musicUrl)) return "library";
+  return order.musicUrl ? "url" : "default";
+}
+
+function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles: MusicFile[] = []): OrderFormState {
   const photographer = order.photographer;
   const imageUrls = [...(order.imageUrls || [])].slice(0, 3);
   const photographerLogoUrl = photographer?.logoUrl || "";
+  const musicFile = musicFiles.find((file) => file.id === order.musicLibraryTrackId || file.url === order.musicUrl);
+  const musicChoice = normalizeOrderMusicChoice(order, musicFiles);
   return {
     groomName: order.groomName || "",
     brideName: order.brideName || "",
@@ -89,8 +98,9 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string): OrderForm
     templateSlug: order.templateSlug || fallbackTemplate,
     imageUrls: emptyImages.map((slot, index) => ({ ...slot, url: imageUrls[index] || "", name: imageUrls[index]?.split("/").pop() || "" })),
     musicEnabled: Boolean(order.musicEnabled),
-    musicChoice: order.musicChoice || (order.musicUrl ? "url" : "default"),
+    musicChoice,
     musicUrl: order.musicUrl || "",
+    musicLibraryTrackId: musicChoice === "library" ? musicFile?.id || order.musicLibraryTrackId || "" : "",
     musicBusy: false,
     musicFileName: order.musicUrl?.split("/").pop() || "",
     invitationTexts: normalizeInvitationTexts(order.texts),
@@ -112,7 +122,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
   const [items, setItems] = useState<OrderRequest[]>(orders);
   const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
   const selectedOrder = useMemo(() => items.find((order) => order.id === selectedId) || items[0] || null, [items, selectedId]);
-  const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate)));
+  const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles)));
   const [busy, setBusy] = useState<"idle" | "review" | "update" | "publish" | "reject">("idle");
   const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
@@ -122,7 +132,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
 
   useEffect(() => {
     if (!selectedOrder) return;
-    setForm(formFromOrder(selectedOrder, fallbackTemplate));
+    setForm(formFromOrder(selectedOrder, fallbackTemplate, musicFiles));
     setLinks(
       selectedOrder.publishedInvitationCode
         ? {
@@ -131,7 +141,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
           }
         : null,
     );
-  }, [cleanSiteUrl, fallbackTemplate, selectedOrder]);
+  }, [cleanSiteUrl, fallbackTemplate, musicFiles, selectedOrder]);
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
@@ -181,6 +191,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       musicEnabled: form.musicEnabled,
       musicChoice: form.musicChoice,
       musicUrl: form.musicUrl,
+      musicLibraryTrackId: form.musicLibraryTrackId,
       musicBusy: form.musicBusy,
       musicFileName: form.musicFileName,
       invitationTexts: form.invitationTexts,
@@ -226,6 +237,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
     if (patch.musicEnabled !== undefined) update.musicEnabled = patch.musicEnabled;
     if (patch.musicChoice !== undefined) update.musicChoice = patch.musicChoice;
     if (patch.musicUrl !== undefined) update.musicUrl = patch.musicUrl;
+    if (patch.musicLibraryTrackId !== undefined) update.musicLibraryTrackId = patch.musicLibraryTrackId;
     if (patch.musicBusy !== undefined) update.musicBusy = patch.musicBusy;
     if (patch.musicFileName !== undefined) update.musicFileName = patch.musicFileName;
     if (patch.invitationTexts !== undefined) update.invitationTexts = patch.invitationTexts;
@@ -263,6 +275,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
       musicEnabled: form.musicEnabled,
       musicChoice: form.musicChoice,
       musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
+      musicLibraryTrackId: form.musicLibraryTrackId,
       texts: form.invitationTexts,
       photographer: {
         enabled: form.photographerEnabled,
@@ -363,7 +376,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
 
   async function handleMusicFile(file?: File | null) {
     if (!file) return;
-    patchForm({ musicBusy: true, musicEnabled: true, musicChoice: "upload" });
+    patchForm({ musicBusy: true, musicEnabled: true, musicChoice: "upload", musicLibraryTrackId: "" });
     try {
       const musicUrl = await uploadAdminMusic(file);
       patchForm({ musicBusy: false, musicUrl, musicFileName: file.name });

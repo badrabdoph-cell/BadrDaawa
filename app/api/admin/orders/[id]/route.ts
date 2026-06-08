@@ -32,8 +32,9 @@ type AdminOrderPayload = {
   templateSlug?: string;
   imageUrls?: string[];
   musicEnabled?: boolean;
-  musicChoice?: "default" | "upload" | "url";
+  musicChoice?: "default" | "library" | "upload" | "url";
   musicUrl?: string;
+  musicLibraryTrackId?: string;
   musicDataUrl?: string;
   texts?: Invitation["texts"];
   photographer?: Invitation["photographer"];
@@ -106,6 +107,10 @@ function normalizeStatus(status: string): OrderRequest["status"] {
   return "new";
 }
 
+function normalizeMusicChoice(value: unknown, fallback: "default" | "library" | "upload" | "url" = "default") {
+  return value === "default" || value === "library" || value === "upload" || value === "url" ? value : fallback;
+}
+
 function parseStoredImageUrls(value: unknown) {
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map((item) => normalizeInternalAssetUrl(item) || item).filter(Boolean).slice(0, 3);
   if (typeof value === "string") {
@@ -141,11 +146,13 @@ function cleanPhotographer(value: unknown): Invitation["photographer"] | undefin
     logoUrl: enabled ? cleanOptionalUrl(input.logoUrl) || undefined : undefined,
     facebookUrl: enabled ? cleanOptionalUrl(input.facebookUrl) || "https://www.facebook.com/" : "",
     instagramUrl: enabled ? cleanOptionalUrl(input.instagramUrl) || "https://www.instagram.com/" : "",
+    whatsappUrl: enabled ? cleanOptionalUrl(input.whatsappUrl) || undefined : undefined,
   };
 }
 
-async function resolveMusic(payload: AdminOrderPayload, existingUrl?: string | null) {
-  if (!payload.musicEnabled) return "";
+async function resolveMusic(payload: AdminOrderPayload, existingUrl?: string | null, existingEnabled = false) {
+  const musicEnabled = payload.musicEnabled ?? existingEnabled;
+  if (!musicEnabled) return "";
   if (payload.musicChoice === "default") return "";
   if (payload.musicDataUrl) {
     const uploaded = await saveAudioDataUrl(payload.musicDataUrl, existingUrl);
@@ -173,7 +180,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
   const notes = cleanText(payload.notes, existing?.notes || "", 1500);
   const templateSlug = cleanText(payload.templateSlug, existing?.templateSlug || "featured-1", 140);
   const images = cleanImageList(payload.imageUrls).length ? cleanImageList(payload.imageUrls) : existing?.imageUrls || [];
-  const musicChoice = payload.musicChoice === "upload" || payload.musicChoice === "url" || payload.musicChoice === "default" ? payload.musicChoice : existing?.musicChoice || "default";
+  const musicChoice = normalizeMusicChoice(payload.musicChoice, normalizeMusicChoice(existing?.musicChoice));
   return {
     groomName,
     brideName,
@@ -239,7 +246,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     notes: order.notes || undefined,
     imageUrls: parseStoredImageUrls(order.imageUrls),
     musicEnabled: order.musicEnabled,
-    musicChoice: order.musicChoice === "upload" || order.musicChoice === "url" || order.musicChoice === "default" ? order.musicChoice : "default",
+    musicChoice: normalizeMusicChoice(order.musicChoice),
     musicUrl: order.musicUrl || undefined,
     texts: normalizeInvitationTexts(order.texts),
     photographer: cleanPhotographer(order.photographer),
@@ -302,7 +309,7 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
   const error = validateDraft(draft);
   if (error) throw new Error(error);
   const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
-  const musicUrl = await resolveMusic(payload, order.musicUrl);
+  const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
   const digits = digitsOnly(draft.phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
   const password = digits.slice(-6) || order.id.slice(-6) || "123456";
@@ -363,7 +370,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     notes: order.notes || undefined,
     imageUrls: parseStoredImageUrls(order.imageUrls),
     musicEnabled: order.musicEnabled,
-    musicChoice: order.musicChoice === "upload" || order.musicChoice === "url" || order.musicChoice === "default" ? order.musicChoice : "default",
+    musicChoice: normalizeMusicChoice(order.musicChoice),
     musicUrl: order.musicUrl || undefined,
     texts: normalizeInvitationTexts(order.texts),
     photographer: cleanPhotographer(order.photographer),
@@ -379,7 +386,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
 
   const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
   const finalGallery = gallery.length ? gallery : fallbackGallery;
-  const musicUrl = await resolveMusic(payload, order.musicUrl);
+  const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
   const baseSlug = buildInvitationBaseSlug(draft.groomName, draft.brideName);
   const publishedCode = order.publishedInvitationCode || "";
   const existingPublishedInvitation = publishedCode ? await prisma.invitation.findUnique({ where: { code: publishedCode }, select: { code: true } }).catch(() => null) : null;
@@ -479,7 +486,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         notes: existingPrisma.notes || undefined,
         imageUrls: parseStoredImageUrls(existingPrisma.imageUrls),
         musicEnabled: existingPrisma.musicEnabled,
-        musicChoice: existingPrisma.musicChoice === "upload" || existingPrisma.musicChoice === "url" || existingPrisma.musicChoice === "default" ? existingPrisma.musicChoice : "default",
+        musicChoice: normalizeMusicChoice(existingPrisma.musicChoice),
         musicUrl: existingPrisma.musicUrl || undefined,
         texts: normalizeInvitationTexts(existingPrisma.texts),
         photographer: cleanPhotographer(existingPrisma.photographer),
@@ -491,7 +498,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
   const draft = getOrderDraft(payload, existingOrder);
   const error = status === "REVIEWING" ? "" : validateDraft(draft);
   if (error) throw new Error(error);
-  const musicUrl = await resolveMusic(payload, existingOrder.musicUrl);
+  const musicUrl = await resolveMusic(payload, existingOrder.musicUrl, Boolean(existingOrder.musicEnabled));
 
   if (existingPrisma && prisma) {
     const template = draft.templateSlug ? await upsertTemplate(draft.templateSlug) : null;
@@ -603,7 +610,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const code = (await publishPrismaOrder(id, payload)) || (await publishFileOrder(id, payload));
       if (!code) throw new Error("لم يتم العثور على الطلب.");
       revalidatePath("/admin/orders");
-      revalidatePath("/admin/client-invitations");
+      revalidatePath("/admin/invitations");
       revalidatePath(`/${code}`);
       revalidatePath(getCustomerAdminPath(code));
       queueGitHubSync(`Order published as invitation: ${code}.`, { createSnapshot: true });
