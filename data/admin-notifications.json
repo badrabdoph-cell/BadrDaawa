@@ -1,0 +1,20 @@
+{
+  "notifications": [
+    {
+      "signature": "errors:recent:1:err-mq5v80hl-57auw86k",
+      "type": "errors",
+      "severity": "error",
+      "title": "أخطاء تشغيلية جديدة",
+      "message": "تم تسجيل 1 خطأ خلال آخر 24 ساعة. آخر خطأ: 502  - /admin?_rsc=yrDcgtHlcI4zVVYY",
+      "href": "/admin/errors",
+      "meta": {
+        "count": 1,
+        "latestErrorId": "err-mq5v80hl-57auw86k",
+        "latestRoute": "https://daawa.up.railway.app/admin?_rsc=yrDcgtHlcI4zVVYY"
+      },
+      "id": "admin-note-b7f07511011a6110",
+      "createdAt": "2026-06-08T23:52:04.663Z",
+      "updatedAt": "2026-06-08T23:55:09.965Z"
+    }
+  ]
+}
