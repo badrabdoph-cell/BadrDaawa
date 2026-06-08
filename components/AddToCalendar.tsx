@@ -6,7 +6,7 @@ import type { Invitation } from "@/lib/types";
 import { formatArabicDate, getInvitationUrl } from "@/lib/utils";
 
 export function AddToCalendar({ invitation, isPreview = false }: { invitation: Invitation; isPreview?: boolean }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const googleUrl = getGoogleCalendarUrl(invitation, invitationUrl);
   const outlookUrl = getOutlookCalendarUrl(invitation, invitationUrl);
   const { start } = getInvitationCalendarRange(invitation);

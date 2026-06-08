@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
@@ -34,6 +34,14 @@ export default async function InvitationPage({ params, searchParams }: PageProps
   const invitation = await getCachedInvitationByCode(code);
   if (!invitation || !invitation.isActive) {
     notFound();
+  }
+  if (invitation.customSlug && code !== invitation.customSlug) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query || {})) {
+      if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
+      else if (value) params.set(key, value);
+    }
+    redirect(`/${invitation.customSlug}${params.size ? `?${params.toString()}` : ""}`);
   }
 
   const [template, siteSettings] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getSiteSettings()]);

@@ -40,6 +40,7 @@ export type TemplateDefinition = {
 export type Invitation = {
   id: string;
   code: string;
+  customSlug?: string;
   templateSlug: string;
   status?: "draft" | "active" | "paused" | "archived";
   language: Language;

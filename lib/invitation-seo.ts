@@ -54,7 +54,7 @@ export function getInvitationSeoMetadata(invitation: Invitation): Metadata {
       .join("، "),
     155,
   );
-  const url = getInvitationUrl(invitation.code);
+  const url = getInvitationUrl(invitation.code, invitation.customSlug);
   const imageUrl = getInvitationImage(invitation);
   const imageAlt = truncate(`دعوة زفاف ${coupleName}`, 120);
 

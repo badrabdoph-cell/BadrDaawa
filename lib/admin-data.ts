@@ -21,6 +21,7 @@ export type AdminCustomer = {
 type AdminInvitationRow = {
   id: string;
   code: string;
+  customSlug?: string | null;
   template?: { slug: string } | null;
   templateSlug?: string;
   language: string;
@@ -161,6 +162,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
   return {
     id: row.id,
     code: row.code,
+    customSlug: row.customSlug || undefined,
     templateSlug: row.template?.slug || "royal-envelope",
     status,
     language: row.language === "en" ? "en" : "ar",

@@ -57,7 +57,8 @@ export default async function CustomerAdminPage({
     notFound();
   }
   const analytics = await getCustomerInvitationAnalytics(invitation, guests);
-  const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${invitation.code}`;
+  const publicSlug = invitation.customSlug || invitation.code;
+  const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${publicSlug}`;
 
   return (
     <main className="customer-admin">
@@ -70,7 +71,7 @@ export default async function CustomerAdminPage({
           <p>{url}</p>
         </div>
         <div className="button-row">
-          <Link className="btn btn-soft" href={`/${invitation.code}`}>
+          <Link className="btn btn-soft" href={`/${publicSlug}`}>
             <ExternalLink size={18} />
             فتح الدعوة
           </Link>

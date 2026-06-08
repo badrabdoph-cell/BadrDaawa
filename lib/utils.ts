@@ -138,9 +138,9 @@ export function getMetadataBaseUrl() {
   return new URL(normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL));
 }
 
-export function getInvitationUrl(code: string) {
+export function getInvitationUrl(code: string, customSlug?: string | null) {
   if (code.startsWith("preview-")) return templatePreviewQrUrl;
-  return `${getSiteUrl().replace(/\/$/, "")}/${code}`;
+  return `${getSiteUrl().replace(/\/$/, "")}/${(customSlug || code).replace(/^\/+/, "")}`;
 }
 
 export function normalizePhoneForWhatsApp(phone: string) {

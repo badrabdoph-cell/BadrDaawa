@@ -6,7 +6,12 @@ const reservedRoutes = new Set([
   "faq",
   "order",
   "pricing",
+  "privacy-policy",
+  "refund-policy",
+  "terms",
   "templates",
+  "usage-policy",
+  "uploads",
   "_next",
 ]);
 
@@ -38,6 +43,32 @@ export function makeNumberedInvitationSlug(baseSlug: string, existingCodes: stri
   }
 
   return code;
+}
+
+export function normalizeCustomInvitationSlug(value?: string | null) {
+  return (value || "")
+    .trim()
+    .replace(/^https?:\/\/[^/]+/i, "")
+    .replace(/^\/+|\/+$/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+export function isReservedInvitationSlug(value: string) {
+  return reservedRoutes.has(value.toLowerCase());
+}
+
+export function validateCustomInvitationSlug(value?: string | null) {
+  const slug = normalizeCustomInvitationSlug(value);
+  if (!slug) return { slug: "", error: "" };
+  if (slug.length < 3) return { slug, error: "الرابط المخصص يجب أن يكون 3 أحرف على الأقل." };
+  if (isReservedInvitationSlug(slug)) return { slug, error: "هذا الرابط محجوز داخل الموقع. اختار رابطاً آخر." };
+  if (/^\d+$/.test(slug)) return { slug, error: "الرابط المخصص لا يمكن أن يكون أرقام فقط." };
+  return { slug, error: "" };
 }
 
 export function getCustomerAdminPath(code: string) {

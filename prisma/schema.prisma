@@ -92,6 +92,7 @@ model WeddingTemplate {
 model Invitation {
   id          String            @id @default(cuid())
   code        String            @unique
+  customSlug  String?           @unique
   status      InvitationStatus  @default(DRAFT)
   language    String            @default("ar")
   groomName   String

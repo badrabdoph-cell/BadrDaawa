@@ -217,7 +217,7 @@ export function InvitationExperience({
     return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
 
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
 
   return (
@@ -326,7 +326,7 @@ function escapeHtml(value: string) {
 }
 
 function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl?: string | null) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const imageSet = getInvitationImages(invitation);
   const images = imageSet.gallery;
   const texts = getInvitationTexts(invitation);
@@ -385,7 +385,7 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
 }
 
 function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
 
@@ -497,7 +497,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
 }
 
 function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
 
@@ -610,7 +610,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
 }
 
 function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -730,7 +730,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
 }
 
 function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
@@ -844,7 +844,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
 }
 
 function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -992,7 +992,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
 }
 
 function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1136,7 +1136,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
 }
 
 function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1255,7 +1255,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
 }
 
 function ModernCinematicInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1369,7 +1369,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
 }
 
 function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1485,7 +1485,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
 }
 
 function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1564,7 +1564,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
 }
 
 function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1630,7 +1630,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
 }
 
 function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1693,7 +1693,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
 }
 
 function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1757,7 +1757,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
 }
 
 function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1818,7 +1818,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
 }
 
 function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1881,7 +1881,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
 }
 
 function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -1944,7 +1944,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
 }
 
 function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -2012,7 +2012,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
 }
 
 function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -2077,7 +2077,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
 }
 
 function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
 
@@ -2139,7 +2139,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
 }
 
 function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
-  const invitationUrl = getInvitationUrl(invitation.code);
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);

@@ -11,6 +11,7 @@ import { normalizeInternalAssetUrl } from "./utils";
 type DatabaseInvitation = {
   id: string;
   code: string;
+  customSlug: string | null;
   language: string;
   groomName: string;
   brideName: string;
@@ -83,6 +84,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
   return {
     id: invitation.id,
     code: invitation.code,
+    customSlug: invitation.customSlug || undefined,
     templateSlug: invitation.template.slug,
     status: invitation.status.toLowerCase() as Invitation["status"],
     language: invitation.language === "en" ? "en" : "ar",
@@ -126,7 +128,10 @@ export async function getInvitationByCode(code: string): Promise<Invitation | un
 
   try {
     const invitation = await prisma.invitation.findFirst({
-      where: { code, deletedAt: null },
+      where: {
+        deletedAt: null,
+        OR: [{ code }, { customSlug: code }],
+      },
       include: { template: { select: { slug: true } } },
     });
 

@@ -60,10 +60,11 @@ type CreateFileInvitationInput = {
   musicEnabled?: boolean;
   texts?: Invitation["texts"];
   photographer?: Invitation["photographer"];
+  customSlug?: string;
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "templateSlug" | "status" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
+  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -238,8 +239,20 @@ export async function getFileCustomers() {
 export async function getFileInvitationByCode(code: string) {
   await archiveExpiredFileInvitations(code);
   const store = await readStore();
-  const invitation = store.invitations.find((invitation) => invitation.code.toLowerCase() === code.toLowerCase() && !invitation.deletedAt);
+  const lookup = code.toLowerCase();
+  const invitation = store.invitations.find((invitation) => (invitation.code.toLowerCase() === lookup || invitation.customSlug?.toLowerCase() === lookup) && !invitation.deletedAt);
   return invitation ? normalizeInvitationImages(invitation) : undefined;
+}
+
+export async function isFileInvitationSlugAvailable(slug: string, currentCode = "") {
+  const lookup = slug.toLowerCase();
+  const current = currentCode.toLowerCase();
+  const store = await readStore();
+  return !store.invitations.some((invitation) => {
+    if (invitation.deletedAt) return false;
+    if (current && invitation.code.toLowerCase() === current) return false;
+    return invitation.code.toLowerCase() === lookup || invitation.customSlug?.toLowerCase() === lookup;
+  });
 }
 
 export async function getFileGuestsByInvitation(code: string) {
@@ -275,6 +288,7 @@ export async function createFileInvitation(input: CreateFileInvitationInput) {
   const invitation: Invitation = {
     id: `inv_${code.replace(/[^a-z0-9]+/gi, "_")}`,
     code,
+    customSlug: input.customSlug || undefined,
     templateSlug: input.templateSlug,
     language: "ar",
     groomName: input.groomName,
@@ -341,8 +355,9 @@ function shouldArchiveInvitation(invitation: Invitation, now = Date.now()) {
 export async function archiveExpiredFileInvitations(code?: string) {
   const store = await readStore();
   let count = 0;
+  const lookup = code?.toLowerCase();
   store.invitations = store.invitations.map((invitation) => {
-    if (code && invitation.code.toLowerCase() !== code.toLowerCase()) return invitation;
+    if (lookup && invitation.code.toLowerCase() !== lookup && invitation.customSlug?.toLowerCase() !== lookup) return invitation;
     if (!shouldArchiveInvitation(invitation)) return invitation;
     count += 1;
     return { ...invitation, isActive: false, status: "archived" };
