@@ -3,11 +3,15 @@
     {
       "id": "global-track",
       "name": "الموسيقى العامة",
-      "url": "/uploads/music/music-1780789271956-8fdca446.mp3",
-      "enabled": true,
+      "url": "/uploads/music/music-1780954531385-07bbd688.mp3",
+      "enabled": false,
       "applyToAll": true,
       "templateSlugs": [],
-      "updatedAt": "2026-06-06T23:41:36.175Z"
+      "updatedAt": "2026-06-08T21:35:31.388Z",
+      "createdAt": "2026-06-06T23:41:36.175Z",
+      "source": "upload",
+      "mimeType": "audio/mpeg",
+      "extension": "mp3"
     }
   ]
 }
