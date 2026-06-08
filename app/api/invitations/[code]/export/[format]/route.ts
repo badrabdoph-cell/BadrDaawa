@@ -37,8 +37,8 @@ type DatabaseGuestRow = {
 async function getExportRows(code: string): Promise<ExportData | null> {
   if (prisma) {
     try {
-      const invitation = await prisma.invitation.findUnique({
-        where: { code },
+      const invitation = await prisma.invitation.findFirst({
+        where: { code, deletedAt: null },
         include: { guests: { orderBy: { createdAt: "desc" } } },
       });
       if (invitation) {

@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Archive, BarChart3, Bell, Crown, DatabaseBackup, FileImage, FileText, Github, History, Home, LayoutDashboard, LogOut, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, ScrollText, ShieldCheck, UsersRound } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
+  { href: "/admin/search", label: "البحث العام", icon: Search },
   { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
   { href: "/admin/invitations", label: "الدعوات", icon: Archive },
   { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
+  { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
+  { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
   { href: "/admin/templates", label: "القوالب", icon: Palette },
   { href: "/admin/music", label: "الموسيقى", icon: Music2 },
   { href: "/admin/media", label: "الوسائط", icon: FileImage },
@@ -18,7 +21,10 @@ const adminLinks = [
   { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
+  { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+  { href: "/admin/errors", label: "الأخطاء", icon: Bug },
   { href: "/admin/audit-log", label: "سجل التدقيق", icon: ScrollText },
+  { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
   { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
   { href: "/admin/sync-history", label: "سجل المزامنة", icon: Github },
   { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },
@@ -26,8 +32,10 @@ const adminLinks = [
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const activeLink = adminLinks.find((link) => (link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href))) || adminLinks[0];
   const [ordersBadge, setOrdersBadge] = useState(0);
+  const [messagesBadge, setMessagesBadge] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -43,6 +51,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return () => {
       alive = false;
       window.removeEventListener("admin-orders-count-refresh", loadCount);
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    async function loadCount() {
+      const response = await fetch("/api/admin/client-messages/unread-count", { cache: "no-store" }).catch(() => null);
+      if (!alive || !response?.ok) return;
+      const data = (await response.json().catch(() => null)) as { count?: number } | null;
+      setMessagesBadge(Math.max(0, Number(data?.count || 0)));
+    }
+    loadCount();
+    const timer = window.setInterval(loadCount, 30000);
+    return () => {
+      alive = false;
       window.clearInterval(timer);
     };
   }, []);
@@ -78,6 +102,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   <Icon size={18} />
                   <span>{link.label}</span>
                   {"badgeKey" in link && link.badgeKey === "orders" && ordersBadge > 0 ? <strong className="dashboard-nav-badge">{ordersBadge}</strong> : null}
+                  {"badgeKey" in link && link.badgeKey === "messages" && messagesBadge > 0 ? <strong className="dashboard-nav-badge">{messagesBadge}</strong> : null}
                 </Link>
               );
             })}
@@ -103,12 +128,18 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <span className="eyebrow">Admin Panel</span>
             <h1>{activeLink.label}</h1>
           </div>
+          <form className="dashboard-global-search" action="/admin/search" method="get">
+            <Search size={17} />
+            <input name="q" placeholder="بحث عام..." defaultValue={pathname === "/admin/search" ? searchParams.get("q") || "" : ""} />
+            <button type="submit">بحث</button>
+          </form>
           <div className="dashboard-topbar-actions">
             <Link className="admin-icon-button" href="/admin/templates" title="القوالب">
               <Palette size={18} />
             </Link>
-            <Link className="admin-icon-button" href="/admin" title="الإشعارات">
+            <Link className="admin-icon-button" href="/admin/messages" title="الرسائل">
               <Bell size={18} />
+              {messagesBadge > 0 ? <strong className="dashboard-nav-badge topbar-badge">{messagesBadge}</strong> : null}
             </Link>
           </div>
         </header>

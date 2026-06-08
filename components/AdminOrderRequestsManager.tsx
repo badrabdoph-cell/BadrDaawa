@@ -18,7 +18,7 @@ import {
 } from "@/components/AdminInvitationTools";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
-import type { InvitationTexts, OrderRequest } from "@/lib/types";
+import type { ContentPreset, InvitationTexts, OrderRequest } from "@/lib/types";
 
 type BuilderTemplate = AdminToolTemplate;
 type MusicFile = AdminToolMusicFile;
@@ -117,7 +117,7 @@ function orderTitle(order: OrderRequest, index: number) {
   return `طلب ${order.orderNumber || `#${index + 1}`} - ${order.groomName} & ${order.brideName}`;
 }
 
-export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteUrl }: { orders: OrderRequest[]; templates: BuilderTemplate[]; musicFiles: MusicFile[]; siteUrl: string }) {
+export function AdminOrderRequestsManager({ orders, templates, musicFiles, contentPresets, siteUrl }: { orders: OrderRequest[]; templates: BuilderTemplate[]; musicFiles: MusicFile[]; contentPresets: ContentPreset[]; siteUrl: string }) {
   const fallbackTemplate = templates[0]?.slug || "featured-1";
   const [items, setItems] = useState<OrderRequest[]>(orders);
   const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
@@ -444,6 +444,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, siteU
           values={toolValues}
           templates={templates}
           musicFiles={musicFiles}
+          contentPresets={contentPresets}
           refs={{ imageInputRefs: imageInputs }}
           showPhone
           sectionClassName="orders-edit-section"

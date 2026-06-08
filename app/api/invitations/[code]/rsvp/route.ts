@@ -52,7 +52,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   if (prisma) {
     try {
-      const invitation = await prisma.invitation.findUnique({ where: { code } });
+      const invitation = await prisma.invitation.findFirst({ where: { code, deletedAt: null } });
       if (!invitation) {
         return saveFileRsvp(code, parsed.data);
       }

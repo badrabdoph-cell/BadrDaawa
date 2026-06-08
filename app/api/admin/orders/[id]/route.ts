@@ -4,7 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
+import { createFileInvitation, getFileOrder, softDeleteFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
@@ -229,8 +229,8 @@ function serializeFileOrder(order: OrderRequest, request: NextRequest): AdminOrd
 
 async function serializePrismaOrder(id: string, request: NextRequest): Promise<AdminOrderSnapshot | null> {
   if (!prisma) return null;
-  const order = await prisma.orderRequest.findUnique({
-    where: { id },
+  const order = await prisma.orderRequest.findFirst({
+    where: { id, deletedAt: null },
     include: { template: { select: { slug: true } } },
   });
   if (!order) return null;
@@ -356,8 +356,8 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
 
 async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
   if (!prisma) return null;
-  const order = await prisma.orderRequest.findUnique({
-    where: { id },
+  const order = await prisma.orderRequest.findFirst({
+    where: { id, deletedAt: null },
     include: { template: { select: { slug: true } } },
   });
   if (!order) return null;
@@ -474,7 +474,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
   const fileOrder = await getFileOrder(id);
   const existingFile: Partial<OrderRequest> | null = fileOrder || null;
   const existingPrisma = prisma
-    ? await prisma.orderRequest.findUnique({ where: { id }, include: { template: { select: { slug: true } } } }).catch(() => null)
+    ? await prisma.orderRequest.findFirst({ where: { id, deletedAt: null }, include: { template: { select: { slug: true } } } }).catch(() => null)
     : null;
   const existingOrder: Partial<OrderRequest> | null = existingPrisma
     ? {
@@ -584,9 +584,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   try {
     if (action === "delete") {
-      if (prisma) await prisma.orderRequest.delete({ where: { id } }).catch(() => null);
-      await deleteFileOrder(id).catch(() => null);
+      if (prisma) await prisma.orderRequest.updateMany({ where: { id, deletedAt: null }, data: { deletedAt: new Date() } }).catch(() => null);
+      await softDeleteFileOrder(id).catch(() => null);
       revalidatePath("/admin/orders");
+      revalidatePath("/admin/trash");
       queueGitHubSync(`Order deleted from admin: ${id}.`, { createSnapshot: true });
       return jsonMode ? NextResponse.json({ ok: true, deleted: true }) : redirectBack(request, "deleted");
     }

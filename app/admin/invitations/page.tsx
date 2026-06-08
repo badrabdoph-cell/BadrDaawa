@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Archive, CalendarDays, ExternalLink, Eye, Filter, Pause, Play, Search, Settings2, Sparkles, Trash2, UserCheck } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
+import { getInvitationCompleteness } from "@/lib/invitation-completeness";
 import { getCustomerAdminPath } from "@/lib/slug";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
@@ -31,8 +32,9 @@ function isExpiredInvitation(weddingDate: string) {
   return date.getTime() < Date.now();
 }
 
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string }) {
-  if (!invitation.isActive) return "paused";
+function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string }) {
+  if (invitation.status === "archived") return "archived";
+  if (invitation.status === "paused" || !invitation.isActive) return "paused";
   if (isExpiredInvitation(invitation.weddingDate)) return "expired";
   return "active";
 }
@@ -41,7 +43,14 @@ function stateLabel(state: string) {
   if (state === "active") return "نشطة";
   if (state === "paused") return "متوقفة";
   if (state === "expired") return "منتهية";
+  if (state === "archived") return "مؤرشفة";
   return "كل الحالات";
+}
+
+function stateClassName(state: string) {
+  if (state === "active") return "status success";
+  if (state === "paused" || state === "expired") return "status warning";
+  return "status danger";
 }
 
 export default async function InvitationsPage({
@@ -89,12 +98,19 @@ export default async function InvitationsPage({
   const activeCount = invitations.filter((invitation) => getInvitationState(invitation) === "active").length;
   const pausedCount = invitations.filter((invitation) => getInvitationState(invitation) === "paused").length;
   const expiredCount = invitations.filter((invitation) => getInvitationState(invitation) === "expired").length;
+  const archivedCount = invitations.filter((invitation) => getInvitationState(invitation) === "archived").length;
   const totalViews = invitations.reduce((sum, invitation) => sum + invitation.views, 0);
   const expectedGuests = [...guestStatsByCode.values()].reduce((sum, item) => sum + item.attendees, 0);
+  const completenessByCode = new Map(invitations.map((invitation) => [invitation.code, getInvitationCompleteness(invitation)]));
+  const incompleteInvitations = invitations
+    .map((invitation) => ({ invitation, completeness: completenessByCode.get(invitation.code) || getInvitationCompleteness(invitation) }))
+    .filter((item) => !item.completeness.isComplete)
+    .sort((a, b) => a.completeness.percentage - b.completeness.percentage);
   const statusMessages: Record<string, string> = {
     pause: "تم إيقاف الدعوة.",
     resume: "تم تشغيل الدعوة.",
-    delete: "تم حذف الدعوة.",
+    archive: "تمت أرشفة الدعوة.",
+    delete: "تم نقل الدعوة إلى سلة المهملات.",
     missing: "لم يتم العثور على الدعوة المطلوبة.",
     invalid: "الإجراء غير صالح.",
   };
@@ -146,11 +162,36 @@ export default async function InvitationsPage({
           <span>منتهية</span>
           <strong>{formatArabicNumber(expiredCount)}</strong>
         </div>
+        <div className="admin-list-stat warning">
+          <Archive size={19} />
+          <span>مؤرشفة</span>
+          <strong>{formatArabicNumber(archivedCount)}</strong>
+        </div>
+        <div className="admin-list-stat warning">
+          <Settings2 size={19} />
+          <span>غير مكتملة</span>
+          <strong>{formatArabicNumber(incompleteInvitations.length)}</strong>
+        </div>
       </section>
 
       {params.created ? <div className="notice success">تم إنشاء الدعوة بنجاح: {params.created}</div> : null}
       {params.error ? <div className="notice danger">{params.error === "music" ? "الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر." : params.error === "images" ? "الصور لم يتم حفظها. ارفع صور JPG/PNG/WebP أو انتظر انتهاء الرفع." : "راجع البيانات المطلوبة قبل إنشاء الدعوة."}</div> : null}
       {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
+      {incompleteInvitations.length ? (
+        <div className="notice warning invitation-completeness-alert">
+          <Settings2 size={18} />
+          <div>
+            <strong>يوجد {formatArabicNumber(incompleteInvitations.length)} دعوة غير مكتملة.</strong>
+            <span>
+              أقل الدعوات اكتمالاً:{" "}
+              {incompleteInvitations
+                .slice(0, 3)
+                .map(({ invitation, completeness }) => `${invitation.code} (${formatArabicNumber(completeness.percentage)}%)`)
+                .join("، ")}
+            </span>
+          </div>
+        </div>
+      ) : null}
       <form className="admin-table-toolbar" action="/admin/invitations" method="get">
         <label className="admin-search-field">
           <Search size={17} />
@@ -163,6 +204,7 @@ export default async function InvitationsPage({
             <option value="active">نشطة</option>
             <option value="paused">متوقفة</option>
             <option value="expired">منتهية</option>
+            <option value="archived">مؤرشفة</option>
           </select>
         </label>
         <label className="admin-select-field">
@@ -190,6 +232,7 @@ export default async function InvitationsPage({
               <th>القالب المستخدم</th>
               <th>الزيارات</th>
               <th>الحضور</th>
+              <th>الاكتمال</th>
               <th>الحالة</th>
               <th>روابط العميل</th>
               <th>إجراءات</th>
@@ -203,6 +246,7 @@ export default async function InvitationsPage({
               const clientAdminUrl = `${siteUrl}${customerAdminPath}`;
               const guestStats = guestStatsByCode.get(invitation.code) || { responses: 0, confirmed: 0, attendees: 0 };
               const invitationState = getInvitationState(invitation);
+              const completeness = completenessByCode.get(invitation.code) || getInvitationCompleteness(invitation);
               return (
                 <tr key={invitation.id}>
                   <td>{invitation.code}</td>
@@ -217,7 +261,16 @@ export default async function InvitationsPage({
                     <small>{formatArabicNumber(guestStats.responses)} رد</small>
                   </td>
                   <td>
-                    <span className={invitationState === "active" ? "status success" : "status danger"}>{stateLabel(invitationState)}</span>
+                    <div className={completeness.isComplete ? "invitation-completeness done" : "invitation-completeness warning"}>
+                      <strong>{formatArabicNumber(completeness.percentage)}%</strong>
+                      <span className="invitation-completeness-track">
+                        <span style={{ width: `${completeness.percentage}%` }} />
+                      </span>
+                      {!completeness.isComplete ? <small>ناقص: {completeness.missingLabels.join("، ")}</small> : <small>مكتملة</small>}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={stateClassName(invitationState)}>{stateLabel(invitationState)}</span>
                   </td>
                   <td>
                     <div className="mini-links">
@@ -242,8 +295,15 @@ export default async function InvitationsPage({
                           {invitation.isActive ? <Pause size={17} /> : <Play size={17} />}
                         </button>
                       </form>
+                      {invitationState !== "archived" ? (
+                        <form action={`/api/admin/invitations/${invitation.code}`} method="post">
+                          <button className="btn btn-soft btn-icon" name="action" value="archive" title="أرشفة الدعوة" type="submit">
+                            <Archive size={17} />
+                          </button>
+                        </form>
+                      ) : null}
                       <form action={`/api/admin/invitations/${invitation.code}`} method="post">
-                        <button className="btn btn-soft btn-icon danger-button" name="action" value="delete" title="حذف الدعوة" type="submit">
+                        <button className="btn btn-soft btn-icon danger-button" name="action" value="delete" title="نقل الدعوة للمهملات" type="submit">
                           <Trash2 size={17} />
                         </button>
                       </form>
@@ -254,7 +314,7 @@ export default async function InvitationsPage({
             })}
             {!filteredInvitations.length ? (
               <tr>
-                <td colSpan={9}>
+                <td colSpan={10}>
                   <div className="admin-empty-state compact">
                     <strong>لا توجد دعوات مطابقة</strong>
                     <p>جرّب تغيير البحث أو حالة الفلترة.</p>

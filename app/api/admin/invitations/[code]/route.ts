@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/db";
-import { deleteFileInvitation, getFileInvitationByCode, setFileInvitationActive } from "@/lib/file-store";
+import { getFileInvitationByCode, setFileInvitationActive, setFileInvitationArchived, softDeleteFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -30,14 +30,14 @@ async function updateDatabaseInvitation(code: string, action: string) {
 
   try {
     if (action === "delete") {
-      const result = await prisma.invitation.deleteMany({ where: { code } });
+      const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data: { deletedAt: new Date(), status: "ARCHIVED" } });
       return result.count > 0;
     }
 
-    if (action === "pause" || action === "resume") {
+    if (action === "pause" || action === "resume" || action === "archive") {
       const result = await prisma.invitation.updateMany({
-        where: { code },
-        data: { status: action === "pause" ? "PAUSED" : "ACTIVE" },
+        where: { code, deletedAt: null },
+        data: { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE" },
       });
       return result.count > 0;
     }
@@ -49,9 +49,10 @@ async function updateDatabaseInvitation(code: string, action: string) {
 }
 
 async function updateFileInvitationAction(code: string, action: string) {
-  if (action === "delete") return deleteFileInvitation(code);
+  if (action === "delete") return softDeleteFileInvitation(code);
   if (action === "pause") return setFileInvitationActive(code, false);
   if (action === "resume") return setFileInvitationActive(code, true);
+  if (action === "archive") return setFileInvitationArchived(code, true);
   return false;
 }
 
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { code } = await params;
   const formData = await request.formData();
   const action = String(formData.get("action") || "").trim();
-  if (!code || !["pause", "resume", "delete"].includes(action)) {
+  if (!code || !["pause", "resume", "archive", "delete"].includes(action)) {
     return redirectBack(request, "invalid");
   }
 
@@ -113,10 +114,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     queueGitHubSync(`Client invitation ${action}: ${code}.`, { createSnapshot: true });
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
-      action: action === "delete" ? "invitation.delete" : action === "pause" ? "invitation.pause" : "invitation.resume",
+      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : "invitation.resume",
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
-      newValues: action === "delete" ? { deleted: true } : { status: action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
+      newValues: action === "delete" ? { deleted: true } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
       metadata: { storage: updatedDatabase ? "database" : "file" },
     });
   }

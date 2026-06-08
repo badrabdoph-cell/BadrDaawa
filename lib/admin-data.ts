@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { getFileCustomers, getFileGuestsByInvitation, getFileInvitations, getFileOrders } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
+import { archiveExpiredInvitations } from "./invitation-archiving";
 import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
@@ -14,6 +15,7 @@ export type AdminCustomer = {
   isActive: boolean;
   invitations: number;
   createdAt: string;
+  deletedAt?: string;
 };
 
 type AdminInvitationRow = {
@@ -40,6 +42,7 @@ type AdminInvitationRow = {
   viewCount?: number;
   views?: number;
   customerId: string;
+  deletedAt?: Date | string | null;
 };
 
 type AdminOrderRow = {
@@ -67,6 +70,7 @@ type AdminOrderRow = {
   status: string;
   submittedAt?: Date | string | null;
   createdAt: Date | string;
+  deletedAt?: Date | string | null;
 };
 
 type AdminGuestRow = {
@@ -89,6 +93,7 @@ type AdminCustomerRow = {
   isActive: boolean;
   _count: { invitations: number };
   createdAt: Date;
+  deletedAt?: Date | null;
 };
 
 function toStringArray(value: unknown) {
@@ -152,10 +157,12 @@ function parsePhotographerFromNotes(notes?: string | null): OrderRequest["photog
 function toInvitation(row: AdminInvitationRow): Invitation {
   const gallery = toStringArray(row.gallery);
   const heroPhoto = normalizeInternalAssetUrl(row.heroPhoto);
+  const status = String(row.status || (row.isActive ? "ACTIVE" : "PAUSED")).toLowerCase() as Invitation["status"];
   return {
     id: row.id,
     code: row.code,
     templateSlug: row.template?.slug || "royal-envelope",
+    status,
     language: row.language === "en" ? "en" : "ar",
     groomName: row.groomName,
     brideName: row.brideName,
@@ -213,11 +220,13 @@ function toOrder(row: AdminOrderRow): OrderRequest {
 }
 
 export async function getAdminInvitations(): Promise<Invitation[]> {
+  await archiveExpiredInvitations();
   if (!prisma) return getFileInvitations();
 
   try {
     const [invitations, fileInvitations] = await Promise.all([
       prisma.invitation.findMany({
+        where: { deletedAt: null },
         include: { template: { select: { slug: true } } },
         orderBy: { createdAt: "desc" },
       }),
@@ -237,6 +246,7 @@ export async function getAdminOrders(): Promise<OrderRequest[]> {
 
   try {
     const orders = await prisma.orderRequest.findMany({
+      where: { deletedAt: null },
       include: { template: { select: { slug: true } } },
       orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
     });
@@ -256,6 +266,7 @@ export async function getAdminGuests(): Promise<GuestRsvp[]> {
 
   try {
     const guests = await prisma.guestRsvp.findMany({
+      where: { invitation: { deletedAt: null } },
       include: { invitation: { select: { code: true } } },
       orderBy: { createdAt: "desc" },
     });
@@ -283,7 +294,8 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
 
   try {
     const customers = await prisma.customer.findMany({
-      include: { _count: { select: { invitations: true } } },
+      where: { deletedAt: null },
+      include: { _count: { select: { invitations: { where: { deletedAt: null } } } } },
       orderBy: { createdAt: "desc" },
     });
 

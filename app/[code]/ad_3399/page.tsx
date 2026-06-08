@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
-import { Download, ExternalLink, LogOut, QrCode } from "lucide-react";
+import { Download, ExternalLink, LogOut } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
 import { ClientShareTools } from "@/components/ClientShareTools";
 import { CopyButton } from "@/components/CopyButton";
 import { CustomerAnalyticsPanel } from "@/components/CustomerAnalyticsPanel";
+import { CustomerMessagesPanel } from "@/components/CustomerMessagesPanel";
 import { GuestTable } from "@/components/GuestTable";
-import { QrCodeBlock } from "@/components/QrCodeBlock";
+import { InvitationQrTools } from "@/components/InvitationQrTools";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
+import { getClientMessages } from "@/lib/client-messages";
+import { getContentPresets } from "@/lib/content-presets";
 import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getMusicLibrary } from "@/lib/music-library";
@@ -34,10 +37,12 @@ export default async function CustomerAdminPage({
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 
-  const [guests, template, musicFiles] = await Promise.all([
+  const [guests, template, musicFiles, clientMessages, contentPresets] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
     getMusicLibrary(),
+    getClientMessages(invitation.code),
+    getContentPresets(),
   ]);
   if (!template) {
     notFound();
@@ -72,6 +77,8 @@ export default async function CustomerAdminPage({
 
       <CustomerAnalyticsPanel analytics={analytics} />
 
+      <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
+
       {query.saved === "music-error" ? (
         <div className="notice danger customer-notice">الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV.</div>
       ) : query.saved === "images-error" ? (
@@ -81,12 +88,7 @@ export default async function CustomerAdminPage({
       ) : null}
 
       <section className="customer-control-grid customer-admin-tools">
-        <article className="panel">
-          <QrCode size={24} />
-          <h2>الرابط والـ QR</h2>
-          <p>أي تعديل على رابط الدعوة يتزامن تلقائيًا مع QR لأنه مبني من نفس الكود.</p>
-          <QrCodeBlock value={url} />
-        </article>
+        <InvitationQrTools invitationUrl={url} title={`${invitation.groomName} و ${invitation.brideName}`} initialLogoUrl={invitation.photographer?.logoUrl || ""} />
 
         <article className="panel">
           <Download size={24} />
@@ -109,6 +111,7 @@ export default async function CustomerAdminPage({
         invitation={invitation}
         template={template}
         musicFiles={musicFiles.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0 }))}
+        contentPresets={contentPresets}
         publicUrl={url}
       />
 

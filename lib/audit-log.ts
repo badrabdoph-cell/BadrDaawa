@@ -11,6 +11,7 @@ export type AuditAction =
   | "invitation.delete"
   | "invitation.pause"
   | "invitation.resume"
+  | "invitation.archive"
   | "order.create"
   | "order.publish"
   | "template.change"
@@ -233,6 +234,7 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "invitation.delete": "حذف دعوة",
   "invitation.pause": "إيقاف دعوة",
   "invitation.resume": "تشغيل دعوة",
+  "invitation.archive": "أرشفة دعوة",
   "order.create": "إنشاء طلب",
   "order.publish": "نشر طلب",
   "template.change": "تغيير قالب",

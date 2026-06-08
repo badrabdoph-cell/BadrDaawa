@@ -2,6 +2,7 @@ import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode
 import { prisma } from "./db";
 import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
+import { archiveExpiredInvitations } from "./invitation-archiving";
 import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
@@ -82,6 +83,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     id: invitation.id,
     code: invitation.code,
     templateSlug: invitation.template.slug,
+    status: invitation.status.toLowerCase() as Invitation["status"],
     language: invitation.language === "en" ? "en" : "ar",
     groomName: invitation.groomName,
     brideName: invitation.brideName,
@@ -116,13 +118,14 @@ function toGuestRsvp(guest: DatabaseGuest): GuestRsvp {
 }
 
 export async function getInvitationByCode(code: string): Promise<Invitation | undefined> {
+  await archiveExpiredInvitations(code);
   if (!prisma) {
     return (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
   }
 
   try {
-    const invitation = await prisma.invitation.findUnique({
-      where: { code },
+    const invitation = await prisma.invitation.findFirst({
+      where: { code, deletedAt: null },
       include: { template: { select: { slug: true } } },
     });
 
@@ -141,7 +144,7 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
 
   try {
     const guests = await prisma.guestRsvp.findMany({
-      where: { invitation: { code } },
+      where: { invitation: { code, deletedAt: null } },
       include: { invitation: { select: { code: true } } },
       orderBy: { createdAt: "desc" },
     });
@@ -163,15 +166,17 @@ export async function recordInvitationView(code: string) {
   }
 
   try {
-    const invitation = await prisma.invitation.update({
-      where: { code },
+    const invitation = await prisma.invitation.updateMany({
+      where: { code, deletedAt: null },
       data: { viewCount: { increment: 1 } },
-      select: { id: true },
     });
+    if (!invitation.count) return;
+    const current = await prisma.invitation.findUnique({ where: { code }, select: { id: true } });
+    if (!current) return;
 
     await prisma.analyticsEvent.create({
       data: {
-        invitationId: invitation.id,
+        invitationId: current.id,
         eventType: "VIEW",
       },
     });

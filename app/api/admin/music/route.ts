@@ -8,6 +8,7 @@ import { updateFileInvitationsMusicUrl } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteMusicSlot, getMusicLibrary, getMusicUsage, renameMusicSlot, saveMusicSlot, setMusicSlotEnabled } from "@/lib/music-library";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { clearTemplatesPreviewMusicIfTrackDeleted, updateTemplatesPreviewMusicSettings } from "@/lib/templates-preview-music";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -28,6 +29,13 @@ async function revalidateMusicPages(templateSlugs: string[]) {
     revalidatePath(`/${invitation.code}`);
     revalidatePath(`/${invitation.code}/ad_3399`);
   }
+}
+
+function revalidateTemplatesPreviewPages(templateSlugs: string[]) {
+  revalidatePath("/admin/music");
+  revalidatePath("/admin/templates");
+  revalidatePath("/templates");
+  for (const slug of templateSlugs) revalidatePath(`/templates/${slug}/preview`);
 }
 
 async function convertInvitationsToDefaultMusic(trackUrl: string) {
@@ -68,6 +76,17 @@ export async function POST(request: NextRequest) {
   const usage = getMusicUsage(invitations, library);
   const usedCount = currentSlot?.url ? usage.usageByUrl.get(currentSlot.url) || 0 : 0;
 
+  if (action === "templates-preview") {
+    const enabled = formData.get("templatesPreviewEnabled") === "on";
+    const requestedTrackId = String(formData.get("templatesPreviewTrackId") || "").trim();
+    const selectedTrack = library.slots.find((slot) => slot.id === requestedTrackId && slot.url);
+    if (enabled && !selectedTrack) return redirectWith(request, { error: "templates-preview-track" });
+    const settings = await updateTemplatesPreviewMusicSettings({ enabled, trackId: selectedTrack?.id || "" });
+    revalidateTemplatesPreviewPages(allTemplateSlugs);
+    queueGitHubSync(`Templates preview music updated: ${settings.enabled ? settings.trackId : "off"}.`, { createSnapshot: true });
+    return redirectWith(request, { saved: "templates-preview" });
+  }
+
   if (["rename", "replace", "enable", "disable", "delete"].includes(action) && !currentSlot) {
     return redirectWith(request, { error: "slot" });
   }
@@ -104,6 +123,7 @@ export async function POST(request: NextRequest) {
     }
     const converted = await convertInvitationsToDefaultMusic(currentSlot.url);
     const deleted = await deleteMusicSlot(currentSlot.id);
+    if (deleted) await clearTemplatesPreviewMusicIfTrackDeleted(deleted.id);
     if (deleted) await deleteUploadedMusicFile(deleted.url);
     await revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Music track deleted: ${deleted?.id || slotId}; converted ${converted} invitation(s).`, { createSnapshot: true });

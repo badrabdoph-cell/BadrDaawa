@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordErrorEvent, serializeErrorForTracking } from "./error-tracking";
 
 export interface ApiError {
   message: string;
@@ -88,8 +89,16 @@ export function createApiError(
   };
 }
 
-export function handleApiError(error: unknown): ApiError {
+export function handleApiError(error: unknown, context?: { route?: string; user?: string }): ApiError {
   console.error("API Error:", error);
+  const tracked = serializeErrorForTracking(error);
+  void recordErrorEvent({
+    route: context?.route || "api-route",
+    message: tracked.message,
+    stack: tracked.stack,
+    user: context?.user || "server",
+    source: "api-handler",
+  }).catch(() => undefined);
 
   if (error instanceof AppError) {
     return {
@@ -146,7 +155,8 @@ export function asyncHandler(
     try {
       return await handler(req, ctx);
     } catch (error) {
-      const apiError = handleApiError(error);
+      const route = req instanceof Request ? req.url : "api-route";
+      const apiError = handleApiError(error, { route, user: "server" });
       return sendApiError(apiError);
     }
   };

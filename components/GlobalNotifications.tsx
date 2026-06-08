@@ -108,6 +108,24 @@ function buildReport(title: string, lines: Array<[string, unknown] | string>) {
   return truncate(report);
 }
 
+function trackClientError(input: { route?: string; message: string; stack?: string; source: string; digest?: string }) {
+  const route = input.route || (typeof window !== "undefined" ? window.location.href : "unknown-route");
+  if (route.includes("/api/errors")) return;
+
+  fetch("/api/errors", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      route,
+      message: input.message,
+      stack: input.stack,
+      source: input.source,
+      digest: input.digest,
+    }),
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 async function copyText(value: string) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -182,6 +200,7 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
     const errorStatuses = new Set(["failed", "error", "missing", "invalid", "delete-error"]);
     const successMessages: Record<string, string> = {
       accepted: "تم قبول الطلب وتنفيذ الإجراء.",
+      archive: "تمت الأرشفة بنجاح.",
       converted: "تم تحويل الطلب إلى دعوة منشورة.",
       delete: "تم الحذف بنجاح.",
       pause: "تم الإيقاف بنجاح.",
@@ -317,27 +336,41 @@ export function GlobalNotifications() {
   useEffect(() => {
     const handleWindowError = (event: ErrorEvent) => {
       const error = event.error instanceof Error ? event.error : null;
+      const report = buildReport("window.error", [
+        ["Message", event.message],
+        ["File", event.filename],
+        ["Line", event.lineno],
+        ["Column", event.colno],
+        ["Error", error || event.error],
+      ]);
+      trackClientError({
+        route: typeof window !== "undefined" ? window.location.href : event.filename,
+        message: error?.message || event.message || "حصل خطأ غير متوقع في الصفحة.",
+        stack: error?.stack || report,
+        source: "window.error",
+      });
       addNotification({
         type: "error",
         title: "خطأ في الموقع",
         message: error?.message || event.message || "حصل خطأ غير متوقع في الصفحة.",
-        details: buildReport("window.error", [
-          ["Message", event.message],
-          ["File", event.filename],
-          ["Line", event.lineno],
-          ["Column", event.colno],
-          ["Error", error || event.error],
-        ]),
+        details: report,
         signature: `window-error:${event.message}:${event.filename}:${event.lineno}:${event.colno}`,
       });
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const error = event.reason instanceof Error ? event.reason : null;
+      const report = buildReport("unhandledrejection", [["Reason", event.reason]]);
+      trackClientError({
+        message: error?.message || "وعد برمجي فشل بدون معالجة.",
+        stack: error?.stack || report,
+        source: "unhandledrejection",
+      });
       addNotification({
         type: "error",
         title: "خطأ غير متوقع",
         message: event.reason instanceof Error ? event.reason.message : "وعد برمجي فشل بدون معالجة.",
-        details: buildReport("unhandledrejection", [["Reason", event.reason]]),
+        details: report,
         signature: `unhandled:${serializeValue(event.reason).slice(0, 220)}`,
       });
     };
@@ -404,34 +437,53 @@ export function GlobalNotifications() {
           } catch (readError) {
             responseText = `Could not read response body: ${serializeValue(readError)}`;
           }
+          const report = buildReport("fetch non-ok response", [
+            ["Request URL", meta.url],
+            ["Method", meta.method],
+            ["Status", response.status],
+            ["Status Text", response.statusText],
+            ["Response URL", response.url],
+            ["Response Body", truncate(responseText, 5000)],
+          ]);
+
+          if (!meta.url.includes("/api/errors")) {
+            trackClientError({
+              route: meta.url,
+              message: `${response.status} ${response.statusText || ""} - ${shortUrl(meta.url)}`.trim(),
+              stack: report,
+              source: "fetch.non_ok",
+            });
+          }
 
           addNotification({
             type: "error",
             title: "فشل طلب في الموقع",
             message: `${response.status} ${response.statusText || ""} - ${shortUrl(meta.url)}`.trim(),
-            details: buildReport("fetch non-ok response", [
-              ["Request URL", meta.url],
-              ["Method", meta.method],
-              ["Status", response.status],
-              ["Status Text", response.statusText],
-              ["Response URL", response.url],
-              ["Response Body", truncate(responseText, 5000)],
-            ]),
+            details: report,
             signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
           });
         }
 
         return response;
       } catch (error) {
+        const report = buildReport("fetch network failure", [
+          ["Request URL", meta.url],
+          ["Method", meta.method],
+          ["Error", error],
+        ]);
+        if (!meta.url.includes("/api/errors")) {
+          trackClientError({
+            route: meta.url,
+            message: error instanceof Error ? error.message : "تعذر تنفيذ طلب الشبكة.",
+            stack: error instanceof Error ? error.stack || report : report,
+            source: "fetch.network",
+          });
+        }
         addNotification({
           type: "error",
           title: "فشل الاتصال",
           message: error instanceof Error ? error.message : "تعذر تنفيذ طلب الشبكة.",
-          details: buildReport("fetch network failure", [
-            ["Request URL", meta.url],
-            ["Method", meta.method],
-            ["Error", error],
-          ]),
+          details: report,
           signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
         });
         throw error;

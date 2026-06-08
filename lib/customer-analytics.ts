@@ -34,8 +34,8 @@ export async function getCustomerInvitationAnalytics(invitation: Pick<Invitation
   }
 
   try {
-    const dbInvitation = await prisma.invitation.findUnique({
-      where: { code: invitation.code },
+    const dbInvitation = await prisma.invitation.findFirst({
+      where: { code: invitation.code, deletedAt: null },
       select: {
         id: true,
         viewCount: true,

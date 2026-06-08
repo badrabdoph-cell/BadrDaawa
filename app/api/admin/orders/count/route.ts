@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     try {
       const count = await prisma.orderRequest.count({
         where: {
+          deletedAt: null,
           status: {
             in: ["NEW", "REVIEWING", "EDITED", "ACCEPTED"] as never,
           },

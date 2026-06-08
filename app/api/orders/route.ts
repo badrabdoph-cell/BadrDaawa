@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
 
-      const existingOrder = await prisma.orderRequest.findUnique({ where: { dedupeKey }, select: { id: true, orderNumber: true } }).catch(() => null);
+      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true } }).catch(() => null);
       if (existingOrder) {
         const message = buildOrderWhatsAppMessage({
           orderNumber: existingOrder.orderNumber || orderNumber,

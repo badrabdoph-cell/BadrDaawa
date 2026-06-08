@@ -5,6 +5,7 @@ import { cleanPlayableAudioUrl } from "./audio-files";
 import { getCustomTemplates } from "./custom-templates";
 import { getActiveMusicSlot, getMusicLibrary } from "./music-library";
 import { getTemplateBySlug, invitationTemplates } from "./templates";
+import { resolveTemplatesPreviewMusic } from "./templates-preview-music";
 import type { TemplateDefinition } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
 
@@ -60,6 +61,11 @@ function cleanHexColor(value: string) {
   return /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim() : "";
 }
 
+async function getGlobalMusicOverride() {
+  const library = await getMusicLibrary();
+  return getActiveMusicSlot(library)?.url || "";
+}
+
 async function readTemplateSettings(): Promise<TemplateSettings> {
   noStore();
 
@@ -75,11 +81,6 @@ async function readTemplateSettings(): Promise<TemplateSettings> {
 async function writeTemplateSettings(settings: TemplateSettings) {
   await mkdir(path.dirname(settingsPath), { recursive: true });
   await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
-}
-
-async function getGlobalMusicOverride() {
-  const library = await getMusicLibrary();
-  return getActiveMusicSlot(library)?.url || "";
 }
 
 function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings, globalMusicUrl?: string): TemplateDefinition {
@@ -127,6 +128,17 @@ export async function getPublicTemplatesWithSettings() {
   return templates.filter((template) => template.enabled);
 }
 
+export async function getTemplatesWithPreviewMusic() {
+  const [settings, customTemplates, previewMusic] = await Promise.all([readTemplateSettings(), getCustomTemplates(), resolveTemplatesPreviewMusic()]);
+  const previewMusicUrl = previewMusic.settings.enabled ? previewMusic.musicUrl : "";
+  return [...invitationTemplates, ...customTemplates].map((template) => applyTemplateSettings(template, settings, previewMusicUrl));
+}
+
+export async function getPublicTemplatesWithPreviewMusic() {
+  const templates = await getTemplatesWithPreviewMusic();
+  return templates.filter((template) => template.enabled);
+}
+
 export async function getTemplateWithSettings(slug: string) {
   const customTemplates = await getCustomTemplates();
   const template = getTemplateBySlug(slug) || customTemplates.find((item) => item.slug === slug);
@@ -137,6 +149,20 @@ export async function getTemplateWithSettings(slug: string) {
 
 export async function getPublicTemplateWithSettings(slug: string) {
   const template = await getTemplateWithSettings(slug);
+  return template?.enabled ? template : undefined;
+}
+
+export async function getTemplateWithPreviewMusic(slug: string) {
+  const customTemplates = await getCustomTemplates();
+  const template = getTemplateBySlug(slug) || customTemplates.find((item) => item.slug === slug);
+  if (!template) return undefined;
+  const [settings, previewMusic] = await Promise.all([readTemplateSettings(), resolveTemplatesPreviewMusic()]);
+  const previewMusicUrl = previewMusic.settings.enabled ? previewMusic.musicUrl : "";
+  return applyTemplateSettings(template, settings, previewMusicUrl);
+}
+
+export async function getPublicTemplateWithPreviewMusic(slug: string) {
+  const template = await getTemplateWithPreviewMusic(slug);
   return template?.enabled ? template : undefined;
 }
 

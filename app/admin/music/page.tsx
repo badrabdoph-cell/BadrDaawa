@@ -1,8 +1,10 @@
 import { AlertTriangle, CheckCircle2, Disc3, FileAudio, Library, Music2, Pencil, Plus, RefreshCw, Star, Trash2, UploadCloud } from "lucide-react";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { TemplatesPreviewMusicForm } from "@/components/TemplatesPreviewMusicForm";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { isUploadedMusicUrl } from "@/lib/audio-files";
 import { getDefaultMusicSlot, getMusicLibrary, getMusicUsage, type MusicSlot } from "@/lib/music-library";
+import { resolveTemplatesPreviewMusic } from "@/lib/templates-preview-music";
 import { formatArabicNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,7 @@ function formatDuration(value?: number) {
 }
 
 function saveMessage(params: MusicPageParams) {
+  if (params.saved === "templates-preview") return "تم حفظ موسيقى القوالب الجاهزة. سيظهر التغيير في معاينات القوالب فقط.";
   if (params.saved === "default") return "تم تعيين الموسيقى الافتراضية للموقع.";
   if (params.saved === "disabled") return "تم إيقاف الموسيقى الافتراضية.";
   if (params.saved === "deleted") return `تم حذف المقطع وتحويل ${formatArabicNumber(Number(params.converted || 0))} دعوة للموسيقى الافتراضية.`;
@@ -52,6 +55,7 @@ function errorMessage(error?: string) {
   if (error === "name") return "اكتب اسم واضح للمقطع قبل الحفظ.";
   if (error === "audio") return "لا يوجد ملف صوت صالح. الصيغ المسموحة: mp3, wav, ogg, aac, m4a, webm, flac.";
   if (error === "slot") return "لم يتم العثور على المقطع المطلوب.";
+  if (error === "templates-preview-track") return "اختار مقطعًا صالحًا لموسيقى القوالب الجاهزة أو أوقف الإعداد.";
   return "تعذر تنفيذ أمر الموسيقى.";
 }
 
@@ -63,6 +67,7 @@ function trackStatus(track: MusicSlot, defaultTrack?: MusicSlot) {
 export default async function AdminMusicPage({ searchParams }: { searchParams: Promise<MusicPageParams> }) {
   const [params, library, invitations] = await Promise.all([searchParams, getMusicLibrary(), getAdminInvitations()]);
   const tracks = library.slots.filter((slot) => slot.url);
+  const templatesPreviewMusic = await resolveTemplatesPreviewMusic(library);
   const defaultTrack = getDefaultMusicSlot(library);
   const usage = getMusicUsage(invitations, library);
   const confirmTrack = params.confirmDelete ? tracks.find((track) => track.id === params.confirmDelete) : undefined;
@@ -126,6 +131,20 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: P
           {defaultTrack ? <AudioPlayer src={defaultTrack.url} label={defaultTrack.name} /> : null}
           <a className="btn btn-soft" href="#add-music"><RefreshCw size={17} /> تغيير المقطع</a>
         </div>
+      </section>
+
+      <section className="music-control-panel panel templates-preview-music-panel">
+        <div className="admin-card-head">
+          <Disc3 size={22} />
+          <div>
+            <span className="eyebrow">Templates Preview Music</span>
+            <h2>موسيقى القوالب الجاهزة</h2>
+          </div>
+        </div>
+        <p className="templates-preview-music-note">
+          هذا الإعداد يعمل فقط داخل صفحة عرض القوالب الجاهزة ومعاينات القوالب قبل إنشاء الدعوة. لا يغيّر أي دعوة منشأة، ولا موسيقى العميل، ولا أي موسيقى مخصصة داخل دعوة.
+        </p>
+        <TemplatesPreviewMusicForm tracks={tracks} settings={templatesPreviewMusic.settings} />
       </section>
 
       <section className="music-library-panel panel">

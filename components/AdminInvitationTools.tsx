@@ -2,10 +2,11 @@
 
 import type { MutableRefObject } from "react";
 import { ImagePlus, Link2, Loader2, MessageSquareText, Music2, UploadCloud, UserRound } from "lucide-react";
+import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import { uploadBrowserPreviewImage, type BrowserImageUploadOptions } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { ContentPreset, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
 export type AdminToolMusicFile = { url: string; modifiedAt?: number; name?: string; id?: string; sizeBytes?: number; extension?: string };
@@ -99,6 +100,7 @@ export function AdminInvitationTools({
   values,
   templates,
   musicFiles,
+  contentPresets = [],
   refs,
   showPhone = false,
   sectionClassName = "builder-section",
@@ -115,6 +117,7 @@ export function AdminInvitationTools({
   values: AdminInvitationToolValues;
   templates: AdminToolTemplate[];
   musicFiles: AdminToolMusicFile[];
+  contentPresets?: ContentPreset[];
   refs?: AdminInvitationToolRefs;
   showPhone?: boolean;
   sectionClassName?: string;
@@ -260,6 +263,14 @@ export function AdminInvitationTools({
           <MessageSquareText size={18} />
           <strong>نصوص داخل الدعوة</strong>
         </div>
+        <ContentPresetPicker
+          presets={contentPresets}
+          onApply={(textPatch) => {
+            for (const [key, value] of Object.entries(textPatch)) {
+              onInvitationTextChange(key as keyof InvitationTexts, String(value || ""));
+            }
+          }}
+        />
         <div className="builder-text-list">
           <label className="field">
             <span>سؤال تأكيد الحضور</span>

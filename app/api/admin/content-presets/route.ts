@@ -1,0 +1,69 @@
+import { revalidatePath } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { createContentPreset, deleteContentPreset, updateContentPreset } from "@/lib/content-presets";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { getRedirectUrl } from "@/lib/utils";
+
+export const runtime = "nodejs";
+
+async function isAdmin(request: NextRequest) {
+  return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+}
+
+function redirectPresets(request: NextRequest, params: Record<string, string>) {
+  const url = getRedirectUrl("/admin/content-presets", request.headers, request.nextUrl.origin);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  return NextResponse.redirect(url, 303);
+}
+
+function revalidatePresetConsumers() {
+  revalidatePath("/admin/content-presets");
+  revalidatePath("/admin/new-invitation");
+  revalidatePath("/admin/orders");
+}
+
+export async function POST(request: NextRequest) {
+  if (!(await isAdmin(request))) {
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+  }
+
+  const formData = await request.formData();
+  const action = String(formData.get("action") || "create");
+  const id = String(formData.get("id") || "").trim();
+
+  if (action === "delete") {
+    if (!id) return redirectPresets(request, { error: "id" });
+    const deleted = await deleteContentPreset(id);
+    if (!deleted) return redirectPresets(request, { error: "id" });
+    revalidatePresetConsumers();
+    queueGitHubSync(`Content preset deleted: ${id}.`, { createSnapshot: true });
+    return redirectPresets(request, { saved: "deleted" });
+  }
+
+  const input = {
+    kind: formData.get("kind"),
+    title: formData.get("title"),
+    content: formData.get("content"),
+    secondaryContent: formData.get("secondaryContent"),
+  };
+
+  if (!String(input.title || "").trim() || !String(input.content || "").trim()) {
+    return redirectPresets(request, { error: "required" });
+  }
+
+  if (action === "update") {
+    if (!id) return redirectPresets(request, { error: "id" });
+    const updated = await updateContentPreset(id, input);
+    if (!updated) return redirectPresets(request, { error: "id" });
+    revalidatePresetConsumers();
+    queueGitHubSync(`Content preset updated: ${updated.id}.`, { createSnapshot: true });
+    return redirectPresets(request, { saved: "updated" });
+  }
+
+  const created = await createContentPreset(input);
+  if (!created) return redirectPresets(request, { error: "required" });
+  revalidatePresetConsumers();
+  queueGitHubSync(`Content preset created: ${created.id}.`, { createSnapshot: true });
+  return redirectPresets(request, { saved: "created" });
+}

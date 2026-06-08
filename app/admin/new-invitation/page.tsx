@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { AdminNewInvitationWizard } from "@/components/AdminNewInvitationWizard";
+import { getContentPresets } from "@/lib/content-presets";
 import { getMediaCleanupReport } from "@/lib/media-cleanup";
 import { getMusicLibrary } from "@/lib/music-library";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
@@ -8,7 +9,7 @@ import { getPublicSiteUrl } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function NewInvitationPage() {
-  const [templates, musicLibrary, mediaReport, requestHeaders] = await Promise.all([getTemplatesWithSettings(), getMusicLibrary(), getMediaCleanupReport(), headers()]);
+  const [templates, musicLibrary, mediaReport, contentPresets, requestHeaders] = await Promise.all([getTemplatesWithSettings(), getMusicLibrary(), getMediaCleanupReport(), getContentPresets(), headers()]);
   const templateOptions = templates.map(({ slug, name, arabicName, category, previewImage }) => ({
     slug,
     name,
@@ -31,5 +32,5 @@ export default async function NewInvitationPage() {
     .filter((file) => file.kind === "image")
     .map((file) => ({ url: file.url, name: file.relativePath, sizeBytes: file.sizeBytes, extension: file.extension }));
 
-  return <AdminNewInvitationWizard templates={templateOptions} musicFiles={musicFiles} imageFiles={imageFiles} siteUrl={getPublicSiteUrl(requestHeaders).replace(/\/$/, "")} />;
+  return <AdminNewInvitationWizard templates={templateOptions} musicFiles={musicFiles} imageFiles={imageFiles} contentPresets={contentPresets} siteUrl={getPublicSiteUrl(requestHeaders).replace(/\/$/, "")} />;
 }

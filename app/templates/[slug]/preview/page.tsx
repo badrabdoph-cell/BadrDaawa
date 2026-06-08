@@ -5,7 +5,7 @@ import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
-import { getTemplateWithSettings } from "@/lib/template-settings";
+import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 
 type PageProps = {
@@ -60,11 +60,13 @@ function cleanPreviewUrl(value: string | undefined, fallback: string) {
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const query = await searchParams;
-  const template = await getTemplateWithSettings(slug);
+  const template = await getTemplateWithPreviewMusic(slug);
   if (!template) notFound();
   const previewGallery = cleanPreviewGallery(query?.gallery);
-  const previewMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
-  const previewMusicEnabled = query?.musicEnabled === "1";
+  const hasExplicitMusicPreview = query?.musicEnabled !== undefined || query?.musicUrl !== undefined;
+  const explicitMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
+  const previewMusicUrl = hasExplicitMusicPreview ? explicitMusicUrl : cleanPlayableAudioUrl(template.musicUrl || "");
+  const previewMusicEnabled = hasExplicitMusicPreview ? query?.musicEnabled === "1" && Boolean(previewMusicUrl) : Boolean(previewMusicUrl);
   const previewPhotographer =
     query?.photographerEnabled === "1"
       ? {

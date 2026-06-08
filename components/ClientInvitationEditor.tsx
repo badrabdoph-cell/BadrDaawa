@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Eye, ImagePlus, Loader2, MessageSquareText, Music2, Save, UploadCloud, UserRound } from "lucide-react";
+import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { uploadBrowserPreviewImage } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { ContentPreset, Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 type MusicFile = { id?: string; name?: string; url: string; modifiedAt: number };
 type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
@@ -34,11 +35,13 @@ export function ClientInvitationEditor({
   invitation,
   template,
   musicFiles,
+  contentPresets,
   publicUrl,
 }: {
   invitation: Invitation;
   template: Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
   musicFiles: MusicFile[];
+  contentPresets: ContentPreset[];
   publicUrl: string;
 }) {
   const [groomName, setGroomName] = useState(invitation.groomName);
@@ -434,6 +437,13 @@ export function ClientInvitationEditor({
             <MessageSquareText size={18} />
             <strong>نصوص داخل الدعوة</strong>
           </div>
+          <ContentPresetPicker
+            presets={contentPresets}
+            onApply={(textPatch) => {
+              setInvitationTexts((current) => ({ ...current, ...textPatch }));
+              markDirty();
+            }}
+          />
           <div className="builder-text-list">
             <label className="field">
               <span>سؤال تأكيد الحضور</span>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, GripVertical, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, RotateCcw, Save, Send, Sparkles, UploadCloud, UserRound, X } from "lucide-react";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import {
   emptyAdminToolImages,
   emptyAdminToolUpload,
@@ -19,7 +20,7 @@ import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPr
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { defaultInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { InvitationTexts } from "@/lib/types";
+import type { ContentPreset, InvitationTexts } from "@/lib/types";
 
 type WizardTemplate = {
   slug: string;
@@ -204,7 +205,19 @@ function isValidUrl(value: string) {
   }
 }
 
-export function AdminNewInvitationWizard({ templates, musicFiles, imageFiles, siteUrl }: { templates: WizardTemplate[]; musicFiles: AdminToolMusicFile[]; imageFiles: ImageLibraryFile[]; siteUrl: string }) {
+export function AdminNewInvitationWizard({
+  templates,
+  musicFiles,
+  imageFiles,
+  contentPresets,
+  siteUrl,
+}: {
+  templates: WizardTemplate[];
+  musicFiles: AdminToolMusicFile[];
+  imageFiles: ImageLibraryFile[];
+  contentPresets: ContentPreset[];
+  siteUrl: string;
+}) {
   const [draft, setDraft] = useState<DraftState>(() => createInitialDraft(templates));
   const [currentStep, setCurrentStep] = useState<StepId>("template");
   const [savedCode, setSavedCode] = useState("");
@@ -680,6 +693,12 @@ export function AdminNewInvitationWizard({ templates, musicFiles, imageFiles, si
   function renderTextsStep() {
     return (
       <div className="new-invite-field-grid">
+        <div className="full">
+          <ContentPresetPicker
+            presets={contentPresets}
+            onApply={(textPatch) => patch({ invitationTexts: { ...draft.invitationTexts, ...textPatch } })}
+          />
+        </div>
         <label className="field full"><span>رسالة الترحيب</span><textarea rows={3} value={draft.invitationTexts.inviteMessageSecondary} onChange={(event) => updateText("inviteMessageSecondary", event.target.value)} /></label>
         <label className="field full"><span>رسالة الدعوة</span><textarea rows={5} value={draft.invitationTexts.inviteMessage} onChange={(event) => updateText("inviteMessage", event.target.value)} /></label>
         <label className="field"><span>رسالة RSVP</span><input value={draft.invitationTexts.rsvpQuestion} onChange={(event) => updateText("rsvpQuestion", event.target.value)} /></label>

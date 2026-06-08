@@ -58,7 +58,7 @@ function cleanUrl(value: unknown) {
 
 async function getCurrentMusicUrl(code: string) {
   if (prisma) {
-    const existing = await prisma.invitation.findUnique({ where: { code }, select: { musicUrl: true } }).catch(() => null);
+    const existing = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { musicUrl: true } }).catch(() => null);
     if (existing?.musicUrl) return existing.musicUrl;
   }
   return (await getFileInvitationByCode(code))?.musicUrl || "";
@@ -67,8 +67,8 @@ async function getCurrentMusicUrl(code: string) {
 async function getClientInvitationAuditSnapshot(code: string) {
   if (prisma) {
     const invitation = await prisma.invitation
-      .findUnique({
-        where: { code },
+      .findFirst({
+        where: { code, deletedAt: null },
         select: {
           code: true,
           status: true,
@@ -231,8 +231,8 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   if (prisma) {
     try {
       if (Object.keys(data).length) {
-        await prisma.invitation.update({ where: { code }, data });
-        updated = true;
+        const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
+        updated = result.count > 0;
       }
     } catch (error) {
       console.error("Failed to update database invitation from client JSON editor", error);
@@ -314,7 +314,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (prisma) {
-      const existing = await prisma.invitation.findUnique({ where: { code }, select: { musicUrl: true } }).catch(() => null);
+      const existing = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { musicUrl: true } }).catch(() => null);
       currentMusicUrl = existing?.musicUrl || "";
     } else {
       currentMusicUrl = (await getFileInvitationByCode(code))?.musicUrl || "";
@@ -378,7 +378,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (prisma) {
     try {
       if (Object.keys(data).length) {
-        await prisma.invitation.update({ where: { code }, data });
+        const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
+        if (!result.count) throw new Error("Invitation is deleted or missing.");
         if (savedGallery.length) {
           console.log(`[Client Invitation] Database invitation ${code} updated with heroPhoto=${savedGallery[0]}.`);
         }

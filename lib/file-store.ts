@@ -15,6 +15,7 @@ type FileCustomer = {
   passwordHash: string;
   isActive: boolean;
   createdAt: string;
+  deletedAt?: string;
 };
 
 type FileStoreData = {
@@ -45,7 +46,7 @@ type CreateFileInvitationInput = {
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "templateSlug" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
+  Pick<Invitation, "templateSlug" | "status" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -118,7 +119,7 @@ function normalizeInvitationImages(invitation: Invitation): Invitation {
   };
   const gallery = invitation.gallery.map(cleanImage).filter(Boolean);
   const heroPhoto = cleanImage(invitation.heroPhoto) || gallery[0] || invitation.heroPhoto;
-  return { ...invitation, heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
+  return { ...invitation, status: invitation.status || (invitation.isActive ? "active" : "paused"), heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
 }
 
 function normalizeOrderImages(order: OrderRequest): OrderRequest {
@@ -131,13 +132,15 @@ function normalizeOrderImages(order: OrderRequest): OrderRequest {
 }
 
 export async function getFileInvitations() {
+  await archiveExpiredFileInvitations();
   const store = await readStore();
-  return store.invitations.map(normalizeInvitationImages);
+  return store.invitations.filter((invitation) => !invitation.deletedAt).map(normalizeInvitationImages);
 }
 
 export async function getFileOrders() {
   const store = await readStore();
   return store.orders
+    .filter((order) => !order.deletedAt)
     .map(normalizeOrderImages)
     .sort((a, b) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime());
 }
@@ -173,6 +176,19 @@ export async function updateFileOrder(id: string, update: FileOrderUpdate) {
 }
 
 export async function deleteFileOrder(id: string) {
+  return softDeleteFileOrder(id);
+}
+
+export async function softDeleteFileOrder(id: string) {
+  const store = await readStore();
+  const index = store.orders.findIndex((order) => order.id === id && !order.deletedAt);
+  if (index < 0) return false;
+  store.orders[index] = { ...store.orders[index], deletedAt: new Date().toISOString() };
+  await writeStore(store);
+  return true;
+}
+
+export async function hardDeleteFileOrder(id: string) {
   const store = await readStore();
   const nextOrders = store.orders.filter((order) => order.id !== id);
   if (nextOrders.length === store.orders.length) return false;
@@ -183,26 +199,27 @@ export async function deleteFileOrder(id: string) {
 
 export async function getFileOrder(id: string) {
   const store = await readStore();
-  const order = store.orders.find((order) => order.id === id);
+  const order = store.orders.find((order) => order.id === id && !order.deletedAt);
   return order ? normalizeOrderImages(order) : null;
 }
 
 export async function getFileCustomers() {
   const store = await readStore();
-  return store.customers.map((customer) => ({
+  return store.customers.filter((customer) => !customer.deletedAt).map((customer) => ({
     id: customer.id,
     name: customer.name,
     phone: customer.phone,
     username: customer.username,
     isActive: customer.isActive,
-    invitations: store.invitations.filter((invitation) => invitation.customerId === customer.id).length,
+    invitations: store.invitations.filter((invitation) => invitation.customerId === customer.id && !invitation.deletedAt).length,
     createdAt: customer.createdAt,
   }));
 }
 
 export async function getFileInvitationByCode(code: string) {
+  await archiveExpiredFileInvitations(code);
   const store = await readStore();
-  const invitation = store.invitations.find((invitation) => invitation.code.toLowerCase() === code.toLowerCase());
+  const invitation = store.invitations.find((invitation) => invitation.code.toLowerCase() === code.toLowerCase() && !invitation.deletedAt);
   return invitation ? normalizeInvitationImages(invitation) : undefined;
 }
 
@@ -254,6 +271,7 @@ export async function createFileInvitation(input: CreateFileInvitationInput) {
     musicEnabled: input.musicEnabled === true,
     texts: input.texts,
     photographer: input.photographer,
+    status: "active",
     isActive: true,
     views: 0,
     customerId: customer.id,
@@ -287,10 +305,47 @@ export async function updateFileInvitationsMusicUrl(fromUrl: string, update: Pic
 }
 
 export async function setFileInvitationActive(code: string, isActive: boolean) {
-  return updateFileInvitation(code, { isActive });
+  return updateFileInvitation(code, { isActive, status: isActive ? "active" : "paused" });
+}
+
+export async function setFileInvitationArchived(code: string, archived: boolean) {
+  return updateFileInvitation(code, { isActive: !archived, status: archived ? "archived" : "active" });
+}
+
+function shouldArchiveInvitation(invitation: Invitation, now = Date.now()) {
+  if (invitation.deletedAt || invitation.status === "archived") return false;
+  const weddingDate = new Date(invitation.weddingDate);
+  if (Number.isNaN(weddingDate.getTime())) return false;
+  return weddingDate.getTime() + 2 * 24 * 60 * 60 * 1000 <= now;
+}
+
+export async function archiveExpiredFileInvitations(code?: string) {
+  const store = await readStore();
+  let count = 0;
+  store.invitations = store.invitations.map((invitation) => {
+    if (code && invitation.code.toLowerCase() !== code.toLowerCase()) return invitation;
+    if (!shouldArchiveInvitation(invitation)) return invitation;
+    count += 1;
+    return { ...invitation, isActive: false, status: "archived" };
+  });
+  if (count > 0) await writeStore(store);
+  return count;
 }
 
 export async function deleteFileInvitation(code: string) {
+  return softDeleteFileInvitation(code);
+}
+
+export async function softDeleteFileInvitation(code: string) {
+  const store = await readStore();
+  const index = store.invitations.findIndex((item) => item.code.toLowerCase() === code.toLowerCase() && !item.deletedAt);
+  if (index < 0) return false;
+  store.invitations[index] = { ...store.invitations[index], deletedAt: new Date().toISOString(), isActive: false, status: "archived" };
+  await writeStore(store);
+  return true;
+}
+
+export async function hardDeleteFileInvitation(code: string) {
   const store = await readStore();
   const invitation = store.invitations.find((item) => item.code.toLowerCase() === code.toLowerCase());
   if (!invitation) return false;
@@ -303,6 +358,100 @@ export async function deleteFileInvitation(code: string) {
   }
   await writeStore(store);
   return true;
+}
+
+export async function softDeleteFileCustomer(id: string) {
+  const store = await readStore();
+  const index = store.customers.findIndex((customer) => customer.id === id && !customer.deletedAt);
+  if (index < 0) return false;
+  store.customers[index] = { ...store.customers[index], isActive: false, deletedAt: new Date().toISOString() };
+  await writeStore(store);
+  return true;
+}
+
+export async function restoreFileTrashItem(type: "invitation" | "order" | "customer", id: string) {
+  const store = await readStore();
+  if (type === "invitation") {
+    const index = store.invitations.findIndex((item) => item.code === id || item.id === id);
+    if (index < 0) return false;
+    const { deletedAt, ...invitation } = store.invitations[index];
+    store.invitations[index] = { ...invitation, isActive: true, status: "active" };
+  } else if (type === "order") {
+    const index = store.orders.findIndex((item) => item.id === id);
+    if (index < 0) return false;
+    const { deletedAt, ...order } = store.orders[index];
+    store.orders[index] = order;
+  } else {
+    const index = store.customers.findIndex((item) => item.id === id);
+    if (index < 0) return false;
+    const { deletedAt, ...customer } = store.customers[index];
+    store.customers[index] = { ...customer, isActive: true };
+  }
+  await writeStore(store);
+  return true;
+}
+
+export async function hardDeleteFileTrashItem(type: "invitation" | "order" | "customer", id: string) {
+  const store = await readStore();
+  if (type === "invitation") {
+    const invitation = store.invitations.find((item) => (item.code === id || item.id === id) && item.deletedAt);
+    if (!invitation) return false;
+    store.invitations = store.invitations.filter((item) => item.code !== invitation.code);
+    store.guests = store.guests.filter((guest) => guest.invitationCode !== invitation.code);
+    await writeStore(store);
+    return true;
+  }
+  if (type === "order") {
+    const order = store.orders.find((item) => item.id === id && item.deletedAt);
+    if (!order) return false;
+    store.orders = store.orders.filter((item) => item.id !== id);
+    await writeStore(store);
+    return true;
+  }
+  const existing = store.customers.find((customer) => customer.id === id && customer.deletedAt);
+  if (!existing) return false;
+  const nextCustomers = store.customers.filter((customer) => customer.id !== id);
+  store.customers = nextCustomers;
+  await writeStore(store);
+  return true;
+}
+
+export async function getFileTrashItems() {
+  const store = await readStore();
+  const invitations = store.invitations
+    .filter((invitation) => invitation.deletedAt)
+    .map((invitation) => ({
+      type: "invitation" as const,
+      id: invitation.code,
+      title: `${invitation.groomName} و ${invitation.brideName}`,
+      subtitle: invitation.code,
+      deletedAt: invitation.deletedAt || "",
+      createdAt: invitation.weddingDate,
+      meta: invitation.venue,
+    }));
+  const orders = store.orders
+    .filter((order) => order.deletedAt)
+    .map((order) => ({
+      type: "order" as const,
+      id: order.id,
+      title: `${order.groomName} و ${order.brideName}`,
+      subtitle: order.orderNumber || order.id,
+      deletedAt: order.deletedAt || "",
+      createdAt: order.createdAt,
+      meta: order.venue,
+    }));
+  const customers = store.customers
+    .filter((customer) => customer.deletedAt)
+    .map((customer) => ({
+      type: "customer" as const,
+      id: customer.id,
+      title: customer.name,
+      subtitle: customer.username,
+      deletedAt: customer.deletedAt || "",
+      createdAt: customer.createdAt,
+      meta: customer.phone,
+    }));
+  return [...invitations, ...orders, ...customers].sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime());
 }
 
 export async function recordFileInvitationView(code: string) {
@@ -328,11 +477,36 @@ export async function addFileGuest(code: string, guest: Omit<GuestRsvp, "id" | "
   return true;
 }
 
+export async function updateFileGuest(id: string, input: Omit<GuestRsvp, "id" | "invitationCode" | "createdAt">) {
+  const store = await readStore();
+  const index = store.guests.findIndex((guest) => guest.id === id);
+  if (index < 0) return null;
+  store.guests[index] = {
+    ...store.guests[index],
+    name: input.name,
+    phone: input.phone,
+    attendees: input.attendees,
+    status: input.status,
+    note: input.note,
+  };
+  await writeStore(store);
+  return store.guests[index];
+}
+
+export async function deleteFileGuest(id: string) {
+  const store = await readStore();
+  const guest = store.guests.find((item) => item.id === id);
+  if (!guest) return null;
+  store.guests = store.guests.filter((item) => item.id !== id);
+  await writeStore(store);
+  return guest;
+}
+
 export async function validateFileClientLogin(code: string, username: string, password: string) {
   const store = await readStore();
-  const invitation = store.invitations.find((item) => item.code.toLowerCase() === code.toLowerCase());
+  const invitation = store.invitations.find((item) => item.code.toLowerCase() === code.toLowerCase() && !item.deletedAt);
   if (!invitation) return false;
 
-  const customer = store.customers.find((item) => item.id === invitation.customerId && item.username === username);
+  const customer = store.customers.find((item) => item.id === invitation.customerId && item.username === username && !item.deletedAt);
   return Boolean(customer?.isActive && verifyPassword(password, customer.passwordHash));
 }

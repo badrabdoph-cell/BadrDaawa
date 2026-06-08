@@ -41,6 +41,7 @@ export type Invitation = {
   id: string;
   code: string;
   templateSlug: string;
+  status?: "draft" | "active" | "paused" | "archived";
   language: Language;
   groomName: string;
   brideName: string;
@@ -67,6 +68,7 @@ export type Invitation = {
   isActive: boolean;
   views: number;
   customerId: string;
+  deletedAt?: string;
 };
 
 export type MusicSource = "default" | "library" | "upload" | "url";
@@ -78,6 +80,18 @@ export type InvitationTexts = {
   inviteMessageSecondary?: string;
   rsvpQuestion?: string;
   rsvpDeclinedMessage?: string;
+};
+
+export type ContentPresetKind = "opening" | "welcome" | "rsvp";
+
+export type ContentPreset = {
+  id: string;
+  kind: ContentPresetKind;
+  title: string;
+  content: string;
+  secondaryContent?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type GuestRsvp = {
@@ -123,4 +137,15 @@ export type OrderRequest = {
   status: "new" | "reviewing" | "edited" | "published" | "rejected" | "accepted" | "converted";
   submittedAt?: string;
   createdAt: string;
+  deletedAt?: string;
+};
+
+export type ClientMessage = {
+  id: string;
+  invitationCode: string;
+  title: string;
+  body: string;
+  sender: "admin";
+  createdAt: string;
+  readAt?: string;
 };

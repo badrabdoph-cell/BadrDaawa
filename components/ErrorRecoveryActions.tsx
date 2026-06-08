@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { RefreshCw } from "lucide-react";
 import { CopyButton } from "./CopyButton";
 
@@ -27,6 +28,26 @@ function buildErrorReport(error: ErrorRecoveryActionsProps["error"], context: st
 }
 
 export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryActionsProps) {
+  const report = useMemo(() => buildErrorReport(error, context), [context, error]);
+
+  useEffect(() => {
+    const payload = {
+      route: typeof window === "undefined" ? "server-render" : window.location.href,
+      message: error.message || error.name || "Unknown error",
+      stack: error.stack || report,
+      digest: error.digest,
+      source: `react-boundary:${context}`,
+      user: context === "admin" ? "admin" : context,
+    };
+
+    fetch("/api/errors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [context, error.digest, error.message, error.name, error.stack, report]);
+
   const reloadPage = () => {
     if (reset) reset();
     window.location.reload();
@@ -38,7 +59,7 @@ export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryAct
         <RefreshCw size={17} />
         تحديث الصفحة
       </button>
-      <CopyButton className="btn btn-soft btn-glass" value={buildErrorReport(error, context)} label="نسخ الخطأ" copiedLabel="تم النسخ" title="نسخ تفاصيل الخطأ" />
+      <CopyButton className="btn btn-soft btn-glass" value={report} label="نسخ الخطأ" copiedLabel="تم النسخ" title="نسخ تفاصيل الخطأ" />
     </div>
   );
 }

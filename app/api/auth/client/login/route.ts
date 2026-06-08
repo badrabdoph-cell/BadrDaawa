@@ -17,13 +17,14 @@ async function isValidClientLogin(code: string, username: string, password: stri
   if (!prisma) return isValidFileLogin;
 
   try {
-    const invitation = await prisma.invitation.findUnique({
-      where: { code },
-      include: { customer: { select: { username: true, passwordHash: true, isActive: true } } },
+    const invitation = await prisma.invitation.findFirst({
+      where: { code, deletedAt: null },
+      include: { customer: { select: { username: true, passwordHash: true, isActive: true, deletedAt: true } } },
     });
 
     const isValidDatabaseLogin = Boolean(
       invitation?.customer.isActive &&
+        !invitation.customer.deletedAt &&
         invitation.customer.username === username &&
         verifyPassword(password, invitation.customer.passwordHash),
     );
