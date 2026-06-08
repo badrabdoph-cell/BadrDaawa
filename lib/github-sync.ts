@@ -95,30 +95,53 @@ class GitHubSyncHttpError extends Error {
 
 function normalizeGitHubToken(value: string | undefined) {
   if (!value) return "";
-  let token = value.trim().replace(/[\r\n\t ]+/g, "");
+  let token = value.trim().replace(/[\u200B-\u200D\uFEFF\r\n\t ]+/g, "");
 
   const assignmentMatch = token.match(/^(?:GITHUB_SYNC_TOKEN|BACKUP_GITHUB_TOKEN|GITHUB_TOKEN|GH_TOKEN)=(.+)$/);
   if (assignmentMatch) token = assignmentMatch[1];
 
-  if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+  if (
+    (token.startsWith('"') && token.endsWith('"')) ||
+    (token.startsWith("'") && token.endsWith("'")) ||
+    (token.startsWith("“") && token.endsWith("”")) ||
+    (token.startsWith("‘") && token.endsWith("’"))
+  ) {
     token = token.slice(1, -1).trim();
   }
 
   return token;
 }
 
+function getTokenDiagnostics(rawValue: string | undefined, token: string) {
+  return {
+    rawLength: rawValue?.length ?? 0,
+    normalizedLength: token.length,
+    normalizedChanged: Boolean(rawValue && rawValue !== token),
+    fingerprint: token ? createHash("sha256").update(token).digest("hex").slice(0, 12) : "",
+  };
+}
+
 function getGitHubTokenConfig() {
   const candidates = [
-    ["GITHUB_SYNC_TOKEN", normalizeGitHubToken(process.env.GITHUB_SYNC_TOKEN)],
-    ["BACKUP_GITHUB_TOKEN", normalizeGitHubToken(process.env.BACKUP_GITHUB_TOKEN)],
-    ["GITHUB_TOKEN", normalizeGitHubToken(process.env.GITHUB_TOKEN)],
-    ["GH_TOKEN", normalizeGitHubToken(process.env.GH_TOKEN)],
+    ["GITHUB_SYNC_TOKEN", process.env.GITHUB_SYNC_TOKEN],
+    ["BACKUP_GITHUB_TOKEN", process.env.BACKUP_GITHUB_TOKEN],
+    ["GITHUB_TOKEN", process.env.GITHUB_TOKEN],
+    ["GH_TOKEN", process.env.GH_TOKEN],
   ] as const;
 
-  const match = candidates.find(([, value]) => Boolean(value));
+  const match = candidates
+    .map(([source, rawValue]) => ({
+      source,
+      rawValue,
+      token: normalizeGitHubToken(rawValue),
+    }))
+    .find(({ token }) => Boolean(token));
+
+  const token = match?.token || "";
   return {
-    token: match?.[1] || "",
-    source: match?.[0] || "none",
+    token,
+    source: match?.source || "none",
+    diagnostics: getTokenDiagnostics(match?.rawValue, token),
   };
 }
 
@@ -173,7 +196,7 @@ export function getGitHubSyncReadiness() {
     };
   }
 
-  const token = getGitHubToken();
+  const { token, source: tokenSource, diagnostics: tokenDiagnostics } = getGitHubTokenConfig();
   const rawRepo = process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "";
   const repo = parseRepo(rawRepo);
   const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
@@ -189,6 +212,8 @@ export function getGitHubSyncReadiness() {
       configured: false,
       label: "غير مكتملة",
       detail: `ناقص: ${missing.join(" / ") || "إعدادات GitHub"}`,
+      tokenSource,
+      tokenDiagnostics,
     };
   }
 
@@ -196,6 +221,8 @@ export function getGitHubSyncReadiness() {
     configured: true,
     label: "جاهزة",
     detail: `${repo.owner}/${repo.repo} - ${branch}`,
+    tokenSource,
+    tokenDiagnostics,
   };
 }
 
