@@ -47,6 +47,17 @@ type SyncFile = {
   size: number;
 };
 
+type SyncConfig = {
+  token: string;
+  tokenSource: string;
+  repo: {
+    owner: string;
+    repo: string;
+  };
+  repoSource: string;
+  branch: string;
+};
+
 export type SyncLogEntry = {
   id: string;
   timestamp: Date;
@@ -82,8 +93,23 @@ class GitHubSyncHttpError extends Error {
   }
 }
 
+function getGitHubTokenConfig() {
+  const candidates = [
+    ["GITHUB_SYNC_TOKEN", process.env.GITHUB_SYNC_TOKEN],
+    ["BACKUP_GITHUB_TOKEN", process.env.BACKUP_GITHUB_TOKEN],
+    ["GITHUB_TOKEN", process.env.GITHUB_TOKEN],
+    ["GH_TOKEN", process.env.GH_TOKEN],
+  ] as const;
+
+  const match = candidates.find(([, value]) => Boolean(value));
+  return {
+    token: match?.[1] || "",
+    source: match?.[0] || "none",
+  };
+}
+
 function getGitHubToken() {
-  return process.env.GITHUB_SYNC_TOKEN || process.env.BACKUP_GITHUB_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
+  return getGitHubTokenConfig().token;
 }
 
 export function isGitHubSyncAuthFailure(error: unknown) {
@@ -93,8 +119,10 @@ export function isGitHubSyncAuthFailure(error: unknown) {
   return error instanceof Error && /GitHub sync failed (401|403)|bad credentials|requires authentication|resource not accessible/i.test(error.message);
 }
 
-function gitHubAuthFailureMessage(details: string) {
-  return `GitHub rejected the sync token. Update GITHUB_SYNC_TOKEN or BACKUP_GITHUB_TOKEN in Railway with a valid token that can write to the repo, then redeploy. Details: ${details}`;
+function gitHubAuthFailureMessage(details: string, config: SyncConfig | null) {
+  const target = config ? `${config.repo.owner}/${config.repo.repo}:${config.branch}` : "the configured repo";
+  const tokenSource = config ? config.tokenSource : "GITHUB_SYNC_TOKEN";
+  return `GitHub rejected the sync token for ${target}. Railway is using ${tokenSource}. Create or update a token that has write access to that repository, set it as GITHUB_SYNC_TOKEN, then redeploy. Details: ${details}`;
 }
 
 function parseRepo(value: string) {
@@ -106,12 +134,14 @@ function parseRepo(value: string) {
 function getSyncConfig() {
   if (process.env.GITHUB_SYNC_ENABLED === "false") return null;
 
-  const token = getGitHubToken();
-  const repo = parseRepo(process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "");
+  const { token, source: tokenSource } = getGitHubTokenConfig();
+  const rawRepo = process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "";
+  const repoSource = process.env.GITHUB_SYNC_REPO ? "GITHUB_SYNC_REPO" : process.env.BACKUP_GITHUB_REPO ? "BACKUP_GITHUB_REPO" : "none";
+  const repo = parseRepo(rawRepo);
   const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
 
   if (!token || !repo || !branch) return null;
-  return { token, repo, branch };
+  return { token, tokenSource, repo, repoSource, branch };
 }
 
 export function getGitHubSyncReadiness() {
@@ -242,7 +272,7 @@ async function githubRequest<T>(pathName: string, init: RequestInit, token: stri
 
 async function createBlob(owner: string, repo: string, token: string, file: SyncFile) {
   const bytes = await readFile(file.absolutePath).catch((error: unknown) => {
-    console.error(`[GitHub Sync] Skipping missing/unreadable file: ${file.repoPath}`, error);
+    console.warn(`[GitHub Sync] Skipping missing/unreadable file: ${file.repoPath}`, error);
     return null;
   });
   if (!bytes) return null;
@@ -430,7 +460,7 @@ async function attemptSync(
       startedAt,
       status: "unchanged",
       message: "GitHub already has the latest admin data.",
-      files: files.length,
+      files: treeItems.length,
       duration: Date.now() - startedAt,
     };
   }
@@ -466,7 +496,7 @@ async function attemptSync(
     message: "Admin data synced to GitHub.",
     commitUrl: commit.html_url,
     commitSha: commit.sha,
-    files: files.length,
+    files: treeItems.length,
     duration: Date.now() - startedAt,
   };
 }
@@ -501,7 +531,7 @@ export async function syncAdminStateToGitHub(
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : "Unknown GitHub sync error.";
     const authFailed = isGitHubSyncAuthFailure(error);
-    const message = authFailed ? gitHubAuthFailureMessage(rawMessage) : rawMessage;
+    const message = authFailed ? gitHubAuthFailureMessage(rawMessage, getSyncConfig()) : rawMessage;
     const retryCount = options.retryCount ?? 0;
     const canRetry = !authFailed && retryCount < maxRetries;
     const nextRetryDelay = canRetry ? retryDelays[retryCount] : null;
