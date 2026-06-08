@@ -56,7 +56,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         </div>
       ) : null}
 
-      {params?.sync ? (
+      {params?.sync && params.sync !== "failed" ? (
         <div className={params.sync === "failed" || params.sync === "skipped" ? "notice danger" : "notice success"}>
           {params.sync === "synced"
             ? "تمت مزامنة بيانات الأدمن مع GitHub."

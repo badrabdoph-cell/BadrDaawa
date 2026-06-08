@@ -181,13 +181,13 @@ export function SyncStatus() {
   const { readiness, queue, recentLogs, lastSync, nextRetry } = data;
   const isCurrentlySyncing = queue.isSyncing || syncing;
   const pendingCount = queue.items.filter((i) => i.status === "pending" || i.status === "processing").length;
-  const failedLogs = recentLogs.filter((l) => l.status === "failed");
+  const latestLog = recentLogs[0];
 
   // Determine overall status pill
   let pillClass = readiness.configured ? "good" : "danger";
   let pillLabel = readiness.label;
   if (isCurrentlySyncing) { pillClass = "processing"; pillLabel = "جاري المزامنة"; }
-  else if (failedLogs.length) { pillClass = "danger"; pillLabel = "فشل"; }
+  else if (latestLog?.status === "failed") { pillClass = "danger"; pillLabel = "فشل"; }
   else if (pendingCount) { pillClass = "pending"; pillLabel = `${pendingCount} في الانتظار`; }
 
   return (
