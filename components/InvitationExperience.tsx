@@ -306,7 +306,7 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
         className="custom-code-frame"
         srcDoc={srcDoc}
         title={`قالب ${template.arabicName}`}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
         allow="autoplay; geolocation; notifications"
       />
     </main>

@@ -48,7 +48,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
       <div className="template-browser-tools">
         <label className="template-search-box">
           <Search size={18} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث باسم القالب أو نوعه..." />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث باسم القالب، اللون، أو الطابع..." />
           {query ? (
             <button type="button" onClick={() => setQuery("")} aria-label="مسح البحث">
               <X size={16} />
@@ -71,7 +71,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
 
       <div className="template-result-count">
         <strong>{filteredTemplates.length}</strong>
-        <span>قالب مناسب لاختيارك</span>
+        <span>{filteredTemplates.length === 1 ? "قالب مناسب لاختيارك" : "قوالب مناسبة لاختيارك"}</span>
       </div>
 
       {filteredTemplates.length ? (
@@ -82,8 +82,8 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
         </div>
       ) : (
         <div className="template-empty-state">
-          <strong>مفيش قالب مطابق للبحث ده</strong>
-          <p>جرّب كلمة أبسط أو ارجع لعرض كل القوالب.</p>
+          <strong>لا يوجد قالب مطابق الآن</strong>
+          <p>جرّب كلمة أبسط، أو اعرض كل القوالب واختار حسب الإحساس الأقرب للمناسبة.</p>
           <button
             className="btn btn-gold"
             type="button"

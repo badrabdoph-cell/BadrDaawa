@@ -274,7 +274,7 @@ function CompactOrderImageInput({
     <div className={`compact-image-slot ${previewUrl ? "has-image" : ""}`}>
       <div className="compact-image-preview">
         {previewUrl && !previewFailed ? (
-          <img src={previewUrl} alt={`معاينة الصورة ${index + 1}`} onError={() => setPreviewFailed(true)} />
+          <img src={previewUrl} alt={`معاينة الصورة ${index + 1}`} decoding="async" onError={() => setPreviewFailed(true)} />
         ) : (
           <span>
             <ImagePlus size={18} />

@@ -1,5 +1,7 @@
-import { readFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
 import { runtimeUploadSubdirs, runtimeUploadsDir } from "@/lib/runtime-paths";
 
@@ -67,13 +69,17 @@ function parseRange(range: string | null, size: number) {
   return { start, end: Math.min(end, size - 1) };
 }
 
+function streamFile(filePath: string, range?: { start: number; end: number }) {
+  const stream = range ? createReadStream(filePath, { start: range.start, end: range.end }) : createReadStream(filePath);
+  return Readable.toWeb(stream) as BodyInit;
+}
+
 export async function GET(request: NextRequest, { params }: RouteProps) {
   const resolved = await resolveUploadPath((await params).path);
   if (!resolved) return NextResponse.json({ error: "Upload not found" }, { status: 404 });
 
   const type = contentTypeFor(resolved.filePath);
   const range = parseRange(request.headers.get("range"), resolved.size);
-  const file = await readFile(resolved.filePath);
   const headers = new Headers({
     "Accept-Ranges": "bytes",
     "Cache-Control": "public, max-age=31536000, immutable",
@@ -81,14 +87,13 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
   });
 
   if (range) {
-    const body = file.subarray(range.start, range.end + 1);
-    headers.set("Content-Length", String(body.length));
+    headers.set("Content-Length", String(range.end - range.start + 1));
     headers.set("Content-Range", `bytes ${range.start}-${range.end}/${resolved.size}`);
-    return new NextResponse(new Uint8Array(body), { status: 206, headers });
+    return new NextResponse(streamFile(resolved.filePath, range), { status: 206, headers });
   }
 
-  headers.set("Content-Length", String(file.length));
-  return new NextResponse(new Uint8Array(file), { headers });
+  headers.set("Content-Length", String(resolved.size));
+  return new NextResponse(streamFile(resolved.filePath), { headers });
 }
 
 export async function HEAD(request: NextRequest, props: RouteProps) {

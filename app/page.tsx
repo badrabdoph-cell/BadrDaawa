@@ -103,9 +103,9 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   {content.preview.badge}
                 </span>
                 {previewSettings.mode === "image" && previewSettings.imageUrl ? (
-                  <img className="live-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" />
+                  <img className="live-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" loading="lazy" decoding="async" />
                 ) : previewSettings.mode === "video" && previewSettings.videoUrl ? (
-                  <video className="live-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls />
+                  <video className="live-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
                 ) : (
                   <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" allow="geolocation; notifications" />
                 )}
