@@ -1,13 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
+import { writeUploadFile } from "@/lib/storage-provider";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -39,10 +38,8 @@ async function savePreviewMedia(file: File | null) {
   }
 
   const fileName = `home-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "previews");
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), bytes);
-  return { url: `/uploads/previews/${fileName}`, mode: isImage ? "image" : "video" };
+  const saved = await writeUploadFile(`previews/${fileName}`, bytes, isImage ? `image/${extension}` : file.type || "application/octet-stream");
+  return { url: saved.url, mode: isImage ? "image" : "video" };
 }
 
 export async function POST(request: NextRequest) {

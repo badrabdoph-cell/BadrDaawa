@@ -1,9 +1,5 @@
 import crypto from "node:crypto";
-import { mkdir, stat, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { ensureDirectory } from "./runtime-paths";
-
-const uploadDir = path.join(process.cwd(), "public", "uploads", "music");
+import { deleteUploadFile, listUploadFiles, writeUploadFile } from "./storage-provider";
 
 const allowedAudioTypes: Record<string, string> = {
   "audio/aac": "aac",
@@ -93,15 +89,7 @@ export function isUploadedMusicUrl(value?: string | null) {
 
 export async function deleteUploadedMusicFile(value?: string | null) {
   if (!isUploadedMusicUrl(value)) return false;
-  const filePath = path.join(process.cwd(), "public", value || "");
-  if (!filePath.startsWith(uploadDir)) return false;
-
-  try {
-    await unlink(filePath);
-    return true;
-  } catch {
-    return false;
-  }
+  return deleteUploadFile(value || "");
 }
 
 function extensionFromBytes(bytes: Buffer) {
@@ -136,13 +124,9 @@ async function saveAudioBytes(bytes: Buffer, mimeType = "", nameExtension = "", 
   const extension = normalizeAudioExtension(detectedExtension || allowedAudioTypes[mimeType] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : ""));
   if (!extension || !allowedAudioExtensions.has(extension) || !bytes.length || bytes.length > maxAudioBytes) return "";
 
-  ensureDirectory(uploadDir);
-  await mkdir(uploadDir, { recursive: true });
   const fileName = `music-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-  const filePath = path.join(uploadDir, fileName);
-  await writeFile(filePath, bytes);
-
-  const savedUrl = `/uploads/music/${fileName}`;
+  const saved = await writeUploadFile(`music/${fileName}`, bytes, `audio/${extension === "mp3" ? "mpeg" : extension}`);
+  const savedUrl = saved.url;
   if (previousUrl && previousUrl !== savedUrl) {
     await deleteUploadedMusicFile(previousUrl);
   }
@@ -159,19 +143,14 @@ export async function saveAudioDataUrl(dataUrl: string, previousUrl?: string | n
 
 export async function listUploadedMusicFiles() {
   try {
-    ensureDirectory(uploadDir);
-    const { readdir } = await import("node:fs/promises");
-    const entries = await readdir(uploadDir, { withFileTypes: true });
+    const entries = await listUploadFiles("music");
     const files = [];
     for (const entry of entries) {
-      if (!entry.isFile()) continue;
-      const filePath = path.join(uploadDir, entry.name);
-      const fileStat = await stat(filePath);
-      const extension = entry.name.split(".").pop()?.toLowerCase() || "";
+      const extension = entry.key.split(".").pop()?.toLowerCase() || "";
       files.push({
-        url: `/uploads/music/${entry.name}`,
-        modifiedAt: fileStat.mtime.getTime(),
-        sizeBytes: fileStat.size,
+        url: entry.url,
+        modifiedAt: entry.lastModified?.getTime() || 0,
+        sizeBytes: entry.size,
         extension,
         mimeType: extension ? `audio/${extension === "mp3" ? "mpeg" : extension}` : "",
       });

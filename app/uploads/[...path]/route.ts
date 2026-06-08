@@ -1,9 +1,7 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
-import { runtimeUploadSubdirs, runtimeUploadsDir } from "@/lib/runtime-paths";
+import { runtimeUploadSubdirs } from "@/lib/runtime-paths";
+import { getUploadFileContentType, normalizeStorageKey, statUploadFile, streamUploadFile } from "@/lib/storage-provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,21 +40,13 @@ async function resolveUploadPath(segments: string[] | undefined) {
   if (!cleanSegments.length || cleanSegments.some(invalidSegment)) return null;
   if (!runtimeUploadSubdirs.includes(cleanSegments[0])) return null;
 
-  const filePath = path.join(runtimeUploadsDir, ...cleanSegments);
-  const root = `${runtimeUploadsDir}${path.sep}`;
-  if (!filePath.startsWith(root)) return null;
-
-  try {
-    const fileStat = await stat(filePath);
-    if (!fileStat.isFile()) return null;
-    return { filePath, size: fileStat.size };
-  } catch {
-    return null;
-  }
+  const key = normalizeStorageKey(cleanSegments.join("/"));
+  const file = await statUploadFile(key);
+  return file ? { key, size: file.size } : null;
 }
 
-function contentTypeFor(filePath: string) {
-  const extension = path.extname(filePath).replace(/^\./, "").toLowerCase();
+function contentTypeFor(key: string) {
+  const extension = path.extname(key).replace(/^\./, "").toLowerCase();
   return mimeTypes[extension] || "application/octet-stream";
 }
 
@@ -69,17 +59,14 @@ function parseRange(range: string | null, size: number) {
   return { start, end: Math.min(end, size - 1) };
 }
 
-function streamFile(filePath: string, range?: { start: number; end: number }) {
-  const stream = range ? createReadStream(filePath, { start: range.start, end: range.end }) : createReadStream(filePath);
-  return Readable.toWeb(stream) as BodyInit;
-}
-
 export async function GET(request: NextRequest, { params }: RouteProps) {
   const resolved = await resolveUploadPath((await params).path);
   if (!resolved) return NextResponse.json({ error: "Upload not found" }, { status: 404 });
 
-  const type = contentTypeFor(resolved.filePath);
+  const type = getUploadFileContentType(resolved.key) || contentTypeFor(resolved.key);
   const range = parseRange(request.headers.get("range"), resolved.size);
+  const file = await streamUploadFile(resolved.key, range || undefined);
+  if (!file) return NextResponse.json({ error: "Upload not found" }, { status: 404 });
   const headers = new Headers({
     "Accept-Ranges": "bytes",
     "Cache-Control": "public, max-age=31536000, immutable",
@@ -87,13 +74,13 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
   });
 
   if (range) {
-    headers.set("Content-Length", String(range.end - range.start + 1));
+    headers.set("Content-Length", String(file.contentLength));
     headers.set("Content-Range", `bytes ${range.start}-${range.end}/${resolved.size}`);
-    return new NextResponse(streamFile(resolved.filePath, range), { status: 206, headers });
+    return new NextResponse(file.body, { status: 206, headers });
   }
 
-  headers.set("Content-Length", String(resolved.size));
-  return new NextResponse(streamFile(resolved.filePath), { headers });
+  headers.set("Content-Length", String(file.contentLength));
+  return new NextResponse(file.body, { headers });
 }
 
 export async function HEAD(request: NextRequest, props: RouteProps) {

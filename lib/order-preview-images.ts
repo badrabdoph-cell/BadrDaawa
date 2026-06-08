@@ -1,9 +1,7 @@
 import crypto from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { normalizeImageForDisplay } from "./display-images";
 import { imageExtensionFromBytes, imageExtensionFromDataMime, imageExtensionFromMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
-import { ensureDirectory } from "./runtime-paths";
+import { readPublicMediaFile, writeUploadFile } from "./storage-provider";
 
 const maxPreviewImageBytes = 32 * 1024 * 1024;
 
@@ -43,8 +41,6 @@ function isFileInput(image: PreviewImageInput): image is File {
 }
 
 export async function saveOrderPreviewImages(images: PreviewImageInput[], folder = "order-previews", requestId = "local") {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
-  ensureDirectory(uploadDir);
   const savedUrls: string[] = [];
 
   async function saveBytes(bytes: Buffer, extension: string, sourceLabel: string) {
@@ -61,11 +57,9 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
     const normalized = await normalizeImageForDisplay(bytes, finalExtension, sourceLabel);
     if (!normalized) return "";
 
-    ensureDirectory(uploadDir);
-    await mkdir(uploadDir, { recursive: true });
     const fileName = `order-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
-    await writeFile(path.join(uploadDir, fileName), normalized.bytes);
-    const url = `/uploads/${folder}/${fileName}`;
+    const saved = await writeUploadFile(`${folder}/${fileName}`, normalized.bytes, `image/${normalized.extension}`);
+    const url = saved.url;
     const convertedSuffix = normalized.converted ? ` converted from ${normalized.originalExtension}` : "";
     console.log(`[Order Images ${requestId}] Saved ${url} (${normalized.bytes.length} bytes${convertedSuffix}, ${Date.now() - startedAt}ms).`);
     return url;
@@ -135,8 +129,8 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
 
     if (value.startsWith("/uploads/") || value.startsWith("/assets/")) {
       try {
-        const diskPath = path.join(process.cwd(), "public", value.replace(/^\/+/, ""));
-        const convertedUrl = await saveBytes(await readFile(diskPath), imageExtensionFromName(value) || "jpg", `existing:${value}`);
+        const bytes = await readPublicMediaFile(value);
+        const convertedUrl = bytes ? await saveBytes(bytes, imageExtensionFromName(value) || "jpg", `existing:${value}`) : "";
         if (convertedUrl) savedUrls.push(convertedUrl);
       } catch (error) {
         console.error(`[Order Images ${requestId}] Failed to convert existing non-displayable image for ${folder}: ${value}`, error);

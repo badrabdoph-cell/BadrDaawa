@@ -1,6 +1,4 @@
 import crypto from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { normalizeImageForDisplay } from "./display-images";
 import {
   imageExtensionForUpload,
@@ -11,7 +9,7 @@ import {
   isSupportedImageFile,
   isSupportedImageUrl,
 } from "./image-formats";
-import { ensureDirectory } from "./runtime-paths";
+import { readPublicMediaFile, writeUploadFile } from "./storage-provider";
 import { normalizeInternalAssetUrl } from "./utils";
 
 const maxGalleryImageBytes = 3 * 1024 * 1024;
@@ -31,12 +29,9 @@ async function saveImageBytes(bytes: Buffer, extension: string, sourceLabel: str
   const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
   if (!normalized) return "";
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "client-invitations");
-  ensureDirectory(uploadDir);
-  await mkdir(uploadDir, { recursive: true });
   const fileName = `invitation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
-  await writeFile(path.join(uploadDir, fileName), normalized.bytes);
-  const url = `/uploads/client-invitations/${fileName}`;
+  const saved = await writeUploadFile(`client-invitations/${fileName}`, normalized.bytes, `image/${normalized.extension}`);
+  const url = saved.url;
   const convertedSuffix = normalized.converted ? ` converted from ${normalized.originalExtension}` : "";
   console.log(`[Invitation Images] Saved ${url} (${normalized.bytes.length} bytes${convertedSuffix}).`);
   return url;
@@ -51,8 +46,8 @@ async function saveExistingInternalImageUrl(value: string) {
   }
 
   try {
-    const diskPath = path.join(process.cwd(), "public", normalized.replace(/^\/+/, ""));
-    const bytes = await readFile(diskPath);
+    const bytes = await readPublicMediaFile(normalized);
+    if (!bytes) return "";
     const extension = imageExtensionFromName(normalized) || "jpg";
     return saveImageBytes(bytes, extension, `existing:${normalized}`);
   } catch (error) {

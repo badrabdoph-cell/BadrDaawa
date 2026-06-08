@@ -2,7 +2,8 @@ import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promi
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
-import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir, runtimeUploadsDir } from "./runtime-paths";
+import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir } from "./runtime-paths";
+import { listUploadFiles, readUploadFile, writeUploadFile } from "./storage-provider";
 
 export type BackupSummary = {
   fileName: string;
@@ -33,7 +34,6 @@ type BackupPayload = {
 
 const backupDir = runtimeBackupDir;
 const dataDir = runtimeDataDir;
-const uploadsDir = runtimeUploadsDir;
 const maxUploadFileBytes = 5 * 1024 * 1024;
 const maxUploadsTotalBytes = 40 * 1024 * 1024;
 const maxBackupAgeMs = 7 * 24 * 60 * 60 * 1000;
@@ -87,29 +87,22 @@ async function readDataFiles() {
   return output;
 }
 
-async function walkUploads(dir = uploadsDir, root = uploadsDir): Promise<BackupUploadFile[]> {
-  if (!(await exists(dir))) return [];
-  const entries = await readdir(dir, { withFileTypes: true });
+async function walkUploads(): Promise<BackupUploadFile[]> {
+  const entries = await listUploadFiles();
   const files: BackupUploadFile[] = [];
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...(await walkUploads(fullPath, root)));
-      continue;
-    }
-    if (!entry.isFile()) continue;
-
-    const fileStat = await stat(fullPath);
-    if (fileStat.size > maxUploadFileBytes) continue;
+    if (entry.size > maxUploadFileBytes) continue;
     const currentTotal = files.reduce((sum, file) => sum + file.sizeBytes, 0);
-    if (currentTotal + fileStat.size > maxUploadsTotalBytes) continue;
+    if (currentTotal + entry.size > maxUploadsTotalBytes) continue;
+    const bytes = await readUploadFile(entry.key).catch(() => null);
+    if (!bytes) continue;
 
     files.push({
-      path: path.relative(root, fullPath),
-      sizeBytes: fileStat.size,
-      modifiedAt: fileStat.mtime.toISOString(),
-      base64: (await readFile(fullPath)).toString("base64"),
+      path: entry.key,
+      sizeBytes: entry.size,
+      modifiedAt: entry.lastModified?.toISOString() || new Date().toISOString(),
+      base64: bytes.toString("base64"),
     });
   }
 
@@ -336,13 +329,9 @@ export async function restoreBackupSnapshot(fileName: string) {
   }
 
   if (Array.isArray(payload.uploads)) {
-    await mkdir(uploadsDir, { recursive: true });
     for (const upload of payload.uploads) {
       if (!upload?.path || !upload.base64 || !isSafeUploadPath(upload.path)) continue;
-      const targetPath = path.join(uploadsDir, upload.path);
-      if (!targetPath.startsWith(uploadsDir)) continue;
-      await mkdir(path.dirname(targetPath), { recursive: true });
-      await writeFile(targetPath, Buffer.from(upload.base64, "base64"));
+      await writeUploadFile(upload.path, Buffer.from(upload.base64, "base64"));
       restoredUploads += 1;
     }
   }

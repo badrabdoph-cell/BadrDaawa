@@ -1,11 +1,12 @@
-import { readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
 import { createBackupSnapshot } from "@/lib/backups";
 import { prisma } from "@/lib/db";
 import { getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
-import { ensureRuntimeDirectories, runtimeDataDir, runtimeUploadsDir } from "@/lib/runtime-paths";
+import { ensureRuntimeDirectories, runtimeDataDir } from "@/lib/runtime-paths";
+import { deleteUploadFile, listUploadFiles, storageKeyFromUploadUrl, writeUploadFile } from "@/lib/storage-provider";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { imageExtensionFromName } from "@/lib/image-formats";
 
@@ -105,35 +106,25 @@ function collectReferencesFromValue(references: Map<string, MediaUsageDetail[]>,
   }
 }
 
-async function walkUploadMedia(dir = runtimeUploadsDir, root = runtimeUploadsDir): Promise<MediaFileReportItem[]> {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
-  const files: MediaFileReportItem[] = [];
-
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...(await walkUploadMedia(fullPath, root)));
-      continue;
-    }
-    const kind = mediaKindFromPath(entry.name);
-    if (!entry.isFile() || !kind) continue;
-
-    const fileStat = await stat(fullPath);
-    const relativePath = path.relative(root, fullPath).split(path.sep).join("/");
-    const extension = extensionFromPath(relativePath);
-    files.push({
-      url: `/uploads/${relativePath}`,
-      relativePath,
+async function walkUploadMedia(): Promise<MediaFileReportItem[]> {
+  const files = await listUploadFiles();
+  const mediaFiles: MediaFileReportItem[] = [];
+  for (const file of files) {
+    const kind = mediaKindFromPath(file.key);
+    if (!kind) continue;
+    const extension = extensionFromPath(file.key);
+    mediaFiles.push({
+      url: file.url,
+      relativePath: file.key,
       kind,
       extension,
-      sizeBytes: fileStat.size,
-      modifiedAt: fileStat.mtime.toISOString(),
+      sizeBytes: file.size,
+      modifiedAt: (file.lastModified || new Date()).toISOString(),
       sources: [],
       usageDetails: [],
     });
   }
-
-  return files.sort((a, b) => b.sizeBytes - a.sizeBytes);
+  return mediaFiles.sort((a, b) => b.sizeBytes - a.sizeBytes);
 }
 
 async function collectDatabaseReferences(references: Map<string, MediaUsageDetail[]>) {
@@ -209,13 +200,6 @@ export async function getMediaCleanupReport(): Promise<MediaCleanupReport> {
   };
 }
 
-function uploadFilePath(relativePath: string) {
-  const resolvedRoot = path.resolve(runtimeUploadsDir);
-  const resolvedPath = path.resolve(runtimeUploadsDir, relativePath);
-  if (!resolvedPath.startsWith(`${resolvedRoot}${path.sep}`)) return "";
-  return resolvedPath;
-}
-
 export async function getMediaFile(url: string) {
   const cleanUrl = normalizeUploadUrl(url);
   if (!cleanUrl) return null;
@@ -229,9 +213,10 @@ export async function deleteMediaFile(url: string) {
   const backup = await createBackupSnapshot("media-delete");
   const fresh = await getMediaFile(url);
   if (!fresh || fresh.sources.length) return { ok: false, reason: fresh?.sources.length ? "used" : "missing", file: fresh, backupFileName: backup.fileName };
-  const filePath = uploadFilePath(fresh.relativePath);
-  if (!filePath) return { ok: false, reason: "invalid", file: fresh, backupFileName: backup.fileName };
-  await unlink(filePath);
+  const key = storageKeyFromUploadUrl(fresh.url);
+  if (!key) return { ok: false, reason: "invalid", file: fresh, backupFileName: backup.fileName };
+  const deleted = await deleteUploadFile(key);
+  if (!deleted) return { ok: false, reason: "missing", file: fresh, backupFileName: backup.fileName };
   revalidatePath("/admin/media");
   return { ok: true, reason: "", file: fresh, backupFileName: backup.fileName };
 }
@@ -245,9 +230,9 @@ export async function replaceMediaFile(url: string, file: File | null) {
   if (current.kind === "audio" && !audioExtensions.has(replacementExtension)) return { ok: false, reason: "type", file: current };
 
   const backup = await createBackupSnapshot("media-replace");
-  const filePath = uploadFilePath(current.relativePath);
-  if (!filePath) return { ok: false, reason: "invalid", file: current, backupFileName: backup.fileName };
-  await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+  const key = storageKeyFromUploadUrl(current.url);
+  if (!key) return { ok: false, reason: "invalid", file: current, backupFileName: backup.fileName };
+  await writeUploadFile(key, Buffer.from(await file.arrayBuffer()), current.kind === "image" ? `image/${current.extension}` : `audio/${current.extension}`);
   revalidatePath("/admin/media");
   return { ok: true, reason: "", file: current, backupFileName: backup.fileName };
 }
@@ -260,16 +245,16 @@ export async function deleteUnusedMediaFiles(): Promise<MediaCleanupResult> {
   const skippedFiles: MediaFileReportItem[] = [];
 
   for (const file of freshReport.unusedFiles) {
-    const filePath = uploadFilePath(file.relativePath);
-    if (!filePath) {
+    const key = storageKeyFromUploadUrl(file.url);
+    if (!key) {
       skippedFiles.push(file);
       continue;
     }
 
-    try {
-      await unlink(filePath);
+    const deleted = await deleteUploadFile(key);
+    if (deleted) {
       deletedFiles.push(file);
-    } catch {
+    } else {
       skippedFiles.push(file);
     }
   }

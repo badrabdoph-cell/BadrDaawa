@@ -7594,6 +7594,51 @@ img {
   grid-template-columns: repeat(2, minmax(260px, 1fr));
 }
 
+.customer-share-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+}
+
+.customer-share-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.customer-share-head svg {
+  color: #bd8f3f;
+  flex: 0 0 auto;
+}
+
+.customer-share-head h2 {
+  margin: 0 0 6px;
+}
+
+.customer-share-head p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.customer-share-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.customer-share-actions .btn {
+  min-height: 42px;
+}
+
+.customer-share-message textarea {
+  min-height: 150px;
+  resize: vertical;
+  direction: rtl;
+  line-height: 1.8;
+}
+
 .customer-analytics-panel {
   display: grid;
   gap: 14px;
@@ -16948,6 +16993,11 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   .customer-topbar .btn,
   .live-preview-actions .btn {
     flex: 1 1 150px;
+  }
+
+  .customer-share-actions .btn,
+  .customer-share-panel .button-row .btn {
+    flex: 1 1 180px;
   }
 
   .template-live-preview {

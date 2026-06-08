@@ -1,8 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { normalizeImageForDisplay } from "@/lib/display-images";
@@ -16,6 +14,7 @@ import {
   isSupportedImageFile,
   isSupportedImageUrl,
 } from "@/lib/image-formats";
+import { readPublicMediaFile, writeUploadFile } from "@/lib/storage-provider";
 import { getTemplateWithSettings, updateTemplateSettings } from "@/lib/template-settings";
 import { getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
@@ -24,15 +23,12 @@ async function isAdmin(request: NextRequest) {
 }
 
 async function saveTemplateImage(image: string | File, request: NextRequest) {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "template-previews");
-  await mkdir(uploadDir, { recursive: true });
-
   async function saveBytes(bytes: Buffer, extension: string, sourceLabel: string) {
     const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
     if (!normalized) return "";
     const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
-    await writeFile(path.join(uploadDir, fileName), normalized.bytes);
-    return `/uploads/template-previews/${fileName}`;
+    const saved = await writeUploadFile(`template-previews/${fileName}`, normalized.bytes, `image/${normalized.extension}`);
+    return saved.url;
   }
 
   if (image instanceof File) {
@@ -48,8 +44,8 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
     if (isBrowserDisplayImageUrl(normalized)) return normalized;
     if (!normalized.startsWith("/uploads/") && !normalized.startsWith("/assets/")) return "";
     try {
-      const diskPath = path.join(process.cwd(), "public", normalized.replace(/^\/+/, ""));
-      return saveBytes(await readFile(diskPath), imageExtensionFromName(normalized) || "jpg", `template-existing:${normalized}`);
+      const bytes = await readPublicMediaFile(normalized);
+      return bytes ? saveBytes(bytes, imageExtensionFromName(normalized) || "jpg", `template-existing:${normalized}`) : "";
     } catch (error) {
       console.error(`[Template Images] Failed to convert existing non-displayable image: ${normalized}`, error);
       return "";

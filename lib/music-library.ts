@@ -1,7 +1,8 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { cleanNewDirectAudioUrl, cleanPlayableAudioUrl, isUploadedMusicUrl } from "./audio-files";
+import { statUploadFile } from "./storage-provider";
 import type { Invitation } from "./types";
 
 export type MusicSourceKind = "upload" | "url";
@@ -35,7 +36,6 @@ export type ResolvedInvitationMusic = {
 
 const libraryPath = path.join(process.cwd(), "data", "music-library.json");
 const defaultSlotId = "global-track";
-const uploadDir = path.join(process.cwd(), "public", "uploads", "music");
 
 const defaultMusicSlot: MusicSlot = {
   id: defaultSlotId,
@@ -167,17 +167,16 @@ function normalizeMusicLibrary(input: Partial<MusicLibrary>): MusicLibrary {
 async function enrichMusicSlot(slot: MusicSlot): Promise<MusicSlot> {
   if (!isUploadedMusicUrl(slot.url)) return slot;
   try {
-    const filePath = path.join(process.cwd(), "public", slot.url.replace(/^\/+/, ""));
-    if (!filePath.startsWith(uploadDir)) return slot;
-    const fileStat = await stat(filePath);
+    const fileStat = await statUploadFile(slot.url);
+    if (!fileStat) return slot;
     const extension = slot.extension || extensionFromUrl(slot.url);
     return {
       ...slot,
       sizeBytes: slot.sizeBytes || fileStat.size,
       extension,
       mimeType: slot.mimeType || mimeFromExtension(extension),
-      createdAt: slot.createdAt || fileStat.birthtime.toISOString(),
-      updatedAt: slot.updatedAt || fileStat.mtime.toISOString(),
+      createdAt: slot.createdAt || fileStat.lastModified?.toISOString() || "",
+      updatedAt: slot.updatedAt || fileStat.lastModified?.toISOString() || "",
       source: "upload",
     };
   } catch {

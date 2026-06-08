@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { Download, ExternalLink, LogOut, QrCode } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
+import { ClientShareTools } from "@/components/ClientShareTools";
 import { CopyButton } from "@/components/CopyButton";
 import { CustomerAnalyticsPanel } from "@/components/CustomerAnalyticsPanel";
 import { GuestTable } from "@/components/GuestTable";
@@ -100,6 +101,8 @@ export default async function CustomerAdminPage({
             </a>
           </div>
         </article>
+
+        <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} />
       </section>
 
       <ClientInvitationEditor

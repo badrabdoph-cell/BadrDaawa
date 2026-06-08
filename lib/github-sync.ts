@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { ensureRuntimeDirectories } from "./runtime-paths";
+import { ensureRuntimeDirectories, runtimeUploadsDir } from "./runtime-paths";
 
 type GitHubSyncStatus = "synced" | "skipped" | "unchanged" | "failed";
 
@@ -74,7 +74,10 @@ export type SyncLogEntry = {
   updatedAt: Date;
 };
 
-const syncRoots = ["data", path.join("public", "uploads")];
+const syncRoots = [
+  { absolutePath: path.join(process.cwd(), "data"), repoPath: "data" },
+  { absolutePath: runtimeUploadsDir, repoPath: path.join("public", "uploads") },
+];
 const maxSyncFileBytes = 90 * 1024 * 1024;
 
 // Retry delays in milliseconds: 5s, 15s, 45s
@@ -235,11 +238,12 @@ async function exists(filePath: string) {
   }
 }
 
-function toRepoPath(absolutePath: string) {
-  return path.relative(process.cwd(), absolutePath).split(path.sep).join("/");
+function toRepoPath(absolutePath: string, root: { absolutePath: string; repoPath: string }) {
+  const relativePath = path.relative(root.absolutePath, absolutePath).split(path.sep).join("/");
+  return path.join(root.repoPath, relativePath).split(path.sep).join("/");
 }
 
-async function walkFiles(dir: string): Promise<SyncFile[]> {
+async function walkFiles(dir: string, root: { absolutePath: string; repoPath: string }): Promise<SyncFile[]> {
   ensureRuntimeDirectories();
   if (!(await exists(dir))) return [];
   const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
@@ -251,7 +255,7 @@ async function walkFiles(dir: string): Promise<SyncFile[]> {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...(await walkFiles(fullPath)));
+      files.push(...(await walkFiles(fullPath, root)));
       continue;
     }
 
@@ -264,7 +268,7 @@ async function walkFiles(dir: string): Promise<SyncFile[]> {
     if (!fileStat.size || fileStat.size > maxSyncFileBytes) continue;
     files.push({
       absolutePath: fullPath,
-      repoPath: toRepoPath(fullPath),
+      repoPath: toRepoPath(fullPath, root),
       size: fileStat.size,
     });
   }
@@ -274,7 +278,7 @@ async function walkFiles(dir: string): Promise<SyncFile[]> {
 
 async function collectSyncFiles() {
   ensureRuntimeDirectories();
-  const groups = await Promise.all(syncRoots.map((root) => walkFiles(path.join(process.cwd(), root))));
+  const groups = await Promise.all(syncRoots.map((root) => walkFiles(root.absolutePath, root)));
   return groups.flat().sort((a, b) => a.repoPath.localeCompare(b.repoPath));
 }
 
