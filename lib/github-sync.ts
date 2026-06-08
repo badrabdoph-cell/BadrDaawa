@@ -122,6 +122,12 @@ export function isGitHubSyncAuthFailure(error: unknown) {
 function gitHubAuthFailureMessage(details: string, config: SyncConfig | null) {
   const target = config ? `${config.repo.owner}/${config.repo.repo}:${config.branch}` : "the configured repo";
   const tokenSource = config ? config.tokenSource : "GITHUB_SYNC_TOKEN";
+  if (/GitHub sync failed 401|bad credentials/i.test(details)) {
+    return `GitHub rejected ${tokenSource} for ${target} because the credentials are invalid. Generate a new GitHub token, paste the full token into Railway as GITHUB_SYNC_TOKEN, then redeploy. Details: ${details}`;
+  }
+  if (/GitHub sync failed 403|resource not accessible/i.test(details)) {
+    return `GitHub accepted ${tokenSource} but it cannot write to ${target}. Give the token Contents: Read and write access to that repository, set it as GITHUB_SYNC_TOKEN, then redeploy. Details: ${details}`;
+  }
   return `GitHub rejected the sync token for ${target}. Railway is using ${tokenSource}. Create or update a token that has write access to that repository, set it as GITHUB_SYNC_TOKEN, then redeploy. Details: ${details}`;
 }
 
