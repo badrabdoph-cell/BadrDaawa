@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages, type PreviewImageInput } from "@/lib/order-preview-images";
+import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -16,9 +17,17 @@ function isPreviewImageInput(value: unknown): value is PreviewImageInput {
   return typeof input.dataUrl === "string";
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const requestId = `preview-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
   const startedAt = Date.now();
+  const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:preview-images"), RATE_LIMIT_CONFIGS.API_UPLOAD);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "تم إرسال ملفات كثيرة في وقت قصير. انتظر قليلًا ثم حاول مرة أخرى." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } },
+    );
+  }
+
   const contentType = request.headers.get("content-type") || "";
   const contentLength = Number(request.headers.get("content-length") || 0);
   const referer = request.headers.get("referer") || "";

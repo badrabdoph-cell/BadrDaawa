@@ -18,7 +18,7 @@ export const orderRequestSchema = z.object({
   musicEnabled: z.boolean().optional().default(false),
   musicChoice: z.enum(["default", "upload", "url"]).optional().default("default"),
   musicUrl: z.string().trim().max(500).optional().default(""),
-  orderMusic: z.string().optional().default(""),
+  orderMusic: z.string().max(48 * 1024 * 1024).optional().default(""),
   idempotencyKey: z.string().trim().max(120).optional().default(""),
   templateSlug: z.string().trim().min(2),
   language: z.enum(["ar", "en"]),

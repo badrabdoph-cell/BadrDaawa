@@ -1,9 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
+import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+const maxMusicRequestBytes = 48 * 1024 * 1024;
+
+export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:preview-music"), RATE_LIMIT_CONFIGS.API_UPLOAD);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "تم رفع ملفات كثيرة في وقت قصير. انتظر قليلًا ثم حاول مرة أخرى." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } },
+    );
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > maxMusicRequestBytes) {
+    return NextResponse.json({ error: "ملف الموسيقى كبير جدًا. اختار ملفًا أصغر ثم حاول مرة أخرى." }, { status: 413 });
+  }
+
   const body = (await request.json().catch(() => null)) as { music?: string; musicUrl?: string } | null;
   const musicData = typeof body?.music === "string" ? body.music : "";
   const requestedUrl = typeof body?.musicUrl === "string" ? body.musicUrl : "";

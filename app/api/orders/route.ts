@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
@@ -8,6 +8,7 @@ import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
+import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -114,7 +115,15 @@ function buildOrderWhatsAppMessage(input: {
   ].join("\n");
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:create"), RATE_LIMIT_CONFIGS.API_GENERAL);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "تم إرسال طلبات كثيرة في وقت قصير. انتظر دقيقة ثم حاول مرة أخرى." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } },
+    );
+  }
+
   const contentLength = Number(request.headers.get("content-length") || 0);
   if (contentLength > maxOrderRequestBytes) {
     console.error(`[Order API] Rejected large order payload: ${contentLength} bytes.`);

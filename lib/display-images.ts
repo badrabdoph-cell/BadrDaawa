@@ -14,7 +14,7 @@ async function loadSharp(): Promise<SharpFactory> {
   return module.default ?? module;
 }
 
-const passthroughExtensions = new Set(["svg", "gif"]);
+const passthroughExtensions = new Set(["gif"]);
 const heicExtensions = new Set(["heic", "heif"]);
 const maxDisplayImageWidth = 1800;
 const maxDisplayImageHeight = 2200;

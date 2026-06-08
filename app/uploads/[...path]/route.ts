@@ -22,7 +22,6 @@ const mimeTypes: Record<string, string> = {
   mp4: "audio/mp4",
   ogg: "audio/ogg",
   png: "image/png",
-  svg: "image/svg+xml",
   wav: "audio/wav",
   webm: "audio/webm",
   webp: "image/webp",

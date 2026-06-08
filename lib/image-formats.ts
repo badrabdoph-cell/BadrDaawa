@@ -12,7 +12,6 @@ export const supportedImageExtensions = [
   "tif",
   "psd",
   "psb",
-  "svg",
   "ai",
   "eps",
   "bmp",
@@ -43,7 +42,7 @@ export const supportedImageExtensions = [
 
 const supportedImageExtensionSet = new Set<string>(supportedImageExtensions);
 
-export const browserDisplayImageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "svg", "bmp", "ico", "avif"] as const;
+export const browserDisplayImageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "ico", "avif"] as const;
 
 const browserDisplayImageExtensionSet = new Set<string>(browserDisplayImageExtensions);
 
@@ -66,7 +65,6 @@ const imageMimeExtensions: Record<string, string> = {
   "image/jpg": "jpg",
   "image/openraster": "ora",
   "image/png": "png",
-  "image/svg+xml": "svg",
   "image/tga": "tga",
   "image/tiff": "tif",
   "image/vnd.adobe.photoshop": "psd",

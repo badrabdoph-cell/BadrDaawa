@@ -118,6 +118,7 @@ async function saveAudioBytes(bytes: Buffer, mimeType = "", nameExtension = "", 
 export async function saveAudioDataUrl(dataUrl: string, previousUrl?: string | null) {
   const match = dataUrl.trim().match(/^data:(audio\/[a-zA-Z0-9.+-]+|video\/mp4);base64,([a-zA-Z0-9+/=]+)$/);
   if (!match) return "";
+  if (Math.floor((match[2].length * 3) / 4) > maxAudioBytes) return "";
   const bytes = Buffer.from(match[2], "base64");
   return saveAudioBytes(bytes, match[1], "", previousUrl);
 }
