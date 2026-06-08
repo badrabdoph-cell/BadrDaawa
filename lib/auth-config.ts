@@ -23,5 +23,7 @@ export function isAdminAuthConfigured() {
 }
 
 export function getClientSessionSecret() {
-  return process.env.CLIENT_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-client-local";
+  const configuredSecret = process.env.CLIENT_SESSION_SECRET || process.env.AUTH_SECRET;
+  if (configuredSecret) return configuredSecret;
+  return process.env.NODE_ENV === "production" ? "" : "badrdaawa-client-local";
 }

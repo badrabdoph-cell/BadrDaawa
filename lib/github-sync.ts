@@ -285,7 +285,6 @@ export async function createSyncLog(data: {
   try {
     const prisma = await getPrisma();
     if (!prisma) return null;
-    // @ts-ignore – SyncLog model added via migration
     const log = await prisma.syncLog.create({
       data: {
         reason: data.reason,
@@ -316,7 +315,6 @@ export async function updateSyncLog(
   try {
     const prisma = await getPrisma();
     if (!prisma) return;
-    // @ts-ignore – SyncLog model added via migration
     await prisma.syncLog.update({ where: { id }, data });
   } catch (error) {
     console.error("[SyncLog] Failed to update sync log:", error);
@@ -337,16 +335,13 @@ export async function getSyncHistory(options: {
     if (options.status && options.status !== "all") where.status = options.status;
     if (options.reason) where.reason = { contains: options.reason };
 
-    // @ts-ignore – SyncLog model added via migration
     const [logs, total] = await Promise.all([
-      // @ts-ignore
       prisma.syncLog.findMany({
         where,
         orderBy: { createdAt: "desc" },
         take: options.limit ?? 20,
         skip: options.offset ?? 0,
       }),
-      // @ts-ignore
       prisma.syncLog.count({ where }),
     ]);
 
@@ -361,7 +356,6 @@ export async function getLastSuccessfulSync(): Promise<SyncLogEntry | null> {
   try {
     const prisma = await getPrisma();
     if (!prisma) return null;
-    // @ts-ignore
     const log = await prisma.syncLog.findFirst({
       where: { status: "completed" },
       orderBy: { createdAt: "desc" },

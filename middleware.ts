@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getClientSessionSecret } from "@/lib/auth-config";
+import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { getRedirectUrl } from "@/lib/utils";
 
 export async function middleware(request: NextRequest) {
@@ -19,8 +19,8 @@ export async function middleware(request: NextRequest) {
   const isCustomerLoginPage = /^\/[^/]+\/ad_3399\/login(?:\/)?$/.test(pathname);
   if (customerMatch && !isCustomerLoginPage) {
     const code = customerMatch[1];
-    const session = request.cookies.get("bd_client_session")?.value;
-    if (session !== `${getClientSessionSecret()}:${code}`) {
+    const session = request.cookies.get(CLIENT_SESSION_COOKIE)?.value;
+    if (!(await verifyClientSessionCookie(session, code))) {
       const url = getRedirectUrl(`/${code}/ad_3399/login`, request.headers, request.nextUrl.origin);
       return NextResponse.redirect(url);
     }

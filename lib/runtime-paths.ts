@@ -4,7 +4,7 @@ import path from "node:path";
 export const runtimeDataDir = path.join(process.cwd(), "data");
 export const runtimeBackupDir = path.join(runtimeDataDir, "backups");
 export const runtimeUploadsDir = path.join(process.cwd(), "public", "uploads");
-export const runtimeUploadSubdirs = ["client-invitations", "order-requests", "order-previews", "music"];
+export const runtimeUploadSubdirs = ["client-invitations", "order-requests", "order-previews", "music", "previews", "template-previews"];
 
 export function ensureDirectory(dirPath: string) {
   mkdirSync(dirPath, { recursive: true });

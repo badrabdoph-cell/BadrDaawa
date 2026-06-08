@@ -8,7 +8,7 @@ import { GuestTable } from "@/components/GuestTable";
 import { QrCodeBlock } from "@/components/QrCodeBlock";
 import { StatsGrid } from "@/components/StatsGrid";
 import { listUploadedMusicFiles } from "@/lib/audio-files";
-import { getClientSessionSecret } from "@/lib/auth-config";
+import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { calculateAttendance, getPublicSiteUrl } from "@/lib/utils";
@@ -27,8 +27,8 @@ export default async function CustomerAdminPage({
     notFound();
   }
 
-  const session = cookieStore.get("bd_client_session")?.value;
-  if (session !== `${getClientSessionSecret()}:${invitation.code}`) {
+  const session = cookieStore.get(CLIENT_SESSION_COOKIE)?.value;
+  if (!(await verifyClientSessionCookie(session, invitation.code))) {
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 

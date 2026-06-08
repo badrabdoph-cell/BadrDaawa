@@ -21,6 +21,10 @@ function revalidateAdminState() {
   }
 }
 
+function sanitizeReturnTo(value: string) {
+  return value === "/admin/backups" || value === "/admin/recent-edits" ? value : "/admin/recent-edits";
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
@@ -29,7 +33,8 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const fileName = String(formData.get("fileName") || "").trim();
   const confirmFileName = String(formData.get("confirmFileName") || "").trim();
-  const url = getRedirectUrl("/admin/recent-edits", request.headers, request.nextUrl.origin);
+  const returnTo = sanitizeReturnTo(String(formData.get("returnTo") || ""));
+  const url = getRedirectUrl(returnTo, request.headers, request.nextUrl.origin);
 
   if (!fileName || confirmFileName !== fileName) {
     url.searchParams.set("error", "confirm");

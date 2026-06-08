@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CLIENT_SESSION_COOKIE, CLIENT_SESSION_MAX_AGE, createClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
-import { getClientSessionSecret } from "@/lib/auth-config";
 import { validateFileClientLogin } from "@/lib/file-store";
 import { verifyPassword } from "@/lib/password";
 import { getRedirectUrl } from "@/lib/utils";
@@ -47,12 +47,21 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.redirect(getRedirectUrl(`/${code}/ad_3399`, request.headers, request.nextUrl.origin), 303);
-  response.cookies.set("bd_client_session", `${getClientSessionSecret()}:${code}`, {
+  let sessionCookie = "";
+  try {
+    sessionCookie = await createClientSessionCookie(code);
+  } catch {
+    const url = getRedirectUrl(`/${code}/ad_3399/login`, request.headers, request.nextUrl.origin);
+    url.searchParams.set("error", "1");
+    return NextResponse.redirect(url, 303);
+  }
+
+  response.cookies.set(CLIENT_SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: CLIENT_SESSION_MAX_AGE,
   });
   return response;
 }

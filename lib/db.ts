@@ -1,4 +1,3 @@
-// @ts-ignore
 import { PrismaClient } from "@prisma/client";
 import { getDatabaseUrl } from "./database-url";
 

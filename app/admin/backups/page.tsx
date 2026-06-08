@@ -18,7 +18,11 @@ function formatBackupDate(value: string) {
   }).format(date);
 }
 
-export default async function BackupsPage({ searchParams }: { searchParams: Promise<{ created?: string }> }) {
+export default async function BackupsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string; restored?: string; before?: string; error?: string }>;
+}) {
   const [params, backups] = await Promise.all([searchParams, listBackupSnapshots()]);
   const latest = backups[0];
   const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
@@ -44,6 +48,18 @@ export default async function BackupsPage({ searchParams }: { searchParams: Prom
           <ShieldCheck size={18} />
           تم إنشاء النسخة: <strong>{params.created}</strong>
         </div>
+      ) : null}
+      {params.restored ? (
+        <div className="notice success">
+          <RotateCcw size={18} />
+          تم استعادة النسخة: <strong>{params.restored}</strong>
+          {params.before ? <span> وتم إنشاء نسخة أمان قبل الاستعادة: <strong>{params.before}</strong></span> : null}
+        </div>
+      ) : null}
+      {params.error === "confirm" ? (
+        <div className="notice danger">اكتب اسم ملف النسخة كما هو قبل الاستعادة.</div>
+      ) : params.error === "missing" ? (
+        <div className="notice danger">تعذر العثور على ملف النسخة أو قراءته.</div>
       ) : null}
 
       <div className="backup-status-grid">
@@ -101,9 +117,14 @@ export default async function BackupsPage({ searchParams }: { searchParams: Prom
                       <a className="btn btn-soft btn-icon" href={`/api/admin/backups/${backup.fileName}`} title="تحميل">
                         <CloudDownload size={17} />
                       </a>
-                      <button className="btn btn-soft btn-icon" type="button" title="الاسترجاع يحتاج تأكيد منفصل" disabled>
-                        <RotateCcw size={17} />
-                      </button>
+                      <form className="backup-restore-form" action="/api/admin/recent-edits/restore" method="post">
+                        <input name="fileName" type="hidden" value={backup.fileName} />
+                        <input name="returnTo" type="hidden" value="/admin/backups" />
+                        <input aria-label="تأكيد اسم ملف النسخة" name="confirmFileName" placeholder={backup.fileName} required />
+                        <button className="btn btn-soft btn-icon" type="submit" title="استعادة">
+                          <RotateCcw size={17} />
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>

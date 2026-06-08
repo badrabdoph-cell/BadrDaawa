@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveAudioDataUrl, saveUploadedAudioFile } from "@/lib/audio-files";
+import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
@@ -8,9 +9,8 @@ import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation } from "@/lib/types";
 
-function isClientAllowed(request: NextRequest, code: string) {
-  const expected = process.env.CLIENT_SESSION_SECRET || process.env.AUTH_SECRET || "badrdaawa-client-local";
-  return request.cookies.get("bd_client_session")?.value === `${expected}:${code}`;
+async function isClientAllowed(request: NextRequest, code: string) {
+  return verifyClientSessionCookie(request.cookies.get(CLIENT_SESSION_COOKIE)?.value, code);
 }
 
 type ClientInvitationPayload = {
@@ -197,7 +197,7 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
-  if (!isClientAllowed(request, code)) {
+  if (!(await isClientAllowed(request, code))) {
     if (request.headers.get("content-type")?.includes("application/json")) {
       return NextResponse.json({ error: "سجل الدخول للوحة الدعوة أولًا." }, { status: 401 });
     }

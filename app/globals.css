@@ -3939,6 +3939,30 @@ img {
   text-align: left;
 }
 
+.backup-restore-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.backup-restore-form input {
+  width: min(34vw, 210px);
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid rgba(243, 207, 115, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 248, 234, 0.08);
+  color: #fff7e8;
+  direction: ltr;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.backup-restore-form input::placeholder {
+  color: rgba(255, 247, 232, 0.42);
+}
+
 .recent-edit-status-grid {
   margin-top: 0;
 }
@@ -14928,10 +14952,14 @@ body:has(.template-preview-floating-actions) .music-control {
   }
 
   .dashboard-main {
+    min-width: 0;
+    width: 100%;
     padding: 14px;
   }
 
   .dashboard-sidebar {
+    min-width: 0;
+    width: 100%;
     padding: 16px;
   }
 
@@ -15128,12 +15156,18 @@ body:has(.template-preview-floating-actions) .music-control {
   }
 
   .admin-dark-shell .dashboard-main {
+    min-width: 0;
+    width: 100%;
     padding: 12px;
+    overflow-x: hidden;
   }
 
   .admin-dark-shell .dashboard-sidebar {
+    min-width: 0;
+    width: 100%;
     padding: 12px;
     gap: 12px;
+    overflow-x: hidden;
   }
 
   .admin-brand {

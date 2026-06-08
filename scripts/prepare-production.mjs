@@ -8,10 +8,9 @@ const dirs = [
   path.join(root, "data"),
   path.join(root, "data", "backups"),
   path.join(root, "public", "uploads"),
-  path.join(root, "public", "uploads", "client-invitations"),
-  path.join(root, "public", "uploads", "order-requests"),
-  path.join(root, "public", "uploads", "order-previews"),
-  path.join(root, "public", "uploads", "music"),
+  ...["client-invitations", "order-requests", "order-previews", "music", "previews", "template-previews"].map((subdir) =>
+    path.join(root, "public", "uploads", subdir),
+  ),
 ];
 
 function cleanEnvValue(value) {

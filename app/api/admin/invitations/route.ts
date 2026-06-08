@@ -16,6 +16,10 @@ async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
+function isUniqueConstraintError(error: unknown) {
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
@@ -102,10 +106,7 @@ export async function POST(request: NextRequest) {
       where: { code: { startsWith: baseSlug } },
       select: { code: true },
     });
-    const code = makeNumberedInvitationSlug(
-      baseSlug,
-      existing.map((item: { code: string }) => item.code),
-    );
+    const existingCodes = new Set(existing.map((item: { code: string }) => item.code));
 
     const template = await prisma.weddingTemplate.upsert({
       where: { slug: selectedTemplate.slug },
@@ -157,26 +158,36 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await prisma.invitation.create({
-      data: {
-        code,
-        status: "ACTIVE",
-        language: "ar",
-        groomName,
-        brideName,
-        weddingDate: parsedWeddingDate,
-        weddingTime,
-        venue,
-        city,
-        mapUrl,
-        heroPhoto: gallery[0],
-        gallery,
-        musicUrl,
-        musicEnabled: Boolean(musicUrl),
-        customerId: customer.id,
-        templateId: template.id,
-      },
-    });
+    let code = "";
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      code = makeNumberedInvitationSlug(baseSlug, Array.from(existingCodes));
+      try {
+        await prisma.invitation.create({
+          data: {
+            code,
+            status: "ACTIVE",
+            language: "ar",
+            groomName,
+            brideName,
+            weddingDate: parsedWeddingDate,
+            weddingTime,
+            venue,
+            city,
+            mapUrl,
+            heroPhoto: gallery[0],
+            gallery,
+            musicUrl,
+            musicEnabled: Boolean(musicUrl),
+            customerId: customer.id,
+            templateId: template.id,
+          },
+        });
+        break;
+      } catch (error) {
+        if (!isUniqueConstraintError(error) || attempt === 2) throw error;
+        existingCodes.add(code);
+      }
+    }
     console.log(`[Admin Invitation] Database invitation ${code} saved with heroPhoto=${gallery[0]}.`);
 
     revalidatePath(`/${code}`);
