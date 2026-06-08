@@ -1,0 +1,31 @@
+[
+  {
+    "id": "audit-mq5qcjx7-u8lyqhbw",
+    "createdAt": "2026-06-08T21:35:37.436Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1780954531392",
+      "label": "Music track saved: global-track."
+    },
+    "newValues": {
+      "startedAt": 1780954531397,
+      "status": "synced",
+      "message": "Admin data synced to GitHub.",
+      "commitUrl": "https://github.com/badrabdoph-cell/BadrDaawa/commit/4313daffa63cb80da6f1a2bd2fdf3153914d45e2",
+      "commitSha": "4313daffa63cb80da6f1a2bd2fdf3153914d45e2",
+      "files": 25,
+      "duration": 6034
+    },
+    "metadata": {
+      "reason": "Music track saved: global-track.",
+      "status": "synced",
+      "retryCount": 0,
+      "logId": "cmq5qcf9e0000mrghuavhn3o5"
+    }
+  }
+]
