@@ -1,7 +1,7 @@
 {
   "notifications": [
     {
-      "signature": "orders:actionable:1:cmq5vff8000022816ocp88w4s:new",
+      "signature": "orders:actionable:1:cmq5vff8000022816ocp88w4s:reviewing",
       "type": "orders",
       "severity": "info",
       "title": "وصل طلب جديد أو طلب يحتاج مراجعة",
@@ -10,27 +10,27 @@
       "meta": {
         "count": 1,
         "latestOrderId": "cmq5vff8000022816ocp88w4s",
-        "latestStatus": "new"
+        "latestStatus": "reviewing"
       },
-      "id": "admin-note-78b4eac45198b0ea",
-      "createdAt": "2026-06-08T23:58:37.104Z",
-      "updatedAt": "2026-06-08T23:58:44.687Z"
+      "id": "admin-note-45d498187a61e2af",
+      "createdAt": "2026-06-08T23:59:14.662Z",
+      "updatedAt": "2026-06-08T23:59:44.685Z"
     },
     {
-      "signature": "errors:recent:1:err-mq5v80hl-57auw86k",
+      "signature": "errors:recent:2:err-mq5vgm36-cirzt28r",
       "type": "errors",
       "severity": "error",
       "title": "أخطاء تشغيلية جديدة",
-      "message": "تم تسجيل 1 خطأ خلال آخر 24 ساعة. آخر خطأ: 502  - /admin?_rsc=yrDcgtHlcI4zVVYY",
+      "message": "تم تسجيل 2 خطأ خلال آخر 24 ساعة. آخر خطأ: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
       "href": "/admin/errors",
       "meta": {
-        "count": 1,
-        "latestErrorId": "err-mq5v80hl-57auw86k",
-        "latestRoute": "https://daawa.up.railway.app/admin?_rsc=yrDcgtHlcI4zVVYY"
+        "count": 2,
+        "latestErrorId": "err-mq5vgm36-cirzt28r",
+        "latestRoute": "https://daawa.up.railway.app/admin/orders"
       },
-      "id": "admin-note-b7f07511011a6110",
-      "createdAt": "2026-06-08T23:52:04.663Z",
-      "updatedAt": "2026-06-08T23:58:44.683Z"
+      "id": "admin-note-ae5ffe0d0b99d647",
+      "createdAt": "2026-06-08T23:59:14.663Z",
+      "updatedAt": "2026-06-08T23:59:44.682Z"
     }
   ]
 }

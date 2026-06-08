@@ -1,5 +1,138 @@
 [
   {
+    "id": "audit-mq5vhwbb-ygm32ml3",
+    "createdAt": "2026-06-08T23:59:44.855Z",
+    "actor": {
+      "type": "admin",
+      "id": "Badrabdoph3399",
+      "label": "Badrabdoph3399"
+    },
+    "action": "order.publish",
+    "entity": {
+      "type": "Order",
+      "id": "cmq5vff8000022816ocp88w4s",
+      "label": "ORD-MQ5VFF65-8F1E"
+    },
+    "oldValues": {
+      "id": "cmq5vff8000022816ocp88w4s",
+      "orderNumber": "ORD-MQ5VFF65-8F1E",
+      "dedupeKey": "addd3dfde9569011e67bcc7cc4d1b1a543e28dc52b3b1cec19975af38caedfd1",
+      "groomName": "بدر",
+      "brideName": "ساره",
+      "phone": "",
+      "weddingDate": "2026-10-26T00:00:00.000Z",
+      "venue": "البحيره . قاعه الملكه",
+      "mapUrl": "https://maps.app.goo.gl/x4i3m54TRBpvnpWC8?g_st=ac",
+      "notes": "موسيقى الدعوة:\nاختيار العميل: رفع ملف موسيقى\n\nرابط اللوكيشن:\nhttps://maps.app.goo.gl/x4i3m54TRBpvnpWC8?g_st=ac\n\nبيانات المصور الفوتوغرافي:\n\nموسيقى الدعوة:\n\nصور الطلب:\n1. /uploads/order-previews/order-preview-1780963023579-c3e14761.webp\n2. /uploads/order-previews/order-preview-1780963064093-01aa6082.webp\n3. /uploads/order-previews/order-preview-1780963030426-935dcf6d.webp",
+      "imageUrls": [
+        "/uploads/order-previews/order-preview-1780963023579-c3e14761.webp",
+        "/uploads/order-previews/order-preview-1780963064093-01aa6082.webp",
+        "/uploads/order-previews/order-preview-1780963030426-935dcf6d.webp"
+      ],
+      "musicEnabled": true,
+      "musicChoice": "upload",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "inviteMessage": "يومنا لن يكتمل إلا بحضوركم، ننتظركم لنصنع معاً ذكريات لا تنسى في أفضل يوم في عمرنا.",
+        "inviteMessageSecondary": "وجودكم معنا يجعل فرحتنا أجمل.",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "story": []
+      },
+      "photographer": {
+        "enabled": true,
+        "name": "المصور الفوتوغرافي",
+        "facebookUrl": "https://www.facebook.com/",
+        "instagramUrl": "https://www.instagram.com/"
+      },
+      "templateSlug": "vintage-theme",
+      "language": "ar",
+      "status": "reviewing",
+      "submittedAt": "2026-06-08T23:57:49.392Z",
+      "createdAt": "2026-06-08T23:57:49.392Z"
+    },
+    "newValues": {
+      "id": "cmq5vff8000022816ocp88w4s",
+      "orderNumber": "ORD-MQ5VFF65-8F1E",
+      "dedupeKey": "addd3dfde9569011e67bcc7cc4d1b1a543e28dc52b3b1cec19975af38caedfd1",
+      "groomName": "بدر",
+      "brideName": "ساره",
+      "phone": "",
+      "weddingDate": "2026-10-26T00:00:00.000Z",
+      "venue": "البحيره . قاعه الملكه",
+      "mapUrl": "https://maps.app.goo.gl/x4i3m54TRBpvnpWC8?g_st=ac",
+      "notes": "موسيقى الدعوة:\nاختيار العميل: رفع ملف موسيقى\n\nرابط اللوكيشن:\nhttps://maps.app.goo.gl/x4i3m54TRBpvnpWC8?g_st=ac\n\nبيانات المصور الفوتوغرافي:\n\nموسيقى الدعوة:\n\nصور الطلب:\n1. /uploads/order-previews/order-preview-1780963023579-c3e14761.webp\n2. /uploads/order-previews/order-preview-1780963064093-01aa6082.webp\n3. /uploads/order-previews/order-preview-1780963030426-935dcf6d.webp",
+      "imageUrls": [
+        "/uploads/order-previews/order-preview-1780963023579-c3e14761.webp",
+        "/uploads/order-previews/order-preview-1780963064093-01aa6082.webp",
+        "/uploads/order-previews/order-preview-1780963030426-935dcf6d.webp"
+      ],
+      "musicEnabled": true,
+      "musicChoice": "library",
+      "musicUrl": "/uploads/music/music-1780954531385-07bbd688.mp3",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "inviteMessage": "يومنا لن يكتمل إلا بحضوركم، ننتظركم لنصنع معاً ذكريات لا تنسى في أفضل يوم في عمرنا.",
+        "inviteMessageSecondary": "وجودكم معنا يجعل فرحتنا أجمل.",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "story": []
+      },
+      "photographer": {
+        "enabled": true,
+        "name": "المصور الفوتوغرافي",
+        "facebookUrl": "https://www.facebook.com/",
+        "instagramUrl": "https://www.instagram.com/"
+      },
+      "publishedInvitationCode": "wedding-invitation-1",
+      "templateSlug": "vintage-theme",
+      "language": "ar",
+      "status": "published",
+      "submittedAt": "2026-06-08T23:57:49.392Z",
+      "createdAt": "2026-06-08T23:57:49.392Z",
+      "publicUrl": "https://daawa.up.railway.app/wedding-invitation-1",
+      "adminUrl": "https://daawa.up.railway.app/wedding-invitation-1/ad_3399",
+      "links": {
+        "publicUrl": "https://daawa.up.railway.app/wedding-invitation-1",
+        "adminUrl": "https://daawa.up.railway.app/wedding-invitation-1/ad_3399"
+      }
+    },
+    "metadata": {
+      "invitationCode": "wedding-invitation-1"
+    }
+  },
+  {
+    "id": "audit-mq5vh2gr-hd0viqtc",
+    "createdAt": "2026-06-08T23:59:06.171Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-3-1780963135071",
+      "label": "Order marked reviewing: cmq5vff8000022816ocp88w4s."
+    },
+    "newValues": {
+      "startedAt": 1780963139991,
+      "status": "synced",
+      "message": "Admin data synced to GitHub.",
+      "commitUrl": "https://github.com/badrabdoph-cell/BadrDaawa/commit/a41ce332ebe3198ea2e666caea2b15e0fabc6498",
+      "commitSha": "a41ce332ebe3198ea2e666caea2b15e0fabc6498",
+      "files": 36,
+      "duration": 6174
+    },
+    "metadata": {
+      "reason": "Order marked reviewing: cmq5vff8000022816ocp88w4s.",
+      "status": "synced",
+      "retryCount": 0,
+      "logId": "cmq5vgxoz00092816g455wmek"
+    }
+  },
+  {
     "id": "audit-mq5vgxb2-n3i9esvr",
     "createdAt": "2026-06-08T23:58:59.486Z",
     "actor": {
