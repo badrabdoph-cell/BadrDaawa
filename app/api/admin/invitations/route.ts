@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
   console.log(`[Admin Invitation] Creating invitation with gallery (${gallery.length}):`, gallery);
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
+  const actor = await getAuditActorFromAdminRequest(request);
 
   async function createFallbackInvitation() {
     const invitation = await createFileInvitation({
@@ -94,6 +96,36 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/${invitation.code}/ad_3399`);
     revalidatePath("/admin/invitations");
     queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
+    await recordAuditLog({
+      actor,
+      action: "invitation.create",
+      entity: { type: "Invitation", id: invitation.code, label: `${groomName} و ${brideName}` },
+      newValues: {
+        code: invitation.code,
+        templateSlug: selectedTemplate.slug,
+        groomName,
+        brideName,
+        phone,
+        weddingDate,
+        weddingTime,
+        venue,
+        city,
+        mapUrl,
+        gallery,
+        musicEnabled: Boolean(musicUrl),
+        musicUrl,
+      },
+      metadata: { source: "legacy-admin-invitations", storage: "file" },
+    });
+    if (savedGallery.length) {
+      await recordAuditLog({
+        actor,
+        action: "media.image.upload",
+        entity: { type: "Media", id: savedGallery[0], label: savedGallery.length > 1 ? `${savedGallery.length} invitation images` : savedGallery[0] },
+        newValues: { imageUrls: savedGallery },
+        metadata: { invitationCode: invitation.code, source: "legacy-admin-invitations" },
+      });
+    }
     return NextResponse.redirect(getRedirectUrl(`/admin/invitations?created=${invitation.code}&demo=1`, request.headers, request.nextUrl.origin), 303);
   }
 
@@ -194,6 +226,36 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/${code}/ad_3399`);
     revalidatePath("/admin/invitations");
     queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
+    await recordAuditLog({
+      actor,
+      action: "invitation.create",
+      entity: { type: "Invitation", id: code, label: `${groomName} و ${brideName}` },
+      newValues: {
+        code,
+        templateSlug: selectedTemplate.slug,
+        groomName,
+        brideName,
+        phone,
+        weddingDate,
+        weddingTime,
+        venue,
+        city,
+        mapUrl,
+        gallery,
+        musicEnabled: Boolean(musicUrl),
+        musicUrl,
+      },
+      metadata: { source: "legacy-admin-invitations", storage: "database" },
+    });
+    if (savedGallery.length) {
+      await recordAuditLog({
+        actor,
+        action: "media.image.upload",
+        entity: { type: "Media", id: savedGallery[0], label: savedGallery.length > 1 ? `${savedGallery.length} invitation images` : savedGallery[0] },
+        newValues: { imageUrls: savedGallery },
+        metadata: { invitationCode: code, source: "legacy-admin-invitations" },
+      });
+    }
     return NextResponse.redirect(getRedirectUrl(`/admin/invitations?created=${code}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("Failed to create database invitation, falling back to file store", error);

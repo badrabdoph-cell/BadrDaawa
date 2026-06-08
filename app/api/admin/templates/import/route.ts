@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { createCustomTemplateFromHtml } from "@/lib/custom-templates";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
@@ -30,6 +31,13 @@ export async function POST(request: NextRequest) {
     revalidatePath("/order");
     revalidatePath(`/templates/${result.template.slug}/preview`);
     queueGitHubSync(`Custom template imported: ${result.template.slug}.`, { createSnapshot: true });
+    await recordAuditLog({
+      actor: await getAuditActorFromAdminRequest(request),
+      action: "template.change",
+      entity: { type: "Template", id: result.template.slug, label: result.template.arabicName || result.template.name },
+      newValues: result.template,
+      metadata: { source: "custom-template-import" },
+    });
   }
 
   const url = getRedirectUrl("/admin/templates", request.headers, request.nextUrl.origin);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { deleteMediaFile, replaceMediaFile } from "@/lib/media-cleanup";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
@@ -29,6 +30,16 @@ export async function POST(request: NextRequest) {
     const result = await deleteMediaFile(url);
     if (!result.ok) return redirectMedia(request, { mediaError: result.reason || "delete" });
     queueGitHubSync(`Media file deleted: ${result.file?.url}. Backup: ${result.backupFileName}.`, { createSnapshot: true });
+    if (result.file?.kind === "image") {
+      await recordAuditLog({
+        actor: await getAuditActorFromAdminRequest(request),
+        action: "media.image.delete",
+        entity: { type: "Media", id: result.file.url, label: result.file.relativePath },
+        oldValues: result.file,
+        newValues: { deleted: true },
+        metadata: { backupFileName: result.backupFileName, source: "media-library" },
+      });
+    }
     return redirectMedia(request, { mediaSaved: "deleted", backup: result.backupFileName || "" });
   }
 

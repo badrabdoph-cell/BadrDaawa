@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { syncAdminStateToGitHub, updateSyncLog } from "@/lib/github-sync";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -32,6 +33,13 @@ export async function POST(request: NextRequest) {
     createSnapshot: false,
     logId,
     retryCount: 0,
+  });
+  await recordAuditLog({
+    actor: await getAuditActorFromAdminRequest(request),
+    action: "github.sync",
+    entity: { type: "GitHubSync", id: logId || "manual-retry", label: reason },
+    newValues: result,
+    metadata: { source: "manual-retry", logId },
   });
 
   return NextResponse.json(

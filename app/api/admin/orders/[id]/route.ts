@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, deleteFileOrder, getFileOrder, updateFileOrder } from "@/lib/file-store";
@@ -607,6 +608,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     if (action === "publish") {
+      const oldValues = await getSnapshot(id, request);
       const code = (await publishPrismaOrder(id, payload)) || (await publishFileOrder(id, payload));
       if (!code) throw new Error("لم يتم العثور على الطلب.");
       revalidatePath("/admin/orders");
@@ -616,6 +618,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       queueGitHubSync(`Order published as invitation: ${code}.`, { createSnapshot: true });
       const order = await getSnapshot(id, request);
       const links = responseLinks(request, code);
+      await recordAuditLog({
+        actor: await getAuditActorFromAdminRequest(request),
+        action: "order.publish",
+        entity: { type: "Order", id, label: oldValues?.orderNumber || id },
+        oldValues,
+        newValues: { ...order, publishedInvitationCode: code, links },
+        metadata: { invitationCode: code },
+      });
       return jsonMode ? NextResponse.json({ ok: true, code, ...links, order }) : redirectBack(request, `converted-${code}`);
     }
 

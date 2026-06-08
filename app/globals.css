@@ -8596,6 +8596,98 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   gap: 7px;
 }
 
+.audit-log-toolbar {
+  margin-bottom: 14px;
+}
+
+.audit-log-toolbar form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.audit-log-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.audit-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.audit-table-shell {
+  max-height: 72vh;
+}
+
+.audit-log-table {
+  min-width: 980px;
+}
+
+.audit-log-table td {
+  vertical-align: top;
+}
+
+.audit-log-table td strong,
+.audit-log-table td small {
+  display: block;
+}
+
+.audit-log-table td small,
+.audit-muted {
+  margin-top: 3px;
+  color: rgba(245, 234, 214, 0.58);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.audit-action-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.14);
+  color: #f4d676;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.audit-diff-grid {
+  display: grid;
+  gap: 8px;
+  min-width: 260px;
+}
+
+.audit-diff-grid details {
+  border: 1px solid rgba(245, 234, 214, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.audit-diff-grid summary {
+  cursor: pointer;
+  padding: 8px 10px;
+  color: #fff7e8;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.audit-diff-grid pre {
+  max-width: 430px;
+  max-height: 220px;
+  margin: 0;
+  overflow: auto;
+  padding: 0 10px 10px;
+  color: rgba(245, 234, 214, 0.78);
+  direction: ltr;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.75rem;
+}
+
 .media-search-field input {
   min-width: min(320px, 70vw);
 }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/db";
-import { deleteFileInvitation, setFileInvitationActive } from "@/lib/file-store";
+import { deleteFileInvitation, getFileInvitationByCode, setFileInvitationActive } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -54,6 +55,39 @@ async function updateFileInvitationAction(code: string, action: string) {
   return false;
 }
 
+async function getInvitationAuditSnapshot(code: string) {
+  if (prisma) {
+    const invitation = await prisma.invitation
+      .findUnique({
+        where: { code },
+        select: {
+          code: true,
+          status: true,
+          groomName: true,
+          brideName: true,
+          weddingDate: true,
+          venue: true,
+          musicEnabled: true,
+          musicUrl: true,
+        },
+      })
+      .catch(() => null);
+    if (invitation) return invitation;
+  }
+  const fileInvitation = await getFileInvitationByCode(code).catch(() => null);
+  if (!fileInvitation) return null;
+  return {
+    code: fileInvitation.code,
+    isActive: fileInvitation.isActive,
+    groomName: fileInvitation.groomName,
+    brideName: fileInvitation.brideName,
+    weddingDate: fileInvitation.weddingDate,
+    venue: fileInvitation.venue,
+    musicEnabled: fileInvitation.musicEnabled,
+    musicUrl: fileInvitation.musicUrl,
+  };
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
@@ -66,6 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return redirectBack(request, "invalid");
   }
 
+  const oldValues = await getInvitationAuditSnapshot(code);
   const updatedDatabase = await updateDatabaseInvitation(code, action);
   const updatedFile = updatedDatabase ? false : await updateFileInvitationAction(code, action);
   const changed = updatedDatabase || updatedFile;
@@ -76,6 +111,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     safeRevalidatePath(`/${code}`);
     safeRevalidatePath(`/${code}/ad_3399`);
     queueGitHubSync(`Client invitation ${action}: ${code}.`, { createSnapshot: true });
+    await recordAuditLog({
+      actor: await getAuditActorFromAdminRequest(request),
+      action: action === "delete" ? "invitation.delete" : action === "pause" ? "invitation.pause" : "invitation.resume",
+      entity: { type: "Invitation", id: code, label: code },
+      oldValues,
+      newValues: action === "delete" ? { deleted: true } : { status: action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
+      metadata: { storage: updatedDatabase ? "database" : "file" },
+    });
   }
 
   return redirectBack(request, changed ? action : "missing");

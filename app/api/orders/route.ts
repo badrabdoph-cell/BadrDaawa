@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
+import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileOrder } from "@/lib/file-store";
@@ -330,5 +331,27 @@ export async function POST(request: NextRequest) {
     photographer,
   });
   queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
+  await recordAuditLog({
+    actor: getPublicAuditActor(parsed.data.phone || parsed.data.groomName || "Public order"),
+    action: "order.create",
+    entity: { type: "Order", id: orderId, label: effectiveOrderNumber },
+    newValues: {
+      orderId,
+      orderNumber: effectiveOrderNumber,
+      groomName: parsed.data.groomName,
+      brideName: parsed.data.brideName,
+      phone: parsed.data.phone,
+      weddingDate: parsed.data.weddingDate,
+      venue: parsed.data.venue,
+      mapUrl,
+      templateSlug: selectedTemplate.slug,
+      imageUrls,
+      musicEnabled: parsed.data.musicEnabled,
+      musicChoice: parsed.data.musicChoice,
+      musicUrl: music.musicUrl,
+      photographer,
+    },
+    metadata: { source: "public-order-form" },
+  });
   return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message) });
 }

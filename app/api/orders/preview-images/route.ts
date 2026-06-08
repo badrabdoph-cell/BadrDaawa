@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
+import { ADMIN_SESSION_COOKIE, getAdminSessionUser } from "@/lib/admin-session";
+import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages, type PreviewImageInput } from "@/lib/order-preview-images";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
@@ -15,6 +17,12 @@ function isPreviewImageInput(value: unknown): value is PreviewImageInput {
   if (!value || typeof value !== "object") return false;
   const input = value as { dataUrl?: unknown };
   return typeof input.dataUrl === "string";
+}
+
+async function getUploadActor(request: NextRequest) {
+  const admin = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  if (admin) return { type: "admin" as const, id: admin, label: admin };
+  return getPublicAuditActor("Image upload");
 }
 
 export async function POST(request: NextRequest) {
@@ -78,6 +86,13 @@ export async function POST(request: NextRequest) {
     }
 
     queueGitHubSync(`Order preview image uploaded: ${imageUrls.join(", ")}.`);
+    await recordAuditLog({
+      actor: await getUploadActor(request),
+      action: "media.image.upload",
+      entity: { type: "Media", id: imageUrls[0], label: imageUrls.length > 1 ? `${imageUrls.length} images` : imageUrls[0] },
+      newValues: { imageUrls },
+      metadata: { requestId, referer },
+    });
     console.log(`[Preview Images ${requestId}] Done in ${Date.now() - startedAt}ms.`, imageUrls);
     return NextResponse.json({ ok: true, imageUrls });
   } catch (error) {

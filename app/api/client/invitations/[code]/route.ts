@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveAudioDataUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
@@ -11,6 +12,10 @@ import type { Invitation } from "@/lib/types";
 
 async function isClientAllowed(request: NextRequest, code: string) {
   return verifyClientSessionCookie(request.cookies.get(CLIENT_SESSION_COOKIE)?.value, code);
+}
+
+function getClientAuditActor(code: string) {
+  return { type: "client" as const, id: code, label: `Client ${code}` };
 }
 
 type ClientInvitationPayload = {
@@ -59,6 +64,53 @@ async function getCurrentMusicUrl(code: string) {
   return (await getFileInvitationByCode(code))?.musicUrl || "";
 }
 
+async function getClientInvitationAuditSnapshot(code: string) {
+  if (prisma) {
+    const invitation = await prisma.invitation
+      .findUnique({
+        where: { code },
+        select: {
+          code: true,
+          status: true,
+          groomName: true,
+          brideName: true,
+          weddingDate: true,
+          weddingTime: true,
+          venue: true,
+          city: true,
+          mapUrl: true,
+          gallery: true,
+          heroPhoto: true,
+          musicEnabled: true,
+          musicUrl: true,
+          texts: true,
+          photographer: true,
+        },
+      })
+      .catch(() => null);
+    if (invitation) return invitation;
+  }
+  const fileInvitation = await getFileInvitationByCode(code).catch(() => null);
+  if (!fileInvitation) return null;
+  return {
+    code: fileInvitation.code,
+    isActive: fileInvitation.isActive,
+    groomName: fileInvitation.groomName,
+    brideName: fileInvitation.brideName,
+    weddingDate: fileInvitation.weddingDate,
+    weddingTime: fileInvitation.weddingTime,
+    venue: fileInvitation.venue,
+    city: fileInvitation.city,
+    mapUrl: fileInvitation.mapUrl,
+    gallery: fileInvitation.gallery,
+    heroPhoto: fileInvitation.heroPhoto,
+    musicEnabled: fileInvitation.musicEnabled,
+    musicUrl: fileInvitation.musicUrl,
+    texts: fileInvitation.texts,
+    photographer: fileInvitation.photographer,
+  };
+}
+
 async function resolveJsonMusic(code: string, payload: ClientInvitationPayload) {
   if (payload.musicEnabled === false) return { musicUrl: undefined, error: "" };
   if (payload.musicEnabled !== true) return { musicUrl: undefined, error: "" };
@@ -96,6 +148,7 @@ async function resolveJsonPhotographer(payload: ClientInvitationPayload) {
 async function handleJsonUpdate(request: NextRequest, code: string) {
   const payload = (await request.json().catch(() => null)) as ClientInvitationPayload | null;
   if (!payload) return NextResponse.json({ error: "بيانات غير صالحة." }, { status: 400 });
+  const oldValues = await getClientInvitationAuditSnapshot(code);
 
   const data: Record<string, unknown> = {};
   const fileData: Record<string, unknown> = {};
@@ -106,6 +159,7 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   const venue = cleanText(payload.venue);
   const city = cleanText(payload.city);
   const mapUrl = cleanText(payload.mapUrl, 500);
+  let uploadedImageUrls: string[] = [];
 
   if (groomName) {
     data.groomName = groomName;
@@ -143,6 +197,7 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
       return NextResponse.json({ error: "الصور لم يتم حفظها. جرّب صورة أخرى أو صيغة مختلفة." }, { status: 400 });
     }
     if (savedGallery.length) {
+      uploadedImageUrls = savedGallery;
       data.gallery = savedGallery;
       data.heroPhoto = savedGallery[0];
       fileData.gallery = savedGallery;
@@ -191,6 +246,25 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);
   queueGitHubSync(`Client invitation live editor updated: ${code}.`, { createSnapshot: true });
+  if (updated) {
+    await recordAuditLog({
+      actor: getClientAuditActor(code),
+      action: "invitation.update",
+      entity: { type: "Invitation", id: code, label: code },
+      oldValues,
+      newValues: fileData,
+      metadata: { source: "client-live-editor" },
+    });
+    if (uploadedImageUrls.length) {
+      await recordAuditLog({
+        actor: getClientAuditActor(code),
+        action: "media.image.upload",
+        entity: { type: "Media", id: uploadedImageUrls[0], label: uploadedImageUrls.length > 1 ? `${uploadedImageUrls.length} invitation images` : uploadedImageUrls[0] },
+        newValues: { imageUrls: uploadedImageUrls },
+        metadata: { invitationCode: code, source: "client-live-editor" },
+      });
+    }
+  }
   return NextResponse.json({ ok: true, updated });
 }
 
@@ -209,6 +283,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const formData = await request.formData();
+  const oldValues = await getClientInvitationAuditSnapshot(code);
   const galleryImages = getInvitationGalleryEntries(formData);
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
   if (galleryImages.length && !savedGallery.length) {
@@ -311,6 +386,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       revalidatePath(`/${code}`);
       revalidatePath(`/${code}/ad_3399`);
       queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
+      await recordAuditLog({
+        actor: getClientAuditActor(code),
+        action: "invitation.update",
+        entity: { type: "Invitation", id: code, label: code },
+        oldValues,
+        newValues: data,
+        metadata: { source: "client-settings-form", storage: "database" },
+      });
+      if (savedGallery.length) {
+        await recordAuditLog({
+          actor: getClientAuditActor(code),
+          action: "media.image.upload",
+          entity: { type: "Media", id: savedGallery[0], label: savedGallery.length > 1 ? `${savedGallery.length} invitation images` : savedGallery[0] },
+          newValues: { imageUrls: savedGallery },
+          metadata: { invitationCode: code, source: "client-settings-form" },
+        });
+      }
       return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
     } catch (error) {
       console.error("Failed to update database invitation from client admin", error);
@@ -326,5 +418,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);
   queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
+  if (Object.keys(fileData).length) {
+    await recordAuditLog({
+      actor: getClientAuditActor(code),
+      action: "invitation.update",
+      entity: { type: "Invitation", id: code, label: code },
+      oldValues,
+      newValues: fileData,
+      metadata: { source: "client-settings-form", storage: "file" },
+    });
+    if (savedGallery.length) {
+      await recordAuditLog({
+        actor: getClientAuditActor(code),
+        action: "media.image.upload",
+        entity: { type: "Media", id: savedGallery[0], label: savedGallery.length > 1 ? `${savedGallery.length} invitation images` : savedGallery[0] },
+        newValues: { imageUrls: savedGallery },
+        metadata: { invitationCode: code, source: "client-settings-form" },
+      });
+    }
+  }
   return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
 }

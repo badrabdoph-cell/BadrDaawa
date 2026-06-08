@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { restoreBackupSnapshot } from "@/lib/backups";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
@@ -49,6 +50,19 @@ export async function POST(request: NextRequest) {
 
   revalidateAdminState();
   queueGitHubSync(`Restored admin snapshot: ${fileName}.`);
+  await recordAuditLog({
+    actor: await getAuditActorFromAdminRequest(request),
+    action: "backup.restore",
+    entity: { type: "Backup", id: result.fileName, label: result.fileName },
+    oldValues: { beforeRestoreFileName: result.beforeRestoreFileName },
+    newValues: {
+      restoredFileName: result.fileName,
+      restoredDataFiles: result.restoredDataFiles,
+      restoredUploads: result.restoredUploads,
+      includesDatabaseDump: result.includesDatabaseDump,
+    },
+    metadata: { returnTo },
+  });
 
   url.searchParams.set("restored", result.fileName);
   url.searchParams.set("before", result.beforeRestoreFileName);

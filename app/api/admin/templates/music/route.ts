@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import {
@@ -15,7 +16,7 @@ import {
   isSupportedImageFile,
   isSupportedImageUrl,
 } from "@/lib/image-formats";
-import { updateTemplateSettings } from "@/lib/template-settings";
+import { getTemplateWithSettings, updateTemplateSettings } from "@/lib/template-settings";
 import { getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const slug = String(formData.get("slug") || "").trim();
+  const oldValues = await getTemplateWithSettings(slug).catch(() => null);
   const optimizedImages = formData.getAll("templateImage").filter((value): value is string => typeof value === "string" && Boolean(value));
   const rawImages = formData.getAll("templateImageRaw").filter((value): value is File => value instanceof File && isSupportedImageFile(value));
   const imageInputs = optimizedImages.length >= rawImages.length ? optimizedImages : rawImages;
@@ -110,6 +112,25 @@ export async function POST(request: NextRequest) {
     revalidatePath("/templates");
     revalidatePath(`/templates/${slug}/preview`);
     queueGitHubSync(`Template settings updated: ${slug}.`, { createSnapshot: true });
+    const actor = await getAuditActorFromAdminRequest(request);
+    const newValues = await getTemplateWithSettings(slug).catch(() => null);
+    await recordAuditLog({
+      actor,
+      action: "template.change",
+      entity: { type: "Template", id: slug, label: newValues?.arabicName || newValues?.name || slug },
+      oldValues,
+      newValues,
+      metadata: { source: "admin-template-settings" },
+    });
+    if (cleanUploadedImages.length) {
+      await recordAuditLog({
+        actor,
+        action: "media.image.upload",
+        entity: { type: "Media", id: cleanUploadedImages[0], label: cleanUploadedImages.length > 1 ? `${cleanUploadedImages.length} template images` : cleanUploadedImages[0] },
+        newValues: { imageUrls: cleanUploadedImages },
+        metadata: { templateSlug: slug, source: "admin-template-settings" },
+      });
+    }
   }
 
   const url = getRedirectUrl("/admin/templates", request.headers, request.nextUrl.origin);

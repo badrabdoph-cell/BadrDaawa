@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { getSystemAuditActor, recordAuditLog } from "./audit-log";
 import { syncAdminStateToGitHub, createSyncLog, isGitHubSyncAuthFailure } from "./github-sync";
 import type { GitHubSyncResult } from "./github-sync";
 
@@ -164,6 +165,18 @@ async function processSyncQueue() {
           item.status = "completed";
           item.completedAt = Date.now();
         }
+        await recordAuditLog({
+          actor: getSystemAuditActor("GitHub Sync Queue"),
+          action: "github.sync",
+          entity: { type: "GitHubSync", id: item.id, label: item.reason },
+          newValues: result,
+          metadata: {
+            reason: item.reason,
+            status: result.status,
+            retryCount: item.retryCount,
+            logId: item.logId,
+          },
+        });
 
         console.log(`[GitHub Sync Queue] ${item.reason}:`, result.status);
       } catch (error) {
@@ -176,6 +189,17 @@ async function processSyncQueue() {
         } else {
           await scheduleRetry(item);
         }
+        await recordAuditLog({
+          actor: getSystemAuditActor("GitHub Sync Queue"),
+          action: "github.sync",
+          entity: { type: "GitHubSync", id: item.id, label: item.reason },
+          newValues: { status: "failed", error: item.error },
+          metadata: {
+            reason: item.reason,
+            retryCount: item.retryCount,
+            logId: item.logId,
+          },
+        });
       }
 
       trimTrackedJobs();

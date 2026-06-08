@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, getFileInvitationByCode, setFileInvitationActive, updateFileInvitation } from "@/lib/file-store";
@@ -98,6 +99,56 @@ function responseLinks(request: NextRequest, code: string) {
   };
 }
 
+async function getBuilderAuditSnapshot(code: string) {
+  if (!code) return null;
+  if (prisma) {
+    const invitation = await prisma.invitation
+      .findUnique({
+        where: { code },
+        select: {
+          code: true,
+          status: true,
+          groomName: true,
+          brideName: true,
+          weddingDate: true,
+          weddingTime: true,
+          venue: true,
+          city: true,
+          mapUrl: true,
+          gallery: true,
+          musicEnabled: true,
+          musicUrl: true,
+          template: { select: { slug: true, arabicName: true } },
+        },
+      })
+      .catch(() => null);
+    if (invitation) {
+      return {
+        ...invitation,
+        templateSlug: invitation.template?.slug || "",
+        templateName: invitation.template?.arabicName || "",
+      };
+    }
+  }
+  const fileInvitation = await getFileInvitationByCode(code).catch(() => null);
+  if (!fileInvitation) return null;
+  return {
+    code: fileInvitation.code,
+    isActive: fileInvitation.isActive,
+    templateSlug: fileInvitation.templateSlug,
+    groomName: fileInvitation.groomName,
+    brideName: fileInvitation.brideName,
+    weddingDate: fileInvitation.weddingDate,
+    weddingTime: fileInvitation.weddingTime,
+    venue: fileInvitation.venue,
+    city: fileInvitation.city,
+    mapUrl: fileInvitation.mapUrl,
+    gallery: fileInvitation.gallery,
+    musicEnabled: fileInvitation.musicEnabled,
+    musicUrl: fileInvitation.musicUrl,
+  };
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.json({ error: "انتهت جلسة الأدمن. سجل الدخول مرة أخرى." }, { status: 401 });
@@ -137,6 +188,7 @@ export async function POST(request: NextRequest) {
   const isActive = status === "ACTIVE";
   const baseSlug = buildInvitationBaseSlug(groomName, brideName);
   const existingCode = cleanText(input.code);
+  const oldValues = existingCode ? await getBuilderAuditSnapshot(existingCode) : null;
 
   async function createOrUpdateFileInvitation() {
     if (existingCode && (await getFileInvitationByCode(existingCode))) {
@@ -280,6 +332,53 @@ export async function POST(request: NextRequest) {
   revalidatePath(getCustomerAdminPath(code));
   revalidatePath("/admin/invitations");
   queueGitHubSync(`Invitation builder ${action}: ${code}.`, { createSnapshot: true });
+  const actor = await getAuditActorFromAdminRequest(request);
+  const newValues = {
+    code,
+    status,
+    templateSlug: templateDefinition.slug,
+    groomName,
+    brideName,
+    weddingDate,
+    weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
+    venue,
+    city: cleanText(input.city),
+    mapUrl: cleanText(input.mapUrl),
+    gallery,
+    musicEnabled: Boolean(input.musicEnabled),
+    musicChoice: input.musicChoice || "default",
+    musicUrl,
+    texts,
+    photographer,
+  };
+  await recordAuditLog({
+    actor,
+    action: oldValues ? "invitation.update" : "invitation.create",
+    entity: { type: "Invitation", id: code, label: `${groomName} و ${brideName}` },
+    oldValues,
+    newValues,
+    metadata: { source: "invitation-builder", builderAction: action },
+  });
+  if (savedGallery.length && galleryInput.length) {
+    await recordAuditLog({
+      actor,
+      action: "media.image.upload",
+      entity: { type: "Media", id: savedGallery[0], label: savedGallery.length > 1 ? `${savedGallery.length} invitation images` : savedGallery[0] },
+      newValues: { imageUrls: savedGallery },
+      metadata: { invitationCode: code, source: "invitation-builder" },
+    });
+  }
+
+  if (oldValues && "templateSlug" in oldValues && oldValues.templateSlug && oldValues.templateSlug !== templateDefinition.slug) {
+    await recordAuditLog({
+      actor,
+      action: "template.change",
+      entity: { type: "Template", id: templateDefinition.slug, label: `${oldValues.templateSlug} -> ${templateDefinition.slug}` },
+      oldValues: { templateSlug: oldValues.templateSlug },
+      newValues: { templateSlug: templateDefinition.slug },
+      metadata: { invitationCode: code },
+    });
+  }
 
   return NextResponse.json({
     ok: true,
