@@ -1,7 +1,7 @@
 "use client";
 
 const maxBrowserOriginalImageBytes = 32 * 1024 * 1024;
-const maxDirectServerImageBytes = 16 * 1024 * 1024;
+const maxDirectServerImageBytes = 32 * 1024 * 1024;
 const maxImageSide = 1800;
 const retryCount = 2;
 
@@ -43,6 +43,7 @@ function loadImageElement(url: string) {
 async function compressBrowserImage(file: File): Promise<OptimizedUploadFile> {
   const sourceUrl = URL.createObjectURL(file);
   try {
+    console.log(`[Browser Image Upload] Compress start name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`);
     let width = 0;
     let height = 0;
     let drawable: CanvasImageSource;
@@ -111,7 +112,10 @@ async function prepareUploadFile(file: File): Promise<OptimizedUploadFile> {
     return await compressBrowserImage(file);
   } catch (error) {
     if (file.size <= maxDirectServerImageBytes) {
-      console.log(`[Browser Image Upload] Browser compression skipped for ${file.name}; sending original to server.`, error);
+      console.log(
+        `[Browser Image Upload] Compression failed; uploading original fallback name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`,
+        error,
+      );
       return {
         file,
         originalBytes: file.size,
@@ -148,7 +152,9 @@ export async function uploadBrowserPreviewImage(file: File, options: BrowserImag
   options.onStatus?.({
     phase: "uploading",
     progress: 55,
-    message: `تم الضغط من ${formatBytes(optimized.originalBytes)} إلى ${formatBytes(optimized.optimizedBytes)}`,
+    message: optimized.originalBytes === optimized.optimizedBytes
+      ? `سيتم رفع الصورة الأصلية (${formatBytes(optimized.originalBytes)})`
+      : `تم الضغط من ${formatBytes(optimized.originalBytes)} إلى ${formatBytes(optimized.optimizedBytes)}`,
   });
 
   let lastError: unknown = null;

@@ -81,7 +81,7 @@ const orderImageSlots = [
 
 const acceptedAudioFormats = "audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac,.aif,.aiff";
 const maxClientOriginalImageBytes = 32 * 1024 * 1024;
-const maxDirectServerImageBytes = 16 * 1024 * 1024;
+const maxDirectServerImageBytes = 32 * 1024 * 1024;
 const uploadRetryCount = 2;
 
 function createIdleUploadState(url = ""): ImageUploadState {
@@ -116,6 +116,7 @@ function loadImageElement(url: string) {
 async function compressImageForUpload(file: File) {
   const sourceUrl = URL.createObjectURL(file);
   try {
+    console.log(`[Order Upload] Compress start name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`);
     let width = 0;
     let height = 0;
     let drawable: CanvasImageSource;
@@ -600,7 +601,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         setImageUpload(index, { phase: "compressing", progress: 18, message: "جاري ضغط الصورة داخل المتصفح", error: "" });
         const optimized = await compressImageForUpload(file).catch((error) => {
           if (file.size <= maxDirectServerImageBytes) {
-            console.log(`[Order Upload] Browser compression skipped for ${file.name}; sending original to server.`, error);
+            console.log(
+              `[Order Upload] Compression failed; uploading original fallback name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`,
+              error,
+            );
             return {
               file,
               originalBytes: file.size,
@@ -615,7 +619,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         setImageUpload(index, {
           phase: "uploading",
           progress: 50,
-          message: `تم الضغط من ${formatUploadSize(optimized.originalBytes)} إلى ${formatUploadSize(optimized.optimizedBytes)}`,
+          message: optimized.originalBytes === optimized.optimizedBytes
+            ? `سيتم رفع الصورة الأصلية (${formatUploadSize(optimized.originalBytes)})`
+            : `تم الضغط من ${formatUploadSize(optimized.originalBytes)} إلى ${formatUploadSize(optimized.optimizedBytes)}`,
           error: "",
         });
 

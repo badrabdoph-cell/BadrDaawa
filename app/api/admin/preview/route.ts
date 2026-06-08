@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { imageExtensionForUpload, isSupportedImageFile } from "@/lib/image-formats";
+import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ async function savePreviewMedia(file: File | null) {
     "video/quicktime": "mov",
   };
   let bytes: Buffer = Buffer.from(await file.arrayBuffer());
-  let extension = isImage ? imageExtensionForUpload(file.type, file.name) : extensionByType[file.type] || "mp4";
+  let extension = isImage ? imageExtensionForUpload(file.type, file.name, imageExtensionFromBytes(bytes) || "jpg") : extensionByType[file.type] || "mp4";
   if (isImage) {
     const normalized = await normalizeImageForDisplay(bytes, extension, `home-preview:${file.name || file.type}`);
     if (!normalized) return { url: "", mode: "" };

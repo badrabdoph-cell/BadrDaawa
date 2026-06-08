@@ -12,7 +12,7 @@ import { orderRequestSchema } from "@/lib/validation";
 export const runtime = "nodejs";
 export const maxDuration = 45;
 
-const maxOrderRequestBytes = 24 * 1024 * 1024;
+const maxOrderRequestBytes = 36 * 1024 * 1024;
 
 async function saveOrderImages(images: string[], request: Request) {
   const requestId = `order-${Date.now().toString(36)}`;

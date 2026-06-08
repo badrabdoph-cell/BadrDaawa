@@ -20,7 +20,12 @@ const maxDisplayImageHeight = 2200;
 const maxInputPixels = 60_000_000;
 
 export async function normalizeImageForDisplay(bytes: Buffer, extension: string, sourceLabel: string): Promise<DisplayImageResult | null> {
-  const originalExtension = cleanImageExtension(extension) || "jpg";
+  const originalExtension = cleanImageExtension(extension);
+  if (!bytes.length || !originalExtension) {
+    console.error(`[Image Conversion] ${sourceLabel}: rejected empty or unsupported image (${bytes.length} bytes, ${extension || "unknown"}).`);
+    return null;
+  }
+
   if (isBrowserDisplayImageExtension(originalExtension) && passthroughExtensions.has(originalExtension)) {
     return {
       bytes,
@@ -63,7 +68,7 @@ export async function normalizeImageForDisplay(bytes: Buffer, extension: string,
   } catch (error) {
     const message = error instanceof Error ? error.message.split("\n")[0] : String(error);
     if (isBrowserDisplayImageExtension(originalExtension)) {
-      console.error(`[Image Conversion] Failed to optimize ${sourceLabel} (${originalExtension}); keeping original browser-displayable file. Reason: ${message}`);
+      console.error(`[Image Conversion] ${sourceLabel}: sharp optimization failed for ${originalExtension}; saved original browser-displayable file. Reason: ${message}`);
       return {
         bytes,
         extension: originalExtension,
@@ -71,7 +76,12 @@ export async function normalizeImageForDisplay(bytes: Buffer, extension: string,
         originalExtension,
       };
     }
-    console.error(`[Image Conversion] Failed to convert ${sourceLabel} (${originalExtension}) to browser-safe image. Reason: ${message}`);
-    return null;
+    console.error(`[Image Conversion] ${sourceLabel}: sharp conversion failed for ${originalExtension}; saved original as fallback. Reason: ${message}`);
+    return {
+      bytes,
+      extension: originalExtension,
+      converted: false,
+      originalExtension,
+    };
   }
 }

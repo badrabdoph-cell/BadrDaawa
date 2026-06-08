@@ -4,6 +4,7 @@ import path from "node:path";
 import { normalizeImageForDisplay } from "./display-images";
 import {
   imageExtensionForUpload,
+  imageExtensionFromBytes,
   imageExtensionFromDataMime,
   imageExtensionFromName,
   isBrowserDisplayImageUrl,
@@ -22,8 +23,8 @@ function isExistingImageUrl(value: string) {
   return value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://");
 }
 
-function imageExtension(type: string, fileName = "") {
-  return imageExtensionForUpload(type, fileName);
+function imageExtension(type: string, fileName = "", bytes?: Buffer) {
+  return imageExtensionForUpload(type, fileName, bytes ? imageExtensionFromBytes(bytes) || "jpg" : "jpg");
 }
 
 async function saveImageBytes(bytes: Buffer, extension: string, sourceLabel: string) {
@@ -76,7 +77,7 @@ async function saveGalleryImage(image: string | File) {
         console.error(`[Invitation Images] Uploaded image is empty: ${image.name || "unnamed"}.`);
         return "";
       }
-      return saveImageBytes(bytes, imageExtension(image.type, image.name), image.name || image.type || "uploaded invitation image");
+      return saveImageBytes(bytes, imageExtension(image.type, image.name, bytes), image.name || image.type || "uploaded invitation image");
     } catch (error) {
       console.error("[Invitation Images] Failed to save uploaded invitation image", error);
       return "";

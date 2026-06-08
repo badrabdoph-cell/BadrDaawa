@@ -6,7 +6,7 @@ import { saveOrderPreviewImages, type PreviewImageInput } from "@/lib/order-prev
 export const runtime = "nodejs";
 export const maxDuration = 45;
 
-const maxPreviewRequestBytes = 18 * 1024 * 1024;
+const maxPreviewRequestBytes = 36 * 1024 * 1024;
 
 function isPreviewImageInput(value: unknown): value is PreviewImageInput {
   if (typeof value === "string") return true;
@@ -21,14 +21,17 @@ export async function POST(request: Request) {
   const startedAt = Date.now();
   const contentType = request.headers.get("content-type") || "";
   const contentLength = Number(request.headers.get("content-length") || 0);
+  const referer = request.headers.get("referer") || "";
   let images: PreviewImageInput[] = [];
 
-  console.log(`[Preview Images ${requestId}] Start contentType=${contentType || "unknown"} contentLength=${contentLength || "unknown"}.`);
+  console.log(
+    `[Preview Images ${requestId}] Start contentType=${contentType || "unknown"} contentLength=${contentLength || "unknown"} referer=${referer || "unknown"}.`,
+  );
 
   if (contentLength > maxPreviewRequestBytes) {
     console.error(`[Preview Images ${requestId}] Rejected large request: ${contentLength} bytes.`);
     return NextResponse.json(
-      { ok: false, error: "حجم الصورة كبير جداً. اضغط الصورة أو اختار صورة أقل من 16MB ثم حاول مرة أخرى." },
+      { ok: false, error: "حجم الصورة كبير جداً. اضغط الصورة أو اختار صورة أقل من 32MB ثم حاول مرة أخرى." },
       { status: 413 },
     );
   }
@@ -59,7 +62,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: "تعذر تحويل الصورة لصيغة قابلة للعرض. جرّب رفع JPG أو PNG أو صورة HEIC أوضح/أقل حجمًا.",
+          error: "الصورة لم تصل كملف صالح أو تبدو تالفة. جرّب رفع JPG أو PNG أو HEIC أو AVIF من جديد.",
         },
         { status: 422 },
       );

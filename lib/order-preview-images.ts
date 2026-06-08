@@ -2,10 +2,10 @@ import crypto from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { normalizeImageForDisplay } from "./display-images";
-import { imageExtensionFromDataMime, imageExtensionFromMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
+import { imageExtensionFromBytes, imageExtensionFromDataMime, imageExtensionFromMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
 import { ensureDirectory } from "./runtime-paths";
 
-const maxPreviewImageBytes = 16 * 1024 * 1024;
+const maxPreviewImageBytes = 32 * 1024 * 1024;
 
 export type PreviewImageInput =
   | string
@@ -49,8 +49,16 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
 
   async function saveBytes(bytes: Buffer, extension: string, sourceLabel: string) {
     const startedAt = Date.now();
-    console.log(`[Order Images ${requestId}] Optimizing ${sourceLabel} (${bytes.length} bytes, ${extension}) for ${folder}.`);
-    const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
+    const detectedExtension = imageExtensionFromBytes(bytes);
+    const finalExtension = extension || detectedExtension;
+    console.log(
+      `[Order Images ${requestId}] Optimizing ${sourceLabel} (${bytes.length} bytes, extension=${extension || "unknown"}, detected=${detectedExtension || "unknown"}) for ${folder}.`,
+    );
+    if (!finalExtension) {
+      console.error(`[Order Images ${requestId}] Rejected ${sourceLabel}: unsupported image bytes.`);
+      return "";
+    }
+    const normalized = await normalizeImageForDisplay(bytes, finalExtension, sourceLabel);
     if (!normalized) return "";
 
     ensureDirectory(uploadDir);
@@ -70,13 +78,18 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
         continue;
       }
 
-      const extension = imageExtensionFromMime(image.type) || imageExtensionFromName(image.name);
+      const bytes = Buffer.from(await image.arrayBuffer());
+      const detectedExtension = imageExtensionFromBytes(bytes);
+      const extension = imageExtensionFromMime(image.type) || imageExtensionFromName(image.name) || detectedExtension;
+      console.log(
+        `[Order Images ${requestId}] File input ${image.name || "unnamed"} type=${image.type || "unknown"} size=${image.size} extension=${extension || "unknown"} detected=${detectedExtension || "unknown"}.`,
+      );
       if (!extension) {
         console.error(`[Order Images ${requestId}] Uploaded preview image skipped for ${folder}: unsupported file (${image.type || "empty"} / ${image.name || "unnamed"}).`);
         continue;
       }
 
-      const url = await saveBytes(Buffer.from(await image.arrayBuffer()), extension, image.name || image.type || `upload:${folder}`);
+      const url = await saveBytes(bytes, extension, image.name || image.type || `upload:${folder}`);
       if (url) savedUrls.push(url);
       continue;
     }
@@ -95,7 +108,11 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
         continue;
       }
 
-      const extension = imageExtensionFromDataMime(dataUrl.mime) || imageExtensionFromMime(type) || imageExtensionFromName(name);
+      const detectedExtension = imageExtensionFromBytes(bytes);
+      const extension = imageExtensionFromDataMime(dataUrl.mime) || imageExtensionFromMime(type) || imageExtensionFromName(name) || detectedExtension;
+      console.log(
+        `[Order Images ${requestId}] Data URL input name=${name || "unnamed"} mime=${dataUrl.mime || type || "unknown"} size=${bytes.length} extension=${extension || "unknown"} detected=${detectedExtension || "unknown"}.`,
+      );
       if (!extension) {
         console.error(`[Order Images ${requestId}] Preview image skipped for ${folder}: unsupported MIME/name (${dataUrl.mime || "empty"} / ${type || "empty"} / ${name || "unnamed"}).`);
         continue;

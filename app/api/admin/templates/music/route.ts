@@ -8,6 +8,7 @@ import { normalizeImageForDisplay } from "@/lib/display-images";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import {
   imageExtensionForUpload,
+  imageExtensionFromBytes,
   imageExtensionFromDataMime,
   imageExtensionFromName,
   isBrowserDisplayImageUrl,
@@ -35,8 +36,9 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
 
   if (image instanceof File) {
     if (!isSupportedImageFile(image) || image.size > 80 * 1024 * 1024) return "";
-    const extension = imageExtensionForUpload(image.type, image.name);
-    return saveBytes(Buffer.from(await image.arrayBuffer()), extension, `template:${image.name || image.type}`);
+    const bytes = Buffer.from(await image.arrayBuffer());
+    const extension = imageExtensionForUpload(image.type, image.name, imageExtensionFromBytes(bytes) || "jpg");
+    return saveBytes(bytes, extension, `template:${image.name || image.type}`);
   }
 
   if (!image) return "";

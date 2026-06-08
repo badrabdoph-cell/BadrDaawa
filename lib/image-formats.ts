@@ -122,6 +122,48 @@ export function imageExtensionFromDataMime(type = "") {
   return imageExtensionFromMime(type) || cleanImageExtension(type.replace(/^image\//i, ""));
 }
 
+export function imageExtensionFromBytes(bytes: Uint8Array) {
+  if (bytes.length < 4) return "";
+
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpg";
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "png";
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) return "gif";
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return "webp";
+  }
+  if (
+    bytes.length >= 12 &&
+    bytes[4] === 0x66 &&
+    bytes[5] === 0x74 &&
+    bytes[6] === 0x79 &&
+    bytes[7] === 0x70
+  ) {
+    const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]).toLowerCase();
+    if (brand === "avif" || brand === "avis") return "avif";
+    if (brand === "heic" || brand === "heix" || brand === "hevc" || brand === "hevx") return "heic";
+    if (brand === "heif" || brand === "mif1" || brand === "msf1") return "heif";
+  }
+  if (
+    bytes.length >= 4 &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
+      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a))
+  ) {
+    return "tif";
+  }
+
+  return "";
+}
+
 export function isSupportedImageFile(file: File) {
   return Boolean(file.size > 0 && (imageExtensionFromMime(file.type) || imageExtensionFromName(file.name) || file.type.startsWith("image/")));
 }
