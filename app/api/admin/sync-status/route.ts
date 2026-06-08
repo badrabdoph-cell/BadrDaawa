@@ -42,7 +42,13 @@ export async function POST(request: NextRequest) {
   const result = await syncAdminStateToGitHub("Manual admin sync requested.", { createSnapshot: true });
   const wantsJson = request.headers.get("accept")?.includes("application/json") || request.headers.get("content-type")?.includes("application/json");
   if (wantsJson) {
-    return NextResponse.json(result, { status: result.status === "failed" ? 500 : 200 });
+    return NextResponse.json(
+      {
+        ...result,
+        readiness: getGitHubSyncReadiness(),
+      },
+      { status: result.status === "failed" ? 500 : 200 },
+    );
   }
 
   const url = getRedirectUrl("/admin", request.headers, request.nextUrl.origin);
