@@ -65,6 +65,7 @@ export type Invitation = {
     facebookUrl: string;
     whatsappUrl?: string;
   };
+  checkInEnabled?: boolean;
   isActive: boolean;
   views: number;
   customerId: string;
@@ -80,6 +81,15 @@ export type InvitationTexts = {
   inviteMessageSecondary?: string;
   rsvpQuestion?: string;
   rsvpDeclinedMessage?: string;
+  story?: CoupleStoryItem[];
+};
+
+export type CoupleStoryItem = {
+  id?: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  date?: string;
 };
 
 export type ContentPresetKind = "opening" | "welcome" | "rsvp";
@@ -103,6 +113,42 @@ export type GuestRsvp = {
   status: "confirmed" | "declined";
   note?: string;
   createdAt: string;
+};
+
+export type GuestBookStatus = "pending" | "approved" | "rejected";
+
+export type GuestBookMessage = {
+  id: string;
+  invitationCode: string;
+  name: string;
+  message: string;
+  status: GuestBookStatus;
+  createdAt: string;
+  reviewedAt?: string;
+};
+
+export type InvitationCheckIn = {
+  id: string;
+  invitationCode: string;
+  visitorKey: string;
+  createdAt: string;
+  userAgent?: string;
+};
+
+export type WeddingLiveEvent = {
+  id: string;
+  time: string;
+  title: string;
+  description?: string;
+};
+
+export type WeddingLiveModeConfig = {
+  invitationCode: string;
+  enabled: boolean;
+  announcement?: string;
+  events: WeddingLiveEvent[];
+  updatedAt: string;
+  updatedBy?: "admin" | "client";
 };
 
 export type OrderRequest = {

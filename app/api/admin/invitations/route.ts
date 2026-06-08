@@ -8,6 +8,7 @@ import { createFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { hashPassword } from "@/lib/password";
+import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { royalEnvelopeTemplate } from "@/lib/templates";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -47,7 +48,17 @@ export async function POST(request: NextRequest) {
   const galleryImages = getInvitationGalleryEntries(formData);
 
   const parsedWeddingDate = new Date(weddingDate);
-  if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue) {
+  const prePublishReport = getPrePublishValidationReport({
+    groomName,
+    brideName,
+    weddingDate,
+    weddingTime,
+    venue,
+    mapUrl,
+    templateSlug: selectedTemplate.slug,
+    gallery: galleryImages.map((image) => (typeof image === "string" ? image : image.size > 0 ? image.name || "uploaded-image" : "")),
+  });
+  if (!groomName || !brideName || !phone || !username || !password || !weddingDate || Number.isNaN(parsedWeddingDate.getTime()) || !venue || !prePublishReport.canPublish) {
     return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 

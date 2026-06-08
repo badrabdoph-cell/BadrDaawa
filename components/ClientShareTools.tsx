@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Copy, Facebook, MessageCircle, Send, Share2 } from "lucide-react";
+import { withVisitSource } from "@/lib/visit-source";
 
 type ClientShareToolsProps = {
   invitationUrl: string;
@@ -36,12 +37,27 @@ export function ClientShareTools(props: ClientShareToolsProps) {
   const [message, setMessage] = useState(defaultMessage);
   const [copied, setCopied] = useState<"url" | "message" | "">("");
 
-  const encodedUrl = encodeURIComponent(props.invitationUrl);
-  const encodedMessage = encodeURIComponent(message);
+  const trackedUrls = useMemo(
+    () => ({
+      whatsapp: withVisitSource(props.invitationUrl, "WhatsApp"),
+      telegram: withVisitSource(props.invitationUrl, "Telegram"),
+      facebook: withVisitSource(props.invitationUrl, "Facebook"),
+    }),
+    [props.invitationUrl],
+  );
+  const messageWithUrl = (url: string) => {
+    const clean = message.trim();
+    if (!clean) return url;
+    return clean.includes(props.invitationUrl) ? clean.split(props.invitationUrl).join(url) : `${clean}\n${url}`;
+  };
+  const encodedTelegramUrl = encodeURIComponent(trackedUrls.telegram);
+  const encodedWhatsAppMessage = encodeURIComponent(messageWithUrl(trackedUrls.whatsapp));
+  const encodedTelegramMessage = encodeURIComponent(messageWithUrl(trackedUrls.telegram));
+  const encodedFacebookUrl = encodeURIComponent(trackedUrls.facebook);
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodedMessage}`,
-    telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedMessage}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    whatsapp: `https://wa.me/?text=${encodedWhatsAppMessage}`,
+    telegram: `https://t.me/share/url?url=${encodedTelegramUrl}&text=${encodedTelegramMessage}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedFacebookUrl}`,
   };
 
   async function copy(value: string, kind: "url" | "message") {

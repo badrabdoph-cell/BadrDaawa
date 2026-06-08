@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, GripVertical, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, RotateCcw, Save, Send, Sparkles, UploadCloud, UserRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import {
@@ -20,7 +20,8 @@ import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPr
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { defaultInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { ContentPreset, InvitationTexts } from "@/lib/types";
+import { getPrePublishValidationReport, prePublishStatusLabel, prePublishStatusSymbol } from "@/lib/pre-publish-validation";
+import type { ContentPreset, CoupleStoryItem, InvitationTexts } from "@/lib/types";
 
 type WizardTemplate = {
   slug: string;
@@ -178,23 +179,6 @@ function normalizeDraft(value: unknown, templates: WizardTemplate[]) {
   };
 }
 
-function completionScore(draft: DraftState) {
-  const checks = [
-    Boolean(draft.templateSlug),
-    Boolean(draft.groomName.trim()),
-    Boolean(draft.brideName.trim()),
-    Boolean(draft.weddingDate),
-    Boolean(draft.weddingTime.trim()),
-    Boolean(draft.venue.trim()),
-    draft.images.some((image) => Boolean(image.url)),
-    !draft.musicEnabled || draft.musicChoice === "default" || Boolean(draft.musicUrl),
-    !draft.photographerEnabled || Boolean(draft.photographerName.trim()),
-    Boolean(draft.invitationTexts.inviteMessage.trim()),
-    Boolean(draft.invitationTexts.rsvpQuestion.trim()),
-  ];
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-}
-
 function isValidUrl(value: string) {
   if (!value.trim()) return true;
   try {
@@ -203,6 +187,10 @@ function isValidUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function createStoryItem(): CoupleStoryItem {
+  return { id: `story-${Date.now().toString(36)}`, title: "", description: "", imageUrl: "", date: "" };
 }
 
 export function AdminNewInvitationWizard({
@@ -234,7 +222,21 @@ export function AdminNewInvitationWizard({
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
   const stepIndex = steps.findIndex((step) => step.id === currentStep);
   const selectedTemplate = templates.find((template) => template.slug === draft.templateSlug) || templates[0];
-  const completion = completionScore(draft);
+  const prePublishReport = useMemo(
+    () =>
+      getPrePublishValidationReport({
+        groomName: draft.groomName,
+        brideName: draft.brideName,
+        weddingDate: draft.weddingDate,
+        weddingTime: draft.weddingTime,
+        venue: draft.venue,
+        mapUrl: draft.mapUrl,
+        templateSlug: draft.templateSlug,
+        images: draft.images,
+      }),
+    [draft.brideName, draft.groomName, draft.images, draft.mapUrl, draft.templateSlug, draft.venue, draft.weddingDate, draft.weddingTime],
+  );
+  const completion = prePublishReport.readiness;
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
@@ -324,6 +326,27 @@ export function AdminNewInvitationWizard({
 
   function updateText(key: keyof InvitationTexts, value: string) {
     setDraft((current) => ({ ...current, invitationTexts: { ...current.invitationTexts, [key]: value } }));
+    setMessage(null);
+  }
+
+  function addStoryItem() {
+    setDraft((current) => ({ ...current, invitationTexts: { ...current.invitationTexts, story: [...current.invitationTexts.story, createStoryItem()] } }));
+    setMessage(null);
+  }
+
+  function updateStoryItem(index: number, patchValue: Partial<CoupleStoryItem>) {
+    setDraft((current) => ({
+      ...current,
+      invitationTexts: {
+        ...current.invitationTexts,
+        story: current.invitationTexts.story.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patchValue } : item)),
+      },
+    }));
+    setMessage(null);
+  }
+
+  function removeStoryItem(index: number) {
+    setDraft((current) => ({ ...current, invitationTexts: { ...current.invitationTexts, story: current.invitationTexts.story.filter((_, itemIndex) => itemIndex !== index) } }));
     setMessage(null);
   }
 
@@ -476,7 +499,26 @@ export function AdminNewInvitationWizard({
     }
   }
 
+  async function handleStoryImageFile(index: number, file?: File | null) {
+    if (!file) return;
+    setBusy("image");
+    try {
+      const url = await uploadAdminPreviewImage(file, { slot: `story-${index + 1}` });
+      updateStoryItem(index, { imageUrl: url });
+      setMessage({ kind: "success", text: "تم رفع صورة محطة القصة." });
+    } catch (error) {
+      setMessage({ kind: "error", text: error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع صورة القصة." });
+    } finally {
+      setBusy("idle");
+    }
+  }
+
   async function save(action: "draft" | "publish") {
+    if (action === "publish" && !prePublishReport.canPublish) {
+      setCurrentStep("publish");
+      setMessage({ kind: "error", text: `لا يمكن نشر الدعوة قبل إكمال: ${prePublishReport.blockingItems.map((item) => item.label).join("، ")}.` });
+      return;
+    }
     const values = {
       templateSlug: draft.templateSlug,
       groomName: draft.groomName,
@@ -703,6 +745,43 @@ export function AdminNewInvitationWizard({
         <label className="field full"><span>رسالة الدعوة</span><textarea rows={5} value={draft.invitationTexts.inviteMessage} onChange={(event) => updateText("inviteMessage", event.target.value)} /></label>
         <label className="field"><span>رسالة RSVP</span><input value={draft.invitationTexts.rsvpQuestion} onChange={(event) => updateText("rsvpQuestion", event.target.value)} /></label>
         <label className="field"><span>رسالة الاعتذار</span><input value={draft.invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateText("rsvpDeclinedMessage", event.target.value)} /></label>
+        <section className="story-editor full">
+          <div className="story-editor-head">
+            <div>
+              <span><Heart size={16} /> قسم اختياري</span>
+              <strong>قصة العروسين</strong>
+            </div>
+            <button className="btn btn-soft" type="button" onClick={addStoryItem}><Plus size={16} /> إضافة محطة</button>
+          </div>
+          {draft.invitationTexts.story.length ? (
+            <div className="story-editor-list">
+              {draft.invitationTexts.story.map((item, index) => (
+                <article className="story-editor-item" key={item.id || index}>
+                  <div className="story-editor-item-head">
+                    <strong>محطة {index + 1}</strong>
+                    <button className="admin-icon-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المحطة"><Trash2 size={16} /></button>
+                  </div>
+                  <label className="field"><span>العنوان</span><input value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} /></label>
+                  <label className="field"><span>التاريخ (اختياري)</span><input value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder="مثلاً: 2024 أو أول لقاء" /></label>
+                  <label className="field full"><span>الوصف</span><textarea rows={3} value={item.description} onChange={(event) => updateStoryItem(index, { description: event.target.value })} /></label>
+                  <label className="field full"><span>رابط صورة اختياري</span><input dir="ltr" value={item.imageUrl || ""} onChange={(event) => updateStoryItem(index, { imageUrl: event.target.value })} placeholder="/uploads/..." /></label>
+                  <label className="new-invite-upload-line full"><UploadCloud size={17} /><span>رفع صورة للمحطة</span><input type="file" accept={acceptedImageFormats} onChange={(event) => handleStoryImageFile(index, event.target.files?.[0])} /></label>
+                  {imageFiles.length ? (
+                    <label className="field full">
+                      <span>اختيار صورة من المكتبة</span>
+                      <select value="" onChange={(event) => { if (event.target.value) updateStoryItem(index, { imageUrl: event.target.value }); }}>
+                        <option value="">اختار صورة محفوظة</option>
+                        {imageFiles.map((file) => <option key={`${index}-${file.url}`} value={file.url}>{file.name || file.url.split("/").pop()}</option>)}
+                      </select>
+                    </label>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="story-editor-empty">لن يظهر القسم داخل الدعوة إلا بعد إضافة محطة واحدة على الأقل.</p>
+          )}
+        </section>
       </div>
     );
   }
@@ -739,8 +818,29 @@ export function AdminNewInvitationWizard({
         </div>
         <div className="new-invite-publish-actions">
           <button className="btn btn-soft" type="button" disabled={busy !== "idle"} onClick={() => save("draft")}>{busy === "draft" ? <Loader2 size={18} /> : <Save size={18} />} حفظ كمسودة</button>
-          <button className="btn btn-gold btn-glow" type="button" disabled={busy !== "idle"} onClick={() => save("publish")}>{busy === "publish" ? <Loader2 size={18} /> : <Send size={18} />} نشر الدعوة</button>
+          <button className="btn btn-gold btn-glow" type="button" disabled={busy !== "idle" || !prePublishReport.canPublish} onClick={() => save("publish")}>{busy === "publish" ? <Loader2 size={18} /> : <Send size={18} />} نشر الدعوة</button>
           <button className="btn btn-soft" type="button" disabled={busy !== "idle"} onClick={() => save("draft")}><UserRound size={18} /> إنشاء رابط العميل</button>
+        </div>
+        <div className="pre-publish-report" aria-label="تقرير جاهزية الدعوة قبل النشر">
+          <div className="pre-publish-report-head">
+            <div>
+              <strong>تقرير ما قبل النشر</strong>
+              <span>{prePublishReport.canPublish ? "العناصر الأساسية جاهزة للنشر." : "أكمل العناصر الأساسية المفقودة قبل النشر."}</span>
+            </div>
+            <b>{prePublishReport.completed}/{prePublishReport.total}</b>
+          </div>
+          <div className="pre-publish-items">
+            {prePublishReport.items.map((item) => (
+              <article className={`pre-publish-item ${item.status}`} key={item.key}>
+                <span aria-hidden="true">{prePublishStatusSymbol(item.status)}</span>
+                <div>
+                  <strong>{item.label}</strong>
+                  <small>{item.message}</small>
+                </div>
+                <em>{prePublishStatusLabel(item.status)}</em>
+              </article>
+            ))}
+          </div>
         </div>
         {links ? (
           <div className="builder-links new-invite-links">
@@ -801,7 +901,7 @@ export function AdminNewInvitationWizard({
           <div className="new-invite-nav-actions">
             <button className="btn btn-soft" type="button" onClick={previousStep} disabled={stepIndex === 0}><ArrowRight size={17} /> السابق</button>
             {currentStep === "publish" ? (
-              <button className="btn btn-gold btn-glow" type="button" onClick={() => save("publish")} disabled={busy !== "idle"}>{busy === "publish" ? <Loader2 size={17} /> : <Send size={17} />} نشر الآن</button>
+              <button className="btn btn-gold btn-glow" type="button" onClick={() => save("publish")} disabled={busy !== "idle" || !prePublishReport.canPublish}>{busy === "publish" ? <Loader2 size={17} /> : <Send size={17} />} نشر الآن</button>
             ) : (
               <button className="btn btn-gold btn-glow" type="button" onClick={nextStep}>التالي <ArrowLeft size={17} /></button>
             )}

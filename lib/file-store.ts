@@ -5,6 +5,7 @@ import { isBrowserDisplayImageUrl } from "./image-formats";
 import { hashPassword, verifyPassword } from "./password";
 import { makeNumberedInvitationSlug } from "./slug";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
+import type { VisitSource } from "./visit-source";
 import { normalizeInternalAssetUrl } from "./utils";
 
 type FileCustomer = {
@@ -23,6 +24,22 @@ type FileStoreData = {
   guests: GuestRsvp[];
   customers: FileCustomer[];
   orders: OrderRequest[];
+  analyticsEvents: FileAnalyticsEvent[];
+};
+
+export type FileAnalyticsEvent = {
+  id: string;
+  invitationCode: string;
+  eventType: string;
+  metadata?: {
+    source?: VisitSource;
+    sourceLabel?: string;
+    utmSource?: string;
+    explicitSource?: string;
+    referrer?: string;
+    userAgent?: string;
+  };
+  createdAt: string;
 };
 
 type CreateFileInvitationInput = {
@@ -87,6 +104,7 @@ function createEmptyStore(): FileStoreData {
     guests: [],
     customers: [],
     orders: [],
+    analyticsEvents: [],
   };
 }
 
@@ -101,6 +119,7 @@ async function readStore(): Promise<FileStoreData> {
       guests: Array.isArray(parsed.guests) ? parsed.guests : [],
       customers: Array.isArray(parsed.customers) ? parsed.customers : [],
       orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+      analyticsEvents: Array.isArray(parsed.analyticsEvents) ? parsed.analyticsEvents : [],
     };
   } catch {
     return createEmptyStore();
@@ -454,12 +473,27 @@ export async function getFileTrashItems() {
   return [...invitations, ...orders, ...customers].sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime());
 }
 
-export async function recordFileInvitationView(code: string) {
+export async function recordFileInvitationView(code: string, metadata?: FileAnalyticsEvent["metadata"]) {
   const store = await readStore();
   const index = store.invitations.findIndex((invitation) => invitation.code.toLowerCase() === code.toLowerCase());
   if (index < 0) return;
   store.invitations[index] = { ...store.invitations[index], views: store.invitations[index].views + 1 };
+  store.analyticsEvents = [
+    {
+      id: `evt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      invitationCode: store.invitations[index].code,
+      eventType: "VIEW",
+      metadata,
+      createdAt: new Date().toISOString(),
+    },
+    ...store.analyticsEvents,
+  ].slice(0, 5000);
   await writeStore(store);
+}
+
+export async function getFileAnalyticsEvents() {
+  const store = await readStore();
+  return store.analyticsEvents || [];
 }
 
 export async function addFileGuest(code: string, guest: Omit<GuestRsvp, "id" | "invitationCode" | "createdAt">) {

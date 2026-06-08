@@ -1,10 +1,11 @@
-import { BarChart3, MousePointerClick, TrendingUp, UsersRound } from "lucide-react";
+import { BarChart3, MousePointerClick, Share2, TrendingUp, UsersRound } from "lucide-react";
 import { StatsGrid } from "@/components/StatsGrid";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { getVisitSourceAnalytics } from "@/lib/visit-source-analytics";
 
 export default async function AnalyticsPage() {
-  const [guests, invitations, templates] = await Promise.all([getAdminGuests(), getAdminInvitations(), getTemplatesWithSettings()]);
+  const [guests, invitations, templates, visitSourceAnalytics] = await Promise.all([getAdminGuests(), getAdminInvitations(), getTemplatesWithSettings(), getVisitSourceAnalytics()]);
   const confirmed = guests.filter((guest) => guest.status === "confirmed").length;
   const declined = guests.filter((guest) => guest.status === "declined").length;
   const totalViews = invitations.reduce((sum, item) => sum + item.views, 0);
@@ -42,9 +43,39 @@ export default async function AnalyticsPage() {
           { label: "متوسط الضيوف", value: averageGuests },
           { label: "حضور مؤكد", value: confirmed },
           { label: "اعتذارات", value: declined },
+          { label: "أكثر مصدر زيارات", value: visitSourceAnalytics.topSource?.label || "لا يوجد" },
         ]}
       />
       <section className="analytics-grid">
+        <article className="panel analytics-panel analytics-source-panel">
+          <div className="admin-card-head">
+            <Share2 size={24} />
+            <div>
+              <span className="eyebrow">Traffic Sources</span>
+              <h2>مصادر زيارات الدعوات</h2>
+            </div>
+          </div>
+          <div className="analytics-source-summary">
+            <span>إجمالي زيارات مصنفة</span>
+            <strong>{visitSourceAnalytics.total}</strong>
+            <small>{visitSourceAnalytics.topSource ? `الأعلى: ${visitSourceAnalytics.topSource.label} (${visitSourceAnalytics.topSource.percentage}%)` : "لا توجد بيانات مصادر بعد"}</small>
+          </div>
+          <div className="analytics-source-list">
+            {visitSourceAnalytics.sources.map((source) => (
+              <div className="analytics-source-row" key={source.source}>
+                <div>
+                  <span>{source.label}</span>
+                  <small>{source.count} زيارة</small>
+                </div>
+                <div className="analytics-source-meter" aria-label={`${source.label}: ${source.percentage}%`}>
+                  <i style={{ width: `${source.percentage}%` }} />
+                </div>
+                <strong>{source.percentage}%</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+
         <article className="panel analytics-panel">
           <div className="admin-card-head">
             <BarChart3 size={24} />

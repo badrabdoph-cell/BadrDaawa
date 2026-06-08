@@ -12,6 +12,7 @@ import {
   DatabaseBackup,
   Eye,
   FileText,
+  MapPinCheckInside,
   MonitorPlay,
   Music2,
   Palette,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { listBackupSnapshots } from "@/lib/backups";
+import { getCheckInDashboard } from "@/lib/check-ins";
 import { hasDatabaseConfig } from "@/lib/database-url";
 import { getMusicLibrary } from "@/lib/music-library";
 import { formatArabicNumber } from "@/lib/utils";
@@ -67,7 +69,7 @@ function formatBackupSize(bytes?: number) {
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, backups, musicLibrary] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), listBackupSnapshots(), getMusicLibrary()]);
+  const [invitations, orders, guests, backups, musicLibrary, checkInDashboard] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), listBackupSnapshots(), getMusicLibrary(), getCheckInDashboard()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
@@ -169,6 +171,12 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <span>ردود الحضور</span>
             <strong>{formatAdminNumber(guests.length)}</strong>
             <small>{formatAdminNumber(expectedAttendees)} ضيف متوقع / {formatAdminNumber(responseRate)}% موافقة</small>
+          </Link>
+          <Link className="admin-metric-card" href="/admin/check-ins">
+            <MapPinCheckInside size={20} />
+            <span>الوصول الفعلي</span>
+            <strong>{formatAdminNumber(checkInDashboard.totals.checkIns)}</strong>
+            <small>{formatAdminNumber(checkInDashboard.totals.today)} اليوم / منفصل عن RSVP</small>
           </Link>
         </div>
 

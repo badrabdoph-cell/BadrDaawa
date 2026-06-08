@@ -1,4 +1,4 @@
-import type { InvitationTexts } from "./types";
+import type { CoupleStoryItem, InvitationTexts } from "./types";
 
 export const defaultInvitationTexts: Required<InvitationTexts> = {
   groomNameEn: "",
@@ -7,9 +7,10 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   inviteMessageSecondary: "وجودكم معنا يجعل فرحتنا أجمل.",
   rsvpQuestion: "ناوي تحضر وتشاركنا فرحه عمرنا؟",
   rsvpDeclinedMessage: "حزين إنك مش معايا في يومي المفضل 🥹",
+  story: [],
 };
 
-const textLimits: Record<keyof InvitationTexts, number> = {
+const textLimits: Record<Exclude<keyof InvitationTexts, "story">, number> = {
   groomNameEn: 120,
   brideNameEn: 120,
   inviteMessage: 520,
@@ -22,6 +23,26 @@ function cleanText(value: unknown, fallback: string, limit: number) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, limit) : fallback;
 }
 
+function cleanOptionalText(value: unknown, limit: number) {
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, limit) : "";
+}
+
+export function normalizeCoupleStory(value: unknown): CoupleStoryItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry, index) => {
+      const raw = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
+      return {
+        id: cleanOptionalText(raw.id, 80) || `story-${index + 1}`,
+        title: cleanOptionalText(raw.title, 120),
+        description: cleanOptionalText(raw.description, 700),
+        imageUrl: cleanOptionalText(raw.imageUrl, 500),
+        date: cleanOptionalText(raw.date, 80),
+      };
+    })
+    .filter((entry) => Boolean(entry.title || entry.description || entry.imageUrl || entry.date));
+}
+
 export function normalizeInvitationTexts(value: unknown): Required<InvitationTexts> {
   const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   return {
@@ -31,5 +52,6 @@ export function normalizeInvitationTexts(value: unknown): Required<InvitationTex
     inviteMessageSecondary: cleanText(raw.inviteMessageSecondary, defaultInvitationTexts.inviteMessageSecondary, textLimits.inviteMessageSecondary),
     rsvpQuestion: cleanText(raw.rsvpQuestion, defaultInvitationTexts.rsvpQuestion, textLimits.rsvpQuestion),
     rsvpDeclinedMessage: cleanText(raw.rsvpDeclinedMessage, defaultInvitationTexts.rsvpDeclinedMessage, textLimits.rsvpDeclinedMessage),
+    story: normalizeCoupleStory(raw.story),
   };
 }

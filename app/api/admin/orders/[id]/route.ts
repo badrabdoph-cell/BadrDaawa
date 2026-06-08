@@ -9,6 +9,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
+import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation, OrderRequest } from "@/lib/types";
@@ -202,7 +203,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
   };
 }
 
-function validateDraft(draft: ReturnType<typeof getOrderDraft>) {
+function validateDraft(draft: ReturnType<typeof getOrderDraft>, requirePublishReady = false) {
   const validation = validateOrderUpdate({
     groomName: draft.groomName,
     brideName: draft.brideName,
@@ -215,6 +216,19 @@ function validateDraft(draft: ReturnType<typeof getOrderDraft>) {
   });
   if (!validation.success) return validation.error;
   if (!draft.weddingDate) return "تاريخ المناسبة غير صالح.";
+  if (requirePublishReady) {
+    const prePublishReport = getPrePublishValidationReport({
+      groomName: draft.groomName,
+      brideName: draft.brideName,
+      weddingDate: draft.weddingDateText,
+      weddingTime: "07:00 مساءً",
+      venue: draft.venue,
+      mapUrl: draft.mapUrl,
+      templateSlug: draft.templateSlug,
+      images: draft.imageUrls,
+    });
+    if (!prePublishReport.canPublish) return `لا يمكن نشر الدعوة قبل إكمال: ${prePublishReport.blockingItems.map((item) => item.label).join("، ")}.`;
+  }
   return "";
 }
 
@@ -307,7 +321,7 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
   const order = await getFileOrder(id);
   if (!order) return null;
   const draft = getOrderDraft(payload, order);
-  const error = validateDraft(draft);
+  const error = validateDraft(draft, true);
   if (error) throw new Error(error);
   const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
   const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
@@ -379,7 +393,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     templateSlug: order.template?.slug || "featured-1",
   };
   const draft = getOrderDraft(payload, existingOrder);
-  const error = validateDraft(draft);
+  const error = validateDraft(draft, true);
   if (error) throw new Error(error);
   const weddingDate = draft.weddingDate || new Date();
   const template = await upsertTemplate(draft.templateSlug);

@@ -7,11 +7,17 @@ import { InviteMap } from "./InviteMap";
 import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
 import { InvitePermissions } from "./InvitePermissions";
+import { InviteCheckIn } from "./InviteCheckIn";
+import { AddToCalendar } from "./AddToCalendar";
+import { CoupleStoryTimeline } from "./CoupleStoryTimeline";
+import { GuestBook } from "./GuestBook";
+import { WeddingLiveMode } from "./WeddingLiveMode";
 import { QrCodeBlock } from "./QrCodeBlock";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
+import { withVisitSource } from "@/lib/visit-source";
 
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
 
@@ -51,12 +57,26 @@ function InvitationPoll({ invitation }: { invitation: Invitation }) {
   return <InvitePoll code={invitation.code} question={texts.rsvpQuestion} declinedMessage={texts.rsvpDeclinedMessage} />;
 }
 
+function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
+  const isPreview = invitation.code.startsWith("preview-");
+  return (
+    <>
+      <CoupleStoryTimeline story={getInvitationTexts(invitation).story} />
+      <AddToCalendar invitation={invitation} isPreview={isPreview} />
+      {invitation.checkInEnabled === false ? null : <InviteCheckIn code={invitation.code} isPreview={isPreview} />}
+      <GuestBook code={invitation.code} isPreview={isPreview} />
+    </>
+  );
+}
+
 function getSocialShareLinks(invitationUrl: string) {
+  const facebookUrl = withVisitSource(invitationUrl, "Facebook");
+  const whatsAppUrl = withVisitSource(invitationUrl, "WhatsApp");
   return [
-    { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(invitationUrl)}` },
+    { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(facebookUrl)}` },
     { label: "Instagram", href: "https://www.instagram.com/" },
     { label: "TikTok", href: "https://www.tiktok.com/" },
-    { label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(invitationUrl)}` },
+    { label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(whatsAppUrl)}` },
   ];
 }
 
@@ -70,6 +90,7 @@ type PhotographerConfig = {
 
 type InvitationExperienceSettings = {
   showPhotographerCard?: boolean;
+  showTemplatePhotographer?: boolean;
   photographerName?: string;
   photographerInstagramUrl?: string;
   photographerFacebookUrl?: string;
@@ -77,7 +98,9 @@ type InvitationExperienceSettings = {
 
 function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation, settings?: InvitationExperienceSettings): PhotographerConfig {
   const invitationPhotographer = invitation?.photographer;
-  const enabled = settings?.showPhotographerCard !== false && invitationPhotographer?.enabled === true;
+  const enabled =
+    (settings?.showTemplatePhotographer === true && template.photographer?.enabled !== false) ||
+    (settings?.showPhotographerCard !== false && invitationPhotographer?.enabled === true);
   return {
     enabled,
     name: invitationPhotographer?.name || template.photographer?.name || settings?.photographerName || "badrabdoph",
@@ -89,6 +112,30 @@ function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invi
 
 function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer: PhotographerConfig; fallback?: string }) {
   return photographer.logoUrl ? <img className="photographer-logo-image" src={photographer.logoUrl} alt={photographer.name} /> : <span>{fallback}</span>;
+}
+
+function TemplatePhotographerCard({ photographer, className = "" }: { photographer: PhotographerConfig; className?: string }) {
+  if (!photographer.enabled) return null;
+
+  return (
+    <section className={["template-photographer-card", className].filter(Boolean).join(" ")}>
+      <div className="template-photographer-logo">
+        <PhotographerLogoMark photographer={photographer} />
+      </div>
+      <div>
+        <span>Official Photographer</span>
+        <h2>{photographer.name}</h2>
+      </div>
+      <div className="template-photographer-socials" aria-label="روابط المصور">
+        <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
+          <Facebook size={17} />
+        </a>
+        <a href={photographer.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer">
+          <Instagram size={17} />
+        </a>
+      </div>
+    </section>
+  );
 }
 
 export function InvitationExperience({
@@ -140,31 +187,31 @@ export function InvitationExperience({
     return <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "royal-gold") {
-    return <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "boho-sand") {
-    return <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "pure-white") {
-    return <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "neon-theme") {
-    return <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "vintage-theme") {
-    return <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "fairytale-theme") {
-    return <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "ocean-theme") {
-    return <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "art-deco-theme") {
-    return <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "magazine-theme") {
-    return <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} />;
+    return <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
   }
   if (template.slug === "cinematic-story") {
     return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
@@ -188,6 +235,7 @@ export function InvitationExperience({
     >
       <InviteMusic musicUrl={templateMusicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
       <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="invite-story">
@@ -251,6 +299,8 @@ export function InvitationExperience({
 
         <InvitationPoll invitation={invitation} />
 
+        <InvitationGuestBook invitation={invitation} />
+
         <section className="invite-card qr-share-card">
           <QrCodeBlock value={invitationUrl} />
           <div className="social-row" aria-label="روابط السوشيال">
@@ -296,6 +346,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     inviteMessageSecondary: texts.inviteMessageSecondary,
     rsvpQuestion: texts.rsvpQuestion,
     rsvpDeclinedMessage: texts.rsvpDeclinedMessage,
+    story: JSON.stringify(texts.story),
     heroPhoto: imageSet.hero,
     gallery1: images[0] || "",
     gallery2: images[1] || images[0] || "",
@@ -307,7 +358,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     output = output.replaceAll(`{{${key}}}`, escapeHtml(String(value)));
   });
 
-  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, gallery: images }).replace(/</g, "\\u003c")};</script>`;
+  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, story: texts.story, gallery: images }).replace(/</g, "\\u003c")};</script>`;
   return output.includes("</body>") ? output.replace("</body>", `${bridge}</body>`) : `${output}${bridge}`;
 }
 
@@ -318,6 +369,7 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
     <main className="custom-code-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
       <iframe
         className="custom-code-frame"
         srcDoc={srcDoc}
@@ -325,6 +377,9 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
         sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
         allow="autoplay; geolocation; notifications"
       />
+      <div className="custom-code-guest-book">
+        <InvitationGuestBook invitation={invitation} />
+      </div>
     </main>
   );
 }
@@ -339,6 +394,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
       <div className="noir-pattern" aria-hidden="true" />
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
       <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="noir-story">
@@ -422,6 +478,8 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
 
         <InvitationPoll invitation={invitation} />
 
+        <InvitationGuestBook invitation={invitation} />
+
         <section className="noir-qr-card">
           <p>شارك الدعوة مع من تحب</p>
           <QrCodeBlock value={invitationUrl} />
@@ -448,6 +506,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
       <div className="ivory-frame" aria-hidden="true" />
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
       <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="ivory-story">
@@ -531,6 +590,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
 
         <div className="ivory-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="ivory-qr-card">
@@ -559,6 +619,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
     <main className="mobile-gold-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
       <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="mobile-gold-story">
@@ -647,6 +708,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
 
         <div className="mobile-gold-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="mobile-gold-qr-card">
@@ -678,6 +740,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
     <main className="boho-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <section className="boho-hero">
         <img src={heroImage} alt="صورة العروسين" />
@@ -757,6 +820,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
 
         <div className="boho-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="boho-qr-card">
@@ -790,6 +854,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
       <div className="garden-soft-bg" aria-hidden="true" />
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <section className="garden-story">
         <header className="garden-hero">
@@ -901,6 +966,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
 
         <div className="garden-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="garden-qr-ticket">
@@ -935,6 +1001,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
     <main className="featured-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <section className="featured-hero">
         <div className="featured-hero-media">
@@ -1047,6 +1114,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
 
         <div className="featured-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="featured-qr-card">
@@ -1080,6 +1148,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
     <main className="cinema-rose-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <section className="cinema-rose-hero">
         <div className="cinema-rose-hero-media">
@@ -1164,6 +1233,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
 
         <div className="cinema-rose-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="cinema-rose-qr-card">
@@ -1194,6 +1264,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
     <main className="modern-cinema-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <section className="modern-cinema-hero">
         <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="صورة الغلاف" />
@@ -1276,6 +1347,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
 
         <div className="modern-cinema-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="modern-cinema-qr-card">
@@ -1310,6 +1382,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
       </div>
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="ethereal-glass-content">
         <section className="ethereal-glass-hero">
@@ -1390,6 +1463,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
 
         <div className="ethereal-glass-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="ethereal-glass-card ethereal-glass-qr-card">
@@ -1420,6 +1494,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
     <main className="botanical-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="botanical-shell">
         <section className="botanical-hero-card">
@@ -1467,6 +1542,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
 
         <div className="botanical-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="botanical-qr-card">
@@ -1487,7 +1563,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
   );
 }
 
-function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1496,6 +1572,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: I
     <main className="royal-gold-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="royal-gold-shell">
         <section className="royal-gold-names">
@@ -1527,8 +1604,11 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: I
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="royal-gold-photographer" />
+
         <div className="royal-gold-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="royal-gold-qr-card">
@@ -1549,7 +1629,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl }: { invitation: I
   );
 }
 
-function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1558,6 +1638,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: In
     <main className="boho-sand-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="boho-sand-shell">
         <figure className="boho-sand-cover">
@@ -1586,8 +1667,11 @@ function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: In
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="boho-sand-photographer" />
+
         <div className="boho-sand-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="boho-sand-qr-card">
@@ -1608,7 +1692,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl }: { invitation: In
   );
 }
 
-function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1617,6 +1701,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: I
     <main className="pure-white-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="pure-white-shell">
         <section className="pure-white-names">
@@ -1646,8 +1731,11 @@ function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: I
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="pure-white-photographer" />
+
         <div className="pure-white-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="pure-white-qr-card">
@@ -1668,7 +1756,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl }: { invitation: I
   );
 }
 
-function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1677,6 +1765,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: I
     <main className="neon-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="neon-shell">
         <section className="neon-name-card">
@@ -1704,8 +1793,11 @@ function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: I
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="neon-photographer" />
+
         <div className="neon-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="neon-qr-card">
@@ -1725,7 +1817,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl }: { invitation: I
   );
 }
 
-function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1735,6 +1827,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation
       <div className="vintage-paper-pattern" aria-hidden="true" />
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="vintage-shell">
         <section className="vintage-title-card">
@@ -1763,8 +1856,11 @@ function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="vintage-photographer" />
+
         <div className="vintage-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="vintage-qr-card">
@@ -1784,7 +1880,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl }: { invitation
   );
 }
 
-function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1793,6 +1889,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitati
     <main className="fairytale-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="fairytale-shell">
         <section className="fairytale-hero-card">
@@ -1822,8 +1919,11 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitati
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="fairytale-photographer" />
+
         <div className="fairytale-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="fairytale-qr-card">
@@ -1843,7 +1943,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl }: { invitati
   );
 }
 
-function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1852,6 +1952,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: 
     <main className="ocean-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <section className="ocean-hero">
         <h1>{invitation.groomName}</h1>
@@ -1886,8 +1987,11 @@ function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: 
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="ocean-photographer" />
+
         <div className="ocean-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="ocean-qr-card">
@@ -1907,7 +2011,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl }: { invitation: 
   );
 }
 
-function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1916,6 +2020,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation
     <main className="artdeco-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="artdeco-shell">
         <section className="artdeco-name-frame">
@@ -1947,8 +2052,11 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation
           </div>
         </section>
 
+        <TemplatePhotographerCard photographer={photographer} className="artdeco-photographer" />
+
         <div className="artdeco-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="artdeco-qr-card">
@@ -1968,7 +2076,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl }: { invitation
   );
 }
 
-function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitation: Invitation; musicUrl?: string | null }) {
+function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code);
   const images = getInvitationImages(invitation).gallery;
   const socialLinks = getSocialShareLinks(invitationUrl);
@@ -1977,6 +2085,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitatio
     <main className="magazine-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
 
       <div className="magazine-shell">
         <section className="magazine-cover">
@@ -2005,8 +2114,11 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl }: { invitatio
             </div>
           </section>
 
+          <TemplatePhotographerCard photographer={photographer} className="magazine-photographer" />
+
           <div className="magazine-poll-wrap">
             <InvitationPoll invitation={invitation} />
+            <InvitationGuestBook invitation={invitation} />
           </div>
 
           <section className="magazine-qr-card">
@@ -2036,6 +2148,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
     <main className="cinematic-invite">
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
+      <WeddingLiveMode code={invitation.code} />
       <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
 
       <section className="cinematic-hero">
@@ -2115,6 +2228,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
 
         <div className="cinematic-poll-wrap">
           <InvitationPoll invitation={invitation} />
+          <InvitationGuestBook invitation={invitation} />
         </div>
 
         <section className="cinematic-qr-section">

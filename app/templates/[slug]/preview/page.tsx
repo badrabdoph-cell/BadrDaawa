@@ -68,6 +68,14 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const explicitMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
   const previewMusicUrl = hasExplicitMusicPreview ? explicitMusicUrl : cleanPlayableAudioUrl(template.musicUrl || "");
   const previewMusicEnabled = hasExplicitMusicPreview ? query?.musicEnabled === "1" && Boolean(previewMusicUrl) : Boolean(previewMusicUrl);
+  const hasExplicitPhotographerPreview = query?.photographerEnabled !== undefined;
+  const useTemplatePhotographer = query?.builderPreview !== "1" && !hasExplicitPhotographerPreview;
+  const templatePhotographer = template.photographer || {
+    enabled: true,
+    name: "badrabdoph",
+    facebookUrl: "https://www.facebook.com/",
+    instagramUrl: "https://www.instagram.com/",
+  };
   const previewPhotographer =
     query?.photographerEnabled === "1"
       ? {
@@ -77,6 +85,14 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
           instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
         }
+      : useTemplatePhotographer
+        ? {
+            enabled: templatePhotographer.enabled !== false,
+            name: templatePhotographer.name || "badrabdoph",
+            logoUrl: templatePhotographer.logoUrl,
+            facebookUrl: templatePhotographer.facebookUrl || "https://www.facebook.com/",
+            instagramUrl: templatePhotographer.instagramUrl || "https://www.instagram.com/",
+          }
       : {
           enabled: false,
           name: "",
@@ -119,6 +135,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           disableMusic={isSilentPreview}
           settings={{
             showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+            showTemplatePhotographer: useTemplatePhotographer,
             photographerName: siteSettings.photographer.defaultName,
             photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
             photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
@@ -131,6 +148,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           disableMusic={isSilentPreview}
           settings={{
             showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+            showTemplatePhotographer: useTemplatePhotographer,
             photographerName: siteSettings.photographer.defaultName,
             photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
             photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,

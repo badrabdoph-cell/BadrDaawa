@@ -1,9 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { Download, ExternalLink, LogOut } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
 import { ClientShareTools } from "@/components/ClientShareTools";
+import { ClientWeddingLiveModePanel } from "@/components/ClientWeddingLiveModePanel";
 import { CopyButton } from "@/components/CopyButton";
 import { CustomerAnalyticsPanel } from "@/components/CustomerAnalyticsPanel";
 import { CustomerMessagesPanel } from "@/components/CustomerMessagesPanel";
@@ -17,6 +19,12 @@ import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-dat
 import { getMusicLibrary } from "@/lib/music-library";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
+import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
+
+export const metadata: Metadata = {
+  title: "لوحة العميل",
+  robots: { index: false, follow: false },
+};
 
 export default async function CustomerAdminPage({
   params,
@@ -37,12 +45,13 @@ export default async function CustomerAdminPage({
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 
-  const [guests, template, musicFiles, clientMessages, contentPresets] = await Promise.all([
+  const [guests, template, musicFiles, clientMessages, contentPresets, liveModeConfig] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
     getMusicLibrary(),
     getClientMessages(invitation.code),
     getContentPresets(),
+    getWeddingLiveMode(invitation.code),
   ]);
   if (!template) {
     notFound();
@@ -105,6 +114,8 @@ export default async function CustomerAdminPage({
         </article>
 
         <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} />
+
+        <ClientWeddingLiveModePanel invitationCode={invitation.code} initialConfig={liveModeConfig} />
       </section>
 
       <ClientInvitationEditor

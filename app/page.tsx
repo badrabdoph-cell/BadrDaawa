@@ -164,7 +164,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                     </div>
                   </div>
                   {content.pricing.rows.map((row) => (
-                    <div className="home-pricing-row" role="row" key={row.feature}>
+                    <div className="home-pricing-row" role="row" key={row.id}>
                       <div className="home-pricing-feature" role="cell" data-broadcast-key={`pricing.rows.${row.id}.feature`} data-broadcast-label={`ميزة باقة: ${row.feature}`} data-broadcast-kind="text" data-broadcast-value={row.feature}>
                         {row.feature}
                       </div>

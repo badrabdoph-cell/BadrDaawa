@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Eye, ImagePlus, Loader2, MessageSquareText, Music2, Save, UploadCloud, UserRound } from "lucide-react";
+import { Copy, Eye, Heart, ImagePlus, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { uploadBrowserPreviewImage } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { ContentPreset, Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { ContentPreset, CoupleStoryItem, Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 type MusicFile = { id?: string; name?: string; url: string; modifiedAt: number };
 type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
@@ -29,6 +29,10 @@ function toDateInput(value: string) {
 function isPlayableAudioUrl(value: string) {
   if (!value.trim()) return true;
   return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i.test(value.trim());
+}
+
+function createStoryItem(): CoupleStoryItem {
+  return { id: `story-${Date.now().toString(36)}`, title: "", description: "", imageUrl: "", date: "" };
 }
 
 export function ClientInvitationEditor({
@@ -150,6 +154,24 @@ export function ClientInvitationEditor({
     markDirty();
   }
 
+  function addStoryItem() {
+    setInvitationTexts((current) => ({ ...current, story: [...current.story, createStoryItem()] }));
+    markDirty();
+  }
+
+  function updateStoryItem(index: number, patch: Partial<CoupleStoryItem>) {
+    setInvitationTexts((current) => ({
+      ...current,
+      story: current.story.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
+    markDirty();
+  }
+
+  function removeStoryItem(index: number) {
+    setInvitationTexts((current) => ({ ...current, story: current.story.filter((_, itemIndex) => itemIndex !== index) }));
+    markDirty();
+  }
+
   async function handleImageFile(index: number, file?: File | null) {
     if (!file) return;
     markDirty();
@@ -175,6 +197,21 @@ export function ClientInvitationEditor({
       setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: false });
       setStatus("error");
       setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع شعار المصور. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
+    }
+  }
+
+  async function handleStoryImageFile(index: number, file?: File | null) {
+    if (!file) return;
+    markDirty();
+    setBusy(true);
+    try {
+      const url = await uploadBrowserPreviewImage(file, { slot: `client-story-${index + 1}` });
+      updateStoryItem(index, { imageUrl: url });
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع صورة القصة. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -462,6 +499,38 @@ export function ClientInvitationEditor({
               <input value={invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateInvitationText("rsvpDeclinedMessage", event.target.value)} />
             </label>
           </div>
+          <section className="story-editor">
+            <div className="story-editor-head">
+              <div>
+                <span><Heart size={16} /> قسم اختياري</span>
+                <strong>قصة العروسين</strong>
+              </div>
+              <button className="btn btn-soft" type="button" onClick={addStoryItem}><Plus size={16} /> إضافة محطة</button>
+            </div>
+            {invitationTexts.story.length ? (
+              <div className="story-editor-list">
+                {invitationTexts.story.map((item, index) => (
+                  <article className="story-editor-item" key={item.id || index}>
+                    <div className="story-editor-item-head">
+                      <strong>محطة {index + 1}</strong>
+                      <button className="admin-icon-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المحطة"><Trash2 size={16} /></button>
+                    </div>
+                    <label className="field"><span>العنوان</span><input value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} /></label>
+                    <label className="field"><span>التاريخ (اختياري)</span><input value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder="مثلاً: 2024 أو أول لقاء" /></label>
+                    <label className="field full"><span>الوصف</span><textarea rows={3} value={item.description} onChange={(event) => updateStoryItem(index, { description: event.target.value })} /></label>
+                    <label className="field full"><span>رابط صورة اختياري</span><input dir="ltr" value={item.imageUrl || ""} onChange={(event) => updateStoryItem(index, { imageUrl: event.target.value })} placeholder="/uploads/..." /></label>
+                    <label className="builder-logo-upload full">
+                      <UploadCloud size={17} />
+                      <span>رفع صورة للمحطة</span>
+                      <input type="file" accept={acceptedImageFormats} onChange={(event) => handleStoryImageFile(index, event.target.files?.[0])} />
+                    </label>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="story-editor-empty">لن يظهر القسم داخل الدعوة إلا بعد إضافة محطة واحدة على الأقل.</p>
+            )}
+          </section>
         </div>
 
         {message ? <div className={status === "error" ? "notice danger" : "notice success"}>{message}</div> : null}

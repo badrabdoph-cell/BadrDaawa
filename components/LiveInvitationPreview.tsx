@@ -115,6 +115,7 @@ export function LiveInvitationPreview({
   disableMusic?: boolean;
   settings?: {
     showPhotographerCard?: boolean;
+    showTemplatePhotographer?: boolean;
     photographerName?: string;
     photographerInstagramUrl?: string;
     photographerFacebookUrl?: string;

@@ -1,4 +1,5 @@
 import type { Invitation } from "./types";
+import { getPrePublishValidationReport } from "./pre-publish-validation";
 
 export type InvitationCompletenessItem = {
   key: string;
@@ -19,16 +20,6 @@ function hasText(value?: string | null) {
   return Boolean(value?.trim());
 }
 
-function hasValidDate(value?: string | null) {
-  if (!value) return false;
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime());
-}
-
-function hasImages(invitation: Invitation) {
-  return Boolean(invitation.gallery?.filter(Boolean).length || invitation.heroPhoto?.trim());
-}
-
 function hasMusic(invitation: Invitation) {
   return Boolean(invitation.musicEnabled && invitation.musicUrl?.trim());
 }
@@ -40,31 +31,15 @@ function hasInvitationTexts(invitation: Invitation) {
 }
 
 export function getInvitationCompleteness(invitation: Invitation): InvitationCompleteness {
-  const items: InvitationCompletenessItem[] = [
-    {
-      key: "names",
-      label: "الأسماء",
-      complete: hasText(invitation.groomName) && hasText(invitation.brideName),
-    },
-    {
-      key: "date",
-      label: "التاريخ",
-      complete: hasValidDate(invitation.weddingDate),
-    },
-    {
-      key: "venue",
-      label: "القاعة",
-      complete: hasText(invitation.venue),
-    },
+  const prePublish = getPrePublishValidationReport(invitation);
+  const items: InvitationCompletenessItem[] = prePublish.items
+    .filter((entry) => entry.key !== "map")
+    .map((entry) => ({ key: entry.key, label: entry.label, complete: entry.status !== "missing" }));
+  items.push(
     {
       key: "map",
       label: "الخريطة",
       complete: hasText(invitation.mapUrl),
-    },
-    {
-      key: "images",
-      label: "الصور",
-      complete: hasImages(invitation),
     },
     {
       key: "music",
@@ -76,7 +51,7 @@ export function getInvitationCompleteness(invitation: Invitation): InvitationCom
       label: "النصوص",
       complete: hasInvitationTexts(invitation),
     },
-  ];
+  );
   const completed = items.filter((item) => item.complete).length;
   const total = items.length;
   const percentage = Math.round((completed / total) * 100);

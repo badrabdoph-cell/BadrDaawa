@@ -9,6 +9,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
+import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
@@ -162,9 +163,31 @@ export async function POST(request: NextRequest) {
   const groomName = cleanText(input.groomName);
   const brideName = cleanText(input.brideName);
   const weddingDate = cleanText(input.weddingDate);
+  const rawWeddingTime = cleanText(input.weddingTime);
   const venue = cleanText(input.venue);
   const templateSlug = cleanText(input.templateSlug, "featured-1");
   const parsedDate = normalizeDate(weddingDate);
+  const galleryInput = Array.isArray(input.gallery) ? input.gallery.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3) : [];
+  const prePublishReport = getPrePublishValidationReport({
+    groomName,
+    brideName,
+    weddingDate,
+    weddingTime: rawWeddingTime,
+    venue,
+    mapUrl: cleanText(input.mapUrl),
+    templateSlug,
+    gallery: galleryInput,
+  });
+
+  if (action === "publish" && !prePublishReport.canPublish) {
+    return NextResponse.json(
+      {
+        error: `لا يمكن نشر الدعوة قبل إكمال: ${prePublishReport.blockingItems.map((item) => item.label).join("، ")}.`,
+        validation: prePublishReport,
+      },
+      { status: 400 },
+    );
+  }
 
   if (!groomName || !brideName || !parsedDate || !venue) {
     return NextResponse.json({ error: "اكتب اسم العريس واسم العروسة والتاريخ والعنوان قبل الحفظ." }, { status: 400 });
@@ -175,7 +198,6 @@ export async function POST(request: NextRequest) {
   const templateDefinition = selectedTemplate;
   const safeWeddingDate: Date = parsedDate;
 
-  const galleryInput = Array.isArray(input.gallery) ? input.gallery.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3) : [];
   const savedGallery = await saveInvitationGalleryImages(galleryInput);
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
   const musicUrl = await resolveMusic(input);
@@ -384,6 +406,7 @@ export async function POST(request: NextRequest) {
     ok: true,
     status,
     code,
+    validation: prePublishReport,
     ...responseLinks(request, code),
   });
 }

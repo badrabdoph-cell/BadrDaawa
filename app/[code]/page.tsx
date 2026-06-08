@@ -1,33 +1,37 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { InvitationExperience } from "@/components/InvitationExperience";
-import { getInvitationByCode, recordInvitationView } from "@/lib/invitation-data";
+import { recordInvitationView } from "@/lib/invitation-data";
+import { getCachedInvitationByCode, getInvitationSeoMetadata, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
-import { getInvitationUrl } from "@/lib/utils";
+import { detectVisitSource } from "@/lib/visit-source";
+
+type InvitationSearchParams = {
+  silentPreview?: string;
+  embed?: string;
+  [key: string]: string | string[] | undefined;
+};
 
 type PageProps = {
   params: Promise<{ code: string }>;
-  searchParams?: Promise<{ silentPreview?: string; embed?: string }>;
+  searchParams?: Promise<InvitationSearchParams>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { code } = await params;
-  const invitation = await getInvitationByCode(code);
+  const invitation = await getCachedInvitationByCode(code);
   if (!invitation) {
-    return { title: "دعوة غير موجودة" };
+    return getMissingInvitationSeoMetadata();
   }
-  return {
-    title: `دعوة ${invitation.groomName} و ${invitation.brideName}`,
-    description: `يشرفنا حضوركم فرح ${invitation.groomName} و ${invitation.brideName}`,
-    alternates: { canonical: getInvitationUrl(invitation.code) },
-  };
+  return getInvitationSeoMetadata(invitation);
 }
 
 export default async function InvitationPage({ params, searchParams }: PageProps) {
-  const [{ code }, query] = await Promise.all([params, searchParams]);
+  const [{ code }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
-  const invitation = await getInvitationByCode(code);
+  const invitation = await getCachedInvitationByCode(code);
   if (!invitation || !invitation.isActive) {
     notFound();
   }
@@ -38,7 +42,14 @@ export default async function InvitationPage({ params, searchParams }: PageProps
   }
 
   if (!isSilentPreview) {
-    await recordInvitationView(invitation.code);
+    const referrer = requestHeaders.get("referer");
+    const userAgent = requestHeaders.get("user-agent");
+    await recordInvitationView(invitation.code, {
+      source: detectVisitSource({ searchParams: query, referrer, userAgent }),
+      searchParams: query,
+      referrer,
+      userAgent,
+    });
   }
 
   return (

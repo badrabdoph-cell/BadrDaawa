@@ -5,6 +5,7 @@ import { isBrowserDisplayImageUrl } from "./image-formats";
 import { archiveExpiredInvitations } from "./invitation-archiving";
 import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation } from "./types";
+import { createVisitEventMetadata, type VisitSource } from "./visit-source";
 import { normalizeInternalAssetUrl } from "./utils";
 
 type DatabaseInvitation = {
@@ -159,9 +160,17 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
   }
 }
 
-export async function recordInvitationView(code: string) {
+export type InvitationViewTrackingInput = {
+  source: VisitSource;
+  searchParams?: Record<string, string | string[] | undefined> | null;
+  referrer?: string | null;
+  userAgent?: string | null;
+};
+
+export async function recordInvitationView(code: string, tracking?: InvitationViewTrackingInput) {
+  const metadata = tracking ? createVisitEventMetadata(tracking) : undefined;
   if (!prisma) {
-    await recordFileInvitationView(code);
+    await recordFileInvitationView(code, metadata);
     return;
   }
 
@@ -178,10 +187,11 @@ export async function recordInvitationView(code: string) {
       data: {
         invitationId: current.id,
         eventType: "VIEW",
+        metadata,
       },
     });
   } catch (error) {
     console.error("Failed to record invitation view", error);
-    await recordFileInvitationView(code);
+    await recordFileInvitationView(code, metadata);
   }
 }
