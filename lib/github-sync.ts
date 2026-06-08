@@ -93,12 +93,26 @@ class GitHubSyncHttpError extends Error {
   }
 }
 
+function normalizeGitHubToken(value: string | undefined) {
+  if (!value) return "";
+  let token = value.trim().replace(/[\r\n\t ]+/g, "");
+
+  const assignmentMatch = token.match(/^(?:GITHUB_SYNC_TOKEN|BACKUP_GITHUB_TOKEN|GITHUB_TOKEN|GH_TOKEN)=(.+)$/);
+  if (assignmentMatch) token = assignmentMatch[1];
+
+  if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+    token = token.slice(1, -1).trim();
+  }
+
+  return token;
+}
+
 function getGitHubTokenConfig() {
   const candidates = [
-    ["GITHUB_SYNC_TOKEN", process.env.GITHUB_SYNC_TOKEN],
-    ["BACKUP_GITHUB_TOKEN", process.env.BACKUP_GITHUB_TOKEN],
-    ["GITHUB_TOKEN", process.env.GITHUB_TOKEN],
-    ["GH_TOKEN", process.env.GH_TOKEN],
+    ["GITHUB_SYNC_TOKEN", normalizeGitHubToken(process.env.GITHUB_SYNC_TOKEN)],
+    ["BACKUP_GITHUB_TOKEN", normalizeGitHubToken(process.env.BACKUP_GITHUB_TOKEN)],
+    ["GITHUB_TOKEN", normalizeGitHubToken(process.env.GITHUB_TOKEN)],
+    ["GH_TOKEN", normalizeGitHubToken(process.env.GH_TOKEN)],
   ] as const;
 
   const match = candidates.find(([, value]) => Boolean(value));
