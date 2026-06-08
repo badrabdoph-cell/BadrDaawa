@@ -42,6 +42,15 @@ type OrderFormValues = Pick<
   | "musicUrl"
 >;
 type OrderDraft = Partial<FormState> & { imageUrls?: string[] };
+type ImageUploadPhase = "idle" | "selected" | "compressing" | "uploading" | "saved" | "error";
+type ImageUploadState = {
+  phase: ImageUploadPhase;
+  progress: number;
+  message: string;
+  fileName: string;
+  url: string;
+  error: string;
+};
 export type OrderInitialDraft = Pick<
   FormState,
   | "groomName"
@@ -71,6 +80,100 @@ const orderImageSlots = [
 ];
 
 const acceptedAudioFormats = "audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.mp4,.flac,.aif,.aiff";
+const maxClientOriginalImageBytes = 32 * 1024 * 1024;
+const maxDirectServerImageBytes = 16 * 1024 * 1024;
+const uploadRetryCount = 2;
+
+function createIdleUploadState(url = ""): ImageUploadState {
+  return {
+    phase: url ? "saved" : "idle",
+    progress: url ? 100 : 0,
+    message: url ? "تم حفظ الصورة للمعاينة" : "لم يتم اختيار صورة",
+    fileName: "",
+    url,
+    error: "",
+  };
+}
+
+function fileKey(file: File) {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+function formatUploadSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function loadImageElement(url: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("image-preview-failed"));
+    image.src = url;
+  });
+}
+
+async function compressImageForUpload(file: File) {
+  const sourceUrl = URL.createObjectURL(file);
+  try {
+    let width = 0;
+    let height = 0;
+    let drawable: CanvasImageSource;
+
+    try {
+      if (!("createImageBitmap" in window)) throw new Error("createImageBitmap-unavailable");
+      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      width = bitmap.width;
+      height = bitmap.height;
+      drawable = bitmap;
+    } catch {
+      const image = await loadImageElement(sourceUrl);
+      width = image.naturalWidth;
+      height = image.naturalHeight;
+      drawable = image;
+    }
+
+    const maxSide = 1800;
+    const scale = Math.min(1, maxSide / Math.max(width, height));
+    const targetWidth = Math.max(1, Math.round(width * scale));
+    const targetHeight = Math.max(1, Math.round(height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("canvas-unavailable");
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(drawable, 0, 0, targetWidth, targetHeight);
+    if ("close" in drawable && typeof drawable.close === "function") drawable.close();
+
+    const webpBlob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", 0.82);
+    });
+    const blob = webpBlob?.size
+      ? webpBlob
+      : await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(resolve, "image/jpeg", 0.84);
+        });
+    if (!blob?.size) throw new Error("compression-empty");
+    const extension = blob.type === "image/webp" ? "webp" : "jpg";
+
+    const output = new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "wedding-photo"}.${extension}`, {
+      type: blob.type || "image/jpeg",
+      lastModified: Date.now(),
+    });
+
+    return {
+      file: output,
+      originalBytes: file.size,
+      optimizedBytes: output.size,
+      width: targetWidth,
+      height: targetHeight,
+    };
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+}
 
 function cleanOrderDraftImageUrls(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -102,10 +205,14 @@ function CompactOrderImageInput({
   index,
   defaultImage,
   onClearDefault,
+  upload,
+  onFileSelected,
 }: {
   index: number;
   defaultImage?: string;
   onClearDefault: () => void;
+  upload: ImageUploadState;
+  onFileSelected: (index: number, file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef("");
@@ -116,6 +223,14 @@ function CompactOrderImageInput({
   useEffect(() => {
     if (!objectUrlRef.current) setPreviewUrl(defaultImage || "");
   }, [defaultImage]);
+
+  useEffect(() => {
+    if (!upload.url) return;
+    revokeObjectUrl();
+    setPreviewUrl(upload.url);
+    setFileName(upload.fileName);
+    setPreviewFailed(false);
+  }, [upload.fileName, upload.url]);
 
   useEffect(() => {
     return () => {
@@ -142,6 +257,7 @@ function CompactOrderImageInput({
     objectUrlRef.current = objectUrl;
     setPreviewUrl(objectUrl);
     setFileName(file.name);
+    onFileSelected(index, file);
   }
 
   function clearImage() {
@@ -167,7 +283,15 @@ function CompactOrderImageInput({
       </div>
       <div className="compact-image-meta">
         <strong>{orderImageSlots[index]?.title}</strong>
-        <small>{fileName || orderImageSlots[index]?.hint}</small>
+        <small>{upload.fileName || fileName || orderImageSlots[index]?.hint}</small>
+        <div className={`compact-upload-status ${upload.phase}`}>
+          <span>{upload.message}</span>
+          <strong>{upload.progress}%</strong>
+        </div>
+        <div className="compact-upload-track" aria-hidden="true">
+          <span style={{ width: `${upload.progress}%` }} />
+        </div>
+        {upload.error ? <small className="compact-upload-error">{upload.error}</small> : null}
       </div>
       <div className="compact-image-actions">
         <label>
@@ -217,10 +341,17 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [draftImageUrls, setDraftImageUrls] = useState<string[]>(() => cleanOrderDraftImageUrls(initialDraft?.imageUrls));
+  const [imageUploads, setImageUploads] = useState<ImageUploadState[]>(() =>
+    orderImageSlots.map((_, index) => createIdleUploadState(cleanOrderDraftImageUrls(initialDraft?.imageUrls)[index] || "")),
+  );
   const [musicFileName, setMusicFileName] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
+  const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
+  const selectedImageKeysRef = useRef<string[]>([]);
+  const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
+  const imageUploadRequestsRef = useRef<Array<XMLHttpRequest | null>>(orderImageSlots.map(() => null));
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
@@ -349,7 +480,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         musicChoice: draft.musicChoice === "upload" || draft.musicChoice === "url" ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
       }));
-      setDraftImageUrls(cleanOrderDraftImageUrls(draft.imageUrls));
+      const restoredImages = cleanOrderDraftImageUrls(draft.imageUrls);
+      setDraftImageUrls(restoredImages);
+      uploadedImageUrlsRef.current = restoredImages;
+      setImageUploads(orderImageSlots.map((_, index) => createIdleUploadState(restoredImages[index] || "")));
     } catch {
       try {
         window.sessionStorage?.removeItem(orderDraftStorageKey);
@@ -373,6 +507,173 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       return next;
     });
     if (message) setMessage("");
+  }
+
+  function setImageUpload(index: number, update: Partial<ImageUploadState>) {
+    setImageUploads((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...update } : item)));
+  }
+
+  function syncUploadedImageUrl(index: number, url: string) {
+    uploadedImageUrlsRef.current[index] = url;
+    setDraftImageUrls((current) => {
+      const next = [...current];
+      next[index] = url;
+      return cleanOrderDraftImageUrls(next);
+    });
+  }
+
+  function uploadCompressedImage(file: File, index: number, attempt = 0) {
+    return new Promise<string>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      imageUploadRequestsRef.current[index]?.abort();
+      imageUploadRequestsRef.current[index] = xhr;
+      xhr.open("POST", "/api/orders/preview-images");
+      xhr.timeout = 45_000;
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return;
+        const uploadProgress = Math.round((event.loaded / event.total) * 45);
+        setImageUpload(index, {
+          phase: "uploading",
+          progress: Math.min(95, 50 + uploadProgress),
+          message: "جاري حفظ الصورة على الخادم",
+          error: "",
+        });
+      };
+      xhr.onload = () => {
+        imageUploadRequestsRef.current[index] = null;
+        const payload = (() => {
+          try {
+            return JSON.parse(xhr.responseText || "{}") as { imageUrls?: string[]; error?: string };
+          } catch {
+            return null;
+          }
+        })();
+        const url = payload?.imageUrls?.[0] || "";
+        if (xhr.status >= 200 && xhr.status < 300 && url) {
+          resolve(url);
+          return;
+        }
+        const error = new Error(payload?.error || `upload-failed-${xhr.status || "network"}`);
+        reject(error);
+      };
+      xhr.onerror = () => {
+        imageUploadRequestsRef.current[index] = null;
+        reject(new Error("network-upload-failed"));
+      };
+      xhr.ontimeout = () => {
+        imageUploadRequestsRef.current[index] = null;
+        reject(new Error("upload-timeout"));
+      };
+      xhr.onabort = () => reject(new Error("upload-aborted"));
+
+      const payload = new FormData();
+      payload.append("images", file);
+      payload.append("slot", String(index + 1));
+      payload.append("attempt", String(attempt + 1));
+      xhr.send(payload);
+    });
+  }
+
+  async function uploadOrderImage(index: number, file: File) {
+    const key = fileKey(file);
+    selectedImageKeysRef.current[index] = key;
+    uploadedImageUrlsRef.current[index] = "";
+    imageUploadRequestsRef.current[index]?.abort();
+
+    setImageUpload(index, {
+      phase: "selected",
+      progress: 5,
+      message: "تم اختيار الصورة",
+      fileName: file.name,
+      url: "",
+      error: "",
+    });
+
+    if (file.size > maxClientOriginalImageBytes) {
+      const error = `حجم الصورة ${formatUploadSize(file.size)}. اختار صورة أقل من ${formatUploadSize(maxClientOriginalImageBytes)}.`;
+      setImageUpload(index, { phase: "error", progress: 0, message: "الصورة كبيرة جداً", error });
+      throw new Error(error);
+    }
+
+    const promise = (async () => {
+      try {
+        setImageUpload(index, { phase: "compressing", progress: 18, message: "جاري ضغط الصورة داخل المتصفح", error: "" });
+        const optimized = await compressImageForUpload(file).catch((error) => {
+          if (file.size <= maxDirectServerImageBytes) {
+            console.log(`[Order Upload] Browser compression skipped for ${file.name}; sending original to server.`, error);
+            return {
+              file,
+              originalBytes: file.size,
+              optimizedBytes: file.size,
+              width: 0,
+              height: 0,
+            };
+          }
+          throw error;
+        });
+        if (selectedImageKeysRef.current[index] !== key) throw new Error("upload-aborted");
+        setImageUpload(index, {
+          phase: "uploading",
+          progress: 50,
+          message: `تم الضغط من ${formatUploadSize(optimized.originalBytes)} إلى ${formatUploadSize(optimized.optimizedBytes)}`,
+          error: "",
+        });
+
+        let lastError: unknown = null;
+        for (let attempt = 0; attempt <= uploadRetryCount; attempt += 1) {
+          try {
+            if (attempt > 0) {
+              setImageUpload(index, {
+                phase: "uploading",
+                progress: 52,
+                message: `إعادة محاولة الرفع ${attempt + 1}/${uploadRetryCount + 1}`,
+                error: "",
+              });
+            }
+            const url = await uploadCompressedImage(optimized.file, index, attempt);
+            if (selectedImageKeysRef.current[index] !== key) throw new Error("upload-aborted");
+            syncUploadedImageUrl(index, url);
+            setImageUpload(index, {
+              phase: "saved",
+              progress: 100,
+              message: "تم حفظ الصورة وستظهر في المعاينة",
+              fileName: file.name,
+              url,
+              error: "",
+            });
+            return url;
+          } catch (error) {
+            lastError = error;
+            if (error instanceof Error && error.message === "upload-aborted") throw error;
+          }
+        }
+
+        throw lastError instanceof Error ? lastError : new Error("upload-failed");
+      } catch (error) {
+        const uploadError = error instanceof Error && error.message === "upload-aborted"
+          ? "تم إلغاء رفع الصورة لأنك اخترت صورة أخرى."
+          : "تعذر رفع الصورة. جرّب صورة أقل حجماً أو اتصال إنترنت أكثر استقراراً.";
+        setImageUpload(index, {
+          phase: "error",
+          progress: 0,
+          message: "فشل حفظ الصورة",
+          error: uploadError,
+          url: "",
+        });
+        throw error;
+      }
+    })();
+
+    imageUploadPromisesRef.current[index] = promise;
+    return promise;
+  }
+
+  function handleOrderImageSelected(index: number, file: File) {
+    if (message) setMessage("");
+    uploadOrderImage(index, file).catch(() => {
+      setState("error");
+      setMessage("في صورة لم يتم حفظها. راجع حالة الصور قبل المعاينة أو التأكيد.");
+    });
   }
 
   function fieldValue(value: string, fallback = "لم يكتب بعد") {
@@ -479,13 +780,41 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     const slotImages = await Promise.all(
       orderImageSlots.map(async (_, index) => {
         const rawFile = formData.get(`orderImage${index}Raw`);
-        if (rawFile instanceof File && rawFile.size > 0) return readFileAsDataUrl(rawFile);
+        if (rawFile instanceof File && rawFile.size > 0) {
+          const key = fileKey(rawFile);
+          if (selectedImageKeysRef.current[index] !== key || !imageUploadPromisesRef.current[index]) {
+            imageUploadPromisesRef.current[index] = uploadOrderImage(index, rawFile);
+          }
+          return imageUploadPromisesRef.current[index]?.catch(() => "") || "";
+        }
+        if (uploadedImageUrlsRef.current[index]) return uploadedImageUrlsRef.current[index];
         if (draftImageUrls[index]) return draftImageUrls[index];
         return "";
       }),
     );
 
     return slotImages.filter(Boolean).slice(0, 3);
+  }
+
+  function selectedRawImageCount(formData: FormData) {
+    return orderImageSlots.filter((_, index) => {
+      const rawFile = formData.get(`orderImage${index}Raw`);
+      return rawFile instanceof File && rawFile.size > 0;
+    }).length;
+  }
+
+  function clearOrderImage(index: number) {
+    imageUploadRequestsRef.current[index]?.abort();
+    imageUploadRequestsRef.current[index] = null;
+    imageUploadPromisesRef.current[index] = null;
+    selectedImageKeysRef.current[index] = "";
+    uploadedImageUrlsRef.current[index] = "";
+    setImageUpload(index, createIdleUploadState());
+    setDraftImageUrls((current) => {
+      const next = [...current];
+      next[index] = "";
+      return cleanOrderDraftImageUrls(next);
+    });
   }
 
   async function getOrderMusicDataUrl(formData: FormData) {
@@ -556,19 +885,23 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       let musicUrl = form.musicEnabled && form.musicChoice === "url" ? currentForm.musicUrl : form.musicEnabled && form.musicChoice === "upload" ? form.musicUrl : "";
 
       if (orderImages.length) {
-        const response = await fetch("/api/orders/preview-images", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ images: orderImages }),
-        });
-        const data = (await response.json().catch(() => null)) as { imageUrls?: string[] } | null;
-        imageUrls = Array.isArray(data?.imageUrls) ? data.imageUrls : [];
-        if (!response.ok || !imageUrls.length) {
-          setState("error");
-          setMessage("تعذر تجهيز الصور للمعاينة. جرّب صورًا أوضح أو أقل حجمًا ثم أعد المحاولة.");
-          setIsPreviewing(false);
-          return;
-        }
+        imageUrls = orderImages;
+      }
+
+      if (selectedRawImageCount(formData) > orderImages.length) {
+        setState("error");
+        setMessage("في صورة لم يتم حفظها للمعاينة. ارفعها مرة أخرى أو اختار صورة أصغر.");
+        setIsPreviewing(false);
+        return;
+      }
+
+      const hasSelectedImageStillUploading = imageUploads.some((upload) => upload.phase === "compressing" || upload.phase === "uploading" || upload.phase === "selected");
+      const hasImageError = imageUploads.some((upload) => upload.phase === "error");
+      if (hasSelectedImageStillUploading || hasImageError) {
+        setState("error");
+        setMessage(hasImageError ? "في صورة فشلت في الرفع. احذفها أو ارفعها مرة أخرى قبل المعاينة." : "استنى انتهاء رفع الصور قبل فتح المعاينة.");
+        setIsPreviewing(false);
+        return;
       }
 
       if (form.musicEnabled && form.musicChoice !== "default" && (orderMusic || currentForm.musicUrl)) {
@@ -615,8 +948,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       orderSubmitKeyRef.current = `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     }
     const formData = new FormData(event.currentTarget);
-    const orderImages = await getOrderImageDataUrls(formData);
-    const orderMusic = await getOrderMusicDataUrl(formData);
     const rawWeddingDate = String(formData.get("weddingDate") || "").trim();
     const currentForm: FormState = {
       ...form,
@@ -635,12 +966,25 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     };
     if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled, currentForm.musicEnabled, currentForm.musicChoice))) return;
     setState("loading");
-    setMessage("");
+    setMessage("جاري التأكد من حفظ الصور قبل إنشاء الدعوة.");
 
     const photographerNotes = getPhotographerNotes(currentForm);
     const clientMusicNotes = getMusicNotes(currentForm);
 
     try {
+      const orderImages = await getOrderImageDataUrls(formData);
+      if (selectedRawImageCount(formData) > orderImages.length) {
+        setState("error");
+        setMessage("في صورة لم يتم حفظها. ارفعها مرة أخرى أو اختار صورة أصغر قبل تأكيد الدعوة.");
+        return;
+      }
+      const hasImageError = imageUploads.some((upload) => upload.phase === "error");
+      if (hasImageError) {
+        setState("error");
+        setMessage("في صورة لم يتم حفظها. احذف الصورة أو ارفعها مرة أخرى قبل تأكيد الدعوة.");
+        return;
+      }
+      const orderMusic = await getOrderMusicDataUrl(formData);
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -753,13 +1097,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                 key={slot.title}
                 index={index}
                 defaultImage={draftImageUrls[index]}
-                onClearDefault={() =>
-                  setDraftImageUrls((current) => {
-                    const next = [...current];
-                    next[index] = "";
-                    return next;
-                  })
-                }
+                upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
+                onFileSelected={handleOrderImageSelected}
+                onClearDefault={() => clearOrderImage(index)}
               />
             ))}
           </div>

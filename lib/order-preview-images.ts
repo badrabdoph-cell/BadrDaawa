@@ -5,7 +5,7 @@ import { normalizeImageForDisplay } from "./display-images";
 import { imageExtensionFromDataMime, imageExtensionFromMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
 import { ensureDirectory } from "./runtime-paths";
 
-const maxPreviewImageBytes = 80 * 1024 * 1024;
+const maxPreviewImageBytes = 16 * 1024 * 1024;
 
 export type PreviewImageInput =
   | string
@@ -42,12 +42,14 @@ function isFileInput(image: PreviewImageInput): image is File {
   return typeof File !== "undefined" && image instanceof File;
 }
 
-export async function saveOrderPreviewImages(images: PreviewImageInput[], folder = "order-previews") {
+export async function saveOrderPreviewImages(images: PreviewImageInput[], folder = "order-previews", requestId = "local") {
   const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
   ensureDirectory(uploadDir);
   const savedUrls: string[] = [];
 
   async function saveBytes(bytes: Buffer, extension: string, sourceLabel: string) {
+    const startedAt = Date.now();
+    console.log(`[Order Images ${requestId}] Optimizing ${sourceLabel} (${bytes.length} bytes, ${extension}) for ${folder}.`);
     const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
     if (!normalized) return "";
 
@@ -57,20 +59,20 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
     await writeFile(path.join(uploadDir, fileName), normalized.bytes);
     const url = `/uploads/${folder}/${fileName}`;
     const convertedSuffix = normalized.converted ? ` converted from ${normalized.originalExtension}` : "";
-    console.log(`[Order Images] Saved ${url} (${normalized.bytes.length} bytes${convertedSuffix}).`);
+    console.log(`[Order Images ${requestId}] Saved ${url} (${normalized.bytes.length} bytes${convertedSuffix}, ${Date.now() - startedAt}ms).`);
     return url;
   }
 
   for (const image of images.slice(0, 3)) {
     if (isFileInput(image)) {
       if (!image.size || image.size > maxPreviewImageBytes) {
-        console.error(`[Order Images] Uploaded preview image skipped for ${folder}: invalid size ${image.size}.`);
+        console.error(`[Order Images ${requestId}] Uploaded preview image skipped for ${folder}: invalid size ${image.size}.`);
         continue;
       }
 
       const extension = imageExtensionFromMime(image.type) || imageExtensionFromName(image.name);
       if (!extension) {
-        console.error(`[Order Images] Uploaded preview image skipped for ${folder}: unsupported file (${image.type || "empty"} / ${image.name || "unnamed"}).`);
+        console.error(`[Order Images ${requestId}] Uploaded preview image skipped for ${folder}: unsupported file (${image.type || "empty"} / ${image.name || "unnamed"}).`);
         continue;
       }
 
@@ -81,7 +83,7 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
 
     const { value, name, type } = normalizePreviewInput(image);
     if (!value) {
-      console.error(`[Order Images] Ignored unsupported preview image payload for ${folder}.`);
+      console.error(`[Order Images ${requestId}] Ignored unsupported preview image payload for ${folder}.`);
       continue;
     }
 
@@ -89,13 +91,13 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
     if (dataUrl) {
       const bytes = Buffer.from(dataUrl.base64, "base64");
       if (!bytes.length || bytes.length > maxPreviewImageBytes) {
-        console.error(`[Order Images] Preview image skipped for ${folder}: invalid size ${bytes.length}.`);
+        console.error(`[Order Images ${requestId}] Preview image skipped for ${folder}: invalid size ${bytes.length}.`);
         continue;
       }
 
       const extension = imageExtensionFromDataMime(dataUrl.mime) || imageExtensionFromMime(type) || imageExtensionFromName(name);
       if (!extension) {
-        console.error(`[Order Images] Preview image skipped for ${folder}: unsupported MIME/name (${dataUrl.mime || "empty"} / ${type || "empty"} / ${name || "unnamed"}).`);
+        console.error(`[Order Images ${requestId}] Preview image skipped for ${folder}: unsupported MIME/name (${dataUrl.mime || "empty"} / ${type || "empty"} / ${name || "unnamed"}).`);
         continue;
       }
 
@@ -105,7 +107,7 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
     }
 
     if (!isSupportedImageUrl(value)) {
-      console.error(`[Order Images] Ignored unsupported preview image URL for ${folder}: ${value.slice(0, 80)}.`);
+      console.error(`[Order Images ${requestId}] Ignored unsupported preview image URL for ${folder}: ${value.slice(0, 80)}.`);
       continue;
     }
 
@@ -120,12 +122,12 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
         const convertedUrl = await saveBytes(await readFile(diskPath), imageExtensionFromName(value) || "jpg", `existing:${value}`);
         if (convertedUrl) savedUrls.push(convertedUrl);
       } catch (error) {
-        console.error(`[Order Images] Failed to convert existing non-displayable image for ${folder}: ${value}`, error);
+        console.error(`[Order Images ${requestId}] Failed to convert existing non-displayable image for ${folder}: ${value}`, error);
       }
       continue;
     }
   }
 
-  console.log(`[Order Images] Received ${images.length}, saved ${savedUrls.length} in ${folder}.`, savedUrls);
+  console.log(`[Order Images ${requestId}] Received ${images.length}, saved ${savedUrls.length} in ${folder}.`, savedUrls);
   return savedUrls;
 }

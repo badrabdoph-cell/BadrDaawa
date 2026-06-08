@@ -2,6 +2,7 @@
 
 import type { MutableRefObject } from "react";
 import { ImagePlus, Link2, Loader2, MessageSquareText, Music2, UploadCloud, UserRound } from "lucide-react";
+import { uploadBrowserPreviewImage, type BrowserImageUploadOptions } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { InvitationTexts, TemplateDefinition } from "@/lib/types";
@@ -58,17 +59,8 @@ export function readAdminFileAsDataUrl(file: File) {
   });
 }
 
-export async function uploadAdminPreviewImage(file: File) {
-  const formData = new FormData();
-  formData.append("images", file);
-  const response = await fetch("/api/orders/preview-images", {
-    method: "POST",
-    body: formData,
-  });
-  const data = (await response.json().catch(() => null)) as { imageUrls?: string[]; error?: string } | null;
-  const url = data?.imageUrls?.[0] || "";
-  if (!response.ok || !url) throw new Error(data?.error || "preview-image-upload-failed");
-  return url;
+export async function uploadAdminPreviewImage(file: File, options: BrowserImageUploadOptions = {}) {
+  return uploadBrowserPreviewImage(file, options);
 }
 
 export async function uploadAdminMusic(file: File) {

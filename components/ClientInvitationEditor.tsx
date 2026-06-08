@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Eye, ImagePlus, Loader2, MessageSquareText, Music2, Save, UploadCloud, UserRound } from "lucide-react";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
+import { uploadBrowserPreviewImage } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
@@ -146,25 +147,12 @@ export function ClientInvitationEditor({
     markDirty();
   }
 
-  async function uploadPreviewImage(file: File) {
-    const formData = new FormData();
-    formData.append("images", file);
-    const response = await fetch("/api/orders/preview-images", {
-      method: "POST",
-      body: formData,
-    });
-    const data = (await response.json().catch(() => null)) as { imageUrls?: string[]; error?: string } | null;
-    const url = data?.imageUrls?.[0] || "";
-    if (!response.ok || !url) throw new Error(data?.error || "preview-image-upload-failed");
-    return url;
-  }
-
   async function handleImageFile(index: number, file?: File | null) {
     if (!file) return;
     markDirty();
     setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, dataUrl: "", name: file.name, loading: true } : item)));
     try {
-      const url = await uploadPreviewImage(file);
+      const url = await uploadBrowserPreviewImage(file, { slot: `client-${index + 1}` });
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, previewUrl: url, loading: false } : item)));
     } catch (error) {
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, loading: false } : item)));
@@ -178,7 +166,7 @@ export function ClientInvitationEditor({
     markDirty();
     setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: true });
     try {
-      const url = await uploadPreviewImage(file);
+      const url = await uploadBrowserPreviewImage(file, { slot: "client-photographer-logo" });
       setPhotographerLogo({ dataUrl: "", previewUrl: url, name: file.name, loading: false });
     } catch (error) {
       setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: false });

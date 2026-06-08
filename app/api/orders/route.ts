@@ -10,10 +10,14 @@ import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
+export const maxDuration = 45;
+
+const maxOrderRequestBytes = 24 * 1024 * 1024;
 
 async function saveOrderImages(images: string[], request: Request) {
-  console.log(`[Order API] Saving ${images.length} order image(s) for ${request.url}.`);
-  return saveOrderPreviewImages(images, "order-requests");
+  const requestId = `order-${Date.now().toString(36)}`;
+  console.log(`[Order API ${requestId}] Saving ${images.length} order image(s) for ${request.url}.`);
+  return saveOrderPreviewImages(images, "order-requests", requestId);
 }
 
 async function resolveOrderMusic(input: { musicEnabled: boolean; musicChoice: "default" | "upload" | "url"; musicUrl?: string; orderMusic?: string }) {
@@ -111,6 +115,15 @@ function buildOrderWhatsAppMessage(input: {
 }
 
 export async function POST(request: Request) {
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > maxOrderRequestBytes) {
+    console.error(`[Order API] Rejected large order payload: ${contentLength} bytes.`);
+    return NextResponse.json(
+      { error: "حجم الطلب كبير جداً. ارفع الصور من جديد وانتظر اكتمال ضغطها وحفظها قبل تأكيد الدعوة." },
+      { status: 413 },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = orderRequestSchema.safeParse(body);
 

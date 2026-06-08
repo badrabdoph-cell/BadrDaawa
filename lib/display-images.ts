@@ -14,9 +14,14 @@ async function loadSharp(): Promise<SharpFactory> {
   return module.default ?? module;
 }
 
+const passthroughExtensions = new Set(["svg", "gif"]);
+const maxDisplayImageWidth = 1800;
+const maxDisplayImageHeight = 2200;
+const maxInputPixels = 60_000_000;
+
 export async function normalizeImageForDisplay(bytes: Buffer, extension: string, sourceLabel: string): Promise<DisplayImageResult | null> {
   const originalExtension = cleanImageExtension(extension) || "jpg";
-  if (isBrowserDisplayImageExtension(originalExtension)) {
+  if (isBrowserDisplayImageExtension(originalExtension) && passthroughExtensions.has(originalExtension)) {
     return {
       bytes,
       extension: originalExtension,
@@ -27,11 +32,17 @@ export async function normalizeImageForDisplay(bytes: Buffer, extension: string,
 
   try {
     const sharp = await loadSharp();
-    const converted = await sharp(bytes, { limitInputPixels: false })
+    const converted = await sharp(bytes, { limitInputPixels: maxInputPixels })
       .rotate()
-      .jpeg({
-        quality: 88,
-        mozjpeg: true,
+      .resize({
+        width: maxDisplayImageWidth,
+        height: maxDisplayImageHeight,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 82,
+        effort: 4,
       })
       .toBuffer();
 
@@ -40,17 +51,27 @@ export async function normalizeImageForDisplay(bytes: Buffer, extension: string,
     }
 
     console.log(
-      `[Image Conversion] ${sourceLabel}: converted ${originalExtension} to jpg (${bytes.length} -> ${converted.length} bytes).`,
+      `[Image Conversion] ${sourceLabel}: optimized ${originalExtension} to webp (${bytes.length} -> ${converted.length} bytes).`,
     );
 
     return {
       bytes: converted,
-      extension: "jpg",
-      converted: true,
+      extension: "webp",
+      converted: originalExtension !== "webp" || converted.length !== bytes.length,
       originalExtension,
     };
   } catch (error) {
-    console.error(`[Image Conversion] Failed to convert ${sourceLabel} (${originalExtension}) to browser-safe jpg.`, error);
+    const message = error instanceof Error ? error.message.split("\n")[0] : String(error);
+    if (isBrowserDisplayImageExtension(originalExtension)) {
+      console.error(`[Image Conversion] Failed to optimize ${sourceLabel} (${originalExtension}); keeping original browser-displayable file. Reason: ${message}`);
+      return {
+        bytes,
+        extension: originalExtension,
+        converted: false,
+        originalExtension,
+      };
+    }
+    console.error(`[Image Conversion] Failed to convert ${sourceLabel} (${originalExtension}) to browser-safe image. Reason: ${message}`);
     return null;
   }
 }
