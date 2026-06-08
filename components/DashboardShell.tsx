@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/search", label: "البحث العام", icon: Search },
   { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
   { href: "/admin/invitations", label: "الدعوات", icon: Archive },
+  { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
   { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
   { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
   { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
