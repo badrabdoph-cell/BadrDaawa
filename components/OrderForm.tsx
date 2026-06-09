@@ -20,6 +20,7 @@ type FormState = {
   photographerName: string;
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
+  openingText: string;
   storyEnabled: boolean;
   story: CoupleStoryItem[];
   giftEnabled: boolean;
@@ -44,6 +45,7 @@ type OrderFormValues = Pick<
   | "photographerName"
   | "photographerFacebookUrl"
   | "photographerInstagramUrl"
+  | "openingText"
   | "musicUrl"
 >;
 type OrderDraft = Partial<FormState> & { imageUrls?: string[] };
@@ -68,6 +70,7 @@ export type OrderInitialDraft = Pick<
   | "photographerName"
   | "photographerFacebookUrl"
   | "photographerInstagramUrl"
+  | "openingText"
   | "musicUrl"
 > & {
   photographerEnabled: boolean;
@@ -399,6 +402,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     photographerName: initialDraft?.photographerName || "",
     photographerFacebookUrl: initialDraft?.photographerFacebookUrl || "",
     photographerInstagramUrl: initialDraft?.photographerInstagramUrl || "",
+    openingText: initialDraft?.openingText || "",
     storyEnabled: Boolean(initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length),
     story: cleanOrderStory(initialDraft?.story),
     giftEnabled: Boolean(initialDraft?.giftEnabled || Object.values(filledOrderGift(initialDraft?.gift)).some(Boolean)),
@@ -563,10 +567,11 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         templateSlug: draftTemplate,
         language: draft.language === "en" ? "en" : "ar",
         photographerEnabled: Boolean(draft.photographerEnabled),
-        photographerName: typeof draft.photographerName === "string" ? draft.photographerName : current.photographerName,
-        photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
-        photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
-        storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
+      photographerName: typeof draft.photographerName === "string" ? draft.photographerName : current.photographerName,
+      photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
+      photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
+      openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
+      storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
         story: cleanOrderStory(draft.story),
         giftEnabled: Boolean(draft.giftEnabled || Object.values(filledOrderGift(draft.gift)).some(Boolean)),
         gift: cleanOrderGift(draft.gift),
@@ -869,6 +874,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (weddingDate) params.set("weddingDate", weddingDate);
     if (values.venue) params.set("venue", values.venue);
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
+    if (values.openingText) params.set("openingText", values.openingText);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
     const story = filledOrderStory(values.story);
     if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
@@ -892,6 +898,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
       photographerInstagramUrl: String(formData.get("photographerInstagramUrl") || "").trim(),
+      openingText: String(formData.get("openingText") || form.openingText || "").trim(),
       musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
   }
@@ -1148,6 +1155,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
       photographerInstagramUrl: String(formData.get("photographerInstagramUrl") || "").trim(),
+      openingText: String(formData.get("openingText") || form.openingText || "").trim(),
       musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
     if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled, currentForm.musicEnabled, currentForm.musicChoice))) return;

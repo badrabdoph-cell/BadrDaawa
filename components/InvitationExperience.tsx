@@ -47,6 +47,11 @@ function getInvitationTexts(invitation: Invitation) {
   return normalizeInvitationTexts(invitation.texts, invitation.language);
 }
 
+function InvitationOpeningLayer({ invitation }: { invitation: Invitation }) {
+  const texts = getInvitationTexts(invitation);
+  return <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} coverImage={getInvitationImages(invitation).hero} openingText={texts.openingText || texts.inviteMessageSecondary} locale={invitation.language} />;
+}
+
 function formatInvitationDate(invitation: Pick<Invitation, "weddingDate" | "language">) {
   return new Intl.DateTimeFormat(getLocaleMeta(invitation.language).dateLocale, {
     weekday: "long",
@@ -150,9 +155,10 @@ function getTemplatePaletteStyle(template: TemplateDefinition) {
   } as React.CSSProperties;
 }
 
-function withTemplateColors(template: TemplateDefinition, children: React.ReactNode) {
+function withTemplateColors(template: TemplateDefinition, invitation: Invitation, children: React.ReactNode) {
   return (
     <div className="template-color-scope" style={getTemplatePaletteStyle(template)}>
+      <InvitationOpeningLayer invitation={invitation} />
       {children}
     </div>
   );
@@ -201,64 +207,64 @@ export function InvitationExperience({
   }
 
   if (template.slug === "luxe-noir") {
-    return withTemplateColors(template, <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "ivory-arches") {
-    return withTemplateColors(template, <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "mobile-gold" || template.slug === "soft-gold") {
-    return withTemplateColors(template, <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "boho-chic") {
-    return withTemplateColors(template, <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "garden-elegance") {
-    return withTemplateColors(template, <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "featured-1") {
-    return withTemplateColors(template, <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "cinematic-rose") {
-    return withTemplateColors(template, <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "modern-cinematic") {
-    return withTemplateColors(template, <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "ethereal-glass") {
-    return withTemplateColors(template, <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "botanical-theme") {
-    return withTemplateColors(template, <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "royal-gold") {
-    return withTemplateColors(template, <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "boho-sand") {
-    return withTemplateColors(template, <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "pure-white") {
-    return withTemplateColors(template, <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "neon-theme") {
-    return withTemplateColors(template, <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "vintage-theme") {
-    return withTemplateColors(template, <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "fairytale-theme") {
-    return withTemplateColors(template, <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "ocean-theme") {
-    return withTemplateColors(template, <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "art-deco-theme") {
-    return withTemplateColors(template, <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "magazine-theme") {
-    return withTemplateColors(template, <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "cinematic-story") {
-    return withTemplateColors(template, <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withTemplateColors(template, invitation, <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
 
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
@@ -272,7 +278,7 @@ export function InvitationExperience({
       <InviteMusic musicUrl={templateMusicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
+      <InvitationOpeningLayer invitation={invitation} />
 
       <section className="invite-story">
         <div className="invite-card invite-title-card">
@@ -408,6 +414,7 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
+      <InvitationOpeningLayer invitation={invitation} />
       <iframe
         className="custom-code-frame"
         srcDoc={srcDoc}
@@ -436,7 +443,6 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="noir-story">
         <div className="noir-hero-card">
@@ -542,7 +548,6 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="ivory-story">
         <div className="ivory-hero">
@@ -644,7 +649,6 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="mobile-gold-story">
         <div className="mobile-gold-hero">
@@ -2095,7 +2099,6 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="cinematic-hero">
         <div className="cinematic-hero-media">

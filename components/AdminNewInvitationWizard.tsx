@@ -785,6 +785,7 @@ export function AdminNewInvitationWizard({
             onApply={(textPatch) => patch({ invitationTexts: { ...draft.invitationTexts, ...textPatch } })}
           />
         </div>
+        <label className="field full"><span>نص الافتتاح السينمائي</span><textarea rows={2} value={draft.invitationTexts.openingText} onChange={(event) => updateText("openingText", event.target.value)} /></label>
         <label className="field full"><span>رسالة الترحيب</span><textarea rows={3} value={draft.invitationTexts.inviteMessageSecondary} onChange={(event) => updateText("inviteMessageSecondary", event.target.value)} /></label>
         <label className="field full"><span>رسالة الدعوة</span><textarea rows={5} value={draft.invitationTexts.inviteMessage} onChange={(event) => updateText("inviteMessage", event.target.value)} /></label>
         <label className="field"><span>رسالة RSVP</span><input value={draft.invitationTexts.rsvpQuestion} onChange={(event) => updateText("rsvpQuestion", event.target.value)} /></label>

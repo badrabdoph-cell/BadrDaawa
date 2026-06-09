@@ -538,6 +538,10 @@ export function ClientInvitationEditor({
           />
           <div className="builder-text-list">
             <label className="field">
+              <span>نص الافتتاح السينمائي</span>
+              <textarea value={invitationTexts.openingText} onChange={(event) => updateInvitationText("openingText", event.target.value)} rows={2} />
+            </label>
+            <label className="field">
               <span>سؤال تأكيد الحضور</span>
               <input ref={textFieldRefs.rsvpQuestion} value={invitationTexts.rsvpQuestion} onChange={(event) => updateInvitationText("rsvpQuestion", event.target.value)} />
             </label>

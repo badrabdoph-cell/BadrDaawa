@@ -376,6 +376,10 @@ export function AdminInvitationTools({
           }}
         />
         <div className="builder-text-list">
+          <label className="field wide">
+            <span>نص الافتتاح السينمائي</span>
+            <textarea value={values.invitationTexts.openingText} onChange={(event) => onInvitationTextChange("openingText", event.target.value)} rows={2} />
+          </label>
           <label className="field">
             <span>سؤال تأكيد الحضور</span>
             <input ref={refs?.textFieldRefs?.rsvpQuestion} value={values.invitationTexts.rsvpQuestion} onChange={(event) => onInvitationTextChange("rsvpQuestion", event.target.value)} />
