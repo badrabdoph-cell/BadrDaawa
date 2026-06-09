@@ -1295,6 +1295,12 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             <small className="field-preview" id="mapUrl-hint">أفضل نتيجة تكون من رابط Google Maps المباشر للقاعة حتى تظهر المعاينة والمسافة بدقة.</small>
             {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
           </div>
+
+          <div className="field full">
+            <label htmlFor="openingText">نص الافتتاح السينمائي</label>
+            <textarea id="openingText" name="openingText" rows={2} placeholder="مثال: افتحوا الدعوة وشاركونا أجمل لحظة في عمرنا" value={form.openingText} onChange={(event) => updateField("openingText", event.target.value)} />
+            <small className="field-preview">يظهر فوق صورة الغلاف قبل زر فتح الدعوة، واتركه فارغاً لاستخدام النص الافتراضي.</small>
+          </div>
         </div>
 
         <section className="order-compact-images" aria-labelledby="order-images-title">
