@@ -15,7 +15,7 @@ const adminLinks = [
   { href: "/admin/invitations", label: "الدعوات", icon: Archive },
   { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
   { href: "/admin/check-ins", label: "الوصول الفعلي", icon: MapPinCheckInside },
-  { href: "/admin/guest-book", label: "سجل التهاني", icon: MessageCircleHeart },
+  { href: "/admin/guest-book", label: "رسائل للعروسين", icon: MessageCircleHeart },
   { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
   { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
   { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },

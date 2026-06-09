@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { CheckCircle2, Filter, MessageCircleHeart, Search, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Filter, ImageIcon, MessageCircleHeart, Pencil, Search, Trash2, XCircle } from "lucide-react";
 import { getAdminInvitations } from "@/lib/admin-data";
-import { getAllGuestBookMessages } from "@/lib/guest-book";
-import type { GuestBookMessage, GuestBookStatus } from "@/lib/types";
+import { getAllCoupleMessagesSettings, getAllGuestBookMessages } from "@/lib/guest-book";
+import type { GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
 import { formatArabicNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +21,12 @@ const statusLabels: Record<GuestBookStatus, string> = {
   rejected: "مرفوضة",
 };
 
+const modeLabels: Record<GuestBookMode, string> = {
+  disabled: "تعطيل القسم",
+  auto: "نشر تلقائي",
+  moderated: "مراجعة قبل النشر",
+};
+
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value || "-";
@@ -31,6 +37,8 @@ function notice(saved?: string, error?: string) {
   if (saved === "approve") return { kind: "success", text: "تم نشر رسالة التهنئة داخل الدعوة." };
   if (saved === "reject") return { kind: "success", text: "تم رفض رسالة التهنئة." };
   if (saved === "delete") return { kind: "success", text: "تم حذف رسالة التهنئة." };
+  if (saved === "edit") return { kind: "success", text: "تم تعديل رسالة العروسين." };
+  if (saved === "settings") return { kind: "success", text: "تم حفظ إعدادات رسائل العروسين لهذه الدعوة." };
   if (error) return { kind: "danger", text: "تعذر تنفيذ العملية المطلوبة." };
   return null;
 }
@@ -43,11 +51,13 @@ function matchesMessage(message: GuestBookMessage, query: string, invitationTitl
 
 export default async function AdminGuestBookPage({ searchParams }: { searchParams: Promise<GuestBookPageParams> }) {
   const params = await searchParams;
-  const [messages, invitations] = await Promise.all([getAllGuestBookMessages(), getAdminInvitations()]);
+  const [messages, invitations, allSettings] = await Promise.all([getAllGuestBookMessages(), getAdminInvitations(), getAllCoupleMessagesSettings()]);
   const invitationMap = new Map(invitations.map((invitation) => [invitation.code, `${invitation.groomName} و ${invitation.brideName}`]));
+  const settingsMap = new Map(allSettings.map((setting) => [setting.invitationCode, setting.mode]));
   const status = params.status || "all";
   const selectedInvitation = params.invitation || "";
   const query = params.q?.trim() || "";
+  const settingsInvitationCode = selectedInvitation || invitations[0]?.code || "";
   const filtered = messages.filter((message) => {
     const invitationTitle = invitationMap.get(message.invitationCode) || message.invitationCode;
     const matchesStatus = status === "all" || message.status === status;
@@ -66,9 +76,9 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
     <section className="admin-command-center guest-book-admin-page">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Guest Book</span>
-          <h1>سجل التهاني</h1>
-          <p>راجع رسائل الضيوف قبل نشرها داخل الدعوة، مع قبول أو رفض أو حذف أي رسالة.</p>
+          <span className="eyebrow">Couple Messages</span>
+          <h1>رسائل للعروسين</h1>
+          <p>مكان موحد لرسائل وتهاني الضيوف، مع صور اختيارية ومراجعة قبل النشر أو نشر تلقائي حسب إعداد كل دعوة.</p>
         </div>
       </div>
 
@@ -98,6 +108,31 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
       </div>
 
       <section className="panel">
+        {settingsInvitationCode ? (
+          <form className="couple-messages-settings-panel" action="/api/admin/guest-book" method="post">
+            <input type="hidden" name="action" value="settings" />
+            <label className="admin-select-field">
+              <span>إعدادات دعوة</span>
+              <select name="invitationCode" defaultValue={settingsInvitationCode}>
+                {invitations.map((invitation) => (
+                  <option key={invitation.code} value={invitation.code}>
+                    {invitation.groomName} و {invitation.brideName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="admin-select-field">
+              <span>طريقة النشر</span>
+              <select name="mode" defaultValue={settingsMap.get(settingsInvitationCode) || "moderated"}>
+                {Object.entries(modeLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </label>
+            <button className="btn btn-gold" type="submit">حفظ إعدادات الرسائل</button>
+          </form>
+        ) : null}
+
         <form className="attendance-toolbar" action="/admin/guest-book" method="get">
           <label className="admin-search-field">
             <Search size={17} />
@@ -132,7 +167,8 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
               <tr>
                 <th>الدعوة</th>
                 <th>الاسم</th>
-                <th>رسالة التهنئة</th>
+                <th>الرسالة</th>
+                <th>الصورة</th>
                 <th>الحالة</th>
                 <th>تاريخ الإرسال</th>
                 <th>إجراءات</th>
@@ -147,6 +183,15 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                   </td>
                   <td>{message.name}</td>
                   <td className="guest-book-message-cell">{message.message}</td>
+                  <td>
+                    {message.imageUrl ? (
+                      <a className="guest-book-admin-image-link" href={message.imageUrl} target="_blank" rel="noreferrer">
+                        <img src={message.imageUrl} alt={`صورة من ${message.name}`} loading="lazy" />
+                      </a>
+                    ) : (
+                      <span className="guest-book-muted-cell"><ImageIcon size={15} /> لا توجد</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`guest-book-status-pill ${message.status}`}>{statusLabels[message.status]}</span>
                   </td>
@@ -168,13 +213,29 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                         <input type="hidden" name="action" value="delete" />
                         <button className="btn btn-soft btn-icon danger-button" type="submit" title="حذف"><Trash2 size={16} /></button>
                       </form>
+                      <details className="guest-book-edit-details">
+                        <summary className="btn btn-soft btn-icon" title="تعديل"><Pencil size={16} /></summary>
+                        <form className="guest-book-edit-form" action="/api/admin/guest-book" method="post">
+                          <input type="hidden" name="messageId" value={message.id} />
+                          <input type="hidden" name="action" value="edit" />
+                          <input name="name" defaultValue={message.name} placeholder="اسم المرسل" maxLength={80} required />
+                          <textarea name="message" defaultValue={message.message} placeholder="نص الرسالة" maxLength={600} rows={3} required />
+                          <input name="imageUrl" defaultValue={message.imageUrl || ""} placeholder="رابط الصورة الاختيارية" />
+                          <select name="status" defaultValue={message.status}>
+                            <option value="pending">بانتظار الموافقة</option>
+                            <option value="approved">منشورة</option>
+                            <option value="rejected">مرفوضة</option>
+                          </select>
+                          <button className="btn btn-gold" type="submit">حفظ التعديل</button>
+                        </form>
+                      </details>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!filtered.length ? <div className="admin-empty-state compact">لا توجد رسائل تهنئة مطابقة للفلاتر الحالية.</div> : null}
+          {!filtered.length ? <div className="admin-empty-state compact">لا توجد رسائل مطابقة للفلاتر الحالية.</div> : null}
         </div>
       </section>
     </section>
