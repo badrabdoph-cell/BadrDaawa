@@ -46,17 +46,15 @@ export function LiveVisitorsCounter() {
 
   return (
     <section className="live-visitors-section" aria-label="عدد الزوار الحالي">
-      <div className="container">
-        <div className="live-visitors-card">
-          <span className="live-visitors-icon">
-            <UsersRound size={22} />
-          </span>
-          <div>
-            <span>عدد الزوار في الوقت الحالي</span>
-            <strong>{count}</strong>
-          </div>
-          <em>Live</em>
+      <div className="live-visitors-card">
+        <span className="live-visitors-icon">
+          <UsersRound size={22} />
+        </span>
+        <div>
+          <span>عدد الزوار في الوقت الحالي</span>
+          <strong>{count}</strong>
         </div>
+        <em>Live</em>
       </div>
     </section>
   );

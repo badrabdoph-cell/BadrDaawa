@@ -65,7 +65,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const stats = [
     { label: "دعوة منشأة", value: publicStatsBase.invitations + platformStats.invitations, icon: Sparkles },
     { label: "عميل", value: publicStatsBase.customers + platformStats.customers, icon: UsersRound },
-    { label: "تصاميم دعوة جاهزة", value: platformStats.templates, icon: LayoutTemplate },
     { label: "تأكيد حضور", value: publicStatsBase.confirmedRsvps + platformStats.confirmedRsvps, icon: UserCheck },
   ];
 
@@ -124,16 +123,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </section>
 
-        <LiveVisitorsCounter />
-
-        <section className="home-platform-stats home-platform-stats-compact" aria-labelledby="home-platform-stats-title">
+        <section className="home-platform-stats home-platform-stats-compact" aria-label="إحصائيات المنصة">
           <div className="container">
             <div className="home-platform-stats-head">
               <span className="eyebrow">
                 <Sparkles size={16} />
                 أرقام حقيقية من النظام
               </span>
-              <h2 id="home-platform-stats-title">إحصائيات المنصة</h2>
             </div>
             <div className="home-platform-stats-grid">
               {stats.map((stat) => {
@@ -151,6 +147,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 );
               })}
             </div>
+            <LiveVisitorsCounter />
           </div>
         </section>
 
