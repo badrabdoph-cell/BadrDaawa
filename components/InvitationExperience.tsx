@@ -6,6 +6,8 @@ import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
 import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
+import { InviteGift } from "./InviteGift";
+import { InviteGallery } from "./InviteGallery";
 import { InvitePermissions } from "./InvitePermissions";
 import { InviteCheckIn } from "./InviteCheckIn";
 import { AddToCalendar } from "./AddToCalendar";
@@ -85,6 +87,7 @@ function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
   return (
     <>
       <CoupleStoryTimeline story={getInvitationTexts(invitation).story} locale={invitation.language} />
+      <InviteGift gift={getInvitationTexts(invitation).gift} locale={invitation.language} />
       <AddToCalendar invitation={invitation} isPreview={isPreview} />
       {invitation.checkInEnabled === false ? null : <InviteCheckIn code={invitation.code} isPreview={isPreview} locale={invitation.language} />}
       <GuestBook code={invitation.code} isPreview={isPreview} locale={invitation.language} />
@@ -137,6 +140,24 @@ function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer:
   return photographer.logoUrl ? <img className="photographer-logo-image" src={photographer.logoUrl} alt={photographer.name} /> : <span>{fallback}</span>;
 }
 
+function getTemplatePaletteStyle(template: TemplateDefinition) {
+  return {
+    "--tpl-primary": template.palette.primary,
+    "--tpl-secondary": template.palette.secondary,
+    "--tpl-accent": template.palette.accent,
+    "--tpl-ink": template.palette.ink,
+    "--tpl-surface": template.palette.surface,
+  } as React.CSSProperties;
+}
+
+function withTemplateColors(template: TemplateDefinition, children: React.ReactNode) {
+  return (
+    <div className="template-color-scope" style={getTemplatePaletteStyle(template)}>
+      {children}
+    </div>
+  );
+}
+
 function TemplatePhotographerCard({ photographer, className = "", invitation }: { photographer: PhotographerConfig; className?: string; invitation: Pick<Invitation, "language"> }) {
   if (!photographer.enabled) return null;
 
@@ -180,64 +201,64 @@ export function InvitationExperience({
   }
 
   if (template.slug === "luxe-noir") {
-    return <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "ivory-arches") {
-    return <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "mobile-gold" || template.slug === "soft-gold") {
-    return <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "boho-chic") {
-    return <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "garden-elegance") {
-    return <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "featured-1") {
-    return <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "cinematic-rose") {
-    return <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "modern-cinematic") {
-    return <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "ethereal-glass") {
-    return <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "botanical-theme") {
-    return <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "royal-gold") {
-    return <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "boho-sand") {
-    return <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "pure-white") {
-    return <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "neon-theme") {
-    return <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "vintage-theme") {
-    return <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "fairytale-theme") {
-    return <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "ocean-theme") {
-    return <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "art-deco-theme") {
-    return <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "magazine-theme") {
-    return <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
   if (template.slug === "cinematic-story") {
-    return <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />;
+    return withTemplateColors(template, <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
   }
 
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
@@ -246,15 +267,7 @@ export function InvitationExperience({
   return (
     <main
       className="creative-invite"
-      style={
-        {
-          "--tpl-primary": template.palette.primary,
-          "--tpl-secondary": template.palette.secondary,
-          "--tpl-accent": template.palette.accent,
-          "--tpl-ink": template.palette.ink,
-          "--tpl-surface": template.palette.surface,
-        } as React.CSSProperties
-      }
+      style={getTemplatePaletteStyle(template)}
     >
       <InviteMusic musicUrl={templateMusicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
@@ -271,14 +284,10 @@ export function InvitationExperience({
           <p className="invite-short-line">✦ ✧ ✦</p>
           <p>{formatInvitationDate(invitation)}</p>
           <strong>{invitation.weddingTime}</strong>
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </div>
 
-        <div className="luxury-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          {getInvitationImages(invitation).gallery.map((image, index) => (
-            <img src={image} alt={`صورة من الدعوة ${index + 1}`} key={`${image}-${index}`} />
-          ))}
-        </div>
+        <InviteGallery className="luxury-gallery" images={getInvitationImages(invitation).gallery} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="invite-card invite-message">
           <Music2 size={22} />
@@ -372,6 +381,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     rsvpConfirmedSuccessMessage: texts.rsvpConfirmedSuccessMessage,
     rsvpDeclinedSuccessMessage: texts.rsvpDeclinedSuccessMessage,
     story: JSON.stringify(texts.story),
+    gift: JSON.stringify(texts.gift),
     heroPhoto: imageSet.hero,
     gallery1: images[0] || "",
     gallery2: images[1] || images[0] || "",
@@ -383,7 +393,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     output = output.replaceAll(`{{${key}}}`, escapeHtml(String(value)));
   });
 
-  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, story: texts.story, gallery: images }).replace(/</g, "\\u003c")};</script>`;
+  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, story: texts.story, gift: texts.gift, gallery: images }).replace(/</g, "\\u003c")};</script>`;
   return output.includes("</body>") ? output.replace("</body>", `${bridge}</body>`) : `${output}${bridge}`;
 }
 
@@ -391,7 +401,10 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
   const srcDoc = injectCustomTemplateData(template.customHtml || "", invitation, musicUrl);
 
   return (
-    <main className="custom-code-invite">
+    <main
+      className="custom-code-invite"
+      style={getTemplatePaletteStyle(template)}
+    >
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
@@ -402,6 +415,9 @@ function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { in
         sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
         allow="autoplay; geolocation; notifications"
       />
+      <div className="custom-code-countdown">
+        <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
+      </div>
       <div className="custom-code-guest-book">
         <InvitationGuestBook invitation={invitation} />
       </div>
@@ -437,7 +453,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           <p>{formatInvitationDate(invitation)}</p>
           <strong className="noir-time">{invitation.weddingTime}</strong>
           <div className="noir-countdown">
-            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+            <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
         </div>
 
@@ -453,13 +469,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           </p>
         </section>
 
-        <div className="noir-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          {images.map((image, index) => (
-            <figure key={`${image}-${index}`}>
-              <img src={image} alt={`صورة من الدعوة ${index + 1}`} />
-            </figure>
-          ))}
-        </div>
+        <InviteGallery className="noir-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="noir-map-card">
           <div className="noir-map-copy">
@@ -550,7 +560,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
           <strong>{invitation.weddingTime}</strong>
           <div className="ivory-divider" aria-hidden="true" />
           <div className="ivory-countdown">
-            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+            <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
         </div>
 
@@ -564,18 +574,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
           </p>
         </section>
 
-        <section className="ivory-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          <figure className="arch-card">
-            <img src={images[0] || galleryImages[0]} alt="صورة العريس والعروسة 1" />
-          </figure>
-          <figure className="feature-photo-card">
-            <img src={images[1] || galleryImages[1]} alt="صورة العريس والعروسة 2" />
-            <span aria-hidden="true" />
-          </figure>
-          <figure className="arch-card">
-            <img src={images[2] || galleryImages[2]} alt="صورة العريس والعروسة 3" />
-          </figure>
-        </section>
+        <InviteGallery className="ivory-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="ivory-map-card">
           <Sparkles className="ivory-map-sparkle" size={96} aria-hidden="true" />
@@ -669,21 +668,11 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
           </div>
 
           <div className="mobile-gold-countdown">
-            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+            <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
         </div>
 
-        <div className="mobile-gold-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          <div className="mobile-gold-photo-main">
-            <img src={images[0] || galleryImages[0]} alt="صورة 1" />
-          </div>
-          <div>
-            <img src={images[1] || galleryImages[1]} alt="صورة 2" />
-          </div>
-          <div>
-            <img src={images[2] || galleryImages[2]} alt="صورة 3" />
-          </div>
-        </div>
+        <InviteGallery className="mobile-gold-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <div className="mobile-gold-message">
           <Heart size={24} />
@@ -798,19 +787,11 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
           </div>
 
           <div className="boho-countdown">
-            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+            <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
         </section>
 
-        <section className="boho-gallery-wrap" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          <div className="boho-gallery-scroll">
-            {images.map((image, index) => (
-              <div key={`${image}-${index}`}>
-                <img src={image} alt={`Gallery ${index + 1}`} />
-              </div>
-            ))}
-          </div>
-        </section>
+        <InviteGallery className="boho-gallery-wrap boho-gallery-scroll" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="boho-map-card">
           <div className="boho-map-copy">
@@ -946,23 +927,14 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
 
         <section className="garden-countdown-card">
           <p>The Countdown</p>
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="garden-map-frame">
           <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
         </section>
 
-        {images.length > 1 ? (
-          <section className="garden-gallery-grid" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-            <figure>
-              <img src={images[1] || galleryImages[1]} alt="صورة من الدعوة 2" />
-            </figure>
-            <figure>
-              <img src={images[2] || galleryImages[2]} alt="صورة من الدعوة 3" />
-            </figure>
-          </section>
-        ) : null}
+        {images.length > 1 ? <InviteGallery className="garden-gallery-grid" images={images.slice(1)} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} /> : null}
 
         {showPhotographer ? (
           <section className="garden-photographer">
@@ -1087,21 +1059,10 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
 
         <section className="featured-countdown-card">
           <p>The Countdown</p>
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
-        <section className="featured-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          <figure className="featured-arch-card">
-            <img src={images[0] || galleryImages[0]} alt="صورة العريس والعروسة 1" />
-          </figure>
-          <figure className="featured-photo-card">
-            <img src={images[1] || galleryImages[1]} alt="صورة العريس والعروسة 2" />
-            <span aria-hidden="true" />
-          </figure>
-          <figure className="featured-arch-card">
-            <img src={images[2] || galleryImages[2]} alt="صورة العريس والعروسة 3" />
-          </figure>
-        </section>
+        <InviteGallery className="featured-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="featured-map-card">
           <div className="featured-map-copy">
@@ -1200,7 +1161,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
             <strong>{invitation.weddingTime}</strong>
           </div>
         </div>
-        <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+        <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
       </section>
 
       <section className="cinema-rose-content">
@@ -1211,14 +1172,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
           </h2>
         </div>
 
-        <section className="cinema-rose-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          <figure>
-            <img src={galleryImage1} alt="صورة من الدعوة 2" />
-          </figure>
-          <figure>
-            <img src={galleryImage2} alt="صورة من الدعوة 3" />
-          </figure>
-        </section>
+        <InviteGallery className="cinema-rose-gallery" images={[galleryImage1, galleryImage2]} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="cinema-rose-map-card">
           <div className="cinema-rose-map-copy">
@@ -1321,7 +1275,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
         </div>
 
         <div className="modern-cinema-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </div>
 
         <div className="modern-cinema-message">
@@ -1331,13 +1285,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
           </h2>
         </div>
 
-        <section className="modern-cinema-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          {images.map((image, index) => (
-            <figure key={`${image}-${index}`}>
-              <img src={image} alt={`صورة من الدعوة ${index + 1}`} />
-            </figure>
-          ))}
-        </section>
+        <InviteGallery className="modern-cinema-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="modern-cinema-map-card">
           <div className="modern-cinema-map-copy">
@@ -1439,17 +1387,10 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
               <p>{invitation.weddingTime}</p>
             </div>
           </div>
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
-        <section className="ethereal-glass-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-          <figure>
-            <img src={images[1] || galleryImages[1]} alt="صورة من الدعوة 2" />
-          </figure>
-          <figure>
-            <img src={images[2] || galleryImages[2]} alt="صورة من الدعوة 3" />
-          </figure>
-        </section>
+        <InviteGallery className="ethereal-glass-gallery" images={[images[1] || galleryImages[1], images[2] || galleryImages[2]]} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <div className="ethereal-glass-message">
           <Heart size={24} fill="currentColor" />
@@ -1533,12 +1474,10 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
         </section>
 
         <section className="botanical-countdown-card">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
-        <figure className="botanical-cover-photo">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="botanical-cover-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="botanical-map-card">
           <div className="botanical-map-copy">
@@ -1612,12 +1551,10 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
           <p>{invitation.weddingTime}</p>
         </section>
 
-        <figure className="royal-gold-cover">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="royal-gold-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="royal-gold-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="royal-gold-map-card">
@@ -1666,9 +1603,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
       <WeddingLiveMode code={invitation.code} />
 
       <div className="boho-sand-shell">
-        <figure className="boho-sand-cover">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="boho-sand-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="boho-sand-names">
           <h1>{invitation.groomName}</h1>
@@ -1681,7 +1616,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
         </section>
 
         <section className="boho-sand-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="boho-sand-map-card">
@@ -1735,9 +1670,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
           <h1>{invitation.brideName}</h1>
         </section>
 
-        <figure className="pure-white-cover">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="pure-white-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="pure-white-date">
           <p>{formatInvitationDate(invitation)}</p>
@@ -1745,7 +1678,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
         </section>
 
         <section className="pure-white-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="pure-white-map-card">
@@ -1802,12 +1735,10 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
           </div>
         </section>
 
-        <figure className="neon-cover">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="neon-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="neon-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="neon-map-card">
@@ -1865,12 +1796,10 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
           </p>
         </section>
 
-        <figure className="vintage-photo">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="vintage-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="vintage-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="vintage-map-card">
@@ -1923,9 +1852,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
           <h1>{invitation.brideName}</h1>
         </section>
 
-        <figure className="fairytale-photo">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="fairytale-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="fairytale-date-card">
           <p>{formatInvitationDate(invitation)}</p>
@@ -1933,7 +1860,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
         </section>
 
         <section className="fairytale-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="fairytale-map-card">
@@ -1985,9 +1912,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
       </section>
 
       <div className="ocean-shell">
-        <figure className="ocean-photo">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="ocean-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="ocean-date-grid">
           <div>
@@ -2001,7 +1926,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
         </section>
 
         <section className="ocean-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="ocean-map-card">
@@ -2056,9 +1981,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
           </div>
         </section>
 
-        <figure className="artdeco-photo">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-        </figure>
+        <InviteGallery className="artdeco-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="artdeco-date-card">
           <p>{formatInvitationDate(invitation)}</p>
@@ -2066,7 +1989,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
         </section>
 
         <section className="artdeco-countdown">
-          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+          <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
         <section className="artdeco-map-card">
@@ -2115,9 +2038,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
       <div className="magazine-shell">
         <section className="magazine-cover">
           <h1 className="magazine-name magazine-name-top">{invitation.groomName}</h1>
-          <figure className="magazine-photo">
-            <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="غلاف الدعوة" />
-          </figure>
+          <InviteGallery className="magazine-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
           <h1 className="magazine-name magazine-name-bottom">{invitation.brideName}</h1>
         </section>
 
@@ -2128,7 +2049,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
           </section>
 
           <section className="magazine-countdown">
-            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+            <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </section>
 
           <section className="magazine-map-card">
@@ -2209,20 +2130,11 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
 
           <div className="cinematic-countdown">
             <p>يتبقى على الفرحة</p>
-            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
+            <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
         </section>
 
-        {images.length > 1 ? (
-          <section className="cinematic-gallery-stack" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
-            <div className="cinematic-gallery-back">
-              <img src={images[1] || galleryImages[1]} alt="Gallery 2" />
-            </div>
-            <div className="cinematic-gallery-front">
-              <img src={images[2] || galleryImages[2]} alt="Gallery 3" />
-            </div>
-          </section>
-        ) : null}
+        {images.length > 1 ? <InviteGallery className="cinematic-gallery-stack" images={images.slice(1)} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} /> : null}
 
         <section className="cinematic-map-card">
           <div className="cinematic-map-copy">

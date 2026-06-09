@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { LocateFixed, MapPin, Navigation, Route } from "lucide-react";
+import { Check, LocateFixed, MapPin, Navigation, Route, Share2 } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
@@ -51,13 +51,38 @@ function getGoogleSearchUrl(destination: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
 }
 
+function getDistanceKm(from: Coordinates, to: Coordinates) {
+  const earthRadiusKm = 6371;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const deltaLat = toRadians(to.lat - from.lat);
+  const deltaLng = toRadians(to.lng - from.lng);
+  const lat1 = toRadians(from.lat);
+  const lat2 = toRadians(to.lat);
+  const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistance(distanceKm: number, locale: Language) {
+  const numberLocale = locale === "ar" ? "ar-EG-u-nu-latn" : "en-US";
+  if (distanceKm < 1) {
+    return `${new Intl.NumberFormat(numberLocale, { maximumFractionDigits: 0 }).format(distanceKm * 1000)} ${locale === "ar" ? "متر" : "m"}`;
+  }
+  return `${new Intl.NumberFormat(numberLocale, { maximumFractionDigits: 1 }).format(distanceKm)} ${locale === "ar" ? "كم" : "km"}`;
+}
+
 export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: string; city: string; mapUrl: string; locale?: Language }) {
-  const t = getInvitationTranslator(resolveLocale(locale));
+  const resolvedLocale = resolveLocale(locale);
+  const t = getInvitationTranslator(resolvedLocale);
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [status, setStatus] = useState<"idle" | "locating" | "ready" | "blocked">("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("desktop");
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const destination = getSearchDestination(venue, city);
   const mapCoordinates = useMemo(() => extractCoordinates(mapUrl), [mapUrl]);
+  const distanceLabel = useMemo(() => {
+    if (!coords || !mapCoordinates) return "";
+    return formatDistance(getDistanceKm(coords, mapCoordinates), resolvedLocale);
+  }, [coords, mapCoordinates, resolvedLocale]);
 
   useEffect(() => {
     setDeviceType(detectDeviceType(navigator.userAgent));
@@ -95,7 +120,7 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
     const googleDestination = destinationCoordinates || destination;
     const googleMapsUrl = coords
       ? `https://www.google.com/maps/dir/?api=1&origin=${coords.lat},${coords.lng}&destination=${encodeURIComponent(googleDestination)}`
-      : mapUrl || getGoogleSearchUrl(destination);
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(googleDestination)}`;
     const appleMapsUrl = destinationCoordinates
       ? `https://maps.apple.com/?daddr=${encodeURIComponent(destinationCoordinates)}&dirflg=d`
       : `https://maps.apple.com/?q=${encodeURIComponent(destination)}&dirflg=d`;
@@ -112,23 +137,60 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
     return links;
   }, [coords, destination, deviceType, mapCoordinates, mapUrl]);
 
+  const googleMapsLink = navigationLinks.find((link) => link.key === "google")?.href || mapUrl || getGoogleSearchUrl(destination);
+  const secondaryLinks = navigationLinks.filter((link) => link.key !== "google").slice(0, 1);
+
+  async function shareLocation() {
+    const shareUrl = googleMapsLink;
+    const shareText = [venue, city].filter(Boolean).join(" - ");
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: t("invitation.map.shareTitle"),
+          text: shareText || destination,
+          url: shareUrl,
+        });
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${shareText || destination}\n${shareUrl}`);
+        setShareState("copied");
+        window.setTimeout(() => setShareState("idle"), 1800);
+      }
+    } catch {
+      setShareState("idle");
+    }
+  }
+
   return (
     <div className="map-frame route-map">
       <iframe src={mapEmbed} title={t("invitation.map.iframeTitle")} loading="lazy" />
+      <div className="map-preview-badge">
+        <MapPin size={14} />
+        <span>{t("invitation.map.preview")}</span>
+      </div>
       <div className="map-live-caption">
         <span className={`map-live-dot ${status === "ready" ? "ready" : ""}`}>
           <LocateFixed size={14} />
         </span>
         <span>{status === "ready" ? t("invitation.map.ready") : status === "locating" ? t("invitation.map.locating") : venue}</span>
+        {distanceLabel ? <strong>{t("invitation.map.distanceAway", { distance: distanceLabel })}</strong> : null}
       </div>
       <div className="map-actions" aria-label={t("invitation.map.actionsLabel")}>
-        {navigationLinks.map((link) => {
+        <a className="map-action recommended map-action-google" href={googleMapsLink} target="_blank" rel="noreferrer">
+          <Navigation size={15} />
+          <span>{t("invitation.map.openGoogle")}</span>
+        </a>
+        <button className="map-action map-action-share" type="button" onClick={shareLocation}>
+          {shareState === "copied" ? <Check size={15} /> : <Share2 size={15} />}
+          <span>{shareState === "copied" ? t("invitation.map.copied") : t("invitation.map.share")}</span>
+        </button>
+        {secondaryLinks.map((link) => {
           const Icon = link.icon;
           return (
             <a className={link.recommended ? "map-action recommended" : "map-action"} href={link.href} target="_blank" rel="noreferrer" key={link.key}>
               <Icon size={15} />
               <span>{link.label}</span>
-              {link.recommended ? <b>{t("invitation.map.recommended")}</b> : null}
             </a>
           );
         })}

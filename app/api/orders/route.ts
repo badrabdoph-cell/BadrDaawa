@@ -7,6 +7,7 @@ import { createFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
+import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
@@ -87,6 +88,8 @@ function buildOrderWhatsAppMessage(input: {
   musicChoice: OrderMusicChoice;
   musicUrl: string;
   photographer: { enabled: boolean; name: string; facebookUrl: string; instagramUrl: string };
+  story: Array<{ date?: string; title?: string; description?: string }>;
+  gift: { vodafoneCash?: string; instapay?: string; bankAccount?: string; customText?: string };
 }) {
   const submittedAt = new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
     dateStyle: "full",
@@ -125,6 +128,14 @@ function buildOrderWhatsAppMessage(input: {
     input.photographer.enabled
       ? ["بيانات المصور:", `الاسم: ${input.photographer.name || "غير محدد"}`, input.photographer.facebookUrl ? `Facebook: ${input.photographer.facebookUrl}` : "", input.photographer.instagramUrl ? `Instagram: ${input.photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
       : "بيانات المصور: لم يتم إضافتها",
+    "",
+    input.story.length
+      ? ["قصة العروسين:", ...input.story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n")
+      : "قصة العروسين: لم يتم إضافتها",
+    "",
+    Object.values(input.gift).some(Boolean)
+      ? ["هدية العروسين:", input.gift.vodafoneCash ? `فودافون كاش: ${input.gift.vodafoneCash}` : "", input.gift.instapay ? `إنستا باي: ${input.gift.instapay}` : "", input.gift.bankAccount ? `حساب بنكي: ${input.gift.bankAccount}` : "", input.gift.customText ? `نص مخصص: ${input.gift.customText}` : ""].filter(Boolean).join("\n")
+      : "هدية العروسين: لم يتم إضافتها",
   ].join("\n");
 }
 
@@ -168,6 +179,9 @@ export async function POST(request: NextRequest) {
   if (music.error) {
     return NextResponse.json({ error: music.error }, { status: 400 });
   }
+  const story = normalizeCoupleStory(parsed.data.story);
+  const gift = normalizeInvitationGift(parsed.data.gift);
+  const texts = story.length || Object.values(gift).some(Boolean) ? { story, gift } : undefined;
   const orderNumber = makeOrderNumber();
   const dedupeSource = parsed.data.idempotencyKey || JSON.stringify({
     groomName: parsed.data.groomName,
@@ -177,6 +191,8 @@ export async function POST(request: NextRequest) {
     mapUrl: parsed.data.mapUrl,
     templateSlug: selectedTemplate.slug,
     orderImages: parsed.data.orderImages,
+    story,
+    gift,
   });
   const dedupeKey = makeDedupeKey(dedupeSource);
   const siteUrl = getPublicSiteUrl(request.headers, request.url);
@@ -197,7 +213,9 @@ export async function POST(request: NextRequest) {
   const photographerNotes = parsed.data.photographerEnabled
     ? ["بيانات المصور الفوتوغرافي:", parsed.data.photographerName ? `الاسم: ${parsed.data.photographerName}` : "", photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "", photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
     : "";
-  const notes = [parsed.data.notes, mapNotes, photographerNotes, musicNotes, imageNotes].filter(Boolean).join("\n\n");
+  const storyNotes = story.length ? ["قصة العروسين:", ...story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
+  const giftNotes = Object.values(gift).some(Boolean) ? ["هدية العروسين:", gift.vodafoneCash ? `فودافون كاش: ${gift.vodafoneCash}` : "", gift.instapay ? `إنستا باي: ${gift.instapay}` : "", gift.bankAccount ? `حساب بنكي: ${gift.bankAccount}` : "", gift.customText ? `نص مخصص: ${gift.customText}` : ""].filter(Boolean).join("\n") : "";
+  const notes = [parsed.data.notes, mapNotes, photographerNotes, musicNotes, storyNotes, giftNotes, imageNotes].filter(Boolean).join("\n\n");
   let orderId = "";
   let effectiveOrderNumber = orderNumber;
 
@@ -216,6 +234,7 @@ export async function POST(request: NextRequest) {
       musicEnabled: parsed.data.musicEnabled,
       musicChoice: parsed.data.musicChoice,
       musicUrl: music.musicUrl,
+      texts,
       photographer,
       templateSlug: selectedTemplate.slug,
       language: parsed.data.language,
@@ -272,6 +291,8 @@ export async function POST(request: NextRequest) {
           musicChoice: parsed.data.musicChoice,
           musicUrl: absoluteMusicUrl,
           photographer,
+          story,
+          gift,
         });
         return NextResponse.json({ ok: true, duplicate: true, orderId: existingOrder.id, orderNumber: existingOrder.orderNumber || orderNumber, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message) });
       }
@@ -291,6 +312,7 @@ export async function POST(request: NextRequest) {
           musicEnabled: parsed.data.musicEnabled,
           musicChoice: parsed.data.musicChoice,
           musicUrl: music.musicUrl,
+          texts,
           photographer,
           language: parsed.data.language,
           templateId: template.id,
@@ -315,6 +337,7 @@ export async function POST(request: NextRequest) {
         musicEnabled: parsed.data.musicEnabled,
         musicChoice: parsed.data.musicChoice,
         musicUrl: music.musicUrl,
+        texts,
         photographer,
         templateSlug: selectedTemplate.slug,
         language: parsed.data.language,
@@ -337,6 +360,8 @@ export async function POST(request: NextRequest) {
     musicChoice: parsed.data.musicChoice,
     musicUrl: absoluteMusicUrl,
     photographer,
+    story,
+    gift,
   });
   queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
   await recordAuditLog({
@@ -357,6 +382,9 @@ export async function POST(request: NextRequest) {
       musicEnabled: parsed.data.musicEnabled,
       musicChoice: parsed.data.musicChoice,
       musicUrl: music.musicUrl,
+      texts,
+      story,
+      gift,
       photographer,
     },
     metadata: { source: "public-order-form" },

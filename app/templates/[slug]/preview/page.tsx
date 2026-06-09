@@ -6,6 +6,7 @@ import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
@@ -32,6 +33,8 @@ type PageProps = {
     musicEnabled?: string;
     musicUrl?: string;
     language?: string;
+    story?: string;
+    gift?: string;
   }>;
 };
 
@@ -58,6 +61,24 @@ function cleanPreviewGallery(value: string | undefined) {
 function cleanPreviewUrl(value: string | undefined, fallback: string) {
   const clean = value?.trim();
   return clean && /^https?:\/\/\S+\.\S+/.test(clean) ? clean : fallback;
+}
+
+function cleanPreviewStory(value: string | undefined) {
+  if (!value) return [];
+  try {
+    return normalizeCoupleStory(JSON.parse(value));
+  } catch {
+    return [];
+  }
+}
+
+function cleanPreviewGift(value: string | undefined) {
+  if (!value) return {};
+  try {
+    return normalizeInvitationGift(JSON.parse(value));
+  } catch {
+    return {};
+  }
 }
 
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
@@ -104,6 +125,9 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
   const locale = resolveLocale(query?.language);
   const localeMeta = getLocaleMeta(locale);
+  const previewStory = cleanPreviewStory(query?.story);
+  const previewGift = cleanPreviewGift(query?.gift);
+  const previewTexts = previewStory.length || Object.values(previewGift).some(Boolean) ? { story: previewStory, gift: previewGift } : undefined;
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
@@ -121,6 +145,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     gallery: previewGallery.length ? previewGallery : fallbackGallery,
     musicUrl: previewMusicUrl,
     musicEnabled: previewMusicEnabled,
+    texts: previewTexts,
     photographer: previewPhotographer,
     isActive: true,
     views: 0,

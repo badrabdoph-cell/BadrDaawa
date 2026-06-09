@@ -25,12 +25,36 @@ type PageProps = {
     photographerName?: string;
     photographerFacebookUrl?: string;
     photographerInstagramUrl?: string;
+    storyEnabled?: string;
+    story?: string;
+    giftEnabled?: string;
+    gift?: string;
     musicEnabled?: string;
     musicChoice?: string;
     musicUrl?: string;
     gallery?: string;
   }>;
 };
+
+function parseStoryParam(value?: string) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item === "object") : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseGiftParam(value?: string) {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
 
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
@@ -50,6 +74,10 @@ export default async function OrderPage({ searchParams }: PageProps) {
     photographerName: params.photographerName || "",
     photographerFacebookUrl: params.photographerFacebookUrl || "",
     photographerInstagramUrl: params.photographerInstagramUrl || "",
+    storyEnabled: params.storyEnabled === "1",
+    story: parseStoryParam(params.story),
+    giftEnabled: params.giftEnabled === "1",
+    gift: parseGiftParam(params.gift),
     musicEnabled: params.musicEnabled === "1",
     musicChoice: params.musicChoice === "upload" || params.musicChoice === "video" || params.musicChoice === "url" ? params.musicChoice : "default",
     musicUrl: params.musicUrl || "",

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Camera, Check, Eye, FileVideo, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Trash2, UploadCloud, UserRound } from "lucide-react";
-import type { TemplateDefinition } from "@/lib/types";
+import { CalendarDays, Camera, Check, Eye, FileVideo, Gift, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
+import type { CoupleStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 
 type FormState = {
@@ -19,6 +20,10 @@ type FormState = {
   photographerName: string;
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
+  storyEnabled: boolean;
+  story: CoupleStoryItem[];
+  giftEnabled: boolean;
+  gift: InvitationGift;
   musicEnabled: boolean;
   musicChoice: MusicChoice;
   musicUrl: string;
@@ -66,6 +71,10 @@ export type OrderInitialDraft = Pick<
   | "musicUrl"
 > & {
   photographerEnabled: boolean;
+  storyEnabled: boolean;
+  story: CoupleStoryItem[];
+  giftEnabled: boolean;
+  gift: InvitationGift;
   musicEnabled: boolean;
   musicChoice: MusicChoice;
   imageUrls: string[];
@@ -183,6 +192,49 @@ function cleanOrderDraftImageUrls(value: unknown) {
     .filter((item): item is string => typeof item === "string")
     .filter((item) => item.startsWith("/uploads/") || item.startsWith("http://") || item.startsWith("https://"))
     .slice(0, 3);
+}
+
+function cleanOrderStory(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+    .map((item) => ({
+      id: typeof item.id === "string" && item.id.trim() ? item.id.trim().slice(0, 80) : `story-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      date: typeof item.date === "string" ? item.date.trim().slice(0, 80) : "",
+      title: typeof item.title === "string" ? item.title.trim().slice(0, 120) : "",
+      description: typeof item.description === "string" ? item.description.trim().slice(0, 700) : "",
+    }));
+}
+
+function filledOrderStory(value: unknown) {
+  return normalizeCoupleStory(cleanOrderStory(value));
+}
+
+function cleanOrderGift(value: unknown): InvitationGift {
+  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return {
+    vodafoneCash: typeof raw.vodafoneCash === "string" ? raw.vodafoneCash.trim().slice(0, 80) : "",
+    instapay: typeof raw.instapay === "string" ? raw.instapay.trim().slice(0, 120) : "",
+    bankAccount: typeof raw.bankAccount === "string" ? raw.bankAccount.trim().slice(0, 180) : "",
+    customText: typeof raw.customText === "string" ? raw.customText.trim().slice(0, 500) : "",
+  };
+}
+
+function filledOrderGift(value: unknown) {
+  return normalizeInvitationGift(cleanOrderGift(value));
+}
+
+function parseDraftJson(value: string | null, fallback: unknown) {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function createOrderStoryItem(): CoupleStoryItem {
+  return { id: `story-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, date: "", title: "", description: "" };
 }
 
 function isValidOptionalUrl(value: string) {
@@ -347,6 +399,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     photographerName: initialDraft?.photographerName || "",
     photographerFacebookUrl: initialDraft?.photographerFacebookUrl || "",
     photographerInstagramUrl: initialDraft?.photographerInstagramUrl || "",
+    storyEnabled: Boolean(initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length),
+    story: cleanOrderStory(initialDraft?.story),
+    giftEnabled: Boolean(initialDraft?.giftEnabled || Object.values(filledOrderGift(initialDraft?.gift)).some(Boolean)),
+    gift: cleanOrderGift(initialDraft?.gift),
     musicEnabled: Boolean(initialDraft?.musicEnabled),
     musicChoice: initialDraft?.musicChoice || "default",
     musicUrl: initialDraft?.musicUrl || "",
@@ -391,6 +447,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
+      storyEnabled: params.get("storyEnabled") === "1" || undefined,
+      story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
+      giftEnabled: params.get("giftEnabled") === "1" || undefined,
+      gift: cleanOrderGift(parseDraftJson(params.get("gift"), {})),
       musicEnabled: params.get("musicEnabled") === "1" || undefined,
       musicChoice: isOrderMusicChoice(params.get("musicChoice")) ? (params.get("musicChoice") as MusicChoice) : undefined,
       musicUrl: params.get("musicUrl") || undefined,
@@ -420,6 +480,16 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       if (value) params.set(field, value);
     });
     if (nextForm.photographerEnabled) params.set("photographerEnabled", "1");
+    const story = filledOrderStory(nextForm.story);
+    if (nextForm.storyEnabled && story.length) {
+      params.set("storyEnabled", "1");
+      params.set("story", JSON.stringify(story));
+    }
+    const gift = filledOrderGift(nextForm.gift);
+    if (nextForm.giftEnabled && Object.values(gift).some(Boolean)) {
+      params.set("giftEnabled", "1");
+      params.set("gift", JSON.stringify(gift));
+    }
     if (nextForm.musicEnabled) {
       params.set("musicEnabled", "1");
       params.set("musicChoice", nextForm.musicChoice || "default");
@@ -449,6 +519,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         ...currentForm,
         templateSlug: currentTemplateSlug,
         photographerEnabled: form.photographerEnabled,
+        storyEnabled: form.storyEnabled,
+        story: form.story,
+        giftEnabled: form.giftEnabled,
+        gift: form.gift,
         musicEnabled: form.musicEnabled,
         musicChoice: form.musicChoice,
       },
@@ -492,6 +566,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         photographerName: typeof draft.photographerName === "string" ? draft.photographerName : current.photographerName,
         photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
         photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
+        storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
+        story: cleanOrderStory(draft.story),
+        giftEnabled: Boolean(draft.giftEnabled || Object.values(filledOrderGift(draft.gift)).some(Boolean)),
+        gift: cleanOrderGift(draft.gift),
         musicEnabled: Boolean(draft.musicEnabled),
         musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
@@ -522,6 +600,37 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       delete next[field];
       return next;
     });
+    if (message) setMessage("");
+  }
+
+  function addStoryItem() {
+    setForm((current) => ({ ...current, storyEnabled: true, story: [...cleanOrderStory(current.story), createOrderStoryItem()] }));
+    if (message) setMessage("");
+  }
+
+  function updateStoryItem(index: number, patch: Partial<CoupleStoryItem>) {
+    setForm((current) => ({
+      ...current,
+      storyEnabled: true,
+      story: cleanOrderStory(current.story).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
+    if (message) setMessage("");
+  }
+
+  function removeStoryItem(index: number) {
+    setForm((current) => {
+      const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
+      return { ...current, story: nextStory, storyEnabled: nextStory.length ? current.storyEnabled : false };
+    });
+    if (message) setMessage("");
+  }
+
+  function updateGiftField(field: keyof InvitationGift, value: string) {
+    setForm((current) => ({
+      ...current,
+      giftEnabled: true,
+      gift: { ...cleanOrderGift(current.gift), [field]: value },
+    }));
     if (message) setMessage("");
   }
 
@@ -761,6 +870,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (values.venue) params.set("venue", values.venue);
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
+    const story = filledOrderStory(values.story);
+    if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
+    const gift = filledOrderGift(values.gift);
+    if (values.giftEnabled && Object.values(gift).some(Boolean)) params.set("gift", JSON.stringify(gift));
     applyPhotographerParams(params, values);
     applyMusicParams(params, values, musicUrl);
     return `/templates/${values.templateSlug || form.templateSlug}/preview?${params.toString()}`;
@@ -912,6 +1025,34 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "رفع ملف MP3" : values.musicChoice === "video" ? "استخراج الصوت من فيديو" : "رابط أغنية"}`;
   }
 
+  function getStoryNotes(values: Partial<FormState>) {
+    const story = values.storyEnabled ? filledOrderStory(values.story) : [];
+    if (!story.length) return "";
+    return [
+      "قصة العروسين:",
+      ...story.map((item, index) =>
+        [
+          `${index + 1}. ${item.title || "محطة بدون عنوان"}`,
+          item.date ? `التاريخ: ${item.date}` : "",
+          item.description ? `الوصف: ${item.description}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      ),
+    ].join("\n");
+  }
+
+  function getGiftNotes(values: Partial<FormState>) {
+    const gift = values.giftEnabled ? filledOrderGift(values.gift) : {};
+    const lines = [
+      gift.vodafoneCash ? `فودافون كاش: ${gift.vodafoneCash}` : "",
+      gift.instapay ? `إنستا باي: ${gift.instapay}` : "",
+      gift.bankAccount ? `حساب بنكي: ${gift.bankAccount}` : "",
+      gift.customText ? `نص مخصص: ${gift.customText}` : "",
+    ].filter(Boolean);
+    return lines.length ? ["هدية العروسين:", ...lines].join("\n") : "";
+  }
+
   async function openPreview() {
     const currentForm = getCurrentFormFromDom();
     if (showValidationErrors(validateOrder(currentForm))) return;
@@ -967,6 +1108,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         weddingDate: normalizeWeddingDate(currentForm.weddingDate),
         templateSlug: selectedTemplate.slug,
         photographerEnabled: form.photographerEnabled,
+        storyEnabled: form.storyEnabled,
+        story: filledOrderStory(form.story),
+        giftEnabled: form.giftEnabled,
+        gift: filledOrderGift(form.gift),
         musicEnabled: form.musicEnabled,
         musicChoice: form.musicChoice,
         musicUrl,
@@ -1011,6 +1156,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
     const photographerNotes = getPhotographerNotes(currentForm);
     const clientMusicNotes = getMusicNotes(currentForm);
+    const story = currentForm.storyEnabled ? filledOrderStory(currentForm.story) : [];
+    const gift = currentForm.giftEnabled ? filledOrderGift(currentForm.gift) : {};
+    const storyNotes = getStoryNotes({ ...currentForm, story });
+    const giftNotes = getGiftNotes({ ...currentForm, gift });
 
     try {
       const orderImages = await getOrderImageDataUrls(formData);
@@ -1031,7 +1180,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...currentForm,
-          notes: [photographerNotes, clientMusicNotes].filter(Boolean).join("\n\n"),
+          story,
+          gift,
+          notes: [photographerNotes, clientMusicNotes, storyNotes, giftNotes].filter(Boolean).join("\n\n"),
           orderImages,
           orderMusic,
           idempotencyKey: orderSubmitKeyRef.current,
@@ -1132,8 +1283,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
               <Link2 size={16} />
               رابط اللوكيشن
             </label>
-            <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط اللوكيشن من على خريطة جوجل" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
-            <small className="field-preview" id="mapUrl-hint">انسخ رابط اللوكيشن من على خريطة جوجل.</small>
+            <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
+            <small className="field-preview" id="mapUrl-hint">أفضل نتيجة تكون من رابط Google Maps المباشر للقاعة حتى تظهر المعاينة والمسافة بدقة.</small>
             {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
           </div>
         </div>
@@ -1184,6 +1335,99 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                 <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
                 <input id="photographerInstagramUrl" name="photographerInstagramUrl" inputMode="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
                 {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="order-story-box">
+          <button
+            className={`photographer-toggle-button order-story-toggle ${form.storyEnabled ? "active" : ""}`}
+            type="button"
+            aria-expanded={form.storyEnabled}
+            onClick={() => {
+              if (form.storyEnabled) updateField("storyEnabled", false);
+              else {
+                setForm((current) => ({ ...current, storyEnabled: true, story: cleanOrderStory(current.story).length ? current.story : [createOrderStoryItem()] }));
+              }
+            }}
+          >
+            <Heart size={18} />
+            <span>إضافة قصة العروسين داخل الدعوة</span>
+            <strong>{form.storyEnabled ? "إخفاء القصة" : "إضافة القصة"}</strong>
+          </button>
+
+          {form.storyEnabled ? (
+            <div className="order-story-fields">
+              <div className="order-story-head">
+                <p>أضفوا محطات رحلتكم، وستظهر كتسلسل زمني راقٍ داخل الدعوة. إذا تركتموها فارغة لن يظهر القسم.</p>
+                <button className="btn btn-soft" type="button" onClick={addStoryItem}>
+                  <Plus size={16} />
+                  إضافة مرحلة
+                </button>
+              </div>
+              {cleanOrderStory(form.story).length ? (
+                <div className="order-story-list">
+                  {cleanOrderStory(form.story).map((item, index) => (
+                    <article className="order-story-item" key={item.id || index}>
+                      <div className="order-story-item-head">
+                        <strong>مرحلة {index + 1}</strong>
+                        <button className="admin-icon-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`storyDate-${index}`}>التاريخ</label>
+                        <input id={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder="مثلاً: 2022 أو أول لقاء" />
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`storyTitle-${index}`}>العنوان</label>
+                        <input id={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder="أول لقاء" />
+                      </div>
+                      <div className="field full">
+                        <label htmlFor={`storyDescription-${index}`}>الوصف</label>
+                        <textarea id={`storyDescription-${index}`} rows={3} value={item.description} onChange={(event) => updateStoryItem(index, { description: event.target.value })} placeholder="اكتبوا تفاصيل قصيرة وراقية لهذه المرحلة" />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="order-story-empty">لن يظهر قسم قصة العروسين إلا بعد إضافة مرحلة واحدة على الأقل.</p>
+              )}
+            </div>
+          ) : null}
+        </section>
+
+        <section className="order-gift-box">
+          <button
+            className={`photographer-toggle-button order-gift-toggle ${form.giftEnabled ? "active" : ""}`}
+            type="button"
+            aria-expanded={form.giftEnabled}
+            onClick={() => updateField("giftEnabled", !form.giftEnabled)}
+          >
+            <Gift size={18} />
+            <span>إضافة بيانات هدية العروسين</span>
+            <strong>{form.giftEnabled ? "إخفاء الهدية" : "إضافة الهدية"}</strong>
+          </button>
+
+          {form.giftEnabled ? (
+            <div className="order-gift-fields">
+              <p>اختياري تمامًا. إذا تركت كل البيانات فارغة لن يظهر القسم داخل الدعوة.</p>
+              <div className="field">
+                <label htmlFor="giftVodafoneCash">رقم فودافون كاش</label>
+                <input id="giftVodafoneCash" dir="ltr" inputMode="tel" value={form.gift.vodafoneCash || ""} onChange={(event) => updateGiftField("vodafoneCash", event.target.value)} placeholder="010..." />
+              </div>
+              <div className="field">
+                <label htmlFor="giftInstapay">إنستا باي</label>
+                <input id="giftInstapay" dir="ltr" value={form.gift.instapay || ""} onChange={(event) => updateGiftField("instapay", event.target.value)} placeholder="username@instapay أو رقم الهاتف" />
+              </div>
+              <div className="field">
+                <label htmlFor="giftBankAccount">حساب بنكي</label>
+                <input id="giftBankAccount" dir="ltr" value={form.gift.bankAccount || ""} onChange={(event) => updateGiftField("bankAccount", event.target.value)} placeholder="اسم البنك / رقم الحساب / IBAN" />
+              </div>
+              <div className="field full">
+                <label htmlFor="giftCustomText">نص مخصص</label>
+                <textarea id="giftCustomText" rows={3} value={form.gift.customText || ""} onChange={(event) => updateGiftField("customText", event.target.value)} placeholder="أي تفاصيل إضافية تريد ظهورها للضيوف" />
               </div>
             </div>
           ) : null}

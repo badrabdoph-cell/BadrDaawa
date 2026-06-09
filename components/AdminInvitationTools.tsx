@@ -1,12 +1,13 @@
 "use client";
 
 import type { MutableRefObject } from "react";
-import { FileVideo, ImagePlus, Link2, Loader2, MessageSquareText, Music2, UploadCloud, UserRound } from "lucide-react";
+import { FileVideo, Gift, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import { uploadBrowserPreviewImage, type BrowserImageUploadOptions } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
+import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { ContentPreset, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { ContentPreset, CoupleStoryItem, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
 export type AdminToolMusicFile = { url: string; modifiedAt?: number; name?: string; id?: string; sizeBytes?: number; extension?: string };
@@ -105,6 +106,14 @@ export function validateAdminInvitationTools(values: AdminInvitationToolValues, 
   return "";
 }
 
+function createStoryItem(): CoupleStoryItem {
+  return { id: `story-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, title: "", description: "", date: "" };
+}
+
+function patchStoryItem(story: CoupleStoryItem[], index: number, patch: Partial<CoupleStoryItem>) {
+  return story.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item));
+}
+
 export function AdminInvitationTools({
   values,
   templates,
@@ -142,6 +151,15 @@ export function AdminInvitationTools({
   onMusicFile: (file?: File | null) => void;
   onMusicVideoFile?: (file?: File | null) => void;
 }) {
+  const story = normalizeCoupleStory(values.invitationTexts.story);
+  const gift = normalizeInvitationGift(values.invitationTexts.gift);
+  const updateStory = (nextStory: CoupleStoryItem[]) => {
+    onPatch({ invitationTexts: { ...values.invitationTexts, story: normalizeCoupleStory(nextStory) } });
+  };
+  const updateGift = (field: keyof NonNullable<InvitationTexts["gift"]>, value: string) => {
+    onPatch({ invitationTexts: { ...values.invitationTexts, gift: normalizeInvitationGift({ ...gift, [field]: value }) } });
+  };
+
   return (
     <>
       <div className={gridClassName}>
@@ -179,8 +197,8 @@ export function AdminInvitationTools({
         </label>
         <label className="field wide">
           <span><Link2 size={15} /> رابط اللوكيشن</span>
-          <input value={values.mapUrl} onChange={(event) => onPatch({ mapUrl: event.target.value })} placeholder="انسخ رابط اللوكيشن من على خريطة جوجل" />
-          <small>انسخ رابط اللوكيشن من على خريطة جوجل.</small>
+          <input value={values.mapUrl} onChange={(event) => onPatch({ mapUrl: event.target.value })} placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" />
+          <small>يفضل رابط Google Maps المباشر حتى تظهر معاينة الموقع والمسافة التقريبية للضيف.</small>
         </label>
       </div>
 
@@ -273,6 +291,75 @@ export function AdminInvitationTools({
             {values.musicUrl ? <audio controls preload="metadata" src={values.musicUrl} /> : null}
           </div>
         ) : null}
+      </div>
+
+      <div className={sectionClassName}>
+        <div className="story-editor">
+          <div className="story-editor-head">
+            <div>
+              <span><Heart size={16} /> قسم اختياري</span>
+              <strong>قصة العروسين</strong>
+            </div>
+            <button className="btn btn-soft" type="button" onClick={() => updateStory([...story, createStoryItem()])}>
+              <Plus size={16} />
+              إضافة مرحلة
+            </button>
+          </div>
+          {story.length ? (
+            <div className="story-editor-list">
+              {story.map((item, index) => (
+                <article className="story-editor-item" key={item.id || index}>
+                  <div className="story-editor-item-head">
+                    <strong>مرحلة {index + 1}</strong>
+                    <button className="admin-icon-button" type="button" onClick={() => updateStory(story.filter((_, itemIndex) => itemIndex !== index))} title="حذف المرحلة">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                  <label className="field">
+                    <span>التاريخ</span>
+                    <input value={item.date || ""} onChange={(event) => updateStory(patchStoryItem(story, index, { date: event.target.value }))} placeholder="مثلاً: 2024 أو أول لقاء" />
+                  </label>
+                  <label className="field">
+                    <span>العنوان</span>
+                    <input value={item.title} onChange={(event) => updateStory(patchStoryItem(story, index, { title: event.target.value }))} placeholder="أول لقاء" />
+                  </label>
+                  <label className="field full">
+                    <span>الوصف</span>
+                    <textarea rows={3} value={item.description} onChange={(event) => updateStory(patchStoryItem(story, index, { description: event.target.value }))} placeholder="تفاصيل قصيرة وراقية لهذه المرحلة" />
+                  </label>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="story-editor-empty">لن يظهر قسم قصة العروسين داخل الدعوة إلا بعد إضافة مرحلة واحدة على الأقل.</p>
+          )}
+        </div>
+      </div>
+
+      <div className={sectionClassName}>
+        <div className="builder-section-head">
+          <Gift size={18} />
+          <strong>هدية العروسين</strong>
+        </div>
+        <div className={gridClassName}>
+          <label className="field">
+            <span>رقم فودافون كاش</span>
+            <input dir="ltr" value={gift.vodafoneCash || ""} onChange={(event) => updateGift("vodafoneCash", event.target.value)} placeholder="010..." />
+          </label>
+          <label className="field">
+            <span>إنستا باي</span>
+            <input dir="ltr" value={gift.instapay || ""} onChange={(event) => updateGift("instapay", event.target.value)} placeholder="username@instapay" />
+          </label>
+          <label className="field">
+            <span>حساب بنكي</span>
+            <input dir="ltr" value={gift.bankAccount || ""} onChange={(event) => updateGift("bankAccount", event.target.value)} placeholder="Bank / Account / IBAN" />
+          </label>
+          <label className="field wide">
+            <span>نص مخصص</span>
+            <textarea rows={3} value={gift.customText || ""} onChange={(event) => updateGift("customText", event.target.value)} placeholder="أي تفاصيل إضافية تظهر داخل قسم الهدية" />
+            <small>إذا كانت كل البيانات فارغة لن يظهر قسم الهدية داخل الدعوة.</small>
+          </label>
+        </div>
       </div>
 
       <div className={sectionClassName}>

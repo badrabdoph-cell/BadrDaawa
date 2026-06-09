@@ -80,6 +80,7 @@ export type MusicSource = "default" | "library" | "upload" | "video" | "url";
 export type InvitationTexts = {
   groomNameEn?: string;
   brideNameEn?: string;
+  openingText?: string;
   inviteMessage?: string;
   inviteMessageSecondary?: string;
   rsvpQuestion?: string;
@@ -87,6 +88,7 @@ export type InvitationTexts = {
   rsvpConfirmedSuccessMessage?: string;
   rsvpDeclinedSuccessMessage?: string;
   story?: CoupleStoryItem[];
+  gift?: InvitationGift;
 };
 
 export type CoupleStoryItem = {
@@ -95,6 +97,13 @@ export type CoupleStoryItem = {
   description: string;
   imageUrl?: string;
   date?: string;
+};
+
+export type InvitationGift = {
+  vodafoneCash?: string;
+  instapay?: string;
+  bankAccount?: string;
+  customText?: string;
 };
 
 export type ContentPresetKind = "opening" | "welcome" | "rsvp";

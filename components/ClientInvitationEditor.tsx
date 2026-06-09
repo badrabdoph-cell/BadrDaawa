@@ -422,7 +422,8 @@ export function ClientInvitationEditor({
           </label>
           <label className="field full">
             <span>رابط الخريطة</span>
-            <input value={mapUrl} onChange={(event) => { setMapUrl(event.target.value); markDirty(); }} />
+            <input value={mapUrl} onChange={(event) => { setMapUrl(event.target.value); markDirty(); }} placeholder="https://maps.google.com/..." />
+            <small>يفضل رابط Google Maps المباشر للقاعة حتى تظهر معاينة الموقع والمسافة التقريبية للضيف.</small>
           </label>
         </div>
 
