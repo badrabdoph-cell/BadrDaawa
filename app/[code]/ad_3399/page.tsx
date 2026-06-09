@@ -16,7 +16,7 @@ import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-s
 import { getClientMessages } from "@/lib/client-messages";
 import { getContentPresets } from "@/lib/content-presets";
 import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
-import { getGuestBookMessages } from "@/lib/guest-book";
+import { getCoupleMessagesSettings, getGuestBookMessages } from "@/lib/guest-book";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
@@ -48,7 +48,7 @@ export default async function CustomerAdminPage({
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 
-  const [guests, template, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages] = await Promise.all([
+  const [guests, template, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages, coupleMessagesSettings] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
     getMusicLibrary(),
@@ -57,6 +57,7 @@ export default async function CustomerAdminPage({
     getMessageTemplates(),
     getWeddingLiveMode(invitation.code),
     getGuestBookMessages(invitation.code, "all"),
+    getCoupleMessagesSettings(invitation.code),
   ]);
   if (!template) {
     notFound();
@@ -94,7 +95,7 @@ export default async function CustomerAdminPage({
 
       <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
 
-      <CustomerGuestBookPanel messages={guestBookMessages} />
+      <CustomerGuestBookPanel invitationCode={invitation.code} messages={guestBookMessages} settings={coupleMessagesSettings} />
 
       {query.saved === "music-error" ? (
         <div className="notice danger customer-notice">الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV.</div>
