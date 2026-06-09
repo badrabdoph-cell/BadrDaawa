@@ -29,6 +29,7 @@ export const orderRequestSchema = z.object({
   photographerName: z.string().trim().max(120).optional().default(""),
   photographerFacebookUrl: z.string().trim().max(500).optional().default(""),
   photographerInstagramUrl: z.string().trim().max(500).optional().default(""),
+  openingText: z.string().trim().max(180).optional().default(""),
   story: z.array(coupleStoryItemSchema).optional().default([]),
   gift: invitationGiftSchema.optional().default({ vodafoneCash: "", instapay: "", bankAccount: "", customText: "" }),
   musicEnabled: z.boolean().optional().default(false),
