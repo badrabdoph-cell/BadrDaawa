@@ -30,6 +30,9 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   revalidatePath("/admin/guest-book");
+  revalidatePath("/admin");
+  revalidatePath(`/${code}/ad_3399`);
+  revalidatePath(`/${invitation.customSlug || invitation.code}`);
   queueGitHubSync(`Guest book message pending review: ${code}.`, { createSnapshot: true });
   return NextResponse.json({ ok: true, status: saved.status });
 }

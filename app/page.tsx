@@ -1,24 +1,62 @@
 import Link from "next/link";
-import { BellRing, Check, Eye, Headphones, Link2, Palette, Send, SlidersHorizontal, Sparkles, Vote, WandSparkles, X } from "lucide-react";
+import { BellRing, Check, Eye, Headphones, LayoutTemplate, Link2, Palette, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
 import { BroadcastAnnotator } from "@/components/BroadcastAnnotator";
+import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getHomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
+import { getHomePlatformStats } from "@/lib/home-stats";
 import { getSiteSettings } from "@/lib/site-settings";
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
+
+function HomeSectionDivider({ variant = "wave" }: { variant?: "wave" | "lace" | "arc" }) {
+  return (
+    <div className={`home-section-divider home-section-divider-${variant}`} aria-hidden="true">
+      {variant === "wave" ? (
+        <svg viewBox="0 0 1440 170" preserveAspectRatio="none" focusable="false">
+          <path className="home-divider-fill" d="M0 84L60 76C120 68 240 52 360 67C480 82 600 128 720 127C840 126 960 78 1080 61C1200 44 1320 58 1380 65L1440 72V170H0V84Z" />
+          <path className="home-divider-line" d="M0 84C144 63 247 54 360 67C480 82 600 128 720 127C840 126 960 78 1080 61C1200 44 1320 58 1440 72" />
+          <path className="home-divider-line soft" d="M0 116C170 92 278 96 410 108C560 122 663 147 794 132C946 115 1046 68 1202 73C1295 76 1360 91 1440 105" />
+        </svg>
+      ) : null}
+      {variant === "lace" ? (
+        <svg viewBox="0 0 1180 96" preserveAspectRatio="none" focusable="false">
+          <path className="home-divider-line" d="M40 48C166 14 280 14 386 48C492 82 608 82 714 48C820 14 936 14 1140 48" />
+          <path className="home-divider-line soft" d="M40 56C210 76 314 76 456 55C598 34 708 34 850 55C966 72 1048 70 1140 56" />
+          <circle cx="354" cy="48" r="5" />
+          <circle cx="590" cy="48" r="7" />
+          <circle cx="826" cy="48" r="5" />
+        </svg>
+      ) : null}
+      {variant === "arc" ? (
+        <svg viewBox="0 0 1180 112" preserveAspectRatio="none" focusable="false">
+          <path className="home-divider-fill" d="M76 58C244 12 396 14 530 56C665 98 794 105 930 66C1012 42 1080 36 1136 42V112H76V58Z" />
+          <path className="home-divider-line" d="M76 58C244 12 396 14 530 56C665 98 794 105 930 66C1012 42 1080 36 1136 42" />
+          <path className="home-divider-line soft" d="M126 74C278 47 404 52 542 80C684 109 798 104 920 82C998 68 1058 62 1112 66" />
+        </svg>
+      ) : null}
+    </div>
+  );
+}
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
-  const [previewSettings, content, siteSettings] = await Promise.all([getHomePreviewSettings(), getHomeContent(), getSiteSettings()]);
+  const [previewSettings, content, siteSettings, platformStats] = await Promise.all([getHomePreviewSettings(), getHomeContent(), getSiteSettings(), getHomePlatformStats()]);
   const previewTemplateSrc = `/templates/${previewSettings.templateSlug}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings.homepage.showFeatures || siteSettings.homepage.showPreview || siteSettings.homepage.showPricing;
+  const stats = [
+    { label: "دعوة منشأة", value: platformStats.invitations, icon: Sparkles },
+    { label: "عميل", value: platformStats.customers, icon: UsersRound },
+    { label: "قالب جاهز", value: platformStats.templates, icon: LayoutTemplate },
+    { label: "تأكيد حضور", value: platformStats.confirmedRsvps, icon: UserCheck },
+  ];
 
   return (
     <div className="page-shell">
@@ -64,6 +102,36 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </section>
 
+        <section className="home-platform-stats" aria-labelledby="home-platform-stats-title">
+          <div className="container">
+            <div className="home-platform-stats-head">
+              <span className="eyebrow">
+                <Sparkles size={16} />
+                أرقام حقيقية من النظام
+              </span>
+              <h2 id="home-platform-stats-title">إحصائيات المنصة</h2>
+            </div>
+            <div className="home-platform-stats-grid">
+              {stats.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <article className="home-platform-stat-card" key={stat.label}>
+                    <span className="home-platform-stat-icon">
+                      <Icon size={22} />
+                    </span>
+                    <strong>
+                      <CountUpNumber value={stat.value} />
+                    </strong>
+                    <small>{stat.label}</small>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
+
         {showHomePanels ? (
           <section className="section compact live-template-section">
             <div className="container live-template-wrap">
@@ -95,6 +163,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 </div>
                   </div>
                 ) : null}
+                {siteSettings.homepage.showFeatures && (siteSettings.homepage.showPreview || siteSettings.homepage.showPricing) ? <HomeSectionDivider variant="lace" /> : null}
                 {siteSettings.homepage.showPreview ? (
                   <>
                     <div className="live-preview-title">
@@ -133,6 +202,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               </div>
                   </>
                 ) : null}
+                {siteSettings.homepage.showPreview && siteSettings.homepage.showPricing ? <HomeSectionDivider variant="arc" /> : null}
                 {siteSettings.homepage.showPricing ? (
                   <div className="home-pricing-panel" aria-label="باقات الأسعار">
                 <div className="home-pricing-head">

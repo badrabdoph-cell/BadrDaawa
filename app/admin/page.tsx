@@ -13,6 +13,7 @@ import {
   Eye,
   FileText,
   MapPinCheckInside,
+  MessageCircleHeart,
   MonitorPlay,
   Music2,
   Palette,
@@ -26,6 +27,7 @@ import { getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin
 import { listBackupSnapshots } from "@/lib/backups";
 import { getCheckInDashboard } from "@/lib/check-ins";
 import { hasDatabaseConfig } from "@/lib/database-url";
+import { getAllGuestBookMessages } from "@/lib/guest-book";
 import { getMusicLibrary } from "@/lib/music-library";
 import { formatArabicNumber } from "@/lib/utils";
 import { SyncStatus } from "@/app/admin/components/sync-status";
@@ -69,7 +71,7 @@ function formatBackupSize(bytes?: number) {
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, backups, musicLibrary, checkInDashboard] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), listBackupSnapshots(), getMusicLibrary(), getCheckInDashboard()]);
+  const [invitations, orders, guests, backups, musicLibrary, checkInDashboard, guestBookMessages] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), listBackupSnapshots(), getMusicLibrary(), getCheckInDashboard(), getAllGuestBookMessages()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
@@ -82,6 +84,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const totalViews = invitations.reduce((sum, invitation) => sum + invitation.views, 0);
   const confirmedGuests = guests.filter((guest) => guest.status === "confirmed");
   const declinedGuests = guests.filter((guest) => guest.status === "declined");
+  const pendingGuestBookMessages = guestBookMessages.filter((message) => message.status === "pending");
   const expectedAttendees = confirmedGuests.reduce((sum, guest) => sum + Math.max(1, guest.attendees || 1), 0);
   const responseRate = guests.length ? Math.round((confirmedGuests.length / guests.length) * 100) : 0;
   const backupAgeMs = latestBackup ? Date.now() - new Date(latestBackup.createdAt).getTime() : Number.POSITIVE_INFINITY;
@@ -90,6 +93,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const alerts = [
     !hasDatabase ? "قاعدة البيانات غير متصلة، البيانات الحالية قد تكون من الملفات المحلية." : "",
     newOrders.length ? `${formatAdminNumber(newOrders.length)} طلب جديد يحتاج متابعة.` : "",
+    pendingGuestBookMessages.length ? `${formatAdminNumber(pendingGuestBookMessages.length)} تهنئة بانتظار الموافقة.` : "",
     backupNeedsAttention ? (latestBackup ? "آخر نسخة احتياطية أقدم من 24 ساعة." : "لا توجد نسخة احتياطية محفوظة بعد.") : "",
     activeMusicSlots === 0 ? "لا توجد مقاطع موسيقى مفعلة للقوالب." : "",
   ].filter(Boolean);
@@ -177,6 +181,12 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <span>الوصول الفعلي</span>
             <strong>{formatAdminNumber(checkInDashboard.totals.checkIns)}</strong>
             <small>{formatAdminNumber(checkInDashboard.totals.today)} اليوم / منفصل عن RSVP</small>
+          </Link>
+          <Link className="admin-metric-card" href="/admin/guest-book">
+            <MessageCircleHeart size={20} />
+            <span>تهاني الضيوف</span>
+            <strong>{formatAdminNumber(guestBookMessages.length)}</strong>
+            <small>{formatAdminNumber(pendingGuestBookMessages.length)} بانتظار موافقة الأدمن</small>
           </Link>
         </div>
 

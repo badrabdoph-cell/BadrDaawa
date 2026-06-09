@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { moderateGuestBookMessage, type GuestBookAction } from "@/lib/guest-book";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { getInvitationByCode } from "@/lib/invitation-data";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -33,7 +34,11 @@ export async function POST(request: NextRequest) {
   }
 
   revalidatePath("/admin/guest-book");
+  revalidatePath("/admin");
   revalidatePath(`/${result.message.invitationCode}`);
+  revalidatePath(`/${result.message.invitationCode}/ad_3399`);
+  const invitation = await getInvitationByCode(result.message.invitationCode).catch(() => null);
+  if (invitation?.customSlug) revalidatePath(`/${invitation.customSlug}`);
   queueGitHubSync(`Guest book message ${action}: ${result.message.invitationCode}.`, { createSnapshot: true });
 
   return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?saved=${action}`, request.headers, request.nextUrl.origin), 303);

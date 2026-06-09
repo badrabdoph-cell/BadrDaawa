@@ -42,6 +42,13 @@ export function GuestBook({ code, isPreview = false }: { code: string; isPreview
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isPreview) return;
+    const cleanName = name.trim();
+    const cleanMessage = message.trim();
+    if (!cleanName || !cleanMessage) {
+      setState("error");
+      setNotice("اكتب الاسم ورسالة تهنئة واضحة قبل الإرسال.");
+      return;
+    }
     setState("loading");
     setNotice("");
 
@@ -49,7 +56,7 @@ export function GuestBook({ code, isPreview = false }: { code: string; isPreview
       const response = await fetch(`/api/invitations/${code}/guest-book`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, message }),
+        body: JSON.stringify({ name: cleanName, message: cleanMessage }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) {
@@ -79,8 +86,8 @@ export function GuestBook({ code, isPreview = false }: { code: string; isPreview
       </div>
 
       <form className="guest-book-form" onSubmit={submit}>
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="الاسم" maxLength={80} required disabled={isPreview || state === "loading"} />
-        <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="رسالة تهنئة قصيرة" maxLength={600} rows={4} required disabled={isPreview || state === "loading"} />
+        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="اكتب اسمك" maxLength={80} required disabled={isPreview || state === "loading"} aria-label="اسم مرسل التهنئة" />
+        <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="اكتب رسالة التهنئة" maxLength={600} rows={4} required disabled={isPreview || state === "loading"} aria-label="رسالة التهنئة" />
         <button className="btn btn-gold btn-glow" type="submit" disabled={isPreview || state === "loading"}>
           {state === "loading" ? <Loader2 size={18} className="animate-float" /> : <Send size={18} />}
           إرسال التهنئة

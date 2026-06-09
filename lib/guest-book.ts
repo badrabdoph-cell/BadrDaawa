@@ -12,9 +12,15 @@ export type GuestBookAction = "approve" | "reject" | "delete";
 const storePath = path.join(process.cwd(), "data", "guest-book.json");
 const maxNameLength = 80;
 const maxMessageLength = 600;
+const fallbackGuestName = "ضيف عزيز";
 
 function cleanText(value: unknown, limit: number) {
-  return (typeof value === "string" ? value : "").trim().replace(/\r\n/g, "\n").slice(0, limit);
+  return (typeof value === "string" ? value : "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, limit);
 }
 
 function createEmptyStore(): GuestBookStore {
@@ -30,10 +36,10 @@ function normalizeMessage(value: unknown): GuestBookMessage | null {
   const raw = value as Partial<GuestBookMessage>;
   const id = cleanText(raw.id, 120);
   const invitationCode = cleanText(raw.invitationCode, 160);
-  const name = cleanText(raw.name, maxNameLength);
+  const name = cleanText(raw.name, maxNameLength) || fallbackGuestName;
   const message = cleanText(raw.message, maxMessageLength);
   const createdAt = cleanText(raw.createdAt, 80);
-  if (!id || !invitationCode || !name || !message || !createdAt) return null;
+  if (!id || !invitationCode || !message || !createdAt) return null;
   return {
     id,
     invitationCode,

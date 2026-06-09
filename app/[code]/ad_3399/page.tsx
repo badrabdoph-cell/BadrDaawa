@@ -8,6 +8,7 @@ import { ClientShareTools } from "@/components/ClientShareTools";
 import { ClientWeddingLiveModePanel } from "@/components/ClientWeddingLiveModePanel";
 import { CopyButton } from "@/components/CopyButton";
 import { CustomerAnalyticsPanel } from "@/components/CustomerAnalyticsPanel";
+import { CustomerGuestBookPanel } from "@/components/CustomerGuestBookPanel";
 import { CustomerMessagesPanel } from "@/components/CustomerMessagesPanel";
 import { GuestTable } from "@/components/GuestTable";
 import { InvitationQrTools } from "@/components/InvitationQrTools";
@@ -15,6 +16,7 @@ import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-s
 import { getClientMessages } from "@/lib/client-messages";
 import { getContentPresets } from "@/lib/content-presets";
 import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
+import { getGuestBookMessages } from "@/lib/guest-book";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
@@ -46,7 +48,7 @@ export default async function CustomerAdminPage({
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 
-  const [guests, template, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig] = await Promise.all([
+  const [guests, template, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
     getMusicLibrary(),
@@ -54,6 +56,7 @@ export default async function CustomerAdminPage({
     getContentPresets(),
     getMessageTemplates(),
     getWeddingLiveMode(invitation.code),
+    getGuestBookMessages(invitation.code, "all"),
   ]);
   if (!template) {
     notFound();
@@ -90,6 +93,8 @@ export default async function CustomerAdminPage({
       <CustomerAnalyticsPanel analytics={analytics} />
 
       <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
+
+      <CustomerGuestBookPanel messages={guestBookMessages} />
 
       {query.saved === "music-error" ? (
         <div className="notice danger customer-notice">الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV.</div>
