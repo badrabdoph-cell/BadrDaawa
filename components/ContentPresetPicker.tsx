@@ -21,7 +21,7 @@ function presetPatch(preset: ContentPreset): Partial<InvitationTexts> {
       ...(preset.secondaryContent ? { rsvpDeclinedMessage: preset.secondaryContent } : {}),
     };
   }
-  return { inviteMessage: preset.content };
+  return { openingText: preset.content };
 }
 
 export function ContentPresetPicker({
