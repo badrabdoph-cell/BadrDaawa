@@ -63,6 +63,14 @@ export function addSecurityHeaders(response: NextResponse) {
   return response;
 }
 
+export function getRequestOrigin(request: Request) {
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Validate request origin
  */
@@ -70,6 +78,27 @@ export function isValidOrigin(request: NextRequest, allowedOrigins: string[]): b
   const origin = request.headers.get("origin");
   if (!origin) return true; // Allow requests without origin header (same-site)
   return allowedOrigins.includes(origin);
+}
+
+export function isSameOriginRequest(request: Request): boolean {
+  const requestOrigin = getRequestOrigin(request);
+  if (!requestOrigin) return true;
+
+  const origin = request.headers.get("origin");
+  if (origin) return origin === requestOrigin;
+
+  const referer = request.headers.get("referer");
+  if (!referer) return true;
+
+  try {
+    return new URL(referer).origin === requestOrigin;
+  } catch {
+    return false;
+  }
+}
+
+export function sameOriginErrorResponse() {
+  return NextResponse.json({ error: "تم رفض الطلب بسبب مصدر غير موثوق." }, { status: 403 });
 }
 
 /**

@@ -11,7 +11,7 @@ import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { hashPassword } from "@/lib/password";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
-import { royalEnvelopeTemplate } from "@/lib/templates";
+import { featuredOneTemplate } from "@/lib/templates";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
   const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
   const uploadedAudio = formData.get("audioFile");
   const hasUploadedAudio = uploadedAudio instanceof File && uploadedAudio.size > 0;
-  const templateSlug = String(formData.get("templateSlug") || royalEnvelopeTemplate.slug).trim();
-  const selectedTemplate = (await getTemplateWithSettings(templateSlug)) || royalEnvelopeTemplate;
+  const templateSlug = String(formData.get("templateSlug") || featuredOneTemplate.slug).trim();
+  const selectedTemplate = (await getTemplateWithSettings(templateSlug)) || featuredOneTemplate;
   const galleryImages = getInvitationGalleryEntries(formData);
 
   const parsedWeddingDate = new Date(weddingDate);

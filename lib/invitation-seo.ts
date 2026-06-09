@@ -97,3 +97,34 @@ export function getMissingInvitationSeoMetadata(): Metadata {
     robots: { index: false, follow: false },
   };
 }
+
+export function getInvitationStructuredData(invitation: Invitation) {
+  const coupleName = `${invitation.groomName} و ${invitation.brideName}`;
+  const url = getInvitationUrl(invitation.code, invitation.customSlug);
+  const startDate = invitation.weddingTime ? `${invitation.weddingDate.slice(0, 10)}T${invitation.weddingTime}` : invitation.weddingDate;
+  const locationName = [invitation.venue, invitation.city].filter(Boolean).join(" - ");
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: `دعوة زفاف ${coupleName}`,
+    description: `يسعدنا دعوتكم لحضور زفاف ${coupleName}`,
+    startDate,
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    image: [getInvitationImage(invitation)],
+    url,
+    location: locationName
+      ? {
+          "@type": "Place",
+          name: locationName,
+          address: locationName,
+        }
+      : undefined,
+    organizer: {
+      "@type": "Organization",
+      name: "BadrDaawa",
+      url: getSiteUrl(),
+    },
+  };
+}

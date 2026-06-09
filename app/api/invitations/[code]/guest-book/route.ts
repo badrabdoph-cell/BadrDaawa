@@ -4,6 +4,8 @@ import { getInvitationByCode } from "@/lib/invitation-data";
 import { createGuestBookMessage, getApprovedGuestBookMessages, getCoupleMessagesSettings } from "@/lib/guest-book";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
+import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -45,6 +47,15 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function POST(request: Request, context: RouteContext) {
   const { code } = await context.params;
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
+  const limit = checkRequestRateLimit(request, `guest-book:${code}`, { windowMs: 60000, maxRequests: 6 });
+  if (!limit.allowed) return rateLimitResponse(limit.resetAt);
+
+  const contentLength = Number(request.headers.get("content-length") || "0");
+  if (contentLength > maxMessageImageBytes + 256 * 1024) {
+    return NextResponse.json({ error: "حجم الطلب كبير جدًا." }, { status: 413 });
+  }
+
   const invitation = await getInvitationByCode(code);
   if (!invitation || !invitation.isActive) {
     return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });

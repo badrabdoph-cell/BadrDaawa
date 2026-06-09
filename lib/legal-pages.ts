@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { writeJsonFileAtomic } from "./atomic-file";
 
 export type LegalPageSlug = "privacy-policy" | "terms" | "refund-policy" | "usage-policy";
 
@@ -86,8 +87,7 @@ async function readLegalPagesFile() {
 }
 
 async function writeLegalPages(pages: Record<LegalPageSlug, LegalPageContent>) {
-  await mkdir(path.dirname(legalPagesPath), { recursive: true });
-  await writeFile(legalPagesPath, `${JSON.stringify(pages, null, 2)}\n`, "utf8");
+  await writeJsonFileAtomic(legalPagesPath, pages);
 }
 
 export async function getLegalPages() {

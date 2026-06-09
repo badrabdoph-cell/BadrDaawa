@@ -3,6 +3,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { addFileGuest, getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 import { getInvitationByCode as getDemoInvitationByCode } from "@/lib/demo-data";
 import { rsvpSchema } from "@/lib/validation";
 
@@ -43,6 +45,10 @@ async function saveFileRsvp(code: string, data: {
 
 export async function POST(request: Request, context: RouteContext) {
   const { code } = await context.params;
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
+  const limit = checkRequestRateLimit(request, `rsvp:${code}`, { windowMs: 60000, maxRequests: 8 });
+  if (!limit.allowed) return rateLimitResponse(limit.resetAt);
+
   const body = await request.json().catch(() => null);
   const parsed = rsvpSchema.safeParse(body);
 

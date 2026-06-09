@@ -39,7 +39,7 @@ export default async function ClientInvitationsPublicPage() {
                 return (
                   <article className="client-invitation-card" key={invitation.id}>
                     <Link className="client-invitation-photo" href={publicPath} aria-label={`فتح دعوة ${invitation.groomName} و ${invitation.brideName}`}>
-                      <img src={invitation.heroPhoto || template?.accentImage || template?.previewImage || "/assets/templates/royal-envelope.svg"} alt="" loading="lazy" />
+                      <img src={invitation.heroPhoto || template?.accentImage || template?.previewImage || "/assets/templates/featured-1.svg"} alt="" loading="lazy" />
                     </Link>
                     <div className="client-invitation-body">
                       <span>{template?.arabicName || "دعوة عميل"}</span>

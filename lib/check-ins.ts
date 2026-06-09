@@ -1,6 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { writeJsonFileAtomic } from "./atomic-file";
 import type { InvitationCheckIn } from "./types";
 
 type CheckInStore = {
@@ -48,8 +49,7 @@ async function readStore(): Promise<CheckInStore> {
 }
 
 async function writeStore(store: CheckInStore) {
-  await mkdir(path.dirname(storePath), { recursive: true });
-  await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await writeJsonFileAtomic(storePath, store);
 }
 
 function createId() {

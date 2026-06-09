@@ -55,7 +55,7 @@ export function AdminTemplateLookup({
       </div>
 
       <form className="template-link-search" onSubmit={submitSearch}>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} name="invitation" placeholder="مثال: magazine-theme أو badr-sarah-1 أو رابط الدعوة" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} name="invitation" placeholder="مثال: featured-1 أو badr-sarah-1 أو رابط الدعوة" />
         {query ? (
           <button className="btn btn-soft btn-icon" type="button" aria-label="مسح البحث" onClick={() => setQuery("")}>
             <X size={17} />

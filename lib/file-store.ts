@@ -1,6 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { writeJsonFileAtomic } from "./atomic-file";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { cleanInvitationHeroVideoUrl } from "./invitation-media";
 import { hashPassword, verifyPassword } from "./password";
@@ -131,8 +132,7 @@ async function readStore(): Promise<FileStoreData> {
 }
 
 async function writeStore(store: FileStoreData) {
-  await mkdir(path.dirname(storePath), { recursive: true });
-  await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await writeJsonFileAtomic(storePath, store);
 }
 
 function normalizeInvitationImages(invitation: Invitation): Invitation {

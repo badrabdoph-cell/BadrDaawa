@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { createCheckIn, hasCheckIn } from "@/lib/check-ins";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationByCode } from "@/lib/invitation-data";
+import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
 export const runtime = "nodejs";
 
@@ -19,6 +21,10 @@ export async function GET(request: Request, context: RouteContext) {
 
 export async function POST(request: Request, context: RouteContext) {
   const { code } = await context.params;
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
+  const limit = checkRequestRateLimit(request, `check-in:${code}`, { windowMs: 60000, maxRequests: 10 });
+  if (!limit.allowed) return rateLimitResponse(limit.resetAt);
+
   const invitation = await getInvitationByCode(code);
   if (!invitation || !invitation.isActive || invitation.checkInEnabled === false) {
     return NextResponse.json({ error: "تسجيل الوصول غير متاح لهذه الدعوة." }, { status: 404 });

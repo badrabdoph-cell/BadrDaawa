@@ -3,13 +3,15 @@ import { CLIENT_SESSION_COOKIE, CLIENT_SESSION_MAX_AGE, createClientSessionCooki
 import { prisma } from "@/lib/db";
 import { validateFileClientLogin } from "@/lib/file-store";
 import { verifyPassword } from "@/lib/password";
+import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
+import { isSameOriginRequest } from "@/lib/security-enhancements";
 import { getRedirectUrl } from "@/lib/utils";
 
 async function isValidClientLogin(code: string, username: string, password: string) {
   const envUsername = process.env.CLIENT_ADMIN_USERNAME;
   const envPassword = process.env.CLIENT_ADMIN_PASSWORD;
 
-  if (envUsername && envPassword && username === envUsername && password === envPassword) {
+  if (process.env.ALLOW_GLOBAL_CLIENT_LOGIN === "true" && envUsername && envPassword && username === envUsername && password === envPassword) {
     return true;
   }
 
@@ -36,6 +38,13 @@ async function isValidClientLogin(code: string, username: string, password: stri
 }
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.redirect(getRedirectUrl("/client-invitations", request.headers, request.nextUrl.origin), 303);
+  }
+
+  const limit = checkRequestRateLimit(request, "auth:client-login", { windowMs: 15 * 60 * 1000, maxRequests: 8 });
+  if (!limit.allowed) return rateLimitResponse(limit.resetAt);
+
   const formData = await request.formData();
   const code = String(formData.get("code") || "").trim();
   const username = String(formData.get("username") || "").trim();

@@ -6,7 +6,7 @@ import { InvitationExperience } from "@/components/InvitationExperience";
 import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-pages";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { recordInvitationView } from "@/lib/invitation-data";
-import { getCachedInvitationByCode, getInvitationSeoMetadata, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
+import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
@@ -53,8 +53,9 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     redirect(`/${invitation.customSlug}${params.size ? `?${params.toString()}` : ""}`);
   }
 
-  const [template, siteSettings] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getSiteSettings()]);
-  if (!template) {
+  const [template, fallbackTemplate, siteSettings] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getSiteSettings()]);
+  const resolvedTemplate = template || fallbackTemplate;
+  if (!resolvedTemplate) {
     notFound();
   }
 
@@ -71,12 +72,14 @@ export default async function InvitationPage({ params, searchParams }: PageProps
 
   const locale = resolveLocale(invitation.language);
   const localeMeta = getLocaleMeta(locale);
+  const structuredData = JSON.stringify(getInvitationStructuredData(invitation)).replace(/</g, "\\u003c");
 
   return (
     <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
       <InvitationExperience
         invitation={invitation}
-        template={template}
+        template={resolvedTemplate}
         disableMusic={isSilentPreview}
         settings={{
           showPhotographerCard: siteSettings.photographer.showPhotographerCard,

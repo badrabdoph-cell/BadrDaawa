@@ -56,7 +56,7 @@ export default async function AdminPreviewPage({ searchParams }: { searchParams:
 
             <label className="field full">
               <span>اختيار قالب للمعاينة</span>
-              <select name="templateSlug" defaultValue={selectedTemplate?.slug || "royal-envelope"}>
+              <select name="templateSlug" defaultValue={selectedTemplate?.slug || "featured-1"}>
                 {templates.map((template) => (
                   <option key={template.slug} value={template.slug}>
                     {template.arabicName}
@@ -118,7 +118,7 @@ export default async function AdminPreviewPage({ searchParams }: { searchParams:
             ) : settings.mode === "video" && settings.videoUrl ? (
               <video src={settings.videoUrl} muted loop playsInline autoPlay controls />
             ) : (
-              <iframe src={`/templates/${selectedTemplate?.slug || "royal-envelope"}/preview?silentPreview=1`} title="معاينة القالب الحالية" loading="lazy" allow="geolocation; notifications" />
+              <iframe src={`/templates/${selectedTemplate?.slug || "featured-1"}/preview?silentPreview=1`} title="معاينة القالب الحالية" loading="lazy" allow="geolocation; notifications" />
             )}
           </div>
         </article>

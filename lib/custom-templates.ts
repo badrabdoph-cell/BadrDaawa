@@ -84,7 +84,7 @@ function toTemplateDefinition(template: StoredCustomTemplate): TemplateDefinitio
       ink: "#f8f4ec",
       surface: "#ffffff",
     },
-    previewImage: "/assets/templates/custom-code.svg",
+    previewImage: "/assets/templates/featured-1.svg",
     accentImage: "/assets/brand/champagne-rings.png",
     musicUrl: template.musicUrl || defaultTemplateMusicUrl,
     customHtml: template.html,

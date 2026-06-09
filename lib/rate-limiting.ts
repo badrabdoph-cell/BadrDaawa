@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 interface RateLimitEntry {
   count: number;
@@ -7,7 +7,7 @@ interface RateLimitEntry {
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
-export function getClientIdentifier(request: NextRequest): string {
+export function getClientIdentifier(request: Request): string {
   const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const realIp = request.headers.get("x-real-ip")?.trim();
   return forwardedFor || realIp || "local";
@@ -58,6 +58,24 @@ export function checkRateLimit(key: string, config: RateLimitConfig): { allowed:
     remaining: config.maxRequests - entry.count,
     resetAt: entry.resetAt,
   };
+}
+
+export function checkRequestRateLimit(request: Request, endpoint: string, config: RateLimitConfig) {
+  const identifier = getClientIdentifier(request);
+  return checkRateLimit(createRateLimitKey(identifier, endpoint), config);
+}
+
+export function rateLimitResponse(resetAt: number) {
+  const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+  return NextResponse.json(
+    { error: "طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل." },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfter),
+      },
+    },
+  );
 }
 
 export function resetRateLimit(key: string): void {

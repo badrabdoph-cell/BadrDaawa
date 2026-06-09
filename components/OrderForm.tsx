@@ -403,7 +403,7 @@ function CompactOrderImageInput({
 }
 
 export function OrderForm({ initialTemplate, initialDraft, templates }: { initialTemplate?: string; initialDraft?: OrderInitialDraft; templates: OrderTemplateOption[] }) {
-  const fallbackTemplate = templates[0] || { slug: "royal-envelope", name: "Royal Envelope", arabicName: "Royal Envelope", previewImage: "/assets/templates/royal-envelope.svg" };
+  const fallbackTemplate = templates[0] || { slug: "featured-1", name: "Featured 1", arabicName: "مميز 1", previewImage: "/assets/templates/featured-1.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
   const [form, setForm] = useState<FormState>({
     groomName: initialDraft?.groomName || "",

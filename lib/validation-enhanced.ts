@@ -9,7 +9,7 @@ export const orderUpdateSchema = z.object({
   venue: z.string().optional().default(""),
   mapUrl: z.string().url("رابط اللوكيشن غير صحيح").optional().or(z.literal("")),
   notes: z.string().optional().default(""),
-  templateSlug: z.string().optional().default("royal-envelope"),
+  templateSlug: z.string().optional().default("featured-1"),
 });
 
 export const invitationUpdateSchema = z.object({
@@ -21,7 +21,7 @@ export const invitationUpdateSchema = z.object({
   city: z.string().optional().default(""),
   mapUrl: z.string().url("رابط الخريطة غير صحيح").optional().or(z.literal("")),
   musicUrl: z.string().url("رابط الموسيقى غير صحيح").optional().or(z.literal("")),
-  templateSlug: z.string().optional().default("royal-envelope"),
+  templateSlug: z.string().optional().default("featured-1"),
 });
 
 export const musicSlotSchema = z.object({

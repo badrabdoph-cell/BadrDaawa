@@ -1,6 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { writeJsonFileAtomic } from "./atomic-file";
 import { normalizeInternalAssetUrl } from "./utils";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "./types";
 
@@ -95,8 +96,7 @@ async function readStore(): Promise<GuestBookStore> {
 }
 
 async function writeStore(store: GuestBookStore) {
-  await mkdir(path.dirname(storePath), { recursive: true });
-  await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await writeJsonFileAtomic(storePath, store);
 }
 
 function createEmptySettingsStore(): CoupleMessagesSettingsStore {
@@ -117,8 +117,7 @@ async function readSettingsStore(): Promise<CoupleMessagesSettingsStore> {
 }
 
 async function writeSettingsStore(store: CoupleMessagesSettingsStore) {
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await writeJsonFileAtomic(settingsPath, store);
 }
 
 function createId() {

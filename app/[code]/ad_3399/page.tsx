@@ -48,9 +48,10 @@ export default async function CustomerAdminPage({
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 
-  const [guests, template, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages, coupleMessagesSettings] = await Promise.all([
+  const [guests, template, fallbackTemplate, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages, coupleMessagesSettings] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
+    getTemplateWithSettings("featured-1"),
     getMusicLibrary(),
     getClientMessages(invitation.code),
     getContentPresets(),
@@ -59,7 +60,8 @@ export default async function CustomerAdminPage({
     getGuestBookMessages(invitation.code, "all"),
     getCoupleMessagesSettings(invitation.code),
   ]);
-  if (!template) {
+  const resolvedTemplate = template || fallbackTemplate;
+  if (!resolvedTemplate) {
     notFound();
   }
   const analytics = await getCustomerInvitationAnalytics(invitation, guests);
@@ -129,7 +131,7 @@ export default async function CustomerAdminPage({
 
       <ClientInvitationEditor
         invitation={invitation}
-        template={template}
+        template={resolvedTemplate}
         musicFiles={musicFiles.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0 }))}
         contentPresets={contentPresets}
         publicUrl={url}
