@@ -1,18 +1,26 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import type { GuestBookMessage, GuestBookStatus } from "./types";
+import { normalizeInternalAssetUrl } from "./utils";
+import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "./types";
 
 type GuestBookStore = {
   messages: GuestBookMessage[];
 };
 
+type CoupleMessagesSettingsStore = {
+  settings: CoupleMessagesSettings[];
+};
+
 export type GuestBookAction = "approve" | "reject" | "delete";
+export type CoupleMessagesAdminAction = GuestBookAction | "edit" | "settings";
 
 const storePath = path.join(process.cwd(), "data", "guest-book.json");
+const settingsPath = path.join(process.cwd(), "data", "couple-messages-settings.json");
 const maxNameLength = 80;
 const maxMessageLength = 600;
 const fallbackGuestName = "ضيف عزيز";
+const defaultMessagesMode: GuestBookMode = "moderated";
 
 function cleanText(value: unknown, limit: number) {
   return (typeof value === "string" ? value : "")
@@ -31,6 +39,15 @@ function normalizeStatus(value: unknown): GuestBookStatus {
   return value === "approved" || value === "rejected" || value === "pending" ? value : "pending";
 }
 
+function normalizeMode(value: unknown): GuestBookMode {
+  return value === "disabled" || value === "auto" || value === "moderated" ? value : defaultMessagesMode;
+}
+
+function cleanImageUrl(value: unknown) {
+  const url = normalizeInternalAssetUrl(typeof value === "string" ? value : "");
+  return url && (url.startsWith("/uploads/") || url.startsWith("/assets/")) ? url : "";
+}
+
 function normalizeMessage(value: unknown): GuestBookMessage | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<GuestBookMessage>;
@@ -45,9 +62,22 @@ function normalizeMessage(value: unknown): GuestBookMessage | null {
     invitationCode,
     name,
     message,
+    ...(cleanImageUrl(raw.imageUrl) ? { imageUrl: cleanImageUrl(raw.imageUrl) } : {}),
     status: normalizeStatus(raw.status),
     createdAt,
     ...(raw.reviewedAt ? { reviewedAt: cleanText(raw.reviewedAt, 80) } : {}),
+  };
+}
+
+function normalizeSetting(value: unknown): CoupleMessagesSettings | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<CoupleMessagesSettings>;
+  const invitationCode = cleanText(raw.invitationCode, 160);
+  if (!invitationCode) return null;
+  return {
+    invitationCode,
+    mode: normalizeMode(raw.mode),
+    ...(raw.updatedAt ? { updatedAt: cleanText(raw.updatedAt, 80) } : {}),
   };
 }
 
@@ -67,6 +97,28 @@ async function readStore(): Promise<GuestBookStore> {
 async function writeStore(store: GuestBookStore) {
   await mkdir(path.dirname(storePath), { recursive: true });
   await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+}
+
+function createEmptySettingsStore(): CoupleMessagesSettingsStore {
+  return { settings: [] };
+}
+
+async function readSettingsStore(): Promise<CoupleMessagesSettingsStore> {
+  noStore();
+  try {
+    const raw = await readFile(settingsPath, "utf8");
+    const parsed = JSON.parse(raw) as Partial<CoupleMessagesSettingsStore>;
+    return {
+      settings: Array.isArray(parsed.settings) ? parsed.settings.map(normalizeSetting).filter((setting): setting is CoupleMessagesSettings => Boolean(setting)) : [],
+    };
+  } catch {
+    return createEmptySettingsStore();
+  }
+}
+
+async function writeSettingsStore(store: CoupleMessagesSettingsStore) {
+  await mkdir(path.dirname(settingsPath), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 }
 
 function createId() {
@@ -92,10 +144,53 @@ export async function getApprovedGuestBookMessages(invitationCode: string) {
   return getGuestBookMessages(invitationCode, "approved");
 }
 
-export async function createGuestBookMessage(input: { invitationCode: unknown; name: unknown; message: unknown }) {
+export async function getCoupleMessagesSettings(invitationCode: string): Promise<CoupleMessagesSettings> {
+  const cleanCode = cleanText(invitationCode, 160);
+  const store = await readSettingsStore();
+  const saved = store.settings.find((setting) => setting.invitationCode.toLowerCase() === cleanCode.toLowerCase());
+  return saved || { invitationCode: cleanCode, mode: defaultMessagesMode };
+}
+
+export async function getAllCoupleMessagesSettings() {
+  const store = await readSettingsStore();
+  return store.settings;
+}
+
+export async function updateCoupleMessagesSettings(invitationCode: unknown, mode: unknown) {
+  const cleanCode = cleanText(invitationCode, 160);
+  if (!cleanCode) return null;
+  const next: CoupleMessagesSettings = {
+    invitationCode: cleanCode,
+    mode: normalizeMode(mode),
+    updatedAt: new Date().toISOString(),
+  };
+  const store = await readSettingsStore();
+  const index = store.settings.findIndex((setting) => setting.invitationCode.toLowerCase() === cleanCode.toLowerCase());
+  if (index >= 0) {
+    store.settings[index] = next;
+  } else {
+    store.settings.push(next);
+  }
+  await writeSettingsStore(store);
+  return next;
+}
+
+export async function getCoupleMessagesStats(invitationCode?: string) {
+  const cleanCode = invitationCode ? invitationCode.trim().toLowerCase() : "";
+  const messages = cleanCode ? await getGuestBookMessages(cleanCode, "all") : await getAllGuestBookMessages();
+  return {
+    total: messages.length,
+    pending: messages.filter((message) => message.status === "pending").length,
+    published: messages.filter((message) => message.status === "approved").length,
+    rejected: messages.filter((message) => message.status === "rejected").length,
+  };
+}
+
+export async function createGuestBookMessage(input: { invitationCode: unknown; name: unknown; message: unknown; imageUrl?: unknown; status?: unknown }) {
   const invitationCode = cleanText(input.invitationCode, 160);
   const name = cleanText(input.name, maxNameLength);
   const message = cleanText(input.message, maxMessageLength);
+  const imageUrl = cleanImageUrl(input.imageUrl);
   if (!invitationCode || !name || !message) return null;
 
   const store = await readStore();
@@ -104,12 +199,41 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
     invitationCode,
     name,
     message,
-    status: "pending",
+    ...(imageUrl ? { imageUrl } : {}),
+    status: normalizeStatus(input.status),
     createdAt: new Date().toISOString(),
   };
   store.messages.unshift(guestMessage);
   await writeStore(store);
   return guestMessage;
+}
+
+export async function updateGuestBookMessage(id: string, input: { name?: unknown; message?: unknown; imageUrl?: unknown; status?: unknown }) {
+  const cleanId = id.trim();
+  if (!cleanId) return null;
+  const store = await readStore();
+  const target = store.messages.find((message) => message.id === cleanId);
+  if (!target) return null;
+
+  const nextName = input.name === undefined ? target.name : cleanText(input.name, maxNameLength);
+  const nextMessage = input.message === undefined ? target.message : cleanText(input.message, maxMessageLength);
+  const nextImageUrl = input.imageUrl === undefined ? target.imageUrl || "" : cleanImageUrl(input.imageUrl);
+  if (!nextName || !nextMessage) return null;
+
+  const reviewedAt = input.status !== undefined && normalizeStatus(input.status) !== target.status ? new Date().toISOString() : target.reviewedAt;
+  const updated: GuestBookMessage = {
+    ...target,
+    name: nextName,
+    message: nextMessage,
+    status: input.status === undefined ? target.status : normalizeStatus(input.status),
+    ...(nextImageUrl ? { imageUrl: nextImageUrl } : {}),
+    ...(reviewedAt ? { reviewedAt } : {}),
+  };
+  if (!nextImageUrl) delete updated.imageUrl;
+
+  store.messages = store.messages.map((message) => (message.id === cleanId ? updated : message));
+  await writeStore(store);
+  return updated;
 }
 
 export async function moderateGuestBookMessage(id: string, action: GuestBookAction) {

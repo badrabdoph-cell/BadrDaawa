@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellRing, Check, Eye, Headphones, LayoutTemplate, Link2, Palette, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
+import { BellRing, Check, Clock3, Eye, Headphones, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
 import { BroadcastAnnotator } from "@/components/BroadcastAnnotator";
 import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
@@ -11,6 +11,12 @@ import { getHomePlatformStats } from "@/lib/home-stats";
 import { getSiteSettings } from "@/lib/site-settings";
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
+const quickBenefits = [
+  { label: "إنشاء خلال دقائق", icon: Clock3 },
+  { label: "قوالب جاهزة", icon: LayoutTemplate },
+  { label: "تأكيد حضور", icon: UserCheck },
+  { label: "مشاركة واتساب", icon: MessageCircle },
+];
 
 function HomeSectionDivider({ variant = "wave" }: { variant?: "wave" | "lace" | "arc" }) {
   return (
@@ -84,6 +90,17 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               <p className="hero-shine-copy" data-broadcast-key="hero.description" data-broadcast-label="وصف البداية" data-broadcast-kind="text" data-broadcast-value={content.hero.description}>
                 {content.hero.description}
               </p>
+              <div className="home-quick-benefits" aria-label="مزايا سريعة">
+                {quickBenefits.map((benefit) => {
+                  const Icon = benefit.icon;
+                  return (
+                    <span key={benefit.label}>
+                      <Icon size={16} />
+                      {benefit.label}
+                    </span>
+                  );
+                })}
+              </div>
               <div className="button-row home-cta-row">
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <WandSparkles size={19} />

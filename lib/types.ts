@@ -155,12 +155,20 @@ export type GuestRsvp = {
 };
 
 export type GuestBookStatus = "pending" | "approved" | "rejected";
+export type GuestBookMode = "disabled" | "auto" | "moderated";
+
+export type CoupleMessagesSettings = {
+  invitationCode: string;
+  mode: GuestBookMode;
+  updatedAt?: string;
+};
 
 export type GuestBookMessage = {
   id: string;
   invitationCode: string;
   name: string;
   message: string;
+  imageUrl?: string;
   status: GuestBookStatus;
   createdAt: string;
   reviewedAt?: string;
