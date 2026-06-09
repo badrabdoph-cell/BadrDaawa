@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Vintage Theme template preview">
+  <defs>
+    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#3e2723" opacity=".18"/>
+    </pattern>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f2dfc5"/>
+      <stop offset=".48" stop-color="#a87d61"/>
+      <stop offset="1" stop-color="#3e2723"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#3e2723" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="#efe9d9"/>
+  <rect width="900" height="1200" fill="url(#dots)"/>
+  <g filter="url(#shadow)" transform="rotate(-1 450 220)">
+    <rect x="110" y="92" width="680" height="270" fill="#f5f0e1" stroke="#5d4037" stroke-width="9"/>
+    <rect x="128" y="110" width="644" height="234" fill="none" stroke="#5d4037" stroke-width="3"/>
+    <text x="450" y="220" text-anchor="middle" font-family="Georgia, serif" font-size="56" fill="#3e2723">بدر &amp; Sara</text>
+    <line x1="180" y1="258" x2="720" y2="258" stroke="#5d4037" stroke-width="3"/>
+    <text x="450" y="304" text-anchor="middle" font-family="monospace" font-size="23" fill="#3e2723">26 أكتوبر • 07:00</text>
+  </g>
+  <g filter="url(#shadow)" transform="rotate(2 450 610)">
+    <rect x="135" y="445" width="630" height="370" fill="#ffffff"/>
+    <rect x="162" y="472" width="576" height="316" fill="url(#photo)"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="135" y="880" width="630" height="120" fill="#f5f0e1" stroke="#8d6e63" stroke-width="4" stroke-dasharray="12 10"/>
+    <circle cx="280" cy="940" r="25" fill="#fff" opacity=".42"/>
+    <circle cx="393" cy="940" r="25" fill="#fff" opacity=".42"/>
+    <circle cx="506" cy="940" r="25" fill="#fff" opacity=".42"/>
+    <circle cx="619" cy="940" r="25" fill="#fff" opacity=".42"/>
+  </g>
+  <text x="450" y="1115" text-anchor="middle" font-family="Georgia, serif" font-size="34" fill="#3e2723">فينتاج كلاسيك</text>
+</svg>

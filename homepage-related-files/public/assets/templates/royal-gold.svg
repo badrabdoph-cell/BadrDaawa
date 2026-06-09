@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Royal Gold template preview">
+  <defs>
+    <radialGradient id="goldGlow" cx="50%" cy="0%" r="70%">
+      <stop offset="0" stop-color="#d4af37" stop-opacity=".22"/>
+      <stop offset=".55" stop-color="#0a0a0a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#efe0bd"/>
+      <stop offset=".48" stop-color="#2a2317"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#000" flood-opacity=".42"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="#0a0a0a"/>
+  <rect width="900" height="1200" fill="url(#goldGlow)"/>
+  <rect x="40" y="0" width="4" height="1200" fill="#d4af37" opacity=".28"/>
+  <rect x="856" y="0" width="4" height="1200" fill="#d4af37" opacity=".28"/>
+  <g filter="url(#shadow)">
+    <line x1="120" y1="150" x2="780" y2="150" stroke="#d4af37" stroke-opacity=".34" stroke-width="4"/>
+    <line x1="120" y1="435" x2="780" y2="435" stroke="#d4af37" stroke-opacity=".34" stroke-width="4"/>
+    <text x="450" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="94" fill="#fff" letter-spacing="4">بدر</text>
+    <text x="450" y="330" text-anchor="middle" font-family="Georgia, serif" font-size="50" fill="#d4af37">&amp;</text>
+    <text x="450" y="420" text-anchor="middle" font-family="Georgia, serif" font-size="94" fill="#fff" letter-spacing="4">Sara</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="120" y="505" width="660" height="92" rx="18" fill="#fff" fill-opacity=".06" stroke="#d4af37" stroke-opacity=".34"/>
+    <text x="285" y="562" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#fff">26 أكتوبر</text>
+    <line x1="450" y1="525" x2="450" y2="578" stroke="#d4af37" stroke-opacity=".32"/>
+    <text x="615" y="562" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#fff">07:00</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="130" y="665" width="640" height="330" fill="#fff" fill-opacity=".04" stroke="#d4af37" stroke-opacity=".5"/>
+    <rect x="150" y="685" width="600" height="290" fill="url(#photo)"/>
+  </g>
+  <text x="450" y="1110" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#d4af37">ملكي ذهبي</text>
+</svg>

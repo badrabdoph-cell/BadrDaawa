@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Botanical Theme template preview">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0f4f0"/>
+      <stop offset=".55" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e2e8e2"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#2c4c3b" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <circle cx="170" cy="120" r="150" fill="#8fbc8f" opacity=".16"/>
+  <circle cx="760" cy="1040" r="190" fill="#2c4c3b" opacity=".08"/>
+  <g filter="url(#shadow)">
+    <rect x="120" y="90" width="660" height="340" rx="120" fill="#fff" stroke="#e2e8e2" stroke-width="3"/>
+    <text x="450" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#8fbc8f">✦</text>
+    <text x="450" y="250" text-anchor="middle" font-family="Georgia, serif" font-size="86" fill="#2c4c3b">بدر</text>
+    <text x="450" y="305" text-anchor="middle" font-family="Georgia, serif" font-size="42" fill="#8fbc8f">&amp;</text>
+    <text x="450" y="386" text-anchor="middle" font-family="Georgia, serif" font-size="86" fill="#2c4c3b">Sara</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="120" y="500" width="660" height="130" rx="36" fill="#2c4c3b"/>
+    <circle cx="265" cy="565" r="28" fill="#ffffff" opacity=".14"/>
+    <circle cx="390" cy="565" r="28" fill="#ffffff" opacity=".14"/>
+    <circle cx="515" cy="565" r="28" fill="#ffffff" opacity=".14"/>
+    <circle cx="640" cy="565" r="28" fill="#ffffff" opacity=".14"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="120" y="700" width="660" height="290" rx="70" fill="#8fbc8f"/>
+    <path d="M120 900 C260 770 390 805 520 720 C645 640 720 695 780 655 L780 990 L120 990Z" fill="#2c4c3b" opacity=".55"/>
+    <circle cx="622" cy="810" r="72" fill="#f0f4f0" opacity=".42"/>
+  </g>
+  <text x="450" y="1110" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#2c4c3b">نباتي هادئ</text>
+</svg>

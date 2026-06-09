@@ -1,0 +1,26 @@
+<svg width="900" height="1200" viewBox="0 0 900 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1200" fill="#2A2A2A"/>
+  <path d="M0 0H900V1200H0V0Z" fill="url(#pattern)" fill-opacity=".5"/>
+  <rect x="120" y="92" width="660" height="288" fill="#252525" stroke="#E5C158" stroke-width="4"/>
+  <rect x="144" y="116" width="612" height="240" fill="#1A1A1A" stroke="#E5C158" stroke-width="3"/>
+  <path d="M184 156H260L184 232V156Z" fill="#E5C158" fill-opacity=".18"/>
+  <path d="M716 316H640L716 240V316Z" fill="#E5C158" fill-opacity=".18"/>
+  <line x1="224" y1="236" x2="676" y2="236" stroke="#E5C158" stroke-width="3"/>
+  <rect x="130" y="440" width="640" height="320" fill="#111111" stroke="#E5C158" stroke-width="8"/>
+  <path d="M130 682C226 604 326 624 420 666C516 708 609 696 770 580V760H130V682Z" fill="#4B5563"/>
+  <circle cx="650" cy="522" r="56" fill="#E5C158" fill-opacity=".42"/>
+  <rect x="130" y="826" width="640" height="142" fill="#1A1A1A"/>
+  <line x1="130" y1="826" x2="770" y2="826" stroke="#E5C158" stroke-width="5"/>
+  <line x1="130" y1="968" x2="770" y2="968" stroke="#E5C158" stroke-width="5"/>
+  <rect x="130" y="1030" width="640" height="112" fill="#1A1A1A" stroke="#E5C158" stroke-width="3"/>
+  <text x="450" y="198" text-anchor="middle" fill="#F7E6A0" font-family="Georgia, serif" font-size="68" font-weight="700">BADR</text>
+  <text x="450" y="312" text-anchor="middle" fill="#F7E6A0" font-family="Georgia, serif" font-size="68" font-weight="700">SARA</text>
+  <text x="450" y="884" text-anchor="middle" fill="#F7E6A0" font-family="Georgia, serif" font-size="36" font-weight="700">26 OCTOBER 2026</text>
+  <text x="450" y="930" text-anchor="middle" fill="#E5C158" font-family="Georgia, serif" font-size="30" font-weight="700">07:00 PM</text>
+  <text x="450" y="1098" text-anchor="middle" fill="#F7E6A0" font-family="Georgia, serif" font-size="34" font-weight="700">ROYAL HALL</text>
+  <defs>
+    <pattern id="pattern" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M0 60H120M60 0V120M20 20H100V100H20V20Z" stroke="#E5C158" stroke-opacity=".12" stroke-width="2"/>
+    </pattern>
+  </defs>
+</svg>

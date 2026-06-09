@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Pure White template preview">
+  <defs>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#eeeeee"/>
+      <stop offset=".48" stop-color="#8f8f8f"/>
+      <stop offset="1" stop-color="#242424"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="1200" fill="#ffffff"/>
+  <text x="450" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#9ca3af" letter-spacing="8">WEDDING CELEBRATION</text>
+  <text x="450" y="275" text-anchor="middle" font-family="Georgia, serif" font-size="96" fill="#111111" font-weight="300">بدر</text>
+  <text x="450" y="385" text-anchor="middle" font-family="Georgia, serif" font-size="96" fill="#111111" font-weight="300">Sara</text>
+  <rect x="130" y="500" width="640" height="360" fill="url(#photo)"/>
+  <line x1="160" y1="930" x2="740" y2="930" stroke="#e5e7eb" stroke-width="3"/>
+  <line x1="160" y1="1038" x2="740" y2="1038" stroke="#e5e7eb" stroke-width="3"/>
+  <text x="450" y="980" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#111111">26 أكتوبر 2026</text>
+  <text x="450" y="1018" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#6b7280">07:00 مساء</text>
+  <circle cx="285" cy="1100" r="24" fill="#fafafa" stroke="#eeeeee"/>
+  <circle cx="395" cy="1100" r="24" fill="#fafafa" stroke="#eeeeee"/>
+  <circle cx="505" cy="1100" r="24" fill="#fafafa" stroke="#eeeeee"/>
+  <circle cx="615" cy="1100" r="24" fill="#fafafa" stroke="#eeeeee"/>
+</svg>
