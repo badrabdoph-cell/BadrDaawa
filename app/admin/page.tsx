@@ -184,9 +184,9 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           </Link>
           <Link className="admin-metric-card" href="/admin/guest-book">
             <MessageCircleHeart size={20} />
-            <span>تهاني الضيوف</span>
+            <span>رسائل للعروسين</span>
             <strong>{formatAdminNumber(guestBookMessages.length)}</strong>
-            <small>{formatAdminNumber(pendingGuestBookMessages.length)} بانتظار موافقة الأدمن</small>
+            <small>{formatAdminNumber(pendingGuestBookMessages.length)} بانتظار المراجعة</small>
           </Link>
         </div>
 
