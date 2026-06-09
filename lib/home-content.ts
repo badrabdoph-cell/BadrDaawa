@@ -94,7 +94,7 @@ export const defaultHomeContent: HomeContent = {
       { id: "anytime-edit", feature: "تعديل الدعوة بسهولة في أي وقت", invitation: false, plus: true },
       { id: "main-page", feature: "صفحة الدعوة الأساسية", invitation: true, plus: true },
       { id: "choose-design", feature: "اختيار التصميم", invitation: true, plus: true },
-      { id: "comments", feature: "دفتر تهاني الضيوف", invitation: true, plus: true },
+      { id: "comments", feature: "رسائل للعروسين", invitation: true, plus: true },
       { id: "rsvp-open", feature: "تأكيد حضور الضيوف إلكترونيًا", invitation: true, plus: true },
       { id: "client-admin", feature: "لوحة تحكم خاصة بك", invitation: true, plus: true },
       { id: "guest-records", feature: "كشف كامل بأسماء وأرقام المسجلين للحضور", invitation: true, plus: true },

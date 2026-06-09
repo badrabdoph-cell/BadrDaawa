@@ -93,7 +93,7 @@ export default async function AdminLiveModePage({ searchParams }: { searchParams
                 </div>
                 <div className="live-mode-admin-mini-stats">
                   <b>{formatArabicNumber(checkInCount)} وصول فعلي</b>
-                  <b>{formatArabicNumber(approvedCounts.get(invitation.code) || 0)} تهنئة معتمدة</b>
+                  <b>{formatArabicNumber(approvedCounts.get(invitation.code) || 0)} رسالة معتمدة</b>
                   <b>{config?.updatedAt ? formatDate(config.updatedAt) : "لم يتم ضبطه"}</b>
                 </div>
                 <form action="/api/admin/live-mode" method="post" className="live-mode-admin-form">

@@ -71,7 +71,7 @@ export function GuestBook({ code, isPreview = false }: { code: string; isPreview
     const cleanMessage = message.trim();
     if (!cleanName || !cleanMessage) {
       setState("error");
-      setNotice("اكتب الاسم ورسالة تهنئة واضحة قبل الإرسال.");
+      setNotice("اكتب الاسم ورسالة واضحة قبل الإرسال.");
       return;
     }
     setState("loading");

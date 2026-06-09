@@ -93,7 +93,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const alerts = [
     !hasDatabase ? "قاعدة البيانات غير متصلة، البيانات الحالية قد تكون من الملفات المحلية." : "",
     newOrders.length ? `${formatAdminNumber(newOrders.length)} طلب جديد يحتاج متابعة.` : "",
-    pendingGuestBookMessages.length ? `${formatAdminNumber(pendingGuestBookMessages.length)} تهنئة بانتظار الموافقة.` : "",
+    pendingGuestBookMessages.length ? `${formatAdminNumber(pendingGuestBookMessages.length)} رسالة للعروسين بانتظار المراجعة.` : "",
     backupNeedsAttention ? (latestBackup ? "آخر نسخة احتياطية أقدم من 24 ساعة." : "لا توجد نسخة احتياطية محفوظة بعد.") : "",
     activeMusicSlots === 0 ? "لا توجد مقاطع موسيقى مفعلة للقوالب." : "",
   ].filter(Boolean);

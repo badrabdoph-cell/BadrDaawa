@@ -83,7 +83,7 @@ export function WeddingLiveMode({ code }: { code: string }) {
         <article className="wedding-live-panel">
           <div className="wedding-live-panel-head">
             <Megaphone size={18} />
-            <h2>آخر التهاني</h2>
+            <h2>آخر رسائل العروسين</h2>
           </div>
           <div className="wedding-live-messages">
             {payload.messages.length ? (
@@ -94,7 +94,7 @@ export function WeddingLiveMode({ code }: { code: string }) {
                 </blockquote>
               ))
             ) : (
-              <p className="wedding-live-empty">لا توجد تهاني معتمدة بعد.</p>
+              <p className="wedding-live-empty">لا توجد رسائل معتمدة بعد.</p>
             )}
           </div>
         </article>
