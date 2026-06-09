@@ -8840,7 +8840,7 @@ img {
 .customer-guest-book-settings {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: flex-end;
   gap: 10px;
 }
 
