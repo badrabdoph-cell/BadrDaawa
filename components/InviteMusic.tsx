@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { inviteOpenedEventName } from "./InviteOpening";
 
 const nonInvitationSegments = new Set(["", "admin", "api", "_next", "templates", "order", "pricing", "faq", "contact", "client", "client-invitations", "manage"]);
 let activeInviteAudio: HTMLAudioElement | null = null;
@@ -75,7 +76,7 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
 
     const audio = new Audio(cleanMusicUrl);
     audio.loop = true;
-    audio.preload = "auto";
+    audio.preload = "metadata";
     audio.setAttribute("playsinline", "");
     audioRef.current = audio;
 
@@ -92,26 +93,20 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
     audio.addEventListener("error", onError);
-    void play();
 
-    function retryAfterGesture() {
+    function playAfterOpening() {
       if (audioRef.current === audio && !audio.paused) return;
       void play();
     }
-
-    window.addEventListener("pointerdown", retryAfterGesture, { once: true, passive: true });
-    window.addEventListener("touchstart", retryAfterGesture, { once: true, passive: true });
-    window.addEventListener("keydown", retryAfterGesture, { once: true });
     function stopOnLeave() {
       stopAudio(audio);
     }
 
+    window.addEventListener(inviteOpenedEventName, playAfterOpening);
     window.addEventListener("pagehide", stopOnLeave);
 
     return () => {
-      window.removeEventListener("pointerdown", retryAfterGesture);
-      window.removeEventListener("touchstart", retryAfterGesture);
-      window.removeEventListener("keydown", retryAfterGesture);
+      window.removeEventListener(inviteOpenedEventName, playAfterOpening);
       window.removeEventListener("pagehide", stopOnLeave);
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
