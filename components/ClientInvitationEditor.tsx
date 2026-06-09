@@ -552,6 +552,14 @@ export function ClientInvitationEditor({
               <span>رسالة الاعتذار عن الحضور</span>
               <input value={invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateInvitationText("rsvpDeclinedMessage", event.target.value)} />
             </label>
+            <label className="field">
+              <span>شكر تأكيد الحضور</span>
+              <textarea value={invitationTexts.rsvpConfirmedSuccessMessage} onChange={(event) => updateInvitationText("rsvpConfirmedSuccessMessage", event.target.value)} rows={2} />
+            </label>
+            <label className="field">
+              <span>شكر الاعتذار</span>
+              <textarea value={invitationTexts.rsvpDeclinedSuccessMessage} onChange={(event) => updateInvitationText("rsvpDeclinedSuccessMessage", event.target.value)} rows={2} />
+            </label>
           </div>
           <section className="story-editor">
             <div className="story-editor-head">

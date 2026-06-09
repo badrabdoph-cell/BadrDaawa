@@ -17,10 +17,11 @@ import {
   type AdminToolTemplate,
   type AdminToolUploadSlot,
 } from "@/components/AdminInvitationTools";
+import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
-import type { ContentPreset, InternalNote, InvitationTexts, OrderRequest } from "@/lib/types";
+import type { AdminFavorite, ContentPreset, InternalNote, InvitationTexts, OrderRequest } from "@/lib/types";
 
 type BuilderTemplate = AdminToolTemplate;
 type MusicFile = AdminToolMusicFile;
@@ -129,6 +130,7 @@ export function AdminOrderRequestsManager({
   musicFiles,
   contentPresets,
   internalNotes,
+  favorites,
   siteUrl,
 }: {
   orders: OrderRequestWithLinks[];
@@ -136,6 +138,7 @@ export function AdminOrderRequestsManager({
   musicFiles: MusicFile[];
   contentPresets: ContentPreset[];
   internalNotes: InternalNote[];
+  favorites: AdminFavorite[];
   siteUrl: string;
 }) {
   const fallbackTemplate = templates[0]?.slug || "featured-1";
@@ -239,6 +242,7 @@ export function AdminOrderRequestsManager({
 
   const openCount = items.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
   const selectedInternalNotes = useMemo(() => (selectedOrder ? internalNotes.filter((note) => note.entityType === "order" && note.entityId === selectedOrder.id) : []), [internalNotes, selectedOrder]);
+  const selectedIsFavorite = useMemo(() => (selectedOrder ? favorites.some((favorite) => favorite.entityType === "order" && favorite.entityId === selectedOrder.id) : false), [favorites, selectedOrder]);
 
   function patchForm(update: Partial<OrderFormState>) {
     setForm((current) => ({ ...current, ...update }));
@@ -469,7 +473,19 @@ export function AdminOrderRequestsManager({
             <span className="eyebrow">{selectedOrder?.orderNumber || "Order"}</span>
             <h2>{selectedOrder ? `${selectedOrder.groomName} & ${selectedOrder.brideName}` : "طلب دعوة"}</h2>
           </div>
-          <span className={`order-status-chip ${selectedStatus.className}`}>{selectedStatus.label}</span>
+          <div className="orders-editor-head-actions">
+            {selectedOrder ? (
+              <FavoriteToggleButton
+                entityType="order"
+                entityId={selectedOrder.id}
+                label={orderTitle(selectedOrder, Math.max(0, items.findIndex((item) => item.id === selectedOrder.id)))}
+                href="/admin/orders"
+                returnTo="/admin/orders"
+                active={selectedIsFavorite}
+              />
+            ) : null}
+            <span className={`order-status-chip ${selectedStatus.className}`}>{selectedStatus.label}</span>
+          </div>
         </div>
 
         {notice ? <div className={notice.kind === "error" ? "notice danger" : "notice success"}>{notice.text}</div> : null}

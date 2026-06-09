@@ -84,6 +84,8 @@ export type InvitationTexts = {
   inviteMessageSecondary?: string;
   rsvpQuestion?: string;
   rsvpDeclinedMessage?: string;
+  rsvpConfirmedSuccessMessage?: string;
+  rsvpDeclinedSuccessMessage?: string;
   story?: CoupleStoryItem[];
 };
 
@@ -128,6 +130,17 @@ export type InternalNote = {
   authorLabel: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type AdminFavoriteEntityType = "order" | "invitation" | "customer";
+
+export type AdminFavorite = {
+  id: string;
+  entityType: AdminFavoriteEntityType;
+  entityId: string;
+  label: string;
+  href: string;
+  createdAt: string;
 };
 
 export type GuestRsvp = {

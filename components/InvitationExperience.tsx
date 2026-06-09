@@ -54,7 +54,15 @@ function SecondaryInvitationMessage({ invitation }: { invitation: Invitation }) 
 
 function InvitationPoll({ invitation }: { invitation: Invitation }) {
   const texts = getInvitationTexts(invitation);
-  return <InvitePoll code={invitation.code} question={texts.rsvpQuestion} declinedMessage={texts.rsvpDeclinedMessage} />;
+  return (
+    <InvitePoll
+      code={invitation.code}
+      question={texts.rsvpQuestion}
+      declinedMessage={texts.rsvpDeclinedMessage}
+      confirmedSuccessMessage={texts.rsvpConfirmedSuccessMessage}
+      declinedSuccessMessage={texts.rsvpDeclinedSuccessMessage}
+    />
+  );
 }
 
 function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
@@ -346,6 +354,8 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     inviteMessageSecondary: texts.inviteMessageSecondary,
     rsvpQuestion: texts.rsvpQuestion,
     rsvpDeclinedMessage: texts.rsvpDeclinedMessage,
+    rsvpConfirmedSuccessMessage: texts.rsvpConfirmedSuccessMessage,
+    rsvpDeclinedSuccessMessage: texts.rsvpDeclinedSuccessMessage,
     story: JSON.stringify(texts.story),
     heroPhoto: imageSet.hero,
     gallery1: images[0] || "",

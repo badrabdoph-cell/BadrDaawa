@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { AdminOrderRequestsManager } from "@/components/AdminOrderRequestsManager";
 import { getAdminOrders } from "@/lib/admin-data";
+import { getAdminFavorites } from "@/lib/admin-favorites";
 import { getContentPresets } from "@/lib/content-presets";
 import { getInternalNotes } from "@/lib/internal-notes";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 type OrdersPageParams = {
   noteStatus?: string;
+  favoriteStatus?: string;
 };
 
 function noteStatusMessage(value?: string) {
@@ -23,12 +25,20 @@ function noteStatusMessage(value?: string) {
   return "";
 }
 
+function favoriteStatusMessage(value?: string) {
+  if (value === "added") return "تمت إضافة الطلب إلى المفضلة.";
+  if (value === "removed") return "تمت إزالة الطلب من المفضلة.";
+  if (value === "missing") return "العنصر غير موجود في المفضلة.";
+  if (value === "invalid") return "تعذر تحديث المفضلة.";
+  return "";
+}
+
 export default async function OrdersPage({
   searchParams,
 }: {
   searchParams: Promise<OrdersPageParams>;
 }) {
-  const [params, orders, templates, musicLibrary, contentPresets, requestHeaders, internalNotes] = await Promise.all([searchParams, getAdminOrders(), getTemplatesWithSettings(), getMusicLibrary(), getContentPresets(), headers(), getInternalNotes({ entityType: "order" })]);
+  const [params, orders, templates, musicLibrary, contentPresets, requestHeaders, internalNotes, favorites] = await Promise.all([searchParams, getAdminOrders(), getTemplatesWithSettings(), getMusicLibrary(), getContentPresets(), headers(), getInternalNotes({ entityType: "order" }), getAdminFavorites({ entityType: "order" })]);
   const siteUrl = getPublicSiteUrl(requestHeaders);
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
   const ordersWithLinks = await Promise.all(
@@ -44,6 +54,7 @@ export default async function OrdersPage({
   );
   const openCount = ordersWithLinks.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
   const noteMessage = noteStatusMessage(params.noteStatus);
+  const favoriteMessage = favoriteStatusMessage(params.favoriteStatus);
   const templateOptions = templates.map(({ slug, name, arabicName, opening, concept, layout, typography }) => ({
     slug,
     name,
@@ -64,7 +75,8 @@ export default async function OrdersPage({
         </div>
       </div>
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
-      <AdminOrderRequestsManager orders={ordersWithLinks} templates={templateOptions} musicFiles={musicLibrary.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0, sizeBytes: slot.sizeBytes, extension: slot.extension }))} contentPresets={contentPresets} internalNotes={internalNotes} siteUrl={siteUrl} />
+      {favoriteMessage ? <div className={params.favoriteStatus === "added" || params.favoriteStatus === "removed" ? "notice success" : "notice danger"}>{favoriteMessage}</div> : null}
+      <AdminOrderRequestsManager orders={ordersWithLinks} templates={templateOptions} musicFiles={musicLibrary.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0, sizeBytes: slot.sizeBytes, extension: slot.extension }))} contentPresets={contentPresets} internalNotes={internalNotes} favorites={favorites} siteUrl={siteUrl} />
     </>
   );
 }

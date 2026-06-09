@@ -305,6 +305,14 @@ export function AdminInvitationTools({
             <span>رسالة الاعتذار عن الحضور</span>
             <input value={values.invitationTexts.rsvpDeclinedMessage} onChange={(event) => onInvitationTextChange("rsvpDeclinedMessage", event.target.value)} />
           </label>
+          <label className="field">
+            <span>شكر تأكيد الحضور</span>
+            <textarea value={values.invitationTexts.rsvpConfirmedSuccessMessage} onChange={(event) => onInvitationTextChange("rsvpConfirmedSuccessMessage", event.target.value)} rows={2} />
+          </label>
+          <label className="field">
+            <span>شكر الاعتذار</span>
+            <textarea value={values.invitationTexts.rsvpDeclinedSuccessMessage} onChange={(event) => onInvitationTextChange("rsvpDeclinedSuccessMessage", event.target.value)} rows={2} />
+          </label>
         </div>
       </div>
     </>

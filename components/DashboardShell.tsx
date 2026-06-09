@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Trash2, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, UsersRound, X } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/admin/search", label: "البحث العام", icon: Search },
+  { href: "/admin/favorites", label: "المفضلة", icon: Star },
   { href: "/admin/notifications", label: "التنبيهات", icon: Bell, badgeKey: "notifications" },
   { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
   { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
@@ -194,6 +195,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="dashboard-topbar-actions">
             <Link className="admin-icon-button" href="/admin/templates" title="القوالب">
               <Palette size={18} />
+            </Link>
+            <Link className="admin-icon-button" href="/admin/favorites" title="المفضلة">
+              <Star size={18} />
             </Link>
             <Link className="admin-icon-button" href="/admin/notifications" title="التنبيهات">
               <Bell size={18} />

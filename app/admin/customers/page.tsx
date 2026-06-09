@@ -1,7 +1,9 @@
 import { KeyRound, Trash2, UserCheck, UserPlus, UsersRound } from "lucide-react";
+import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { StatsGrid } from "@/components/StatsGrid";
 import { getAdminCustomers } from "@/lib/admin-data";
+import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
 import { getInternalNotes, groupInternalNotesByEntity } from "@/lib/internal-notes";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +11,7 @@ export const dynamic = "force-dynamic";
 type CustomersPageParams = {
   status?: string;
   noteStatus?: string;
+  favoriteStatus?: string;
 };
 
 function statusMessage(value?: string) {
@@ -27,16 +30,25 @@ function noteStatusMessage(value?: string) {
   return "";
 }
 
+function favoriteStatusMessage(value?: string) {
+  if (value === "added") return "تمت إضافة العميل إلى المفضلة.";
+  if (value === "removed") return "تمت إزالة العميل من المفضلة.";
+  if (value === "missing") return "العنصر غير موجود في المفضلة.";
+  if (value === "invalid") return "تعذر تحديث المفضلة.";
+  return "";
+}
+
 export default async function CustomersPage({
   searchParams,
 }: {
   searchParams: Promise<CustomersPageParams>;
 }) {
-  const [params, customers, internalNotes] = await Promise.all([searchParams, getAdminCustomers(), getInternalNotes({ entityType: "customer" })]);
+  const [params, customers, internalNotes, favorites] = await Promise.all([searchParams, getAdminCustomers(), getInternalNotes({ entityType: "customer" }), getAdminFavorites({ entityType: "customer" })]);
   const activeCustomers = customers.filter((customer) => customer.isActive).length;
   const totalInvitations = customers.reduce((sum, customer) => sum + customer.invitations, 0);
   const message = statusMessage(params.status);
   const noteMessage = noteStatusMessage(params.noteStatus);
+  const favoriteMessage = favoriteStatusMessage(params.favoriteStatus);
   const notesByEntity = groupInternalNotesByEntity(internalNotes);
 
   return (
@@ -53,6 +65,7 @@ export default async function CustomersPage({
       </div>
       {message ? <div className={params.status === "deleted" ? "notice success" : "notice danger"}>{message}</div> : null}
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
+      {favoriteMessage ? <div className={params.favoriteStatus === "added" || params.favoriteStatus === "removed" ? "notice success" : "notice danger"}>{favoriteMessage}</div> : null}
       <StatsGrid
         stats={[
           { label: "إجمالي العملاء", value: customers.length, hint: "متزامن من حسابات الدعوات المنشأة" },
@@ -102,6 +115,15 @@ export default async function CustomersPage({
                 </td>
                 <td>
                   <div className="button-row">
+                    <FavoriteToggleButton
+                      entityType="customer"
+                      entityId={customer.id}
+                      label={customer.name}
+                      href="/admin/customers"
+                      returnTo="/admin/customers"
+                      active={isAdminFavorite(favorites, "customer", customer.id)}
+                      iconOnly
+                    />
                     <button className="btn btn-soft" type="button">
                       <KeyRound size={17} />
                       Reset Password

@@ -7,6 +7,8 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   inviteMessageSecondary: "وجودكم معنا يجعل فرحتنا أجمل.",
   rsvpQuestion: "ناوي تحضر وتشاركنا فرحه عمرنا؟",
   rsvpDeclinedMessage: "حزين إنك مش معايا في يومي المفضل 🥹",
+  rsvpConfirmedSuccessMessage: "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+  rsvpDeclinedSuccessMessage: "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
   story: [],
 };
 
@@ -17,6 +19,8 @@ const textLimits: Record<Exclude<keyof InvitationTexts, "story">, number> = {
   inviteMessageSecondary: 240,
   rsvpQuestion: 160,
   rsvpDeclinedMessage: 180,
+  rsvpConfirmedSuccessMessage: 260,
+  rsvpDeclinedSuccessMessage: 260,
 };
 
 function cleanText(value: unknown, fallback: string, limit: number) {
@@ -52,6 +56,8 @@ export function normalizeInvitationTexts(value: unknown): Required<InvitationTex
     inviteMessageSecondary: cleanText(raw.inviteMessageSecondary, defaultInvitationTexts.inviteMessageSecondary, textLimits.inviteMessageSecondary),
     rsvpQuestion: cleanText(raw.rsvpQuestion, defaultInvitationTexts.rsvpQuestion, textLimits.rsvpQuestion),
     rsvpDeclinedMessage: cleanText(raw.rsvpDeclinedMessage, defaultInvitationTexts.rsvpDeclinedMessage, textLimits.rsvpDeclinedMessage),
+    rsvpConfirmedSuccessMessage: cleanText(raw.rsvpConfirmedSuccessMessage, defaultInvitationTexts.rsvpConfirmedSuccessMessage, textLimits.rsvpConfirmedSuccessMessage),
+    rsvpDeclinedSuccessMessage: cleanText(raw.rsvpDeclinedSuccessMessage, defaultInvitationTexts.rsvpDeclinedSuccessMessage, textLimits.rsvpDeclinedSuccessMessage),
     story: normalizeCoupleStory(raw.story),
   };
 }

@@ -772,6 +772,8 @@ export function AdminNewInvitationWizard({
         <label className="field full"><span>رسالة الدعوة</span><textarea rows={5} value={draft.invitationTexts.inviteMessage} onChange={(event) => updateText("inviteMessage", event.target.value)} /></label>
         <label className="field"><span>رسالة RSVP</span><input value={draft.invitationTexts.rsvpQuestion} onChange={(event) => updateText("rsvpQuestion", event.target.value)} /></label>
         <label className="field"><span>رسالة الاعتذار</span><input value={draft.invitationTexts.rsvpDeclinedMessage} onChange={(event) => updateText("rsvpDeclinedMessage", event.target.value)} /></label>
+        <label className="field"><span>شكر تأكيد الحضور</span><textarea rows={2} value={draft.invitationTexts.rsvpConfirmedSuccessMessage} onChange={(event) => updateText("rsvpConfirmedSuccessMessage", event.target.value)} /></label>
+        <label className="field"><span>شكر الاعتذار</span><textarea rows={2} value={draft.invitationTexts.rsvpDeclinedSuccessMessage} onChange={(event) => updateText("rsvpDeclinedSuccessMessage", event.target.value)} /></label>
         <section className="story-editor full">
           <div className="story-editor-head">
             <div>

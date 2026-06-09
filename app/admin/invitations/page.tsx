@@ -2,8 +2,10 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { Archive, CalendarDays, ExternalLink, Eye, Filter, Pause, Play, Search, Settings2, Sparkles, Trash2, UserCheck } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
+import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
+import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
 import { getInternalNotes, groupInternalNotesByEntity } from "@/lib/internal-notes";
 import { getInvitationCompleteness } from "@/lib/invitation-completeness";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
@@ -22,6 +24,7 @@ type InvitationListParams = {
   state?: string;
   sort?: string;
   noteStatus?: string;
+  favoriteStatus?: string;
 };
 
 function formatAdminDate(value: string) {
@@ -60,7 +63,7 @@ function stateClassName(state: string) {
 function buildReturnTo(params: InvitationListParams) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value && key !== "noteStatus") query.set(key, value);
+    if (value && key !== "noteStatus" && key !== "favoriteStatus") query.set(key, value);
   }
   return `/admin/invitations${query.toString() ? `?${query.toString()}` : ""}`;
 }
@@ -70,13 +73,14 @@ export default async function InvitationsPage({
 }: {
   searchParams: Promise<InvitationListParams>;
 }) {
-  const [params, invitations, guests, templates, requestHeaders, internalNotes] = await Promise.all([
+  const [params, invitations, guests, templates, requestHeaders, internalNotes, favorites] = await Promise.all([
     searchParams,
     getAdminInvitations(),
     getAdminGuests(),
     getTemplatesWithSettings(),
     headers(),
     getInternalNotes({ entityType: "invitation" }),
+    getAdminFavorites({ entityType: "invitation" }),
   ]);
   const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
   const query = (params.q || "").trim().toLowerCase();
@@ -143,6 +147,12 @@ export default async function InvitationsPage({
     invalid: "اكتب ملاحظة صالحة قبل الحفظ.",
     missing: "لم يتم العثور على الملاحظة المطلوبة.",
   };
+  const favoriteMessages: Record<string, string> = {
+    added: "تمت إضافة العنصر إلى المفضلة.",
+    removed: "تمت إزالة العنصر من المفضلة.",
+    invalid: "تعذر تحديث المفضلة.",
+    missing: "العنصر غير موجود في المفضلة.",
+  };
 
   return (
     <>
@@ -207,6 +217,7 @@ export default async function InvitationsPage({
       {params.error ? <div className="notice danger">{params.error === "music" ? "الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر." : params.error === "images" ? "الصور لم يتم حفظها. ارفع صور JPG/PNG/WebP أو انتظر انتهاء الرفع." : "راجع البيانات المطلوبة قبل إنشاء الدعوة."}</div> : null}
       {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
       {params.noteStatus ? <div className={params.noteStatus === "invalid" || params.noteStatus === "missing" ? "notice danger" : "notice success"}>{noteMessages[params.noteStatus] || "تم تحديث الملاحظات الداخلية."}</div> : null}
+      {params.favoriteStatus ? <div className={params.favoriteStatus === "invalid" || params.favoriteStatus === "missing" ? "notice danger" : "notice success"}>{favoriteMessages[params.favoriteStatus] || "تم تحديث المفضلة."}</div> : null}
       {incompleteInvitations.length ? (
         <div className="notice warning invitation-completeness-alert">
           <Settings2 size={18} />
@@ -330,6 +341,15 @@ export default async function InvitationsPage({
                   </td>
                   <td>
                     <div className="button-row">
+                      <FavoriteToggleButton
+                        entityType="invitation"
+                        entityId={invitation.code}
+                        label={`${invitation.groomName} و ${invitation.brideName}`}
+                        href={customerAdminPath}
+                        returnTo={returnTo}
+                        active={isAdminFavorite(favorites, "invitation", invitation.code)}
+                        iconOnly
+                      />
                       <Link className="btn btn-soft btn-icon" href={`/${publicSlug}`} title="فتح الدعوة">
                         <Eye size={17} />
                       </Link>
