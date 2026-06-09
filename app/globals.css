@@ -57,6 +57,7 @@
   pointer-events: none;
 }
 
+.hero-card,
 .mobile-optimized .hero-card {
   position: relative;
   min-height: 0;
@@ -87,6 +88,7 @@
   text-transform: uppercase;
 }
 
+.hero-title,
 .mobile-optimized .hero-title {
   margin: 0 0 var(--space-2);
   color: var(--text-primary);
@@ -348,11 +350,13 @@
   transform: scale(0.9);
 }
 
+.pricing-section,
 .mobile-optimized .pricing-section {
   padding: var(--space-5) var(--space-3);
   background: var(--bg-primary);
 }
 
+.pricing-grid,
 .mobile-optimized .pricing-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -360,6 +364,7 @@
   margin: 0;
 }
 
+.pricing-card,
 .mobile-optimized .pricing-card {
   display: block;
   overflow: hidden;
@@ -370,39 +375,40 @@
   box-shadow: var(--shadow-md);
 }
 
+.pricing-card-featured,
 .mobile-optimized .pricing-card-featured {
   border-color: var(--accent-gold);
   background: linear-gradient(180deg, #1a1612, #2a2218);
   color: #f5efe6;
 }
 
-.mobile-optimized .pricing-header {
+.pricing-header {
   padding: var(--space-4);
   border-bottom: 1px solid rgba(201, 168, 76, 0.1);
   text-align: center;
 }
 
-.mobile-optimized .pricing-card-featured .pricing-header {
+.pricing-card-featured .pricing-header {
   border-color: rgba(201, 168, 76, 0.2);
 }
 
-.mobile-optimized .pricing-name {
+.pricing-name {
   margin-bottom: var(--space-1);
   font-size: var(--text-lg);
   font-weight: 900;
 }
 
-.mobile-optimized .pricing-price {
+.pricing-price {
   color: var(--accent-gold);
   font-size: var(--text-3xl);
   font-weight: 900;
 }
 
-.mobile-optimized .pricing-features {
+.pricing-features {
   padding: var(--space-3);
 }
 
-.mobile-optimized .pricing-feature {
+.pricing-feature {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -412,11 +418,11 @@
   font-weight: 600;
 }
 
-.mobile-optimized .pricing-feature:last-child {
+.pricing-feature:last-child {
   border-bottom: 0;
 }
 
-.mobile-optimized .pricing-check {
+.pricing-check {
   display: grid;
   width: 22px;
   height: 22px;
@@ -427,12 +433,12 @@
   color: var(--accent-gold);
 }
 
-.mobile-optimized .pricing-check-included {
+.pricing-check-included {
   background: rgba(201, 168, 76, 0.2);
   color: var(--accent-gold);
 }
 
-.mobile-optimized .pricing-check-excluded {
+.pricing-check-excluded {
   background: rgba(107, 93, 77, 0.08);
   color: var(--text-secondary);
   opacity: 0.5;
@@ -441,7 +447,7 @@
 .site-header-mobile {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 1000;
   border-bottom: 1px solid rgba(201, 168, 76, 0.1);
   background: rgba(250, 247, 242, 0.92);
   backdrop-filter: blur(20px) saturate(180%);
@@ -499,15 +505,16 @@
 
 .mobile-menu-overlay {
   position: fixed;
-  z-index: 40;
+  z-index: 999;
   inset: 0;
   background: rgba(26, 22, 18, 0.6);
   backdrop-filter: blur(4px);
-  animation: fade-up 0.2s ease-out;
+  animation: mobile-menu-reveal 0.2s ease-out both;
 }
 
 .mobile-menu {
-  position: absolute;
+  position: fixed;
+  z-index: 1001;
   top: 60px;
   right: 0;
   left: 0;
@@ -515,7 +522,7 @@
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   background: var(--bg-elevated);
   box-shadow: var(--shadow-lg);
-  animation: fade-up 0.3s ease-out;
+  animation: mobile-menu-reveal 0.3s ease-out both;
 }
 
 .mobile-menu-link {
@@ -544,6 +551,18 @@
   from {
     opacity: 0;
     transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobile-menu-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
 
   to {
@@ -583,6 +602,7 @@
     padding: var(--space-6) var(--space-5);
   }
 
+  .hero-title,
   .mobile-optimized .hero-title {
     font-size: var(--text-4xl);
   }
@@ -610,6 +630,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .pricing-grid,
   .mobile-optimized .pricing-grid {
     max-width: 800px;
     margin: 0 auto;
