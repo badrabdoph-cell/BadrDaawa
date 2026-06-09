@@ -4,7 +4,7 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   groomNameEn: "",
   brideNameEn: "",
   inviteMessage: "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
-  inviteMessageSecondary: "وجودكم معنا يجعل فرحتنا أجمل.",
+  inviteMessageSecondary: "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
   rsvpQuestion: "ناوي تحضر وتشاركنا فرحه عمرنا؟",
   rsvpDeclinedMessage: "حزين إنك مش معايا في يومي المفضل 🥹",
   rsvpConfirmedSuccessMessage: "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
