@@ -1,13 +1,14 @@
 "use client";
 
 import { Calendar, CalendarHeart, Camera, ChevronDown, Clock, Facebook, Flower2, Heart, Instagram, Leaf, MapPin, Music2, Share2, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 import { Countdown } from "./Countdown";
 import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
 import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
 import { InviteGift } from "./InviteGift";
-import { InviteGallery } from "./InviteGallery";
+import { InviteGallery, InviteGalleryStoryProvider } from "./InviteGallery";
 import { InvitePermissions } from "./InvitePermissions";
 import { InviteCheckIn } from "./InviteCheckIn";
 import { AddToCalendar } from "./AddToCalendar";
@@ -201,76 +202,83 @@ export function InvitationExperience({
 }) {
   const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : invitation.musicUrl || template.musicUrl;
   const photographer = getTemplatePhotographer(template, invitation, settings);
+  const galleryImagesForStories = getInvitationImages(invitation).gallery;
+  const galleryStories = getInvitationTexts(invitation).galleryStories;
+  const withGalleryStories = (content: ReactNode) => (
+    <InviteGalleryStoryProvider images={galleryImagesForStories} stories={galleryStories}>
+      {content}
+    </InviteGalleryStoryProvider>
+  );
 
   if (template.customHtml) {
-    return <CustomHtmlInvitationExperience invitation={invitation} template={template} musicUrl={templateMusicUrl} />;
+    return withGalleryStories(<CustomHtmlInvitationExperience invitation={invitation} template={template} musicUrl={templateMusicUrl} />);
   }
 
   if (template.slug === "luxe-noir") {
-    return withTemplateColors(template, invitation, <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <LuxeNoirInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "ivory-arches") {
-    return withTemplateColors(template, invitation, <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <IvoryArchesInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "mobile-gold" || template.slug === "soft-gold") {
-    return withTemplateColors(template, invitation, <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <MobileGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "boho-chic") {
-    return withTemplateColors(template, invitation, <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <BohoChicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "garden-elegance") {
-    return withTemplateColors(template, invitation, <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <GardenEleganceInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "featured-1") {
-    return withTemplateColors(template, invitation, <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <FeaturedOneInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "cinematic-rose") {
-    return withTemplateColors(template, invitation, <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <CinematicRoseInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "modern-cinematic") {
-    return withTemplateColors(template, invitation, <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <ModernCinematicInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "ethereal-glass") {
-    return withTemplateColors(template, invitation, <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <EtherealGlassInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "botanical-theme") {
-    return withTemplateColors(template, invitation, <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <BotanicalThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "royal-gold") {
-    return withTemplateColors(template, invitation, <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <RoyalGoldInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "boho-sand") {
-    return withTemplateColors(template, invitation, <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <BohoSandInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "pure-white") {
-    return withTemplateColors(template, invitation, <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <PureWhiteInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "neon-theme") {
-    return withTemplateColors(template, invitation, <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <NeonThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "vintage-theme") {
-    return withTemplateColors(template, invitation, <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <VintageThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "fairytale-theme") {
-    return withTemplateColors(template, invitation, <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <FairytaleThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "ocean-theme") {
-    return withTemplateColors(template, invitation, <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <OceanThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "art-deco-theme") {
-    return withTemplateColors(template, invitation, <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <ArtDecoThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "magazine-theme") {
-    return withTemplateColors(template, invitation, <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <MagazineThemeInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
   if (template.slug === "cinematic-story") {
-    return withTemplateColors(template, invitation, <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />);
+    return withGalleryStories(withTemplateColors(template, invitation, <CinematicStoryInvitationExperience invitation={invitation} musicUrl={templateMusicUrl} photographer={photographer} />));
   }
 
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
 
-  return (
+  return withGalleryStories(
     <main
       className="creative-invite"
       style={getTemplatePaletteStyle(template)}
@@ -350,7 +358,7 @@ export function InvitationExperience({
           </div>
         </section>
       </section>
-    </main>
+    </main>,
   );
 }
 
@@ -382,10 +390,12 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     musicUrl: musicUrl || "",
     inviteMessage: texts.inviteMessage,
     inviteMessageSecondary: texts.inviteMessageSecondary,
+    openingText: texts.openingText,
     rsvpQuestion: texts.rsvpQuestion,
     rsvpDeclinedMessage: texts.rsvpDeclinedMessage,
     rsvpConfirmedSuccessMessage: texts.rsvpConfirmedSuccessMessage,
     rsvpDeclinedSuccessMessage: texts.rsvpDeclinedSuccessMessage,
+    galleryStories: JSON.stringify(texts.galleryStories),
     story: JSON.stringify(texts.story),
     gift: JSON.stringify(texts.gift),
     heroPhoto: imageSet.hero,
@@ -399,7 +409,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     output = output.replaceAll(`{{${key}}}`, escapeHtml(String(value)));
   });
 
-  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, story: texts.story, gift: texts.gift, gallery: images }).replace(/</g, "\\u003c")};</script>`;
+  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, galleryStories: texts.galleryStories, story: texts.story, gift: texts.gift, gallery: images }).replace(/</g, "\\u003c")};</script>`;
   return output.includes("</body>") ? output.replace("</body>", `${bridge}</body>`) : `${output}${bridge}`;
 }
 

@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Camera, Check, Eye, FileVideo, Gift, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
-import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
-import type { CoupleStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
+import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
+import type { CoupleStoryItem, GalleryStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 
 type FormState = {
@@ -21,6 +21,7 @@ type FormState = {
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
   openingText: string;
+  galleryStories: GalleryStoryItem[];
   storyEnabled: boolean;
   story: CoupleStoryItem[];
   giftEnabled: boolean;
@@ -75,6 +76,7 @@ export type OrderInitialDraft = Pick<
 > & {
   photographerEnabled: boolean;
   storyEnabled: boolean;
+  galleryStories: GalleryStoryItem[];
   story: CoupleStoryItem[];
   giftEnabled: boolean;
   gift: InvitationGift;
@@ -211,6 +213,21 @@ function cleanOrderStory(value: unknown) {
 
 function filledOrderStory(value: unknown) {
   return normalizeCoupleStory(cleanOrderStory(value));
+}
+
+function cleanOrderGalleryStories(value: unknown) {
+  const source = Array.isArray(value) ? value : [];
+  return orderImageSlots.map((_, index) => {
+    const item = source[index] && typeof source[index] === "object" ? (source[index] as Record<string, unknown>) : {};
+    return {
+      title: typeof item.title === "string" ? item.title.trim().slice(0, 120) : "",
+      description: typeof item.description === "string" ? item.description.trim().slice(0, 280) : "",
+    };
+  });
+}
+
+function filledOrderGalleryStories(value: unknown) {
+  return normalizeGalleryStories(cleanOrderGalleryStories(value));
 }
 
 function cleanOrderGift(value: unknown): InvitationGift {
@@ -403,6 +420,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     photographerFacebookUrl: initialDraft?.photographerFacebookUrl || "",
     photographerInstagramUrl: initialDraft?.photographerInstagramUrl || "",
     openingText: initialDraft?.openingText || "",
+    galleryStories: cleanOrderGalleryStories(initialDraft?.galleryStories),
     storyEnabled: Boolean(initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length),
     story: cleanOrderStory(initialDraft?.story),
     giftEnabled: Boolean(initialDraft?.giftEnabled || Object.values(filledOrderGift(initialDraft?.gift)).some(Boolean)),
@@ -451,6 +469,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
+      galleryStories: cleanOrderGalleryStories(parseDraftJson(params.get("galleryStories"), [])),
       storyEnabled: params.get("storyEnabled") === "1" || undefined,
       story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
       giftEnabled: params.get("giftEnabled") === "1" || undefined,
@@ -489,6 +508,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       params.set("storyEnabled", "1");
       params.set("story", JSON.stringify(story));
     }
+    const galleryStories = filledOrderGalleryStories(nextForm.galleryStories);
+    if (galleryStories.length) params.set("galleryStories", JSON.stringify(galleryStories));
     const gift = filledOrderGift(nextForm.gift);
     if (nextForm.giftEnabled && Object.values(gift).some(Boolean)) {
       params.set("giftEnabled", "1");
@@ -523,6 +544,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         ...currentForm,
         templateSlug: currentTemplateSlug,
         photographerEnabled: form.photographerEnabled,
+        galleryStories: form.galleryStories,
         storyEnabled: form.storyEnabled,
         story: form.story,
         giftEnabled: form.giftEnabled,
@@ -571,6 +593,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
       photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
       openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
+      galleryStories: cleanOrderGalleryStories(draft.galleryStories),
       storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
         story: cleanOrderStory(draft.story),
         giftEnabled: Boolean(draft.giftEnabled || Object.values(filledOrderGift(draft.gift)).some(Boolean)),
@@ -627,6 +650,14 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
       return { ...current, story: nextStory, storyEnabled: nextStory.length ? current.storyEnabled : false };
     });
+    if (message) setMessage("");
+  }
+
+  function updateGalleryStory(index: number, patch: Partial<GalleryStoryItem>) {
+    setForm((current) => ({
+      ...current,
+      galleryStories: cleanOrderGalleryStories(current.galleryStories).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
     if (message) setMessage("");
   }
 
@@ -876,6 +907,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     if (values.openingText) params.set("openingText", values.openingText);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
+    const galleryStories = filledOrderGalleryStories(values.galleryStories);
+    if (galleryStories.length) params.set("galleryStories", JSON.stringify(galleryStories));
     const story = filledOrderStory(values.story);
     if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
     const gift = filledOrderGift(values.gift);
@@ -1049,6 +1082,22 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     ].join("\n");
   }
 
+  function getGalleryStoryNotes(values: Partial<FormState>) {
+    const galleryStories = filledOrderGalleryStories(values.galleryStories);
+    if (!galleryStories.length) return "";
+    return [
+      "Story Gallery:",
+      ...galleryStories.map((item, index) =>
+        [
+          `${index + 1}. ${item.title || "صورة بدون عنوان"}`,
+          item.description ? `الوصف: ${item.description}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      ),
+    ].join("\n");
+  }
+
   function getGiftNotes(values: Partial<FormState>) {
     const gift = values.giftEnabled ? filledOrderGift(values.gift) : {};
     const lines = [
@@ -1115,6 +1164,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         weddingDate: normalizeWeddingDate(currentForm.weddingDate),
         templateSlug: selectedTemplate.slug,
         photographerEnabled: form.photographerEnabled,
+        galleryStories: filledOrderGalleryStories(form.galleryStories),
         storyEnabled: form.storyEnabled,
         story: filledOrderStory(form.story),
         giftEnabled: form.giftEnabled,
@@ -1164,6 +1214,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
     const photographerNotes = getPhotographerNotes(currentForm);
     const clientMusicNotes = getMusicNotes(currentForm);
+    const galleryStories = filledOrderGalleryStories(currentForm.galleryStories);
+    const galleryStoryNotes = getGalleryStoryNotes({ ...currentForm, galleryStories });
     const story = currentForm.storyEnabled ? filledOrderStory(currentForm.story) : [];
     const gift = currentForm.giftEnabled ? filledOrderGift(currentForm.gift) : {};
     const storyNotes = getStoryNotes({ ...currentForm, story });
@@ -1188,9 +1240,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...currentForm,
+          galleryStories,
           story,
           gift,
-          notes: [photographerNotes, clientMusicNotes, storyNotes, giftNotes].filter(Boolean).join("\n\n"),
+          notes: [photographerNotes, clientMusicNotes, galleryStoryNotes, storyNotes, giftNotes].filter(Boolean).join("\n\n"),
           orderImages,
           orderMusic,
           idempotencyKey: orderSubmitKeyRef.current,
@@ -1309,17 +1362,32 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             <p>3 صور فقط، وكل صورة تظهر معاينتها قبل المعاينة أو التأكيد.</p>
           </div>
           <div className="compact-image-grid">
-            {orderImageSlots.map((slot, index) => (
-              <CompactOrderImageInput
-                key={slot.title}
-                index={index}
-                defaultImage={draftImageUrls[index]}
-                upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
-                onFileSelected={handleOrderImageSelected}
-                onClearDefault={() => clearOrderImage(index)}
-              />
-            ))}
+            {orderImageSlots.map((slot, index) => {
+              const galleryStory = cleanOrderGalleryStories(form.galleryStories)[index] || {};
+              return (
+                <div className="compact-image-story-card" key={slot.title}>
+                  <CompactOrderImageInput
+                    index={index}
+                    defaultImage={draftImageUrls[index]}
+                    upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
+                    onFileSelected={handleOrderImageSelected}
+                    onClearDefault={() => clearOrderImage(index)}
+                  />
+                  <div className="compact-image-story-fields">
+                    <label>
+                      <span>عنوان الصورة</span>
+                      <input value={galleryStory.title || ""} onChange={(event) => updateGalleryStory(index, { title: event.target.value })} placeholder="مثال: أول نظرة" />
+                    </label>
+                    <label>
+                      <span>وصف قصير</span>
+                      <textarea rows={2} value={galleryStory.description || ""} onChange={(event) => updateGalleryStory(index, { description: event.target.value })} placeholder="اكتب جملة قصيرة تجعل الصورة جزءاً من الحكاية" />
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+          <p className="field-preview">إذا تركت عناوين وأوصاف الصور فارغة سيظهر معرض الصور بالشكل الحالي.</p>
         </section>
 
         <section className="order-photographer-box">

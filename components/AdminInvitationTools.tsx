@@ -5,9 +5,9 @@ import { FileVideo, Gift, Heart, ImagePlus, Link2, Loader2, MessageSquareText, M
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import { uploadBrowserPreviewImage, type BrowserImageUploadOptions } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { ContentPreset, CoupleStoryItem, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
 export type AdminToolMusicFile = { url: string; modifiedAt?: number; name?: string; id?: string; sizeBytes?: number; extension?: string };
@@ -152,7 +152,12 @@ export function AdminInvitationTools({
   onMusicVideoFile?: (file?: File | null) => void;
 }) {
   const story = normalizeCoupleStory(values.invitationTexts.story);
+  const galleryStories = unifiedImageSlots.map((_, index) => normalizeGalleryStories(values.invitationTexts.galleryStories)[index] || { title: "", description: "" });
   const gift = normalizeInvitationGift(values.invitationTexts.gift);
+  const updateGalleryStory = (index: number, patch: Partial<GalleryStoryItem>) => {
+    const nextStories = galleryStories.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item));
+    onPatch({ invitationTexts: { ...values.invitationTexts, galleryStories: normalizeGalleryStories(nextStories) } });
+  };
   const updateStory = (nextStory: CoupleStoryItem[]) => {
     onPatch({ invitationTexts: { ...values.invitationTexts, story: normalizeCoupleStory(nextStory) } });
   };
@@ -217,6 +222,25 @@ export function AdminInvitationTools({
             </label>
           ))}
         </div>
+        <div className="builder-gallery-story-fields">
+          {unifiedImageSlots.map((slot, index) => {
+            const galleryStory = galleryStories[index] || {};
+            return (
+              <div className="builder-gallery-story-item" key={`story-${slot.id}`}>
+                <strong>{slot.label}</strong>
+                <label className="field">
+                  <span>عنوان الصورة</span>
+                  <input value={galleryStory.title || ""} onChange={(event) => updateGalleryStory(index, { title: event.target.value })} placeholder="مثال: أول نظرة" />
+                </label>
+                <label className="field">
+                  <span>وصف قصير</span>
+                  <textarea rows={2} value={galleryStory.description || ""} onChange={(event) => updateGalleryStory(index, { description: event.target.value })} placeholder="جملة قصيرة تجعل الصورة جزءاً من الحكاية" />
+                </label>
+              </div>
+            );
+          })}
+        </div>
+        <small className="builder-inline-hint">اترك هذه الحقول فارغة ليظل المعرض بالطريقة الحالية.</small>
       </div>
 
       <div className={sectionClassName}>

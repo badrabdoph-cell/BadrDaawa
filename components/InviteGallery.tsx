@@ -1,26 +1,59 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Maximize2, X, ZoomIn, ZoomOut } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
+export type InviteGalleryStory = {
+  title?: string;
+  description?: string;
+};
+
 type InviteGalleryProps = {
   images: string[];
+  stories?: InviteGalleryStory[];
   locale?: Language;
   className?: string;
   label?: string;
   altPrefix?: string;
 };
 
+const InviteGalleryStoryContext = createContext<{ images: string[]; stories: InviteGalleryStory[] }>({ images: [], stories: [] });
+
+export function InviteGalleryStoryProvider({ images, stories, children }: { images: string[]; stories?: InviteGalleryStory[] | null; children: ReactNode }) {
+  const value = useMemo(() => ({ images: images.filter(Boolean), stories: stories || [] }), [images, stories]);
+  return <InviteGalleryStoryContext.Provider value={value}>{children}</InviteGalleryStoryContext.Provider>;
+}
+
 function clampIndex(index: number, length: number) {
   if (!length) return 0;
   return (index + length) % length;
 }
 
-export function InviteGallery({ images, locale = "ar", className = "", label, altPrefix = "صورة من الدعوة" }: InviteGalleryProps) {
+function cleanStoryText(value?: string) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function InviteGallery({ images, stories, locale = "ar", className = "", label, altPrefix = "صورة من الدعوة" }: InviteGalleryProps) {
   const t = getInvitationTranslator(resolveLocale(locale));
+  const storyContext = useContext(InviteGalleryStoryContext);
   const cleanImages = useMemo(() => images.filter(Boolean), [images]);
+  const slides = useMemo(
+    () =>
+      cleanImages.map((image, index) => {
+        const explicitStory = stories?.[index];
+        const contextIndex = storyContext.images[index] === image ? index : storyContext.images.findIndex((candidate) => candidate === image);
+        const story = explicitStory || (contextIndex >= 0 ? storyContext.stories[contextIndex] : undefined) || {};
+        return {
+          image,
+          title: cleanStoryText(story.title),
+          description: cleanStoryText(story.description),
+        };
+      }),
+    [cleanImages, stories, storyContext.images, storyContext.stories],
+  );
+  const hasStoryGallery = slides.some((slide) => slide.title || slide.description);
   const [active, setActive] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
@@ -102,9 +135,16 @@ export function InviteGallery({ images, locale = "ar", className = "", label, al
               transitionDuration: dragStart === null ? "420ms" : "0ms",
             }}
           >
-            {cleanImages.map((image, index) => (
-              <button className="invite-gallery-slide" type="button" key={`${image}-${index}`} onClick={openFullscreen} aria-label={t("invitation.gallery.openImage", { number: index + 1 })}>
-                <img src={image} alt={`${altPrefix} ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} decoding="async" draggable={false} />
+            {slides.map((slide, index) => (
+              <button className="invite-gallery-slide" type="button" key={`${slide.image}-${index}`} onClick={openFullscreen} aria-label={t("invitation.gallery.openImage", { number: index + 1 })}>
+                <img src={slide.image} alt={`${altPrefix} ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} decoding="async" draggable={false} />
+                {hasStoryGallery && (slide.title || slide.description) ? (
+                  <span className="invite-gallery-story-copy">
+                    <small>{`${index + 1} / ${cleanImages.length}`}</small>
+                    {slide.title ? <strong>{slide.title}</strong> : null}
+                    {slide.description ? <span>{slide.description}</span> : null}
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -129,13 +169,24 @@ export function InviteGallery({ images, locale = "ar", className = "", label, al
             ))}
           </div>
         ) : null}
+
+        {hasStoryGallery && cleanImages.length > 1 ? (
+          <div className="invite-gallery-story-progress" aria-label={label || t("invitation.galleryLabel")}>
+            {slides.map((slide, index) => (
+              <button className={index === activeIndex ? "active" : ""} type="button" key={`story-${slide.image}-${index}`} onClick={() => go(index)}>
+                <span />
+                <strong>{slide.title || `${index + 1}`}</strong>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   }
 
   return (
     <>
-      <section className={["interactive-gallery", className].filter(Boolean).join(" ")} aria-label={label || t("invitation.galleryLabel")}>
+      <section className={["interactive-gallery", hasStoryGallery ? "is-story-gallery" : "", className].filter(Boolean).join(" ")} aria-label={label || t("invitation.galleryLabel")}>
         {renderGallery()}
       </section>
       {fullscreen ? (

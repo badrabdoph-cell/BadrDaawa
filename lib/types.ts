@@ -87,8 +87,14 @@ export type InvitationTexts = {
   rsvpDeclinedMessage?: string;
   rsvpConfirmedSuccessMessage?: string;
   rsvpDeclinedSuccessMessage?: string;
+  galleryStories?: GalleryStoryItem[];
   story?: CoupleStoryItem[];
   gift?: InvitationGift;
+};
+
+export type GalleryStoryItem = {
+  title?: string;
+  description?: string;
 };
 
 export type CoupleStoryItem = {

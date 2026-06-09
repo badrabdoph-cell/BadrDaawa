@@ -19,10 +19,10 @@ import {
 } from "@/components/AdminInvitationTools";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { defaultInvitationTexts, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { defaultInvitationTexts, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import { getPrePublishValidationReport, prePublishStatusLabel, prePublishStatusSymbol } from "@/lib/pre-publish-validation";
-import type { ContentPreset, CoupleStoryItem, InvitationTexts } from "@/lib/types";
+import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts } from "@/lib/types";
 
 type WizardTemplate = {
   slug: string;
@@ -200,6 +200,10 @@ function createStoryItem(): CoupleStoryItem {
   return { id: `story-${Date.now().toString(36)}`, title: "", description: "", imageUrl: "", date: "" };
 }
 
+function normalizeGalleryStorySlots(value: unknown) {
+  return unifiedImageSlots.map((_, index) => normalizeGalleryStories(value)[index] || { title: "", description: "" });
+}
+
 export function AdminNewInvitationWizard({
   templates,
   musicFiles,
@@ -353,6 +357,20 @@ export function AdminNewInvitationWizard({
     setMessage(null);
   }
 
+  function updateGalleryStoryItem(index: number, patchValue: Partial<GalleryStoryItem>) {
+    setDraft((current) => {
+      const galleryStories = normalizeGalleryStorySlots(current.invitationTexts.galleryStories).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patchValue } : item));
+      return {
+        ...current,
+        invitationTexts: {
+          ...current.invitationTexts,
+          galleryStories: normalizeGalleryStories(galleryStories),
+        },
+      };
+    });
+    setMessage(null);
+  }
+
   function removeStoryItem(index: number) {
     setDraft((current) => ({ ...current, invitationTexts: { ...current.invitationTexts, story: current.invitationTexts.story.filter((_, itemIndex) => itemIndex !== index) } }));
     setMessage(null);
@@ -455,7 +473,10 @@ export function AdminNewInvitationWizard({
       const images = [...current.images];
       const [moved] = images.splice(from, 1);
       images.splice(to, 0, moved);
-      return { ...current, images };
+      const galleryStories = normalizeGalleryStorySlots(current.invitationTexts.galleryStories);
+      const [movedStory] = galleryStories.splice(from, 1);
+      galleryStories.splice(to, 0, movedStory);
+      return { ...current, images, invitationTexts: { ...current.invitationTexts, galleryStories: normalizeGalleryStories(galleryStories) } };
     });
   }
 
@@ -693,6 +714,7 @@ export function AdminNewInvitationWizard({
           {draft.images.map((image, index) => {
             const slot = unifiedImageSlots[index] || { label: `صورة ${index + 1}`, role: "detail" };
             const slotHint = slot.role === "hero" ? "الغلاف الرئيسي" : slot.role === "secondary" ? "صورة داعمة" : "تفصيلة من المناسبة";
+            const galleryStory = normalizeGalleryStorySlots(draft.invitationTexts.galleryStories)[index] || {};
             return (
               <div
                 className={image.url ? "new-invite-image-slot has-image" : "new-invite-image-slot"}
@@ -720,12 +742,22 @@ export function AdminNewInvitationWizard({
                     </select>
                   </label>
                 ) : null}
+                <div className="new-invite-image-story-fields">
+                  <label>
+                    <span>عنوان الصورة</span>
+                    <input value={galleryStory.title || ""} onChange={(event) => updateGalleryStoryItem(index, { title: event.target.value })} placeholder="مثال: أول نظرة" />
+                  </label>
+                  <label>
+                    <span>وصف قصير</span>
+                    <textarea rows={2} value={galleryStory.description || ""} onChange={(event) => updateGalleryStoryItem(index, { description: event.target.value })} placeholder="جملة قصيرة تجعل الصورة جزءاً من الحكاية" />
+                  </label>
+                </div>
                 <input ref={(node) => { imageInputRefs.current[index] = node; }} type="file" accept={acceptedImageFormats} onChange={(event) => startImageCrop(index, event.target.files?.[0])} hidden />
               </div>
             );
           })}
         </div>
-        <p className="new-invite-help"><UploadCloud size={16} /> يمكنك السحب والإفلات، القص قبل الرفع، الاستبدال، وإعادة الترتيب. أي صورة محفوظة تظهر فوراً في المعاينة.</p>
+        <p className="new-invite-help"><UploadCloud size={16} /> يمكنك السحب والإفلات، القص قبل الرفع، الاستبدال، وإعادة الترتيب. عناوين الصور اختيارية، وإذا تركت فارغة يظل المعرض بالشكل الحالي.</p>
       </>
     );
   }
@@ -856,6 +888,7 @@ export function AdminNewInvitationWizard({
       ["المكان", [draft.venue, draft.city].filter(Boolean).join(" - ") || "-"],
       ["الرابط المخصص", draft.customSlug ? `/${draft.customSlug}` : "تلقائي"],
       ["الصور", `${draft.images.filter((image) => image.url).length} صورة`],
+      ["Story Gallery", normalizeGalleryStories(draft.invitationTexts.galleryStories).some((item) => item.title || item.description) ? "مفعلة" : "غير مفعلة"],
       ["الموسيقى", draft.musicEnabled ? (draft.musicChoice === "default" ? "الموسيقى الافتراضية" : draft.musicChoice === "library" ? "من المكتبة" : draft.musicChoice === "upload" ? "ملف MP3 خاص" : draft.musicChoice === "video" ? "مستخرجة من فيديو" : "رابط مباشر") : "بدون موسيقى"],
       ["قصة العروسين", draft.invitationTexts.story.length ? `${draft.invitationTexts.story.length} مرحلة` : "غير مفعلة"],
       ["هدية العروسين", Object.values(draft.invitationTexts.gift).some(Boolean) ? "مفعلة" : "غير مفعلة"],

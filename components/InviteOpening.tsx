@@ -25,6 +25,15 @@ export function InviteOpening({ groomName, brideName, coverImage, openingText, l
     return () => window.clearTimeout(timer);
   }, [phase]);
 
+  useEffect(() => {
+    if (phase === "done") return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [phase]);
+
   if (phase === "done") return null;
 
   function openInvitation() {

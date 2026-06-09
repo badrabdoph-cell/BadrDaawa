@@ -7,7 +7,7 @@ import { createFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
-import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
@@ -88,6 +88,8 @@ function buildOrderWhatsAppMessage(input: {
   musicChoice: OrderMusicChoice;
   musicUrl: string;
   photographer: { enabled: boolean; name: string; facebookUrl: string; instagramUrl: string };
+  openingText: string;
+  galleryStories: Array<{ title?: string; description?: string }>;
   story: Array<{ date?: string; title?: string; description?: string }>;
   gift: { vodafoneCash?: string; instapay?: string; bankAccount?: string; customText?: string };
 }) {
@@ -107,7 +109,10 @@ function buildOrderWhatsAppMessage(input: {
         ? `ملف مرفوع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
       : input.musicChoice === "video"
         ? `صوت مستخرج من فيديو${input.musicUrl ? `: ${input.musicUrl}` : ""}`
-        : `رابط خارجي: ${input.musicUrl || "لم يرسل رابط"}`;
+      : `رابط خارجي: ${input.musicUrl || "لم يرسل رابط"}`;
+  const meaningfulGalleryStories = input.galleryStories
+    .map((item, index) => ({ ...item, number: index + 1 }))
+    .filter((item) => item.title || item.description);
 
   return [
     `طلب دعوة جديد #${input.orderNumber}`,
@@ -124,6 +129,11 @@ function buildOrderWhatsAppMessage(input: {
     input.imageUrls.length ? input.imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n") : "لا توجد صور مرفوعة",
     "",
     `الموسيقى: ${musicLabel}`,
+    input.openingText ? `نص الافتتاح السينمائي: ${input.openingText}` : "نص الافتتاح السينمائي: الافتراضي",
+    "",
+    meaningfulGalleryStories.length
+      ? ["Story Gallery:", ...meaningfulGalleryStories.map((item) => [`${item.number}. ${item.title || "صورة"}`, item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n")
+      : "Story Gallery: لم يتم إضافتها",
     "",
     input.photographer.enabled
       ? ["بيانات المصور:", `الاسم: ${input.photographer.name || "غير محدد"}`, input.photographer.facebookUrl ? `Facebook: ${input.photographer.facebookUrl}` : "", input.photographer.instagramUrl ? `Instagram: ${input.photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
@@ -179,9 +189,11 @@ export async function POST(request: NextRequest) {
   if (music.error) {
     return NextResponse.json({ error: music.error }, { status: 400 });
   }
+  const openingText = parsed.data.openingText.trim();
+  const galleryStories = normalizeGalleryStories(parsed.data.galleryStories);
   const story = normalizeCoupleStory(parsed.data.story);
   const gift = normalizeInvitationGift(parsed.data.gift);
-  const texts = story.length || Object.values(gift).some(Boolean) ? { story, gift } : undefined;
+  const texts = openingText || galleryStories.length || story.length || Object.values(gift).some(Boolean) ? { openingText, galleryStories, story, gift } : undefined;
   const orderNumber = makeOrderNumber();
   const dedupeSource = parsed.data.idempotencyKey || JSON.stringify({
     groomName: parsed.data.groomName,
@@ -191,8 +203,10 @@ export async function POST(request: NextRequest) {
     mapUrl: parsed.data.mapUrl,
     templateSlug: selectedTemplate.slug,
     orderImages: parsed.data.orderImages,
+    galleryStories,
     story,
     gift,
+    openingText,
   });
   const dedupeKey = makeDedupeKey(dedupeSource);
   const siteUrl = getPublicSiteUrl(request.headers, request.url);
@@ -214,8 +228,11 @@ export async function POST(request: NextRequest) {
     ? ["بيانات المصور الفوتوغرافي:", parsed.data.photographerName ? `الاسم: ${parsed.data.photographerName}` : "", photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "", photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
     : "";
   const storyNotes = story.length ? ["قصة العروسين:", ...story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
+  const meaningfulGalleryStories = galleryStories.map((item, index) => ({ ...item, number: index + 1 })).filter((item) => item.title || item.description);
+  const galleryStoryNotes = meaningfulGalleryStories.length ? ["Story Gallery:", ...meaningfulGalleryStories.map((item) => [`${item.number}. ${item.title || "صورة"}`, item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
   const giftNotes = Object.values(gift).some(Boolean) ? ["هدية العروسين:", gift.vodafoneCash ? `فودافون كاش: ${gift.vodafoneCash}` : "", gift.instapay ? `إنستا باي: ${gift.instapay}` : "", gift.bankAccount ? `حساب بنكي: ${gift.bankAccount}` : "", gift.customText ? `نص مخصص: ${gift.customText}` : ""].filter(Boolean).join("\n") : "";
-  const notes = [parsed.data.notes, mapNotes, photographerNotes, musicNotes, storyNotes, giftNotes, imageNotes].filter(Boolean).join("\n\n");
+  const openingNotes = openingText ? `نص الافتتاح السينمائي:\n${openingText}` : "";
+  const notes = [parsed.data.notes, mapNotes, openingNotes, photographerNotes, musicNotes, galleryStoryNotes, storyNotes, giftNotes, imageNotes].filter(Boolean).join("\n\n");
   let orderId = "";
   let effectiveOrderNumber = orderNumber;
 
@@ -291,6 +308,8 @@ export async function POST(request: NextRequest) {
           musicChoice: parsed.data.musicChoice,
           musicUrl: absoluteMusicUrl,
           photographer,
+          openingText,
+          galleryStories,
           story,
           gift,
         });
@@ -360,8 +379,10 @@ export async function POST(request: NextRequest) {
     musicChoice: parsed.data.musicChoice,
     musicUrl: absoluteMusicUrl,
     photographer,
+    galleryStories,
     story,
     gift,
+    openingText,
   });
   queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
   await recordAuditLog({
@@ -383,6 +404,7 @@ export async function POST(request: NextRequest) {
       musicChoice: parsed.data.musicChoice,
       musicUrl: music.musicUrl,
       texts,
+      galleryStories,
       story,
       gift,
       photographer,

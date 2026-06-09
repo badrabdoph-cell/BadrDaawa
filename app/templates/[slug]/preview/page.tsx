@@ -6,7 +6,7 @@ import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
-import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
@@ -33,6 +33,8 @@ type PageProps = {
     musicEnabled?: string;
     musicUrl?: string;
     language?: string;
+    openingText?: string;
+    galleryStories?: string;
     story?: string;
     gift?: string;
   }>;
@@ -67,6 +69,15 @@ function cleanPreviewStory(value: string | undefined) {
   if (!value) return [];
   try {
     return normalizeCoupleStory(JSON.parse(value));
+  } catch {
+    return [];
+  }
+}
+
+function cleanPreviewGalleryStories(value: string | undefined) {
+  if (!value) return [];
+  try {
+    return normalizeGalleryStories(JSON.parse(value));
   } catch {
     return [];
   }
@@ -126,8 +137,10 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const locale = resolveLocale(query?.language);
   const localeMeta = getLocaleMeta(locale);
   const previewStory = cleanPreviewStory(query?.story);
+  const previewGalleryStories = cleanPreviewGalleryStories(query?.galleryStories);
   const previewGift = cleanPreviewGift(query?.gift);
-  const previewTexts = previewStory.length || Object.values(previewGift).some(Boolean) ? { story: previewStory, gift: previewGift } : undefined;
+  const previewOpeningText = cleanPreviewText(query?.openingText, "");
+  const previewTexts = previewOpeningText || previewGalleryStories.length || previewStory.length || Object.values(previewGift).some(Boolean) ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: previewStory, gift: previewGift } : undefined;
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,

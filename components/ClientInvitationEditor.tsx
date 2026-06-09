@@ -6,9 +6,9 @@ import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { uploadBrowserPreviewImage } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import { normalizeGalleryStories, normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
-import type { ContentPreset, CoupleStoryItem, Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
 type MusicFile = { id?: string; name?: string; url: string; modifiedAt: number };
 type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
@@ -42,6 +42,10 @@ async function extractClientVideoAudio(file: File) {
 
 function createStoryItem(): CoupleStoryItem {
   return { id: `story-${Date.now().toString(36)}`, title: "", description: "", imageUrl: "", date: "" };
+}
+
+function normalizeGalleryStorySlots(value: unknown) {
+  return unifiedImageSlots.map((_, index) => normalizeGalleryStories(value)[index] || { title: "", description: "" });
 }
 
 export function ClientInvitationEditor({
@@ -179,6 +183,14 @@ export function ClientInvitationEditor({
 
   function removeStoryItem(index: number) {
     setInvitationTexts((current) => ({ ...current, story: current.story.filter((_, itemIndex) => itemIndex !== index) }));
+    markDirty();
+  }
+
+  function updateGalleryStoryItem(index: number, patch: Partial<GalleryStoryItem>) {
+    setInvitationTexts((current) => {
+      const galleryStories = normalizeGalleryStorySlots(current.galleryStories).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item));
+      return { ...current, galleryStories: normalizeGalleryStories(galleryStories) };
+    });
     markDirty();
   }
 
@@ -442,6 +454,25 @@ export function ClientInvitationEditor({
               </label>
             ))}
           </div>
+          <div className="builder-gallery-story-fields">
+            {unifiedImageSlots.map((slot, index) => {
+              const galleryStory = normalizeGalleryStorySlots(invitationTexts.galleryStories)[index] || {};
+              return (
+                <div className="builder-gallery-story-item" key={`client-story-${slot.id}`}>
+                  <strong>{slot.label}</strong>
+                  <label className="field">
+                    <span>عنوان الصورة</span>
+                    <input value={galleryStory.title || ""} onChange={(event) => updateGalleryStoryItem(index, { title: event.target.value })} placeholder="مثال: أول نظرة" />
+                  </label>
+                  <label className="field">
+                    <span>وصف قصير</span>
+                    <textarea rows={2} value={galleryStory.description || ""} onChange={(event) => updateGalleryStoryItem(index, { description: event.target.value })} placeholder="جملة قصيرة تجعل الصورة جزءاً من الحكاية" />
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+          <small className="builder-inline-hint">اترك عناوين وأوصاف الصور فارغة ليظل المعرض بالطريقة الحالية.</small>
         </div>
 
         <div className="builder-section">

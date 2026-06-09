@@ -1,4 +1,4 @@
-import type { CoupleStoryItem, InvitationGift, InvitationTexts, Language } from "./types";
+import type { CoupleStoryItem, GalleryStoryItem, InvitationGift, InvitationTexts, Language } from "./types";
 
 export const defaultInvitationTexts: Required<InvitationTexts> = {
   groomNameEn: "",
@@ -10,6 +10,7 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   rsvpDeclinedMessage: "حزين إنك مش معايا في يومي المفضل 🥹",
   rsvpConfirmedSuccessMessage: "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
   rsvpDeclinedSuccessMessage: "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+  galleryStories: [],
   story: [],
   gift: {},
 };
@@ -26,12 +27,13 @@ export const defaultInvitationTextsByLocale: Record<Language, Required<Invitatio
     rsvpDeclinedMessage: "We will miss you on our special day.",
     rsvpConfirmedSuccessMessage: "Thank you for confirming. Your presence will make our night complete.",
     rsvpDeclinedSuccessMessage: "Thank you for letting us know. We appreciate you sharing our joy.",
+    galleryStories: [],
     story: [],
     gift: {},
   },
 };
 
-const textLimits: Record<Exclude<keyof InvitationTexts, "story" | "gift">, number> = {
+const textLimits: Record<Exclude<keyof InvitationTexts, "galleryStories" | "story" | "gift">, number> = {
   groomNameEn: 120,
   brideNameEn: 120,
   openingText: 180,
@@ -67,6 +69,20 @@ export function normalizeCoupleStory(value: unknown): CoupleStoryItem[] {
     .filter((entry) => Boolean(entry.title || entry.description || entry.imageUrl || entry.date));
 }
 
+export function normalizeGalleryStories(value: unknown): GalleryStoryItem[] {
+  if (!Array.isArray(value)) return [];
+  const stories = value
+    .slice(0, 12)
+    .map((entry) => {
+      const raw = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
+      return {
+        title: cleanOptionalText(raw.title, 120),
+        description: cleanOptionalText(raw.description, 280),
+      };
+    });
+  return stories.some((entry) => entry.title || entry.description) ? stories : [];
+}
+
 export function normalizeInvitationGift(value: unknown): InvitationGift {
   const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   const gift = {
@@ -91,6 +107,7 @@ export function normalizeInvitationTexts(value: unknown, language: Language = "a
     rsvpDeclinedMessage: cleanText(raw.rsvpDeclinedMessage, defaults.rsvpDeclinedMessage, textLimits.rsvpDeclinedMessage),
     rsvpConfirmedSuccessMessage: cleanText(raw.rsvpConfirmedSuccessMessage, defaults.rsvpConfirmedSuccessMessage, textLimits.rsvpConfirmedSuccessMessage),
     rsvpDeclinedSuccessMessage: cleanText(raw.rsvpDeclinedSuccessMessage, defaults.rsvpDeclinedSuccessMessage, textLimits.rsvpDeclinedSuccessMessage),
+    galleryStories: normalizeGalleryStories(raw.galleryStories),
     story: normalizeCoupleStory(raw.story),
     gift: normalizeInvitationGift(raw.gift),
   };
