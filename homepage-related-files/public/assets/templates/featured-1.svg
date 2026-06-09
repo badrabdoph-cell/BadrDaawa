@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Featured 1 template preview">
+  <defs>
+    <linearGradient id="hero" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8d6b8"/>
+      <stop offset=".46" stop-color="#38584f"/>
+      <stop offset="1" stop-color="#0a1110"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity=".18"/>
+      <stop offset=".56" stop-color="#0a1110" stop-opacity=".58"/>
+      <stop offset="1" stop-color="#0a1110"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#2c251d" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="#fdfbf7"/>
+  <rect width="900" height="575" fill="url(#hero)"/>
+  <rect width="900" height="575" fill="url(#fade)"/>
+  <text x="450" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" fill="#d4af37" letter-spacing="8">FOREVER BEGINS HERE</text>
+  <text x="450" y="330" text-anchor="middle" font-family="Georgia, serif" font-size="94" fill="#ffffff">بدر</text>
+  <line x1="320" y1="395" x2="396" y2="395" stroke="#d4af37" stroke-opacity=".58" stroke-width="3"/>
+  <text x="450" y="412" text-anchor="middle" font-family="Georgia, serif" font-size="54" fill="#d4af37">♥</text>
+  <line x1="504" y1="395" x2="580" y2="395" stroke="#d4af37" stroke-opacity=".58" stroke-width="3"/>
+  <text x="450" y="515" text-anchor="middle" font-family="Georgia, serif" font-size="94" fill="#ffffff">Sara</text>
+
+  <g filter="url(#shadow)">
+    <rect x="108" y="525" width="684" height="220" rx="42" fill="#ffffff" stroke="#e2e6d8"/>
+    <line x1="170" y1="608" x2="170" y2="692" stroke="#e2e6d8" stroke-width="4"/>
+    <circle cx="170" cy="585" r="20" fill="#8a9a86"/>
+    <circle cx="170" cy="650" r="20" fill="#8a9a86"/>
+    <circle cx="170" cy="712" r="20" fill="#8a9a86"/>
+    <text x="220" y="592" font-family="Arial, sans-serif" font-size="26" fill="#2c3b2e">اليوم والتاريخ</text>
+    <text x="220" y="657" font-family="Arial, sans-serif" font-size="26" fill="#2c3b2e">موعد الحضور</text>
+    <text x="220" y="719" font-family="Arial, sans-serif" font-size="26" fill="#2c3b2e">القاعة والموقع</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="118" y="780" width="664" height="116" rx="34" fill="#0a1110"/>
+    <text x="450" y="820" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" fill="#d4af37" letter-spacing="5">THE COUNTDOWN</text>
+    <g fill="#f7efe1" font-family="Georgia, serif" font-size="32" text-anchor="middle">
+      <text x="220" y="870">141</text>
+      <text x="373" y="870">07</text>
+      <text x="526" y="870">24</text>
+      <text x="680" y="870">12</text>
+    </g>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="118" y="948" width="180" height="210" rx="90 90 24 24" fill="#d8b4ad"/>
+    <rect x="338" y="915" width="224" height="250" rx="34" fill="#c9b17c"/>
+    <rect x="602" y="948" width="180" height="210" rx="90 90 24 24" fill="#8a9a86"/>
+  </g>
+  <text x="450" y="1180" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#8a641f">مميز 1</text>
+</svg>

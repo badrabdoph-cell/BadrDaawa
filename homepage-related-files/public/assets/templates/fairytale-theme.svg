@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Fairytale Theme template preview">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff0f5"/>
+      <stop offset="1" stop-color="#ffe4e1"/>
+    </linearGradient>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".45" stop-color="#f4a9c4"/>
+      <stop offset="1" stop-color="#703c53"/>
+    </linearGradient>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#f4a9c4" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <circle cx="130" cy="120" r="150" fill="#ffffff" opacity=".58"/>
+  <circle cx="790" cy="980" r="210" fill="#ffffff" opacity=".34"/>
+  <g filter="url(#soft)">
+    <rect x="110" y="95" width="680" height="330" rx="70" fill="#ffffff" fill-opacity=".66"/>
+    <text x="450" y="168" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#f4a9c4">♥</text>
+    <text x="450" y="270" text-anchor="middle" font-family="Georgia, serif" font-size="88" fill="#703c53">بدر</text>
+    <text x="450" y="370" text-anchor="middle" font-family="Georgia, serif" font-size="88" fill="#703c53">Sara</text>
+  </g>
+  <g filter="url(#soft)">
+    <circle cx="450" cy="675" r="205" fill="#ffffff"/>
+    <circle cx="450" cy="675" r="178" fill="url(#photo)"/>
+  </g>
+  <g filter="url(#soft)">
+    <rect x="170" y="930" width="560" height="110" rx="40" fill="#ffffff"/>
+    <text x="450" y="980" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#703c53">26 أكتوبر 2026</text>
+    <text x="450" y="1018" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#9a5b74">07:00 مساء</text>
+  </g>
+  <text x="450" y="1135" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#9a5b74">حكاية وردية</text>
+</svg>

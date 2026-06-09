@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-label="Garden Elegance template preview">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f4f6f0"/>
+      <stop offset="1" stop-color="#e2e6d8"/>
+    </linearGradient>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f7efe4"/>
+      <stop offset=".55" stop-color="#c8d3bd"/>
+      <stop offset="1" stop-color="#8a9a86"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#2c3b2e" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <circle cx="156" cy="150" r="110" fill="#ffffff" opacity=".34"/>
+  <circle cx="760" cy="1040" r="160" fill="#ca7d60" opacity=".08"/>
+  <g fill="none" stroke="#8a9a86" stroke-width="3" opacity=".5">
+    <path d="M138 165c38-38 82-48 132-30"/>
+    <path d="M650 145c55 20 96 55 121 107"/>
+  </g>
+  <g filter="url(#shadow)">
+    <circle cx="382" cy="235" r="130" fill="#f4f6f0" stroke="#8a9a86" stroke-opacity=".35" stroke-width="4"/>
+    <circle cx="518" cy="235" r="130" fill="#f4f6f0" stroke="#8a9a86" stroke-opacity=".35" stroke-width="4"/>
+    <text x="370" y="252" text-anchor="middle" font-family="Georgia, serif" font-size="58" fill="#2c3b2e">بدر</text>
+    <text x="530" y="252" text-anchor="middle" font-family="Georgia, serif" font-size="58" fill="#2c3b2e">Sara</text>
+    <text x="450" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="64" fill="#ca7d60">&amp;</text>
+  </g>
+  <text x="450" y="86" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#6b7b67" letter-spacing="8">WE ARE GETTING MARRIED</text>
+  <path d="M260 480 Q450 330 640 480 L640 790 Q450 852 260 790 Z" fill="url(#photo)" filter="url(#shadow)"/>
+  <path d="M246 462 Q450 300 654 462" fill="none" stroke="#8a9a86" stroke-opacity=".45" stroke-width="5"/>
+  <g transform="translate(165 865)" filter="url(#shadow)">
+    <rect width="570" height="150" rx="40" fill="#fff"/>
+    <circle cx="86" cy="75" r="31" fill="#8a9a86"/>
+    <circle cx="285" cy="75" r="31" fill="#8a9a86"/>
+    <circle cx="484" cy="75" r="31" fill="#8a9a86"/>
+    <text x="86" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#2c3b2e">التاريخ</text>
+    <text x="285" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#2c3b2e">الوقت</text>
+    <text x="484" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#2c3b2e">المكان</text>
+  </g>
+  <rect x="210" y="1060" width="480" height="66" rx="33" fill="#2c3b2e"/>
+  <text x="450" y="1103" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" fill="#f4f6f0">Garden Elegance</text>
+</svg>
