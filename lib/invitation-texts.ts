@@ -1,4 +1,4 @@
-import type { CoupleStoryItem, InvitationTexts } from "./types";
+import type { CoupleStoryItem, InvitationTexts, Language } from "./types";
 
 export const defaultInvitationTexts: Required<InvitationTexts> = {
   groomNameEn: "",
@@ -10,6 +10,21 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   rsvpConfirmedSuccessMessage: "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
   rsvpDeclinedSuccessMessage: "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
   story: [],
+};
+
+export const defaultInvitationTextsByLocale: Record<Language, Required<InvitationTexts>> = {
+  ar: defaultInvitationTexts,
+  en: {
+    groomNameEn: "",
+    brideNameEn: "",
+    inviteMessage: "With love and gratitude, we invite you to share this special evening with us as a new story begins.",
+    inviteMessageSecondary: "Your presence will make our joy complete and turn the day into an unforgettable memory. 💖",
+    rsvpQuestion: "Will you join us and celebrate our big day?",
+    rsvpDeclinedMessage: "We will miss you on our special day.",
+    rsvpConfirmedSuccessMessage: "Thank you for confirming. Your presence will make our night complete.",
+    rsvpDeclinedSuccessMessage: "Thank you for letting us know. We appreciate you sharing our joy.",
+    story: [],
+  },
 };
 
 const textLimits: Record<Exclude<keyof InvitationTexts, "story">, number> = {
@@ -47,17 +62,18 @@ export function normalizeCoupleStory(value: unknown): CoupleStoryItem[] {
     .filter((entry) => Boolean(entry.title || entry.description || entry.imageUrl || entry.date));
 }
 
-export function normalizeInvitationTexts(value: unknown): Required<InvitationTexts> {
+export function normalizeInvitationTexts(value: unknown, language: Language = "ar"): Required<InvitationTexts> {
+  const defaults = defaultInvitationTextsByLocale[language] || defaultInvitationTexts;
   const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   return {
-    groomNameEn: cleanText(raw.groomNameEn, defaultInvitationTexts.groomNameEn, textLimits.groomNameEn),
-    brideNameEn: cleanText(raw.brideNameEn, defaultInvitationTexts.brideNameEn, textLimits.brideNameEn),
-    inviteMessage: cleanText(raw.inviteMessage, defaultInvitationTexts.inviteMessage, textLimits.inviteMessage),
-    inviteMessageSecondary: cleanText(raw.inviteMessageSecondary, defaultInvitationTexts.inviteMessageSecondary, textLimits.inviteMessageSecondary),
-    rsvpQuestion: cleanText(raw.rsvpQuestion, defaultInvitationTexts.rsvpQuestion, textLimits.rsvpQuestion),
-    rsvpDeclinedMessage: cleanText(raw.rsvpDeclinedMessage, defaultInvitationTexts.rsvpDeclinedMessage, textLimits.rsvpDeclinedMessage),
-    rsvpConfirmedSuccessMessage: cleanText(raw.rsvpConfirmedSuccessMessage, defaultInvitationTexts.rsvpConfirmedSuccessMessage, textLimits.rsvpConfirmedSuccessMessage),
-    rsvpDeclinedSuccessMessage: cleanText(raw.rsvpDeclinedSuccessMessage, defaultInvitationTexts.rsvpDeclinedSuccessMessage, textLimits.rsvpDeclinedSuccessMessage),
+    groomNameEn: cleanText(raw.groomNameEn, defaults.groomNameEn, textLimits.groomNameEn),
+    brideNameEn: cleanText(raw.brideNameEn, defaults.brideNameEn, textLimits.brideNameEn),
+    inviteMessage: cleanText(raw.inviteMessage, defaults.inviteMessage, textLimits.inviteMessage),
+    inviteMessageSecondary: cleanText(raw.inviteMessageSecondary, defaults.inviteMessageSecondary, textLimits.inviteMessageSecondary),
+    rsvpQuestion: cleanText(raw.rsvpQuestion, defaults.rsvpQuestion, textLimits.rsvpQuestion),
+    rsvpDeclinedMessage: cleanText(raw.rsvpDeclinedMessage, defaults.rsvpDeclinedMessage, textLimits.rsvpDeclinedMessage),
+    rsvpConfirmedSuccessMessage: cleanText(raw.rsvpConfirmedSuccessMessage, defaults.rsvpConfirmedSuccessMessage, textLimits.rsvpConfirmedSuccessMessage),
+    rsvpDeclinedSuccessMessage: cleanText(raw.rsvpDeclinedSuccessMessage, defaults.rsvpDeclinedSuccessMessage, textLimits.rsvpDeclinedSuccessMessage),
     story: normalizeCoupleStory(raw.story),
   };
 }

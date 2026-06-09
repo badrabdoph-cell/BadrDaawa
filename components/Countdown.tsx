@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
+import type { Language } from "@/lib/types";
 
 const initialRemaining = {
   days: 0,
@@ -22,7 +24,8 @@ function getRemaining(target: string) {
   };
 }
 
-export function Countdown({ targetDate }: { targetDate: string }) {
+export function Countdown({ targetDate, locale = "ar" }: { targetDate: string; locale?: Language }) {
+  const t = getInvitationTranslator(resolveLocale(locale));
   const target = useMemo(() => `${targetDate}T20:00:00`, [targetDate]);
   const [remaining, setRemaining] = useState(initialRemaining);
 
@@ -33,22 +36,22 @@ export function Countdown({ targetDate }: { targetDate: string }) {
   }, [target]);
 
   return (
-    <div className="countdown" aria-label="العد التنازلي">
+    <div className="countdown" aria-label={t("invitation.countdownLabel")}>
       <div>
         <strong>{remaining.days}</strong>
-        <span>يوم</span>
+        <span>{t("invitation.countdown.day")}</span>
       </div>
       <div>
         <strong>{remaining.hours}</strong>
-        <span>ساعة</span>
+        <span>{t("invitation.countdown.hour")}</span>
       </div>
       <div>
         <strong>{remaining.minutes}</strong>
-        <span>دقيقة</span>
+        <span>{t("invitation.countdown.minute")}</span>
       </div>
       <div>
         <strong>{remaining.seconds}</strong>
-        <span>ثانية</span>
+        <span>{t("invitation.countdown.second")}</span>
       </div>
     </div>
   );

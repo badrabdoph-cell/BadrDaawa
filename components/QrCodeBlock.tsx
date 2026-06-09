@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
+import type { Language } from "@/lib/types";
 
-export function QrCodeBlock({ value }: { value: string }) {
+export function QrCodeBlock({ value, locale = "ar" }: { value: string; locale?: Language }) {
+  const t = getInvitationTranslator(resolveLocale(locale));
   const [dataUrl, setDataUrl] = useState("");
 
   useEffect(() => {
@@ -31,8 +34,8 @@ export function QrCodeBlock({ value }: { value: string }) {
 
   return (
     <div className="qr-card">
-      {dataUrl ? <img src={dataUrl} alt="QR Code للدعوة" width={180} height={180} /> : <span className="qr-placeholder" aria-hidden="true" />}
-      <strong>امسح الكود وافتح الدعوة</strong>
+      {dataUrl ? <img src={dataUrl} alt={t("invitation.qrAlt")} width={180} height={180} /> : <span className="qr-placeholder" aria-hidden="true" />}
+      <strong>{t("invitation.qrText")}</strong>
     </div>
   );
 }

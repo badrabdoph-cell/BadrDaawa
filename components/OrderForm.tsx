@@ -1082,6 +1082,17 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         ) : null}
 
         <div className="input-grid order-compact-grid">
+          <div className="field">
+            <label htmlFor="language">
+              <LayoutTemplate size={16} />
+              لغة الدعوة
+            </label>
+            <select id="language" name="language" value={form.language} onChange={(event) => updateField("language", event.target.value === "en" ? "en" : "ar")}>
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
           <div className={`field ${errors.groomName ? "has-error" : ""}`}>
             <label htmlFor="groomName">
               <UserRound size={16} />

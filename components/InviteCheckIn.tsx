@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Loader2, MapPinCheckInside } from "lucide-react";
+import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
+import type { Language } from "@/lib/types";
 
 type CheckInState = "idle" | "loading" | "success" | "error";
 
@@ -14,11 +16,12 @@ function createVisitorKey(code: string) {
   return key;
 }
 
-export function InviteCheckIn({ code, isPreview = false }: { code: string; isPreview?: boolean }) {
+export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code: string; isPreview?: boolean; locale?: Language }) {
+  const t = getInvitationTranslator(resolveLocale(locale));
   const storageKey = useMemo(() => `badrdaawa-checked-in-${code}`, [code]);
   const [state, setState] = useState<CheckInState>(isPreview ? "idle" : "idle");
   const [checkedIn, setCheckedIn] = useState(false);
-  const [message, setMessage] = useState(isPreview ? "زر تجريبي يظهر مكان تسجيل الوصول داخل القالب." : "");
+  const [message, setMessage] = useState(isPreview ? t("invitation.checkIn.previewMessage") : "");
 
   useEffect(() => {
     if (isPreview) return;
@@ -40,32 +43,32 @@ export function InviteCheckIn({ code, isPreview = false }: { code: string; isPre
       const data = (await response.json().catch(() => null)) as { error?: string; duplicate?: boolean } | null;
       if (!response.ok) {
         setState("error");
-        setMessage(data?.error || "تعذر تسجيل وصولك. حاول مرة أخرى.");
+        setMessage(data?.error || t("invitation.checkIn.error"));
         return;
       }
       window.localStorage.setItem(storageKey, "1");
       setCheckedIn(true);
       setState("success");
-      setMessage(data?.duplicate ? "تم تسجيل وصولك مسبقًا. نورت الحفل." : "تم تسجيل وصولك للحفل. نورتونا.");
+      setMessage(data?.duplicate ? t("invitation.checkIn.duplicate") : t("invitation.checkIn.success"));
     } catch {
       setState("error");
-      setMessage("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+      setMessage(t("common.connectionError"));
     }
   }
 
   return (
     <section className="invite-card check-in-card" id="check-in">
-      <span className="invite-kicker">Check-In</span>
+      <span className="invite-kicker">{t("invitation.checkIn.kicker")}</span>
       <div className="check-in-content">
         <MapPinCheckInside size={26} />
         <div>
-          <h2>تسجيل الوصول</h2>
-          <p>عند وصولك لمكان الحفل اضغط الزر لتسجيل الحضور الفعلي.</p>
+          <h2>{t("invitation.checkIn.title")}</h2>
+          <p>{t("invitation.checkIn.description")}</p>
         </div>
       </div>
       <button className="btn btn-gold btn-glow check-in-button" type="button" onClick={submit} disabled={isPreview || checkedIn || state === "loading"}>
         {state === "loading" ? <Loader2 size={18} className="animate-float" /> : <CheckCircle2 size={18} />}
-        {checkedIn ? "تم تسجيل وصولك" : "وصلت إلى الحفل"}
+        {checkedIn ? t("invitation.checkIn.done") : t("invitation.checkIn.button")}
       </button>
       {message ? <p className={state === "error" ? "status danger" : "status success"}>{message}</p> : null}
     </section>

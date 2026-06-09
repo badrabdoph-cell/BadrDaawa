@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
   const venue = String(formData.get("venue") || "").trim();
   const city = String(formData.get("city") || "").trim();
   const mapUrl = String(formData.get("mapUrl") || "").trim();
+  const language = String(formData.get("language") || "") === "en" ? "en" : "ar";
   const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
   const uploadedAudio = formData.get("audioFile");
   const hasUploadedAudio = uploadedAudio instanceof File && uploadedAudio.size > 0;
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
     const invitation = await createFileInvitation({
       baseSlug,
       templateSlug: selectedTemplate.slug,
+      language,
       groomName,
       brideName,
       phone,
@@ -212,7 +214,7 @@ export async function POST(request: NextRequest) {
           data: {
             code,
             status: "ACTIVE",
-            language: "ar",
+            language,
             groomName,
             brideName,
             weddingDate: parsedWeddingDate,

@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { LocateFixed, MapPin, Navigation, Route } from "lucide-react";
+import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
+import type { Language } from "@/lib/types";
 
 type Coordinates = {
   lat: number;
@@ -49,7 +51,8 @@ function getGoogleSearchUrl(destination: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
 }
 
-export function InviteMap({ venue, city, mapUrl }: { venue: string; city: string; mapUrl: string }) {
+export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: string; city: string; mapUrl: string; locale?: Language }) {
+  const t = getInvitationTranslator(resolveLocale(locale));
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [status, setStatus] = useState<"idle" | "locating" | "ready" | "blocked">("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("desktop");
@@ -111,21 +114,21 @@ export function InviteMap({ venue, city, mapUrl }: { venue: string; city: string
 
   return (
     <div className="map-frame route-map">
-      <iframe src={mapEmbed} title="خريطة مكان الفرح" loading="lazy" />
+      <iframe src={mapEmbed} title={t("invitation.map.iframeTitle")} loading="lazy" />
       <div className="map-live-caption">
         <span className={`map-live-dot ${status === "ready" ? "ready" : ""}`}>
           <LocateFixed size={14} />
         </span>
-        <span>{status === "ready" ? "موقعك متزامن مع الخريطة" : status === "locating" ? "بنحدد موقعك الآن" : venue}</span>
+        <span>{status === "ready" ? t("invitation.map.ready") : status === "locating" ? t("invitation.map.locating") : venue}</span>
       </div>
-      <div className="map-actions" aria-label="خيارات فتح خريطة مكان الحفل">
+      <div className="map-actions" aria-label={t("invitation.map.actionsLabel")}>
         {navigationLinks.map((link) => {
           const Icon = link.icon;
           return (
             <a className={link.recommended ? "map-action recommended" : "map-action"} href={link.href} target="_blank" rel="noreferrer" key={link.key}>
               <Icon size={15} />
               <span>{link.label}</span>
-              {link.recommended ? <b>مناسب لجهازك</b> : null}
+              {link.recommended ? <b>{t("invitation.map.recommended")}</b> : null}
             </a>
           );
         })}

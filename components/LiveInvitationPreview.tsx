@@ -27,6 +27,7 @@ export type LiveInvitationPreviewPayload = {
   musicUrl?: string;
   musicEnabled?: boolean;
   disableMusic?: boolean;
+  language?: Invitation["language"];
   texts?: Invitation["texts"];
   photographer?: PreviewPhotographer;
 };
@@ -72,6 +73,7 @@ function cleanAudioUrl(value: unknown) {
 }
 
 function applyPayload(invitation: Invitation, payload: LiveInvitationPreviewPayload) {
+  const language = payload.language === "en" ? "en" : invitation.language;
   const gallery = cleanGallery(payload.gallery, invitation.gallery);
   const musicEnabled = payload.musicEnabled ?? invitation.musicEnabled;
   const musicUrl = musicEnabled ? cleanAudioUrl(payload.musicUrl) || invitation.musicUrl || "" : "";
@@ -95,11 +97,12 @@ function applyPayload(invitation: Invitation, payload: LiveInvitationPreviewPayl
     venue: cleanText(payload.venue, invitation.venue),
     city: cleanText(payload.city, invitation.city),
     mapUrl: cleanText(payload.mapUrl, invitation.mapUrl),
+    language,
     heroPhoto: gallery[0] || invitation.heroPhoto,
     gallery,
     musicUrl,
     musicEnabled,
-    texts: normalizeInvitationTexts(payload.texts || invitation.texts),
+    texts: normalizeInvitationTexts(payload.texts || invitation.texts, language),
     photographer,
   };
 }

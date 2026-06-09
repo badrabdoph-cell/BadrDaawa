@@ -42,6 +42,7 @@ type ImageLibraryFile = {
 type StepId = "template" | "couple" | "event" | "images" | "extras" | "texts" | "review" | "publish";
 
 type DraftState = {
+  language: "ar" | "en";
   templateSlug: string;
   groomName: string;
   brideName: string;
@@ -140,6 +141,7 @@ async function createCroppedImageFile(draft: CropDraft) {
 
 function createInitialDraft(templates: WizardTemplate[]): DraftState {
   return {
+    language: "ar",
     templateSlug: templates[0]?.slug || "",
     groomName: "",
     brideName: "",
@@ -167,14 +169,16 @@ function createInitialDraft(templates: WizardTemplate[]): DraftState {
   };
 }
 
-function normalizeDraft(value: unknown, templates: WizardTemplate[]) {
+function normalizeDraft(value: unknown, templates: WizardTemplate[]): DraftState {
   const fallback = createInitialDraft(templates);
   if (!value || typeof value !== "object") return fallback;
   const input = value as Partial<DraftState>;
   const templateSlug = templates.some((template) => template.slug === input.templateSlug) ? input.templateSlug || fallback.templateSlug : fallback.templateSlug;
+  const language: DraftState["language"] = input.language === "en" ? "en" : "ar";
   return {
     ...fallback,
     ...input,
+    language,
     templateSlug,
     images: Array.isArray(input.images) ? input.images.slice(0, unifiedImageSlots.length).map((image) => ({ url: image?.url || "", name: image?.name || "", loading: false })) : fallback.images,
     photographerLogo: { url: input.photographerLogo?.url || "", name: input.photographerLogo?.name || "", loading: false },
@@ -242,14 +246,15 @@ export function AdminNewInvitationWizard({
   const completion = prePublishReport.readiness;
 
   const previewUrl = useMemo(() => {
-    const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
+    const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1", language: draft.language });
     return `/templates/${draft.templateSlug || templates[0]?.slug || "featured-1"}/preview?${params.toString()}`;
-  }, [draft.templateSlug, templates]);
+  }, [draft.language, draft.templateSlug, templates]);
 
   const previewPayload = useMemo<LiveInvitationPreviewPayload>(
     () => ({
       groomName: draft.groomName || "اسم العريس",
       brideName: draft.brideName || "اسم العروس",
+      language: draft.language,
       weddingDate: draft.weddingDate,
       weddingTime: draft.weddingTime,
       venue: draft.venue || "اسم القاعة",
@@ -569,6 +574,7 @@ export function AdminNewInvitationWizard({
       body: JSON.stringify({
         action,
         code: savedCode,
+        language: draft.language,
         templateSlug: draft.templateSlug,
         groomName: draft.groomName,
         brideName: draft.brideName,
@@ -644,6 +650,13 @@ export function AdminNewInvitationWizard({
   function renderCoupleStep() {
     return (
       <div className="new-invite-field-grid">
+        <label className="field">
+          <span>لغة الدعوة</span>
+          <select value={draft.language} onChange={(event) => patch({ language: event.target.value === "en" ? "en" : "ar" })}>
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+          </select>
+        </label>
         <label className="field"><span>اسم العريس</span><input value={draft.groomName} onChange={(event) => patch({ groomName: event.target.value })} autoFocus /></label>
         <label className="field"><span>اسم العروس</span><input value={draft.brideName} onChange={(event) => patch({ brideName: event.target.value })} /></label>
         <label className="field"><span>الاسم الإنجليزي للعريس (اختياري)</span><input dir="ltr" value={draft.groomNameEn} onChange={(event) => patch({ groomNameEn: event.target.value })} /></label>

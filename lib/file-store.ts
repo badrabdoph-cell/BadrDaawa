@@ -45,6 +45,7 @@ export type FileAnalyticsEvent = {
 type CreateFileInvitationInput = {
   baseSlug: string;
   templateSlug: string;
+  language?: Invitation["language"];
   groomName: string;
   brideName: string;
   phone: string;
@@ -64,7 +65,7 @@ type CreateFileInvitationInput = {
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "manageToken" | "manageTokenExpiresAt" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
+  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "language" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "manageToken" | "manageTokenExpiresAt" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -317,7 +318,7 @@ export async function createFileInvitation(input: CreateFileInvitationInput) {
     code,
     customSlug: input.customSlug || undefined,
     templateSlug: input.templateSlug,
-    language: "ar",
+    language: input.language === "en" ? "en" : "ar",
     groomName: input.groomName,
     brideName: input.brideName,
     weddingDate: input.weddingDate,

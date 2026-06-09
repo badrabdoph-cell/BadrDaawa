@@ -23,6 +23,7 @@ type BuilderPayload = {
   action?: "draft" | "publish";
   code?: string;
   customSlug?: string;
+  language?: "ar" | "en";
   templateSlug?: string;
   groomName?: string;
   brideName?: string;
@@ -211,7 +212,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ملف أو رابط الموسيقى غير قابل للتشغيل." }, { status: 400 });
   }
   const photographer = await resolvePhotographer(input);
-  const texts = normalizeInvitationTexts(input.texts);
+  const language = input.language === "en" ? "en" : "ar";
+  const texts = normalizeInvitationTexts(input.texts, language);
   const status: "ACTIVE" | "DRAFT" = action === "publish" ? "ACTIVE" : "DRAFT";
   const isActive = status === "ACTIVE";
   const baseSlug = buildInvitationBaseSlug(groomName, brideName);
@@ -228,6 +230,7 @@ export async function POST(request: NextRequest) {
       await updateFileInvitation(existingCode, {
         templateSlug: templateDefinition.slug,
         customSlug: customSlug || undefined,
+        language,
         groomName,
         brideName,
         weddingDate,
@@ -249,6 +252,7 @@ export async function POST(request: NextRequest) {
     const storeInvitation = await createFileInvitation({
       baseSlug,
       templateSlug: templateDefinition.slug,
+      language,
       groomName,
       brideName,
       phone: "",
@@ -336,7 +340,7 @@ export async function POST(request: NextRequest) {
     const data = {
       status,
       customSlug: customSlug || null,
-      language: "ar",
+      language,
       groomName,
       brideName,
       weddingDate: safeWeddingDate,

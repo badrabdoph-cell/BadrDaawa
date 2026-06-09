@@ -4,6 +4,7 @@ import { ArrowRight, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
+import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
@@ -30,6 +31,7 @@ type PageProps = {
     photographerLogoUrl?: string;
     musicEnabled?: string;
     musicUrl?: string;
+    language?: string;
   }>;
 };
 
@@ -98,14 +100,16 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           name: "",
           facebookUrl: "",
           instagramUrl: "",
-        };
+  };
   const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
+  const locale = resolveLocale(query?.language);
+  const localeMeta = getLocaleMeta(locale);
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
     code: `preview-${template.slug}`,
     templateSlug: template.slug,
-    language: "ar",
+    language: locale,
     groomName: cleanPreviewText(query?.groomName, "بدر"),
     brideName: cleanPreviewText(query?.brideName, "Sara"),
     weddingDate: cleanPreviewDate(query?.weddingDate),
@@ -127,7 +131,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const hidePreviewActions = isSilentPreview || query?.builderPreview === "1";
 
   return (
-    <>
+    <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>
       {query?.builderPreview === "1" ? (
         <LiveInvitationPreview
           invitation={invitation}
@@ -171,6 +175,6 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           </Link>
         </nav>
       ) : null}
-    </>
+    </div>
   );
 }

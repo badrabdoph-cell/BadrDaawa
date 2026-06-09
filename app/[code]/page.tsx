@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { DynamicPageView } from "@/components/DynamicPageView";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-pages";
+import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -68,17 +69,22 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     });
   }
 
+  const locale = resolveLocale(invitation.language);
+  const localeMeta = getLocaleMeta(locale);
+
   return (
-    <InvitationExperience
-      invitation={invitation}
-      template={template}
-      disableMusic={isSilentPreview}
-      settings={{
-        showPhotographerCard: siteSettings.photographer.showPhotographerCard,
-        photographerName: siteSettings.photographer.defaultName,
-        photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
-        photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
-      }}
-    />
+    <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>
+      <InvitationExperience
+        invitation={invitation}
+        template={template}
+        disableMusic={isSilentPreview}
+        settings={{
+          showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+          photographerName: siteSettings.photographer.defaultName,
+          photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
+          photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+        }}
+      />
+    </div>
   );
 }

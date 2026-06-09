@@ -13,10 +13,11 @@ import { CoupleStoryTimeline } from "./CoupleStoryTimeline";
 import { GuestBook } from "./GuestBook";
 import { WeddingLiveMode } from "./WeddingLiveMode";
 import { QrCodeBlock } from "./QrCodeBlock";
+import { getInvitationTranslator, getLocaleMeta } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
-import { formatArabicDate, getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
+import { getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { withVisitSource } from "@/lib/visit-source";
 
 const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
@@ -41,7 +42,20 @@ function getInvitationImages(invitation: Invitation) {
 }
 
 function getInvitationTexts(invitation: Invitation) {
-  return normalizeInvitationTexts(invitation.texts);
+  return normalizeInvitationTexts(invitation.texts, invitation.language);
+}
+
+function formatInvitationDate(invitation: Pick<Invitation, "weddingDate" | "language">) {
+  return new Intl.DateTimeFormat(getLocaleMeta(invitation.language).dateLocale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(invitation.weddingDate));
+}
+
+function invitationT(invitation: Pick<Invitation, "language">, key: string, replacements?: Record<string, string | number>) {
+  return getInvitationTranslator(invitation.language)(key, replacements);
 }
 
 function PrimaryInvitationMessage({ invitation }: { invitation: Invitation }) {
@@ -57,6 +71,7 @@ function InvitationPoll({ invitation }: { invitation: Invitation }) {
   return (
     <InvitePoll
       code={invitation.code}
+      locale={invitation.language}
       question={texts.rsvpQuestion}
       declinedMessage={texts.rsvpDeclinedMessage}
       confirmedSuccessMessage={texts.rsvpConfirmedSuccessMessage}
@@ -69,10 +84,10 @@ function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
   const isPreview = invitation.code.startsWith("preview-");
   return (
     <>
-      <CoupleStoryTimeline story={getInvitationTexts(invitation).story} />
+      <CoupleStoryTimeline story={getInvitationTexts(invitation).story} locale={invitation.language} />
       <AddToCalendar invitation={invitation} isPreview={isPreview} />
-      {invitation.checkInEnabled === false ? null : <InviteCheckIn code={invitation.code} isPreview={isPreview} />}
-      <GuestBook code={invitation.code} isPreview={isPreview} />
+      {invitation.checkInEnabled === false ? null : <InviteCheckIn code={invitation.code} isPreview={isPreview} locale={invitation.language} />}
+      <GuestBook code={invitation.code} isPreview={isPreview} locale={invitation.language} />
     </>
   );
 }
@@ -122,7 +137,7 @@ function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer:
   return photographer.logoUrl ? <img className="photographer-logo-image" src={photographer.logoUrl} alt={photographer.name} /> : <span>{fallback}</span>;
 }
 
-function TemplatePhotographerCard({ photographer, className = "" }: { photographer: PhotographerConfig; className?: string }) {
+function TemplatePhotographerCard({ photographer, className = "", invitation }: { photographer: PhotographerConfig; className?: string; invitation: Pick<Invitation, "language"> }) {
   if (!photographer.enabled) return null;
 
   return (
@@ -134,7 +149,7 @@ function TemplatePhotographerCard({ photographer, className = "" }: { photograph
         <span>Official Photographer</span>
         <h2>{photographer.name}</h2>
       </div>
-      <div className="template-photographer-socials" aria-label="روابط المصور">
+      <div className="template-photographer-socials" aria-label={invitationT(invitation, "invitation.photographerLinks")}>
         <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
           <Facebook size={17} />
         </a>
@@ -244,7 +259,7 @@ export function InvitationExperience({
       <InviteMusic musicUrl={templateMusicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="invite-story">
         <div className="invite-card invite-title-card">
@@ -254,12 +269,12 @@ export function InvitationExperience({
           </h1>
           <h2 className="invite-venue-title">{invitation.venue}</h2>
           <p className="invite-short-line">✦ ✧ ✦</p>
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <strong>{invitation.weddingTime}</strong>
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </div>
 
-        <div className="luxury-gallery" aria-label="صور الدعوة">
+        <div className="luxury-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           {getInvitationImages(invitation).gallery.map((image, index) => (
             <img src={image} alt={`صورة من الدعوة ${index + 1}`} key={`${image}-${index}`} />
           ))}
@@ -281,7 +296,7 @@ export function InvitationExperience({
             <h2>{invitation.venue}</h2>
             <p>{invitation.city}</p>
           </div>
-          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
         </section>
 
         {showPhotographer ? (
@@ -292,9 +307,9 @@ export function InvitationExperience({
             <div>
               <span className="invite-kicker">Photographer</span>
               <h2>{photographer.name}</h2>
-              <p>لقطات فرحتنا بعدسة خاصة.</p>
+              <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
             </div>
-            <div className="photographer-socials" aria-label="روابط المصور">
+            <div className="photographer-socials" aria-label={invitationT(invitation, "invitation.photographerLinks")}>
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={19} />
               </a>
@@ -310,8 +325,8 @@ export function InvitationExperience({
         <InvitationGuestBook invitation={invitation} />
 
         <section className="invite-card qr-share-card">
-          <QrCodeBlock value={invitationUrl} />
-          <div className="social-row" aria-label="روابط السوشيال">
+          <QrCodeBlock value={invitationUrl} locale={invitation.language} />
+          <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {["Facebook", "Instagram", "TikTok", "WhatsApp"].map((item) => (
               <a href="#" key={item} aria-label={item}>
                 <Share2 size={17} />
@@ -342,7 +357,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     groomName: invitation.groomName,
     brideName: invitation.brideName,
     coupleNames: `${invitation.groomName} & ${invitation.brideName}`,
-    weddingDate: formatArabicDate(invitation.weddingDate),
+    weddingDate: formatInvitationDate(invitation),
     rawWeddingDate: invitation.weddingDate,
     weddingTime: invitation.weddingTime,
     venue: invitation.venue,
@@ -405,7 +420,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="noir-story">
         <div className="noir-hero-card">
@@ -419,10 +434,10 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
             <strong>✦ ✧ ✦</strong>
             <i />
           </div>
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <strong className="noir-time">{invitation.weddingTime}</strong>
           <div className="noir-countdown">
-            <Countdown targetDate={invitation.weddingDate} />
+            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
           </div>
         </div>
 
@@ -438,7 +453,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           </p>
         </section>
 
-        <div className="noir-gallery" aria-label="صور الدعوة">
+        <div className="noir-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           {images.map((image, index) => (
             <figure key={`${image}-${index}`}>
               <img src={image} alt={`صورة من الدعوة ${index + 1}`} />
@@ -456,7 +471,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
             <p>{invitation.city}</p>
           </div>
           <div className="noir-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -472,7 +487,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
                   Photographer
                 </span>
                 <h2>{photographer.name}</h2>
-                <p>لقطات فرحتنا بعدسة خاصة.</p>
+                <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
               </div>
             </div>
             <div className="noir-socials">
@@ -491,9 +506,9 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
         <InvitationGuestBook invitation={invitation} />
 
         <section className="noir-qr-card">
-          <p>شارك الدعوة مع من تحب</p>
-          <QrCodeBlock value={invitationUrl} />
-          <div className="social-row" aria-label="روابط السوشيال">
+          <p>{invitationT(invitation, "invitation.shareInvitation")}</p>
+          <QrCodeBlock value={invitationUrl} locale={invitation.language} />
+          <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {["Facebook", "Instagram", "TikTok", "WhatsApp"].map((item) => (
               <a href="#" key={item} aria-label={item}>
                 <Share2 size={18} />
@@ -517,7 +532,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="ivory-story">
         <div className="ivory-hero">
@@ -531,11 +546,11 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
             <span>&amp;</span>
             {invitation.brideName}
           </h1>
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <strong>{invitation.weddingTime}</strong>
           <div className="ivory-divider" aria-hidden="true" />
           <div className="ivory-countdown">
-            <Countdown targetDate={invitation.weddingDate} />
+            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
           </div>
         </div>
 
@@ -549,7 +564,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
           </p>
         </section>
 
-        <section className="ivory-gallery" aria-label="صور الدعوة">
+        <section className="ivory-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           <figure className="arch-card">
             <img src={images[0] || galleryImages[0]} alt="صورة العريس والعروسة 1" />
           </figure>
@@ -574,7 +589,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
             <strong>ننتظركم بكل حب</strong>
           </div>
           <div className="ivory-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -586,7 +601,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
             </div>
             <span>Photography</span>
             <h2>{photographer.name}</h2>
-            <p>لقطات فرحتنا بعدسة خاصة</p>
+            <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
             <div className="ivory-socials">
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={22} strokeWidth={1.5} />
@@ -605,8 +620,8 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
 
         <section className="ivory-qr-card">
           <h2>لمشاركة هذه اللحظة</h2>
-          <QrCodeBlock value={invitationUrl} />
-          <div className="social-row" aria-label="روابط السوشيال">
+          <QrCodeBlock value={invitationUrl} locale={invitation.language} />
+          <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {["Facebook", "Instagram", "TikTok", "WhatsApp"].map((item) => (
               <a href="#" key={item} aria-label={item}>
                 <Share2 size={20} strokeWidth={1.5} />
@@ -630,7 +645,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="mobile-gold-story">
         <div className="mobile-gold-hero">
@@ -645,7 +660,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
           <div className="mobile-gold-date-grid">
             <div>
               <Calendar size={20} />
-              <p>{formatArabicDate(invitation.weddingDate)}</p>
+              <p>{formatInvitationDate(invitation)}</p>
             </div>
             <div>
               <Clock size={20} />
@@ -654,11 +669,11 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
           </div>
 
           <div className="mobile-gold-countdown">
-            <Countdown targetDate={invitation.weddingDate} />
+            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
           </div>
         </div>
 
-        <div className="mobile-gold-gallery" aria-label="صور الدعوة">
+        <div className="mobile-gold-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           <div className="mobile-gold-photo-main">
             <img src={images[0] || galleryImages[0]} alt="صورة 1" />
           </div>
@@ -687,7 +702,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
             <p>{invitation.city}</p>
           </div>
           <div className="mobile-gold-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -705,7 +720,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
                 <h2>{photographer.name}</h2>
               </div>
             </div>
-            <div className="mobile-gold-socials" aria-label="روابط المصور">
+            <div className="mobile-gold-socials" aria-label={invitationT(invitation, "invitation.photographerLinks")}>
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={18} />
               </a>
@@ -724,9 +739,9 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
         <section className="mobile-gold-qr-card">
           <h3>شارك دعوتنا</h3>
           <div className="mobile-gold-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="mobile-gold-share-row" aria-label="روابط السوشيال">
+          <div className="mobile-gold-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={20} />
@@ -771,7 +786,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
           <div className="boho-date-row">
             <div>
               <CalendarHeart size={24} strokeWidth={1.5} />
-              <p>{formatArabicDate(invitation.weddingDate)}</p>
+              <p>{formatInvitationDate(invitation)}</p>
             </div>
 
             <i />
@@ -783,11 +798,11 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
           </div>
 
           <div className="boho-countdown">
-            <Countdown targetDate={invitation.weddingDate} />
+            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
           </div>
         </section>
 
-        <section className="boho-gallery-wrap" aria-label="صور الدعوة">
+        <section className="boho-gallery-wrap" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           <div className="boho-gallery-scroll">
             {images.map((image, index) => (
               <div key={`${image}-${index}`}>
@@ -807,7 +822,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
             <span>{invitation.city}</span>
           </div>
           <div className="boho-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -834,13 +849,13 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
         </div>
 
         <section className="boho-qr-card">
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
 
           <div className="boho-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
 
-          <div className="boho-share-row" aria-label="روابط السوشيال">
+          <div className="boho-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={20} />
@@ -902,7 +917,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
               </span>
               <div>
                 <p>اليوم والتاريخ</p>
-                <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+                <strong>{formatInvitationDate(invitation)}</strong>
               </div>
             </div>
 
@@ -931,15 +946,15 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
 
         <section className="garden-countdown-card">
           <p>The Countdown</p>
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="garden-map-frame">
-          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
         </section>
 
         {images.length > 1 ? (
-          <section className="garden-gallery-grid" aria-label="صور الدعوة">
+          <section className="garden-gallery-grid" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
             <figure>
               <img src={images[1] || galleryImages[1]} alt="صورة من الدعوة 2" />
             </figure>
@@ -982,13 +997,13 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
         <section className="garden-qr-ticket">
           <span className="garden-ticket-cut garden-ticket-cut-left" aria-hidden="true" />
           <span className="garden-ticket-cut garden-ticket-cut-right" aria-hidden="true" />
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
 
           <div className="garden-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
 
-          <div className="garden-share-row" aria-label="روابط السوشيال">
+          <div className="garden-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1043,7 +1058,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
               </span>
               <div>
                 <p>اليوم والتاريخ</p>
-                <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+                <strong>{formatInvitationDate(invitation)}</strong>
               </div>
             </div>
 
@@ -1072,10 +1087,10 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
 
         <section className="featured-countdown-card">
           <p>The Countdown</p>
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
-        <section className="featured-gallery" aria-label="صور الدعوة">
+        <section className="featured-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           <figure className="featured-arch-card">
             <img src={images[0] || galleryImages[0]} alt="صورة العريس والعروسة 1" />
           </figure>
@@ -1098,7 +1113,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
             <p>{invitation.city}</p>
           </div>
           <div className="featured-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -1110,7 +1125,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
             </div>
             <span>Photography</span>
             <h2>{photographer.name}</h2>
-            <p>لقطات فرحتنا بعدسة خاصة</p>
+            <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
             <div className="featured-socials">
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={22} strokeWidth={1.5} />
@@ -1128,11 +1143,11 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
         </div>
 
         <section className="featured-qr-card">
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
           <div className="featured-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="featured-share-row" aria-label="روابط السوشيال">
+          <div className="featured-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1177,7 +1192,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
         <div className="cinema-rose-date-row">
           <div>
             <Calendar size={22} />
-            <p>{formatArabicDate(invitation.weddingDate)}</p>
+            <p>{formatInvitationDate(invitation)}</p>
           </div>
           <i />
           <div>
@@ -1185,7 +1200,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
             <strong>{invitation.weddingTime}</strong>
           </div>
         </div>
-        <Countdown targetDate={invitation.weddingDate} />
+        <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
       </section>
 
       <section className="cinema-rose-content">
@@ -1196,7 +1211,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
           </h2>
         </div>
 
-        <section className="cinema-rose-gallery" aria-label="صور الدعوة">
+        <section className="cinema-rose-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           <figure>
             <img src={galleryImage1} alt="صورة من الدعوة 2" />
           </figure>
@@ -1215,7 +1230,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
             <p>{invitation.city}</p>
           </div>
           <div className="cinema-rose-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -1249,9 +1264,9 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
         <section className="cinema-rose-qr-card">
           <h3>مشاركة الدعوة</h3>
           <div className="cinema-rose-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="cinema-rose-share-row" aria-label="روابط السوشيال">
+          <div className="cinema-rose-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={20} />
@@ -1295,7 +1310,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
           <div>
             <Calendar size={18} />
             <span>Date</span>
-            <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+            <strong>{formatInvitationDate(invitation)}</strong>
           </div>
           <i />
           <div>
@@ -1306,7 +1321,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
         </div>
 
         <div className="modern-cinema-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </div>
 
         <div className="modern-cinema-message">
@@ -1316,7 +1331,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
           </h2>
         </div>
 
-        <section className="modern-cinema-gallery" aria-label="صور الدعوة">
+        <section className="modern-cinema-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           {images.map((image, index) => (
             <figure key={`${image}-${index}`}>
               <img src={image} alt={`صورة من الدعوة ${index + 1}`} />
@@ -1334,7 +1349,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
             <p>{invitation.city}</p>
           </div>
           <div className="modern-cinema-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -1362,10 +1377,10 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
 
         <section className="modern-cinema-qr-card">
           <div className="modern-cinema-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <h4>احفظ التذكرة أو شاركها مع من تحب</h4>
-          <div className="modern-cinema-share-row" aria-label="روابط السوشيال">
+          <div className="modern-cinema-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1413,7 +1428,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
                 <Calendar size={14} />
                 Date
               </span>
-              <p>{formatArabicDate(invitation.weddingDate)}</p>
+              <p>{formatInvitationDate(invitation)}</p>
             </div>
             <i />
             <div>
@@ -1424,10 +1439,10 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
               <p>{invitation.weddingTime}</p>
             </div>
           </div>
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
-        <section className="ethereal-glass-gallery" aria-label="صور الدعوة">
+        <section className="ethereal-glass-gallery" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
           <figure>
             <img src={images[1] || galleryImages[1]} alt="صورة من الدعوة 2" />
           </figure>
@@ -1455,7 +1470,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
             <p>{invitation.city}</p>
           </div>
           <div className="ethereal-glass-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -1477,11 +1492,11 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
         </div>
 
         <section className="ethereal-glass-card ethereal-glass-qr-card">
-          <h4>بطاقة الدخول والمشاركة</h4>
+          <h4>{invitationT(invitation, "invitation.shareCard")}</h4>
           <div className="ethereal-glass-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="ethereal-glass-share-row" aria-label="روابط السوشيال">
+          <div className="ethereal-glass-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1513,12 +1528,12 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
           <span>&amp;</span>
           <h1>{invitation.brideName}</h1>
           <p>
-            {formatArabicDate(invitation.weddingDate)} - {invitation.weddingTime}
+            {formatInvitationDate(invitation)} - {invitation.weddingTime}
           </p>
         </section>
 
         <section className="botanical-countdown-card">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <figure className="botanical-cover-photo">
@@ -1534,7 +1549,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
             <p>{invitation.city}</p>
           </div>
           <div className="botanical-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
@@ -1556,11 +1571,11 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
         </div>
 
         <section className="botanical-qr-card">
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
           <div className="botanical-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="botanical-share-row" aria-label="روابط السوشيال">
+          <div className="botanical-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1592,7 +1607,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
         </section>
 
         <section className="royal-gold-date-strip">
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <span aria-hidden="true" />
           <p>{invitation.weddingTime}</p>
         </section>
@@ -1602,7 +1617,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
         </figure>
 
         <section className="royal-gold-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="royal-gold-map-card">
@@ -1610,11 +1625,11 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="royal-gold-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="royal-gold-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="royal-gold-photographer" invitation={invitation} />
 
         <div className="royal-gold-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -1622,11 +1637,11 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
         </div>
 
         <section className="royal-gold-qr-card">
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
           <div className="royal-gold-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="royal-gold-share-row" aria-label="روابط السوشيال">
+          <div className="royal-gold-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1659,25 +1674,25 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
           <h1>{invitation.groomName}</h1>
           <h1>{invitation.brideName}</h1>
           <div className="boho-sand-date-pill">
-            <span>{formatArabicDate(invitation.weddingDate)}</span>
+            <span>{formatInvitationDate(invitation)}</span>
             <i aria-hidden="true" />
             <span>{invitation.weddingTime}</span>
           </div>
         </section>
 
         <section className="boho-sand-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="boho-sand-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="boho-sand-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="boho-sand-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="boho-sand-photographer" invitation={invitation} />
 
         <div className="boho-sand-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -1685,11 +1700,11 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
         </div>
 
         <section className="boho-sand-qr-card">
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
           <div className="boho-sand-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="boho-sand-share-row" aria-label="روابط السوشيال">
+          <div className="boho-sand-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1725,23 +1740,23 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
         </figure>
 
         <section className="pure-white-date">
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <span>{invitation.weddingTime}</span>
         </section>
 
         <section className="pure-white-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="pure-white-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="pure-white-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="pure-white-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="pure-white-photographer" invitation={invitation} />
 
         <div className="pure-white-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -1749,11 +1764,11 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
         </div>
 
         <section className="pure-white-qr-card">
-          <h3>بطاقة الدخول والمشاركة</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
           <div className="pure-white-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="pure-white-share-row" aria-label="روابط السوشيال">
+          <div className="pure-white-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1782,7 +1797,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
           <h1>{invitation.groomName}</h1>
           <h1>{invitation.brideName}</h1>
           <div className="neon-date-row">
-            <span>{formatArabicDate(invitation.weddingDate)}</span>
+            <span>{formatInvitationDate(invitation)}</span>
             <span>{invitation.weddingTime}</span>
           </div>
         </section>
@@ -1792,18 +1807,18 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
         </figure>
 
         <section className="neon-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="neon-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="neon-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="neon-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="neon-photographer" invitation={invitation} />
 
         <div className="neon-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -1812,9 +1827,9 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
 
         <section className="neon-qr-card">
           <div className="neon-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="neon-share-row" aria-label="روابط السوشيال">
+          <div className="neon-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1846,7 +1861,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
           </h1>
           <span aria-hidden="true" />
           <p>
-            {formatArabicDate(invitation.weddingDate)} • {invitation.weddingTime}
+            {formatInvitationDate(invitation)} • {invitation.weddingTime}
           </p>
         </section>
 
@@ -1855,18 +1870,18 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
         </figure>
 
         <section className="vintage-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="vintage-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="vintage-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="vintage-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="vintage-photographer" invitation={invitation} />
 
         <div className="vintage-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -1875,9 +1890,9 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
 
         <section className="vintage-qr-card">
           <div className="vintage-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="vintage-share-row" aria-label="روابط السوشيال">
+          <div className="vintage-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1913,23 +1928,23 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
         </figure>
 
         <section className="fairytale-date-card">
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <span>{invitation.weddingTime}</span>
         </section>
 
         <section className="fairytale-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="fairytale-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="fairytale-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="fairytale-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="fairytale-photographer" invitation={invitation} />
 
         <div className="fairytale-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -1938,9 +1953,9 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
 
         <section className="fairytale-qr-card">
           <div className="fairytale-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="fairytale-share-row" aria-label="روابط السوشيال">
+          <div className="fairytale-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -1977,7 +1992,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
         <section className="ocean-date-grid">
           <div>
             <p>Date</p>
-            <strong>{formatArabicDate(invitation.weddingDate)}</strong>
+            <strong>{formatInvitationDate(invitation)}</strong>
           </div>
           <div>
             <p>Time</p>
@@ -1986,18 +2001,18 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
         </section>
 
         <section className="ocean-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="ocean-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="ocean-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="ocean-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="ocean-photographer" invitation={invitation} />
 
         <div className="ocean-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -2006,9 +2021,9 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
 
         <section className="ocean-qr-card">
           <div className="ocean-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="ocean-share-row" aria-label="روابط السوشيال">
+          <div className="ocean-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -2046,23 +2061,23 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
         </figure>
 
         <section className="artdeco-date-card">
-          <p>{formatArabicDate(invitation.weddingDate)}</p>
+          <p>{formatInvitationDate(invitation)}</p>
           <span>{invitation.weddingTime}</span>
         </section>
 
         <section className="artdeco-countdown">
-          <Countdown targetDate={invitation.weddingDate} />
+          <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
         </section>
 
         <section className="artdeco-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="artdeco-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
           </div>
         </section>
 
-        <TemplatePhotographerCard photographer={photographer} className="artdeco-photographer" />
+        <TemplatePhotographerCard photographer={photographer} className="artdeco-photographer" invitation={invitation} />
 
         <div className="artdeco-poll-wrap">
           <InvitationPoll invitation={invitation} />
@@ -2071,9 +2086,9 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
 
         <section className="artdeco-qr-card">
           <div className="artdeco-qr-box">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
-          <div className="artdeco-share-row" aria-label="روابط السوشيال">
+          <div className="artdeco-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                 <Share2 size={18} />
@@ -2108,23 +2123,23 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
 
         <div className="magazine-content">
           <section className="magazine-date-row">
-            <span>{formatArabicDate(invitation.weddingDate)}</span>
+            <span>{formatInvitationDate(invitation)}</span>
             <span>{invitation.weddingTime}</span>
           </section>
 
           <section className="magazine-countdown">
-            <Countdown targetDate={invitation.weddingDate} />
+            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
           </section>
 
           <section className="magazine-map-card">
             <h2>{invitation.venue}</h2>
             <p>{invitation.city}</p>
             <div className="magazine-map-frame">
-              <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+              <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
             </div>
           </section>
 
-          <TemplatePhotographerCard photographer={photographer} className="magazine-photographer" />
+          <TemplatePhotographerCard photographer={photographer} className="magazine-photographer" invitation={invitation} />
 
           <div className="magazine-poll-wrap">
             <InvitationPoll invitation={invitation} />
@@ -2132,9 +2147,9 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
           </div>
 
           <section className="magazine-qr-card">
-            <QrCodeBlock value={invitationUrl} />
+            <QrCodeBlock value={invitationUrl} locale={invitation.language} />
             <p>Scan for access</p>
-            <div className="magazine-share-row" aria-label="روابط السوشيال">
+            <div className="magazine-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
               {socialLinks.map((item) => (
                 <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
                   <Share2 size={18} />
@@ -2159,7 +2174,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
       <InviteMusic musicUrl={musicUrl} />
       <InvitePermissions invitationCode={invitation.code} />
       <WeddingLiveMode code={invitation.code} />
-      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} />
+      <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} locale={invitation.language} />
 
       <section className="cinematic-hero">
         <div className="cinematic-hero-media">
@@ -2184,7 +2199,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
           <div className="cinematic-date-row">
             <div>
               <Calendar size={24} />
-              <p>{formatArabicDate(invitation.weddingDate)}</p>
+              <p>{formatInvitationDate(invitation)}</p>
             </div>
             <div>
               <Clock size={24} />
@@ -2194,12 +2209,12 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
 
           <div className="cinematic-countdown">
             <p>يتبقى على الفرحة</p>
-            <Countdown targetDate={invitation.weddingDate} />
+            <Countdown targetDate={invitation.weddingDate} locale={invitation.language} />
           </div>
         </section>
 
         {images.length > 1 ? (
-          <section className="cinematic-gallery-stack" aria-label="صور الدعوة">
+          <section className="cinematic-gallery-stack" aria-label={invitationT(invitation, "invitation.galleryLabel")}>
             <div className="cinematic-gallery-back">
               <img src={images[1] || galleryImages[1]} alt="Gallery 2" />
             </div>
@@ -2218,7 +2233,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
             <p>{invitation.city}</p>
           </div>
           <div className="cinematic-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
             <span aria-hidden="true" />
           </div>
         </section>
@@ -2243,15 +2258,15 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
 
         <section className="cinematic-qr-section">
           <div className="cinematic-separator" />
-          <h3>بطاقة الدخول الإلكترونية</h3>
+          <h3>{invitationT(invitation, "invitation.shareCard")}</h3>
 
           <div className="cinematic-qr-box">
             <div>
-              <QrCodeBlock value={invitationUrl} />
+              <QrCodeBlock value={invitationUrl} locale={invitation.language} />
             </div>
           </div>
 
-          <p>شارك الدعوة</p>
+          <p>{invitationT(invitation, "invitation.shareInvitation")}</p>
           <div className="cinematic-share-row">
             {socialLinks.map((item) => (
               <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">

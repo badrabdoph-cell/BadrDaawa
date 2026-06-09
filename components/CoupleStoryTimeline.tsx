@@ -1,9 +1,10 @@
 "use client";
 
 import { CalendarHeart, Heart } from "lucide-react";
+import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
-import type { CoupleStoryItem } from "@/lib/types";
+import type { CoupleStoryItem, Language } from "@/lib/types";
 import { normalizeInternalAssetUrl } from "@/lib/utils";
 
 function cleanStoryImage(value?: string) {
@@ -11,18 +12,19 @@ function cleanStoryImage(value?: string) {
   return url && isBrowserDisplayImageUrl(url) ? url : "";
 }
 
-export function CoupleStoryTimeline({ story }: { story?: CoupleStoryItem[] | null }) {
+export function CoupleStoryTimeline({ story, locale = "ar" }: { story?: CoupleStoryItem[] | null; locale?: Language }) {
+  const t = getInvitationTranslator(resolveLocale(locale));
   const items = normalizeCoupleStory(story).map((item) => ({ ...item, imageUrl: cleanStoryImage(item.imageUrl) }));
   if (!items.length) return null;
 
   return (
-    <section className="couple-story-timeline" aria-label="قصة العروسين">
+    <section className="couple-story-timeline" aria-label={t("invitation.coupleStory.label")}>
       <div className="couple-story-head">
         <span>
           <Heart size={16} />
-          قصة العروسين
+          {t("invitation.coupleStory.label")}
         </span>
-        <h2>رحلتنا قبل يوم الفرح</h2>
+        <h2>{t("invitation.coupleStory.title")}</h2>
       </div>
       <div className="couple-story-list">
         {items.map((item, index) => (
@@ -30,7 +32,7 @@ export function CoupleStoryTimeline({ story }: { story?: CoupleStoryItem[] | nul
             <div className="couple-story-marker">
               <span>{index + 1}</span>
             </div>
-            {item.imageUrl ? <img src={item.imageUrl} alt={item.title || `محطة ${index + 1} من قصة العروسين`} /> : null}
+            {item.imageUrl ? <img src={item.imageUrl} alt={item.title || t("invitation.coupleStory.itemAlt", { number: index + 1 })} /> : null}
             <div className="couple-story-copy">
               {item.date ? (
                 <time>
