@@ -68,7 +68,7 @@ export const defaultSiteSettings: SiteSettings = {
     title: "BadrDaawa | دعوات زفاف رقمية فاخرة",
     description: "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
     keywords: "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, BadrDaawa",
-    ogTitle: "BadrDaawa | الجيل الجديد من دعوات الزفاف بدأ هنا",
+    ogTitle: "BadrDaawa | فرحتك تستاهل أكثر من مجرد دعوة",
     ogDescription: "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة.",
   },
   homepage: {
