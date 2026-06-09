@@ -10,7 +10,6 @@ dist
 build
 coverage
 tsconfig.tsbuildinfo
-.codex-preview/
 homepage-related-files/
 homepage-related-files 2/
 
