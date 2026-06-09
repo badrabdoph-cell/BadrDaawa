@@ -18,8 +18,9 @@ export const dictionaries = {
       connectionError: "تعذر الاتصال بالخادم. حاول مرة أخرى.",
     },
     invitation: {
-      openingLabel: "فتح ظرف الدعوة",
-      openingTitle: "دعوة فرح",
+      openingLabel: "افتتاح الدعوة",
+      openingTitle: "دعوة زفاف",
+      openingButton: "فتح الدعوة",
       galleryLabel: "صور الدعوة",
       gallery: {
         openImage: "فتح الصورة {number}",
@@ -146,8 +147,9 @@ export const dictionaries = {
       connectionError: "Could not connect to the server. Please try again.",
     },
     invitation: {
-      openingLabel: "Open invitation envelope",
+      openingLabel: "Open invitation",
       openingTitle: "Wedding Invitation",
+      openingButton: "Open invitation",
       galleryLabel: "Invitation photos",
       gallery: {
         openImage: "Open image {number}",
