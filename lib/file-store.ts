@@ -64,7 +64,7 @@ type CreateFileInvitationInput = {
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
+  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "manageToken" | "manageTokenExpiresAt" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -139,7 +139,7 @@ function normalizeInvitationImages(invitation: Invitation): Invitation {
   };
   const gallery = invitation.gallery.map(cleanImage).filter(Boolean);
   const heroPhoto = cleanImage(invitation.heroPhoto) || gallery[0] || invitation.heroPhoto;
-  return { ...invitation, status: invitation.status || (invitation.isActive ? "active" : "paused"), heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
+  return { ...invitation, manageToken: undefined, manageTokenExpiresAt: undefined, status: invitation.status || (invitation.isActive ? "active" : "paused"), heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
 }
 
 function normalizeOrderImages(order: OrderRequest): OrderRequest {
@@ -242,6 +242,33 @@ export async function getFileInvitationByCode(code: string) {
   const lookup = code.toLowerCase();
   const invitation = store.invitations.find((invitation) => (invitation.code.toLowerCase() === lookup || invitation.customSlug?.toLowerCase() === lookup) && !invitation.deletedAt);
   return invitation ? normalizeInvitationImages(invitation) : undefined;
+}
+
+export async function getFileInvitationManageToken(code: string) {
+  const store = await readStore();
+  const invitation = store.invitations.find((item) => item.code.toLowerCase() === code.toLowerCase() && !item.deletedAt);
+  return invitation ? { code: invitation.code, manageToken: invitation.manageToken || "", manageTokenExpiresAt: invitation.manageTokenExpiresAt || "" } : null;
+}
+
+export async function getFileInvitationByManageToken(token: string) {
+  const store = await readStore();
+  const invitation = store.invitations.find((item) => item.manageToken === token && !item.deletedAt);
+  return invitation ? { code: invitation.code, manageTokenExpiresAt: invitation.manageTokenExpiresAt || "" } : null;
+}
+
+export async function isFileInvitationManageTokenAvailable(token: string, currentCode = "") {
+  const store = await readStore();
+  const current = currentCode.toLowerCase();
+  return !store.invitations.some((invitation) => invitation.manageToken === token && invitation.code.toLowerCase() !== current);
+}
+
+export async function setFileInvitationManageToken(code: string, token: string, expiresAt?: string) {
+  const store = await readStore();
+  const index = store.invitations.findIndex((invitation) => invitation.code.toLowerCase() === code.toLowerCase() && !invitation.deletedAt);
+  if (index < 0) return null;
+  store.invitations[index] = { ...store.invitations[index], manageToken: token, manageTokenExpiresAt: expiresAt || undefined };
+  await writeStore(store);
+  return { code: store.invitations[index].code, manageToken: token, manageTokenExpiresAt: expiresAt || "" };
 }
 
 export async function isFileInvitationSlugAvailable(slug: string, currentCode = "") {

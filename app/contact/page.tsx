@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageCircle, Phone } from "lucide-react";
+import { DynamicPageView } from "@/components/DynamicPageView";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SectionIntro } from "@/components/SectionIntro";
+import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-pages";
 import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "تواصل معنا",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getDynamicPageBySlug("contact");
+  return page ? getDynamicPageMetadata(page) : { title: "تواصل معنا" };
+}
 
 export default async function ContactPage() {
+  const dynamicPage = await getDynamicPageBySlug("contact");
+  if (dynamicPage) return <DynamicPageView page={dynamicPage} />;
+
   const settings = await getSiteSettings();
   const primaryPhone = settings.contactPhones[0] || "01011511561";
 

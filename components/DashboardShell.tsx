@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Trash2, UsersRound, X } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
@@ -17,6 +17,7 @@ const adminLinks = [
   { href: "/admin/guest-book", label: "سجل التهاني", icon: MessageCircleHeart },
   { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
   { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
+  { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
   { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
   { href: "/admin/templates", label: "القوالب", icon: Palette },
   { href: "/admin/live-mode", label: "وضع الحفل", icon: RadioTower },
@@ -28,7 +29,9 @@ const adminLinks = [
   { href: "/admin/customers", label: "العملاء", icon: UsersRound },
   { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
   { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+  { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
   { href: "/admin/errors", label: "الأخطاء", icon: Bug },
+  { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
   { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
   { href: "/admin/audit-log", label: "سجل التدقيق", icon: ScrollText },
   { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
@@ -37,6 +40,10 @@ const adminLinks = [
   { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },
 ];
 
+const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications"]);
+const mobilePrimaryLinks = adminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
+const mobileMoreLinks = adminLinks.filter((link) => !mobilePrimaryHrefs.has(link.href));
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -44,6 +51,32 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [ordersBadge, setOrdersBadge] = useState(0);
   const [messagesBadge, setMessagesBadge] = useState(0);
   const [notificationsBadge, setNotificationsBadge] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    }
+    document.body.classList.add("admin-mobile-menu-open");
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.classList.remove("admin-mobile-menu-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
+  function badgeFor(link: (typeof adminLinks)[number]) {
+    if (!("badgeKey" in link)) return null;
+    if (link.badgeKey === "orders" && ordersBadge > 0) return ordersBadge;
+    if (link.badgeKey === "messages" && messagesBadge > 0) return messagesBadge;
+    if (link.badgeKey === "notifications" && notificationsBadge > 0) return notificationsBadge;
+    return null;
+  }
 
   useEffect(() => {
     let alive = true;
@@ -127,9 +160,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
                   <Icon size={18} />
                   <span>{link.label}</span>
-                  {"badgeKey" in link && link.badgeKey === "orders" && ordersBadge > 0 ? <strong className="dashboard-nav-badge">{ordersBadge}</strong> : null}
-                  {"badgeKey" in link && link.badgeKey === "messages" && messagesBadge > 0 ? <strong className="dashboard-nav-badge">{messagesBadge}</strong> : null}
-                  {"badgeKey" in link && link.badgeKey === "notifications" && notificationsBadge > 0 ? <strong className="dashboard-nav-badge">{notificationsBadge}</strong> : null}
+                  {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
                 </Link>
               );
             })}
@@ -172,6 +203,73 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </header>
         <div className="dashboard-content">{children}</div>
       </main>
+      <div className="admin-mobile-nav-shell" aria-label="تنقل لوحة الإدارة للهاتف">
+        <nav className="admin-mobile-bottom-nav">
+          {mobilePrimaryLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = activeLink.href === link.href;
+            const badge = badgeFor(link);
+            return (
+              <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
+                <span className="admin-mobile-nav-icon">
+                  <Icon size={19} />
+                  {badge ? <strong>{badge}</strong> : null}
+                </span>
+                <small>{link.label}</small>
+              </Link>
+            );
+          })}
+          <button className={mobileMenuOpen ? "active" : ""} type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="admin-mobile-menu">
+            <span className="admin-mobile-nav-icon">
+              <Menu size={20} />
+            </span>
+            <small>المزيد</small>
+          </button>
+        </nav>
+      </div>
+      <div className={mobileMenuOpen ? "admin-mobile-menu-backdrop open" : "admin-mobile-menu-backdrop"} onClick={() => setMobileMenuOpen(false)} />
+      <aside id="admin-mobile-menu" className={mobileMenuOpen ? "admin-mobile-menu open" : "admin-mobile-menu"} aria-hidden={!mobileMenuOpen}>
+        <div className="admin-mobile-menu-head">
+          <div>
+            <span className="eyebrow">Admin Sections</span>
+            <h2>كل أقسام الإدارة</h2>
+          </div>
+          <button className="admin-icon-button" type="button" onClick={() => setMobileMenuOpen(false)} aria-label="إغلاق القائمة">
+            <X size={19} />
+          </button>
+        </div>
+        <form className="admin-mobile-search" action="/admin/search" method="get">
+          <Search size={17} />
+          <input name="q" placeholder="بحث عام..." defaultValue={pathname === "/admin/search" ? searchParams.get("q") || "" : ""} />
+          <button type="submit">بحث</button>
+        </form>
+        <nav className="admin-mobile-menu-grid" aria-label="كل أقسام لوحة الإدارة">
+          {mobileMoreLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = activeLink.href === link.href;
+            const badge = badgeFor(link);
+            return (
+              <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
+                <Icon size={18} />
+                <span>{link.label}</span>
+                {badge ? <strong className="dashboard-nav-badge">{badge}</strong> : null}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="admin-mobile-menu-actions">
+          <Link className="btn btn-soft" href="/">
+            <Home size={17} />
+            فتح الموقع
+          </Link>
+          <form action="/api/auth/admin/logout" method="post">
+            <button className="btn btn-soft" type="submit">
+              <LogOut size={17} />
+              تسجيل خروج
+            </button>
+          </form>
+        </div>
+      </aside>
     </div>
   );
 }

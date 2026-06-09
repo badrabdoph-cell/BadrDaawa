@@ -106,6 +106,8 @@ model Invitation {
   gallery     Json              @default("[]")
   musicUrl    String?
   musicEnabled Boolean          @default(false)
+  manageToken String?           @unique
+  manageTokenExpiresAt DateTime?
   texts       Json?
   photographer Json?
   qrCodeUrl   String?
@@ -124,6 +126,7 @@ model Invitation {
   @@index([customerId, createdAt])
   @@index([templateId])
   @@index([deletedAt])
+  @@index([manageTokenExpiresAt])
 }
 
 model GuestRsvp {
@@ -192,6 +195,20 @@ model AnalyticsEvent {
 
   @@index([invitationId, eventType, createdAt])
   @@index([createdAt])
+}
+
+model DynamicPage {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  description   String
+  content       String
+  coverImageUrl String?
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isPublished, updatedAt])
 }
 
 model BackupJob {

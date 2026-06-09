@@ -35,9 +35,10 @@ export default async function ClientInvitationsPublicPage() {
             <div className="client-invitations-grid">
               {activeInvitations.map((invitation) => {
                 const template = templates.find((item) => item.slug === invitation.templateSlug);
+                const publicPath = `/${invitation.customSlug || invitation.code}`;
                 return (
                   <article className="client-invitation-card" key={invitation.id}>
-                    <Link className="client-invitation-photo" href={`/${invitation.code}`} aria-label={`فتح دعوة ${invitation.groomName} و ${invitation.brideName}`}>
+                    <Link className="client-invitation-photo" href={publicPath} aria-label={`فتح دعوة ${invitation.groomName} و ${invitation.brideName}`}>
                       <img src={invitation.heroPhoto || template?.accentImage || template?.previewImage || "/assets/templates/royal-envelope.svg"} alt="" loading="lazy" />
                     </Link>
                     <div className="client-invitation-body">
@@ -53,7 +54,7 @@ export default async function ClientInvitationsPublicPage() {
                         <MapPin size={15} />
                         {invitation.venue}
                       </p>
-                      <Link className="btn btn-gold btn-glow" href={`/${invitation.code}`}>
+                      <Link className="btn btn-gold btn-glow" href={publicPath}>
                         <ExternalLink size={17} />
                         فتح الدعوة
                       </Link>

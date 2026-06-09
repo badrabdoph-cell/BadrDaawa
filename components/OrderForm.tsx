@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Camera, Check, Eye, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { CalendarDays, Camera, Check, Eye, FileVideo, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Trash2, UploadCloud, UserRound } from "lucide-react";
 import type { TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 
@@ -24,7 +24,7 @@ type FormState = {
   musicUrl: string;
 };
 
-type MusicChoice = "default" | "upload" | "url";
+type MusicChoice = "default" | "upload" | "video" | "url";
 type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 type OrderFormValues = Pick<
@@ -79,7 +79,8 @@ const orderImageSlots = [
   { title: "الصورة الثالثة", hint: "اختيارية" },
 ];
 
-const acceptedAudioFormats = "audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac";
+const acceptedAudioFormats = "audio/mpeg,.mp3";
+const acceptedVideoFormats = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
 const maxClientOriginalImageBytes = 32 * 1024 * 1024;
 const maxDirectServerImageBytes = 32 * 1024 * 1024;
 const uploadRetryCount = 2;
@@ -200,6 +201,19 @@ function isPlayableAudioUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function isOrderMusicChoice(value: unknown): value is MusicChoice {
+  return value === "default" || value === "upload" || value === "video" || value === "url";
+}
+
+async function extractOrderVideoAudio(file: File) {
+  const formData = new FormData();
+  formData.append("videoFile", file);
+  const response = await fetch("/api/orders/extract-video-audio", { method: "POST", body: formData });
+  const data = (await response.json().catch(() => null)) as { musicUrl?: string; fileName?: string; error?: string } | null;
+  if (!response.ok || !data?.musicUrl) throw new Error(data?.error || "تعذر استخراج الصوت من الفيديو.");
+  return { musicUrl: data.musicUrl, fileName: data.fileName || `${file.name.replace(/\.[^.]+$/, "") || "video"}-audio.mp3` };
 }
 
 function CompactOrderImageInput({
@@ -346,6 +360,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     orderImageSlots.map((_, index) => createIdleUploadState(cleanOrderDraftImageUrls(initialDraft?.imageUrls)[index] || "")),
   );
   const [musicFileName, setMusicFileName] = useState("");
+  const [musicVideoBusy, setMusicVideoBusy] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
@@ -377,7 +392,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
       musicEnabled: params.get("musicEnabled") === "1" || undefined,
-      musicChoice: params.get("musicChoice") === "upload" || params.get("musicChoice") === "url" ? (params.get("musicChoice") as MusicChoice) : undefined,
+      musicChoice: isOrderMusicChoice(params.get("musicChoice")) ? (params.get("musicChoice") as MusicChoice) : undefined,
       musicUrl: params.get("musicUrl") || undefined,
       imageUrls,
     };
@@ -478,7 +493,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
         photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
         musicEnabled: Boolean(draft.musicEnabled),
-        musicChoice: draft.musicChoice === "upload" || draft.musicChoice === "url" ? draft.musicChoice : "default",
+        musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
       }));
       const restoredImages = cleanOrderDraftImageUrls(draft.imageUrls);
@@ -764,8 +779,27 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
       photographerInstagramUrl: String(formData.get("photographerInstagramUrl") || "").trim(),
-      musicUrl: String(formData.get("musicUrl") || "").trim(),
+      musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
+  }
+
+  async function handleOrderMusicVideoFile(file?: File | null) {
+    if (!file) return;
+    setMusicVideoBusy(true);
+    setState("idle");
+    setMessage("جاري استخراج الصوت من الفيديو وتحويله إلى MP3.");
+    try {
+      const extracted = await extractOrderVideoAudio(file);
+      setMusicFileName(extracted.fileName);
+      updateField("musicUrl", extracted.musicUrl);
+      updateField("musicChoice", "video");
+      setMessage(`تم استخراج الصوت من الفيديو وحفظه كملف MP3: ${extracted.fileName}`);
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "تعذر استخراج الصوت من الفيديو.");
+    } finally {
+      setMusicVideoBusy(false);
+    }
   }
 
   function readFileAsDataUrl(file: File) {
@@ -841,6 +875,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (photographerEnabled && !isValidOptionalUrl(values.photographerFacebookUrl)) nextErrors.photographerFacebookUrl = "رابط Facebook لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerInstagramUrl)) nextErrors.photographerInstagramUrl = "رابط Instagram لازم يبدأ بـ https://";
     if (musicEnabled && musicChoice === "url" && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) nextErrors.musicUrl = "رابط الموسيقى لازم يكون مباشر مثل mp3 أو m4a أو wav.";
+    if (musicEnabled && musicChoice === "video" && !values.musicUrl) nextErrors.musicUrl = "ارفع فيديو أولاً ليتم استخراج الصوت منه.";
     return nextErrors;
   }
 
@@ -873,8 +908,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   function getMusicNotes(values: Partial<FormState>, musicUrl = values.musicUrl || "") {
     if (!values.musicEnabled) return "";
     if (values.musicChoice === "default") return "موسيقى الدعوة:\nاختيار العميل: الموسيقى الأساسية.";
-    if (musicUrl) return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "ملف مرفوع" : "رابط أغنية"}\nرابط الموسيقى: ${musicUrl}`;
-    return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "رفع ملف موسيقى" : "رابط أغنية"}`;
+    if (musicUrl) return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "ملف MP3 مرفوع" : values.musicChoice === "video" ? "صوت مستخرج من فيديو" : "رابط أغنية"}\nرابط الموسيقى: ${musicUrl}`;
+    return `موسيقى الدعوة:\nاختيار العميل: ${values.musicChoice === "upload" ? "رفع ملف MP3" : values.musicChoice === "video" ? "استخراج الصوت من فيديو" : "رابط أغنية"}`;
   }
 
   async function openPreview() {
@@ -888,7 +923,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       const orderImages = await getOrderImageDataUrls(formData);
       const orderMusic = await getOrderMusicDataUrl(formData);
       let imageUrls: string[] = [];
-      let musicUrl = form.musicEnabled && form.musicChoice === "url" ? currentForm.musicUrl : form.musicEnabled && form.musicChoice === "upload" ? form.musicUrl : "";
+      let musicUrl = form.musicEnabled && form.musicChoice === "url" ? currentForm.musicUrl : form.musicEnabled && (form.musicChoice === "upload" || form.musicChoice === "video") ? form.musicUrl : "";
 
       if (orderImages.length) {
         imageUrls = orderImages;
@@ -1165,7 +1200,11 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                 </button>
                 <button className={form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "upload"} onClick={() => updateField("musicChoice", "upload")}>
                   <UploadCloud size={16} />
-                  ارفع ملف موسيقى
+                  رفع ملف MP3
+                </button>
+                <button className={form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "video"} onClick={() => updateField("musicChoice", "video")}>
+                  <FileVideo size={16} />
+                  استخراج الصوت من فيديو
                 </button>
                 <button className={form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "url"} onClick={() => updateField("musicChoice", "url")}>
                   <Link2 size={16} />
@@ -1177,8 +1216,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                 <label className="order-music-upload">
                   <UploadCloud size={17} />
                   <span>
-                    <strong>ارفع ملف موسيقى</strong>
-                    <small>{musicFileName || form.musicUrl || "mp3 / m4a / wav / ogg"}</small>
+                    <strong>ارفع ملف MP3</strong>
+                    <small>{musicFileName || form.musicUrl || "mp3"}</small>
                   </span>
                   <input
                     name="orderMusicFile"
@@ -1192,6 +1231,23 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                 </label>
               ) : null}
 
+              {form.musicChoice === "video" ? (
+                <label className="order-music-upload">
+                  {musicVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+                  <span>
+                    <strong>{musicVideoBusy ? "جاري استخراج الصوت..." : "ارفع فيديو لاستخراج الصوت"}</strong>
+                    <small>{musicFileName || form.musicUrl || "MP4 / MOV / WEBM"}</small>
+                    <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
+                  </span>
+                  <input
+                    type="file"
+                    accept={acceptedVideoFormats}
+                    disabled={musicVideoBusy}
+                    onChange={(event) => handleOrderMusicVideoFile(event.target.files?.[0])}
+                  />
+                </label>
+              ) : null}
+
               {form.musicChoice === "url" ? (
                 <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
                   <label htmlFor="musicUrl">رابط أغنية مباشر</label>
@@ -1200,7 +1256,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                 </div>
               ) : null}
 
-              {form.musicChoice === "upload" && form.musicUrl ? (
+              {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
                 <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
               ) : null}
             </div>

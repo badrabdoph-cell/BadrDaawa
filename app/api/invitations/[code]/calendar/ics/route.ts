@@ -18,7 +18,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const requestHeaders = await headers();
-  const invitationUrl = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${invitation.code}`;
+  const invitationUrl = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${invitation.customSlug || invitation.code}`;
   const ics = createInvitationIcs(invitation, invitationUrl);
   return new Response(ics, {
     headers: {

@@ -16,6 +16,7 @@ import { getClientMessages } from "@/lib/client-messages";
 import { getContentPresets } from "@/lib/content-presets";
 import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
+import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
@@ -45,12 +46,13 @@ export default async function CustomerAdminPage({
     redirect(`/${invitation.code}/ad_3399/login`);
   }
 
-  const [guests, template, musicFiles, clientMessages, contentPresets, liveModeConfig] = await Promise.all([
+  const [guests, template, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig] = await Promise.all([
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
     getMusicLibrary(),
     getClientMessages(invitation.code),
     getContentPresets(),
+    getMessageTemplates(),
     getWeddingLiveMode(invitation.code),
   ]);
   if (!template) {
@@ -114,7 +116,7 @@ export default async function CustomerAdminPage({
           </div>
         </article>
 
-        <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} />
+        <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} />
 
         <ClientWeddingLiveModePanel invitationCode={invitation.code} initialConfig={liveModeConfig} />
       </section>

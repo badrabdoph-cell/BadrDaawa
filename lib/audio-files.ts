@@ -133,6 +133,17 @@ async function saveAudioBytes(bytes: Buffer, mimeType = "", nameExtension = "", 
   return savedUrl;
 }
 
+export async function saveExtractedMp3Audio(bytes: Buffer, previousUrl?: string | null) {
+  if (!bytes.length || bytes.length > maxAudioBytes) return "";
+  const fileName = `music-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.mp3`;
+  const saved = await writeUploadFile(`music/${fileName}`, bytes, "audio/mpeg");
+  const savedUrl = saved.url;
+  if (previousUrl && previousUrl !== savedUrl) {
+    await deleteUploadedMusicFile(previousUrl);
+  }
+  return savedUrl;
+}
+
 export async function saveAudioDataUrl(dataUrl: string, previousUrl?: string | null) {
   const match = dataUrl.trim().match(/^data:(audio\/[a-zA-Z0-9.+-]+|video\/mp4);base64,([a-zA-Z0-9+/=]+)$/);
   if (!match) return "";

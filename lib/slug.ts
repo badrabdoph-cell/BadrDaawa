@@ -4,6 +4,7 @@ const reservedRoutes = new Set([
   "client",
   "contact",
   "faq",
+  "manage",
   "order",
   "pricing",
   "privacy-policy",
@@ -64,7 +65,7 @@ export function isReservedInvitationSlug(value: string) {
 
 export function validateCustomInvitationSlug(value?: string | null) {
   const slug = normalizeCustomInvitationSlug(value);
-  if (!slug) return { slug: "", error: "" };
+  if (!slug) return { slug: "", error: value?.trim() ? "استخدم حروفاً إنجليزية أو أرقاماً مع الشرطة (-) في الرابط المخصص." : "" };
   if (slug.length < 3) return { slug, error: "الرابط المخصص يجب أن يكون 3 أحرف على الأقل." };
   if (isReservedInvitationSlug(slug)) return { slug, error: "هذا الرابط محجوز داخل الموقع. اختار رابطاً آخر." };
   if (/^\d+$/.test(slug)) return { slug, error: "الرابط المخصص لا يمكن أن يكون أرقام فقط." };

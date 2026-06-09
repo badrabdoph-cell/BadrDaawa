@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { DynamicPageView } from "@/components/DynamicPageView";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SectionIntro } from "@/components/SectionIntro";
+import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-pages";
 
-export const metadata: Metadata = {
-  title: "الأسئلة الشائعة",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getDynamicPageBySlug("faq");
+  return page ? getDynamicPageMetadata(page) : { title: "الأسئلة الشائعة" };
+}
 
 const questions = [
   ["هستلم إيه؟", "رابط دعوة، QR، خريطة، وتأكيد حضور."],
@@ -14,7 +17,10 @@ const questions = [
   ["الدفع أونلاين؟", "حاليًا الطلب يتم على واتساب."],
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const dynamicPage = await getDynamicPageBySlug("faq");
+  if (dynamicPage) return <DynamicPageView page={dynamicPage} />;
+
   return (
     <div className="page-shell">
       <SiteHeader />

@@ -3,10 +3,12 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
+import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
 import { createFileInvitation, getFileInvitationByCode, setFileInvitationActive, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
@@ -20,6 +22,7 @@ export const runtime = "nodejs";
 type BuilderPayload = {
   action?: "draft" | "publish";
   code?: string;
+  customSlug?: string;
   templateSlug?: string;
   groomName?: string;
   brideName?: string;
@@ -30,7 +33,7 @@ type BuilderPayload = {
   mapUrl?: string;
   gallery?: string[];
   musicEnabled?: boolean;
-  musicChoice?: "default" | "library" | "upload" | "url";
+  musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;
   musicLibraryTrackId?: string;
   musicDataUrl?: string;
@@ -92,11 +95,12 @@ async function resolvePhotographer(payload: BuilderPayload) {
   };
 }
 
-function responseLinks(request: NextRequest, code: string) {
+async function responseLinks(request: NextRequest, code: string, customSlug?: string) {
   const siteUrl = getPublicSiteUrl(request.headers).replace(/\/$/, "");
+  const managePath = await getInvitationManagePath(code);
   return {
-    publicUrl: `${siteUrl}/${code}`,
-    adminUrl: `${siteUrl}${getCustomerAdminPath(code)}`,
+    publicUrl: `${siteUrl}/${customSlug || code}`,
+    adminUrl: `${siteUrl}${managePath}`,
   };
 }
 
@@ -108,6 +112,7 @@ async function getBuilderAuditSnapshot(code: string) {
         where: { code },
         select: {
           code: true,
+          customSlug: true,
           status: true,
           groomName: true,
           brideName: true,
@@ -135,6 +140,7 @@ async function getBuilderAuditSnapshot(code: string) {
   if (!fileInvitation) return null;
   return {
     code: fileInvitation.code,
+    customSlug: fileInvitation.customSlug,
     isActive: fileInvitation.isActive,
     templateSlug: fileInvitation.templateSlug,
     groomName: fileInvitation.groomName,
@@ -210,12 +216,18 @@ export async function POST(request: NextRequest) {
   const isActive = status === "ACTIVE";
   const baseSlug = buildInvitationBaseSlug(groomName, brideName);
   const existingCode = cleanText(input.code);
+  const customSlugResult = await resolveCustomInvitationSlug(input.customSlug, existingCode);
+  if (customSlugResult.error) {
+    return NextResponse.json({ error: customSlugResult.error }, { status: 400 });
+  }
+  const customSlug = customSlugResult.slug || "";
   const oldValues = existingCode ? await getBuilderAuditSnapshot(existingCode) : null;
 
   async function createOrUpdateFileInvitation() {
     if (existingCode && (await getFileInvitationByCode(existingCode))) {
       await updateFileInvitation(existingCode, {
         templateSlug: templateDefinition.slug,
+        customSlug: customSlug || undefined,
         groomName,
         brideName,
         weddingDate,
@@ -252,6 +264,7 @@ export async function POST(request: NextRequest) {
       musicEnabled: Boolean(input.musicEnabled),
       texts,
       photographer,
+      customSlug: customSlug || undefined,
     });
     if (!isActive) await setFileInvitationActive(storeInvitation.code, false);
     return storeInvitation.code;
@@ -322,6 +335,7 @@ export async function POST(request: NextRequest) {
 
     const data = {
       status,
+      customSlug: customSlug || null,
       language: "ar",
       groomName,
       brideName,
@@ -350,13 +364,17 @@ export async function POST(request: NextRequest) {
   }
 
   const code = (await createOrUpdatePrismaInvitation()) || (await createOrUpdateFileInvitation());
+  const managePath = await getInvitationManagePath(code);
   revalidatePath(`/${code}`);
+  if (customSlug) revalidatePath(`/${customSlug}`);
   revalidatePath(getCustomerAdminPath(code));
+  revalidatePath(managePath);
   revalidatePath("/admin/invitations");
   queueGitHubSync(`Invitation builder ${action}: ${code}.`, { createSnapshot: true });
   const actor = await getAuditActorFromAdminRequest(request);
   const newValues = {
     code,
+    customSlug,
     status,
     templateSlug: templateDefinition.slug,
     groomName,
@@ -406,7 +424,8 @@ export async function POST(request: NextRequest) {
     ok: true,
     status,
     code,
+    customSlug,
     validation: prePublishReport,
-    ...responseLinks(request, code),
+    ...(await responseLinks(request, code, customSlug)),
   });
 }

@@ -8,6 +8,7 @@ import {
   emptyAdminToolUpload,
   uploadAdminMusic,
   uploadAdminPreviewImage,
+  uploadAdminVideoAudio,
   validateAdminInvitationTools,
   type AdminInvitationToolValues,
   type AdminToolImageSlot,
@@ -16,13 +17,18 @@ import {
   type AdminToolTemplate,
   type AdminToolUploadSlot,
 } from "@/components/AdminInvitationTools";
+import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
-import type { ContentPreset, InvitationTexts, OrderRequest } from "@/lib/types";
+import type { ContentPreset, InternalNote, InvitationTexts, OrderRequest } from "@/lib/types";
 
 type BuilderTemplate = AdminToolTemplate;
 type MusicFile = AdminToolMusicFile;
 type StatusKind = OrderRequest["status"];
+type OrderRequestWithLinks = OrderRequest & {
+  publicUrl?: string;
+  adminUrl?: string;
+};
 
 type OrderFormState = {
   groomName: string;
@@ -76,7 +82,7 @@ function formatDateTime(value?: string) {
 }
 
 function normalizeOrderMusicChoice(order: OrderRequest, musicFiles: MusicFile[]): AdminToolMusicChoice {
-  if (order.musicChoice === "default" || order.musicChoice === "library" || order.musicChoice === "upload" || order.musicChoice === "url") return order.musicChoice;
+  if (order.musicChoice === "default" || order.musicChoice === "library" || order.musicChoice === "upload" || order.musicChoice === "video" || order.musicChoice === "url") return order.musicChoice;
   if (order.musicUrl && musicFiles.some((file) => file.url === order.musicUrl)) return "library";
   return order.musicUrl ? "url" : "default";
 }
@@ -117,9 +123,23 @@ function orderTitle(order: OrderRequest, index: number) {
   return `طلب ${order.orderNumber || `#${index + 1}`} - ${order.groomName} & ${order.brideName}`;
 }
 
-export function AdminOrderRequestsManager({ orders, templates, musicFiles, contentPresets, siteUrl }: { orders: OrderRequest[]; templates: BuilderTemplate[]; musicFiles: MusicFile[]; contentPresets: ContentPreset[]; siteUrl: string }) {
+export function AdminOrderRequestsManager({
+  orders,
+  templates,
+  musicFiles,
+  contentPresets,
+  internalNotes,
+  siteUrl,
+}: {
+  orders: OrderRequestWithLinks[];
+  templates: BuilderTemplate[];
+  musicFiles: MusicFile[];
+  contentPresets: ContentPreset[];
+  internalNotes: InternalNote[];
+  siteUrl: string;
+}) {
   const fallbackTemplate = templates[0]?.slug || "featured-1";
-  const [items, setItems] = useState<OrderRequest[]>(orders);
+  const [items, setItems] = useState<OrderRequestWithLinks[]>(orders);
   const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
   const selectedOrder = useMemo(() => items.find((order) => order.id === selectedId) || items[0] || null, [items, selectedId]);
   const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles)));
@@ -136,8 +156,8 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, conte
     setLinks(
       selectedOrder.publishedInvitationCode
         ? {
-            publicUrl: `${cleanSiteUrl}/${selectedOrder.publishedInvitationCode}`,
-            adminUrl: `${cleanSiteUrl}/${selectedOrder.publishedInvitationCode}/ad_3399`,
+            publicUrl: selectedOrder.publicUrl || `${cleanSiteUrl}/${selectedOrder.publishedInvitationCode}`,
+            adminUrl: selectedOrder.adminUrl || `${cleanSiteUrl}/${selectedOrder.publishedInvitationCode}/ad_3399`,
           }
         : null,
     );
@@ -218,6 +238,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, conte
   }, [postPreviewUpdate]);
 
   const openCount = items.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
+  const selectedInternalNotes = useMemo(() => (selectedOrder ? internalNotes.filter((note) => note.entityType === "order" && note.entityId === selectedOrder.id) : []), [internalNotes, selectedOrder]);
 
   function patchForm(update: Partial<OrderFormState>) {
     setForm((current) => ({ ...current, ...update }));
@@ -387,6 +408,19 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, conte
     }
   }
 
+  async function handleMusicVideoFile(file?: File | null) {
+    if (!file) return;
+    patchForm({ musicBusy: true, musicEnabled: true, musicChoice: "video", musicLibraryTrackId: "" });
+    try {
+      const extracted = await uploadAdminVideoAudio(file);
+      patchForm({ musicBusy: false, musicUrl: extracted.musicUrl, musicFileName: extracted.fileName });
+      setNotice({ kind: "success", text: `تم استخراج الصوت من الفيديو وحفظه كملف MP3: ${extracted.fileName}` });
+    } catch (error) {
+      patchForm({ musicBusy: false });
+      setNotice({ kind: "error", text: error instanceof Error ? error.message : "تعذر استخراج الصوت من الفيديو." });
+    }
+  }
+
   async function copy(value: string) {
     await navigator.clipboard.writeText(value);
     setNotice({ kind: "success", text: "تم نسخ الرابط." });
@@ -440,6 +474,16 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, conte
 
         {notice ? <div className={notice.kind === "error" ? "notice danger" : "notice success"}>{notice.text}</div> : null}
 
+        {selectedOrder ? (
+          <InternalNotesPanel
+            entityType="order"
+            entityId={selectedOrder.id}
+            notes={selectedInternalNotes}
+            title="ملاحظات داخلية للطلب"
+            returnTo="/admin/orders"
+          />
+        ) : null}
+
         <AdminInvitationTools
           values={toolValues}
           templates={templates}
@@ -457,6 +501,7 @@ export function AdminOrderRequestsManager({ orders, templates, musicFiles, conte
           onPhotographerLogoFile={handlePhotographerLogoFile}
           onInvitationTextChange={updateInvitationText}
           onMusicFile={handleMusicFile}
+          onMusicVideoFile={handleMusicVideoFile}
         />
 
         <div className="orders-edit-section">

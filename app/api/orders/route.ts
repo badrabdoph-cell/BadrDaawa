@@ -14,7 +14,7 @@ import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CON
 export const runtime = "nodejs";
 export const maxDuration = 45;
 
-type OrderMusicChoice = "default" | "library" | "upload" | "url";
+type OrderMusicChoice = "default" | "library" | "upload" | "video" | "url";
 
 const maxOrderRequestBytes = 36 * 1024 * 1024;
 
@@ -34,6 +34,12 @@ async function resolveOrderMusic(input: { musicEnabled: boolean; musicChoice: Or
     const restoredUploadUrl = cleanPlayableAudioUrl(input.musicUrl || "");
     if (restoredUploadUrl) return { musicUrl: restoredUploadUrl, error: "" };
     return { musicUrl: "", error: input.orderMusic || input.musicUrl ? "ملف الموسيقى غير قابل للتشغيل. جرّب mp3 أو m4a أو wav." : "" };
+  }
+
+  if (input.musicChoice === "video") {
+    const extractedUrl = cleanPlayableAudioUrl(input.musicUrl || "");
+    if (extractedUrl) return { musicUrl: extractedUrl, error: "" };
+    return { musicUrl: "", error: "استخرج الصوت من الفيديو أولاً قبل إرسال الطلب." };
   }
 
   const directUrl = cleanPlayableAudioUrl(input.musicUrl || "");
@@ -96,6 +102,8 @@ function buildOrderWhatsAppMessage(input: {
         ? `مقطع من مكتبة الموقع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
       : input.musicChoice === "upload"
         ? `ملف مرفوع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
+      : input.musicChoice === "video"
+        ? `صوت مستخرج من فيديو${input.musicUrl ? `: ${input.musicUrl}` : ""}`
         : `رابط خارجي: ${input.musicUrl || "لم يرسل رابط"}`;
 
   return [

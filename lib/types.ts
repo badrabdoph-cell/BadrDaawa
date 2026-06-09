@@ -57,6 +57,8 @@ export type Invitation = {
   musicEnabled?: boolean;
   musicSource?: MusicSource;
   musicLibraryTrackId?: string;
+  manageToken?: string;
+  manageTokenExpiresAt?: string;
   texts?: InvitationTexts;
   photographer?: {
     enabled: boolean;
@@ -73,7 +75,7 @@ export type Invitation = {
   deletedAt?: string;
 };
 
-export type MusicSource = "default" | "library" | "upload" | "url";
+export type MusicSource = "default" | "library" | "upload" | "video" | "url";
 
 export type InvitationTexts = {
   groomNameEn?: string;
@@ -101,6 +103,29 @@ export type ContentPreset = {
   title: string;
   content: string;
   secondaryContent?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MessageTemplateKind = "whatsapp" | "welcome" | "reminder";
+
+export type MessageTemplate = {
+  id: string;
+  kind: MessageTemplateKind;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InternalNoteEntityType = "order" | "invitation" | "customer";
+
+export type InternalNote = {
+  id: string;
+  entityType: InternalNoteEntityType;
+  entityId: string;
+  body: string;
+  authorLabel: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -165,7 +190,7 @@ export type OrderRequest = {
   notes?: string;
   imageUrls?: string[];
   musicEnabled?: boolean;
-  musicChoice?: "default" | "library" | "upload" | "url";
+  musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;
   musicLibraryTrackId?: string;
   texts?: InvitationTexts;

@@ -124,7 +124,7 @@ async function readDatabaseSnapshot() {
       }),
       prisma.invitation.findMany({
         orderBy: { createdAt: "desc" },
-        select: { id: true, code: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, heroPhoto: true, gallery: true, musicEnabled: true, musicUrl: true, texts: true, photographer: true, createdAt: true, updatedAt: true },
+        select: { id: true, code: true, customSlug: true, status: true, groomName: true, brideName: true, weddingDate: true, venue: true, heroPhoto: true, gallery: true, musicEnabled: true, musicUrl: true, texts: true, photographer: true, createdAt: true, updatedAt: true },
       }),
       prisma.guestRsvp.findMany({
         orderBy: { createdAt: "desc" },

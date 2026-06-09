@@ -51,7 +51,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
     photographerFacebookUrl: params.photographerFacebookUrl || "",
     photographerInstagramUrl: params.photographerInstagramUrl || "",
     musicEnabled: params.musicEnabled === "1",
-    musicChoice: params.musicChoice === "upload" || params.musicChoice === "url" ? params.musicChoice : "default",
+    musicChoice: params.musicChoice === "upload" || params.musicChoice === "video" || params.musicChoice === "url" ? params.musicChoice : "default",
     musicUrl: params.musicUrl || "",
     imageUrls: (params.gallery || "").split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3),
   };

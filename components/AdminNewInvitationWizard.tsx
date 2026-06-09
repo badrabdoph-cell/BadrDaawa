@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, FileVideo, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import {
@@ -10,6 +10,7 @@ import {
   isPlayableAudioUrl,
   uploadAdminMusic,
   uploadAdminPreviewImage,
+  uploadAdminVideoAudio,
   validateAdminInvitationTools,
   type AdminToolImageSlot,
   type AdminToolMusicChoice,
@@ -51,6 +52,7 @@ type DraftState = {
   venue: string;
   city: string;
   mapUrl: string;
+  customSlug: string;
   images: AdminToolImageSlot[];
   musicEnabled: boolean;
   musicChoice: AdminToolMusicChoice;
@@ -148,6 +150,7 @@ function createInitialDraft(templates: WizardTemplate[]): DraftState {
     venue: "",
     city: "",
     mapUrl: "",
+    customSlug: "",
     images: emptyAdminToolImages,
     musicEnabled: false,
     musicChoice: "default",
@@ -484,6 +487,20 @@ export function AdminNewInvitationWizard({
     }
   }
 
+  async function handleMusicVideoFile(file?: File | null) {
+    if (!file) return;
+    setBusy("music");
+    try {
+      const extracted = await uploadAdminVideoAudio(file);
+      patch({ musicEnabled: true, musicChoice: "video", musicUrl: extracted.musicUrl, musicFileName: extracted.fileName, musicLibraryTrackId: "" });
+      setMessage({ kind: "success", text: `تم استخراج الصوت من الفيديو وحفظه كملف MP3: ${extracted.fileName}` });
+    } catch (error) {
+      setMessage({ kind: "error", text: error instanceof Error ? error.message : "تعذر استخراج الصوت من الفيديو." });
+    } finally {
+      setBusy("idle");
+    }
+  }
+
   async function handleLogoFile(file?: File | null) {
     if (!file) return;
     setBusy("logo");
@@ -560,6 +577,7 @@ export function AdminNewInvitationWizard({
         venue: draft.venue,
         city: draft.city,
         mapUrl: draft.mapUrl,
+        customSlug: draft.customSlug,
         gallery: draft.images.map((image) => image.url).filter(Boolean),
         musicEnabled: draft.musicEnabled,
         musicChoice: draft.musicChoice,
@@ -580,7 +598,7 @@ export function AdminNewInvitationWizard({
         },
       }),
     });
-    const data = (await response.json().catch(() => null)) as { error?: string; code?: string; publicUrl?: string; adminUrl?: string } | null;
+    const data = (await response.json().catch(() => null)) as { error?: string; code?: string; customSlug?: string; publicUrl?: string; adminUrl?: string } | null;
     setBusy("idle");
     if (!response.ok || !data?.code) {
       setMessage({ kind: "error", text: data?.error || "تعذر حفظ الدعوة." });
@@ -641,6 +659,11 @@ export function AdminNewInvitationWizard({
         <label className="field"><span>الوقت</span><input value={draft.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })} placeholder="07:00 مساءً" /></label>
         <label className="field"><span>القاعة</span><input value={draft.venue} onChange={(event) => patch({ venue: event.target.value })} /></label>
         <label className="field"><span>المدينة</span><input value={draft.city} onChange={(event) => patch({ city: event.target.value })} /></label>
+        <label className="field full">
+          <span>رابط الدعوة المخصص (اختياري)</span>
+          <input dir="ltr" value={draft.customSlug} onChange={(event) => patch({ customSlug: event.target.value })} placeholder="ahmed-sara" />
+          <small>اتركه فارغاً ليتم إنشاء الرابط تلقائياً. مثال: /ahmed-sara</small>
+        </label>
         <label className="field full"><span>رابط الخريطة</span><input dir="ltr" value={draft.mapUrl} onChange={(event) => patch({ mapUrl: event.target.value })} placeholder="https://maps.google.com/..." /></label>
       </div>
     );
@@ -700,14 +723,18 @@ export function AdminNewInvitationWizard({
               <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار الموسيقى">
                 <button className={draft.musicChoice === "default" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "default", musicUrl: "", musicLibraryTrackId: "" })}><Music2 size={16} /> الافتراضية</button>
                 <button className={draft.musicChoice === "library" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "library" })}><Disc3 size={16} /> المكتبة</button>
-                <button className={draft.musicChoice === "upload" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "upload", musicLibraryTrackId: "" })}><UploadCloud size={16} /> رفع</button>
+                <button className={draft.musicChoice === "upload" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "upload", musicLibraryTrackId: "" })}><UploadCloud size={16} /> MP3</button>
+                <button className={draft.musicChoice === "video" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "video", musicLibraryTrackId: "" })}><FileVideo size={16} /> من فيديو</button>
                 <button className={draft.musicChoice === "url" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "url", musicLibraryTrackId: "" })}><Link2 size={16} /> رابط</button>
               </div>
               {draft.musicChoice === "library" ? (
                 <label className="field"><span>مكتبة الموسيقى</span><select value={draft.musicUrl} onChange={(event) => { const selected = musicFiles.find((file) => file.url === event.target.value); patch({ musicUrl: event.target.value, musicLibraryTrackId: selected?.id || "" }); }}><option value="">اختار مقطع</option>{musicFiles.map((file) => <option key={file.url} value={file.url}>{file.name || file.url.split("/").pop()}</option>)}</select></label>
               ) : null}
               {draft.musicChoice === "upload" ? (
-                <label className="new-invite-upload-line"><UploadCloud size={17} /><span>{busy === "music" ? "جاري الرفع..." : draft.musicFileName || "رفع ملف موسيقى"}</span><input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" onChange={(event) => handleMusicFile(event.target.files?.[0])} /></label>
+                <label className="new-invite-upload-line"><UploadCloud size={17} /><span>{busy === "music" ? "جاري الرفع..." : draft.musicFileName || "رفع ملف MP3"}</span><input type="file" accept="audio/mpeg,.mp3" onChange={(event) => handleMusicFile(event.target.files?.[0])} /></label>
+              ) : null}
+              {draft.musicChoice === "video" ? (
+                <label className="new-invite-upload-line"><FileVideo size={17} /><span>{busy === "music" ? "جاري استخراج الصوت..." : draft.musicFileName || "رفع فيديو لاستخراج الصوت"}</span><input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" onChange={(event) => handleMusicVideoFile(event.target.files?.[0])} /><small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small></label>
               ) : null}
               {draft.musicChoice === "url" ? <label className="field"><span>رابط ملف صوت مباشر</span><input dir="ltr" value={draft.musicUrl} onChange={(event) => patch({ musicUrl: event.target.value })} placeholder="https://example.com/song.mp3" /></label> : null}
               {draft.musicUrl ? <AudioPlayer src={draft.musicUrl} label="معاينة الموسيقى" /> : null}
@@ -792,8 +819,9 @@ export function AdminNewInvitationWizard({
       ["العروسين", `${draft.groomName || "-"} و ${draft.brideName || "-"}`],
       ["الموعد", `${draft.weddingDate || "-"} · ${draft.weddingTime || "-"}`],
       ["المكان", [draft.venue, draft.city].filter(Boolean).join(" - ") || "-"],
+      ["الرابط المخصص", draft.customSlug ? `/${draft.customSlug}` : "تلقائي"],
       ["الصور", `${draft.images.filter((image) => image.url).length} صورة`],
-      ["الموسيقى", draft.musicEnabled ? (draft.musicChoice === "default" ? "الموسيقى الافتراضية" : draft.musicChoice === "library" ? "من المكتبة" : draft.musicChoice === "upload" ? "ملف خاص" : "رابط مباشر") : "بدون موسيقى"],
+      ["الموسيقى", draft.musicEnabled ? (draft.musicChoice === "default" ? "الموسيقى الافتراضية" : draft.musicChoice === "library" ? "من المكتبة" : draft.musicChoice === "upload" ? "ملف MP3 خاص" : draft.musicChoice === "video" ? "مستخرجة من فيديو" : "رابط مباشر") : "بدون موسيقى"],
       ["المصور", draft.photographerEnabled ? draft.photographerName || "مفعل" : "غير مفعل"],
     ];
     return (

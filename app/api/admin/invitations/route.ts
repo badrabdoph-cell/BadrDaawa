@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { hashPassword } from "@/lib/password";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
@@ -103,8 +104,10 @@ export async function POST(request: NextRequest) {
       musicEnabled: Boolean(musicUrl),
     });
     console.log(`[Admin Invitation] File invitation ${invitation.code} saved with heroPhoto=${gallery[0]}.`);
+    const managePath = await getInvitationManagePath(invitation.code);
     revalidatePath(`/${invitation.code}`);
     revalidatePath(`/${invitation.code}/ad_3399`);
+    revalidatePath(managePath);
     revalidatePath("/admin/invitations");
     queueGitHubSync(`Client invitation created: ${invitation.code}.`, { createSnapshot: true });
     await recordAuditLog({
@@ -233,8 +236,10 @@ export async function POST(request: NextRequest) {
     }
     console.log(`[Admin Invitation] Database invitation ${code} saved with heroPhoto=${gallery[0]}.`);
 
+    const managePath = await getInvitationManagePath(code);
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);
+    revalidatePath(managePath);
     revalidatePath("/admin/invitations");
     queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
     await recordAuditLog({

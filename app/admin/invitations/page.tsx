@@ -2,9 +2,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { Archive, CalendarDays, ExternalLink, Eye, Filter, Pause, Play, Search, Settings2, Sparkles, Trash2, UserCheck } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
+import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
+import { getInternalNotes, groupInternalNotesByEntity } from "@/lib/internal-notes";
 import { getInvitationCompleteness } from "@/lib/invitation-completeness";
-import { getCustomerAdminPath } from "@/lib/slug";
+import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 
@@ -15,9 +17,11 @@ type InvitationListParams = {
   error?: string;
   demo?: string;
   status?: string;
+  message?: string;
   q?: string;
   state?: string;
   sort?: string;
+  noteStatus?: string;
 };
 
 function formatAdminDate(value: string) {
@@ -53,22 +57,33 @@ function stateClassName(state: string) {
   return "status danger";
 }
 
+function buildReturnTo(params: InvitationListParams) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value && key !== "noteStatus") query.set(key, value);
+  }
+  return `/admin/invitations${query.toString() ? `?${query.toString()}` : ""}`;
+}
+
 export default async function InvitationsPage({
   searchParams,
 }: {
   searchParams: Promise<InvitationListParams>;
 }) {
-  const [params, invitations, guests, templates, requestHeaders] = await Promise.all([
+  const [params, invitations, guests, templates, requestHeaders, internalNotes] = await Promise.all([
     searchParams,
     getAdminInvitations(),
     getAdminGuests(),
     getTemplatesWithSettings(),
     headers(),
+    getInternalNotes({ entityType: "invitation" }),
   ]);
   const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
   const query = (params.q || "").trim().toLowerCase();
   const selectedState = params.state || "all";
   const selectedSort = params.sort || "newest";
+  const returnTo = buildReturnTo(params);
+  const notesByEntity = groupInternalNotesByEntity(internalNotes);
   const guestStatsByCode = guests.reduce(
     (map, guest) => {
       const current = map.get(guest.invitationCode) || { responses: 0, confirmed: 0, attendees: 0 };
@@ -86,7 +101,7 @@ export default async function InvitationsPage({
     .filter((invitation) => {
       const state = getInvitationState(invitation);
       const template = templates.find((item) => item.slug === invitation.templateSlug);
-      const searchable = [invitation.code, invitation.groomName, invitation.brideName, invitation.venue, invitation.city, template?.arabicName || invitation.templateSlug].join(" ").toLowerCase();
+      const searchable = [invitation.code, invitation.customSlug, invitation.groomName, invitation.brideName, invitation.venue, invitation.city, template?.arabicName || invitation.templateSlug].join(" ").toLowerCase();
       return (!query || searchable.includes(query)) && (selectedState === "all" || state === selectedState);
     })
     .sort((a, b) => {
@@ -106,6 +121,11 @@ export default async function InvitationsPage({
     .map((invitation) => ({ invitation, completeness: completenessByCode.get(invitation.code) || getInvitationCompleteness(invitation) }))
     .filter((item) => !item.completeness.isComplete)
     .sort((a, b) => a.completeness.percentage - b.completeness.percentage);
+  const managePathByCode = new Map(
+    await Promise.all(
+      filteredInvitations.map(async (invitation) => [invitation.code, await getInvitationManagePath(invitation.code)] as const),
+    ),
+  );
   const statusMessages: Record<string, string> = {
     pause: "تم إيقاف الدعوة.",
     resume: "تم تشغيل الدعوة.",
@@ -113,6 +133,15 @@ export default async function InvitationsPage({
     delete: "تم نقل الدعوة إلى سلة المهملات.",
     missing: "لم يتم العثور على الدعوة المطلوبة.",
     invalid: "الإجراء غير صالح.",
+    "custom-slug": "تم تحديث رابط الدعوة المخصص.",
+    "custom-url-error": params.message || "تعذر حفظ الرابط المخصص.",
+  };
+  const noteMessages: Record<string, string> = {
+    created: "تمت إضافة الملاحظة الداخلية.",
+    updated: "تم تحديث الملاحظة الداخلية.",
+    deleted: "تم حذف الملاحظة الداخلية.",
+    invalid: "اكتب ملاحظة صالحة قبل الحفظ.",
+    missing: "لم يتم العثور على الملاحظة المطلوبة.",
   };
 
   return (
@@ -177,6 +206,7 @@ export default async function InvitationsPage({
       {params.created ? <div className="notice success">تم إنشاء الدعوة بنجاح: {params.created}</div> : null}
       {params.error ? <div className="notice danger">{params.error === "music" ? "الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر." : params.error === "images" ? "الصور لم يتم حفظها. ارفع صور JPG/PNG/WebP أو انتظر انتهاء الرفع." : "راجع البيانات المطلوبة قبل إنشاء الدعوة."}</div> : null}
       {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
+      {params.noteStatus ? <div className={params.noteStatus === "invalid" || params.noteStatus === "missing" ? "notice danger" : "notice success"}>{noteMessages[params.noteStatus] || "تم تحديث الملاحظات الداخلية."}</div> : null}
       {incompleteInvitations.length ? (
         <div className="notice warning invitation-completeness-alert">
           <Settings2 size={18} />
@@ -235,21 +265,26 @@ export default async function InvitationsPage({
               <th>الاكتمال</th>
               <th>الحالة</th>
               <th>روابط العميل</th>
+              <th>ملاحظات داخلية</th>
               <th>إجراءات</th>
             </tr>
           </thead>
           <tbody>
             {filteredInvitations.map((invitation) => {
               const template = templates.find((item) => item.slug === invitation.templateSlug);
-              const invitationUrl = `${siteUrl}/${invitation.code}`;
-              const customerAdminPath = getCustomerAdminPath(invitation.code);
+              const publicSlug = invitation.customSlug || invitation.code;
+              const invitationUrl = `${siteUrl}/${publicSlug}`;
+              const customerAdminPath = managePathByCode.get(invitation.code) || `/${invitation.code}/ad_3399`;
               const clientAdminUrl = `${siteUrl}${customerAdminPath}`;
               const guestStats = guestStatsByCode.get(invitation.code) || { responses: 0, confirmed: 0, attendees: 0 };
               const invitationState = getInvitationState(invitation);
               const completeness = completenessByCode.get(invitation.code) || getInvitationCompleteness(invitation);
               return (
                 <tr key={invitation.id}>
-                  <td>{invitation.code}</td>
+                  <td>
+                    <strong>{invitation.code}</strong>
+                    {invitation.customSlug ? <small className="admin-muted-line">/{invitation.customSlug}</small> : null}
+                  </td>
                   <td>
                     {invitation.groomName} &amp; {invitation.brideName}
                   </td>
@@ -277,10 +312,25 @@ export default async function InvitationsPage({
                       <span>{invitationUrl}</span>
                       <span>{clientAdminUrl}</span>
                     </div>
+                    <form className="custom-slug-form" action={`/api/admin/invitations/${invitation.code}`} method="post">
+                      <input type="hidden" name="action" value="custom-slug" />
+                      <span>/</span>
+                      <input name="customSlug" dir="ltr" defaultValue={invitation.customSlug || ""} placeholder={invitation.code} />
+                      <button className="btn btn-soft" type="submit">حفظ</button>
+                    </form>
+                  </td>
+                  <td>
+                    <InternalNotesPanel
+                      entityType="invitation"
+                      entityId={invitation.code}
+                      notes={notesByEntity.get(`invitation:${invitation.code}`) || []}
+                      returnTo={returnTo}
+                      compact
+                    />
                   </td>
                   <td>
                     <div className="button-row">
-                      <Link className="btn btn-soft btn-icon" href={`/${invitation.code}`} title="فتح الدعوة">
+                      <Link className="btn btn-soft btn-icon" href={`/${publicSlug}`} title="فتح الدعوة">
                         <Eye size={17} />
                       </Link>
                       <Link className="btn btn-soft btn-icon" href={customerAdminPath} title="تعديل الدعوة">
@@ -314,7 +364,7 @@ export default async function InvitationsPage({
             })}
             {!filteredInvitations.length ? (
               <tr>
-                <td colSpan={10}>
+                <td colSpan={11}>
                   <div className="admin-empty-state compact">
                     <strong>لا توجد دعوات مطابقة</strong>
                     <p>جرّب تغيير البحث أو حالة الفلترة.</p>

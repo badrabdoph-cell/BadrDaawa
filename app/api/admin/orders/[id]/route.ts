@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation, getFileOrder, softDeleteFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
@@ -34,7 +35,7 @@ type AdminOrderPayload = {
   templateSlug?: string;
   imageUrls?: string[];
   musicEnabled?: boolean;
-  musicChoice?: "default" | "library" | "upload" | "url";
+  musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;
   musicLibraryTrackId?: string;
   musicDataUrl?: string;
@@ -109,8 +110,8 @@ function normalizeStatus(status: string): OrderRequest["status"] {
   return "new";
 }
 
-function normalizeMusicChoice(value: unknown, fallback: "default" | "library" | "upload" | "url" = "default") {
-  return value === "default" || value === "library" || value === "upload" || value === "url" ? value : fallback;
+function normalizeMusicChoice(value: unknown, fallback: "default" | "library" | "upload" | "video" | "url" = "default") {
+  return value === "default" || value === "library" || value === "upload" || value === "video" || value === "url" ? value : fallback;
 }
 
 function parseStoredImageUrls(value: unknown) {
@@ -163,11 +164,12 @@ async function resolveMusic(payload: AdminOrderPayload, existingUrl?: string | n
   return cleanPlayableAudioUrl(payload.musicUrl || existingUrl || "");
 }
 
-function responseLinks(request: NextRequest, code: string) {
+async function responseLinks(request: NextRequest, code: string) {
   const siteUrl = getPublicSiteUrl(request.headers).replace(/\/$/, "");
+  const managePath = await getInvitationManagePath(code);
   return {
     publicUrl: `${siteUrl}/${code}`,
-    adminUrl: `${siteUrl}${getCustomerAdminPath(code)}`,
+    adminUrl: `${siteUrl}${managePath}`,
   };
 }
 
@@ -232,12 +234,12 @@ function validateDraft(draft: ReturnType<typeof getOrderDraft>, requirePublishRe
   return "";
 }
 
-function serializeFileOrder(order: OrderRequest, request: NextRequest): AdminOrderSnapshot {
+async function serializeFileOrder(order: OrderRequest, request: NextRequest): Promise<AdminOrderSnapshot> {
   return {
     ...order,
     status: normalizeStatus(order.status),
     imageUrls: (order.imageUrls || []).slice(0, 3),
-    ...(order.publishedInvitationCode ? responseLinks(request, order.publishedInvitationCode) : {}),
+    ...(order.publishedInvitationCode ? await responseLinks(request, order.publishedInvitationCode) : {}),
   };
 }
 
@@ -272,7 +274,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     status: normalizeStatus(String(order.status || "NEW")),
     submittedAt: dateToString(order.submittedAt),
     createdAt: dateToString(order.createdAt),
-    ...(order.publishedInvitationCode ? responseLinks(request, order.publishedInvitationCode) : {}),
+    ...(order.publishedInvitationCode ? await responseLinks(request, order.publishedInvitationCode) : {}),
   };
   return snapshot;
 }
@@ -630,9 +632,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       revalidatePath("/admin/invitations");
       revalidatePath(`/${code}`);
       revalidatePath(getCustomerAdminPath(code));
+      revalidatePath(await getInvitationManagePath(code));
       queueGitHubSync(`Order published as invitation: ${code}.`, { createSnapshot: true });
       const order = await getSnapshot(id, request);
-      const links = responseLinks(request, code);
+      const links = await responseLinks(request, code);
       await recordAuditLog({
         actor: await getAuditActorFromAdminRequest(request),
         action: "order.publish",

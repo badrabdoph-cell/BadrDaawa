@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Bell, CheckCircle2, MessageSquareText, Search, Send, UserRound } from "lucide-react";
+import { headers } from "next/headers";
+import { AdminClientMessageForm } from "@/components/AdminClientMessageForm";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getAllClientMessages, getTotalUnreadClientMessages } from "@/lib/client-messages";
-import { formatArabicNumber } from "@/lib/utils";
+import { getMessageTemplates } from "@/lib/message-templates";
+import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +24,7 @@ function formatDate(value: string) {
 }
 
 export default async function AdminMessagesPage({ searchParams }: { searchParams: Promise<AdminMessagesParams> }) {
-  const [params, invitations, messages, unreadCount] = await Promise.all([searchParams, getAdminInvitations(), getAllClientMessages(), getTotalUnreadClientMessages()]);
+  const [params, invitations, messages, unreadCount, messageTemplates, requestHeaders] = await Promise.all([searchParams, getAdminInvitations(), getAllClientMessages(), getTotalUnreadClientMessages(), getMessageTemplates(), headers()]);
   const query = (params.q || "").trim().toLowerCase();
   const filteredMessages = messages.filter((message) => {
     const invitation = invitations.find((item) => item.code === message.invitationCode);
@@ -73,31 +76,7 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
             <h2>إرسال رسالة لعميل</h2>
           </div>
         </div>
-        <form action="/api/admin/client-messages" method="post" className="admin-client-message-form">
-          <label className="field">
-            <span>العميل / الدعوة</span>
-            <select name="invitationCode" required>
-              <option value="">اختار الدعوة</option>
-              {invitations.map((invitation) => (
-                <option value={invitation.code} key={invitation.code}>
-                  {invitation.groomName} و {invitation.brideName} - {invitation.code}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>عنوان الرسالة</span>
-            <input name="title" defaultValue="رسالة من الإدارة" maxLength={120} />
-          </label>
-          <label className="field full">
-            <span>نص الرسالة</span>
-            <textarea name="body" rows={5} required placeholder="اكتب الرسالة التي ستظهر داخل لوحة العميل..." />
-          </label>
-          <button className="btn btn-gold" type="submit">
-            <Send size={17} />
-            إرسال الرسالة
-          </button>
-        </form>
+        <AdminClientMessageForm invitations={invitations} messageTemplates={messageTemplates} siteUrl={getPublicSiteUrl(requestHeaders)} />
       </section>
 
       <form className="admin-table-toolbar messages-toolbar" action="/admin/messages" method="get">

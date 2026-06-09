@@ -189,7 +189,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             {recentInvitations.length ? (
               <div className="admin-compact-list">
                 {recentInvitations.map((invitation) => (
-                  <Link className="admin-compact-row" href={`/${invitation.code}`} key={invitation.id}>
+                  <Link className="admin-compact-row" href={`/${invitation.customSlug || invitation.code}`} key={invitation.id}>
                     <span>
                       <strong>{invitation.groomName} و {invitation.brideName}</strong>
                       <small>{invitation.code} · {formatOrderDate(invitation.weddingDate)}</small>

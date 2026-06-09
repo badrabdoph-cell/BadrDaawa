@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Check, Copy, Facebook, MessageCircle, Send, Share2 } from "lucide-react";
+import { MessageTemplatePicker } from "@/components/MessageTemplatePicker";
+import { createMessageTemplateVariables } from "@/lib/message-template-render";
+import type { MessageTemplate } from "@/lib/types";
 import { withVisitSource } from "@/lib/visit-source";
 
 type ClientShareToolsProps = {
@@ -10,6 +13,7 @@ type ClientShareToolsProps = {
   brideName: string;
   weddingDate: string;
   venue: string;
+  messageTemplates?: MessageTemplate[];
 };
 
 function formatShareDate(value: string) {
@@ -34,6 +38,17 @@ function createDefaultMessage(input: ClientShareToolsProps) {
 
 export function ClientShareTools(props: ClientShareToolsProps) {
   const defaultMessage = useMemo(() => createDefaultMessage(props), [props]);
+  const templateVariables = useMemo(
+    () =>
+      createMessageTemplateVariables({
+        groomName: props.groomName,
+        brideName: props.brideName,
+        weddingDate: props.weddingDate,
+        venue: props.venue,
+        link: props.invitationUrl,
+      }),
+    [props.brideName, props.groomName, props.invitationUrl, props.venue, props.weddingDate],
+  );
   const [message, setMessage] = useState(defaultMessage);
   const [copied, setCopied] = useState<"url" | "message" | "">("");
 
@@ -97,6 +112,12 @@ export function ClientShareTools(props: ClientShareToolsProps) {
 
       <label className="field customer-share-message">
         <span>رسالة واتساب جاهزة</span>
+        <MessageTemplatePicker
+          templates={props.messageTemplates || []}
+          variables={templateVariables}
+          allowedKinds={["whatsapp", "welcome", "reminder"]}
+          onApply={(content) => setMessage(content)}
+        />
         <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={6} />
       </label>
 

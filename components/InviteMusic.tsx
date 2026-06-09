@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
-const nonInvitationSegments = new Set(["", "admin", "api", "_next", "templates", "order", "pricing", "faq", "contact", "client", "client-invitations"]);
+const nonInvitationSegments = new Set(["", "admin", "api", "_next", "templates", "order", "pricing", "faq", "contact", "client", "client-invitations", "manage"]);
 let activeInviteAudio: HTMLAudioElement | null = null;
 
 function isTemplatePreviewPath(segments: string[]) {

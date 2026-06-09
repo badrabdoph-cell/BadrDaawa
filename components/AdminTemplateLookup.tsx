@@ -77,10 +77,10 @@ export function AdminTemplateLookup({
               <p>
                 القالب المستخدم: <strong>{searchedInvitation.templateSlug}</strong>
               </p>
-              <small>/{searchedInvitation.code}</small>
+              <small>/{searchedInvitation.customSlug || searchedInvitation.code}</small>
             </div>
             <div className="button-row">
-              <Link className="btn btn-soft" href={`/${searchedInvitation.code}`}>
+              <Link className="btn btn-soft" href={`/${searchedInvitation.customSlug || searchedInvitation.code}`}>
                 <Eye size={17} />
                 معاينة
               </Link>

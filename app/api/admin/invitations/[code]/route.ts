@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
+import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
-import { getFileInvitationByCode, setFileInvitationActive, setFileInvitationArchived, softDeleteFileInvitation } from "@/lib/file-store";
+import { getFileInvitationByCode, setFileInvitationActive, setFileInvitationArchived, softDeleteFileInvitation, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -25,10 +26,15 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-async function updateDatabaseInvitation(code: string, action: string) {
+async function updateDatabaseInvitation(code: string, action: string, customSlug?: string) {
   if (!prisma) return false;
 
   try {
+    if (action === "custom-slug") {
+      const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data: { customSlug: customSlug || null } });
+      return result.count > 0;
+    }
+
     if (action === "delete") {
       const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data: { deletedAt: new Date(), status: "ARCHIVED" } });
       return result.count > 0;
@@ -48,7 +54,8 @@ async function updateDatabaseInvitation(code: string, action: string) {
   return false;
 }
 
-async function updateFileInvitationAction(code: string, action: string) {
+async function updateFileInvitationAction(code: string, action: string, customSlug?: string) {
+  if (action === "custom-slug") return updateFileInvitation(code, { customSlug: customSlug || undefined });
   if (action === "delete") return softDeleteFileInvitation(code);
   if (action === "pause") return setFileInvitationActive(code, false);
   if (action === "resume") return setFileInvitationActive(code, true);
@@ -63,6 +70,7 @@ async function getInvitationAuditSnapshot(code: string) {
         where: { code },
         select: {
           code: true,
+          customSlug: true,
           status: true,
           groomName: true,
           brideName: true,
@@ -79,6 +87,7 @@ async function getInvitationAuditSnapshot(code: string) {
   if (!fileInvitation) return null;
   return {
     code: fileInvitation.code,
+    customSlug: fileInvitation.customSlug,
     isActive: fileInvitation.isActive,
     groomName: fileInvitation.groomName,
     brideName: fileInvitation.brideName,
@@ -97,27 +106,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { code } = await params;
   const formData = await request.formData();
   const action = String(formData.get("action") || "").trim();
-  if (!code || !["pause", "resume", "archive", "delete"].includes(action)) {
+  if (!code || !["pause", "resume", "archive", "delete", "custom-slug"].includes(action)) {
     return redirectBack(request, "invalid");
   }
 
   const oldValues = await getInvitationAuditSnapshot(code);
-  const updatedDatabase = await updateDatabaseInvitation(code, action);
-  const updatedFile = updatedDatabase ? false : await updateFileInvitationAction(code, action);
+  let customSlug = "";
+  if (action === "custom-slug") {
+    const result = await resolveCustomInvitationSlug(formData.get("customSlug"), code);
+    if (result.error) {
+      const url = getRedirectUrl("/admin/invitations", request.headers, request.nextUrl.origin);
+      url.searchParams.set("status", "custom-url-error");
+      url.searchParams.set("message", result.error);
+      return NextResponse.redirect(url, 303);
+    }
+    customSlug = result.slug;
+  }
+
+  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug);
+  const updatedFile = updatedDatabase ? false : await updateFileInvitationAction(code, action, customSlug);
   const changed = updatedDatabase || updatedFile;
 
   if (changed) {
     safeRevalidatePath("/admin/invitations");
     safeRevalidatePath("/admin");
     safeRevalidatePath(`/${code}`);
+    if (oldValues && "customSlug" in oldValues && typeof oldValues.customSlug === "string") safeRevalidatePath(`/${oldValues.customSlug}`);
+    if (customSlug) safeRevalidatePath(`/${customSlug}`);
     safeRevalidatePath(`/${code}/ad_3399`);
     queueGitHubSync(`Client invitation ${action}: ${code}.`, { createSnapshot: true });
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
-      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : "invitation.resume",
+      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "custom-slug" ? "invitation.update" : "invitation.resume",
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
-      newValues: action === "delete" ? { deleted: true } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
+      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
       metadata: { storage: updatedDatabase ? "database" : "file" },
     });
   }

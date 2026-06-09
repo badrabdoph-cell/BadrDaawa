@@ -1,9 +1,14 @@
 import { KeyRound, Trash2, UserCheck, UserPlus, UsersRound } from "lucide-react";
+import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { StatsGrid } from "@/components/StatsGrid";
 import { getAdminCustomers } from "@/lib/admin-data";
+import { getInternalNotes, groupInternalNotesByEntity } from "@/lib/internal-notes";
+
+export const dynamic = "force-dynamic";
 
 type CustomersPageParams = {
   status?: string;
+  noteStatus?: string;
 };
 
 function statusMessage(value?: string) {
@@ -13,15 +18,26 @@ function statusMessage(value?: string) {
   return "";
 }
 
+function noteStatusMessage(value?: string) {
+  if (value === "created") return "تمت إضافة الملاحظة الداخلية.";
+  if (value === "updated") return "تم تحديث الملاحظة الداخلية.";
+  if (value === "deleted") return "تم حذف الملاحظة الداخلية.";
+  if (value === "missing") return "لم يتم العثور على الملاحظة المطلوبة.";
+  if (value === "invalid") return "اكتب ملاحظة صالحة قبل الحفظ.";
+  return "";
+}
+
 export default async function CustomersPage({
   searchParams,
 }: {
   searchParams: Promise<CustomersPageParams>;
 }) {
-  const [params, customers] = await Promise.all([searchParams, getAdminCustomers()]);
+  const [params, customers, internalNotes] = await Promise.all([searchParams, getAdminCustomers(), getInternalNotes({ entityType: "customer" })]);
   const activeCustomers = customers.filter((customer) => customer.isActive).length;
   const totalInvitations = customers.reduce((sum, customer) => sum + customer.invitations, 0);
   const message = statusMessage(params.status);
+  const noteMessage = noteStatusMessage(params.noteStatus);
+  const notesByEntity = groupInternalNotesByEntity(internalNotes);
 
   return (
     <>
@@ -36,6 +52,7 @@ export default async function CustomersPage({
         </button>
       </div>
       {message ? <div className={params.status === "deleted" ? "notice success" : "notice danger"}>{message}</div> : null}
+      {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
       <StatsGrid
         stats={[
           { label: "إجمالي العملاء", value: customers.length, hint: "متزامن من حسابات الدعوات المنشأة" },
@@ -60,6 +77,7 @@ export default async function CustomersPage({
               <th>اسم الدخول</th>
               <th>عدد الدعوات</th>
               <th>الحالة</th>
+              <th>ملاحظات داخلية</th>
               <th>إجراءات</th>
             </tr>
           </thead>
@@ -72,6 +90,15 @@ export default async function CustomersPage({
                 <td>{customer.invitations}</td>
                 <td>
                   <span className={customer.isActive ? "status success" : "status danger"}>{customer.isActive ? "نشط" : "متوقف"}</span>
+                </td>
+                <td>
+                  <InternalNotesPanel
+                    entityType="customer"
+                    entityId={customer.id}
+                    notes={notesByEntity.get(`customer:${customer.id}`) || []}
+                    returnTo="/admin/customers"
+                    compact
+                  />
                 </td>
                 <td>
                   <div className="button-row">

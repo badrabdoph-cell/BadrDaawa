@@ -207,7 +207,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     notes: notes || undefined,
     imageUrls,
     musicEnabled: row.musicEnabled ?? Boolean(row.musicUrl || parseMusicUrlFromNotes(notes)),
-    musicChoice: row.musicChoice === "upload" || row.musicChoice === "url" || row.musicChoice === "library" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
+    musicChoice: row.musicChoice === "upload" || row.musicChoice === "video" || row.musicChoice === "url" || row.musicChoice === "library" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
     musicUrl: row.musicUrl || parseMusicUrlFromNotes(notes) || undefined,
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer) || parsePhotographerFromNotes(notes),

@@ -1,7 +1,7 @@
 "use client";
 
 import type { MutableRefObject } from "react";
-import { ImagePlus, Link2, Loader2, MessageSquareText, Music2, UploadCloud, UserRound } from "lucide-react";
+import { FileVideo, ImagePlus, Link2, Loader2, MessageSquareText, Music2, UploadCloud, UserRound } from "lucide-react";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import { uploadBrowserPreviewImage, type BrowserImageUploadOptions } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
@@ -12,7 +12,7 @@ export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arab
 export type AdminToolMusicFile = { url: string; modifiedAt?: number; name?: string; id?: string; sizeBytes?: number; extension?: string };
 export type AdminToolImageSlot = { url: string; name: string; loading: boolean };
 export type AdminToolUploadSlot = { url: string; name: string; loading: boolean };
-export type AdminToolMusicChoice = "default" | "library" | "upload" | "url";
+export type AdminToolMusicChoice = "default" | "library" | "upload" | "video" | "url";
 
 export type AdminInvitationToolValues = {
   templateSlug: string;
@@ -77,6 +77,15 @@ export async function uploadAdminMusic(file: File) {
   return data.musicUrl;
 }
 
+export async function uploadAdminVideoAudio(file: File) {
+  const formData = new FormData();
+  formData.append("videoFile", file);
+  const response = await fetch("/api/orders/extract-video-audio", { method: "POST", body: formData });
+  const data = (await response.json().catch(() => null)) as { musicUrl?: string; fileName?: string; error?: string } | null;
+  if (!response.ok || !data?.musicUrl) throw new Error(data?.error || "تعذر استخراج الصوت من الفيديو.");
+  return { musicUrl: data.musicUrl, fileName: data.fileName || `${file.name.replace(/\.[^.]+$/, "") || "video"}-audio.mp3` };
+}
+
 export function validateAdminInvitationTools(values: AdminInvitationToolValues, options: { requireReuploadText?: string } = {}) {
   if (!values.groomName.trim() || !values.brideName.trim() || !values.weddingDate || !values.venue.trim()) {
     return "اكتب اسم العريس والعروسة والتاريخ والعنوان قبل الحفظ أو النشر.";
@@ -113,6 +122,7 @@ export function AdminInvitationTools({
   onPhotographerLogoFile,
   onInvitationTextChange,
   onMusicFile,
+  onMusicVideoFile,
 }: {
   values: AdminInvitationToolValues;
   templates: AdminToolTemplate[];
@@ -130,6 +140,7 @@ export function AdminInvitationTools({
   onPhotographerLogoFile: (file?: File | null) => void;
   onInvitationTextChange: (key: keyof InvitationTexts, value: string) => void;
   onMusicFile: (file?: File | null) => void;
+  onMusicVideoFile?: (file?: File | null) => void;
 }) {
   return (
     <>
@@ -246,8 +257,14 @@ export function AdminInvitationTools({
             </label>
             <label className="builder-logo-upload">
               {values.musicBusy ? <Loader2 size={17} /> : <UploadCloud size={17} />}
-              <span>{values.musicFileName || "رفع ملف جديد"}</span>
-              <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" onChange={(event) => onMusicFile(event.target.files?.[0])} />
+              <span>{values.musicChoice === "upload" && values.musicFileName ? values.musicFileName : "رفع ملف MP3"}</span>
+              <input type="file" accept="audio/mpeg,.mp3" onChange={(event) => onMusicFile(event.target.files?.[0])} />
+            </label>
+            <label className="builder-logo-upload">
+              {values.musicBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+              <span>{values.musicChoice === "video" && values.musicFileName ? values.musicFileName : "استخراج الصوت من فيديو"}</span>
+              <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" onChange={(event) => onMusicVideoFile?.(event.target.files?.[0])} />
+              <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
             </label>
             <label className="field">
               <span>رابط ملف صوتي خارجي</span>

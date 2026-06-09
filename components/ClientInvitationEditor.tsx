@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Eye, Heart, ImagePlus, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { Copy, Disc3, Eye, FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { uploadBrowserPreviewImage } from "@/lib/browser-image-upload";
@@ -29,6 +29,15 @@ function toDateInput(value: string) {
 function isPlayableAudioUrl(value: string) {
   if (!value.trim()) return true;
   return /^(https?:\/\/.+|\/uploads\/music\/.+)\.(mp3|wav|ogg|webm|m4a|aac|flac)(?:[?#].*)?$/i.test(value.trim());
+}
+
+async function extractClientVideoAudio(file: File) {
+  const formData = new FormData();
+  formData.append("videoFile", file);
+  const response = await fetch("/api/orders/extract-video-audio", { method: "POST", body: formData });
+  const data = (await response.json().catch(() => null)) as { musicUrl?: string; fileName?: string; error?: string } | null;
+  if (!response.ok || !data?.musicUrl) throw new Error(data?.error || "تعذر استخراج الصوت من الفيديو.");
+  return { musicUrl: data.musicUrl, fileName: data.fileName || `${file.name.replace(/\.[^.]+$/, "") || "video"}-audio.mp3` };
 }
 
 function createStoryItem(): CoupleStoryItem {
@@ -65,6 +74,7 @@ export function ClientInvitationEditor({
   const [photographerInstagramUrl, setPhotographerInstagramUrl] = useState(invitation.photographer?.instagramUrl || "");
   const [musicEnabled, setMusicEnabled] = useState(invitation.musicEnabled !== false && Boolean(invitation.musicUrl));
   const [musicUrl, setMusicUrl] = useState(invitation.musicUrl || "");
+  const [musicChoice, setMusicChoice] = useState<"library" | "upload" | "video" | "url">(() => (musicFiles.some((file) => file.url === invitation.musicUrl) ? "library" : "upload"));
   const [musicDataUrl, setMusicDataUrl] = useState("");
   const [musicFileName, setMusicFileName] = useState("");
   const [invitationTexts, setInvitationTexts] = useState<Required<InvitationTexts>>(() => normalizeInvitationTexts(invitation.texts));
@@ -233,9 +243,33 @@ export function ClientInvitationEditor({
       return;
     }
     setMusicEnabled(true);
+    setMusicChoice("upload");
     setMusicDataUrl(dataUrl);
     setMusicUrl(data.musicUrl);
     setMusicFileName(file.name);
+    setStatus("success");
+    setMessage("تم رفع ملف MP3 ويمكنك تشغيل المعاينة الآن.");
+  }
+
+  async function handleMusicVideoFile(file?: File | null) {
+    if (!file) return;
+    markDirty();
+    setBusy(true);
+    try {
+      const extracted = await extractClientVideoAudio(file);
+      setMusicEnabled(true);
+      setMusicChoice("video");
+      setMusicDataUrl("");
+      setMusicUrl(extracted.musicUrl);
+      setMusicFileName(extracted.fileName);
+      setStatus("success");
+      setMessage(`تم استخراج الصوت من الفيديو وحفظه كملف MP3: ${extracted.fileName}`);
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "تعذر استخراج الصوت من الفيديو.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function wirePreviewClicks() {
@@ -448,22 +482,42 @@ export function ClientInvitationEditor({
           </label>
           {musicEnabled ? (
             <div className="builder-mini-grid">
+              <div className="order-music-choice-grid full" role="radiogroup" aria-label="اختيار مصدر الموسيقى">
+                <button className={musicChoice === "library" ? "active" : ""} type="button" onClick={() => { setMusicChoice("library"); setMusicDataUrl(""); markDirty(); }}><Disc3 size={16} /> مكتبة الموسيقى</button>
+                <button className={musicChoice === "upload" ? "active" : ""} type="button" onClick={() => { setMusicChoice("upload"); setMusicDataUrl(""); markDirty(); }}><UploadCloud size={16} /> رفع MP3</button>
+                <button className={musicChoice === "video" ? "active" : ""} type="button" onClick={() => { setMusicChoice("video"); setMusicDataUrl(""); markDirty(); }}><FileVideo size={16} /> استخراج الصوت من فيديو</button>
+                <button className={musicChoice === "url" ? "active" : ""} type="button" onClick={() => { setMusicChoice("url"); setMusicDataUrl(""); markDirty(); }}><Link2 size={16} /> رابط مباشر</button>
+              </div>
+              {musicChoice === "library" ? (
               <label className="field">
                 <span>اختيار من الملفات المحفوظة</span>
-                <select value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); markDirty(); }}>
+                <select value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); setMusicChoice("library"); markDirty(); }}>
                   <option value="">اختار ملف محفوظ</option>
                   {musicFiles.map((file) => <option key={file.url} value={file.url}>{file.name || file.url.split("/").pop()}</option>)}
                 </select>
               </label>
+              ) : null}
+              {musicChoice === "upload" ? (
               <label className="builder-logo-upload">
                 {busy ? <Loader2 size={17} /> : <UploadCloud size={17} />}
-                <span>{musicFileName || "رفع ملف جديد"}</span>
-                <input type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac,.flac" onChange={(event) => handleMusicFile(event.target.files?.[0])} />
+                <span>{musicFileName || "رفع ملف MP3"}</span>
+                <input type="file" accept="audio/mpeg,.mp3" onChange={(event) => handleMusicFile(event.target.files?.[0])} />
               </label>
+              ) : null}
+              {musicChoice === "video" ? (
+              <label className="builder-logo-upload">
+                {busy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+                <span>{musicFileName || "رفع فيديو لاستخراج الصوت"}</span>
+                <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" onChange={(event) => handleMusicVideoFile(event.target.files?.[0])} />
+                <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
+              </label>
+              ) : null}
+              {musicChoice === "url" ? (
               <label className="field full">
                 <span>رابط ملف صوتي خارجي</span>
-                <input value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); markDirty(); }} />
+                <input value={musicUrl} onChange={(event) => { setMusicUrl(event.target.value); setMusicDataUrl(""); setMusicChoice("url"); markDirty(); }} />
               </label>
+              ) : null}
               {musicUrl ? <audio controls preload="metadata" src={musicUrl} /> : null}
             </div>
           ) : null}
