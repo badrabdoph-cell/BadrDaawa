@@ -19,8 +19,8 @@ export default async function TemplatesPage() {
         <div className="container">
           <div className="section-title-block templates-title-block">
             <span className="eyebrow">شاهد التصاميم المختلفة</span>
-            <h1 className="section-title">اختار قالب يحكي فرحتك</h1>
-            <p className="section-lead">عاين أي قالب براحتك، ولما تستقر على الشكل اضغط اختار وكمّل بيانات الدعوة في خطوة هادية وسريعة.</p>
+            <h1 className="section-title">فرحتك تستاهل دعوة مميزة 🤍</h1>
+            <p className="section-lead">عاين كل القوالب، اختار ستايل دعوتك المفضل، وسيب الباقي علينا. ✨</p>
           </div>
           <TemplateBrowser templates={templates} />
         </div>

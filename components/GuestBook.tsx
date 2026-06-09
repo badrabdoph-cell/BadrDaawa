@@ -11,7 +11,7 @@ const previewMessages: GuestBookMessage[] = [
     id: "preview-guest-book",
     invitationCode: "preview",
     name: "ضيف عزيز",
-    message: "ربنا يتم فرحتكم على خير وتفضل أيامكم كلها حب ونور.",
+    message: "ربنا يجعل بدايتكم كلها خير، وتعيشوا أجمل أيام العمر سوا. 🌹",
     status: "approved",
     createdAt: new Date(0).toISOString(),
   },

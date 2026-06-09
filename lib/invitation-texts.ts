@@ -3,7 +3,7 @@ import type { CoupleStoryItem, InvitationTexts } from "./types";
 export const defaultInvitationTexts: Required<InvitationTexts> = {
   groomNameEn: "",
   brideNameEn: "",
-  inviteMessage: "يومنا لن يكتمل إلا بحضوركم، ننتظركم لنصنع معاً ذكريات لا تنسى في أفضل يوم في عمرنا.",
+  inviteMessage: "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
   inviteMessageSecondary: "وجودكم معنا يجعل فرحتنا أجمل.",
   rsvpQuestion: "ناوي تحضر وتشاركنا فرحه عمرنا؟",
   rsvpDeclinedMessage: "حزين إنك مش معايا في يومي المفضل 🥹",

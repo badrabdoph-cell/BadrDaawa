@@ -50,9 +50,9 @@ const contentPath = path.join(process.cwd(), "data", "home-content.json");
 export const defaultHomeContent: HomeContent = {
   hero: {
     kicker: "Forever Begins Here",
-    mainTitle: "ودّع الدعوات التقليدية",
-    accentTitle: "الجيل الجديد من دعوات الزفاف بدأ هنا",
-    description: "قدّم نفسك وشريكة حياتك بطريقة مميزة قبل الحفل",
+    mainTitle: "فرحتك تستاهل أكثر من مجرد دعوة 💍",
+    accentTitle: "ودّع الورق والزحمه وصمّم دعوتك بطابعك الخاص",
+    description: "كل قصة حب تستحق أن تُروى بطريقة مميزة ❤️",
     primaryCta: "ابدأ إنشاء دعوتك",
     secondaryCta: "شاهد التصاميم المختلفة",
   },
