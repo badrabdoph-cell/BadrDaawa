@@ -5,8 +5,9 @@
       "invitationCode": "wedding-invitation-1",
       "name": "ساره",
       "message": "هتبقي احلي عروسه في الدنيا",
-      "status": "pending",
-      "createdAt": "2026-06-09T11:57:40.803Z"
+      "status": "approved",
+      "createdAt": "2026-06-09T11:57:40.803Z",
+      "reviewedAt": "2026-06-09T12:41:51.113Z"
     }
   ]
 }
