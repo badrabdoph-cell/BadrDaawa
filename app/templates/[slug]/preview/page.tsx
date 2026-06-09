@@ -6,6 +6,7 @@ import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
@@ -32,6 +33,7 @@ type PageProps = {
     photographerLogoUrl?: string;
     musicEnabled?: string;
     musicUrl?: string;
+    heroVideoUrl?: string;
     language?: string;
     openingText?: string;
     galleryStories?: string;
@@ -101,6 +103,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const hasExplicitMusicPreview = query?.musicEnabled !== undefined || query?.musicUrl !== undefined;
   const explicitMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
   const previewMusicUrl = hasExplicitMusicPreview ? explicitMusicUrl : cleanPlayableAudioUrl(template.musicUrl || "");
+  const previewHeroVideoUrl = cleanInvitationHeroVideoUrl(query?.heroVideoUrl);
   const previewMusicEnabled = hasExplicitMusicPreview ? query?.musicEnabled === "1" && Boolean(previewMusicUrl) : Boolean(previewMusicUrl);
   const hasExplicitPhotographerPreview = query?.photographerEnabled !== undefined;
   const useTemplatePhotographer = query?.builderPreview !== "1" && !hasExplicitPhotographerPreview;
@@ -155,6 +158,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     city: cleanPreviewText(query?.city, "البحيرة"),
     mapUrl: cleanPreviewText(query?.mapUrl, "https://maps.google.com/?q=Royal+Hall+Beheira"),
     heroPhoto: previewGallery[0] || fallbackGallery[0],
+    heroVideoUrl: previewHeroVideoUrl || undefined,
     gallery: previewGallery.length ? previewGallery : fallbackGallery,
     musicUrl: previewMusicUrl,
     musicEnabled: previewMusicEnabled,

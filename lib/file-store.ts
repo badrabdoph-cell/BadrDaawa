@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { isBrowserDisplayImageUrl } from "./image-formats";
+import { cleanInvitationHeroVideoUrl } from "./invitation-media";
 import { hashPassword, verifyPassword } from "./password";
 import { makeNumberedInvitationSlug } from "./slug";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
@@ -57,6 +58,7 @@ type CreateFileInvitationInput = {
   city: string;
   mapUrl: string;
   gallery: string[];
+  heroVideoUrl?: string;
   musicUrl: string;
   musicEnabled?: boolean;
   texts?: Invitation["texts"];
@@ -65,7 +67,7 @@ type CreateFileInvitationInput = {
 };
 
 type FileInvitationUpdate = Partial<
-  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "language" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "manageToken" | "manageTokenExpiresAt" | "texts" | "photographer" | "gallery" | "heroPhoto" | "isActive">
+  Pick<Invitation, "templateSlug" | "customSlug" | "status" | "language" | "groomName" | "brideName" | "weddingDate" | "weddingTime" | "venue" | "city" | "mapUrl" | "musicUrl" | "musicEnabled" | "manageToken" | "manageTokenExpiresAt" | "texts" | "photographer" | "gallery" | "heroPhoto" | "heroVideoUrl" | "isActive">
 >;
 
 type CreateFileOrderInput = Omit<OrderRequest, "id" | "status" | "createdAt"> & {
@@ -140,7 +142,8 @@ function normalizeInvitationImages(invitation: Invitation): Invitation {
   };
   const gallery = invitation.gallery.map(cleanImage).filter(Boolean);
   const heroPhoto = cleanImage(invitation.heroPhoto) || gallery[0] || invitation.heroPhoto;
-  return { ...invitation, manageToken: undefined, manageTokenExpiresAt: undefined, status: invitation.status || (invitation.isActive ? "active" : "paused"), heroPhoto, gallery: gallery.length ? gallery : invitation.gallery };
+  const heroVideoUrl = cleanInvitationHeroVideoUrl(invitation.heroVideoUrl || (invitation.texts as Record<string, unknown> | undefined)?.heroVideoUrl);
+  return { ...invitation, manageToken: undefined, manageTokenExpiresAt: undefined, status: invitation.status || (invitation.isActive ? "active" : "paused"), heroPhoto, heroVideoUrl: heroVideoUrl || undefined, gallery: gallery.length ? gallery : invitation.gallery };
 }
 
 function normalizeOrderImages(order: OrderRequest): OrderRequest {
@@ -327,6 +330,7 @@ export async function createFileInvitation(input: CreateFileInvitationInput) {
     city: input.city,
     mapUrl: input.mapUrl,
     heroPhoto: input.gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
+    heroVideoUrl: cleanInvitationHeroVideoUrl(input.heroVideoUrl) || undefined,
     gallery: input.gallery,
     musicUrl: input.musicUrl || undefined,
     musicEnabled: input.musicEnabled === true,

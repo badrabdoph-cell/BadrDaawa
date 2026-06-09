@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation, getFileOrder, softDeleteFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
@@ -34,6 +35,7 @@ type AdminOrderPayload = {
   notes?: string;
   templateSlug?: string;
   imageUrls?: string[];
+  heroVideoUrl?: string;
   musicEnabled?: boolean;
   musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;
@@ -185,6 +187,9 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
   const templateSlug = cleanText(payload.templateSlug, existing?.templateSlug || "featured-1", 140);
   const images = cleanImageList(payload.imageUrls).length ? cleanImageList(payload.imageUrls) : existing?.imageUrls || [];
   const musicChoice = normalizeMusicChoice(payload.musicChoice, normalizeMusicChoice(existing?.musicChoice));
+  const existingTexts = existing?.texts && typeof existing.texts === "object" ? (existing.texts as Record<string, unknown>) : {};
+  const heroVideoUrl = typeof payload.heroVideoUrl === "string" ? cleanInvitationHeroVideoUrl(payload.heroVideoUrl) : cleanInvitationHeroVideoUrl(existingTexts.heroVideoUrl);
+  const texts = invitationTextsWithHeroVideo(normalizeInvitationTexts(payload.texts ?? existing?.texts), heroVideoUrl);
   return {
     groomName,
     brideName,
@@ -199,7 +204,8 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
     musicEnabled: payload.musicEnabled ?? existing?.musicEnabled ?? false,
     musicChoice,
     musicUrl: cleanText(payload.musicUrl, existing?.musicUrl || "", 500),
-    texts: normalizeInvitationTexts(payload.texts ?? existing?.texts),
+    heroVideoUrl,
+    texts,
     photographer: cleanPhotographer(payload.photographer ?? existing?.photographer),
     rejectionReason: cleanText(payload.rejectionReason, existing?.rejectionReason || "", 500),
   };
@@ -344,6 +350,7 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
     city: "",
     mapUrl: draft.mapUrl,
     gallery: gallery.length ? gallery : fallbackGallery,
+    heroVideoUrl: draft.heroVideoUrl,
     musicUrl,
     musicEnabled: Boolean(draft.musicEnabled),
     texts: draft.texts,

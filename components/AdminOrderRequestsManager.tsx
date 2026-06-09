@@ -6,6 +6,7 @@ import {
   AdminInvitationTools,
   emptyAdminToolImages,
   emptyAdminToolUpload,
+  uploadAdminHeroVideo,
   uploadAdminMusic,
   uploadAdminPreviewImage,
   uploadAdminVideoAudio,
@@ -41,6 +42,9 @@ type OrderFormState = {
   notes: string;
   templateSlug: string;
   imageUrls: AdminToolImageSlot[];
+  heroVideoUrl: string;
+  heroVideoName: string;
+  heroVideoBusy: boolean;
   musicEnabled: boolean;
   musicChoice: AdminToolMusicChoice;
   musicUrl: string;
@@ -92,6 +96,8 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles
   const photographer = order.photographer;
   const imageUrls = [...(order.imageUrls || [])].slice(0, 3);
   const photographerLogoUrl = photographer?.logoUrl || "";
+  const rawTexts = order.texts && typeof order.texts === "object" ? (order.texts as Record<string, unknown>) : {};
+  const heroVideoUrl = typeof rawTexts.heroVideoUrl === "string" ? rawTexts.heroVideoUrl : "";
   const musicFile = musicFiles.find((file) => file.id === order.musicLibraryTrackId || file.url === order.musicUrl);
   const musicChoice = normalizeOrderMusicChoice(order, musicFiles);
   return {
@@ -104,6 +110,9 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles
     notes: order.notes || "",
     templateSlug: order.templateSlug || fallbackTemplate,
     imageUrls: emptyImages.map((slot, index) => ({ ...slot, url: imageUrls[index] || "", name: imageUrls[index]?.split("/").pop() || "" })),
+    heroVideoUrl,
+    heroVideoName: heroVideoUrl.split("/").pop() || "",
+    heroVideoBusy: false,
     musicEnabled: Boolean(order.musicEnabled),
     musicChoice,
     musicUrl: order.musicUrl || "",
@@ -181,6 +190,7 @@ export function AdminOrderRequestsManager({
       city: "",
       mapUrl: form.mapUrl,
       gallery: form.imageUrls.map((image) => image.url).filter(Boolean),
+      heroVideoUrl: form.heroVideoUrl,
       musicEnabled: form.musicEnabled,
       musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
       disableMusic: !form.musicEnabled,
@@ -206,6 +216,9 @@ export function AdminOrderRequestsManager({
       venue: form.venue,
       mapUrl: form.mapUrl,
       images: form.imageUrls,
+      heroVideoUrl: form.heroVideoUrl,
+      heroVideoName: form.heroVideoName,
+      heroVideoBusy: form.heroVideoBusy,
       photographerEnabled: form.photographerEnabled,
       photographerName: form.photographerName,
       photographerLogo: form.photographerLogo,
@@ -259,6 +272,9 @@ export function AdminOrderRequestsManager({
     if (patch.venue !== undefined) update.venue = patch.venue;
     if (patch.mapUrl !== undefined) update.mapUrl = patch.mapUrl;
     if (patch.images !== undefined) update.imageUrls = patch.images;
+    if (patch.heroVideoUrl !== undefined) update.heroVideoUrl = patch.heroVideoUrl;
+    if (patch.heroVideoName !== undefined) update.heroVideoName = patch.heroVideoName;
+    if (patch.heroVideoBusy !== undefined) update.heroVideoBusy = patch.heroVideoBusy;
     if (patch.musicEnabled !== undefined) update.musicEnabled = patch.musicEnabled;
     if (patch.musicChoice !== undefined) update.musicChoice = patch.musicChoice;
     if (patch.musicUrl !== undefined) update.musicUrl = patch.musicUrl;
@@ -297,6 +313,7 @@ export function AdminOrderRequestsManager({
       notes: form.notes,
       templateSlug: form.templateSlug,
       imageUrls: form.imageUrls.map((image) => image.url).filter(Boolean),
+      heroVideoUrl: form.heroVideoUrl,
       musicEnabled: form.musicEnabled,
       musicChoice: form.musicChoice,
       musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
@@ -425,6 +442,19 @@ export function AdminOrderRequestsManager({
     }
   }
 
+  async function handleHeroVideoFile(file?: File | null) {
+    if (!file) return;
+    patchForm({ heroVideoBusy: true, heroVideoName: file.name });
+    try {
+      const heroVideoUrl = await uploadAdminHeroVideo(file);
+      patchForm({ heroVideoBusy: false, heroVideoUrl, heroVideoName: file.name });
+      setNotice({ kind: "success", text: "تم رفع فيديو خلفية الدعوة وربطه بالمعاينة." });
+    } catch (error) {
+      patchForm({ heroVideoBusy: false, heroVideoUrl: "", heroVideoName: "" });
+      setNotice({ kind: "error", text: error instanceof Error ? error.message : "تعذر رفع فيديو خلفية الدعوة." });
+    }
+  }
+
   async function copy(value: string) {
     await navigator.clipboard.writeText(value);
     setNotice({ kind: "success", text: "تم نسخ الرابط." });
@@ -514,6 +544,7 @@ export function AdminOrderRequestsManager({
           musicLabel="تشغيل الموسيقى عند فتح الدعوة"
           onPatch={patchToolValues}
           onImageFile={handleImageFile}
+          onHeroVideoFile={handleHeroVideoFile}
           onPhotographerLogoFile={handlePhotographerLogoFile}
           onInvitationTextChange={updateInvitationText}
           onMusicFile={handleMusicFile}

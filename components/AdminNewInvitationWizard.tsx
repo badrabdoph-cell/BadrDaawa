@@ -9,6 +9,7 @@ import {
   emptyAdminToolUpload,
   isPlayableAudioUrl,
   uploadAdminMusic,
+  uploadAdminHeroVideo,
   uploadAdminPreviewImage,
   uploadAdminVideoAudio,
   validateAdminInvitationTools,
@@ -55,6 +56,8 @@ type DraftState = {
   mapUrl: string;
   customSlug: string;
   images: AdminToolImageSlot[];
+  heroVideoUrl: string;
+  heroVideoName: string;
   musicEnabled: boolean;
   musicChoice: AdminToolMusicChoice;
   musicUrl: string;
@@ -154,6 +157,8 @@ function createInitialDraft(templates: WizardTemplate[]): DraftState {
     mapUrl: "",
     customSlug: "",
     images: emptyAdminToolImages,
+    heroVideoUrl: "",
+    heroVideoName: "",
     musicEnabled: false,
     musicChoice: "default",
     musicUrl: "",
@@ -181,6 +186,8 @@ function normalizeDraft(value: unknown, templates: WizardTemplate[]): DraftState
     language,
     templateSlug,
     images: Array.isArray(input.images) ? input.images.slice(0, unifiedImageSlots.length).map((image) => ({ url: image?.url || "", name: image?.name || "", loading: false })) : fallback.images,
+    heroVideoUrl: typeof input.heroVideoUrl === "string" ? input.heroVideoUrl : "",
+    heroVideoName: typeof input.heroVideoName === "string" ? input.heroVideoName : "",
     photographerLogo: { url: input.photographerLogo?.url || "", name: input.photographerLogo?.name || "", loading: false },
     invitationTexts: { ...defaultInvitationTexts, ...(input.invitationTexts || {}) },
   };
@@ -222,7 +229,7 @@ export function AdminNewInvitationWizard({
   const [savedCode, setSavedCode] = useState("");
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
   const [message, setMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
-  const [busy, setBusy] = useState<"idle" | "draft" | "publish" | "music" | "image" | "logo">("idle");
+  const [busy, setBusy] = useState<"idle" | "draft" | "publish" | "music" | "image" | "logo" | "heroVideo">("idle");
   const [autosaveState, setAutosaveState] = useState("جاهز");
   const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -265,6 +272,7 @@ export function AdminNewInvitationWizard({
       city: draft.city,
       mapUrl: draft.mapUrl,
       gallery: draft.images.map((image) => image.url).filter(Boolean),
+      heroVideoUrl: draft.heroVideoUrl,
       musicEnabled: draft.musicEnabled,
       musicUrl: draft.musicChoice === "default" ? "" : draft.musicUrl,
       disableMusic: true,
@@ -527,6 +535,22 @@ export function AdminNewInvitationWizard({
     }
   }
 
+  async function handleHeroVideoFile(file?: File | null) {
+    if (!file) return;
+    setBusy("heroVideo");
+    patch({ heroVideoName: file.name });
+    try {
+      const heroVideoUrl = await uploadAdminHeroVideo(file);
+      patch({ heroVideoUrl, heroVideoName: file.name });
+      setMessage({ kind: "success", text: "تم رفع فيديو خلفية الدعوة وربطه بالمعاينة." });
+    } catch (error) {
+      patch({ heroVideoUrl: "", heroVideoName: "" });
+      setMessage({ kind: "error", text: error instanceof Error ? error.message : "تعذر رفع فيديو خلفية الدعوة." });
+    } finally {
+      setBusy("idle");
+    }
+  }
+
   async function handleLogoFile(file?: File | null) {
     if (!file) return;
     setBusy("logo");
@@ -570,6 +594,9 @@ export function AdminNewInvitationWizard({
       venue: draft.venue,
       mapUrl: draft.mapUrl,
       images: draft.images,
+      heroVideoUrl: draft.heroVideoUrl,
+      heroVideoName: draft.heroVideoName,
+      heroVideoBusy: busy === "heroVideo",
       photographerEnabled: draft.photographerEnabled,
       photographerName: draft.photographerName,
       photographerLogo: draft.photographerLogo,
@@ -606,6 +633,7 @@ export function AdminNewInvitationWizard({
         mapUrl: draft.mapUrl,
         customSlug: draft.customSlug,
         gallery: draft.images.map((image) => image.url).filter(Boolean),
+        heroVideoUrl: draft.heroVideoUrl,
         musicEnabled: draft.musicEnabled,
         musicChoice: draft.musicChoice,
         musicUrl: draft.musicChoice === "default" ? "" : draft.musicUrl,
@@ -757,6 +785,18 @@ export function AdminNewInvitationWizard({
             );
           })}
         </div>
+        <div className="new-invite-field-grid">
+          <label className="new-invite-upload-line full">
+            <FileVideo size={17} />
+            <span>{busy === "heroVideo" ? "جاري رفع فيديو الخلفية..." : draft.heroVideoName || "رفع فيديو خلفية قصير اختياري"}</span>
+            <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v" onChange={(event) => handleHeroVideoFile(event.target.files?.[0])} />
+            <small>إذا تم رفع فيديو سيظهر بدلاً من صورة الغلاف الرئيسية، وتظل الصورة الأولى نسخة احتياطية للتحميل الضعيف.</small>
+          </label>
+          <label className="field full">
+            <span>رابط فيديو الخلفية</span>
+            <input dir="ltr" value={draft.heroVideoUrl} onChange={(event) => patch({ heroVideoUrl: event.target.value, heroVideoName: event.target.value ? draft.heroVideoName || "رابط فيديو" : "" })} placeholder="/uploads/client-invitations/hero.mp4" />
+          </label>
+        </div>
         <p className="new-invite-help"><UploadCloud size={16} /> يمكنك السحب والإفلات، القص قبل الرفع، الاستبدال، وإعادة الترتيب. عناوين الصور اختيارية، وإذا تركت فارغة يظل المعرض بالشكل الحالي.</p>
       </>
     );
@@ -888,6 +928,7 @@ export function AdminNewInvitationWizard({
       ["المكان", [draft.venue, draft.city].filter(Boolean).join(" - ") || "-"],
       ["الرابط المخصص", draft.customSlug ? `/${draft.customSlug}` : "تلقائي"],
       ["الصور", `${draft.images.filter((image) => image.url).length} صورة`],
+      ["فيديو الخلفية", draft.heroVideoUrl ? "مرفوع" : "غير مفعّل"],
       ["Story Gallery", normalizeGalleryStories(draft.invitationTexts.galleryStories).some((item) => item.title || item.description) ? "مفعلة" : "غير مفعلة"],
       ["الموسيقى", draft.musicEnabled ? (draft.musicChoice === "default" ? "الموسيقى الافتراضية" : draft.musicChoice === "library" ? "من المكتبة" : draft.musicChoice === "upload" ? "ملف MP3 خاص" : draft.musicChoice === "video" ? "مستخرجة من فيديو" : "رابط مباشر") : "بدون موسيقى"],
       ["قصة العروسين", draft.invitationTexts.story.length ? `${draft.invitationTexts.story.length} مرحلة` : "غير مفعلة"],

@@ -52,6 +52,7 @@ export type Invitation = {
   city: string;
   mapUrl: string;
   heroPhoto: string;
+  heroVideoUrl?: string;
   gallery: string[];
   musicUrl?: string;
   musicEnabled?: boolean;
@@ -87,6 +88,7 @@ export type InvitationTexts = {
   rsvpDeclinedMessage?: string;
   rsvpConfirmedSuccessMessage?: string;
   rsvpDeclinedSuccessMessage?: string;
+  heroVideoUrl?: string;
   galleryStories?: GalleryStoryItem[];
   story?: CoupleStoryItem[];
   gift?: InvitationGift;

@@ -10,6 +10,7 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   rsvpDeclinedMessage: "حزين إنك مش معايا في يومي المفضل 🥹",
   rsvpConfirmedSuccessMessage: "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
   rsvpDeclinedSuccessMessage: "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+  heroVideoUrl: "",
   galleryStories: [],
   story: [],
   gift: {},
@@ -27,6 +28,7 @@ export const defaultInvitationTextsByLocale: Record<Language, Required<Invitatio
     rsvpDeclinedMessage: "We will miss you on our special day.",
     rsvpConfirmedSuccessMessage: "Thank you for confirming. Your presence will make our night complete.",
     rsvpDeclinedSuccessMessage: "Thank you for letting us know. We appreciate you sharing our joy.",
+    heroVideoUrl: "",
     galleryStories: [],
     story: [],
     gift: {},
@@ -43,6 +45,7 @@ const textLimits: Record<Exclude<keyof InvitationTexts, "galleryStories" | "stor
   rsvpDeclinedMessage: 180,
   rsvpConfirmedSuccessMessage: 260,
   rsvpDeclinedSuccessMessage: 260,
+  heroVideoUrl: 500,
 };
 
 function cleanText(value: unknown, fallback: string, limit: number) {
@@ -107,6 +110,7 @@ export function normalizeInvitationTexts(value: unknown, language: Language = "a
     rsvpDeclinedMessage: cleanText(raw.rsvpDeclinedMessage, defaults.rsvpDeclinedMessage, textLimits.rsvpDeclinedMessage),
     rsvpConfirmedSuccessMessage: cleanText(raw.rsvpConfirmedSuccessMessage, defaults.rsvpConfirmedSuccessMessage, textLimits.rsvpConfirmedSuccessMessage),
     rsvpDeclinedSuccessMessage: cleanText(raw.rsvpDeclinedSuccessMessage, defaults.rsvpDeclinedSuccessMessage, textLimits.rsvpDeclinedSuccessMessage),
+    heroVideoUrl: cleanOptionalText(raw.heroVideoUrl, textLimits.heroVideoUrl),
     galleryStories: normalizeGalleryStories(raw.galleryStories),
     story: normalizeCoupleStory(raw.story),
     gift: normalizeInvitationGift(raw.gift),

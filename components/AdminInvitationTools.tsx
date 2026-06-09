@@ -24,6 +24,9 @@ export type AdminInvitationToolValues = {
   venue: string;
   mapUrl: string;
   images: AdminToolImageSlot[];
+  heroVideoUrl?: string;
+  heroVideoName?: string;
+  heroVideoBusy?: boolean;
   photographerEnabled: boolean;
   photographerName: string;
   photographerLogo: AdminToolUploadSlot;
@@ -87,6 +90,15 @@ export async function uploadAdminVideoAudio(file: File) {
   return { musicUrl: data.musicUrl, fileName: data.fileName || `${file.name.replace(/\.[^.]+$/, "") || "video"}-audio.mp3` };
 }
 
+export async function uploadAdminHeroVideo(file: File) {
+  const formData = new FormData();
+  formData.append("media", file);
+  const response = await fetch("/api/orders/preview-media", { method: "POST", body: formData });
+  const data = (await response.json().catch(() => null)) as { mediaUrl?: string; error?: string } | null;
+  if (!response.ok || !data?.mediaUrl) throw new Error(data?.error || "تعذر رفع فيديو خلفية الدعوة.");
+  return data.mediaUrl;
+}
+
 export function validateAdminInvitationTools(values: AdminInvitationToolValues, options: { requireReuploadText?: string } = {}) {
   if (!values.groomName.trim() || !values.brideName.trim() || !values.weddingDate || !values.venue.trim()) {
     return "اكتب اسم العريس والعروسة والتاريخ والعنوان قبل الحفظ أو النشر.";
@@ -94,7 +106,7 @@ export function validateAdminInvitationTools(values: AdminInvitationToolValues, 
   if (values.musicEnabled && !["default", "library"].includes(values.musicChoice) && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) {
     return "رابط الموسيقى لازم يكون ملف صوت مباشر.";
   }
-  if (values.images.some((image) => image.loading) || values.photographerLogo.loading || values.musicBusy) {
+  if (values.images.some((image) => image.loading) || values.photographerLogo.loading || values.musicBusy || values.heroVideoBusy) {
     return "استنى لحظة لحد ما رفع الملفات يخلص قبل الحفظ.";
   }
   if (values.images.some((image) => image.name && !image.url)) {
@@ -128,6 +140,7 @@ export function AdminInvitationTools({
   musicLabel = "تشغيل الموسيقى داخل الدعوة",
   onPatch,
   onImageFile,
+  onHeroVideoFile,
   onPhotographerLogoFile,
   onInvitationTextChange,
   onMusicFile,
@@ -146,6 +159,7 @@ export function AdminInvitationTools({
   musicLabel?: string;
   onPatch: (patch: Partial<AdminInvitationToolValues>) => void;
   onImageFile: (index: number, file?: File | null) => void;
+  onHeroVideoFile?: (file?: File | null) => void;
   onPhotographerLogoFile: (file?: File | null) => void;
   onInvitationTextChange: (key: keyof InvitationTexts, value: string) => void;
   onMusicFile: (file?: File | null) => void;
@@ -221,6 +235,23 @@ export function AdminInvitationTools({
               <input ref={(node) => { if (refs?.imageInputRefs) refs.imageInputRefs.current[index] = node; }} type="file" accept={acceptedImageFormats} onChange={(event) => onImageFile(index, event.target.files?.[0])} />
             </label>
           ))}
+        </div>
+        <div className={gridClassName}>
+          <label className="builder-logo-upload">
+            {values.heroVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+            <span>{values.heroVideoName || "فيديو خلفية قصير اختياري"}</span>
+            <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v" onChange={(event) => onHeroVideoFile?.(event.target.files?.[0])} />
+            <small>إذا تم رفع فيديو سيظهر بدلاً من صورة الغلاف الرئيسية، مع استخدام الصورة الأولى كنسخة احتياطية.</small>
+          </label>
+          <label className="field">
+            <span>رابط فيديو الخلفية</span>
+            <input dir="ltr" value={values.heroVideoUrl || ""} onChange={(event) => onPatch({ heroVideoUrl: event.target.value, heroVideoName: event.target.value ? values.heroVideoName || "رابط فيديو" : "" })} placeholder="/uploads/client-invitations/video.mp4" />
+          </label>
+          {values.heroVideoUrl ? (
+            <button className="btn btn-soft" type="button" onClick={() => onPatch({ heroVideoUrl: "", heroVideoName: "" })}>
+              حذف فيديو الخلفية
+            </button>
+          ) : null}
         </div>
         <div className="builder-gallery-story-fields">
           {unifiedImageSlots.map((slot, index) => {

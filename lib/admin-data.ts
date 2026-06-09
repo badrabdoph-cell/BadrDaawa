@@ -2,6 +2,7 @@ import { prisma } from "./db";
 import { getFileCustomers, getFileGuestsByInvitation, getFileInvitations, getFileOrders } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { archiveExpiredInvitations } from "./invitation-archiving";
+import { cleanInvitationHeroVideoUrl } from "./invitation-media";
 import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
@@ -33,6 +34,7 @@ type AdminInvitationRow = {
   city?: string | null;
   mapUrl?: string | null;
   heroPhoto?: string | null;
+  heroVideoUrl?: string | null;
   gallery?: unknown;
   musicUrl?: string | null;
   musicEnabled?: boolean | null;
@@ -158,6 +160,7 @@ function parsePhotographerFromNotes(notes?: string | null): OrderRequest["photog
 function toInvitation(row: AdminInvitationRow): Invitation {
   const gallery = toStringArray(row.gallery);
   const heroPhoto = normalizeInternalAssetUrl(row.heroPhoto);
+  const rawTexts = row.texts && typeof row.texts === "object" ? (row.texts as Record<string, unknown>) : {};
   const status = String(row.status || (row.isActive ? "ACTIVE" : "PAUSED")).toLowerCase() as Invitation["status"];
   return {
     id: row.id,
@@ -174,6 +177,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     city: row.city || "",
     mapUrl: row.mapUrl || "",
     heroPhoto: (heroPhoto && isBrowserDisplayImageUrl(heroPhoto) ? heroPhoto : "") || gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
+    heroVideoUrl: cleanInvitationHeroVideoUrl(row.heroVideoUrl || rawTexts.heroVideoUrl) || undefined,
     gallery,
     musicUrl: row.musicUrl || undefined,
     musicEnabled: row.musicEnabled === true || (row.musicEnabled == null && Boolean(row.musicUrl)),

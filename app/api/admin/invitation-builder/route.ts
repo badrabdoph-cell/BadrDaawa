@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { createFileInvitation, getFileInvitationByCode, setFileInvitationActive, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
@@ -33,6 +34,7 @@ type BuilderPayload = {
   city?: string;
   mapUrl?: string;
   gallery?: string[];
+  heroVideoUrl?: string;
   musicEnabled?: boolean;
   musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;
@@ -213,7 +215,8 @@ export async function POST(request: NextRequest) {
   }
   const photographer = await resolvePhotographer(input);
   const language = input.language === "en" ? "en" : "ar";
-  const texts = normalizeInvitationTexts(input.texts, language);
+  const heroVideoUrl = cleanInvitationHeroVideoUrl(input.heroVideoUrl);
+  const texts = invitationTextsWithHeroVideo(normalizeInvitationTexts(input.texts, language), heroVideoUrl);
   const status: "ACTIVE" | "DRAFT" = action === "publish" ? "ACTIVE" : "DRAFT";
   const isActive = status === "ACTIVE";
   const baseSlug = buildInvitationBaseSlug(groomName, brideName);
@@ -240,6 +243,7 @@ export async function POST(request: NextRequest) {
         mapUrl: cleanText(input.mapUrl),
         gallery,
         heroPhoto: gallery[0],
+        heroVideoUrl,
         musicUrl,
         musicEnabled: Boolean(input.musicEnabled),
         texts,
@@ -264,6 +268,7 @@ export async function POST(request: NextRequest) {
       city: cleanText(input.city),
       mapUrl: cleanText(input.mapUrl),
       gallery,
+      heroVideoUrl,
       musicUrl,
       musicEnabled: Boolean(input.musicEnabled),
       texts,
@@ -392,6 +397,7 @@ export async function POST(request: NextRequest) {
     musicEnabled: Boolean(input.musicEnabled),
     musicChoice: input.musicChoice || "default",
     musicUrl,
+    heroVideoUrl,
     texts,
     photographer,
   };

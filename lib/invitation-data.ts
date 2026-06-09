@@ -3,6 +3,7 @@ import { prisma } from "./db";
 import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { archiveExpiredInvitations } from "./invitation-archiving";
+import { cleanInvitationHeroVideoUrl } from "./invitation-media";
 import { normalizeInvitationTexts } from "./invitation-texts";
 import type { GuestRsvp, Invitation } from "./types";
 import { createVisitEventMetadata, type VisitSource } from "./visit-source";
@@ -21,6 +22,7 @@ type DatabaseInvitation = {
   city: string | null;
   mapUrl: string | null;
   heroPhoto: string | null;
+  heroVideoUrl?: string | null;
   gallery: unknown;
   musicUrl: string | null;
   musicEnabled?: boolean | null;
@@ -81,6 +83,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
   const gallery = toStringArray(invitation.gallery);
   const normalizedHero = normalizeInternalAssetUrl(invitation.heroPhoto);
   const heroPhoto = (normalizedHero && isBrowserDisplayImageUrl(normalizedHero) ? normalizedHero : "") || gallery[0] || "/assets/brand/hero-luxury.png";
+  const rawTexts = invitation.texts && typeof invitation.texts === "object" ? (invitation.texts as Record<string, unknown>) : {};
   return {
     id: invitation.id,
     code: invitation.code,
@@ -96,6 +99,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     city: invitation.city || "",
     mapUrl: invitation.mapUrl || "",
     heroPhoto,
+    heroVideoUrl: cleanInvitationHeroVideoUrl(invitation.heroVideoUrl || rawTexts.heroVideoUrl) || undefined,
     gallery: gallery.length ? gallery : [heroPhoto],
     musicUrl: invitation.musicUrl || undefined,
     musicEnabled: invitation.musicEnabled === true || (invitation.musicEnabled == null && Boolean(invitation.musicUrl)),

@@ -9,6 +9,8 @@ import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
 import { InviteGift } from "./InviteGift";
 import { InviteGallery, InviteGalleryStoryProvider } from "./InviteGallery";
+import { InviteParallax } from "./InviteParallax";
+import { InviteScrollAnimations } from "./InviteScrollAnimations";
 import { InvitePermissions } from "./InvitePermissions";
 import { InviteCheckIn } from "./InviteCheckIn";
 import { AddToCalendar } from "./AddToCalendar";
@@ -18,6 +20,7 @@ import { WeddingLiveMode } from "./WeddingLiveMode";
 import { QrCodeBlock } from "./QrCodeBlock";
 import { getInvitationTranslator, getLocaleMeta } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
@@ -46,6 +49,30 @@ function getInvitationImages(invitation: Invitation) {
 
 function getInvitationTexts(invitation: Invitation) {
   return normalizeInvitationTexts(invitation.texts, invitation.language);
+}
+
+function getInvitationHeroVideo(invitation: Invitation) {
+  const rawTexts = invitation.texts && typeof invitation.texts === "object" ? (invitation.texts as Record<string, unknown>) : {};
+  return cleanInvitationHeroVideoUrl(invitation.heroVideoUrl || rawTexts.heroVideoUrl);
+}
+
+function InviteHeroMedia({
+  image,
+  videoUrl,
+  alt,
+  className = "",
+  strength = "0.82",
+}: {
+  image: string;
+  videoUrl?: string;
+  alt: string;
+  className?: string;
+  strength?: string;
+}) {
+  if (videoUrl) {
+    return <video className={["invite-hero-video", className].filter(Boolean).join(" ")} src={videoUrl} poster={image} muted loop playsInline autoPlay preload="metadata" data-invite-parallax data-invite-parallax-strength={strength} />;
+  }
+  return <img className={className || undefined} src={image} alt={alt} data-invite-parallax data-invite-parallax-strength={strength} />;
 }
 
 function InvitationOpeningLayer({ invitation }: { invitation: Invitation }) {
@@ -78,7 +105,7 @@ function InvitationPoll({ invitation }: { invitation: Invitation }) {
   const texts = getInvitationTexts(invitation);
   return (
     <InvitePoll
-      code={invitation.code}
+      invitation={invitation}
       locale={invitation.language}
       question={texts.rsvpQuestion}
       declinedMessage={texts.rsvpDeclinedMessage}
@@ -204,8 +231,11 @@ export function InvitationExperience({
   const photographer = getTemplatePhotographer(template, invitation, settings);
   const galleryImagesForStories = getInvitationImages(invitation).gallery;
   const galleryStories = getInvitationTexts(invitation).galleryStories;
+  const heroVideoUrl = getInvitationHeroVideo(invitation);
   const withGalleryStories = (content: ReactNode) => (
-    <InviteGalleryStoryProvider images={galleryImagesForStories} stories={galleryStories}>
+    <InviteGalleryStoryProvider images={galleryImagesForStories} stories={galleryStories} heroVideoUrl={heroVideoUrl}>
+      <InviteScrollAnimations />
+      <InviteParallax />
       {content}
     </InviteGalleryStoryProvider>
   );
@@ -371,6 +401,36 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
+function getCustomTemplateScrollAnimations() {
+  return `<style>
+[data-badr-scroll]{--badr-scroll-x:0;--badr-scroll-y:18px;--badr-scroll-scale:1;opacity:0;translate:var(--badr-scroll-x) var(--badr-scroll-y);scale:var(--badr-scroll-scale);filter:blur(4px);transition:opacity 680ms cubic-bezier(.2,.74,.24,1),translate 680ms cubic-bezier(.2,.74,.24,1),scale 680ms cubic-bezier(.2,.74,.24,1),filter 680ms cubic-bezier(.2,.74,.24,1);transition-delay:var(--badr-scroll-delay,0ms);will-change:opacity,translate,scale,filter}
+[data-badr-scroll-effect=slide-left]{--badr-scroll-x:-22px;--badr-scroll-y:10px}
+[data-badr-scroll-effect=slide-right]{--badr-scroll-x:22px;--badr-scroll-y:10px}
+[data-badr-scroll-effect=scale]{--badr-scroll-y:12px;--badr-scroll-scale:.975}
+[data-badr-scroll].is-in-view{opacity:1;translate:0 0;scale:1;filter:blur(0)}
+@media (prefers-reduced-motion:reduce){[data-badr-scroll]{opacity:1!important;translate:0 0!important;scale:1!important;filter:none!important;transition:none!important;will-change:auto}}
+</style><script>
+(() => {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!("IntersectionObserver" in window)) return;
+  const selector = "main > section, section, article, .invite-card, [class*='card'], [class*='gallery'], [class*='map'], [class*='photographer'], [class*='qr']";
+  const items = Array.from(document.querySelectorAll(selector)).filter((item) => !item.closest(".invite-opening") && !item.matches("script,style"));
+  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    entry.target.classList.add("is-in-view");
+    observer.unobserve(entry.target);
+  }), { rootMargin: "0px 0px -10% 0px", threshold: 0.16 });
+  items.forEach((item, index) => {
+    const name = String(item.className || "").toLowerCase();
+    item.dataset.badrScroll = "true";
+    item.dataset.badrScrollEffect = name.includes("gallery") || name.includes("photo") || name.includes("media") ? "scale" : index % 3 === 1 ? "slide-right" : index % 3 === 2 ? "slide-left" : "fade";
+    item.style.setProperty("--badr-scroll-delay", (Math.min(index % 5, 4) * 55) + "ms");
+    observer.observe(item);
+  });
+})();
+</script>`;
+}
+
 function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl?: string | null) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const imageSet = getInvitationImages(invitation);
@@ -388,6 +448,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     mapUrl: invitation.mapUrl,
     invitationUrl,
     musicUrl: musicUrl || "",
+    heroVideoUrl: getInvitationHeroVideo(invitation),
     inviteMessage: texts.inviteMessage,
     inviteMessageSecondary: texts.inviteMessageSecondary,
     openingText: texts.openingText,
@@ -410,7 +471,8 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
   });
 
   const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, galleryStories: texts.galleryStories, story: texts.story, gift: texts.gift, gallery: images }).replace(/</g, "\\u003c")};</script>`;
-  return output.includes("</body>") ? output.replace("</body>", `${bridge}</body>`) : `${output}${bridge}`;
+  const scrollAnimations = getCustomTemplateScrollAnimations();
+  return output.includes("</body>") ? output.replace("</body>", `${bridge}${scrollAnimations}</body>`) : `${output}${bridge}${scrollAnimations}`;
 }
 
 function CustomHtmlInvitationExperience({ invitation, template, musicUrl }: { invitation: Invitation; template: TemplateDefinition; musicUrl?: string | null }) {
@@ -771,7 +833,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
       <WeddingLiveMode code={invitation.code} />
 
       <section className="boho-hero">
-        <img src={heroImage} alt="صورة العروسين" />
+        <InviteHeroMedia image={heroImage} videoUrl={getInvitationHeroVideo(invitation)} alt="صورة العروسين" strength="0.82" />
         <div className="boho-hero-shade" />
 
         <div className="boho-hero-copy">
@@ -897,7 +959,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
         <section className="garden-photo-arch" aria-label="الصورة الرئيسية">
           <div className="garden-photo-line" aria-hidden="true" />
           <figure>
-            <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt={`${invitation.groomName} و ${invitation.brideName}`} />
+            <InviteHeroMedia image={images[0] || invitation.heroPhoto || galleryImages[0]} videoUrl={getInvitationHeroVideo(invitation)} alt={`${invitation.groomName} و ${invitation.brideName}`} strength="0.78" />
           </figure>
         </section>
 
@@ -1016,7 +1078,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
 
       <section className="featured-hero">
         <div className="featured-hero-media">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="صورة العرسان" />
+          <InviteHeroMedia image={images[0] || invitation.heroPhoto || galleryImages[0]} videoUrl={getInvitationHeroVideo(invitation)} alt="صورة العرسان" strength="0.86" />
           <div className="featured-hero-gradient" />
         </div>
 
@@ -1152,7 +1214,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
 
       <section className="cinema-rose-hero">
         <div className="cinema-rose-hero-media">
-          <img src={heroImage} alt="صورة الغلاف" />
+          <InviteHeroMedia image={heroImage} videoUrl={getInvitationHeroVideo(invitation)} alt="صورة الغلاف" strength="0.78" />
           <span aria-hidden="true" />
         </div>
         <div className="cinema-rose-hero-copy">
@@ -1260,7 +1322,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
       <WeddingLiveMode code={invitation.code} />
 
       <section className="modern-cinema-hero">
-        <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="صورة الغلاف" />
+        <InviteHeroMedia image={images[0] || invitation.heroPhoto || galleryImages[0]} videoUrl={getInvitationHeroVideo(invitation)} alt="صورة الغلاف" strength="0.74" />
         <span className="modern-cinema-hero-shade" aria-hidden="true" />
         <div className="modern-cinema-hero-copy">
           <p>
@@ -1364,7 +1426,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
   return (
     <main className="ethereal-glass-invite">
       <div className="ethereal-glass-bg" aria-hidden="true">
-        <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="" />
+        <InviteHeroMedia image={images[0] || invitation.heroPhoto || galleryImages[0]} videoUrl={getInvitationHeroVideo(invitation)} alt="" strength="0.58" />
         <span />
       </div>
       <InviteMusic musicUrl={musicUrl} />
@@ -2112,7 +2174,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
 
       <section className="cinematic-hero">
         <div className="cinematic-hero-media">
-          <img src={images[0] || invitation.heroPhoto || galleryImages[0]} alt="صورة العرسان" />
+          <InviteHeroMedia image={images[0] || invitation.heroPhoto || galleryImages[0]} videoUrl={getInvitationHeroVideo(invitation)} alt="صورة العرسان" strength="0.84" />
           <div className="cinematic-hero-gradient" />
         </div>
 

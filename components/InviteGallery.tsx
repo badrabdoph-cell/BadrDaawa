@@ -19,10 +19,10 @@ type InviteGalleryProps = {
   altPrefix?: string;
 };
 
-const InviteGalleryStoryContext = createContext<{ images: string[]; stories: InviteGalleryStory[] }>({ images: [], stories: [] });
+const InviteGalleryStoryContext = createContext<{ images: string[]; stories: InviteGalleryStory[]; heroVideoUrl?: string }>({ images: [], stories: [] });
 
-export function InviteGalleryStoryProvider({ images, stories, children }: { images: string[]; stories?: InviteGalleryStory[] | null; children: ReactNode }) {
-  const value = useMemo(() => ({ images: images.filter(Boolean), stories: stories || [] }), [images, stories]);
+export function InviteGalleryStoryProvider({ images, stories, heroVideoUrl, children }: { images: string[]; stories?: InviteGalleryStory[] | null; heroVideoUrl?: string; children: ReactNode }) {
+  const value = useMemo(() => ({ images: images.filter(Boolean), stories: stories || [], heroVideoUrl }), [images, stories, heroVideoUrl]);
   return <InviteGalleryStoryContext.Provider value={value}>{children}</InviteGalleryStoryContext.Provider>;
 }
 
@@ -49,9 +49,10 @@ export function InviteGallery({ images, stories, locale = "ar", className = "", 
           image,
           title: cleanStoryText(story.title),
           description: cleanStoryText(story.description),
+          videoUrl: index === 0 && storyContext.images[0] === image ? storyContext.heroVideoUrl || "" : "",
         };
       }),
-    [cleanImages, stories, storyContext.images, storyContext.stories],
+    [cleanImages, stories, storyContext.heroVideoUrl, storyContext.images, storyContext.stories],
   );
   const hasStoryGallery = slides.some((slide) => slide.title || slide.description);
   const [active, setActive] = useState(0);
@@ -137,7 +138,11 @@ export function InviteGallery({ images, stories, locale = "ar", className = "", 
           >
             {slides.map((slide, index) => (
               <button className="invite-gallery-slide" type="button" key={`${slide.image}-${index}`} onClick={openFullscreen} aria-label={t("invitation.gallery.openImage", { number: index + 1 })}>
-                <img src={slide.image} alt={`${altPrefix} ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} decoding="async" draggable={false} />
+                {slide.videoUrl ? (
+                  <video className="invite-hero-video" src={slide.videoUrl} poster={slide.image} muted loop playsInline autoPlay preload="metadata" data-invite-parallax data-invite-parallax-strength="0.72" />
+                ) : (
+                  <img src={slide.image} alt={`${altPrefix} ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} decoding="async" draggable={false} data-invite-parallax data-invite-parallax-strength="0.72" />
+                )}
                 {hasStoryGallery && (slide.title || slide.description) ? (
                   <span className="invite-gallery-story-copy">
                     <small>{`${index + 1} / ${cleanImages.length}`}</small>

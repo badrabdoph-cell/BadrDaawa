@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
+import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { InvitationExperience } from "./InvitationExperience";
@@ -26,6 +27,7 @@ export type LiveInvitationPreviewPayload = {
   gallery?: string[];
   musicUrl?: string;
   musicEnabled?: boolean;
+  heroVideoUrl?: string;
   disableMusic?: boolean;
   language?: Invitation["language"];
   texts?: Invitation["texts"];
@@ -99,6 +101,7 @@ function applyPayload(invitation: Invitation, payload: LiveInvitationPreviewPayl
     mapUrl: cleanText(payload.mapUrl, invitation.mapUrl),
     language,
     heroPhoto: gallery[0] || invitation.heroPhoto,
+    heroVideoUrl: cleanInvitationHeroVideoUrl(payload.heroVideoUrl) || invitation.heroVideoUrl,
     gallery,
     musicUrl,
     musicEnabled,

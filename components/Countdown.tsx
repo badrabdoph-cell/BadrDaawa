@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
+import { formatArabicNumber } from "@/lib/utils";
 import type { Language } from "@/lib/types";
 
 type RemainingTime = {
@@ -27,6 +28,15 @@ const initialState: CountdownState = {
   remaining: initialRemaining,
   isComplete: false,
 };
+
+const countdownUnits = ["days", "hours", "minutes", "seconds"] as const;
+
+type CountdownUnit = (typeof countdownUnits)[number];
+
+function formatCountdownValue(unit: CountdownUnit, value: number) {
+  if (unit === "days") return formatArabicNumber(value);
+  return String(Math.max(0, value)).padStart(2, "0");
+}
 
 function normalizeDigits(value: string) {
   return value.replace(/[٠-٩۰-۹]/g, (digit) => {
@@ -126,24 +136,23 @@ export function Countdown({ targetDate, targetTime, locale = "ar" }: { targetDat
   }, [target]);
 
   return (
-    <div className="countdown-wrap">
-      <div className={["countdown", isComplete ? "is-complete" : ""].filter(Boolean).join(" ")} aria-label={t("invitation.countdownLabel")}>
-        <div>
-          <strong>{remaining.days}</strong>
-          <span>{t("invitation.countdown.day")}</span>
-        </div>
-        <div>
-          <strong>{remaining.hours}</strong>
-          <span>{t("invitation.countdown.hour")}</span>
-        </div>
-        <div>
-          <strong>{remaining.minutes}</strong>
-          <span>{t("invitation.countdown.minute")}</span>
-        </div>
-        <div>
-          <strong>{remaining.seconds}</strong>
-          <span>{t("invitation.countdown.second")}</span>
-        </div>
+    <div className="countdown-wrap countdown-luxury-wrap">
+      <div className={["countdown countdown-luxury", isComplete ? "is-complete" : ""].filter(Boolean).join(" ")} aria-label={t("invitation.countdownLabel")} aria-live={isComplete ? "polite" : "off"}>
+        <span className="countdown-kicker">{t("invitation.countdownLabel")}</span>
+        {countdownUnits.map((unit) => {
+          const value = remaining[unit];
+          const label = t(`invitation.countdown.${unit === "days" ? "day" : unit === "hours" ? "hour" : unit === "minutes" ? "minute" : "second"}`);
+          return (
+            <div className="countdown-unit" data-unit={unit} key={unit} aria-label={`${formatCountdownValue(unit, value)} ${label}`}>
+              <strong className="countdown-number">
+                <span className="countdown-digit" key={`${unit}-${value}`}>
+                  {formatCountdownValue(unit, value)}
+                </span>
+              </strong>
+              <span className="countdown-label">{label}</span>
+            </div>
+          );
+        })}
       </div>
       {isComplete ? (
         <div className="countdown-complete" role="status" aria-live="polite">

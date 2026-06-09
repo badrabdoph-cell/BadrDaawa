@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation } from "@/lib/types";
 
@@ -27,6 +28,7 @@ type ClientInvitationPayload = {
   city?: string;
   mapUrl?: string;
   gallery?: string[];
+  heroVideoUrl?: string;
   musicEnabled?: boolean;
   musicUrl?: string;
   musicDataUrl?: string;
@@ -104,6 +106,7 @@ async function getClientInvitationAuditSnapshot(code: string) {
     mapUrl: fileInvitation.mapUrl,
     gallery: fileInvitation.gallery,
     heroPhoto: fileInvitation.heroPhoto,
+    heroVideoUrl: fileInvitation.heroVideoUrl,
     musicEnabled: fileInvitation.musicEnabled,
     musicUrl: fileInvitation.musicUrl,
     texts: fileInvitation.texts,
@@ -159,6 +162,10 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   const venue = cleanText(payload.venue);
   const city = cleanText(payload.city);
   const mapUrl = cleanText(payload.mapUrl, 500);
+  const oldTexts = oldValues && "texts" in oldValues ? oldValues.texts : undefined;
+  const oldRawTexts = oldTexts && typeof oldTexts === "object" ? (oldTexts as Record<string, unknown>) : {};
+  const currentHeroVideoUrl = cleanInvitationHeroVideoUrl((oldValues && "heroVideoUrl" in oldValues ? oldValues.heroVideoUrl : undefined) || oldRawTexts.heroVideoUrl);
+  const heroVideoUrl = typeof payload.heroVideoUrl === "string" ? cleanInvitationHeroVideoUrl(payload.heroVideoUrl) : currentHeroVideoUrl;
   let uploadedImageUrls: string[] = [];
 
   if (groomName) {
@@ -221,10 +228,11 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
     data.photographer = photographer;
     fileData.photographer = photographer;
   }
-  if (payload.texts) {
-    const texts = normalizeInvitationTexts(payload.texts);
+  if (payload.texts || typeof payload.heroVideoUrl === "string") {
+    const texts = invitationTextsWithHeroVideo(normalizeInvitationTexts(payload.texts || oldTexts), heroVideoUrl);
     data.texts = texts;
     fileData.texts = texts;
+    fileData.heroVideoUrl = heroVideoUrl;
   }
 
   let updated = false;

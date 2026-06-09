@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Disc3, Eye, FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { uploadAdminHeroVideo } from "@/components/AdminInvitationTools";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { uploadBrowserPreviewImage } from "@/lib/browser-image-upload";
@@ -71,6 +72,8 @@ export function ClientInvitationEditor({
   const [images, setImages] = useState<ImageSlotState[]>(
     unifiedImageSlots.map((_, index) => ({ previewUrl: invitation.gallery[index] || "", dataUrl: "", name: "", loading: false })),
   );
+  const [heroVideoUrl, setHeroVideoUrl] = useState(invitation.heroVideoUrl || "");
+  const [heroVideoName, setHeroVideoName] = useState(invitation.heroVideoUrl?.split("/").pop() || "");
   const [photographerEnabled, setPhotographerEnabled] = useState(Boolean(invitation.photographer?.enabled));
   const [photographerName, setPhotographerName] = useState(invitation.photographer?.name || "");
   const [photographerLogo, setPhotographerLogo] = useState<ImageSlotState>({ previewUrl: invitation.photographer?.logoUrl || "", dataUrl: "", name: "", loading: false });
@@ -115,6 +118,7 @@ export function ClientInvitationEditor({
       city,
       mapUrl,
       gallery: images.map((image) => image.previewUrl).filter(Boolean),
+      heroVideoUrl,
       musicEnabled,
       musicUrl,
       disableMusic: !musicEnabled,
@@ -127,7 +131,7 @@ export function ClientInvitationEditor({
         instagramUrl: photographerInstagramUrl,
       },
     }),
-    [brideName, city, groomName, images, invitationTexts, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate, weddingTime],
+    [brideName, city, groomName, heroVideoUrl, images, invitationTexts, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate, weddingTime],
   );
 
   const postPreviewUpdate = useCallback(() => {
@@ -284,6 +288,26 @@ export function ClientInvitationEditor({
     }
   }
 
+  async function handleHeroVideoFile(file?: File | null) {
+    if (!file) return;
+    markDirty();
+    setBusy(true);
+    setHeroVideoName(file.name);
+    try {
+      const uploadedUrl = await uploadAdminHeroVideo(file);
+      setHeroVideoUrl(uploadedUrl);
+      setStatus("success");
+      setMessage("تم رفع فيديو خلفية الدعوة وربطه بالمعاينة.");
+    } catch (error) {
+      setHeroVideoUrl("");
+      setHeroVideoName("");
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "تعذر رفع فيديو خلفية الدعوة.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function wirePreviewClicks() {
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
@@ -343,9 +367,9 @@ export function ClientInvitationEditor({
       setMessage("رابط الموسيقى لازم يكون ملف صوت مباشر.");
       return;
     }
-    if (images.some((image) => image.loading) || photographerLogo.loading) {
+    if (images.some((image) => image.loading) || photographerLogo.loading || busy) {
       setStatus("error");
-      setMessage("استنى لحظة لحد ما رفع الصور يخلص قبل الحفظ.");
+      setMessage("استنى لحظة لحد ما رفع الملفات يخلص قبل الحفظ.");
       return;
     }
     if (images.some((image) => image.name && !image.previewUrl)) {
@@ -371,6 +395,7 @@ export function ClientInvitationEditor({
         city,
         mapUrl,
         gallery: images.map((image) => image.previewUrl).filter(Boolean),
+        heroVideoUrl,
         musicEnabled,
         musicUrl,
         musicDataUrl,
@@ -453,6 +478,23 @@ export function ClientInvitationEditor({
                 <input ref={(node) => { imageInputRefs.current[index] = node; }} type="file" accept={acceptedImageFormats} onChange={(event) => handleImageFile(index, event.target.files?.[0])} />
               </label>
             ))}
+          </div>
+          <div className="builder-mini-grid">
+            <label className="builder-logo-upload full">
+              {busy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+              <span>{heroVideoName || "رفع فيديو خلفية قصير اختياري"}</span>
+              <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v" onChange={(event) => handleHeroVideoFile(event.target.files?.[0])} />
+              <small>إذا تم رفع فيديو سيظهر بدلاً من صورة الغلاف الرئيسية، وتظل الصورة الأولى نسخة احتياطية.</small>
+            </label>
+            <label className="field full">
+              <span>رابط فيديو الخلفية</span>
+              <input dir="ltr" value={heroVideoUrl} onChange={(event) => { setHeroVideoUrl(event.target.value); setHeroVideoName(event.target.value ? heroVideoName || "رابط فيديو" : ""); markDirty(); }} placeholder="/uploads/client-invitations/hero.mp4" />
+            </label>
+            {heroVideoUrl ? (
+              <button className="btn btn-soft" type="button" onClick={() => { setHeroVideoUrl(""); setHeroVideoName(""); markDirty(); }}>
+                حذف فيديو الخلفية
+              </button>
+            ) : null}
           </div>
           <div className="builder-gallery-story-fields">
             {unifiedImageSlots.map((slot, index) => {

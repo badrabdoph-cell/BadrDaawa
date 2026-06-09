@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CheckCircle2, Loader2, PartyPopper, X } from "lucide-react";
-import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
-import type { Language } from "@/lib/types";
+import { CalendarPlus, Check, CheckCircle2, Download, ExternalLink, Loader2, PartyPopper, X } from "lucide-react";
+import { getGoogleCalendarUrl, getInvitationCalendarRange, getOutlookCalendarUrl } from "@/lib/calendar";
+import { getInvitationTranslator, getLocaleMeta, resolveLocale } from "@/lib/i18n";
+import type { Invitation, Language } from "@/lib/types";
+import { getInvitationUrl } from "@/lib/utils";
 
 type PollState = "idle" | "attending" | "declined";
 type RsvpStatus = "confirmed" | "declined";
 
 export function InvitePoll({
-  code,
+  invitation,
   locale = "ar",
   question,
   declinedMessage,
   confirmedSuccessMessage,
   declinedSuccessMessage,
 }: {
-  code: string;
+  invitation: Invitation;
   locale?: Language;
   question?: string;
   declinedMessage?: string;
@@ -24,6 +26,13 @@ export function InvitePoll({
   declinedSuccessMessage?: string;
 }) {
   const t = getInvitationTranslator(resolveLocale(locale));
+  const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
+  const googleCalendarUrl = getGoogleCalendarUrl(invitation, invitationUrl);
+  const outlookCalendarUrl = getOutlookCalendarUrl(invitation, invitationUrl);
+  const { start } = getInvitationCalendarRange(invitation);
+  const dateLocale = getLocaleMeta(resolveLocale(locale)).dateLocale;
+  const eventTime = `${new Intl.DateTimeFormat(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(invitation.weddingDate))} - ${start.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })}`;
+  const isPreview = invitation.code.startsWith("preview-");
   const resolvedQuestion = question || t("invitation.rsvp.defaultQuestion");
   const resolvedDeclinedMessage = declinedMessage || t("invitation.rsvp.declinedMessage");
   const resolvedConfirmedSuccessMessage = confirmedSuccessMessage || t("invitation.rsvp.confirmedSuccessMessage");
@@ -45,7 +54,7 @@ export function InvitePoll({
     setSuccess(null);
 
     try {
-      const response = await fetch(`/api/invitations/${code}/rsvp`, {
+      const response = await fetch(`/api/invitations/${invitation.code}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,21 +93,55 @@ export function InvitePoll({
   if (success) {
     const confirmed = success.status === "confirmed";
     return (
-      <section id="rsvp" className={confirmed ? "invite-card invite-poll rsvp-success-card confirmed" : "invite-card invite-poll rsvp-success-card declined"}>
-        <span className="invite-kicker">{t("invitation.rsvp.kicker")}</span>
-        <div className="rsvp-success-icon">
-          {confirmed ? <PartyPopper size={28} /> : <CheckCircle2 size={28} />}
+      <section id="rsvp" className={confirmed ? "invite-card invite-poll rsvp-success-screen confirmed" : "invite-card invite-poll rsvp-success-screen declined"}>
+        <div className="rsvp-success-ambient" aria-hidden="true">
+          <span />
+          <span />
+          <span />
         </div>
+        <div className="rsvp-success-mark" aria-hidden="true">
+          <span>
+            {confirmed ? <CheckCircle2 size={42} /> : <Check size={42} />}
+          </span>
+          {confirmed ? <PartyPopper size={24} /> : null}
+        </div>
+        <span className="invite-kicker">{t("invitation.rsvp.kicker")}</span>
         <h2>{t("invitation.rsvp.successTitle")}</h2>
-        <div className="rsvp-success-summary">
+        <p className="rsvp-success-thanks">{confirmed ? resolvedConfirmedSuccessMessage : resolvedDeclinedSuccessMessage}</p>
+
+        <div className="rsvp-success-guest">
           <span>{t("invitation.rsvp.guestName")}</span>
           <strong>{success.name}</strong>
+          <small>{confirmed ? t("invitation.rsvp.confirmed") : t("invitation.rsvp.declined")}</small>
         </div>
-        <div className="rsvp-success-summary">
-          <span>{t("invitation.rsvp.responseStatus")}</span>
-          <strong>{confirmed ? t("invitation.rsvp.confirmed") : t("invitation.rsvp.declined")}</strong>
-        </div>
-        <p>{confirmed ? resolvedConfirmedSuccessMessage : resolvedDeclinedSuccessMessage}</p>
+
+        {confirmed ? (
+          <div className="rsvp-calendar-panel">
+            <div className="rsvp-calendar-head">
+              <CalendarPlus size={22} />
+              <div>
+                <strong>{t("invitation.rsvp.addToCalendarTitle")}</strong>
+                <span>{eventTime}</span>
+              </div>
+            </div>
+            <div className="rsvp-calendar-actions">
+              <a className="btn btn-gold btn-glow" href={googleCalendarUrl} target="_blank" rel="noreferrer">
+                <ExternalLink size={17} />
+                Google Calendar
+              </a>
+              <a className={isPreview ? "btn btn-soft disabled" : "btn btn-soft"} href={isPreview ? undefined : `/api/invitations/${invitation.code}/calendar/ics`} aria-disabled={isPreview}>
+                <Download size={17} />
+                Apple Calendar
+              </a>
+              <a className="btn btn-soft" href={outlookCalendarUrl} target="_blank" rel="noreferrer">
+                <ExternalLink size={17} />
+                Outlook
+              </a>
+            </div>
+            {isPreview ? <p className="status">{t("invitation.calendar.previewNote")}</p> : null}
+          </div>
+        ) : null}
+
         <button className="poll-choice" type="button" onClick={() => {
           setChoice("idle");
           setState("idle");

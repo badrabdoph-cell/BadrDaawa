@@ -57,11 +57,16 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const previewTemplateSrc = `/templates/${previewSettings.templateSlug}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings.homepage.showFeatures || siteSettings.homepage.showPreview || siteSettings.homepage.showPricing;
+  const publicStatsBase = {
+    invitations: 113,
+    customers: 113,
+    confirmedRsvps: 31640,
+  };
   const stats = [
-    { label: "دعوة منشأة", value: platformStats.invitations, icon: Sparkles },
-    { label: "عميل", value: platformStats.customers, icon: UsersRound },
-    { label: "قالب جاهز", value: platformStats.templates, icon: LayoutTemplate },
-    { label: "تأكيد حضور", value: platformStats.confirmedRsvps, icon: UserCheck },
+    { label: "دعوة منشأة", value: publicStatsBase.invitations + platformStats.invitations, icon: Sparkles },
+    { label: "عميل", value: publicStatsBase.customers + platformStats.customers, icon: UsersRound },
+    { label: "تصاميم دعوة جاهزة", value: platformStats.templates, icon: LayoutTemplate },
+    { label: "تأكيد حضور", value: publicStatsBase.confirmedRsvps + platformStats.confirmedRsvps, icon: UserCheck },
   ];
 
   return (
@@ -119,7 +124,9 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </section>
 
-        <section className="home-platform-stats" aria-labelledby="home-platform-stats-title">
+        <LiveVisitorsCounter />
+
+        <section className="home-platform-stats home-platform-stats-compact" aria-labelledby="home-platform-stats-title">
           <div className="container">
             <div className="home-platform-stats-head">
               <span className="eyebrow">
@@ -271,7 +278,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </section>
         ) : null}
       </main>
-      <LiveVisitorsCounter />
       <SiteFooter />
       {isBroadcastMode ? <BroadcastAnnotator /> : null}
     </div>
