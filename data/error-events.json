@@ -1,6 +1,7 @@
 {
   "events": [
     {
+<<<<<<< HEAD
       "id": "err-mq6m3lpj-912t3ylm",
       "route": "http://localhost:3013/templates/featured-1/preview?builderPreview=1&silentPreview=1&_rsc=fCybWZe22Iatp-nC",
       "message": "404 Not Found - /templates/featured-1/preview?builderPreview=1&silentPreview=1&_rsc=fCybWZe22Iatp-nC",
@@ -26,6 +27,555 @@
       "user": "public",
       "source": "fetch.non_ok",
       "createdAt": "2026-06-09T12:21:31.397Z"
+=======
+      "id": "err-mq6l40ei-cdk9wf1o",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:56:46.664Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:56:46.986Z"
+    },
+    {
+      "id": "err-mq6l40aj-87m4jpbn",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:56:46.653Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:56:46.843Z"
+    },
+    {
+      "id": "err-mq6l2q50-emirfeso",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:55:46.702Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:55:47.028Z"
+    },
+    {
+      "id": "err-mq6l2q0z-e03for7e",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:55:46.701Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:55:46.883Z"
+    },
+    {
+      "id": "err-mq6l1ft9-yugz8v86",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:54:46.658Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:54:46.989Z"
+    },
+    {
+      "id": "err-mq6l1fst-qbopyjxt",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:54:46.648Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:54:46.973Z"
+    },
+    {
+      "id": "err-mq6l05hv-y9efwviv",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:53:46.640Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:53:46.963Z"
+    },
+    {
+      "id": "err-mq6l05e3-7t0ehexv",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:53:46.645Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:53:46.827Z"
+    },
+    {
+      "id": "err-mq6kyv90-ta4q2efh",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:52:46.699Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:52:47.028Z"
+    },
+    {
+      "id": "err-mq6kyv8o-hhtwpi5d",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:52:46.694Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:52:47.016Z"
+    },
+    {
+      "id": "err-mq6kxl14-qid632hr",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:51:46.662Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:51:47.128Z"
+    },
+    {
+      "id": "err-mq6kxkx3-l0l3xjk8",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:51:46.652Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:51:46.983Z"
+    },
+    {
+      "id": "err-mq6kwam8-ehynr3dp",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:50:46.654Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:50:46.976Z"
+    },
+    {
+      "id": "err-mq6kwam5-yx3gve57",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:50:46.653Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:50:46.973Z"
+    },
+    {
+      "id": "err-mq6kv0gi-ga3rds2p",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:49:46.836Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:49:47.154Z"
+    },
+    {
+      "id": "err-mq6kv0ce-8afu6vyf",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:49:46.673Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:49:47.006Z"
+    },
+    {
+      "id": "err-mq6ktq4u-028lkvzb",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:48:46.787Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:48:47.118Z"
+    },
+    {
+      "id": "err-mq6ktq3n-zskro9ne",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:48:46.744Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:48:47.075Z"
+    },
+    {
+      "id": "err-mq6ksfqk-34oxuttw",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:47:46.664Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:47:46.988Z"
+    },
+    {
+      "id": "err-mq6kr5kn-y8ouandy",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:46:46.682Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:46:47.159Z"
+    },
+    {
+      "id": "err-mq6kr5gk-9ivjhktt",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:46:46.681Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:46:47.012Z"
+    },
+    {
+      "id": "err-mq6kpv6z-i31kfvjc",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:45:46.689Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:45:47.051Z"
+    },
+    {
+      "id": "err-mq6kpv6u-pyopt6wd",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:45:46.684Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:45:47.046Z"
+    },
+    {
+      "id": "err-mq6kokud-sxwihhv8",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:44:46.609Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:44:46.981Z"
+    },
+    {
+      "id": "err-mq6koku7-ponduldz",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:44:46.614Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:44:46.975Z"
+    },
+    {
+      "id": "err-mq6knath-y6anu5h0",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:43:46.816Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:43:47.333Z"
+    },
+    {
+      "id": "err-mq6knal3-2wiv647u",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:43:46.812Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:43:47.031Z"
+    },
+    {
+      "id": "err-mq6km0ak-iftgri6c",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:42:46.666Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:42:47.036Z"
+    },
+    {
+      "id": "err-mq6km0a6-hg22lvuj",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:42:46.653Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:42:47.022Z"
+    },
+    {
+      "id": "err-mq6kkpyk-sg4njha8",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:41:46.616Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:41:46.988Z"
+    },
+    {
+      "id": "err-mq6kkpy8-hkejch8q",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:41:46.614Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:41:46.977Z"
+    },
+    {
+      "id": "err-mq6kjfnj-03qe6j0l",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:40:46.610Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:40:46.975Z"
+    },
+    {
+      "id": "err-mq6kjfjw-rkjop3zi",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:40:46.626Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:40:46.844Z"
+    },
+    {
+      "id": "err-mq6ki5lb-cx6bcnfj",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:39:46.771Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:39:47.279Z"
+    },
+    {
+      "id": "err-mq6ki5ce-t1yt28la",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:39:46.681Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:39:46.958Z"
+    },
+    {
+      "id": "err-mq6kgva3-dqcw5ku2",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:38:46.757Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:38:47.259Z"
+    },
+    {
+      "id": "err-mq6kgv6a-3lflyqbh",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:38:46.753Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:38:47.122Z"
+    },
+    {
+      "id": "err-mq6kfkrt-s53bvxeb",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:37:46.618Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:37:46.985Z"
+    },
+    {
+      "id": "err-mq6kfko2-11ogywxy",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:37:46.630Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:37:46.850Z"
+    },
+    {
+      "id": "err-mq6keann-u34m3kyi",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:36:46.853Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:36:47.219Z"
+    },
+    {
+      "id": "err-mq6keaig-n5gdqvra",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:36:46.667Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:36:47.032Z"
+    },
+    {
+      "id": "err-mq6kd09y-8hoziqit",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:35:46.618Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:35:47.110Z"
+    },
+    {
+      "id": "err-mq6kd06y-ucu9e8ts",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:35:46.634Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:35:47.002Z"
+    },
+    {
+      "id": "err-mq6kbpzf-k66zc15j",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:34:46.785Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:34:47.115Z"
+    },
+    {
+      "id": "err-mq6kbpvg-kxv2stww",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:34:46.620Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:34:46.972Z"
+    },
+    {
+      "id": "err-mq6kafpb-7ncrd8ah",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:33:46.630Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:33:47.135Z"
+    },
+    {
+      "id": "err-mq6kafhf-x213hh6l",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:33:46.638Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:33:46.851Z"
+    },
+    {
+      "id": "err-mq6k95fj-iid5jr12",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:32:46.812Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:32:47.167Z"
+    },
+    {
+      "id": "err-mq6k95ba-ifdnfkl7",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:32:46.798Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:32:47.014Z"
+    },
+    {
+      "id": "err-mq6jcowa-io860g6j",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:07:32.428Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:07:32.746Z"
+    },
+    {
+      "id": "err-mq6jcow3-ro38imco",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T11:07:32.285Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T11:07:32.739Z"
+    },
+    {
+      "id": "err-mq6im8ti-qvxtqwme",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T10:46:58.436Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T10:46:58.854Z"
+    },
+    {
+      "id": "err-mq6im8te-zrs692sy",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T10:46:58.429Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T10:46:58.850Z"
+    },
+    {
+      "id": "err-mq6cml66-5rinmqkm",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T07:59:16.827Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T07:59:17.166Z"
+    },
+    {
+      "id": "err-mq6cml1x-izhhf741",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T07:59:16.816Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T07:59:17.013Z"
+    },
+    {
+      "id": "err-mq6bjxmo-twuwy38a",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T07:29:13.322Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T07:29:13.728Z"
+    },
+    {
+      "id": "err-mq6bjxmg-kgs1dobx",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T07:29:13.309Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T07:29:13.720Z"
+    },
+    {
+      "id": "err-mq69wq1s-3jkf0kwa",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T06:43:10.770Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T06:43:11.201Z"
+    },
+    {
+      "id": "err-mq68tli7-5f31kor5",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T06:12:45.240Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T06:12:45.727Z"
+    },
+    {
+      "id": "err-mq68tldy-z3i89zsh",
+      "route": "/api/admin/orders/count",
+      "message": "401  - /api/admin/orders/count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T06:12:45.237Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/orders/count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/orders/count\nResponse Body: {\"error\":\"Unauthorized\"}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T06:12:45.574Z"
+    },
+    {
+      "id": "err-mq6775ys-wnivbxpn",
+      "route": "/api/admin/client-messages/unread-count",
+      "message": "401  - /api/admin/client-messages/unread-count",
+      "stack": "BadrDaawa Diagnostic Report\nTime: 2026-06-09T05:27:19.052Z\nURL: https://daawa.up.railway.app/admin/music?saved=templates-preview\nUser Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36\n\nEvent: fetch non-ok response\nRequest URL: /api/admin/client-messages/unread-count\nMethod: GET\nStatus: 401\nStatus Text: \nResponse URL: https://daawa.up.railway.app/api/admin/client-messages/unread-count\nResponse Body: {\"count\":0}",
+      "user": "public",
+      "source": "fetch.non_ok",
+      "createdAt": "2026-06-09T05:27:19.540Z"
+>>>>>>> 794d67933a0f7249b59c27114d3902d049e0f4b1
     },
     {
       "id": "err-mq5vgm36-cirzt28r",
