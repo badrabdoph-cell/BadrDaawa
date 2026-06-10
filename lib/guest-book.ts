@@ -2,7 +2,6 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { writeJsonFileAtomic } from "./atomic-file";
-import { normalizeInternalAssetUrl } from "./utils";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "./types";
 
 type GuestBookStore = {
@@ -44,11 +43,6 @@ function normalizeMode(value: unknown): GuestBookMode {
   return value === "disabled" || value === "auto" || value === "moderated" ? value : defaultMessagesMode;
 }
 
-function cleanImageUrl(value: unknown) {
-  const url = normalizeInternalAssetUrl(typeof value === "string" ? value : "");
-  return url && (url.startsWith("/uploads/") || url.startsWith("/assets/")) ? url : "";
-}
-
 function normalizeMessage(value: unknown): GuestBookMessage | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<GuestBookMessage>;
@@ -63,7 +57,6 @@ function normalizeMessage(value: unknown): GuestBookMessage | null {
     invitationCode,
     name,
     message,
-    ...(cleanImageUrl(raw.imageUrl) ? { imageUrl: cleanImageUrl(raw.imageUrl) } : {}),
     status: normalizeStatus(raw.status),
     createdAt,
     ...(raw.reviewedAt ? { reviewedAt: cleanText(raw.reviewedAt, 80) } : {}),
@@ -185,11 +178,10 @@ export async function getCoupleMessagesStats(invitationCode?: string) {
   };
 }
 
-export async function createGuestBookMessage(input: { invitationCode: unknown; name: unknown; message: unknown; imageUrl?: unknown; status?: unknown }) {
+export async function createGuestBookMessage(input: { invitationCode: unknown; name: unknown; message: unknown; status?: unknown }) {
   const invitationCode = cleanText(input.invitationCode, 160);
   const name = cleanText(input.name, maxNameLength);
   const message = cleanText(input.message, maxMessageLength);
-  const imageUrl = cleanImageUrl(input.imageUrl);
   if (!invitationCode || !name || !message) return null;
 
   const store = await readStore();
@@ -198,7 +190,6 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
     invitationCode,
     name,
     message,
-    ...(imageUrl ? { imageUrl } : {}),
     status: normalizeStatus(input.status),
     createdAt: new Date().toISOString(),
   };
@@ -207,7 +198,7 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
   return guestMessage;
 }
 
-export async function updateGuestBookMessage(id: string, input: { name?: unknown; message?: unknown; imageUrl?: unknown; status?: unknown }) {
+export async function updateGuestBookMessage(id: string, input: { name?: unknown; message?: unknown; status?: unknown }) {
   const cleanId = id.trim();
   if (!cleanId) return null;
   const store = await readStore();
@@ -216,7 +207,6 @@ export async function updateGuestBookMessage(id: string, input: { name?: unknown
 
   const nextName = input.name === undefined ? target.name : cleanText(input.name, maxNameLength);
   const nextMessage = input.message === undefined ? target.message : cleanText(input.message, maxMessageLength);
-  const nextImageUrl = input.imageUrl === undefined ? target.imageUrl || "" : cleanImageUrl(input.imageUrl);
   if (!nextName || !nextMessage) return null;
 
   const reviewedAt = input.status !== undefined && normalizeStatus(input.status) !== target.status ? new Date().toISOString() : target.reviewedAt;
@@ -225,10 +215,8 @@ export async function updateGuestBookMessage(id: string, input: { name?: unknown
     name: nextName,
     message: nextMessage,
     status: input.status === undefined ? target.status : normalizeStatus(input.status),
-    ...(nextImageUrl ? { imageUrl: nextImageUrl } : {}),
     ...(reviewedAt ? { reviewedAt } : {}),
   };
-  if (!nextImageUrl) delete updated.imageUrl;
 
   store.messages = store.messages.map((message) => (message.id === cleanId ? updated : message));
   await writeStore(store);

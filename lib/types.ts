@@ -185,7 +185,6 @@ export type GuestBookMessage = {
   invitationCode: string;
   name: string;
   message: string;
-  imageUrl?: string;
   status: GuestBookStatus;
   createdAt: string;
   reviewedAt?: string;

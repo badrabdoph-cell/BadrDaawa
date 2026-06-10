@@ -98,4 +98,5 @@ export const RATE_LIMIT_CONFIGS = {
   API_ADMIN: { windowMs: 60000, maxRequests: 100 }, // 100 requests per minute for admin
   API_AUTH: { windowMs: 900000, maxRequests: 5 }, // 5 requests per 15 minutes for auth
   API_UPLOAD: { windowMs: 3600000, maxRequests: 10 }, // 10 uploads per hour
+  ORDER_IMAGE_UPLOAD: { windowMs: 900000, maxRequests: 60 }, // Order images can retry and upload up to 3 slots
 };

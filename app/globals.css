@@ -9555,15 +9555,6 @@ img {
   line-height: 1.75;
 }
 
-.customer-guest-book-image {
-  display: block;
-  width: min(260px, 100%);
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border: 1px solid rgba(189, 143, 63, 0.16);
-  border-radius: 14px;
-}
-
 .customer-guest-book-card time {
   color: var(--muted);
   font-size: 0.85rem;
@@ -12369,6 +12360,19 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   transform-origin: center;
 }
 
+.route-map.is-clean-map iframe {
+  pointer-events: none;
+}
+
+.map-open-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: block;
+  background: transparent;
+  cursor: pointer;
+}
+
 .map-preview-badge {
   position: absolute;
   inset-inline: 12px auto;
@@ -12819,8 +12823,10 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
 .rsvp-calendar-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  width: min(100%, 360px);
+  margin-inline: auto;
 }
 
 .rsvp-calendar-actions .btn {
@@ -13239,8 +13245,10 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
 .add-calendar-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  width: min(100%, 360px);
+  margin-inline: auto;
 }
 
 .add-calendar-actions .btn {
@@ -13541,62 +13549,6 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   line-height: 1.7;
 }
 
-.guest-book-image-picker {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 48px;
-  padding: 11px 13px;
-  border: 1px dashed rgba(189, 143, 63, 0.38);
-  border-radius: 12px;
-  background: rgba(255, 250, 245, 0.72);
-  color: #7a5a24;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.guest-book-image-picker input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.guest-book-image-preview {
-  position: relative;
-  width: min(180px, 100%);
-}
-
-.guest-book-image-preview img,
-.guest-book-message-image {
-  display: block;
-  width: 100%;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.guest-book-image-preview img {
-  aspect-ratio: 4 / 3;
-  border: 1px solid rgba(58, 46, 31, 0.1);
-}
-
-.guest-book-image-preview button {
-  position: absolute;
-  inset-block-start: 8px;
-  inset-inline-end: 8px;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(17, 24, 39, 0.68);
-  color: #fff;
-  cursor: pointer;
-}
-
 .guest-book-form input:disabled,
 .guest-book-form textarea:disabled,
 .guest-book-form button:disabled {
@@ -13636,13 +13588,6 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   color: #5a4934;
   font-weight: 800;
   line-height: 1.7;
-}
-
-.guest-book-message-image {
-  max-width: 240px;
-  aspect-ratio: 4 / 3;
-  margin-top: 10px;
-  border: 1px solid rgba(58, 46, 31, 0.1);
 }
 
 .guest-book-empty {
@@ -13705,32 +13650,6 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   color: #64748b;
   font-size: 0.82rem;
   font-weight: 900;
-}
-
-.guest-book-admin-image-link {
-  display: inline-flex;
-  width: 56px;
-  height: 56px;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.guest-book-admin-image-link img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.guest-book-muted-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #94a3b8;
-  font-size: 0.82rem;
-  font-weight: 850;
-  white-space: nowrap;
 }
 
 .guest-book-edit-details {
@@ -20485,12 +20404,6 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
     align-items: flex-start;
   }
 
-  .guest-book-message-image,
-  .customer-guest-book-image {
-    width: 100%;
-    max-width: 100%;
-  }
-
   .container {
     width: min(100% - 24px, 1180px);
   }
@@ -25797,6 +25710,68 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
 .invite-gallery-story-progress button.active > span {
   background: var(--invite-gallery-accent, currentColor);
+}
+
+.interactive-gallery.is-static-gallery {
+  width: 100%;
+}
+
+.interactive-gallery.is-static-gallery figure {
+  position: relative;
+}
+
+.interactive-gallery.is-static-gallery img,
+.interactive-gallery.is-static-gallery video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.interactive-gallery.is-static-gallery:not(.featured-gallery):not(.garden-gallery-grid):not(.ethereal-glass-gallery):not(.boho-gallery-scroll):not(.botanical-cover-photo):not(.royal-gold-cover):not(.boho-sand-cover):not(.pure-white-cover):not(.neon-cover):not(.vintage-photo):not(.fairytale-photo):not(.ocean-photo):not(.artdeco-photo):not(.magazine-photo):not(.cinematic-gallery-stack) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: clamp(12px, 2vw, 18px);
+}
+
+.interactive-gallery.is-static-gallery:not(.featured-gallery):not(.garden-gallery-grid):not(.ethereal-glass-gallery):not(.boho-gallery-scroll):not(.botanical-cover-photo):not(.royal-gold-cover):not(.boho-sand-cover):not(.pure-white-cover):not(.neon-cover):not(.vintage-photo):not(.fairytale-photo):not(.ocean-photo):not(.artdeco-photo):not(.magazine-photo):not(.cinematic-gallery-stack) figure {
+  overflow: hidden;
+  min-height: min(58vh, 360px);
+  margin: 0;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--invite-gallery-accent, currentColor) 10%, #ffffff);
+}
+
+.interactive-gallery.boho-gallery-scroll.is-static-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 16px;
+  overflow: visible;
+  scroll-snap-type: none;
+}
+
+.interactive-gallery.boho-gallery-scroll.is-static-gallery figure {
+  overflow: hidden;
+  height: 320px;
+  margin: 0;
+  border-radius: 32px;
+  background: #e2d8c8;
+  box-shadow: 0 12px 30px rgba(62, 69, 60, 0.14);
+}
+
+.interactive-gallery.botanical-cover-photo.is-static-gallery figure,
+.interactive-gallery.royal-gold-cover.is-static-gallery figure,
+.interactive-gallery.boho-sand-cover.is-static-gallery figure,
+.interactive-gallery.pure-white-cover.is-static-gallery figure,
+.interactive-gallery.neon-cover.is-static-gallery figure,
+.interactive-gallery.vintage-photo.is-static-gallery figure,
+.interactive-gallery.fairytale-photo.is-static-gallery figure,
+.interactive-gallery.ocean-photo.is-static-gallery figure,
+.interactive-gallery.artdeco-photo.is-static-gallery figure,
+.interactive-gallery.magazine-photo.is-static-gallery figure {
+  width: 100%;
+  height: 100%;
+  margin: 0;
 }
 
 .compact-image-story-card,

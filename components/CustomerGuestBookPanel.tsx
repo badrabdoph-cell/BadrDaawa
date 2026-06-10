@@ -66,7 +66,6 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
                 <span className={`guest-book-status-pill ${message.status}`}>{statusLabels[message.status]}</span>
               </header>
               <p>{message.message}</p>
-              {message.imageUrl ? <img className="customer-guest-book-image" src={message.imageUrl} alt={`صورة من ${message.name || "ضيف عزيز"}`} loading="lazy" /> : null}
               <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
             </article>
           ))}

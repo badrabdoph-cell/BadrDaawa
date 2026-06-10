@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Filter, ImageIcon, MessageCircleHeart, Pencil, Search, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Filter, MessageCircleHeart, Pencil, Search, Trash2, XCircle } from "lucide-react";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getAllCoupleMessagesSettings, getAllGuestBookMessages } from "@/lib/guest-book";
 import type { GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
@@ -168,7 +168,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                 <th>الدعوة</th>
                 <th>الاسم</th>
                 <th>الرسالة</th>
-                <th>الصورة</th>
                 <th>الحالة</th>
                 <th>تاريخ الإرسال</th>
                 <th>إجراءات</th>
@@ -183,15 +182,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                   </td>
                   <td>{message.name}</td>
                   <td className="guest-book-message-cell">{message.message}</td>
-                  <td>
-                    {message.imageUrl ? (
-                      <a className="guest-book-admin-image-link" href={message.imageUrl} target="_blank" rel="noreferrer">
-                        <img src={message.imageUrl} alt={`صورة من ${message.name}`} loading="lazy" />
-                      </a>
-                    ) : (
-                      <span className="guest-book-muted-cell"><ImageIcon size={15} /> لا توجد</span>
-                    )}
-                  </td>
                   <td>
                     <span className={`guest-book-status-pill ${message.status}`}>{statusLabels[message.status]}</span>
                   </td>
@@ -220,7 +210,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                           <input type="hidden" name="action" value="edit" />
                           <input name="name" defaultValue={message.name} placeholder="اسم المرسل" maxLength={80} required />
                           <textarea name="message" defaultValue={message.message} placeholder="نص الرسالة" maxLength={600} rows={3} required />
-                          <input name="imageUrl" defaultValue={message.imageUrl || ""} placeholder="رابط الصورة الاختيارية" />
                           <select name="status" defaultValue={message.status}>
                             <option value="pending">بانتظار الموافقة</option>
                             <option value="approved">منشورة</option>

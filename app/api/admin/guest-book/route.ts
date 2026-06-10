@@ -51,7 +51,6 @@ export async function POST(request: NextRequest) {
     const updated = await updateGuestBookMessage(messageId, {
       name: formData.get("name"),
       message: formData.get("message"),
-      imageUrl: formData.get("imageUrl"),
       status: formData.get("status"),
     });
     if (!updated) {

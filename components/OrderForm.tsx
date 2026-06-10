@@ -98,6 +98,7 @@ const acceptedVideoFormats = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.we
 const maxClientOriginalImageBytes = 32 * 1024 * 1024;
 const maxDirectServerImageBytes = 32 * 1024 * 1024;
 const uploadRetryCount = 2;
+const nonRetryableUploadStatuses = new Set([400, 413, 422, 429]);
 
 function createIdleUploadState(url = ""): ImageUploadState {
   return {
@@ -117,6 +118,24 @@ function fileKey(file: File) {
 function formatUploadSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function createUploadError(message: string, status?: number) {
+  const error = new Error(message);
+  if (status) Object.assign(error, { status });
+  return error;
+}
+
+function getUploadErrorStatus(error: unknown) {
+  return typeof error === "object" && error !== null && "status" in error && typeof (error as { status?: unknown }).status === "number" ? (error as { status: number }).status : 0;
+}
+
+function getUploadErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  if (message && !message.startsWith("upload-failed-") && message !== "network-upload-failed" && message !== "upload-timeout" && message !== "upload-aborted") return message;
+  if (message === "upload-timeout") return "استغرق رفع الصورة وقتًا طويلًا. جرّب اتصال أقوى أو صورة أصغر.";
+  if (message === "network-upload-failed") return "انقطع الاتصال أثناء رفع الصورة. جرّب مرة أخرى.";
+  return "تعذر رفع الصورة. جرّب صورة أقل حجماً أو اتصال إنترنت أكثر استقراراً.";
 }
 
 function loadImageElement(url: string) {
@@ -689,7 +708,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       imageUploadRequestsRef.current[index]?.abort();
       imageUploadRequestsRef.current[index] = xhr;
       xhr.open("POST", "/api/orders/preview-images");
-      xhr.timeout = 45_000;
+      xhr.timeout = 90_000;
       xhr.upload.onprogress = (event) => {
         if (!event.lengthComputable) return;
         const uploadProgress = Math.round((event.loaded / event.total) * 45);
@@ -714,7 +733,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           resolve(url);
           return;
         }
-        const error = new Error(payload?.error || `upload-failed-${xhr.status || "network"}`);
+        const error = createUploadError(payload?.error || `upload-failed-${xhr.status || "network"}`, xhr.status || undefined);
         reject(error);
       };
       xhr.onerror = () => {
@@ -811,6 +830,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           } catch (error) {
             lastError = error;
             if (error instanceof Error && error.message === "upload-aborted") throw error;
+            if (nonRetryableUploadStatuses.has(getUploadErrorStatus(error))) throw error;
           }
         }
 
@@ -818,7 +838,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       } catch (error) {
         const uploadError = error instanceof Error && error.message === "upload-aborted"
           ? "تم إلغاء رفع الصورة لأنك اخترت صورة أخرى."
-          : "تعذر رفع الصورة. جرّب صورة أقل حجماً أو اتصال إنترنت أكثر استقراراً.";
+          : getUploadErrorMessage(error);
         setImageUpload(index, {
           phase: "error",
           progress: 0,

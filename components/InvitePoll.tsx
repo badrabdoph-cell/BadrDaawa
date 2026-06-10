@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, Check, CheckCircle2, Download, ExternalLink, Loader2, PartyPopper, X } from "lucide-react";
-import { getGoogleCalendarUrl, getInvitationCalendarRange, getOutlookCalendarUrl } from "@/lib/calendar";
+import { CalendarPlus, Check, CheckCircle2, Loader2, PartyPopper, X } from "lucide-react";
+import { getGoogleCalendarUrl, getInvitationCalendarRange } from "@/lib/calendar";
 import { getInvitationTranslator, getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import type { Invitation, Language } from "@/lib/types";
 import { getInvitationUrl } from "@/lib/utils";
+import { SmartCalendarButton } from "./SmartCalendarButton";
 
 type PollState = "idle" | "attending" | "declined";
 type RsvpStatus = "confirmed" | "declined";
@@ -28,7 +29,7 @@ export function InvitePoll({
   const t = getInvitationTranslator(resolveLocale(locale));
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const googleCalendarUrl = getGoogleCalendarUrl(invitation, invitationUrl);
-  const outlookCalendarUrl = getOutlookCalendarUrl(invitation, invitationUrl);
+  const icsCalendarUrl = `/api/invitations/${invitation.code}/calendar/ics`;
   const { start } = getInvitationCalendarRange(invitation);
   const dateLocale = getLocaleMeta(resolveLocale(locale)).dateLocale;
   const eventTime = `${new Intl.DateTimeFormat(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(invitation.weddingDate))} - ${start.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })}`;
@@ -125,18 +126,7 @@ export function InvitePoll({
               </div>
             </div>
             <div className="rsvp-calendar-actions">
-              <a className="btn btn-gold btn-glow" href={googleCalendarUrl} target="_blank" rel="noreferrer">
-                <ExternalLink size={17} />
-                Google Calendar
-              </a>
-              <a className={isPreview ? "btn btn-soft disabled" : "btn btn-soft"} href={isPreview ? undefined : `/api/invitations/${invitation.code}/calendar/ics`} aria-disabled={isPreview}>
-                <Download size={17} />
-                Apple Calendar
-              </a>
-              <a className="btn btn-soft" href={outlookCalendarUrl} target="_blank" rel="noreferrer">
-                <ExternalLink size={17} />
-                Outlook
-              </a>
+              <SmartCalendarButton googleUrl={googleCalendarUrl} icsUrl={icsCalendarUrl} locale={locale} isPreview={isPreview} />
             </div>
             {isPreview ? <p className="status">{t("invitation.calendar.previewNote")}</p> : null}
           </div>

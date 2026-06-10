@@ -28,10 +28,10 @@ async function getUploadActor(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const requestId = `preview-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
   const startedAt = Date.now();
-  const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:preview-images"), RATE_LIMIT_CONFIGS.API_UPLOAD);
+  const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:preview-images"), RATE_LIMIT_CONFIGS.ORDER_IMAGE_UPLOAD);
   if (!rateLimit.allowed) {
     return NextResponse.json(
-      { ok: false, error: "تم إرسال ملفات كثيرة في وقت قصير. انتظر قليلًا ثم حاول مرة أخرى." },
+      { ok: false, error: "تمت محاولات رفع كثيرة في وقت قصير. انتظر دقيقة ثم حاول مرة أخرى." },
       { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } },
     );
   }
