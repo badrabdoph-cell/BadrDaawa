@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, UsersRound, X } from "lucide-react";
 
 const adminLinks = [
@@ -44,6 +44,7 @@ const adminLinks = [
 const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications"]);
 const mobilePrimaryLinks = adminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
 const mobileMoreLinks = adminLinks.filter((link) => !mobilePrimaryHrefs.has(link.href));
+const pendingAdminActionKey = "badr-admin-pending-action";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -53,10 +54,144 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [messagesBadge, setMessagesBadge] = useState(0);
   const [notificationsBadge, setNotificationsBadge] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [routeBusy, setRouteBusy] = useState(false);
+  const routeBusyTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setRouteBusy(false);
+    if (routeBusyTimerRef.current) {
+      window.clearTimeout(routeBusyTimerRef.current);
+      routeBusyTimerRef.current = null;
+    }
   }, [pathname]);
+
+  useEffect(() => {
+    setRouteBusy(false);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const raw = window.sessionStorage.getItem(pendingAdminActionKey);
+      if (!raw) return;
+      window.sessionStorage.removeItem(pendingAdminActionKey);
+
+      const params = new URLSearchParams(window.location.search);
+      const hasExplicitOutcome = ["error", "status", "saved", "created", "sync"].some((key) => params.has(key));
+      if (hasExplicitOutcome) return;
+
+      try {
+        const action = JSON.parse(raw) as { kind?: string; label?: string; time?: number };
+        if (!action.time || Date.now() - action.time > 15000) return;
+        const isSubmit = action.kind === "submit";
+        window.badrNotify?.({
+          type: "success",
+          title: isSubmit ? "تم تحميل النتائج" : "تم فتح القسم",
+          message: isSubmit ? `${action.label || "الإجراء"} اكتمل.` : `تم فتح ${action.label || "القسم"} بنجاح.`,
+          duration: 2600,
+        });
+      } catch {
+        window.badrNotify?.({
+          type: "success",
+          title: "تم تحميل الصفحة",
+          message: "اكتمل الانتقال داخل لوحة الإدارة.",
+          duration: 2400,
+        });
+      }
+    }, 160);
+
+    return () => window.clearTimeout(timer);
+  }, [pathname, searchParams]);
+
+  useEffect(() => {
+    function markBusy() {
+      setRouteBusy(true);
+      if (routeBusyTimerRef.current) window.clearTimeout(routeBusyTimerRef.current);
+      routeBusyTimerRef.current = window.setTimeout(() => {
+        setRouteBusy(false);
+        document.querySelectorAll(".admin-action-pending").forEach((item) => item.classList.remove("admin-action-pending"));
+        document.querySelectorAll("[data-admin-working='true']").forEach((item) => item.removeAttribute("data-admin-working"));
+      }, 12000);
+    }
+
+    function notify(type: "info" | "success" | "warning" | "error", title: string, message: string, duration = 2600) {
+      window.badrNotify?.({ type, title, message, duration });
+    }
+
+    function rememberAction(kind: "link" | "submit", label: string) {
+      window.sessionStorage.setItem(
+        pendingAdminActionKey,
+        JSON.stringify({
+          kind,
+          label,
+          time: Date.now(),
+        }),
+      );
+    }
+
+    function onSubmit(event: Event) {
+      const form = event.target instanceof HTMLFormElement ? event.target : null;
+      if (!form?.closest(".admin-dark-shell")) return;
+      if (form.dataset.noAdminFeedback === "true") return;
+
+      const method = (form.method || "get").toUpperCase();
+      const submitter = (event as SubmitEvent).submitter;
+      const submitterElement = submitter instanceof HTMLElement ? submitter : null;
+      const submitterText = submitterElement?.textContent?.trim().replace(/\s+/g, " ").slice(0, 60);
+
+      form.classList.add("admin-action-pending");
+      form.setAttribute("aria-busy", "true");
+      submitterElement?.setAttribute("data-admin-working", "true");
+      markBusy();
+      rememberAction("submit", submitterText || (method === "GET" ? "تحميل النتائج" : "تنفيذ الأمر"));
+
+      notify(
+        "info",
+        method === "GET" ? "جاري تحميل النتائج" : "جاري تنفيذ الأمر",
+        submitterText ? `${submitterText} قيد التنفيذ...` : method === "GET" ? "يتم تطبيق البحث أو الفلتر الآن..." : "يتم إرسال الطلب للسيرفر الآن...",
+        2200,
+      );
+    }
+
+    function onClick(event: MouseEvent) {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+      const link = target.closest("a[href]") as HTMLAnchorElement | null;
+      if (!link?.closest(".admin-dark-shell")) return;
+      if (link.target && link.target !== "_self") return;
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+
+      let url: URL;
+      try {
+        url = new URL(link.href, window.location.origin);
+      } catch {
+        return;
+      }
+
+      if (url.origin !== window.location.origin || !url.pathname.startsWith("/admin")) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+
+      markBusy();
+      const label = link.textContent?.trim().replace(/\s+/g, " ").slice(0, 60) || "القسم";
+      rememberAction("link", label);
+      notify("info", "جاري فتح القسم", `يتم فتح ${label}...`, 1800);
+    }
+
+    function onPageShow() {
+      setRouteBusy(false);
+    }
+
+    document.addEventListener("submit", onSubmit, true);
+    document.addEventListener("click", onClick, true);
+    window.addEventListener("pageshow", onPageShow);
+
+    return () => {
+      document.removeEventListener("submit", onSubmit, true);
+      document.removeEventListener("click", onClick, true);
+      window.removeEventListener("pageshow", onPageShow);
+      if (routeBusyTimerRef.current) window.clearTimeout(routeBusyTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -82,6 +217,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     async function loadCount() {
+      if (document.visibilityState === "hidden") return;
       const response = await fetch("/api/admin/orders/count", { cache: "no-store" }).catch(() => null);
       if (!alive || !response?.ok) return;
       const data = (await response.json().catch(() => null)) as { count?: number } | null;
@@ -89,7 +225,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     }
     loadCount();
     window.addEventListener("admin-orders-count-refresh", loadCount);
-    const timer = window.setInterval(loadCount, 30000);
+    const timer = window.setInterval(loadCount, 45000);
     return () => {
       alive = false;
       window.removeEventListener("admin-orders-count-refresh", loadCount);
@@ -100,13 +236,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     async function loadCount() {
+      if (document.visibilityState === "hidden") return;
       const response = await fetch("/api/admin/client-messages/unread-count", { cache: "no-store" }).catch(() => null);
       if (!alive || !response?.ok) return;
       const data = (await response.json().catch(() => null)) as { count?: number } | null;
       setMessagesBadge(Math.max(0, Number(data?.count || 0)));
     }
     loadCount();
-    const timer = window.setInterval(loadCount, 30000);
+    const timer = window.setInterval(loadCount, 45000);
     return () => {
       alive = false;
       window.clearInterval(timer);
@@ -116,14 +253,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     async function loadCount() {
-      const response = await fetch("/api/admin/notification-center", { cache: "no-store" }).catch(() => null);
+      if (document.visibilityState === "hidden") return;
+      const response = await fetch("/api/admin/notification-center?summary=1", { cache: "no-store" }).catch(() => null);
       if (!alive || !response?.ok) return;
       const data = (await response.json().catch(() => null)) as { unreadCount?: number } | null;
       setNotificationsBadge(Math.max(0, Number(data?.unreadCount || 0)));
     }
     loadCount();
     window.addEventListener("admin-notifications-refresh", loadCount);
-    const timer = window.setInterval(loadCount, 30000);
+    const timer = window.setInterval(loadCount, 60000);
     return () => {
       alive = false;
       window.removeEventListener("admin-notifications-refresh", loadCount);
@@ -133,6 +271,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="dashboard-layout">
+      {routeBusy ? <div className="admin-route-progress" role="status" aria-label="جاري تحميل لوحة الإدارة" /> : null}
       <aside className="dashboard-sidebar">
         <div>
           <Link href="/admin" className="admin-brand">

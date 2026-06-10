@@ -275,16 +275,16 @@ function ensureMinimumOrderStoryItems(value: unknown) {
   return story;
 }
 
-function normalizeStoryDescriptionInput(value: string) {
+function normalizeStoryTextInput(value: string) {
   return value.replace(/[\u00a0\u202f]/g, " ").replace(/[\u200b-\u200d\ufeff]/g, "");
 }
 
-function getDescriptionWithInsertedSpace(target: HTMLTextAreaElement) {
+function getStoryTextWithInsertedSpace(target: HTMLInputElement | HTMLTextAreaElement) {
   const start = target.selectionStart ?? target.value.length;
   const end = target.selectionEnd ?? start;
   return {
     caret: start + 1,
-    description: `${target.value.slice(0, start)} ${target.value.slice(end)}`,
+    value: `${target.value.slice(0, start)} ${target.value.slice(end)}`,
   };
 }
 
@@ -484,15 +484,17 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   const hasImageUploadInProgress = uploadingImageCount > 0;
 
   useEffect(() => {
-    function handleNativeStoryDescriptionSpace(event: globalThis.KeyboardEvent) {
+    function handleNativeStoryFieldSpace(event: globalThis.KeyboardEvent) {
       if ((event.key !== " " && event.code !== "Space") || event.ctrlKey || event.metaKey || event.altKey) return;
       const target = event.target;
-      if (!(target instanceof HTMLTextAreaElement) || target.dataset.orderStoryDescription !== "true") return;
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) || target.dataset.orderStoryField !== "true") return;
 
       const index = Number(target.dataset.storyIndex);
+      const field = target.dataset.storyField;
       if (!Number.isInteger(index) || index < 0) return;
+      if (field !== "date" && field !== "title" && field !== "description") return;
 
-      const next = getDescriptionWithInsertedSpace(target);
+      const next = getStoryTextWithInsertedSpace(target);
       event.preventDefault();
       event.stopPropagation();
 
@@ -501,16 +503,21 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           ...current,
           storyEnabled: true,
           story: cleanOrderStory(current.story).map((item, itemIndex) =>
-            itemIndex === index ? { ...item, description: normalizeStoryDescriptionInput(next.description) } : item,
+            itemIndex === index ? { ...item, [field]: normalizeStoryTextInput(next.value) } : item,
           ),
         }));
+        setStoryErrors((current) => {
+          const nextErrors = { ...current };
+          delete nextErrors[storyFieldErrorKey(index, field)];
+          return nextErrors;
+        });
         setMessage("");
       });
       window.requestAnimationFrame(() => target.setSelectionRange(next.caret, next.caret));
     }
 
-    document.addEventListener("keydown", handleNativeStoryDescriptionSpace, true);
-    return () => document.removeEventListener("keydown", handleNativeStoryDescriptionSpace, true);
+    document.addEventListener("keydown", handleNativeStoryFieldSpace, true);
+    return () => document.removeEventListener("keydown", handleNativeStoryFieldSpace, true);
   }, []);
 
   function getUrlDraft(): OrderDraft {
@@ -751,19 +758,19 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (message) setMessage("");
   }
 
-  function updateStoryDescription(index: number, value: string) {
-    updateStoryItem(index, { description: normalizeStoryDescriptionInput(value) });
+  function updateStoryText(index: number, field: "date" | "title" | "description", value: string) {
+    updateStoryItem(index, { [field]: normalizeStoryTextInput(value) });
   }
 
-  function handleStoryDescriptionBeforeInput(index: number, event: FormEvent<HTMLTextAreaElement>) {
+  function handleStoryFieldBeforeInput(index: number, field: "date" | "title" | "description", event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const inputEvent = event.nativeEvent as InputEvent;
     if (inputEvent.inputType !== "insertText" || ![" ", "\u00a0", "\u202f"].includes(inputEvent.data || "")) return;
 
     const target = event.currentTarget;
-    const next = getDescriptionWithInsertedSpace(target);
+    const next = getStoryTextWithInsertedSpace(target);
     event.preventDefault();
 
-    flushSync(() => updateStoryDescription(index, next.description));
+    flushSync(() => updateStoryText(index, field, next.value));
     window.requestAnimationFrame(() => target.setSelectionRange(next.caret, next.caret));
   }
 
@@ -1597,12 +1604,34 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                         </div>
                         <div className="field">
                           <label htmlFor={`storyDate-${index}`}>التاريخ</label>
-                          <input id={`storyDate-${index}`} name={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder={example.date} aria-invalid={Boolean(dateError)} />
+                          <input
+                            id={`storyDate-${index}`}
+                            name={`storyDate-${index}`}
+                            data-order-story-field="true"
+                            data-story-field="date"
+                            data-story-index={index}
+                            value={item.date || ""}
+                            onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "date", event)}
+                            onChange={(event) => updateStoryText(index, "date", event.target.value)}
+                            placeholder={example.date}
+                            aria-invalid={Boolean(dateError)}
+                          />
                           {dateError ? <small className="field-error">{dateError}</small> : null}
                         </div>
                         <div className="field">
                           <label htmlFor={`storyTitle-${index}`}>العنوان</label>
-                          <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder={example.title} aria-invalid={Boolean(titleError)} />
+                          <input
+                            id={`storyTitle-${index}`}
+                            name={`storyTitle-${index}`}
+                            data-order-story-field="true"
+                            data-story-field="title"
+                            data-story-index={index}
+                            value={item.title}
+                            onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "title", event)}
+                            onChange={(event) => updateStoryText(index, "title", event.target.value)}
+                            placeholder={example.title}
+                            aria-invalid={Boolean(titleError)}
+                          />
                           {titleError ? <small className="field-error">{titleError}</small> : null}
                         </div>
                         <div className="field full">
@@ -1610,13 +1639,14 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                           <textarea
                             id={`storyDescription-${index}`}
                             name={`storyDescription-${index}`}
-                            data-order-story-description="true"
+                            data-order-story-field="true"
+                            data-story-field="description"
                             data-story-index={index}
                             rows={3}
                             value={item.description}
                             aria-invalid={Boolean(descriptionError)}
-                            onBeforeInput={(event) => handleStoryDescriptionBeforeInput(index, event)}
-                            onChange={(event) => updateStoryDescription(index, event.target.value)}
+                            onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "description", event)}
+                            onChange={(event) => updateStoryText(index, "description", event.target.value)}
                             placeholder={example.description}
                           />
                           {descriptionError ? <small className="field-error">{descriptionError}</small> : null}

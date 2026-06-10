@@ -1,5 +1,225 @@
 [
   {
+    "id": "audit-mq8ad6mk-4z4yg052",
+    "createdAt": "2026-06-10T16:31:31.532Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781109091529",
+      "label": "RSVP saved for invitation: qa-groom-qa-bride-1."
+    },
+    "newValues": {
+      "startedAt": 1781109091532,
+      "status": "skipped",
+      "message": "GitHub sync variables are not configured.",
+      "duration": 0
+    },
+    "metadata": {
+      "reason": "RSVP saved for invitation: qa-groom-qa-bride-1.",
+      "status": "skipped",
+      "retryCount": 0,
+      "logId": null
+    }
+  },
+  {
+    "id": "audit-mq8acuhw-yglzmw8j",
+    "createdAt": "2026-06-10T16:31:15.812Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781109075804",
+      "label": "Order published as invitation: qa-groom-qa-bride-1."
+    },
+    "newValues": {
+      "startedAt": 1781109075811,
+      "status": "skipped",
+      "message": "GitHub sync variables are not configured.",
+      "duration": 0
+    },
+    "metadata": {
+      "reason": "Order published as invitation: qa-groom-qa-bride-1.",
+      "status": "skipped",
+      "retryCount": 0,
+      "logId": null
+    }
+  },
+  {
+    "id": "audit-mq8acuhq-iuyyuqjl",
+    "createdAt": "2026-06-10T16:31:15.806Z",
+    "actor": {
+      "type": "admin",
+      "id": "admin",
+      "label": "admin"
+    },
+    "action": "order.publish",
+    "entity": {
+      "type": "Order",
+      "id": "ord_mq8abjls_xcbgb",
+      "label": "ORD-MQ8ABJLB-F4CC"
+    },
+    "oldValues": {
+      "orderNumber": "ORD-MQ8ABJLB-F4CC",
+      "dedupeKey": "833e31ebe69e05d45855502fe627e64bf0cab0a7931fbe1ee72fc8b5ef40e8a8",
+      "groomName": "QA Groom",
+      "brideName": "QA Bride",
+      "phone": "",
+      "weddingDate": "2026-12-31",
+      "venue": "QA Hall",
+      "mapUrl": "",
+      "notes": "",
+      "imageUrls": [],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "publishedInvitationCode": "qa-groom-qa-bride-1",
+      "manageToken": "bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ",
+      "id": "ord_mq8abjls_xcbgb",
+      "status": "new",
+      "submittedAt": "2026-06-10T16:30:15.040Z",
+      "createdAt": "2026-06-10T16:30:15.040Z",
+      "publicUrl": "http://127.0.0.1:3020/qa-groom-qa-bride-1",
+      "adminUrl": "http://127.0.0.1:3020/qa-groom-qa-bride-1/ad_3399"
+    },
+    "newValues": {
+      "orderNumber": "ORD-MQ8ABJLB-F4CC",
+      "dedupeKey": "833e31ebe69e05d45855502fe627e64bf0cab0a7931fbe1ee72fc8b5ef40e8a8",
+      "groomName": "QA Groom",
+      "brideName": "QA Bride",
+      "phone": "",
+      "weddingDate": "2026-12-31",
+      "venue": "QA Hall",
+      "mapUrl": "",
+      "notes": "",
+      "imageUrls": [
+        "/assets/invite/badr-sarah-1.jpeg",
+        "/assets/invite/badr-sarah-2.jpeg",
+        "/assets/invite/badr-sarah-3.jpeg"
+      ],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "publishedInvitationCode": "qa-groom-qa-bride-1",
+      "manageToken": "bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ",
+      "id": "ord_mq8abjls_xcbgb",
+      "status": "published",
+      "submittedAt": "2026-06-10T16:30:15.040Z",
+      "createdAt": "2026-06-10T16:30:15.040Z",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "openingText": "ليلة جديدة تبدأ باسم الحب. افتحوا الدعوة وشاركونا الفرحة.",
+        "inviteMessage": "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
+        "inviteMessageSecondary": "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "rsvpConfirmedSuccessMessage": "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+        "rsvpDeclinedSuccessMessage": "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+        "galleryStories": [],
+        "story": []
+      },
+      "publicUrl": "http://127.0.0.1:3020/qa-groom-qa-bride-1",
+      "adminUrl": "http://127.0.0.1:3020/manage/invitation/bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ",
+      "links": {
+        "publicUrl": "http://127.0.0.1:3020/qa-groom-qa-bride-1",
+        "adminUrl": "http://127.0.0.1:3020/manage/invitation/bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ"
+      }
+    },
+    "metadata": {
+      "invitationCode": "qa-groom-qa-bride-1"
+    }
+  },
+  {
+    "id": "audit-mq8abjmg-7havxcek",
+    "createdAt": "2026-06-10T16:30:15.064Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781109015046",
+      "label": "Order request created: ord_mq8abjls_xcbgb."
+    },
+    "newValues": {
+      "startedAt": 1781109015064,
+      "status": "skipped",
+      "message": "GitHub sync variables are not configured.",
+      "duration": 0
+    },
+    "metadata": {
+      "reason": "Order request created: ord_mq8abjls_xcbgb.",
+      "status": "skipped",
+      "retryCount": 0,
+      "logId": null
+    }
+  },
+  {
+    "id": "audit-mq8abjm1-qmkrf27p",
+    "createdAt": "2026-06-10T16:30:15.049Z",
+    "actor": {
+      "type": "public",
+      "label": "QA Groom"
+    },
+    "action": "order.create",
+    "entity": {
+      "type": "Order",
+      "id": "ord_mq8abjls_xcbgb",
+      "label": "ORD-MQ8ABJLB-F4CC"
+    },
+    "newValues": {
+      "orderId": "ord_mq8abjls_xcbgb",
+      "orderNumber": "ORD-MQ8ABJLB-F4CC",
+      "invitationCode": "qa-groom-qa-bride-1",
+      "manageToken": "bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ",
+      "groomName": "QA Groom",
+      "brideName": "QA Bride",
+      "phone": "",
+      "weddingDate": "2026-12-31",
+      "venue": "QA Hall",
+      "mapUrl": "",
+      "templateSlug": "featured-1",
+      "imageUrls": [],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "story": [],
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      }
+    },
+    "metadata": {
+      "source": "public-order-form"
+    }
+  },
+  {
     "id": "audit-mq89hr2g-h2bp9ihh",
     "createdAt": "2026-06-10T16:07:05.032Z",
     "actor": {
