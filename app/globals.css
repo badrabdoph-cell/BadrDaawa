@@ -7866,21 +7866,31 @@ img {
 
 .orders-queue-item {
   display: grid;
-  gap: 7px;
+  gap: 9px;
   width: 100%;
   padding: 11px;
   border: 1px solid rgba(245, 234, 214, 0.08);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(255, 247, 232, 0.84);
-  text-align: start;
-  cursor: pointer;
 }
 
 .orders-queue-item:hover,
 .orders-queue-item.active {
   border-color: rgba(243, 207, 115, 0.26);
   background: rgba(243, 207, 115, 0.09);
+}
+
+.orders-queue-select {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
 .orders-queue-item strong,
@@ -7891,6 +7901,67 @@ img {
 .orders-queue-item small {
   color: rgba(245, 234, 214, 0.52);
   font-weight: 850;
+}
+
+.orders-queue-publish {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(243, 207, 115, 0.32);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(243, 207, 115, 0.24), rgba(49, 95, 86, 0.2)),
+    rgba(255, 255, 255, 0.055);
+  color: #fff7e8;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 950;
+  overflow: hidden;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.orders-queue-publish::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  animation: orders-quick-publish-shine 4s ease-in-out infinite;
+}
+
+.orders-queue-publish:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(243, 207, 115, 0.5);
+  background:
+    linear-gradient(135deg, rgba(243, 207, 115, 0.32), rgba(49, 95, 86, 0.24)),
+    rgba(255, 255, 255, 0.07);
+}
+
+.orders-queue-publish:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.orders-queue-publish svg,
+.orders-queue-publish span {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes orders-quick-publish-shine {
+  0%,
+  46% {
+    transform: translateX(-120%);
+  }
+  62%,
+  100% {
+    transform: translateX(120%);
+  }
 }
 
 .order-status-chip {

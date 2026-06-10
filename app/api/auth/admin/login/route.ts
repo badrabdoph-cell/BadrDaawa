@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash, scryptSync, timingSafeEqual } from "crypto";
 import { ADMIN_SESSION_COOKIE, ADMIN_SESSION_MAX_AGE, createAdminSessionCookie } from "@/lib/admin-session";
 import { getAdminPassword, getAdminPasswordHash, getAdminUsernames, isAdminAuthConfigured } from "@/lib/auth-config";
-import { getPublicSiteUrl, getRedirectUrl } from "@/lib/utils";
+import { isSameOriginRequest } from "@/lib/security-enhancements";
+import { getRedirectUrl } from "@/lib/utils";
 
 const attempts = new Map<string, { count: number; resetAt: number }>();
 const maxAttempts = 7;
@@ -86,37 +87,8 @@ function sanitizeAdminNext(value: string) {
   return "/admin";
 }
 
-function areLocalDevelopmentOrigins(...origins: string[]) {
-  try {
-    return origins.every((origin) => {
-      const host = new URL(origin).hostname;
-      return host === "localhost" || host === "127.0.0.1";
-    });
-  } catch {
-    return false;
-  }
-}
-
 function isTrustedOrigin(request: NextRequest) {
-  const expectedOrigin = new URL(getPublicSiteUrl(request.headers, request.nextUrl.origin)).origin;
-  const requestOrigin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
-  if (requestOrigin) {
-    if (requestOrigin === expectedOrigin || requestOrigin === request.nextUrl.origin) return true;
-    if (process.env.NODE_ENV === "development") return areLocalDevelopmentOrigins(requestOrigin, expectedOrigin, request.nextUrl.origin);
-    return false;
-  }
-  if (referer) {
-    try {
-      const refererOrigin = new URL(referer).origin;
-      if (refererOrigin === expectedOrigin || refererOrigin === request.nextUrl.origin) return true;
-      if (process.env.NODE_ENV === "development") return areLocalDevelopmentOrigins(refererOrigin, expectedOrigin, request.nextUrl.origin);
-      return false;
-    } catch {
-      return false;
-    }
-  }
-  return true;
+  return isSameOriginRequest(request);
 }
 
 function redirectToLogin(request: NextRequest, reason: "error" | "setup", next: string) {

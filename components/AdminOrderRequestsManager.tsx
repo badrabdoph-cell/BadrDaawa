@@ -134,6 +134,64 @@ function orderTitle(order: OrderRequest, index: number) {
   return `طلب ${order.orderNumber || `#${index + 1}`} - ${order.groomName} & ${order.brideName}`;
 }
 
+function toolValuesFromForm(form: OrderFormState): AdminInvitationToolValues {
+  return {
+    templateSlug: form.templateSlug,
+    groomName: form.groomName,
+    brideName: form.brideName,
+    phone: form.phone,
+    weddingDate: form.weddingDate,
+    venue: form.venue,
+    mapUrl: form.mapUrl,
+    images: form.imageUrls,
+    heroVideoUrl: form.heroVideoUrl,
+    heroVideoName: form.heroVideoName,
+    heroVideoBusy: form.heroVideoBusy,
+    photographerEnabled: form.photographerEnabled,
+    photographerName: form.photographerName,
+    photographerLogo: form.photographerLogo,
+    photographerFacebookUrl: form.photographerFacebookUrl,
+    photographerInstagramUrl: form.photographerInstagramUrl,
+    musicEnabled: form.musicEnabled,
+    musicChoice: form.musicChoice,
+    musicUrl: form.musicUrl,
+    musicLibraryTrackId: form.musicLibraryTrackId,
+    musicBusy: form.musicBusy,
+    musicFileName: form.musicFileName,
+    invitationTexts: form.invitationTexts,
+  };
+}
+
+function payloadFromFormState(form: OrderFormState, action: "review" | "update" | "publish" | "reject") {
+  const effectiveMusic = getEffectiveAdminToolMusic(form);
+  return {
+    action,
+    groomName: form.groomName,
+    brideName: form.brideName,
+    phone: form.phone,
+    weddingDate: form.weddingDate,
+    venue: form.venue,
+    mapUrl: form.mapUrl,
+    notes: form.notes,
+    templateSlug: form.templateSlug,
+    imageUrls: form.imageUrls.map((image) => image.url).filter(Boolean),
+    heroVideoUrl: form.heroVideoUrl,
+    musicEnabled: effectiveMusic.musicEnabled,
+    musicChoice: effectiveMusic.musicChoice,
+    musicUrl: effectiveMusic.musicUrl,
+    musicLibraryTrackId: effectiveMusic.musicLibraryTrackId,
+    texts: form.invitationTexts,
+    photographer: {
+      enabled: form.photographerEnabled,
+      name: form.photographerName,
+      logoUrl: form.photographerLogo.url,
+      facebookUrl: form.photographerFacebookUrl,
+      instagramUrl: form.photographerInstagramUrl,
+    },
+    rejectionReason: form.rejectionReason,
+  };
+}
+
 export function AdminOrderRequestsManager({
   orders,
   templates,
@@ -157,6 +215,7 @@ export function AdminOrderRequestsManager({
   const selectedOrder = useMemo(() => items.find((order) => order.id === selectedId) || items[0] || null, [items, selectedId]);
   const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles)));
   const [busy, setBusy] = useState<"idle" | "review" | "update" | "publish" | "reject">("idle");
+  const [busyOrderId, setBusyOrderId] = useState("");
   const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
   const imageInputs = useRef<Array<HTMLInputElement | null>>([]);
@@ -208,34 +267,7 @@ export function AdminOrderRequestsManager({
     [effectivePreviewMusic, form],
   );
 
-  const toolValues = useMemo<AdminInvitationToolValues>(
-    () => ({
-      templateSlug: form.templateSlug,
-      groomName: form.groomName,
-      brideName: form.brideName,
-      phone: form.phone,
-      weddingDate: form.weddingDate,
-      venue: form.venue,
-      mapUrl: form.mapUrl,
-      images: form.imageUrls,
-      heroVideoUrl: form.heroVideoUrl,
-      heroVideoName: form.heroVideoName,
-      heroVideoBusy: form.heroVideoBusy,
-      photographerEnabled: form.photographerEnabled,
-      photographerName: form.photographerName,
-      photographerLogo: form.photographerLogo,
-      photographerFacebookUrl: form.photographerFacebookUrl,
-      photographerInstagramUrl: form.photographerInstagramUrl,
-      musicEnabled: form.musicEnabled,
-      musicChoice: form.musicChoice,
-      musicUrl: form.musicUrl,
-      musicLibraryTrackId: form.musicLibraryTrackId,
-      musicBusy: form.musicBusy,
-      musicFileName: form.musicFileName,
-      invitationTexts: form.invitationTexts,
-    }),
-    [form],
-  );
+  const toolValues = useMemo<AdminInvitationToolValues>(() => toolValuesFromForm(form), [form]);
 
   const postPreviewUpdate = useCallback(() => {
     iframeRef.current?.contentWindow?.postMessage({ source: "badr-admin-preview", type: "preview:update", payload: previewPayload }, window.location.origin);
@@ -303,86 +335,85 @@ export function AdminOrderRequestsManager({
     setNotice(null);
   }
 
-  function payload(action: "review" | "update" | "publish" | "reject") {
-    const effectiveMusic = getEffectiveAdminToolMusic(form);
-    return {
-      action,
-      groomName: form.groomName,
-      brideName: form.brideName,
-      phone: form.phone,
-      weddingDate: form.weddingDate,
-      venue: form.venue,
-      mapUrl: form.mapUrl,
-      notes: form.notes,
-      templateSlug: form.templateSlug,
-      imageUrls: form.imageUrls.map((image) => image.url).filter(Boolean),
-      heroVideoUrl: form.heroVideoUrl,
-      musicEnabled: effectiveMusic.musicEnabled,
-      musicChoice: effectiveMusic.musicChoice,
-      musicUrl: effectiveMusic.musicUrl,
-      musicLibraryTrackId: effectiveMusic.musicLibraryTrackId,
-      texts: form.invitationTexts,
-      photographer: {
-        enabled: form.photographerEnabled,
-        name: form.photographerName,
-        logoUrl: form.photographerLogo.url,
-        facebookUrl: form.photographerFacebookUrl,
-        instagramUrl: form.photographerInstagramUrl,
-      },
-      rejectionReason: form.rejectionReason,
-    };
-  }
-
   async function selectOrder(order: OrderRequest) {
     setSelectedId(order.id);
     setNotice(null);
     setLinks(null);
     if (order.status !== "new") return;
     setBusy("review");
-    const response = await fetch(`/api/admin/orders/${order.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ action: "review" }),
-    });
-    const data = (await response.json().catch(() => null)) as { order?: OrderRequest; error?: string } | null;
-    setBusy("idle");
-    if (response.ok && data?.order) {
+    setBusyOrderId(order.id);
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ action: "review" }),
+      });
+      const data = (await response.json().catch(() => null)) as { order?: OrderRequest; error?: string } | null;
+      if (response.ok && data?.order) {
+        setItems((current) => current.map((item) => (item.id === order.id ? data.order! : item)));
+        return;
+      }
+      setNotice({ kind: "error", text: data?.error || "تم فتح الطلب، لكن تعذر تحويله إلى قيد المراجعة. يمكنك المتابعة أو إعادة المحاولة." });
+    } catch {
+      setNotice({ kind: "error", text: "تم فتح الطلب، لكن تعذر الاتصال بالخادم لتحديث حالة المراجعة." });
+    } finally {
+      setBusy("idle");
+      setBusyOrderId("");
+    }
+  }
+
+  async function runOrderAction(order: OrderRequestWithLinks, action: "update" | "publish" | "reject", state: OrderFormState) {
+    const effectiveMusic = getEffectiveAdminToolMusic(state);
+    const validationError = validateAdminInvitationTools({ ...toolValuesFromForm(state), ...effectiveMusic });
+    if (validationError) {
+      setSelectedId(order.id);
+      setNotice({ kind: "error", text: validationError });
+      return;
+    }
+    if (action === "reject" && !state.rejectionReason.trim()) {
+      setSelectedId(order.id);
+      setNotice({ kind: "error", text: "اكتب سبب الرفض قبل تغيير حالة الطلب إلى مرفوض." });
+      return;
+    }
+    setSelectedId(order.id);
+    setBusy(action);
+    setBusyOrderId(order.id);
+    setNotice({ kind: "success", text: action === "publish" ? "جاري الموافقة ونشر الدعوة..." : action === "reject" ? "جاري رفض الطلب..." : "جاري حفظ التعديلات..." });
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payloadFromFormState(state, action)),
+      });
+      const data = (await response.json().catch(() => null)) as { order?: OrderRequest; error?: string; publicUrl?: string; adminUrl?: string } | null;
+      if (!response.ok || !data?.order) {
+        setNotice({ kind: "error", text: data?.error || "تعذر تنفيذ الإجراء. راجع البيانات أو حاول مرة أخرى." });
+        return;
+      }
       setItems((current) => current.map((item) => (item.id === order.id ? data.order! : item)));
+      setSelectedId(data.order.id);
+      window.dispatchEvent(new Event("admin-orders-count-refresh"));
+      if (data.publicUrl && data.adminUrl) setLinks({ publicUrl: data.publicUrl, adminUrl: data.adminUrl });
+      setNotice({
+        kind: "success",
+        text: action === "publish" ? "تمت الموافقة ونشر الدعوة وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
+      });
+    } catch {
+      setNotice({ kind: "error", text: "تعذر الاتصال بالخادم. تحقق من الاتصال أو سجل الدخول مرة أخرى ثم حاول." });
+    } finally {
+      setBusy("idle");
+      setBusyOrderId("");
     }
   }
 
   async function runAction(action: "update" | "publish" | "reject") {
     if (!selectedOrder) return;
-    const effectiveMusic = getEffectiveAdminToolMusic(form);
-    const validationError = validateAdminInvitationTools({ ...toolValues, ...effectiveMusic });
-    if (validationError) {
-      setNotice({ kind: "error", text: validationError });
-      return;
-    }
-    if (action === "reject" && !form.rejectionReason.trim()) {
-      setNotice({ kind: "error", text: "اكتب سبب الرفض قبل تغيير حالة الطلب إلى مرفوض." });
-      return;
-    }
-    setBusy(action);
-    const response = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload(action)),
-    });
-    const data = (await response.json().catch(() => null)) as { order?: OrderRequest; error?: string; publicUrl?: string; adminUrl?: string } | null;
-    setBusy("idle");
-    if (!response.ok || !data?.order) {
-      setNotice({ kind: "error", text: data?.error || "تعذر تنفيذ الإجراء. راجع البيانات أو حاول مرة أخرى." });
-      return;
-    }
-    setItems((current) => current.map((item) => (item.id === selectedOrder.id ? data.order! : item)));
-    setSelectedId(data.order.id);
-    window.dispatchEvent(new Event("admin-orders-count-refresh"));
-    if (data.publicUrl && data.adminUrl) setLinks({ publicUrl: data.publicUrl, adminUrl: data.adminUrl });
-    setNotice({
-      kind: "success",
-      text: action === "publish" ? "تم نشر الدعوة وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
-    });
+    await runOrderAction(selectedOrder, action, form);
+  }
+
+  async function quickPublish(order: OrderRequestWithLinks) {
+    const state = formFromOrder(order, fallbackTemplate, musicFiles);
+    await runOrderAction(order, "publish", state);
   }
 
   async function handleImageFile(index: number, file?: File | null) {
@@ -490,12 +521,20 @@ export function AdminOrderRequestsManager({
           {items.map((order, index) => {
             const meta = statusMap[order.status] || statusMap.new;
             const active = selectedOrder?.id === order.id;
+            const isFinal = ["published", "converted", "rejected"].includes(order.status);
+            const isPublishingThisOrder = busy === "publish" && busyOrderId === order.id;
             return (
-              <button className={active ? "orders-queue-item active" : "orders-queue-item"} type="button" key={order.id} onClick={() => selectOrder(order)}>
-                <span className={`order-status-chip ${meta.className}`}>{meta.label}</span>
-                <strong>{orderTitle(order, index)}</strong>
-                <small>{formatDateTime(order.submittedAt || order.createdAt)}</small>
-              </button>
+              <article className={active ? "orders-queue-item active" : "orders-queue-item"} key={order.id}>
+                <button className="orders-queue-select" type="button" onClick={() => selectOrder(order)} aria-label={`فتح ${orderTitle(order, index)}`}>
+                  <span className={`order-status-chip ${meta.className}`}>{meta.label}</span>
+                  <strong>{orderTitle(order, index)}</strong>
+                  <small>{formatDateTime(order.submittedAt || order.createdAt)}</small>
+                </button>
+                <button className="orders-queue-publish" type="button" disabled={busy !== "idle" || isFinal} onClick={() => quickPublish(order)}>
+                  {isPublishingThisOrder ? <Loader2 size={15} /> : <Send size={15} />}
+                  موافقة ونشر
+                </button>
+              </article>
             );
           })}
         </div>
