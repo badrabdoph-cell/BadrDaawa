@@ -1,34 +1,5 @@
 [
   {
-    "id": "audit-mq8frh6b-w4cgurz7",
-    "createdAt": "2026-06-10T19:02:36.467Z",
-    "actor": {
-      "type": "system",
-      "label": "GitHub Sync Queue"
-    },
-    "action": "github.sync",
-    "entity": {
-      "type": "GitHubSync",
-      "id": "sync-2-1781118113464",
-      "label": "Order published as invitation: badr-abdo-badr-abdo-1."
-    },
-    "newValues": {
-      "startedAt": 1781118131594,
-      "status": "synced",
-      "message": "Admin data synced to GitHub.",
-      "commitUrl": "https://github.com/badrabdoph-cell/BadrDaawa/commit/bf214789302a6f24e268c93e73d443389a3363e3",
-      "commitSha": "bf214789302a6f24e268c93e73d443389a3363e3",
-      "files": 31,
-      "duration": 24858
-    },
-    "metadata": {
-      "reason": "Order published as invitation: badr-abdo-badr-abdo-1.",
-      "status": "synced",
-      "retryCount": 0,
-      "logId": "cmq8fqxz70007liofm3xc36lw"
-    }
-  },
-  {
     "id": "audit-mq8fqxl9-6911p0hq",
     "createdAt": "2026-06-10T19:02:11.085Z",
     "actor": {
