@@ -267,18 +267,20 @@ export async function listBackupSnapshots() {
         const fileStat = await stat(filePath);
         let source: BackupSummary["source"] = "files";
         let items = 0;
-        try {
-          const safe = await parseJsonFileIfSafe<{
-            source?: BackupSummary["source"];
-            dataFiles?: Record<string, unknown>;
-            uploads?: unknown[];
-          }>(filePath, entry.name, 512 * 1024);
-          const parsed = safe.value;
-          if (!parsed) throw new Error(safe.skipped ? "oversized-backup" : "invalid-backup");
-          source = parsed.source === "database" ? "database" : "files";
-          items = Object.keys(parsed.dataFiles || {}).length + (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0);
-        } catch {
-          items = 0;
+        if (fileStat.size <= 512 * 1024) {
+          try {
+            const safe = await parseJsonFileIfSafe<{
+              source?: BackupSummary["source"];
+              dataFiles?: Record<string, unknown>;
+              uploads?: unknown[];
+            }>(filePath, entry.name, 512 * 1024);
+            const parsed = safe.value;
+            if (!parsed) throw new Error(safe.skipped ? "oversized-backup" : "invalid-backup");
+            source = parsed.source === "database" ? "database" : "files";
+            items = Object.keys(parsed.dataFiles || {}).length + (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0);
+          } catch {
+            items = 0;
+          }
         }
         return toBackupSummary(entry.name, fileStat.size, fileStat.mtime.toISOString(), source, items);
       }),

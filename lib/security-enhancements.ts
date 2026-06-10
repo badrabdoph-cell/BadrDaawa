@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "./admin-session";
 import { getClientIdentifier, checkRateLimit, RATE_LIMIT_CONFIGS } from "./rate-limiting";
+import { getPublicSiteUrl } from "./utils";
 
 /**
  * Verify admin session middleware
@@ -71,6 +72,45 @@ export function getRequestOrigin(request: Request) {
   }
 }
 
+function normalizeOrigin(value?: string | null) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    return url.origin;
+  } catch {
+    return "";
+  }
+}
+
+function getForwardedOrigin(headers: Headers) {
+  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim() || headers.get("host")?.split(",")[0]?.trim();
+  if (!forwardedHost) return "";
+  const forwardedProto = headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || (/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(forwardedHost) ? "http" : "https");
+  return normalizeOrigin(`${forwardedProto}://${forwardedHost}`);
+}
+
+function isLocalOrigin(value: string) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
+function getTrustedRequestOrigins(request: Request) {
+  const requestOrigin = getRequestOrigin(request);
+  return new Set(
+    [
+      requestOrigin,
+      getForwardedOrigin(request.headers),
+      normalizeOrigin(getPublicSiteUrl(request.headers, requestOrigin || undefined)),
+      normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL),
+    ].filter(Boolean),
+  );
+}
+
 /**
  * Validate request origin
  */
@@ -81,20 +121,23 @@ export function isValidOrigin(request: NextRequest, allowedOrigins: string[]): b
 }
 
 export function isSameOriginRequest(request: Request): boolean {
-  const requestOrigin = getRequestOrigin(request);
-  if (!requestOrigin) return true;
+  const trustedOrigins = getTrustedRequestOrigins(request);
+  if (!trustedOrigins.size) return true;
 
-  const origin = request.headers.get("origin");
-  if (origin) return origin === requestOrigin;
+  const sourceOrigin = normalizeOrigin(request.headers.get("origin"));
+  if (sourceOrigin) {
+    if (trustedOrigins.has(sourceOrigin)) return true;
+    if (process.env.NODE_ENV === "development" && isLocalOrigin(sourceOrigin) && Array.from(trustedOrigins).some(isLocalOrigin)) return true;
+    return false;
+  }
 
   const referer = request.headers.get("referer");
   if (!referer) return true;
 
-  try {
-    return new URL(referer).origin === requestOrigin;
-  } catch {
-    return false;
-  }
+  const refererOrigin = normalizeOrigin(referer);
+  if (!refererOrigin) return false;
+  if (trustedOrigins.has(refererOrigin)) return true;
+  return process.env.NODE_ENV === "development" && isLocalOrigin(refererOrigin) && Array.from(trustedOrigins).some(isLocalOrigin);
 }
 
 export function sameOriginErrorResponse() {
