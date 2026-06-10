@@ -33,6 +33,8 @@ type MusicChoice = "default" | "upload" | "video" | "url";
 type OrderMusicState = Pick<FormState, "musicEnabled" | "musicChoice" | "musicUrl">;
 type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
 type FieldErrors = Partial<Record<keyof FormState, string>>;
+type StoryFieldErrors = Record<string, string>;
+type OrderStoryItem = Required<Pick<CoupleStoryItem, "id" | "date" | "title" | "description">>;
 type OrderFormValues = Pick<
   FormState,
   | "groomName"
@@ -106,6 +108,8 @@ const orderStoryExamples = [
     description: "مثال: اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً.",
   },
 ];
+
+const minimumOrderStoryStages = 2;
 
 const acceptedAudioFormats = "audio/mpeg,.mp3";
 const acceptedVideoFormats = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
@@ -248,6 +252,10 @@ function filledOrderStory(value: unknown) {
   return normalizeCoupleStory(cleanOrderStory(value));
 }
 
+function storyFieldErrorKey(index: number, field: "date" | "title" | "description") {
+  return `${index}:${field}`;
+}
+
 function parseDraftJson(value: string | null, fallback: unknown) {
   if (!value) return fallback;
   try {
@@ -257,8 +265,14 @@ function parseDraftJson(value: string | null, fallback: unknown) {
   }
 }
 
-function createOrderStoryItem(): CoupleStoryItem {
+function createOrderStoryItem(): OrderStoryItem {
   return { id: `story-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, date: "", title: "", description: "" };
+}
+
+function ensureMinimumOrderStoryItems(value: unknown) {
+  const story = cleanOrderStory(value);
+  while (story.length < minimumOrderStoryStages) story.push(createOrderStoryItem());
+  return story;
 }
 
 function normalizeStoryDescriptionInput(value: string) {
@@ -438,7 +452,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     photographerInstagramUrl: initialDraft?.photographerInstagramUrl || "",
     openingText: initialDraft?.openingText || "",
     storyEnabled: Boolean(initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length),
-    story: cleanOrderStory(initialDraft?.story),
+    story: initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length ? ensureMinimumOrderStoryItems(initialDraft?.story) : cleanOrderStory(initialDraft?.story),
     musicEnabled: initialDraft?.musicEnabled ?? true,
     musicChoice: initialDraft?.musicChoice || "default",
     musicUrl: initialDraft?.musicUrl || "",
@@ -447,6 +461,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [storyErrors, setStoryErrors] = useState<StoryFieldErrors>({});
   const [draftImageUrls, setDraftImageUrls] = useState<string[]>(() => cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const [imageUploads, setImageUploads] = useState<ImageUploadState[]>(() =>
     orderImageSlots.map((_, index) => createIdleUploadState(cleanOrderDraftImageUrls(initialDraft?.imageUrls)[index] || "")),
@@ -546,10 +561,10 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       if (value) params.set(field, value);
     });
     if (nextForm.photographerEnabled) params.set("photographerEnabled", "1");
-    const story = filledOrderStory(nextForm.story);
-    if (nextForm.storyEnabled && story.length) {
+    const story = cleanOrderStory(nextForm.story);
+    if (nextForm.storyEnabled) {
       params.set("storyEnabled", "1");
-      params.set("story", JSON.stringify(story));
+      if (story.length) params.set("story", JSON.stringify(story));
     }
     if (typeof nextForm.musicEnabled === "boolean") {
       params.set("musicEnabled", nextForm.musicEnabled ? "1" : "0");
@@ -627,7 +642,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
       openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
       storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
-        story: cleanOrderStory(draft.story),
+        story: draft.storyEnabled || filledOrderStory(draft.story).length ? ensureMinimumOrderStoryItems(draft.story) : cleanOrderStory(draft.story),
         musicEnabled: typeof draft.musicEnabled === "boolean" ? draft.musicEnabled : current.musicEnabled,
         musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
@@ -690,6 +705,13 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (message) setMessage("");
   }
 
+  function cancelOrderStory() {
+    const currentValues = getCurrentFormFromDom();
+    setForm((current) => ({ ...current, ...currentValues, storyEnabled: false, story: [] }));
+    setStoryErrors({});
+    if (message) setMessage("");
+  }
+
   function selectMusicChoice(choice: MusicChoice | "none") {
     setForm((current) => ({
       ...current,
@@ -708,7 +730,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   }
 
   function addStoryItem() {
-    setForm((current) => ({ ...current, storyEnabled: true, story: [...cleanOrderStory(current.story), createOrderStoryItem()] }));
+    const currentValues = getCurrentFormFromDom();
+    setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: [...ensureMinimumOrderStoryItems(current.story), createOrderStoryItem()] }));
     if (message) setMessage("");
   }
 
@@ -716,8 +739,15 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     setForm((current) => ({
       ...current,
       storyEnabled: true,
-      story: cleanOrderStory(current.story).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+      story: ensureMinimumOrderStoryItems(current.story).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
     }));
+    setStoryErrors((current) => {
+      const next = { ...current };
+      if ("date" in patch) delete next[storyFieldErrorKey(index, "date")];
+      if ("title" in patch) delete next[storyFieldErrorKey(index, "title")];
+      if ("description" in patch) delete next[storyFieldErrorKey(index, "description")];
+      return next;
+    });
     if (message) setMessage("");
   }
 
@@ -739,9 +769,11 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
   function removeStoryItem(index: number) {
     setForm((current) => {
+      const currentValues = getCurrentFormFromDom();
       const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
-      return { ...current, story: nextStory, storyEnabled: nextStory.length ? current.storyEnabled : false };
+      return nextStory.length ? { ...current, ...currentValues, story: nextStory, storyEnabled: current.storyEnabled } : { ...current, ...currentValues, story: [], storyEnabled: false };
     });
+    setStoryErrors({});
     if (message) setMessage("");
   }
 
@@ -1132,6 +1164,34 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     return true;
   }
 
+  function validateOrderStory(values: Pick<FormState, "storyEnabled" | "story"> = form) {
+    const nextErrors: StoryFieldErrors = {};
+    if (!values.storyEnabled) return nextErrors;
+    ensureMinimumOrderStoryItems(values.story).forEach((item, index) => {
+      if (!item.date.trim()) nextErrors[storyFieldErrorKey(index, "date")] = "اكتب تاريخ هذه المرحلة أو وقتها.";
+      if (!item.title.trim()) nextErrors[storyFieldErrorKey(index, "title")] = "اكتب عنوان هذه المرحلة.";
+      if (!item.description.trim()) nextErrors[storyFieldErrorKey(index, "description")] = "اكتب وصفاً قصيراً لهذه المرحلة.";
+    });
+    return nextErrors;
+  }
+
+  function showStoryValidationErrors(values: Pick<FormState, "storyEnabled" | "story"> = form) {
+    const nextErrors = validateOrderStory(values);
+    setStoryErrors(nextErrors);
+    const entries = Object.entries(nextErrors);
+    if (!entries.length) return false;
+    setState("error");
+    setMessage("كمل بيانات قصة العروسين في المرحلتين أو الغِ القصة عشان تقدر تعاين أو تأكد الطلب.");
+    const [firstKey] = entries[0] || [];
+    const [index, field] = firstKey.split(":");
+    window.setTimeout(() => {
+      const element = formRef.current?.querySelector<HTMLElement>(`[name="story${field ? `${field[0]?.toUpperCase()}${field.slice(1)}` : "Title"}-${index}"]`);
+      element?.focus();
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+    return true;
+  }
+
   function getPhotographerNotes(values: Partial<FormState>) {
     if (!values.photographerEnabled) return "";
     const lines = [
@@ -1170,6 +1230,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   async function openPreview() {
     const currentForm = getCurrentFormFromDom();
     if (showValidationErrors(validateOrder(currentForm))) return;
+    if (showStoryValidationErrors(form)) return;
     setIsPreviewing(true);
     setMessage("");
 
@@ -1269,6 +1330,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
     if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled, currentForm.musicEnabled, currentForm.musicChoice))) return;
+    if (showStoryValidationErrors(currentForm)) return;
     setState("loading");
     setMessage("جاري التأكد من حفظ الصور قبل إنشاء الدعوة.");
 
@@ -1499,26 +1561,32 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             type="button"
             aria-expanded={form.storyEnabled}
             onClick={() => {
-              if (form.storyEnabled) updateField("storyEnabled", false);
+              if (form.storyEnabled) cancelOrderStory();
               else {
-                setForm((current) => ({ ...current, storyEnabled: true, story: cleanOrderStory(current.story).length ? current.story : [createOrderStoryItem()] }));
+                const currentValues = getCurrentFormFromDom();
+                setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
+                setStoryErrors({});
+                if (message) setMessage("");
               }
             }}
           >
             <Heart size={18} />
             <span>إضافة قصة العروسين داخل الدعوة</span>
-            <strong>{form.storyEnabled ? "إخفاء القصة" : "إضافة القصة"}</strong>
+            <strong>{form.storyEnabled ? "إلغاء القصة" : "إضافة القصة"}</strong>
           </button>
 
           {form.storyEnabled ? (
             <div className="order-story-fields">
               <div className="order-story-head">
-                <p>أضفوا محطات رحلتكم، وستظهر كتسلسل زمني راقٍ داخل الدعوة. إذا تركتموها فارغة لن يظهر القسم.</p>
+                <p>القصة اختيارية، لكن بعد تفعيلها يجب إكمال تاريخ وعنوان ووصف مرحلتين على الأقل، أو إلغاء القصة للمتابعة بدونها.</p>
               </div>
-              {cleanOrderStory(form.story).length ? (
+              {ensureMinimumOrderStoryItems(form.story).length ? (
                 <div className="order-story-list">
-                  {cleanOrderStory(form.story).map((item, index) => {
+                  {ensureMinimumOrderStoryItems(form.story).map((item, index) => {
                     const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
+                    const dateError = storyErrors[storyFieldErrorKey(index, "date")];
+                    const titleError = storyErrors[storyFieldErrorKey(index, "title")];
+                    const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
                     return (
                       <article className="order-story-item" key={item.id || index}>
                         <div className="order-story-item-head">
@@ -1529,11 +1597,13 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                         </div>
                         <div className="field">
                           <label htmlFor={`storyDate-${index}`}>التاريخ</label>
-                          <input id={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder={example.date} />
+                          <input id={`storyDate-${index}`} name={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder={example.date} aria-invalid={Boolean(dateError)} />
+                          {dateError ? <small className="field-error">{dateError}</small> : null}
                         </div>
                         <div className="field">
                           <label htmlFor={`storyTitle-${index}`}>العنوان</label>
-                          <input id={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder={example.title} />
+                          <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder={example.title} aria-invalid={Boolean(titleError)} />
+                          {titleError ? <small className="field-error">{titleError}</small> : null}
                         </div>
                         <div className="field full">
                           <label htmlFor={`storyDescription-${index}`}>الوصف</label>
@@ -1544,10 +1614,12 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                             data-story-index={index}
                             rows={3}
                             value={item.description}
+                            aria-invalid={Boolean(descriptionError)}
                             onBeforeInput={(event) => handleStoryDescriptionBeforeInput(index, event)}
                             onChange={(event) => updateStoryDescription(index, event.target.value)}
                             placeholder={example.description}
                           />
+                          {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
                         </div>
                       </article>
                     );

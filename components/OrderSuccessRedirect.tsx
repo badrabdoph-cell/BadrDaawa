@@ -17,6 +17,7 @@ type OrderSuccessRedirectProps = {
 
 const storageKey = "badrdaawa-order-success";
 const fallbackWhatsappUrl = "https://wa.me/";
+const redirectCountdownSeconds = 10;
 
 function cleanWhatsAppUrl(value?: string) {
   if (!value) return fallbackWhatsappUrl;
@@ -52,7 +53,7 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
     [fallbackUrl, invitationCode, orderNumber],
   );
   const [payload, setPayload] = useState<OrderSuccessPayload>(initialPayload);
-  const [seconds, setSeconds] = useState(5);
+  const [seconds, setSeconds] = useState(redirectCountdownSeconds);
 
   useEffect(() => {
     const storedPayload = readStoredPayload();

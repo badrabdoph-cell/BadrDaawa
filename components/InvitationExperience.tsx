@@ -96,7 +96,16 @@ function InviteHeroMedia({
 
 function InvitationOpeningLayer({ invitation }: { invitation: Invitation }) {
   const texts = getInvitationTexts(invitation);
-  return <InviteOpening groomName={invitation.groomName} brideName={invitation.brideName} coverImage={getInvitationImages(invitation).hero} openingText={texts.openingText || texts.inviteMessageSecondary} locale={invitation.language} />;
+  return (
+    <InviteOpening
+      groomName={invitation.groomName}
+      brideName={invitation.brideName}
+      coverImage={getInvitationImages(invitation).hero}
+      weddingDateLabel={formatInvitationDate(invitation)}
+      openingText={texts.openingText || texts.inviteMessageSecondary}
+      locale={invitation.language}
+    />
+  );
 }
 
 function formatInvitationDate(invitation: Pick<Invitation, "weddingDate" | "language">) {

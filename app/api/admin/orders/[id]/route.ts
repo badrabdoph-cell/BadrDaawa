@@ -225,6 +225,7 @@ function validateDraft(draft: ReturnType<typeof getOrderDraft>, requirePublishRe
   if (!validation.success) return validation.error;
   if (!draft.weddingDate) return "تاريخ المناسبة غير صالح.";
   if (requirePublishReady) {
+    const validationImages = draft.imageUrls.length ? draft.imageUrls : fallbackGallery;
     const prePublishReport = getPrePublishValidationReport({
       groomName: draft.groomName,
       brideName: draft.brideName,
@@ -233,7 +234,7 @@ function validateDraft(draft: ReturnType<typeof getOrderDraft>, requirePublishRe
       venue: draft.venue,
       mapUrl: draft.mapUrl,
       templateSlug: draft.templateSlug,
-      images: draft.imageUrls,
+      images: validationImages,
     });
     if (!prePublishReport.canPublish) return `لا يمكن نشر الدعوة قبل إكمال: ${prePublishReport.blockingItems.map((item) => item.label).join("، ")}.`;
   }
