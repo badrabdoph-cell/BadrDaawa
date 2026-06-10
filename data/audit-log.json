@@ -1,5 +1,224 @@
 [
   {
+    "id": "audit-mq8h04ho-aciqth0t",
+    "createdAt": "2026-06-10T19:37:19.548Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-2-1781120200303",
+      "label": "Couple message pending: badr-abdo-badr-abdo-1."
+    },
+    "newValues": {
+      "startedAt": 1781120214247,
+      "status": "synced",
+      "message": "Admin data synced to GitHub.",
+      "commitUrl": "https://github.com/badrabdoph-cell/BadrDaawa/commit/abd85d911828900374c735fed63a818439e71a9e",
+      "commitSha": "abd85d911828900374c735fed63a818439e71a9e",
+      "files": 31,
+      "duration": 25296
+    },
+    "metadata": {
+      "reason": "Couple message pending: badr-abdo-badr-abdo-1.",
+      "status": "synced",
+      "retryCount": 0,
+      "logId": "cmq8gzkys0006ox49gptlljhe"
+    }
+  },
+  {
+    "id": "audit-mq8gzkkq-q079jdgf",
+    "createdAt": "2026-06-10T19:36:53.738Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781120188717",
+      "label": "Couple message pending: badr-abdo-badr-abdo-1."
+    },
+    "newValues": {
+      "startedAt": 1781120188724,
+      "status": "synced",
+      "message": "Admin data synced to GitHub.",
+      "commitUrl": "https://github.com/badrabdoph-cell/BadrDaawa/commit/29d1965d7b057ced72e97c67cbee97d9ae85ddad",
+      "commitSha": "29d1965d7b057ced72e97c67cbee97d9ae85ddad",
+      "files": 31,
+      "duration": 25009
+    },
+    "metadata": {
+      "reason": "Couple message pending: badr-abdo-badr-abdo-1.",
+      "status": "synced",
+      "retryCount": 0,
+      "logId": "cmq8gz19s0002ox49watxac79"
+    }
+  },
+  {
+    "id": "audit-mq8fqxl9-6911p0hq",
+    "createdAt": "2026-06-10T19:02:11.085Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781118105937",
+      "label": "Order marked reviewing: cmq87zier0002a53wyw4e7179."
+    },
+    "newValues": {
+      "startedAt": 1781118105948,
+      "status": "unchanged",
+      "message": "GitHub already has the latest admin data.",
+      "files": 31,
+      "duration": 25125
+    },
+    "metadata": {
+      "reason": "Order marked reviewing: cmq87zier0002a53wyw4e7179.",
+      "status": "unchanged",
+      "retryCount": 0,
+      "logId": "cmq8fqe6s0001liof18qa9y7c"
+    }
+  },
+  {
+    "id": "audit-mq8fqk07-8gd8efs5",
+    "createdAt": "2026-06-10T19:01:53.479Z",
+    "actor": {
+      "type": "admin",
+      "id": "Badrabdoph3399",
+      "label": "Badrabdoph3399"
+    },
+    "action": "order.publish",
+    "entity": {
+      "type": "Order",
+      "id": "cmq87zier0002a53wyw4e7179",
+      "label": "ORD-MQ87ZIDB-AC8E"
+    },
+    "oldValues": {
+      "id": "cmq87zier0002a53wyw4e7179",
+      "orderNumber": "ORD-MQ87ZIDB-AC8E",
+      "dedupeKey": "56cc5edb76509bba9f0b2e7a6c8fc369d011d61a4540dfcc96c08a61640f9420",
+      "groomName": "Badr Abdo",
+      "brideName": "Badr Abdo",
+      "phone": "",
+      "weddingDate": "2026-06-24T00:00:00.000Z",
+      "venue": "أنا ما أعرف شي",
+      "notes": "بيانات المصور الفوتوغرافي:\nالاسم: Badr Abdo\nFacebook: https://www.facebook.com/badrabdophoto\nInstagram: https://www.instagram.com/badr_abdo_ph\n\nقصة العروسين:\n1. اولمره\nالتاريخ: 15/10\nالوصف: نبننين\n\nنص الافتتاح السينمائي:\nفلللبلللف\n\nبيانات المصور الفوتوغرافي:\nالاسم: Badr Abdo\nFacebook: https://www.facebook.com/badrabdophoto\nInstagram: https://www.instagram.com/badr_abdo_ph\n\nقصة العروسين:\n1. اولمره\nالتاريخ: 15/10\nالوصف: نبننين\n\nصور الطلب:\n1. /uploads/order-previews/order-preview-1781101156860-2d9f87a5.webp\n2. /uploads/order-previews/order-preview-1781101147366-7c825041.webp\n3. /uploads/order-previews/order-preview-1781101220182-af109bb3.webp",
+      "imageUrls": [
+        "/uploads/order-previews/order-preview-1781101156860-2d9f87a5.webp",
+        "/uploads/order-previews/order-preview-1781101147366-7c825041.webp",
+        "/uploads/order-previews/order-preview-1781101220182-af109bb3.webp"
+      ],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "openingText": "فلللبلللف",
+        "inviteMessage": "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
+        "inviteMessageSecondary": "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "rsvpConfirmedSuccessMessage": "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+        "rsvpDeclinedSuccessMessage": "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+        "heroVideoUrl": "",
+        "galleryStories": [],
+        "story": [
+          {
+            "id": "story-mq87rgct-i6dbz",
+            "title": "اولمره",
+            "description": "نبننين",
+            "imageUrl": "",
+            "date": "15/10"
+          }
+        ]
+      },
+      "photographer": {
+        "enabled": true,
+        "name": "Badr Abdo",
+        "facebookUrl": "https://www.facebook.com/badrabdophoto",
+        "instagramUrl": "https://www.instagram.com/badr_abdo_ph"
+      },
+      "publishedInvitationCode": "badr-abdo-badr-abdo-1",
+      "manageToken": "qi3bpcPlpn0WNERqdWRsvWY3bXmV1zZ6qndumu5s5c9sLOGzRC0Iknu4a4YyTe1Z",
+      "manageTokenExpiresAt": "",
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "status": "reviewing",
+      "submittedAt": "2026-06-10T15:24:54.387Z",
+      "createdAt": "2026-06-10T15:24:54.387Z",
+      "publicUrl": "https://daawa.up.railway.app/badr-abdo-badr-abdo-1",
+      "adminUrl": "https://daawa.up.railway.app/badr-abdo-badr-abdo-1/ad_3399"
+    },
+    "newValues": {
+      "id": "cmq87zier0002a53wyw4e7179",
+      "orderNumber": "ORD-MQ87ZIDB-AC8E",
+      "dedupeKey": "56cc5edb76509bba9f0b2e7a6c8fc369d011d61a4540dfcc96c08a61640f9420",
+      "groomName": "Badr Abdo",
+      "brideName": "Badr Abdo",
+      "phone": "",
+      "weddingDate": "2026-06-24T00:00:00.000Z",
+      "venue": "أنا ما أعرف شي",
+      "notes": "بيانات المصور الفوتوغرافي:\nالاسم: Badr Abdo\nFacebook: https://www.facebook.com/badrabdophoto\nInstagram: https://www.instagram.com/badr_abdo_ph\n\nقصة العروسين:\n1. اولمره\nالتاريخ: 15/10\nالوصف: نبننين\n\nنص الافتتاح السينمائي:\nفلللبلللف\n\nبيانات المصور الفوتوغرافي:\nالاسم: Badr Abdo\nFacebook: https://www.facebook.com/badrabdophoto\nInstagram: https://www.instagram.com/badr_abdo_ph\n\nقصة العروسين:\n1. اولمره\nالتاريخ: 15/10\nالوصف: نبننين\n\nصور الطلب:\n1. /uploads/order-previews/order-preview-1781101156860-2d9f87a5.webp\n2. /uploads/order-previews/order-preview-1781101147366-7c825041.webp\n3. /uploads/order-previews/order-preview-1781101220182-af109bb3.webp",
+      "imageUrls": [
+        "/assets/invite/badr-sarah-1.jpeg",
+        "/assets/invite/badr-sarah-2.jpeg",
+        "/assets/invite/badr-sarah-3.jpeg"
+      ],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "openingText": "فلللبلللف",
+        "inviteMessage": "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
+        "inviteMessageSecondary": "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "rsvpConfirmedSuccessMessage": "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+        "rsvpDeclinedSuccessMessage": "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+        "heroVideoUrl": "",
+        "galleryStories": [],
+        "story": [
+          {
+            "id": "story-mq87rgct-i6dbz",
+            "title": "اولمره",
+            "description": "نبننين",
+            "imageUrl": "",
+            "date": "15/10"
+          }
+        ]
+      },
+      "photographer": {
+        "enabled": true,
+        "name": "Badr Abdo",
+        "facebookUrl": "https://www.facebook.com/badrabdophoto",
+        "instagramUrl": "https://www.instagram.com/badr_abdo_ph"
+      },
+      "publishedInvitationCode": "badr-abdo-badr-abdo-1",
+      "manageToken": "qi3bpcPlpn0WNERqdWRsvWY3bXmV1zZ6qndumu5s5c9sLOGzRC0Iknu4a4YyTe1Z",
+      "manageTokenExpiresAt": "",
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "status": "published",
+      "submittedAt": "2026-06-10T15:24:54.387Z",
+      "createdAt": "2026-06-10T15:24:54.387Z",
+      "publicUrl": "https://daawa.up.railway.app/badr-abdo-badr-abdo-1",
+      "adminUrl": "https://daawa.up.railway.app/manage/invitation/qi3bpcPlpn0WNERqdWRsvWY3bXmV1zZ6qndumu5s5c9sLOGzRC0Iknu4a4YyTe1Z",
+      "links": {
+        "publicUrl": "https://daawa.up.railway.app/badr-abdo-badr-abdo-1",
+        "adminUrl": "https://daawa.up.railway.app/manage/invitation/qi3bpcPlpn0WNERqdWRsvWY3bXmV1zZ6qndumu5s5c9sLOGzRC0Iknu4a4YyTe1Z"
+      }
+    },
+    "metadata": {
+      "invitationCode": "badr-abdo-badr-abdo-1"
+    }
+  },
+  {
     "id": "audit-mq8ad6mk-4z4yg052",
     "createdAt": "2026-06-10T16:31:31.532Z",
     "actor": {
