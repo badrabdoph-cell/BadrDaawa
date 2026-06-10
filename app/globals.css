@@ -20065,6 +20065,13 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   text-decoration: none;
 }
 
+.footer-legal-link {
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.25;
+  opacity: 0.78;
+}
+
 .footer-link:hover {
   color: var(--gold);
 }

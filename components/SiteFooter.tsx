@@ -30,16 +30,16 @@ export async function SiteFooter() {
               {link.label}
             </Link>
           ))}
-          <Link className="footer-link" href="/privacy-policy">
+          <Link className="footer-link footer-legal-link" href="/privacy-policy">
             سياسة الخصوصية
           </Link>
-          <Link className="footer-link" href="/terms">
+          <Link className="footer-link footer-legal-link" href="/terms">
             الشروط والأحكام
           </Link>
-          <Link className="footer-link" href="/refund-policy">
+          <Link className="footer-link footer-legal-link" href="/refund-policy">
             سياسة الاسترجاع
           </Link>
-          <Link className="footer-link" href="/usage-policy">
+          <Link className="footer-link footer-legal-link" href="/usage-policy">
             سياسة الاستخدام
           </Link>
           <Link className="btn btn-soft btn-icon" href="/contact" title="تواصل معنا">
