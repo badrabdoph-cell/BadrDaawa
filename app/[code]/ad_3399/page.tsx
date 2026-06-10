@@ -12,6 +12,7 @@ import { CustomerGuestBookPanel } from "@/components/CustomerGuestBookPanel";
 import { CustomerMessagesPanel } from "@/components/CustomerMessagesPanel";
 import { GuestTable } from "@/components/GuestTable";
 import { InvitationQrTools } from "@/components/InvitationQrTools";
+import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { getClientMessages } from "@/lib/client-messages";
 import { getContentPresets } from "@/lib/content-presets";
@@ -20,6 +21,7 @@ import { getCoupleMessagesSettings, getGuestBookMessages } from "@/lib/guest-boo
 import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
+import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
 import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
@@ -40,12 +42,16 @@ export default async function CustomerAdminPage({
   const [query, requestHeaders, cookieStore] = await Promise.all([searchParams, headers(), cookies()]);
   const invitation = await getInvitationByCode(code);
   if (!invitation) {
+    const pendingOrder = await getPendingOrderByInvitationCode(code);
+    if (pendingOrder) {
+      return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
+    }
     notFound();
   }
 
   const session = cookieStore.get(CLIENT_SESSION_COOKIE)?.value;
   if (!(await verifyClientSessionCookie(session, invitation.code))) {
-    redirect(`/${invitation.code}/ad_3399/login`);
+    redirect("/manage/invitation/invalid?reason=session");
   }
 
   const [guests, template, fallbackTemplate, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages, coupleMessagesSettings] = await Promise.all([

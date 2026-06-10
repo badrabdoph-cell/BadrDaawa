@@ -6,6 +6,7 @@ import {
   AdminInvitationTools,
   emptyAdminToolImages,
   emptyAdminToolUpload,
+  getEffectiveAdminToolMusic,
   uploadAdminHeroVideo,
   uploadAdminMusic,
   uploadAdminPreviewImage,
@@ -179,6 +180,7 @@ export function AdminOrderRequestsManager({
     const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
     return `/templates/${form.templateSlug || fallbackTemplate}/preview?${params.toString()}`;
   }, [fallbackTemplate, form.templateSlug]);
+  const effectivePreviewMusic = useMemo(() => getEffectiveAdminToolMusic(form), [form.musicChoice, form.musicEnabled, form.musicLibraryTrackId, form.musicUrl]);
 
   const previewPayload = useMemo<LiveInvitationPreviewPayload>(
     () => ({
@@ -191,9 +193,9 @@ export function AdminOrderRequestsManager({
       mapUrl: form.mapUrl,
       gallery: form.imageUrls.map((image) => image.url).filter(Boolean),
       heroVideoUrl: form.heroVideoUrl,
-      musicEnabled: form.musicEnabled,
-      musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
-      disableMusic: !form.musicEnabled,
+      musicEnabled: effectivePreviewMusic.musicEnabled,
+      musicUrl: effectivePreviewMusic.musicUrl,
+      disableMusic: !effectivePreviewMusic.musicEnabled,
       texts: form.invitationTexts,
       photographer: {
         enabled: form.photographerEnabled,
@@ -203,7 +205,7 @@ export function AdminOrderRequestsManager({
         instagramUrl: form.photographerInstagramUrl,
       },
     }),
-    [form],
+    [effectivePreviewMusic, form],
   );
 
   const toolValues = useMemo<AdminInvitationToolValues>(
@@ -302,6 +304,7 @@ export function AdminOrderRequestsManager({
   }
 
   function payload(action: "review" | "update" | "publish" | "reject") {
+    const effectiveMusic = getEffectiveAdminToolMusic(form);
     return {
       action,
       groomName: form.groomName,
@@ -314,10 +317,10 @@ export function AdminOrderRequestsManager({
       templateSlug: form.templateSlug,
       imageUrls: form.imageUrls.map((image) => image.url).filter(Boolean),
       heroVideoUrl: form.heroVideoUrl,
-      musicEnabled: form.musicEnabled,
-      musicChoice: form.musicChoice,
-      musicUrl: form.musicChoice === "default" ? "" : form.musicUrl,
-      musicLibraryTrackId: form.musicLibraryTrackId,
+      musicEnabled: effectiveMusic.musicEnabled,
+      musicChoice: effectiveMusic.musicChoice,
+      musicUrl: effectiveMusic.musicUrl,
+      musicLibraryTrackId: effectiveMusic.musicLibraryTrackId,
       texts: form.invitationTexts,
       photographer: {
         enabled: form.photographerEnabled,
@@ -350,7 +353,8 @@ export function AdminOrderRequestsManager({
 
   async function runAction(action: "update" | "publish" | "reject") {
     if (!selectedOrder) return;
-    const validationError = validateAdminInvitationTools(toolValues);
+    const effectiveMusic = getEffectiveAdminToolMusic(form);
+    const validationError = validateAdminInvitationTools({ ...toolValues, ...effectiveMusic });
     if (validationError) {
       setNotice({ kind: "error", text: validationError });
       return;

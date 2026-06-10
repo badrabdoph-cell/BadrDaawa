@@ -30,11 +30,17 @@ export async function middleware(request: NextRequest) {
 
   const customerMatch = pathname.match(/^\/([^/]+)\/ad_3399(?:\/.*)?$/);
   const isCustomerLoginPage = /^\/[^/]+\/ad_3399\/login(?:\/)?$/.test(pathname);
-  if (customerMatch && !isCustomerLoginPage) {
+  if (isCustomerLoginPage) {
+    const url = getRedirectUrl("/manage/invitation/invalid", request.headers, request.nextUrl.origin);
+    url.searchParams.set("reason", "session");
+    return addSecurityHeaders(NextResponse.redirect(url));
+  }
+  if (customerMatch) {
     const code = customerMatch[1];
     const session = request.cookies.get(CLIENT_SESSION_COOKIE)?.value;
     if (!(await verifyClientSessionCookie(session, code))) {
-      const url = getRedirectUrl(`/${code}/ad_3399/login`, request.headers, request.nextUrl.origin);
+      const url = getRedirectUrl("/manage/invitation/invalid", request.headers, request.nextUrl.origin);
+      url.searchParams.set("reason", "session");
       return addSecurityHeaders(NextResponse.redirect(url));
     }
   }

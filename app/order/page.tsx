@@ -27,7 +27,6 @@ type PageProps = {
     photographerInstagramUrl?: string;
     openingText?: string;
     storyEnabled?: string;
-    galleryStories?: string;
     story?: string;
     giftEnabled?: string;
     gift?: string;
@@ -39,16 +38,6 @@ type PageProps = {
 };
 
 function parseStoryParam(value?: string) {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item === "object") : [];
-  } catch {
-    return [];
-  }
-}
-
-function parseGalleryStoriesParam(value?: string) {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value);
@@ -88,7 +77,6 @@ export default async function OrderPage({ searchParams }: PageProps) {
     photographerInstagramUrl: params.photographerInstagramUrl || "",
     openingText: params.openingText || "",
     storyEnabled: params.storyEnabled === "1",
-    galleryStories: parseGalleryStoriesParam(params.galleryStories),
     story: parseStoryParam(params.story),
     giftEnabled: params.giftEnabled === "1",
     gift: parseGiftParam(params.gift),

@@ -48,6 +48,15 @@ export type AdminInvitationToolRefs = {
   textFieldRefs?: Partial<Record<"rsvpQuestion", MutableRefObject<HTMLInputElement | null>> & Record<"inviteMessage", MutableRefObject<HTMLTextAreaElement | null>>>;
 };
 
+export function getEffectiveAdminToolMusic(values: Pick<AdminInvitationToolValues, "musicEnabled" | "musicChoice" | "musicUrl" | "musicLibraryTrackId">) {
+  if (!values.musicEnabled) return { musicEnabled: false, musicChoice: "default" as AdminToolMusicChoice, musicUrl: "", musicLibraryTrackId: "" };
+  const musicUrl = values.musicUrl.trim();
+  if (values.musicChoice === "default") return { musicEnabled: true, musicChoice: "default" as AdminToolMusicChoice, musicUrl: "", musicLibraryTrackId: "" };
+  return musicUrl
+    ? { musicEnabled: true, musicChoice: values.musicChoice, musicUrl, musicLibraryTrackId: values.musicLibraryTrackId || "" }
+    : { musicEnabled: false, musicChoice: "default" as AdminToolMusicChoice, musicUrl: "", musicLibraryTrackId: "" };
+}
+
 export const emptyAdminToolImages: AdminToolImageSlot[] = unifiedImageSlots.map(() => ({ url: "", name: "", loading: false }));
 export const emptyAdminToolUpload: AdminToolUploadSlot = { url: "", name: "", loading: false };
 
@@ -317,11 +326,21 @@ export function AdminInvitationTools({
           <input type="checkbox" checked={values.musicEnabled} onChange={(event) => onPatch({ musicEnabled: event.target.checked })} />
           {musicLabel}
         </label>
+        <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار حالة الموسيقى">
+          <button className={!values.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!values.musicEnabled} onClick={() => onPatch({ musicEnabled: false, musicChoice: "default", musicUrl: "", musicLibraryTrackId: "", musicFileName: "" })}>
+            <Music2 size={16} />
+            بدون موسيقى
+          </button>
+          <button className={values.musicEnabled && values.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={values.musicEnabled && values.musicChoice === "default"} onClick={() => onPatch({ musicEnabled: true, musicChoice: "default", musicUrl: "", musicLibraryTrackId: "", musicFileName: "" })}>
+            <Music2 size={16} />
+            الموسيقى الافتراضية
+          </button>
+        </div>
         {values.musicEnabled ? (
           <div className={gridClassName}>
             <label className="field">
               <span>اختيار من الملفات المحفوظة</span>
-              <select value={values.musicChoice === "library" || values.musicChoice === "upload" ? values.musicUrl : ""} onChange={(event) => onPatch({ musicUrl: event.target.value, musicChoice: event.target.value ? "library" : values.musicChoice, musicLibraryTrackId: musicFiles.find((file) => file.url === event.target.value)?.id || event.target.value })}>
+              <select value={values.musicChoice === "library" || values.musicChoice === "upload" ? values.musicUrl : ""} onChange={(event) => onPatch({ musicEnabled: Boolean(event.target.value) || values.musicEnabled, musicUrl: event.target.value, musicChoice: event.target.value ? "library" : values.musicChoice, musicLibraryTrackId: musicFiles.find((file) => file.url === event.target.value)?.id || event.target.value })}>
                 <option value="">اختار ملف محفوظ</option>
                 {musicFiles.map((file) => (
                   <option key={file.url} value={file.url}>{file.name || file.url.split("/").pop()}</option>
@@ -341,7 +360,7 @@ export function AdminInvitationTools({
             </label>
             <label className="field">
               <span>رابط ملف صوتي خارجي</span>
-              <input value={values.musicChoice === "url" ? values.musicUrl : ""} onChange={(event) => onPatch({ musicUrl: event.target.value, musicChoice: "url" })} placeholder="https://example.com/song.mp3" />
+              <input value={values.musicChoice === "url" ? values.musicUrl : ""} onChange={(event) => onPatch({ musicEnabled: Boolean(event.target.value.trim()) || values.musicEnabled, musicUrl: event.target.value, musicChoice: "url" })} placeholder="https://example.com/song.mp3" />
             </label>
             {values.musicUrl ? <audio controls preload="metadata" src={values.musicUrl} /> : null}
           </div>

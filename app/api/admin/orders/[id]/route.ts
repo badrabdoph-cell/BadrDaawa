@@ -275,6 +275,8 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     photographer: cleanPhotographer(order.photographer),
     rejectionReason: order.rejectionReason || undefined,
     publishedInvitationCode: order.publishedInvitationCode || undefined,
+    manageToken: order.manageToken || undefined,
+    manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
     templateSlug: order.template?.slug || "featured-1",
     language: order.language === "en" ? "en" : "ar",
     status: normalizeStatus(String(order.status || "NEW")),
@@ -333,11 +335,14 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
   if (error) throw new Error(error);
   const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
   const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
+  const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
+  const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
   const digits = digitsOnly(draft.phone);
   const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
   const password = digits.slice(-6) || order.id.slice(-6) || "123456";
   const invitation = await createFileInvitation({
     baseSlug: buildInvitationBaseSlug(draft.groomName, draft.brideName),
+    code: order.publishedInvitationCode,
     templateSlug: draft.templateSlug,
     groomName: draft.groomName,
     brideName: draft.brideName,
@@ -352,7 +357,9 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
     gallery: gallery.length ? gallery : fallbackGallery,
     heroVideoUrl: draft.heroVideoUrl,
     musicUrl,
-    musicEnabled: Boolean(draft.musicEnabled),
+    musicEnabled: effectiveMusicEnabled,
+    manageToken: order.manageToken || undefined,
+    manageTokenExpiresAt: order.manageTokenExpiresAt || undefined,
     texts: draft.texts,
     photographer: draft.photographer,
   });
@@ -366,8 +373,8 @@ async function publishFileOrder(id: string, payload: AdminOrderPayload) {
     notes: draft.notes,
     imageUrls: gallery.length ? gallery : fallbackGallery,
     templateSlug: draft.templateSlug,
-    musicEnabled: Boolean(draft.musicEnabled),
-    musicChoice: draft.musicChoice,
+    musicEnabled: effectiveMusicEnabled,
+    musicChoice: effectiveMusicChoice,
     musicUrl,
     texts: draft.texts,
     photographer: draft.photographer,
@@ -399,6 +406,8 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     texts: normalizeInvitationTexts(order.texts),
     photographer: cleanPhotographer(order.photographer),
     rejectionReason: order.rejectionReason || undefined,
+    manageToken: order.manageToken || undefined,
+    manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
     templateSlug: order.template?.slug || "featured-1",
   };
   const draft = getOrderDraft(payload, existingOrder);
@@ -411,12 +420,15 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
   const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
   const finalGallery = gallery.length ? gallery : fallbackGallery;
   const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
+  const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
+  const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
   const baseSlug = buildInvitationBaseSlug(draft.groomName, draft.brideName);
   const publishedCode = order.publishedInvitationCode || "";
   const existingPublishedInvitation = publishedCode ? await prisma.invitation.findUnique({ where: { code: publishedCode }, select: { code: true } }).catch(() => null) : null;
   const existingCodes = existingPublishedInvitation ? [] : await prisma.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } });
   const code =
     existingPublishedInvitation?.code ||
+    publishedCode ||
     makeNumberedInvitationSlug(
       baseSlug,
       existingCodes.map((item) => item.code),
@@ -454,7 +466,9 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     heroPhoto: finalGallery[0],
     gallery: finalGallery,
     musicUrl: musicUrl || undefined,
-    musicEnabled: Boolean(draft.musicEnabled),
+    musicEnabled: effectiveMusicEnabled,
+    manageToken: order.manageToken || undefined,
+    manageTokenExpiresAt: order.manageTokenExpiresAt || undefined,
     texts: draft.texts,
     photographer: draft.photographer,
     customerId: customer.id,
@@ -478,8 +492,8 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
       mapUrl: draft.mapUrl,
       notes: draft.notes,
       imageUrls: finalGallery,
-      musicEnabled: Boolean(draft.musicEnabled),
-      musicChoice: draft.musicChoice,
+      musicEnabled: effectiveMusicEnabled,
+      musicChoice: effectiveMusicChoice,
       musicUrl,
       texts: draft.texts,
       photographer: draft.photographer,
@@ -523,6 +537,8 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
   const error = status === "REVIEWING" ? "" : validateDraft(draft);
   if (error) throw new Error(error);
   const musicUrl = await resolveMusic(payload, existingOrder.musicUrl, Boolean(existingOrder.musicEnabled));
+  const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
+  const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
 
   if (existingPrisma && prisma) {
     const template = draft.templateSlug ? await upsertTemplate(draft.templateSlug) : null;
@@ -537,8 +553,8 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         mapUrl: draft.mapUrl,
         notes: draft.notes,
         imageUrls: draft.imageUrls,
-        musicEnabled: Boolean(draft.musicEnabled),
-        musicChoice: draft.musicChoice,
+        musicEnabled: effectiveMusicEnabled,
+        musicChoice: effectiveMusicChoice,
         musicUrl,
         texts: draft.texts,
         photographer: draft.photographer,
@@ -561,8 +577,8 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
     notes: draft.notes,
     imageUrls: draft.imageUrls,
     templateSlug: draft.templateSlug,
-    musicEnabled: Boolean(draft.musicEnabled),
-    musicChoice: draft.musicChoice,
+    musicEnabled: effectiveMusicEnabled,
+    musicChoice: effectiveMusicChoice,
     musicUrl,
     texts: draft.texts,
     photographer: draft.photographer,

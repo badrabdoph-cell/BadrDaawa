@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   if (!(await verifyClientSessionCookie(request.cookies.get(CLIENT_SESSION_COOKIE)?.value, code))) {
-    return NextResponse.json({ error: "سجل الدخول للوحة الدعوة أولًا." }, { status: 401 });
+    return NextResponse.json({ error: "افتح لوحة الدعوة من رابط الإدارة السري أولاً." }, { status: 401 });
   }
 
   const body = (await request.json().catch(() => null)) as { enabled?: unknown } | null;

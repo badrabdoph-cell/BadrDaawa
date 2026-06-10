@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
 import { ToastContainer, type ToastItem, type ToastType } from "@/components/Toast";
 
 const NOTIFY_EVENT = "badrdaawa:notify";
@@ -14,6 +13,7 @@ type NotificationInput = {
   title?: string;
   message: string;
   details?: string;
+  code?: string;
   duration?: number;
 };
 
@@ -23,7 +23,7 @@ type InternalNotificationInput = NotificationInput & {
 
 declare global {
   interface Window {
-    badrNotify?: (notification: NotificationInput) => void;
+    badrNotify?: (notification: NotificationInput) => string;
   }
 
   interface WindowEventMap {
@@ -37,6 +37,19 @@ function truncate(value: string, maxLength = MAX_DETAIL_LENGTH) {
   }
 
   return `${value.slice(0, maxLength)}\n\n... تم اختصار باقي التفاصيل لطولها.`;
+}
+
+function hashText(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).toUpperCase().padStart(7, "0");
+}
+
+function createErrorCode(signature: string) {
+  return `ERR-${Date.now().toString(36).toUpperCase()}-${hashText(signature).slice(0, 7)}`;
 }
 
 function serializeValue(value: unknown): string {
@@ -110,7 +123,8 @@ function buildReport(title: string, lines: Array<[string, unknown] | string>) {
 
 function trackClientError(input: { route?: string; message: string; stack?: string; source: string; digest?: string }) {
   const route = input.route || (typeof window !== "undefined" ? window.location.href : "unknown-route");
-  if (route.includes("/api/errors")) return;
+  if (route.includes("/api/errors")) return input.digest || createErrorCode(`${input.source}:${input.message}:${route}`);
+  const digest = input.digest || createErrorCode(`${input.source}:${input.message}:${route}`);
 
   fetch("/api/errors", {
     method: "POST",
@@ -120,10 +134,11 @@ function trackClientError(input: { route?: string; message: string; stack?: stri
       message: input.message,
       stack: input.stack,
       source: input.source,
-      digest: input.digest,
+      digest,
     }),
     keepalive: true,
   }).catch(() => undefined);
+  return digest;
 }
 
 async function copyText(value: string) {
@@ -261,9 +276,6 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
 }
 
 export function GlobalNotifications() {
-  const pathname = usePathname() || "/";
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.toString();
   const [notifications, setNotifications] = useState<ToastItem[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const duplicateMapRef = useRef(new Map<string, number>());
@@ -281,23 +293,31 @@ export function GlobalNotifications() {
 
     duplicateMapRef.current.set(signature, now);
 
-    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const isError = notification.type === "error";
+    const errorCode = isError ? notification.code || createErrorCode(signature) : undefined;
+    const id = isError ? "site-error" : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const item: ToastItem = {
       id,
       type: notification.type || "info",
-      title: notification.title,
+      title: isError ? "error" : notification.title,
       message,
       details: notification.details ? truncate(notification.details) : undefined,
-      duration: notification.duration ?? (notification.type === "error" || notification.details ? 0 : 4000),
+      errorCode,
+      copyLabel: isError ? "نسخ" : undefined,
+      duration: notification.duration ?? (isError || notification.details ? 0 : 4000),
     };
 
-    setNotifications((current) => [...current, item].slice(-MAX_TOASTS));
+    setNotifications((current) => (isError ? [item] : [...current.filter((notificationItem) => notificationItem.type !== "error"), item].slice(-MAX_TOASTS)));
     return id;
   }, []);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((current) => current.filter((notification) => notification.id !== id));
   }, []);
+
+  if (typeof window !== "undefined") {
+    window.badrNotify = addNotification;
+  }
 
   const handleCopy = useCallback(
     async (id: string) => {
@@ -306,7 +326,7 @@ export function GlobalNotifications() {
         return;
       }
 
-      const value = notification.details || `${notification.title || ""}\n${notification.message}`.trim();
+      const value = notification.type === "error" ? notification.errorCode || notification.details || "ERR" : notification.details || `${notification.title || ""}\n${notification.message}`.trim();
       await copyText(value);
       setCopiedId(id);
       window.setTimeout(() => {
@@ -326,9 +346,6 @@ export function GlobalNotifications() {
     window.addEventListener(NOTIFY_EVENT, handleCustomNotification);
 
     return () => {
-      if (window.badrNotify === addNotification) {
-        delete window.badrNotify;
-      }
       window.removeEventListener(NOTIFY_EVENT, handleCustomNotification);
     };
   }, [addNotification]);
@@ -343,7 +360,7 @@ export function GlobalNotifications() {
         ["Column", event.colno],
         ["Error", error || event.error],
       ]);
-      trackClientError({
+      const code = trackClientError({
         route: typeof window !== "undefined" ? window.location.href : event.filename,
         message: error?.message || event.message || "حصل خطأ غير متوقع في الصفحة.",
         stack: error?.stack || report,
@@ -352,8 +369,9 @@ export function GlobalNotifications() {
       addNotification({
         type: "error",
         title: "خطأ في الموقع",
-        message: error?.message || event.message || "حصل خطأ غير متوقع في الصفحة.",
+        message: "error",
         details: report,
+        code,
         signature: `window-error:${event.message}:${event.filename}:${event.lineno}:${event.colno}`,
       });
     };
@@ -361,7 +379,7 @@ export function GlobalNotifications() {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const error = event.reason instanceof Error ? event.reason : null;
       const report = buildReport("unhandledrejection", [["Reason", event.reason]]);
-      trackClientError({
+      const code = trackClientError({
         message: error?.message || "وعد برمجي فشل بدون معالجة.",
         stack: error?.stack || report,
         source: "unhandledrejection",
@@ -369,8 +387,9 @@ export function GlobalNotifications() {
       addNotification({
         type: "error",
         title: "خطأ غير متوقع",
-        message: event.reason instanceof Error ? event.reason.message : "وعد برمجي فشل بدون معالجة.",
+        message: "error",
         details: report,
+        code,
         signature: `unhandled:${serializeValue(event.reason).slice(0, 220)}`,
       });
     };
@@ -396,7 +415,7 @@ export function GlobalNotifications() {
       addNotification({
         type: "error",
         title: "خطأ في الكونسول",
-        message,
+        message: "error",
         details: buildReport("console.error", [["Arguments", args]]),
         signature: `console-error:${message}`,
       });
@@ -447,21 +466,29 @@ export function GlobalNotifications() {
           ]);
 
           if (!meta.url.includes("/api/errors")) {
-            trackClientError({
+            const code = trackClientError({
               route: meta.url,
               message: `${response.status} ${response.statusText || ""} - ${shortUrl(meta.url)}`.trim(),
               stack: report,
               source: "fetch.non_ok",
             });
+            addNotification({
+              type: "error",
+              title: "فشل طلب في الموقع",
+              message: "error",
+              details: report,
+              code,
+              signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
+            });
+          } else {
+            addNotification({
+              type: "error",
+              title: "فشل طلب في الموقع",
+              message: "error",
+              details: report,
+              signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
+            });
           }
-
-          addNotification({
-            type: "error",
-            title: "فشل طلب في الموقع",
-            message: `${response.status} ${response.statusText || ""} - ${shortUrl(meta.url)}`.trim(),
-            details: report,
-            signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
-          });
         }
 
         return response;
@@ -472,20 +499,29 @@ export function GlobalNotifications() {
           ["Error", error],
         ]);
         if (!meta.url.includes("/api/errors")) {
-          trackClientError({
+          const code = trackClientError({
             route: meta.url,
             message: error instanceof Error ? error.message : "تعذر تنفيذ طلب الشبكة.",
             stack: error instanceof Error ? error.stack || report : report,
             source: "fetch.network",
           });
+          addNotification({
+            type: "error",
+            title: "فشل الاتصال",
+            message: "error",
+            details: report,
+            code,
+            signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
+          });
+        } else {
+          addNotification({
+            type: "error",
+            title: "فشل الاتصال",
+            message: "error",
+            details: report,
+            signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
+          });
         }
-        addNotification({
-          type: "error",
-          title: "فشل الاتصال",
-          message: error instanceof Error ? error.message : "تعذر تنفيذ طلب الشبكة.",
-          details: report,
-          signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
-        });
         throw error;
       }
     };
@@ -496,6 +532,8 @@ export function GlobalNotifications() {
   }, [addNotification]);
 
   useEffect(() => {
+    const pathname = window.location.pathname || "/";
+    const searchQuery = window.location.search.startsWith("?") ? window.location.search.slice(1) : window.location.search;
     const routeKey = `${pathname}?${searchQuery}`;
     if (lastRouteKeyRef.current === routeKey) {
       return;
@@ -507,7 +545,7 @@ export function GlobalNotifications() {
     if (notification) {
       addNotification(notification);
     }
-  }, [addNotification, pathname, searchQuery]);
+  }, [addNotification]);
 
   return (
     <ToastContainer

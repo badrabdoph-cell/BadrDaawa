@@ -27,15 +27,30 @@ function buildErrorReport(error: ErrorRecoveryActionsProps["error"], context: st
   return lines.join("\n");
 }
 
+function hashText(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).toUpperCase().padStart(7, "0");
+}
+
+function buildErrorCode(error: ErrorRecoveryActionsProps["error"], context: string) {
+  if (error.digest) return error.digest;
+  return `ERR-${Date.now().toString(36).toUpperCase()}-${hashText(`${context}:${error.name}:${error.message}`).slice(0, 7)}`;
+}
+
 export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryActionsProps) {
   const report = useMemo(() => buildErrorReport(error, context), [context, error]);
+  const errorCode = useMemo(() => buildErrorCode(error, context), [context, error]);
 
   useEffect(() => {
     const payload = {
       route: typeof window === "undefined" ? "server-render" : window.location.href,
       message: error.message || error.name || "Unknown error",
       stack: error.stack || report,
-      digest: error.digest,
+      digest: errorCode,
       source: `react-boundary:${context}`,
       user: context === "admin" ? "admin" : context,
     };
@@ -54,12 +69,13 @@ export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryAct
   };
 
   return (
-    <div className="error-actions">
-      <button className="btn btn-gold btn-glow" type="button" onClick={reloadPage}>
+    <div className="site-error-notice">
+      <strong>error</strong>
+      <button className="site-error-refresh" type="button" onClick={reloadPage}>
         <RefreshCw size={17} />
         تحديث الصفحة
       </button>
-      <CopyButton className="btn btn-soft btn-glass" value={report} label="نسخ الخطأ" copiedLabel="تم النسخ" title="نسخ تفاصيل الخطأ" />
+      <CopyButton className="site-error-copy" value={errorCode} label="نسخ" copiedLabel="تم" title="نسخ كود الخطأ" />
     </div>
   );
 }

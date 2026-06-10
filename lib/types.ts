@@ -241,6 +241,8 @@ export type OrderRequest = {
   };
   rejectionReason?: string;
   publishedInvitationCode?: string;
+  manageToken?: string;
+  manageTokenExpiresAt?: string;
   templateSlug: string;
   language: Language;
   status: "new" | "reviewing" | "edited" | "published" | "rejected" | "accepted" | "converted";

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { LoginPanel } from "@/components/LoginPanel";
+import { redirect } from "next/navigation";
+import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
+import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
 
 export const metadata: Metadata = {
   title: "دخول لوحة العميل",
@@ -12,15 +14,11 @@ export default async function CustomerLoginPage({
   params: Promise<{ code: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ code }, query] = await Promise.all([params, searchParams]);
+  const [{ code }] = await Promise.all([params, searchParams]);
+  const pendingOrder = await getPendingOrderByInvitationCode(code);
+  if (pendingOrder) {
+    return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
+  }
 
-  return (
-    <LoginPanel
-      action="/api/auth/client/login"
-      title="دخول لوحة الدعوة"
-      description="تابع الحضور، عدل بيانات الدعوة، واستبدل الصور من مكان واحد."
-      error={query.error}
-      hiddenFields={{ code }}
-    />
-  );
+  redirect("/manage/invitation/invalid?reason=session");
 }

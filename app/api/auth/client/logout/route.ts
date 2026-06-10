@@ -5,7 +5,7 @@ import { getRedirectUrl } from "@/lib/utils";
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const code = String(formData.get("code") || "");
-  const response = NextResponse.redirect(getRedirectUrl(code ? `/${code}/ad_3399/login` : "/", request.headers, request.nextUrl.origin), 303);
+  const response = NextResponse.redirect(getRedirectUrl(code ? `/${code}` : "/", request.headers, request.nextUrl.origin), 303);
   response.cookies.delete(CLIENT_SESSION_COOKIE);
   return response;
 }

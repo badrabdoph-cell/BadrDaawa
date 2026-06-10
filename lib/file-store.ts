@@ -4,7 +4,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { writeJsonFileAtomic } from "./atomic-file";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { cleanInvitationHeroVideoUrl } from "./invitation-media";
-import { hashPassword, verifyPassword } from "./password";
+import { hashPassword } from "./password";
 import { makeNumberedInvitationSlug } from "./slug";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
 import type { VisitSource } from "./visit-source";
@@ -46,6 +46,7 @@ export type FileAnalyticsEvent = {
 
 type CreateFileInvitationInput = {
   baseSlug: string;
+  code?: string;
   templateSlug: string;
   language?: Invitation["language"];
   groomName: string;
@@ -62,6 +63,8 @@ type CreateFileInvitationInput = {
   heroVideoUrl?: string;
   musicUrl: string;
   musicEnabled?: boolean;
+  manageToken?: string;
+  manageTokenExpiresAt?: string;
   texts?: Invitation["texts"];
   photographer?: Invitation["photographer"];
   customSlug?: string;
@@ -95,6 +98,8 @@ type FileOrderUpdate = Partial<
     | "photographer"
     | "rejectionReason"
     | "publishedInvitationCode"
+    | "manageToken"
+    | "manageTokenExpiresAt"
     | "orderNumber"
     | "dedupeKey"
     | "submittedAt"
@@ -293,10 +298,11 @@ export async function getFileGuestsByInvitation(code: string) {
 
 export async function createFileInvitation(input: CreateFileInvitationInput) {
   const store = await readStore();
-  const code = makeNumberedInvitationSlug(
-    input.baseSlug,
-    store.invitations.map((invitation) => invitation.code),
-  );
+  const existingCodes = store.invitations.map((invitation) => invitation.code);
+  const requestedCode = input.code?.trim();
+  const code = requestedCode && !existingCodes.some((item) => item.toLowerCase() === requestedCode.toLowerCase())
+    ? requestedCode
+    : makeNumberedInvitationSlug(input.baseSlug, existingCodes);
   const now = new Date().toISOString();
   const customerId = `cus_${input.username.toLowerCase().replace(/[^a-z0-9]+/g, "_") || Date.now().toString(36)}`;
   const existingCustomerIndex = store.customers.findIndex((customer) => customer.username.toLowerCase() === input.username.toLowerCase());
@@ -334,6 +340,8 @@ export async function createFileInvitation(input: CreateFileInvitationInput) {
     gallery: input.gallery,
     musicUrl: input.musicUrl || undefined,
     musicEnabled: input.musicEnabled === true,
+    manageToken: input.manageToken || undefined,
+    manageTokenExpiresAt: input.manageTokenExpiresAt || undefined,
     texts: input.texts,
     photographer: input.photographer,
     status: "active",
@@ -581,13 +589,4 @@ export async function deleteFileGuest(id: string) {
   store.guests = store.guests.filter((item) => item.id !== id);
   await writeStore(store);
   return guest;
-}
-
-export async function validateFileClientLogin(code: string, username: string, password: string) {
-  const store = await readStore();
-  const invitation = store.invitations.find((item) => item.code.toLowerCase() === code.toLowerCase() && !item.deletedAt);
-  if (!invitation) return false;
-
-  const customer = store.customers.find((item) => item.id === invitation.customerId && item.username === username && !item.deletedAt);
-  return Boolean(customer?.isActive && verifyPassword(password, customer.passwordHash));
 }

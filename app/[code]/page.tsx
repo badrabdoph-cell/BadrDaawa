@@ -3,10 +3,12 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { DynamicPageView } from "@/components/DynamicPageView";
 import { InvitationExperience } from "@/components/InvitationExperience";
+import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
 import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-pages";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
+import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
@@ -26,6 +28,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { code } = await params;
   const invitation = await getCachedInvitationByCode(code);
   if (invitation) return getInvitationSeoMetadata(invitation);
+  const pendingOrder = await getPendingOrderByInvitationCode(code);
+  if (pendingOrder) {
+    return {
+      title: "الدعوة قيد المراجعة",
+      description: "تم تجهيز رابط الدعوة، لكنه غير متاح حتى موافقة الأدمن ونشر الدعوة.",
+      robots: { index: false, follow: false },
+    };
+  }
   const page = await getDynamicPageBySlug(code);
   if (page) return getDynamicPageMetadata(page);
   return getMissingInvitationSeoMetadata();
@@ -36,6 +46,10 @@ export default async function InvitationPage({ params, searchParams }: PageProps
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
   const invitation = await getCachedInvitationByCode(code);
   if (!invitation) {
+    const pendingOrder = await getPendingOrderByInvitationCode(code);
+    if (pendingOrder) {
+      return <PendingInvitationNotice code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
+    }
     const page = await getDynamicPageBySlug(code);
     if (page) return <DynamicPageView page={page} />;
     notFound();

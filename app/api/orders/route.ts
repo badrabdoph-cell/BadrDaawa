@@ -3,11 +3,12 @@ import crypto from "node:crypto";
 import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { createFileOrder } from "@/lib/file-store";
+import { createFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
+import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
-import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
@@ -40,7 +41,7 @@ async function resolveOrderMusic(input: { musicEnabled: boolean; musicChoice: Or
   if (input.musicChoice === "video") {
     const extractedUrl = cleanPlayableAudioUrl(input.musicUrl || "");
     if (extractedUrl) return { musicUrl: extractedUrl, error: "" };
-    return { musicUrl: "", error: "استخرج الصوت من الفيديو أولاً قبل إرسال الطلب." };
+    return { musicUrl: "", error: input.musicUrl ? "استخرج الصوت من الفيديو أولاً قبل إرسال الطلب." : "" };
   }
 
   const directUrl = cleanPlayableAudioUrl(input.musicUrl || "");
@@ -58,12 +59,6 @@ function makeDedupeKey(value: string) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-function absoluteUrl(value: string, siteUrl: string) {
-  if (!value) return "";
-  if (value.startsWith("http://") || value.startsWith("https://")) return value;
-  return `${siteUrl.replace(/\/$/, "")}${value.startsWith("/") ? value : `/${value}`}`;
-}
-
 function cleanExternalUrl(value: string) {
   const clean = value.trim();
   if (!clean) return "";
@@ -76,76 +71,35 @@ function cleanExternalUrl(value: string) {
 }
 
 function buildOrderWhatsAppMessage(input: {
-  orderNumber: string;
+  invitationCode: string;
   groomName: string;
   brideName: string;
-  weddingDate: string;
-  venue: string;
-  mapUrl: string;
-  templateName: string;
-  imageUrls: string[];
-  musicEnabled: boolean;
-  musicChoice: OrderMusicChoice;
-  musicUrl: string;
-  photographer: { enabled: boolean; name: string; facebookUrl: string; instagramUrl: string };
-  openingText: string;
-  galleryStories: Array<{ title?: string; description?: string }>;
-  story: Array<{ date?: string; title?: string; description?: string }>;
-  gift: { vodafoneCash?: string; instapay?: string; bankAccount?: string; customText?: string };
+  publicUrl: string;
+  adminUrl: string;
 }) {
-  const submittedAt = new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
-    dateStyle: "full",
-    timeStyle: "short",
-    timeZone: "Africa/Cairo",
-  }).format(new Date());
-
-  const musicLabel = !input.musicEnabled
-    ? "لم يطلب موسيقى"
-    : input.musicChoice === "default"
-      ? "الموسيقى الأساسية"
-      : input.musicChoice === "library"
-        ? `مقطع من مكتبة الموقع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
-      : input.musicChoice === "upload"
-        ? `ملف مرفوع${input.musicUrl ? `: ${input.musicUrl}` : ""}`
-      : input.musicChoice === "video"
-        ? `صوت مستخرج من فيديو${input.musicUrl ? `: ${input.musicUrl}` : ""}`
-      : `رابط خارجي: ${input.musicUrl || "لم يرسل رابط"}`;
-  const meaningfulGalleryStories = input.galleryStories
-    .map((item, index) => ({ ...item, number: index + 1 }))
-    .filter((item) => item.title || item.description);
-
   return [
-    `طلب دعوة جديد #${input.orderNumber}`,
+    "تم تأكيد طلبك ❤️",
     "",
-    `العريس: ${input.groomName}`,
-    `العروسة: ${input.brideName}`,
-    `التاريخ: ${input.weddingDate}`,
-    `العنوان: ${input.venue}`,
-    `اللوكيشن: ${input.mapUrl || "لم يتم إرساله"}`,
-    `القالب: ${input.templateName}`,
-    `وقت إرسال الطلب: ${submittedAt}`,
+    "فقط أرسل هذه الرسالة إلى الأدمن وسوف نقوم بمراجعة الدعوة ونشرها.",
     "",
-    "الصور:",
-    input.imageUrls.length ? input.imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n") : "لا توجد صور مرفوعة",
+    "طلب دعوة:",
+    input.invitationCode,
     "",
-    `الموسيقى: ${musicLabel}`,
-    input.openingText ? `نص الافتتاح السينمائي: ${input.openingText}` : "نص الافتتاح السينمائي: الافتراضي",
+    "العريس والعروس:",
+    `${input.groomName} / ${input.brideName}`,
     "",
-    meaningfulGalleryStories.length
-      ? ["Story Gallery:", ...meaningfulGalleryStories.map((item) => [`${item.number}. ${item.title || "صورة"}`, item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n")
-      : "Story Gallery: لم يتم إضافتها",
+    "هذا رابط الدعوة الذي ستشاركه مع معازيمك بعد موافقة الأدمن على الطلب:",
     "",
-    input.photographer.enabled
-      ? ["بيانات المصور:", `الاسم: ${input.photographer.name || "غير محدد"}`, input.photographer.facebookUrl ? `Facebook: ${input.photographer.facebookUrl}` : "", input.photographer.instagramUrl ? `Instagram: ${input.photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
-      : "بيانات المصور: لم يتم إضافتها",
+    input.publicUrl,
     "",
-    input.story.length
-      ? ["قصة العروسين:", ...input.story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n")
-      : "قصة العروسين: لم يتم إضافتها",
+    "وهذا رابط الإدارة الخاص بالدعوة والذي يمكنك من خلاله:",
     "",
-    Object.values(input.gift).some(Boolean)
-      ? ["هدية العروسين:", input.gift.vodafoneCash ? `فودافون كاش: ${input.gift.vodafoneCash}` : "", input.gift.instapay ? `إنستا باي: ${input.gift.instapay}` : "", input.gift.bankAccount ? `حساب بنكي: ${input.gift.bankAccount}` : "", input.gift.customText ? `نص مخصص: ${input.gift.customText}` : ""].filter(Boolean).join("\n")
-      : "هدية العروسين: لم يتم إضافتها",
+    "- متابعة الحضور.",
+    "- معرفة من أكد حضوره.",
+    "- معرفة من ينوي الحضور.",
+    "- مراجعة الرسائل والتهاني والتعليقات قبل ظهورها داخل الدعوة.",
+    "",
+    input.adminUrl,
   ].join("\n");
 }
 
@@ -189,11 +143,12 @@ export async function POST(request: NextRequest) {
   if (music.error) {
     return NextResponse.json({ error: music.error }, { status: 400 });
   }
+  const effectiveMusicEnabled = Boolean(parsed.data.musicEnabled && (parsed.data.musicChoice === "default" || music.musicUrl));
+  const effectiveMusicChoice: OrderMusicChoice = effectiveMusicEnabled ? parsed.data.musicChoice : "default";
   const openingText = parsed.data.openingText.trim();
-  const galleryStories = normalizeGalleryStories(parsed.data.galleryStories);
   const story = normalizeCoupleStory(parsed.data.story);
   const gift = normalizeInvitationGift(parsed.data.gift);
-  const texts = openingText || galleryStories.length || story.length || Object.values(gift).some(Boolean) ? { openingText, galleryStories, story, gift } : undefined;
+  const texts = openingText || story.length || Object.values(gift).some(Boolean) ? { openingText, story, gift } : undefined;
   const orderNumber = makeOrderNumber();
   const dedupeSource = parsed.data.idempotencyKey || JSON.stringify({
     groomName: parsed.data.groomName,
@@ -203,15 +158,14 @@ export async function POST(request: NextRequest) {
     mapUrl: parsed.data.mapUrl,
     templateSlug: selectedTemplate.slug,
     orderImages: parsed.data.orderImages,
-    galleryStories,
     story,
     gift,
     openingText,
   });
   const dedupeKey = makeDedupeKey(dedupeSource);
   const siteUrl = getPublicSiteUrl(request.headers, request.url);
-  const absoluteImageUrls = imageUrls.map((url) => absoluteUrl(url, siteUrl));
-  const absoluteMusicUrl = music.musicUrl ? absoluteUrl(music.musicUrl, siteUrl) : "";
+  const reservedInvitationCode = await createReservedInvitationCode(parsed.data.groomName, parsed.data.brideName);
+  const reservedManageToken = await createReservedManageToken();
   const photographer = {
     enabled: parsed.data.photographerEnabled,
     name: parsed.data.photographerName,
@@ -221,20 +175,20 @@ export async function POST(request: NextRequest) {
   const mapUrl = cleanExternalUrl(parsed.data.mapUrl);
   const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
   const mapNotes = mapUrl ? `رابط اللوكيشن:\n${mapUrl}` : "";
-  const musicNotes = parsed.data.musicEnabled
-    ? ["موسيقى الدعوة:", parsed.data.musicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", parsed.data.musicChoice === "library" ? "اختار العميل مقطعًا من مكتبة الموقع." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
+  const musicNotes = effectiveMusicEnabled
+    ? ["موسيقى الدعوة:", effectiveMusicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", effectiveMusicChoice === "library" ? "اختار العميل مقطعًا من مكتبة الموقع." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
     : "";
   const photographerNotes = parsed.data.photographerEnabled
     ? ["بيانات المصور الفوتوغرافي:", parsed.data.photographerName ? `الاسم: ${parsed.data.photographerName}` : "", photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "", photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
     : "";
   const storyNotes = story.length ? ["قصة العروسين:", ...story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
-  const meaningfulGalleryStories = galleryStories.map((item, index) => ({ ...item, number: index + 1 })).filter((item) => item.title || item.description);
-  const galleryStoryNotes = meaningfulGalleryStories.length ? ["Story Gallery:", ...meaningfulGalleryStories.map((item) => [`${item.number}. ${item.title || "صورة"}`, item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
   const giftNotes = Object.values(gift).some(Boolean) ? ["هدية العروسين:", gift.vodafoneCash ? `فودافون كاش: ${gift.vodafoneCash}` : "", gift.instapay ? `إنستا باي: ${gift.instapay}` : "", gift.bankAccount ? `حساب بنكي: ${gift.bankAccount}` : "", gift.customText ? `نص مخصص: ${gift.customText}` : ""].filter(Boolean).join("\n") : "";
   const openingNotes = openingText ? `نص الافتتاح السينمائي:\n${openingText}` : "";
-  const notes = [parsed.data.notes, mapNotes, openingNotes, photographerNotes, musicNotes, galleryStoryNotes, storyNotes, giftNotes, imageNotes].filter(Boolean).join("\n\n");
+  const notes = [parsed.data.notes, mapNotes, openingNotes, photographerNotes, musicNotes, storyNotes, giftNotes, imageNotes].filter(Boolean).join("\n\n");
   let orderId = "";
   let effectiveOrderNumber = orderNumber;
+  let effectiveInvitationCode = reservedInvitationCode;
+  let effectiveManageToken = reservedManageToken;
 
   if (!prisma) {
     const order = await createFileOrder({
@@ -248,16 +202,26 @@ export async function POST(request: NextRequest) {
       mapUrl,
       notes,
       imageUrls,
-      musicEnabled: parsed.data.musicEnabled,
-      musicChoice: parsed.data.musicChoice,
+      musicEnabled: effectiveMusicEnabled,
+      musicChoice: effectiveMusicChoice,
       musicUrl: music.musicUrl,
       texts,
       photographer,
       templateSlug: selectedTemplate.slug,
       language: parsed.data.language,
+      publishedInvitationCode: reservedInvitationCode,
+      manageToken: reservedManageToken,
     });
     orderId = order.id;
     effectiveOrderNumber = order.orderNumber || orderNumber;
+    effectiveInvitationCode = order.publishedInvitationCode || reservedInvitationCode;
+    effectiveManageToken = order.manageToken || reservedManageToken;
+    if (!order.publishedInvitationCode) {
+      await updateFileOrder(order.id, { publishedInvitationCode: effectiveInvitationCode }).catch(() => null);
+    }
+    if (!order.manageToken) {
+      await updateFileOrder(order.id, { manageToken: effectiveManageToken }).catch(() => null);
+    }
   } else {
     try {
       const template = await prisma.weddingTemplate.upsert({
@@ -293,27 +257,35 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
 
-      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true } }).catch(() => null);
+      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true, publishedInvitationCode: true, manageToken: true } }).catch(() => null);
       if (existingOrder) {
+        const duplicateInvitationCode = existingOrder.publishedInvitationCode || reservedInvitationCode;
+        const duplicateManageToken = existingOrder.manageToken || reservedManageToken;
+        if (!existingOrder.publishedInvitationCode || !existingOrder.manageToken) {
+          await prisma.orderRequest.update({
+            where: { id: existingOrder.id },
+            data: { publishedInvitationCode: duplicateInvitationCode, manageToken: duplicateManageToken },
+          });
+        }
+        const links = buildReservedInvitationLinks(siteUrl, duplicateInvitationCode, duplicateManageToken);
         const message = buildOrderWhatsAppMessage({
-          orderNumber: existingOrder.orderNumber || orderNumber,
+          invitationCode: duplicateInvitationCode,
           groomName: parsed.data.groomName,
           brideName: parsed.data.brideName,
-          weddingDate: parsed.data.weddingDate,
-          venue: parsed.data.venue || "",
-          mapUrl,
-          templateName: `${selectedTemplate.arabicName} - ${selectedTemplate.name}`,
-          imageUrls: absoluteImageUrls,
-          musicEnabled: parsed.data.musicEnabled,
-          musicChoice: parsed.data.musicChoice,
-          musicUrl: absoluteMusicUrl,
-          photographer,
-          openingText,
-          galleryStories,
-          story,
-          gift,
+          publicUrl: links.publicUrl,
+          adminUrl: links.adminUrl,
         });
-        return NextResponse.json({ ok: true, duplicate: true, orderId: existingOrder.id, orderNumber: existingOrder.orderNumber || orderNumber, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message) });
+        return NextResponse.json({
+          ok: true,
+          duplicate: true,
+          orderId: existingOrder.id,
+          orderNumber: existingOrder.orderNumber || orderNumber,
+          invitationCode: duplicateInvitationCode,
+          imageUrls,
+          musicUrl: music.musicUrl,
+          whatsappUrl: getWhatsAppOrderUrl(message),
+          ...links,
+        });
       }
 
       const order = await prisma.orderRequest.create({
@@ -328,18 +300,22 @@ export async function POST(request: NextRequest) {
           mapUrl,
           notes,
           imageUrls,
-          musicEnabled: parsed.data.musicEnabled,
-          musicChoice: parsed.data.musicChoice,
+          musicEnabled: effectiveMusicEnabled,
+          musicChoice: effectiveMusicChoice,
           musicUrl: music.musicUrl,
           texts,
           photographer,
           language: parsed.data.language,
           templateId: template.id,
+          publishedInvitationCode: reservedInvitationCode,
+          manageToken: reservedManageToken,
         },
         select: { id: true },
       });
       orderId = order.id;
       effectiveOrderNumber = orderNumber;
+      effectiveInvitationCode = reservedInvitationCode;
+      effectiveManageToken = reservedManageToken;
     } catch (error) {
       console.error("Failed to persist order request", error);
       const order = await createFileOrder({
@@ -353,36 +329,36 @@ export async function POST(request: NextRequest) {
         mapUrl,
         notes,
         imageUrls,
-        musicEnabled: parsed.data.musicEnabled,
-        musicChoice: parsed.data.musicChoice,
+        musicEnabled: effectiveMusicEnabled,
+        musicChoice: effectiveMusicChoice,
         musicUrl: music.musicUrl,
         texts,
         photographer,
         templateSlug: selectedTemplate.slug,
         language: parsed.data.language,
+        publishedInvitationCode: reservedInvitationCode,
+        manageToken: reservedManageToken,
       });
       orderId = order.id;
       effectiveOrderNumber = order.orderNumber || orderNumber;
+      effectiveInvitationCode = order.publishedInvitationCode || reservedInvitationCode;
+      effectiveManageToken = order.manageToken || reservedManageToken;
+      if (!order.publishedInvitationCode) {
+        await updateFileOrder(order.id, { publishedInvitationCode: effectiveInvitationCode }).catch(() => null);
+      }
+      if (!order.manageToken) {
+        await updateFileOrder(order.id, { manageToken: effectiveManageToken }).catch(() => null);
+      }
     }
   }
 
+  const links = buildReservedInvitationLinks(siteUrl, effectiveInvitationCode, effectiveManageToken);
   const message = buildOrderWhatsAppMessage({
-    orderNumber: effectiveOrderNumber,
+    invitationCode: effectiveInvitationCode,
     groomName: parsed.data.groomName,
     brideName: parsed.data.brideName,
-    weddingDate: parsed.data.weddingDate,
-    venue: parsed.data.venue || "",
-    mapUrl,
-    templateName: `${selectedTemplate.arabicName} - ${selectedTemplate.name}`,
-    imageUrls: absoluteImageUrls,
-    musicEnabled: parsed.data.musicEnabled,
-    musicChoice: parsed.data.musicChoice,
-    musicUrl: absoluteMusicUrl,
-    photographer,
-    galleryStories,
-    story,
-    gift,
-    openingText,
+    publicUrl: links.publicUrl,
+    adminUrl: links.adminUrl,
   });
   queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
   await recordAuditLog({
@@ -392,6 +368,8 @@ export async function POST(request: NextRequest) {
     newValues: {
       orderId,
       orderNumber: effectiveOrderNumber,
+      invitationCode: effectiveInvitationCode,
+      manageToken: effectiveManageToken,
       groomName: parsed.data.groomName,
       brideName: parsed.data.brideName,
       phone: parsed.data.phone,
@@ -400,16 +378,15 @@ export async function POST(request: NextRequest) {
       mapUrl,
       templateSlug: selectedTemplate.slug,
       imageUrls,
-      musicEnabled: parsed.data.musicEnabled,
-      musicChoice: parsed.data.musicChoice,
+      musicEnabled: effectiveMusicEnabled,
+      musicChoice: effectiveMusicChoice,
       musicUrl: music.musicUrl,
       texts,
-      galleryStories,
       story,
       gift,
       photographer,
     },
     metadata: { source: "public-order-form" },
   });
-  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message) });
+  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, invitationCode: effectiveInvitationCode, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message), ...links });
 }

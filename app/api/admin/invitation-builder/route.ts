@@ -213,6 +213,8 @@ export async function POST(request: NextRequest) {
   if (input.musicEnabled && (input.musicDataUrl || input.musicUrl) && !musicUrl) {
     return NextResponse.json({ error: "ملف أو رابط الموسيقى غير قابل للتشغيل." }, { status: 400 });
   }
+  const effectiveMusicEnabled = Boolean(input.musicEnabled && (input.musicChoice === "default" || musicUrl));
+  const effectiveMusicChoice = effectiveMusicEnabled ? input.musicChoice || "default" : "default";
   const photographer = await resolvePhotographer(input);
   const language = input.language === "en" ? "en" : "ar";
   const heroVideoUrl = cleanInvitationHeroVideoUrl(input.heroVideoUrl);
@@ -245,7 +247,7 @@ export async function POST(request: NextRequest) {
         heroPhoto: gallery[0],
         heroVideoUrl,
         musicUrl,
-        musicEnabled: Boolean(input.musicEnabled),
+        musicEnabled: effectiveMusicEnabled,
         texts,
         photographer,
         isActive,
@@ -270,7 +272,7 @@ export async function POST(request: NextRequest) {
       gallery,
       heroVideoUrl,
       musicUrl,
-      musicEnabled: Boolean(input.musicEnabled),
+      musicEnabled: effectiveMusicEnabled,
       texts,
       photographer,
       customSlug: customSlug || undefined,
@@ -356,7 +358,7 @@ export async function POST(request: NextRequest) {
       heroPhoto: gallery[0],
       gallery,
       musicUrl,
-      musicEnabled: Boolean(input.musicEnabled),
+      musicEnabled: effectiveMusicEnabled,
       texts,
       photographer,
       customerId: customer.id,
@@ -394,8 +396,8 @@ export async function POST(request: NextRequest) {
     city: cleanText(input.city),
     mapUrl: cleanText(input.mapUrl),
     gallery,
-    musicEnabled: Boolean(input.musicEnabled),
-    musicChoice: input.musicChoice || "default",
+    musicEnabled: effectiveMusicEnabled,
+    musicChoice: effectiveMusicChoice,
     musicUrl,
     heroVideoUrl,
     texts,

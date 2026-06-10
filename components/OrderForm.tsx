@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Camera, Check, Eye, FileVideo, Gift, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
-import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
-import type { CoupleStoryItem, GalleryStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
+import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
+import type { CoupleStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 
 type FormState = {
@@ -21,7 +21,6 @@ type FormState = {
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
   openingText: string;
-  galleryStories: GalleryStoryItem[];
   storyEnabled: boolean;
   story: CoupleStoryItem[];
   giftEnabled: boolean;
@@ -32,6 +31,7 @@ type FormState = {
 };
 
 type MusicChoice = "default" | "upload" | "video" | "url";
+type OrderMusicState = Pick<FormState, "musicEnabled" | "musicChoice" | "musicUrl">;
 type OrderTemplateOption = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "previewImage">;
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 type OrderFormValues = Pick<
@@ -76,7 +76,6 @@ export type OrderInitialDraft = Pick<
 > & {
   photographerEnabled: boolean;
   storyEnabled: boolean;
-  galleryStories: GalleryStoryItem[];
   story: CoupleStoryItem[];
   giftEnabled: boolean;
   gift: InvitationGift;
@@ -232,21 +231,6 @@ function cleanOrderStory(value: unknown) {
 
 function filledOrderStory(value: unknown) {
   return normalizeCoupleStory(cleanOrderStory(value));
-}
-
-function cleanOrderGalleryStories(value: unknown) {
-  const source = Array.isArray(value) ? value : [];
-  return orderImageSlots.map((_, index) => {
-    const item = source[index] && typeof source[index] === "object" ? (source[index] as Record<string, unknown>) : {};
-    return {
-      title: typeof item.title === "string" ? item.title.trim().slice(0, 120) : "",
-      description: typeof item.description === "string" ? item.description.trim().slice(0, 280) : "",
-    };
-  });
-}
-
-function filledOrderGalleryStories(value: unknown) {
-  return normalizeGalleryStories(cleanOrderGalleryStories(value));
 }
 
 function cleanOrderGift(value: unknown): InvitationGift {
@@ -439,7 +423,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     photographerFacebookUrl: initialDraft?.photographerFacebookUrl || "",
     photographerInstagramUrl: initialDraft?.photographerInstagramUrl || "",
     openingText: initialDraft?.openingText || "",
-    galleryStories: cleanOrderGalleryStories(initialDraft?.galleryStories),
     storyEnabled: Boolean(initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length),
     story: cleanOrderStory(initialDraft?.story),
     giftEnabled: Boolean(initialDraft?.giftEnabled || Object.values(filledOrderGift(initialDraft?.gift)).some(Boolean)),
@@ -470,6 +453,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
     [fallbackTemplate, form.templateSlug, templates],
   );
+  const uploadingImageCount = imageUploads.filter((upload) => upload.phase === "selected" || upload.phase === "compressing" || upload.phase === "uploading").length;
+  const hasImageUploadInProgress = uploadingImageCount > 0;
 
   function getUrlDraft(): OrderDraft {
     if (typeof window === "undefined") return {};
@@ -488,7 +473,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
-      galleryStories: cleanOrderGalleryStories(parseDraftJson(params.get("galleryStories"), [])),
       storyEnabled: params.get("storyEnabled") === "1" || undefined,
       story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
       giftEnabled: params.get("giftEnabled") === "1" || undefined,
@@ -527,8 +511,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       params.set("storyEnabled", "1");
       params.set("story", JSON.stringify(story));
     }
-    const galleryStories = filledOrderGalleryStories(nextForm.galleryStories);
-    if (galleryStories.length) params.set("galleryStories", JSON.stringify(galleryStories));
     const gift = filledOrderGift(nextForm.gift);
     if (nextForm.giftEnabled && Object.values(gift).some(Boolean)) {
       params.set("giftEnabled", "1");
@@ -563,7 +545,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         ...currentForm,
         templateSlug: currentTemplateSlug,
         photographerEnabled: form.photographerEnabled,
-        galleryStories: form.galleryStories,
         storyEnabled: form.storyEnabled,
         story: form.story,
         giftEnabled: form.giftEnabled,
@@ -612,7 +593,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
       photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
       openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
-      galleryStories: cleanOrderGalleryStories(draft.galleryStories),
       storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
         story: cleanOrderStory(draft.story),
         giftEnabled: Boolean(draft.giftEnabled || Object.values(filledOrderGift(draft.gift)).some(Boolean)),
@@ -650,6 +630,23 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (message) setMessage("");
   }
 
+  function selectMusicChoice(choice: MusicChoice | "none") {
+    setForm((current) => ({
+      ...current,
+      musicEnabled: choice !== "none",
+      musicChoice: choice === "none" ? "default" : choice,
+      musicUrl: choice === "default" || choice === "none" ? "" : current.musicUrl,
+    }));
+    setErrors((current) => {
+      if (!current.musicUrl) return current;
+      const next = { ...current };
+      delete next.musicUrl;
+      return next;
+    });
+    if (choice === "default" || choice === "none") setMusicFileName("");
+    if (message) setMessage("");
+  }
+
   function addStoryItem() {
     setForm((current) => ({ ...current, storyEnabled: true, story: [...cleanOrderStory(current.story), createOrderStoryItem()] }));
     if (message) setMessage("");
@@ -669,14 +666,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
       return { ...current, story: nextStory, storyEnabled: nextStory.length ? current.storyEnabled : false };
     });
-    if (message) setMessage("");
-  }
-
-  function updateGalleryStory(index: number, patch: Partial<GalleryStoryItem>) {
-    setForm((current) => ({
-      ...current,
-      galleryStories: cleanOrderGalleryStories(current.galleryStories).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    }));
     if (message) setMessage("");
   }
 
@@ -927,8 +916,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     if (values.openingText) params.set("openingText", values.openingText);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
-    const galleryStories = filledOrderGalleryStories(values.galleryStories);
-    if (galleryStories.length) params.set("galleryStories", JSON.stringify(galleryStories));
     const story = filledOrderStory(values.story);
     if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
     const gift = filledOrderGift(values.gift);
@@ -1037,6 +1024,19 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     return "";
   }
 
+  function getEffectiveOrderMusicState(values: OrderMusicState, uploadedMusic = ""): OrderMusicState {
+    if (!values.musicEnabled) return { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+    const musicUrl = values.musicUrl.trim();
+    if (values.musicChoice === "default") return { musicEnabled: true, musicChoice: "default", musicUrl: "" };
+    if (values.musicChoice === "upload") {
+      return uploadedMusic || musicUrl ? { musicEnabled: true, musicChoice: "upload", musicUrl } : { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+    }
+    if (values.musicChoice === "video") {
+      return musicUrl ? { musicEnabled: true, musicChoice: "video", musicUrl } : { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+    }
+    return musicUrl ? { musicEnabled: true, musicChoice: "url", musicUrl } : { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+  }
+
   function validateOrder(values: OrderFormValues, photographerEnabled = form.photographerEnabled, musicEnabled = form.musicEnabled, musicChoice = form.musicChoice) {
     const nextErrors: FieldErrors = {};
     if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
@@ -1048,7 +1048,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (photographerEnabled && !isValidOptionalUrl(values.photographerFacebookUrl)) nextErrors.photographerFacebookUrl = "رابط Facebook لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerInstagramUrl)) nextErrors.photographerInstagramUrl = "رابط Instagram لازم يبدأ بـ https://";
     if (musicEnabled && musicChoice === "url" && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) nextErrors.musicUrl = "رابط الموسيقى لازم يكون مباشر مثل mp3 أو m4a أو wav.";
-    if (musicEnabled && musicChoice === "video" && !values.musicUrl) nextErrors.musicUrl = "ارفع فيديو أولاً ليتم استخراج الصوت منه.";
     return nextErrors;
   }
 
@@ -1094,22 +1093,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         [
           `${index + 1}. ${item.title || "محطة بدون عنوان"}`,
           item.date ? `التاريخ: ${item.date}` : "",
-          item.description ? `الوصف: ${item.description}` : "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      ),
-    ].join("\n");
-  }
-
-  function getGalleryStoryNotes(values: Partial<FormState>) {
-    const galleryStories = filledOrderGalleryStories(values.galleryStories);
-    if (!galleryStories.length) return "";
-    return [
-      "Story Gallery:",
-      ...galleryStories.map((item, index) =>
-        [
-          `${index + 1}. ${item.title || "صورة بدون عنوان"}`,
           item.description ? `الوصف: ${item.description}` : "",
         ]
           .filter(Boolean)
@@ -1178,25 +1161,23 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         musicUrl = data?.musicUrl || "";
       }
 
+      const effectiveMusic = getEffectiveOrderMusicState({ musicEnabled: form.musicEnabled, musicChoice: form.musicChoice, musicUrl }, orderMusic);
       const nextImageUrls = imageUrls.length ? imageUrls : draftImageUrls;
       const nextForm = {
         ...currentForm,
         weddingDate: normalizeWeddingDate(currentForm.weddingDate),
         templateSlug: selectedTemplate.slug,
         photographerEnabled: form.photographerEnabled,
-        galleryStories: filledOrderGalleryStories(form.galleryStories),
         storyEnabled: form.storyEnabled,
         story: filledOrderStory(form.story),
         giftEnabled: form.giftEnabled,
         gift: filledOrderGift(form.gift),
-        musicEnabled: form.musicEnabled,
-        musicChoice: form.musicChoice,
-        musicUrl,
+        ...effectiveMusic,
       };
       if (musicUrl) updateField("musicUrl", musicUrl);
       if (nextImageUrls.length) setDraftImageUrls(nextImageUrls);
       persistDraft(nextForm, nextImageUrls);
-      window.location.href = previewHref(nextForm, nextImageUrls, musicUrl);
+      window.location.href = previewHref(nextForm, nextImageUrls, effectiveMusic.musicUrl);
     } catch {
       setState("error");
       setMessage("تعذر تجهيز المعاينة. جرّب مرة أخرى أو اضغط تأكيد إنشاء الدعوة.");
@@ -1207,6 +1188,12 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state === "loading") return;
+    if (hasImageUploadInProgress) {
+      setState("error");
+      setMessage("انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل");
+      formRef.current?.querySelector<HTMLElement>(".order-upload-floating-warning")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (!orderSubmitKeyRef.current) {
       orderSubmitKeyRef.current = `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     }
@@ -1232,15 +1219,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     setState("loading");
     setMessage("جاري التأكد من حفظ الصور قبل إنشاء الدعوة.");
 
-    const photographerNotes = getPhotographerNotes(currentForm);
-    const clientMusicNotes = getMusicNotes(currentForm);
-    const galleryStories = filledOrderGalleryStories(currentForm.galleryStories);
-    const galleryStoryNotes = getGalleryStoryNotes({ ...currentForm, galleryStories });
-    const story = currentForm.storyEnabled ? filledOrderStory(currentForm.story) : [];
-    const gift = currentForm.giftEnabled ? filledOrderGift(currentForm.gift) : {};
-    const storyNotes = getStoryNotes({ ...currentForm, story });
-    const giftNotes = getGiftNotes({ ...currentForm, gift });
-
     try {
       const orderImages = await getOrderImageDataUrls(formData);
       if (selectedRawImageCount(formData) > orderImages.length) {
@@ -1255,15 +1233,22 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         return;
       }
       const orderMusic = await getOrderMusicDataUrl(formData);
+      const effectiveMusic = getEffectiveOrderMusicState(currentForm, orderMusic);
+      const effectiveForm = { ...currentForm, ...effectiveMusic };
+      const photographerNotes = getPhotographerNotes(effectiveForm);
+      const clientMusicNotes = getMusicNotes(effectiveForm, effectiveMusic.musicUrl || (orderMusic ? "ملف موسيقى مرفوع مع الطلب" : ""));
+      const story = effectiveForm.storyEnabled ? filledOrderStory(effectiveForm.story) : [];
+      const gift = effectiveForm.giftEnabled ? filledOrderGift(effectiveForm.gift) : {};
+      const storyNotes = getStoryNotes({ ...effectiveForm, story });
+      const giftNotes = getGiftNotes({ ...effectiveForm, gift });
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...currentForm,
-          galleryStories,
+          ...effectiveForm,
           story,
           gift,
-          notes: [photographerNotes, clientMusicNotes, galleryStoryNotes, storyNotes, giftNotes].filter(Boolean).join("\n\n"),
+          notes: [photographerNotes, clientMusicNotes, storyNotes, giftNotes].filter(Boolean).join("\n\n"),
           orderImages,
           orderMusic,
           idempotencyKey: orderSubmitKeyRef.current,
@@ -1291,6 +1276,13 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
   return (
     <div className="order-flow order-flow-simple">
+      {hasImageUploadInProgress ? (
+        <div className="order-upload-floating-warning" role="status" aria-live="polite">
+          <Loader2 size={18} className="animate-float" />
+          <span>انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</span>
+          <strong>{uploadingImageCount}</strong>
+        </div>
+      ) : null}
       <form className="form-panel details-form order-simple-form" onSubmit={submitOrder} onInput={persistCurrentDomDraft} onChange={persistCurrentDomDraft} ref={formRef} noValidate>
         <div className="order-template-row field full">
           <label htmlFor="templateSlug">
@@ -1382,32 +1374,19 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             <p>3 صور فقط، وكل صورة تظهر معاينتها قبل المعاينة أو التأكيد.</p>
           </div>
           <div className="compact-image-grid">
-            {orderImageSlots.map((slot, index) => {
-              const galleryStory = cleanOrderGalleryStories(form.galleryStories)[index] || {};
-              return (
-                <div className="compact-image-story-card" key={slot.title}>
-                  <CompactOrderImageInput
-                    index={index}
-                    defaultImage={draftImageUrls[index]}
-                    upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
-                    onFileSelected={handleOrderImageSelected}
-                    onClearDefault={() => clearOrderImage(index)}
-                  />
-                  <div className="compact-image-story-fields">
-                    <label>
-                      <span>عنوان الصورة</span>
-                      <input value={galleryStory.title || ""} onChange={(event) => updateGalleryStory(index, { title: event.target.value })} placeholder="مثال: أول نظرة" />
-                    </label>
-                    <label>
-                      <span>وصف قصير</span>
-                      <textarea rows={2} value={galleryStory.description || ""} onChange={(event) => updateGalleryStory(index, { description: event.target.value })} placeholder="اكتب جملة قصيرة تجعل الصورة جزءاً من الحكاية" />
-                    </label>
-                  </div>
-                </div>
-              );
-            })}
+            {orderImageSlots.map((slot, index) => (
+              <div className="compact-image-card" key={slot.title}>
+                <CompactOrderImageInput
+                  index={index}
+                  defaultImage={draftImageUrls[index]}
+                  upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
+                  onFileSelected={handleOrderImageSelected}
+                  onClearDefault={() => clearOrderImage(index)}
+                />
+              </div>
+            ))}
           </div>
-          <p className="field-preview">إذا تركت عناوين وأوصاف الصور فارغة سيظهر معرض الصور بالشكل الحالي.</p>
+          <p className="field-preview">ارفع الصور فقط، وسيتم ترتيبها تلقائياً داخل القالب.</p>
         </section>
 
         <section className="order-photographer-box">
@@ -1540,91 +1519,98 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             className={`photographer-toggle-button order-music-toggle ${form.musicEnabled ? "active" : ""}`}
             type="button"
             aria-expanded={form.musicEnabled}
-            onClick={() => updateField("musicEnabled", !form.musicEnabled)}
+            onClick={() => (form.musicEnabled ? selectMusicChoice("none") : selectMusicChoice("default"))}
           >
             <Music2 size={18} />
             <span>إضافة موسيقى للدعوة</span>
             <strong>{form.musicEnabled ? "إخفاء الموسيقى" : "إضافة موسيقى"}</strong>
           </button>
 
-          {form.musicEnabled ? (
-            <div className="order-music-fields">
-              <p className="order-music-note">اختياري، وتشتغل تلقائيًا عند فتح الدعوة بعد النشر.</p>
-              <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
-                <button className={form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "default"} onClick={() => updateField("musicChoice", "default")}>
-                  <Music2 size={16} />
-                  موسيقى أساسية
-                </button>
-                <button className={form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "upload"} onClick={() => updateField("musicChoice", "upload")}>
-                  <UploadCloud size={16} />
-                  رفع ملف MP3
-                </button>
-                <button className={form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "video"} onClick={() => updateField("musicChoice", "video")}>
-                  <FileVideo size={16} />
-                  استخراج الصوت من فيديو
-                </button>
-                <button className={form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicChoice === "url"} onClick={() => updateField("musicChoice", "url")}>
-                  <Link2 size={16} />
-                  رابط أغنية
-                </button>
-              </div>
-
-              {form.musicChoice === "upload" ? (
-                <label className="order-music-upload">
-                  <UploadCloud size={17} />
-                  <span>
-                    <strong>ارفع ملف MP3</strong>
-                    <small>{musicFileName || form.musicUrl || "mp3"}</small>
-                  </span>
-                  <input
-                    name="orderMusicFile"
-                    type="file"
-                    accept={acceptedAudioFormats}
-                    onChange={(event) => {
-                      setMusicFileName(event.target.files?.[0]?.name || "");
-                      if (message) setMessage("");
-                    }}
-                  />
-                </label>
-              ) : null}
-
-              {form.musicChoice === "video" ? (
-                <label className="order-music-upload">
-                  {musicVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
-                  <span>
-                    <strong>{musicVideoBusy ? "جاري استخراج الصوت..." : "ارفع فيديو لاستخراج الصوت"}</strong>
-                    <small>{musicFileName || form.musicUrl || "MP4 / MOV / WEBM"}</small>
-                    <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
-                  </span>
-                  <input
-                    type="file"
-                    accept={acceptedVideoFormats}
-                    disabled={musicVideoBusy}
-                    onChange={(event) => handleOrderMusicVideoFile(event.target.files?.[0])}
-                  />
-                </label>
-              ) : null}
-
-              {form.musicChoice === "url" ? (
-                <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
-                  <label htmlFor="musicUrl">رابط أغنية مباشر</label>
-                  <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
-                  {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="field-preview">استخدم رابط ملف صوت مباشر، وليس رابط صفحة YouTube.</small>}
-                </div>
-              ) : null}
-
-              {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
-                <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
-              ) : null}
+          <div className="order-music-fields">
+            <p className="order-music-note">اختياري، ولو لم تختار موسيقى ستُنشأ الدعوة بدون موسيقى.</p>
+            <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
+              <button className={!form.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!form.musicEnabled} onClick={() => selectMusicChoice("none")}>
+                <Music2 size={16} />
+                بدون موسيقى
+              </button>
+              <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
+                <Music2 size={16} />
+                موسيقى أساسية
+              </button>
+              <button className={form.musicEnabled && form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
+                <UploadCloud size={16} />
+                رفع ملف MP3
+              </button>
+              <button className={form.musicEnabled && form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
+                <FileVideo size={16} />
+                استخراج الصوت من فيديو
+              </button>
+              <button className={form.musicEnabled && form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
+                <Link2 size={16} />
+                رابط أغنية
+              </button>
             </div>
-          ) : null}
+
+            {form.musicEnabled ? (
+              <>
+                {form.musicChoice === "upload" ? (
+                  <label className="order-music-upload">
+                    <UploadCloud size={17} />
+                    <span>
+                      <strong>ارفع ملف MP3</strong>
+                      <small>{musicFileName || form.musicUrl || "mp3"}</small>
+                    </span>
+                    <input
+                      name="orderMusicFile"
+                      type="file"
+                      accept={acceptedAudioFormats}
+                      onChange={(event) => {
+                        setMusicFileName(event.target.files?.[0]?.name || "");
+                        if (message) setMessage("");
+                      }}
+                    />
+                  </label>
+                ) : null}
+
+                {form.musicChoice === "video" ? (
+                  <label className="order-music-upload">
+                    {musicVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+                    <span>
+                      <strong>{musicVideoBusy ? "جاري استخراج الصوت..." : "ارفع فيديو لاستخراج الصوت"}</strong>
+                      <small>{musicFileName || form.musicUrl || "MP4 / MOV / WEBM"}</small>
+                      <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
+                    </span>
+                    <input
+                      type="file"
+                      accept={acceptedVideoFormats}
+                      disabled={musicVideoBusy}
+                      onChange={(event) => handleOrderMusicVideoFile(event.target.files?.[0])}
+                    />
+                  </label>
+                ) : null}
+
+                {form.musicChoice === "url" ? (
+                  <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
+                    <label htmlFor="musicUrl">رابط أغنية مباشر</label>
+                    <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
+                    {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="field-preview">استخدم رابط ملف صوت مباشر، وليس رابط صفحة YouTube.</small>}
+                  </div>
+                ) : null}
+
+                {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
+                  <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
+                ) : null}
+              </>
+            ) : null}
+          </div>
         </section>
 
         <div className="order-final-actions">
-          <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading"}>
+          <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
             {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <Check size={19} />}
             {state === "loading" ? "جاري التأكيد" : "تأكيد إنشاء الدعوة"}
           </button>
+          {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
 
           <button className="btn btn-soft order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
             {isPreviewing ? <Loader2 size={19} className="animate-float" /> : <Eye size={19} />}

@@ -13,12 +13,12 @@ export async function POST(request: NextRequest) {
   const invitationCode = String(formData.get("invitationCode") || "").trim();
   const invitation = invitationCode ? await getInvitationByCode(invitationCode).catch(() => null) : null;
   if (!invitation) {
-    return NextResponse.redirect(getRedirectUrl("/client/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/manage/invitation/invalid?reason=missing", request.headers, request.nextUrl.origin), 303);
   }
 
   const session = request.cookies.get(CLIENT_SESSION_COOKIE)?.value;
   if (!(await verifyClientSessionCookie(session, invitation.code))) {
-    return NextResponse.redirect(getRedirectUrl(`/${invitation.code}/ad_3399/login`, request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/manage/invitation/invalid?reason=session", request.headers, request.nextUrl.origin), 303);
   }
 
   const settings = await updateCoupleMessagesSettings(invitation.code, formData.get("mode"));

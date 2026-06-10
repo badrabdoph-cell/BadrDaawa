@@ -67,6 +67,8 @@ type AdminOrderRow = {
   photographer?: unknown;
   rejectionReason?: string | null;
   publishedInvitationCode?: string | null;
+  manageToken?: string | null;
+  manageTokenExpiresAt?: Date | string | null;
   template?: { slug: string } | null;
   templateSlug?: string;
   language: string;
@@ -217,6 +219,8 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     photographer: toPhotographer(row.photographer) || parsePhotographerFromNotes(notes),
     rejectionReason: row.rejectionReason || undefined,
     publishedInvitationCode: row.publishedInvitationCode || undefined,
+    manageToken: row.manageToken || undefined,
+    manageTokenExpiresAt: row.manageTokenExpiresAt instanceof Date ? row.manageTokenExpiresAt.toISOString() : row.manageTokenExpiresAt || undefined,
     templateSlug: row.template?.slug || row.templateSlug || "featured-1",
     language: row.language === "en" ? "en" : "ar",
     status: normalizeOrderStatus(String(row.status || "new")),

@@ -281,9 +281,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (!(await isClientAllowed(request, code))) {
     if (request.headers.get("content-type")?.includes("application/json")) {
-      return NextResponse.json({ error: "سجل الدخول للوحة الدعوة أولًا." }, { status: 401 });
+      return NextResponse.json({ error: "افتح لوحة الدعوة من رابط الإدارة السري أولاً." }, { status: 401 });
     }
-    return NextResponse.redirect(new URL(`/${code}/ad_3399/login`, request.url), 303);
+    return NextResponse.redirect(new URL("/manage/invitation/invalid?reason=session", request.url), 303);
   }
 
   if (request.headers.get("content-type")?.includes("application/json")) {

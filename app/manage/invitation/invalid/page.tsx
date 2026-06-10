@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 function errorMessage(reason?: string) {
+  if (reason === "pending") return "تم تجهيز رابط إدارة الدعوة، لكنه سيعمل تلقائياً بعد موافقة الأدمن ونشر الدعوة.";
+  if (reason === "session") return "لوحة إدارة الدعوة لا تفتح إلا من رابط الإدارة السري الخاص بها.";
   if (reason === "expired") return "رابط إدارة الدعوة منتهي الصلاحية. اطلب رابطاً جديداً من فريق الإدارة.";
   if (reason === "invalid") return "رابط إدارة الدعوة غير صحيح أو تم نسخه بشكل ناقص.";
   return "لم يتم العثور على دعوة مرتبطة بهذا الرابط السري.";
@@ -26,7 +28,7 @@ export default async function InvalidInvitationManageLinkPage({
           <article className="panel invalid-manage-link">
             <ShieldAlert size={34} />
             <span className="eyebrow">Secure Link</span>
-            <h1>رابط إدارة الدعوة غير متاح</h1>
+            <h1>{params.reason === "pending" ? "الدعوة قيد المراجعة" : "رابط إدارة الدعوة غير متاح"}</h1>
             <p>{errorMessage(params.reason)}</p>
             <Link className="btn btn-gold" href="/">
               العودة للموقع

@@ -7,6 +7,7 @@ import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import {
   emptyAdminToolImages,
   emptyAdminToolUpload,
+  getEffectiveAdminToolMusic,
   isPlayableAudioUrl,
   uploadAdminMusic,
   uploadAdminHeroVideo,
@@ -260,6 +261,7 @@ export function AdminNewInvitationWizard({
     const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1", language: draft.language });
     return `/templates/${draft.templateSlug || templates[0]?.slug || "featured-1"}/preview?${params.toString()}`;
   }, [draft.language, draft.templateSlug, templates]);
+  const effectivePreviewMusic = useMemo(() => getEffectiveAdminToolMusic(draft), [draft]);
 
   const previewPayload = useMemo<LiveInvitationPreviewPayload>(
     () => ({
@@ -273,8 +275,8 @@ export function AdminNewInvitationWizard({
       mapUrl: draft.mapUrl,
       gallery: draft.images.map((image) => image.url).filter(Boolean),
       heroVideoUrl: draft.heroVideoUrl,
-      musicEnabled: draft.musicEnabled,
-      musicUrl: draft.musicChoice === "default" ? "" : draft.musicUrl,
+      musicEnabled: effectivePreviewMusic.musicEnabled,
+      musicUrl: effectivePreviewMusic.musicUrl,
       disableMusic: true,
       texts: {
         ...draft.invitationTexts,
@@ -290,7 +292,7 @@ export function AdminNewInvitationWizard({
         whatsappUrl: draft.photographerWhatsappUrl,
       },
     }),
-    [draft],
+    [draft, effectivePreviewMusic],
   );
 
   const postPreviewUpdate = useCallback(() => {
@@ -394,8 +396,7 @@ export function AdminNewInvitationWizard({
       if (!isValidUrl(draft.mapUrl)) return "رابط الخريطة غير صحيح.";
     }
     if (step === "extras") {
-      if (draft.musicEnabled && draft.musicChoice !== "default" && !draft.musicUrl.trim()) return "اختار مقطع موسيقى أو ارفع ملف أو اكتب رابط مباشر.";
-      if (draft.musicEnabled && draft.musicChoice === "url" && !isPlayableAudioUrl(draft.musicUrl)) return "رابط الموسيقى يجب أن يكون ملف صوت مباشر.";
+      if (draft.musicEnabled && draft.musicChoice === "url" && draft.musicUrl.trim() && !isPlayableAudioUrl(draft.musicUrl)) return "رابط الموسيقى يجب أن يكون ملف صوت مباشر.";
       if (draft.photographerEnabled && !draft.photographerName.trim()) return "اكتب اسم المصور أو أوقف قسم المصور.";
       if (!isValidUrl(draft.photographerInstagramUrl) || !isValidUrl(draft.photographerFacebookUrl) || !isValidUrl(draft.photographerWhatsappUrl)) return "تأكد من روابط المصور.";
     }
@@ -586,6 +587,7 @@ export function AdminNewInvitationWizard({
       setMessage({ kind: "error", text: `لا يمكن نشر الدعوة قبل إكمال: ${prePublishReport.blockingItems.map((item) => item.label).join("، ")}.` });
       return;
     }
+    const effectiveMusic = getEffectiveAdminToolMusic(draft);
     const values = {
       templateSlug: draft.templateSlug,
       groomName: draft.groomName,
@@ -602,10 +604,10 @@ export function AdminNewInvitationWizard({
       photographerLogo: draft.photographerLogo,
       photographerFacebookUrl: draft.photographerFacebookUrl,
       photographerInstagramUrl: draft.photographerInstagramUrl,
-      musicEnabled: draft.musicEnabled,
-      musicChoice: draft.musicChoice,
-      musicUrl: draft.musicChoice === "default" ? "" : draft.musicUrl,
-      musicLibraryTrackId: draft.musicLibraryTrackId,
+      musicEnabled: effectiveMusic.musicEnabled,
+      musicChoice: effectiveMusic.musicChoice,
+      musicUrl: effectiveMusic.musicUrl,
+      musicLibraryTrackId: effectiveMusic.musicLibraryTrackId,
       musicBusy: busy === "music",
       musicFileName: draft.musicFileName,
       invitationTexts: draft.invitationTexts,
@@ -634,10 +636,10 @@ export function AdminNewInvitationWizard({
         customSlug: draft.customSlug,
         gallery: draft.images.map((image) => image.url).filter(Boolean),
         heroVideoUrl: draft.heroVideoUrl,
-        musicEnabled: draft.musicEnabled,
-        musicChoice: draft.musicChoice,
-        musicUrl: draft.musicChoice === "default" ? "" : draft.musicUrl,
-        musicLibraryTrackId: draft.musicLibraryTrackId,
+        musicEnabled: effectiveMusic.musicEnabled,
+        musicChoice: effectiveMusic.musicChoice,
+        musicUrl: effectiveMusic.musicUrl,
+        musicLibraryTrackId: effectiveMusic.musicLibraryTrackId,
         texts: {
           ...draft.invitationTexts,
           groomNameEn: draft.groomNameEn,
@@ -807,15 +809,17 @@ export function AdminNewInvitationWizard({
       <div className="new-invite-two-columns">
         <section className="new-invite-option-panel">
           <label className="new-invite-toggle"><input type="checkbox" checked={draft.musicEnabled} onChange={(event) => patch({ musicEnabled: event.target.checked })} /><span><Music2 size={18} /> إضافة موسيقى للدعوة</span></label>
-          {draft.musicEnabled ? (
-            <div className="new-invite-option-body">
-              <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار الموسيقى">
-                <button className={draft.musicChoice === "default" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "default", musicUrl: "", musicLibraryTrackId: "" })}><Music2 size={16} /> الافتراضية</button>
-                <button className={draft.musicChoice === "library" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "library" })}><Disc3 size={16} /> المكتبة</button>
-                <button className={draft.musicChoice === "upload" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "upload", musicLibraryTrackId: "" })}><UploadCloud size={16} /> MP3</button>
-                <button className={draft.musicChoice === "video" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "video", musicLibraryTrackId: "" })}><FileVideo size={16} /> من فيديو</button>
-                <button className={draft.musicChoice === "url" ? "active" : ""} type="button" onClick={() => patch({ musicChoice: "url", musicLibraryTrackId: "" })}><Link2 size={16} /> رابط</button>
-              </div>
+          <div className="new-invite-option-body">
+            <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار الموسيقى">
+              <button className={!draft.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!draft.musicEnabled} onClick={() => patch({ musicEnabled: false, musicChoice: "default", musicUrl: "", musicLibraryTrackId: "", musicFileName: "" })}><Music2 size={16} /> بدون موسيقى</button>
+              <button className={draft.musicEnabled && draft.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "default"} onClick={() => patch({ musicEnabled: true, musicChoice: "default", musicUrl: "", musicLibraryTrackId: "", musicFileName: "" })}><Music2 size={16} /> الافتراضية</button>
+              <button className={draft.musicEnabled && draft.musicChoice === "library" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "library"} onClick={() => patch({ musicEnabled: true, musicChoice: "library" })}><Disc3 size={16} /> المكتبة</button>
+              <button className={draft.musicEnabled && draft.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "upload"} onClick={() => patch({ musicEnabled: true, musicChoice: "upload", musicLibraryTrackId: "" })}><UploadCloud size={16} /> MP3</button>
+              <button className={draft.musicEnabled && draft.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "video"} onClick={() => patch({ musicEnabled: true, musicChoice: "video", musicLibraryTrackId: "" })}><FileVideo size={16} /> من فيديو</button>
+              <button className={draft.musicEnabled && draft.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "url"} onClick={() => patch({ musicEnabled: true, musicChoice: "url", musicLibraryTrackId: "" })}><Link2 size={16} /> رابط</button>
+            </div>
+            {draft.musicEnabled ? (
+              <>
               {draft.musicChoice === "library" ? (
                 <label className="field"><span>مكتبة الموسيقى</span><select value={draft.musicUrl} onChange={(event) => { const selected = musicFiles.find((file) => file.url === event.target.value); patch({ musicUrl: event.target.value, musicLibraryTrackId: selected?.id || "" }); }}><option value="">اختار مقطع</option>{musicFiles.map((file) => <option key={file.url} value={file.url}>{file.name || file.url.split("/").pop()}</option>)}</select></label>
               ) : null}
@@ -827,8 +831,9 @@ export function AdminNewInvitationWizard({
               ) : null}
               {draft.musicChoice === "url" ? <label className="field"><span>رابط ملف صوت مباشر</span><input dir="ltr" value={draft.musicUrl} onChange={(event) => patch({ musicUrl: event.target.value })} placeholder="https://example.com/song.mp3" /></label> : null}
               {draft.musicUrl ? <AudioPlayer src={draft.musicUrl} label="معاينة الموسيقى" /> : null}
-            </div>
-          ) : null}
+              </>
+            ) : null}
+          </div>
         </section>
 
         <section className="new-invite-option-panel">

@@ -167,6 +167,8 @@ model OrderRequest {
   photographer Json?
   rejectionReason String?
   publishedInvitationCode String?
+  manageToken String?       @unique
+  manageTokenExpiresAt DateTime?
   language    String          @default("ar")
   status      OrderStatus     @default(NEW)
   submittedAt DateTime        @default(now())
@@ -182,6 +184,7 @@ model OrderRequest {
   @@index([phone])
   @@index([submittedAt])
   @@index([deletedAt])
+  @@index([manageTokenExpiresAt])
 }
 
 model AnalyticsEvent {

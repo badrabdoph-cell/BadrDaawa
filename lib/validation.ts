@@ -9,11 +9,6 @@ const coupleStoryItemSchema = z.object({
   description: z.string().trim().max(700).optional().default(""),
 });
 
-const galleryStoryItemSchema = z.object({
-  title: z.string().trim().max(120).optional().default(""),
-  description: z.string().trim().max(280).optional().default(""),
-});
-
 const invitationGiftSchema = z.object({
   vodafoneCash: z.string().trim().max(80).optional().default(""),
   instapay: z.string().trim().max(120).optional().default(""),
@@ -35,7 +30,6 @@ export const orderRequestSchema = z.object({
   photographerFacebookUrl: z.string().trim().max(500).optional().default(""),
   photographerInstagramUrl: z.string().trim().max(500).optional().default(""),
   openingText: z.string().trim().max(180).optional().default(""),
-  galleryStories: z.array(galleryStoryItemSchema).max(12).optional().default([]),
   story: z.array(coupleStoryItemSchema).optional().default([]),
   gift: invitationGiftSchema.optional().default({ vodafoneCash: "", instapay: "", bankAccount: "", customText: "" }),
   musicEnabled: z.boolean().optional().default(false),
