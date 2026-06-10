@@ -59,6 +59,7 @@ export function InviteScrollAnimations() {
           const element = entry.target as HTMLElement;
           if (!entry.isIntersecting) return;
           element.classList.add("is-in-view");
+          element.dataset.inviteScrollRevealed = "true";
           observer.unobserve(element);
         });
       },
@@ -73,6 +74,7 @@ export function InviteScrollAnimations() {
       observer.disconnect();
       elements.forEach((element) => {
         element.classList.remove("is-in-view");
+        element.removeAttribute("data-invite-scroll-revealed");
         element.removeAttribute("data-invite-scroll");
         element.style.removeProperty("--invite-scroll-delay");
       });

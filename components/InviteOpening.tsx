@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
@@ -24,12 +24,27 @@ function canUseOptimizedImage(src: string) {
 export function InviteOpening({ groomName, brideName, coverImage, weddingDateLabel, openingText, locale = "ar" }: InviteOpeningProps) {
   const t = getInvitationTranslator(resolveLocale(locale));
   const [phase, setPhase] = useState<"ready" | "leaving" | "done">("ready");
+  const hasOpenedRef = useRef(false);
+  const doneTimerRef = useRef<number | null>(null);
+
+  const finishOpening = useCallback(() => {
+    if (doneTimerRef.current) {
+      window.clearTimeout(doneTimerRef.current);
+      doneTimerRef.current = null;
+    }
+    setPhase("done");
+  }, []);
 
   useEffect(() => {
     if (phase !== "leaving") return;
-    const timer = window.setTimeout(() => setPhase("done"), 960);
-    return () => window.clearTimeout(timer);
-  }, [phase]);
+    doneTimerRef.current = window.setTimeout(finishOpening, 1200);
+    return () => {
+      if (doneTimerRef.current) {
+        window.clearTimeout(doneTimerRef.current);
+        doneTimerRef.current = null;
+      }
+    };
+  }, [finishOpening, phase]);
 
   useEffect(() => {
     if (phase === "done") return;
@@ -43,13 +58,23 @@ export function InviteOpening({ groomName, brideName, coverImage, weddingDateLab
   if (phase === "done") return null;
 
   function openInvitation() {
-    if (phase !== "ready") return;
-    window.dispatchEvent(new CustomEvent(inviteOpenedEventName));
+    if (phase !== "ready" || hasOpenedRef.current) return;
+    hasOpenedRef.current = true;
     setPhase("leaving");
+    window.dispatchEvent(new CustomEvent(inviteOpenedEventName));
   }
 
   return (
-    <section className={`invite-opening cinematic-opening ${phase === "leaving" ? "is-leaving" : ""}`} aria-label={t("invitation.openingLabel")}>
+    <section
+      className={`invite-opening cinematic-opening ${phase === "leaving" ? "is-leaving" : ""}`}
+      aria-label={t("invitation.openingLabel")}
+      onAnimationEnd={() => {
+        if (phase === "leaving") finishOpening();
+      }}
+      onTransitionEnd={() => {
+        if (phase === "leaving") finishOpening();
+      }}
+    >
       <div className="cinematic-opening-media" aria-hidden="true">
         {canUseOptimizedImage(coverImage) ? (
           <Image src={coverImage} alt="" fill priority sizes="100vw" draggable={false} />
@@ -71,7 +96,13 @@ export function InviteOpening({ groomName, brideName, coverImage, weddingDateLab
         </h1>
         {weddingDateLabel ? <time className="cinematic-opening-date">{weddingDateLabel}</time> : null}
         {openingText ? <p>{openingText}</p> : null}
-        <button type="button" onClick={openInvitation}>
+        <button
+          type="button"
+          onClick={openInvitation}
+          onPointerUp={(event) => {
+            if (event.pointerType !== "mouse") openInvitation();
+          }}
+        >
           {t("invitation.openingButton")}
         </button>
       </div>

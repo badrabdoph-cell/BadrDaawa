@@ -57,7 +57,7 @@ export function InvitePoll({
   const resolvedDeclinedMessage = declinedMessage || t("invitation.rsvp.declinedMessage");
   const [choice, setChoice] = useState<PollState>("idle");
   const [phase, setPhase] = useState<"choice" | "animating" | "form">("choice");
-  const [emoji, setEmoji] = useState("🙂");
+  const [emoji, setEmoji] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -156,16 +156,15 @@ export function InvitePoll({
     timers.current = [];
     setChoice(nextChoice);
     setPhase("animating");
-    setEmoji("🙂");
     setState("idle");
     setMessage("");
     setSuccess(null);
     setPhoneError("");
 
-    const sequence = nextChoice === "attending" ? ["😊", "😃"] : ["😌", "🌹"];
+    const sequence = nextChoice === "attending" ? ["😊", "🥳"] : ["😌", "🌹"];
+    setEmoji(sequence[0]);
     timers.current = [
-      window.setTimeout(() => setEmoji(sequence[0]), 260),
-      window.setTimeout(() => setEmoji(sequence[1]), 640),
+      window.setTimeout(() => setEmoji(sequence[1]), 420),
       window.setTimeout(() => setPhase("form"), 980),
     ];
   }
@@ -232,9 +231,11 @@ export function InvitePoll({
       <span className="invite-kicker">{t("invitation.rsvp.kicker")}</span>
       <h2>{"هل ستشرفنا بحضور حفل زفافنا؟ ❤️"}</h2>
       {resolvedQuestion && resolvedQuestion !== "هل ستشرفنا بحضور حفل زفافنا؟ ❤️" ? <p className="rsvp-soft-question">{resolvedQuestion}</p> : null}
-      <div className={`rsvp-emoji-stage ${phase === "animating" ? "is-animating" : ""}`} aria-hidden="true">
-        <span>{emoji}</span>
-      </div>
+      {phase === "animating" && emoji ? (
+        <div className="rsvp-emoji-stage is-animating is-flying" aria-hidden="true">
+          <span>{emoji}</span>
+        </div>
+      ) : null}
       <div className="poll-actions">
         <button className={`poll-choice rsvp-choice-confirm ${choice === "attending" ? "selected" : ""}`} type="button" onClick={() => selectChoice("attending")}>
           سأحضر ❤️

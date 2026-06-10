@@ -473,7 +473,8 @@ img {
   --invite-scroll-scale: 0.975;
 }
 
-[data-invite-scroll].is-in-view {
+[data-invite-scroll].is-in-view,
+[data-invite-scroll][data-invite-scroll-revealed="true"] {
   opacity: 1;
   translate: 0 0;
   scale: 1;
@@ -13752,6 +13753,8 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 }
 
 .rsvp-interactive {
+  --rsvp-readable-ink: #392d1f;
+  --rsvp-muted-ink: rgba(57, 45, 31, 0.72);
   position: relative;
   justify-items: center;
   overflow: hidden;
@@ -13768,7 +13771,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 .rsvp-interactive h2 {
   max-width: 16ch;
   text-wrap: balance;
-  color: var(--tpl-ink, #392d1f);
+  color: var(--rsvp-readable-ink);
   line-height: 1.22;
 }
 
@@ -13777,7 +13780,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 .rsvp-form-intro {
   width: min(100%, 560px);
   margin: 0;
-  color: color-mix(in srgb, var(--tpl-ink, #392d1f) 68%, transparent);
+  color: var(--rsvp-muted-ink);
   font-weight: 850;
   line-height: 1.8;
 }
@@ -13787,6 +13790,11 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 }
 
 .rsvp-emoji-stage {
+  position: absolute;
+  inset-block-start: clamp(72px, 18vw, 118px);
+  left: 50%;
+  right: auto;
+  z-index: 2;
   display: grid;
   place-items: center;
   width: clamp(86px, 26vw, 118px);
@@ -13797,6 +13805,9 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
     radial-gradient(circle at 35% 24%, rgba(255, 255, 255, 0.84), transparent 3.6rem),
     color-mix(in srgb, var(--tpl-accent, #bd8f3f) 13%, #fffaf5);
   box-shadow: 0 18px 44px rgba(46, 31, 11, 0.1);
+  pointer-events: none;
+  transform: translateX(-50%) translateY(16px) scale(0.82);
+  opacity: 0;
 }
 
 .rsvp-emoji-stage span {
@@ -13804,6 +13815,10 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   font-size: 4.35rem;
   line-height: 1;
   transform-origin: center;
+}
+
+.rsvp-emoji-stage.is-flying {
+  animation: rsvp-emoji-fly 980ms cubic-bezier(0.2, 0.78, 0.22, 1) both;
 }
 
 .rsvp-emoji-stage.is-animating span {
@@ -13853,7 +13868,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 }
 
 .rsvp-interactive .poll-form label > span {
-  color: color-mix(in srgb, var(--tpl-ink, #392d1f) 68%, transparent);
+  color: var(--rsvp-muted-ink);
   font-size: 0.86rem;
   font-weight: 950;
 }
@@ -13862,6 +13877,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 100%;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.78);
+  color: var(--rsvp-readable-ink);
 }
 
 .rsvp-interactive .poll-form input[aria-invalid="true"] {
@@ -13918,6 +13934,25 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   }
   100% {
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes rsvp-emoji-fly {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(18px) scale(0.78) rotate(-5deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1) rotate(3deg);
+  }
+  62% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-34px) scale(1.08) rotate(-2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-74px) scale(0.92) rotate(5deg);
   }
 }
 
