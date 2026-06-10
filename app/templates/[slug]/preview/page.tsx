@@ -264,6 +264,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
             photographerName: siteSettings.photographer.defaultName,
             photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
             photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+            socialLinks: siteSettings.socialLinks,
+            whatsappUrl: siteSettings.whatsappUrl,
           }}
         />
       ) : (
@@ -277,6 +279,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
             photographerName: siteSettings.photographer.defaultName,
             photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
             photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+            socialLinks: siteSettings.socialLinks,
+            whatsappUrl: siteSettings.whatsappUrl,
           }}
         />
       )}

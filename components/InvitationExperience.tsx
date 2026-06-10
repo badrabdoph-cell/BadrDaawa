@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Calendar, CalendarHeart, Camera, ChevronDown, Clock, Facebook, Flower2, Heart, Instagram, Leaf, MapPin, Music2, Share2, Sparkles } from "lucide-react";
-import type { ReactNode } from "react";
+import { Calendar, CalendarHeart, Camera, ChevronDown, Clock, Facebook, Flower2, Heart, Instagram, Leaf, MapPin, Music2, Sparkles } from "lucide-react";
+import { createContext, useContext, type ReactNode } from "react";
 import { Countdown } from "./Countdown";
 import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
@@ -22,6 +22,7 @@ import { getInvitationTranslator, getLocaleMeta } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import type { SiteSocialLinks } from "@/lib/site-settings";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { withVisitSource } from "@/lib/visit-source";
@@ -155,23 +156,11 @@ function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
   );
 }
 
-function getSocialShareLinks(invitationUrl: string) {
-  const facebookUrl = withVisitSource(invitationUrl, "Facebook");
-  const whatsAppUrl = withVisitSource(invitationUrl, "WhatsApp");
-  return [
-    { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(facebookUrl)}` },
-    { label: "Instagram", href: "https://www.instagram.com/" },
-    { label: "TikTok", href: "https://www.tiktok.com/" },
-    { label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(whatsAppUrl)}` },
-  ];
-}
-
-type PhotographerConfig = {
-  enabled: boolean;
-  name: string;
-  logoUrl?: string;
-  instagramUrl: string;
-  facebookUrl: string;
+type InvitationSocialLink = {
+  key: "facebook" | "instagram" | "tiktok" | "whatsapp";
+  label: string;
+  href: string;
+  active: boolean;
 };
 
 type InvitationExperienceSettings = {
@@ -180,6 +169,84 @@ type InvitationExperienceSettings = {
   photographerName?: string;
   photographerInstagramUrl?: string;
   photographerFacebookUrl?: string;
+  socialLinks?: SiteSocialLinks;
+  whatsappUrl?: string;
+};
+
+const InvitationSocialSettingsContext = createContext<InvitationExperienceSettings | null>(null);
+
+function getSocialShareLinks(invitationUrl: string, settings?: InvitationExperienceSettings | null): InvitationSocialLink[] {
+  const whatsAppUrl = withVisitSource(invitationUrl, "WhatsApp");
+  const socials = settings?.socialLinks;
+  return [
+    { key: "facebook", label: "Facebook", href: socials?.facebook || "", active: Boolean(socials?.facebook) },
+    { key: "instagram", label: "Instagram", href: socials?.instagram || "", active: Boolean(socials?.instagram) },
+    { key: "tiktok", label: "TikTok", href: socials?.tiktok || "", active: Boolean(socials?.tiktok) },
+    { key: "whatsapp", label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(whatsAppUrl)}`, active: true },
+  ];
+}
+
+function SocialBrandIcon({ platform }: { platform: InvitationSocialLink["key"] }) {
+  if (platform === "facebook") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.52 1.49-3.91 3.77-3.91 1.09 0 2.23.2 2.23.2v2.47h-1.25c-1.24 0-1.63.77-1.63 1.57v1.89h2.77l-.44 2.91h-2.33V22A10.03 10.03 0 0 0 22 12.06Z" />
+      </svg>
+    );
+  }
+  if (platform === "instagram") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6Zm9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+      </svg>
+    );
+  }
+  if (platform === "tiktok") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M16.55 2c.24 2.03 1.39 3.25 3.45 3.38v3.12a7.34 7.34 0 0 1-3.38-.8v6.33c0 4.05-2.43 7.16-6.38 7.16-3.14 0-5.74-2.03-6.17-5.02-.56-3.93 2.55-7.12 6.38-6.79.35.03.69.1 1.03.2v3.28a3.2 3.2 0 0 0-1.58-.25 2.58 2.58 0 0 0-2.38 2.83 2.6 2.6 0 0 0 3 2.31c1.7-.25 2.45-1.47 2.45-3.16V2h3.58Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M20.52 3.48A11.83 11.83 0 0 0 12.1 0C5.55 0 .23 5.32.23 11.87c0 2.09.55 4.13 1.6 5.93L.12 24l6.35-1.67a11.83 11.83 0 0 0 5.63 1.43h.01c6.55 0 11.87-5.32 11.87-11.87 0-3.17-1.23-6.15-3.46-8.41ZM12.1 21.75h-.01a9.83 9.83 0 0 1-5.01-1.37l-.36-.21-3.77.99 1-3.68-.24-.38a9.85 9.85 0 0 1-1.5-5.23c0-5.44 4.43-9.86 9.88-9.86a9.8 9.8 0 0 1 6.98 2.9 9.78 9.78 0 0 1 2.89 6.98c0 5.44-4.43 9.86-9.86 9.86Zm5.41-7.39c-.3-.15-1.76-.87-2.03-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.95 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.09 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35Z" />
+    </svg>
+  );
+}
+
+function SocialShareButtons({ invitationUrl }: { invitationUrl: string }) {
+  const settings = useContext(InvitationSocialSettingsContext);
+  const links = getSocialShareLinks(invitationUrl, settings);
+
+  return (
+    <>
+      {links.map((item) => (
+        <a
+          className={`social-share-button social-share-button-${item.key}${item.active ? "" : " is-disabled"}`}
+          href={item.active ? item.href : undefined}
+          key={item.key}
+          aria-label={item.active ? item.label : `${item.label} غير مفعل`}
+          aria-disabled={!item.active}
+          tabIndex={item.active ? undefined : -1}
+          target={item.active ? "_blank" : undefined}
+          rel={item.active ? "noreferrer" : undefined}
+          onClick={item.active ? undefined : (event) => event.preventDefault()}
+          title={item.active ? item.label : `${item.label} غير مفعل حالياً`}
+        >
+          <SocialBrandIcon platform={item.key} />
+        </a>
+      ))}
+    </>
+  );
+}
+
+type PhotographerConfig = {
+  enabled: boolean;
+  name: string;
+  logoUrl?: string;
+  instagramUrl: string;
+  facebookUrl: string;
 };
 
 function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation, settings?: InvitationExperienceSettings): PhotographerConfig {
@@ -260,11 +327,13 @@ export function InvitationExperience({
   const galleryStories = getInvitationTexts(invitation).galleryStories;
   const heroVideoUrl = getInvitationHeroVideo(invitation);
   const withGalleryStories = (content: ReactNode) => (
-    <InviteGalleryStoryProvider images={galleryImagesForStories} stories={galleryStories} heroVideoUrl={heroVideoUrl}>
-      <InviteScrollAnimations />
-      <InviteParallax />
-      {content}
-    </InviteGalleryStoryProvider>
+    <InvitationSocialSettingsContext.Provider value={settings || null}>
+      <InviteGalleryStoryProvider images={galleryImagesForStories} stories={galleryStories} heroVideoUrl={heroVideoUrl}>
+        <InviteScrollAnimations />
+        <InviteParallax />
+        {content}
+      </InviteGalleryStoryProvider>
+    </InvitationSocialSettingsContext.Provider>
   );
 
   if (template.customHtml) {
@@ -407,11 +476,7 @@ export function InvitationExperience({
         <section className="invite-card qr-share-card">
           <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {["Facebook", "Instagram", "TikTok", "WhatsApp"].map((item) => (
-              <a href="#" key={item} aria-label={item}>
-                <Share2 size={17} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -623,11 +688,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           <p>{invitationT(invitation, "invitation.shareInvitation")}</p>
           <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {["Facebook", "Instagram", "TikTok", "WhatsApp"].map((item) => (
-              <a href="#" key={item} aria-label={item}>
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -724,11 +785,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
           <h2>لمشاركة هذه اللحظة</h2>
           <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {["Facebook", "Instagram", "TikTok", "WhatsApp"].map((item) => (
-              <a href="#" key={item} aria-label={item}>
-                <Share2 size={20} strokeWidth={1.5} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -740,7 +797,6 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="mobile-gold-invite">
@@ -833,11 +889,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="mobile-gold-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={20} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -850,7 +902,6 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
   const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="boho-invite">
@@ -939,11 +990,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
           </div>
 
           <div className="boho-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={20} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -955,7 +1002,6 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="garden-invite">
@@ -1078,11 +1124,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
           </div>
 
           <div className="garden-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -1094,7 +1136,6 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="featured-invite">
@@ -1211,11 +1252,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="featured-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1227,7 +1264,6 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
   const heroImage = images[0] || invitation.heroPhoto || galleryImages[0];
   const galleryImage1 = images[1] || galleryImages[1];
   const galleryImage2 = images[2] || galleryImages[2];
@@ -1323,11 +1359,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="cinema-rose-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={20} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -1339,7 +1371,6 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="modern-cinema-invite">
@@ -1431,11 +1462,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
           </div>
           <h4>احفظ التذكرة أو شاركها مع من تحب</h4>
           <div className="modern-cinema-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </section>
@@ -1447,7 +1474,6 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="ethereal-glass-invite">
@@ -1540,11 +1566,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="ethereal-glass-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1556,7 +1578,6 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="botanical-invite">
@@ -1617,11 +1638,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="botanical-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1632,7 +1649,6 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
 function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="royal-gold-invite">
@@ -1681,11 +1697,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="royal-gold-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1696,7 +1708,6 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
 function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="boho-sand-invite">
@@ -1742,11 +1753,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="boho-sand-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1757,7 +1764,6 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
 function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="pure-white-invite">
@@ -1804,11 +1810,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="pure-white-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1819,7 +1821,6 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
 function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="neon-invite">
@@ -1863,11 +1864,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="neon-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1878,7 +1875,6 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
 function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="vintage-invite">
@@ -1924,11 +1920,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="vintage-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -1939,7 +1931,6 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
 function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="fairytale-invite">
@@ -1985,11 +1976,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="fairytale-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -2000,7 +1987,6 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
 function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="ocean-invite">
@@ -2051,11 +2037,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="ocean-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -2066,7 +2048,6 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
 function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="artdeco-invite">
@@ -2114,11 +2095,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <div className="artdeco-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>
@@ -2129,7 +2106,6 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
 function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer }: { invitation: Invitation; musicUrl?: string | null; photographer: PhotographerConfig }) {
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="magazine-invite">
@@ -2173,11 +2149,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
             <p>Scan for access</p>
             <div className="magazine-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
-              {socialLinks.map((item) => (
-                <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                  <Share2 size={18} />
-                </a>
-              ))}
+              <SocialShareButtons invitationUrl={invitationUrl} />
             </div>
           </section>
         </div>
@@ -2190,7 +2162,6 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const showPhotographer = photographer.enabled;
   const images = getInvitationImages(invitation).gallery;
-  const socialLinks = getSocialShareLinks(invitationUrl);
 
   return (
     <main className="cinematic-invite">
@@ -2281,11 +2252,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
 
           <p>{invitationT(invitation, "invitation.shareInvitation")}</p>
           <div className="cinematic-share-row">
-            {socialLinks.map((item) => (
-              <a href={item.href} key={item.label} aria-label={item.label} target="_blank" rel="noreferrer">
-                <Share2 size={18} />
-              </a>
-            ))}
+            <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
         </section>
       </div>

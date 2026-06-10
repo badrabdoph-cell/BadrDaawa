@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import type { SiteSocialLinks } from "@/lib/site-settings";
 import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { InvitationExperience } from "./InvitationExperience";
 
@@ -125,6 +126,8 @@ export function LiveInvitationPreview({
     photographerName?: string;
     photographerInstagramUrl?: string;
     photographerFacebookUrl?: string;
+    socialLinks?: SiteSocialLinks;
+    whatsappUrl?: string;
   };
 }) {
   const [previewInvitation, setPreviewInvitation] = useState(invitation);

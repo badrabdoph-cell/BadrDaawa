@@ -12,6 +12,10 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+function copyGuestValue(guest: GuestRsvp) {
+  return `${guest.name}\n${guest.phone || "بدون رقم"}`;
+}
+
 export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; invitationCode?: string }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | GuestRsvp["status"]>("all");
@@ -60,23 +64,23 @@ export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; in
 
       <div className="guest-mobile-list">
         {filteredGuests.map((guest) => (
-          <article className="guest-mobile-card" key={guest.id}>
-            <div>
-              <strong>{guest.name}</strong>
-              <span className={guest.status === "confirmed" ? "status success" : "status danger"}>{guest.status === "confirmed" ? "حاضر" : "معتذر"}</span>
-            </div>
-            <p>{formatArabicNumber(guest.attendees)} فرد · {formatDate(guest.createdAt)}</p>
-            <footer>
-              <span dir="ltr">{guest.phone || "بدون رقم"}</span>
-              <div className="button-row">
+          <article className="guest-mobile-row" key={guest.id}>
+            <div className="guest-mobile-row-main">
+              <div className="guest-mobile-identity">
+                <strong>{guest.name}</strong>
+                <span className={guest.status === "confirmed" ? "status success" : "status danger"}>{guest.status === "confirmed" ? "حاضر" : "معتذر"}</span>
+              </div>
+              <span className="guest-mobile-phone" dir="ltr">{guest.phone || "بدون رقم"}</span>
+              <div className="guest-mobile-actions">
                 {guest.phone ? (
-                  <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}`} title="واتساب">
-                    <MessageCircle size={17} />
+                  <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}`} title="واتساب" aria-label={`مراسلة ${guest.name} عبر واتساب`}>
+                    <MessageCircle size={16} />
                   </a>
                 ) : null}
-                {guest.phone ? <CopyButton className="btn btn-soft btn-icon" value={guest.phone} title="نسخ الرقم" iconOnly /> : null}
+                <CopyButton className="btn btn-soft btn-icon" value={copyGuestValue(guest)} title="نسخ الاسم والرقم" iconOnly />
               </div>
-            </footer>
+            </div>
+            <p>{formatArabicNumber(guest.attendees)} فرد • {formatDate(guest.createdAt)}</p>
           </article>
         ))}
       </div>
@@ -110,7 +114,7 @@ export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; in
                         <MessageCircle size={17} />
                       </a>
                     ) : null}
-                    {guest.phone ? <CopyButton className="btn btn-soft btn-icon" value={guest.phone} title="نسخ الرقم" iconOnly /> : null}
+                    <CopyButton className="btn btn-soft btn-icon" value={copyGuestValue(guest)} title="نسخ الاسم والرقم" iconOnly />
                   </div>
                 </td>
               </tr>

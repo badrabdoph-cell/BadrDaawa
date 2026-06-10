@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { addFileGuest, getFileInvitationByCode } from "@/lib/file-store";
+import { addFileGuest, getFileGuestsByInvitation, getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
@@ -34,6 +34,14 @@ async function saveFileRsvp(code: string, data: {
   }
 
   if (fileInvitation) {
+    const existingGuest = (await getFileGuestsByInvitation(code)).find((guest) => guest.phone === data.phone);
+    if (existingGuest) {
+      return NextResponse.json({
+        ok: true,
+        duplicate: true,
+        guest: { name: existingGuest.name, status: existingGuest.status },
+      });
+    }
     const saved = await addFileGuest(code, data);
     if (saved) queueGitHubSync(`RSVP saved for invitation: ${code}.`, { createSnapshot: true });
   }
@@ -64,6 +72,21 @@ export async function POST(request: Request, context: RouteContext) {
       }
       if (invitation.status !== "ACTIVE") {
         return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
+      }
+
+      const existingGuest = await prisma.guestRsvp.findFirst({
+        where: { invitationId: invitation.id, phone: parsed.data.phone },
+        select: { name: true, status: true },
+      });
+      if (existingGuest) {
+        return NextResponse.json({
+          ok: true,
+          duplicate: true,
+          guest: {
+            name: existingGuest.name,
+            status: existingGuest.status === "CONFIRMED" ? "confirmed" : "declined",
+          },
+        });
       }
 
       await prisma.guestRsvp.create({

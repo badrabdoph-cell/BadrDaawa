@@ -100,6 +100,8 @@ export default async function InvitationPage({ params, searchParams }: PageProps
           photographerName: siteSettings.photographer.defaultName,
           photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
           photographerFacebookUrl: siteSettings.photographer.defaultFacebookUrl,
+          socialLinks: siteSettings.socialLinks,
+          whatsappUrl: siteSettings.whatsappUrl,
         }}
       />
     </div>

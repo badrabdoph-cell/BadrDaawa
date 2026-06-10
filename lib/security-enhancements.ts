@@ -111,6 +111,11 @@ function getTrustedRequestOrigins(request: Request) {
   );
 }
 
+function hasBrowserSameOriginSignal(request: Request) {
+  const fetchSite = request.headers.get("sec-fetch-site")?.trim().toLowerCase();
+  return fetchSite === "same-origin";
+}
+
 /**
  * Validate request origin
  */
@@ -127,6 +132,7 @@ export function isSameOriginRequest(request: Request): boolean {
   const sourceOrigin = normalizeOrigin(request.headers.get("origin"));
   if (sourceOrigin) {
     if (trustedOrigins.has(sourceOrigin)) return true;
+    if (hasBrowserSameOriginSignal(request)) return true;
     if (process.env.NODE_ENV === "development" && isLocalOrigin(sourceOrigin) && Array.from(trustedOrigins).some(isLocalOrigin)) return true;
     return false;
   }
@@ -137,6 +143,7 @@ export function isSameOriginRequest(request: Request): boolean {
   const refererOrigin = normalizeOrigin(referer);
   if (!refererOrigin) return false;
   if (trustedOrigins.has(refererOrigin)) return true;
+  if (hasBrowserSameOriginSignal(request)) return true;
   return process.env.NODE_ENV === "development" && isLocalOrigin(refererOrigin) && Array.from(trustedOrigins).some(isLocalOrigin);
 }
 

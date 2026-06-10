@@ -79,11 +79,12 @@ export default async function AdminSiteSettingsPage({
             <div>
               <span className="eyebrow">Contact</span>
               <h2>التواصل والروابط الاجتماعية</h2>
+              <p>هذه الروابط عامة للموقع كله، وتتحكم في أزرار السوشيال داخل الدعوات عند إضافتها.</p>
             </div>
           </div>
           <div className="admin-form-grid">
             <label className="field">
-              <span>أرقام التواصل</span>
+              <span>رقم هاتف الموقع العام</span>
               <textarea name="contactPhones" defaultValue={settings.contactPhones.join("\n")} rows={4} placeholder="رقم في كل سطر" />
             </label>
             <label className="field">

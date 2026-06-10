@@ -35,7 +35,10 @@ export const orderRequestSchema = z.object({
 
 export const rsvpSchema = z.object({
   name: z.string().trim().min(2, "اكتب الاسم بالكامل"),
-  phone: z.string().trim().min(8, "اكتب رقم هاتف صحيح"),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^01\d{9}$/, "رقم الهاتف يجب أن يبدأ بـ 01 ويتكون من 11 رقمًا"),
   attendees: z.coerce.number().int().min(1).max(20),
   status: z.enum(["confirmed", "declined"]),
   note: z.string().trim().max(500).optional(),
