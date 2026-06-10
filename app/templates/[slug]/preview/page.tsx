@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Home, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
@@ -12,12 +12,11 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 
-type PageProps = {
-  params: Promise<{ slug: string }>;
-  searchParams?: Promise<{
+type TemplatePreviewSearchParams = {
     silentPreview?: string;
     embed?: string;
     builderPreview?: string;
+    orderPreview?: string;
     groomName?: string;
     brideName?: string;
     weddingDate?: string;
@@ -32,6 +31,7 @@ type PageProps = {
     photographerInstagramUrl?: string;
     photographerLogoUrl?: string;
     musicEnabled?: string;
+    musicChoice?: string;
     musicUrl?: string;
     heroVideoUrl?: string;
     language?: string;
@@ -39,7 +39,11 @@ type PageProps = {
     galleryStories?: string;
     story?: string;
     gift?: string;
-  }>;
+};
+
+type PageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<TemplatePreviewSearchParams>;
 };
 
 function cleanPreviewText(value: string | undefined, fallback: string) {
@@ -94,6 +98,42 @@ function cleanPreviewGift(value: string | undefined) {
   }
 }
 
+function buildOrderConfirmHref(templateSlug: string, query?: TemplatePreviewSearchParams) {
+  const params = new URLSearchParams();
+  params.set("template", templateSlug);
+  params.set("confirmOrder", "1");
+
+  const copiedKeys = [
+    "groomName",
+    "brideName",
+    "weddingDate",
+    "weddingTime",
+    "venue",
+    "city",
+    "mapUrl",
+    "gallery",
+    "photographerEnabled",
+    "photographerName",
+    "photographerFacebookUrl",
+    "photographerInstagramUrl",
+    "musicEnabled",
+    "musicChoice",
+    "musicUrl",
+    "openingText",
+    "story",
+    "gift",
+  ] as const;
+
+  copiedKeys.forEach((key) => {
+    const value = query?.[key]?.trim();
+    if (value) params.set(key, value);
+  });
+  if (query?.story?.trim()) params.set("storyEnabled", "1");
+  if (query?.gift?.trim()) params.set("giftEnabled", "1");
+
+  return `/order?${params.toString()}`;
+}
+
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const query = await searchParams;
@@ -144,6 +184,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const previewGift = cleanPreviewGift(query?.gift);
   const previewOpeningText = cleanPreviewText(query?.openingText, "");
   const previewTexts = previewOpeningText || previewGalleryStories.length || previewStory.length || Object.values(previewGift).some(Boolean) ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: previewStory, gift: previewGift } : undefined;
+  const isOrderRequestPreview = query?.orderPreview === "1";
+  const orderConfirmHref = buildOrderConfirmHref(template.slug, query);
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
@@ -202,19 +244,28 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
         />
       )}
       {!hidePreviewActions ? (
-        <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
-          <Link className="template-preview-action template-preview-action-soft" href="/">
-            <Home size={17} />
-            الصفحة الرئيسية
-          </Link>
-          <Link className="template-preview-action template-preview-action-soft" href="/templates">
-            <ArrowRight size={17} />
-            اختار واحد تاني
-          </Link>
-          <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
-            <Sparkles size={17} />
-            اختار القالب دا
-          </Link>
+        <nav className={`template-preview-floating-actions ${isOrderRequestPreview ? "template-preview-floating-actions-order" : ""}`} aria-label={isOrderRequestPreview ? "تأكيد الطلب" : "اختيارات القالب"}>
+          {isOrderRequestPreview ? (
+            <Link className="template-preview-action template-preview-action-gold" href={orderConfirmHref}>
+              <CheckCircle2 size={18} />
+              تأكيد الطلب
+            </Link>
+          ) : (
+            <>
+              <Link className="template-preview-action template-preview-action-soft" href="/">
+                <Home size={17} />
+                الصفحة الرئيسية
+              </Link>
+              <Link className="template-preview-action template-preview-action-soft" href="/templates">
+                <ArrowRight size={17} />
+                اختار واحد تاني
+              </Link>
+              <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
+                <Sparkles size={17} />
+                اختار القالب دا
+              </Link>
+            </>
+          )}
         </nav>
       ) : null}
     </div>

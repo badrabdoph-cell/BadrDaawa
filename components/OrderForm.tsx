@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { flushSync } from "react-dom";
 import { CalendarDays, Camera, Check, Eye, FileVideo, Gift, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
 import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
 import type { CoupleStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
@@ -260,6 +261,19 @@ function createOrderStoryItem(): CoupleStoryItem {
   return { id: `story-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, date: "", title: "", description: "" };
 }
 
+function normalizeStoryDescriptionInput(value: string) {
+  return value.replace(/[\u00a0\u202f]/g, " ").replace(/[\u200b-\u200d\ufeff]/g, "");
+}
+
+function getDescriptionWithInsertedSpace(target: HTMLTextAreaElement) {
+  const start = target.selectionStart ?? target.value.length;
+  const end = target.selectionEnd ?? start;
+  return {
+    caret: start + 1,
+    description: `${target.value.slice(0, start)} ${target.value.slice(end)}`,
+  };
+}
+
 function isValidOptionalUrl(value: string) {
   const clean = value.trim();
   return !clean || /^https?:\/\/\S+\.\S+/.test(clean);
@@ -444,6 +458,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
+  const autoConfirmSubmittedRef = useRef(false);
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
@@ -455,6 +470,36 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   );
   const uploadingImageCount = imageUploads.filter((upload) => upload.phase === "selected" || upload.phase === "compressing" || upload.phase === "uploading").length;
   const hasImageUploadInProgress = uploadingImageCount > 0;
+
+  useEffect(() => {
+    function handleNativeStoryDescriptionSpace(event: globalThis.KeyboardEvent) {
+      if ((event.key !== " " && event.code !== "Space") || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target;
+      if (!(target instanceof HTMLTextAreaElement) || target.dataset.orderStoryDescription !== "true") return;
+
+      const index = Number(target.dataset.storyIndex);
+      if (!Number.isInteger(index) || index < 0) return;
+
+      const next = getDescriptionWithInsertedSpace(target);
+      event.preventDefault();
+      event.stopPropagation();
+
+      flushSync(() => {
+        setForm((current) => ({
+          ...current,
+          storyEnabled: true,
+          story: cleanOrderStory(current.story).map((item, itemIndex) =>
+            itemIndex === index ? { ...item, description: normalizeStoryDescriptionInput(next.description) } : item,
+          ),
+        }));
+        setMessage("");
+      });
+      window.requestAnimationFrame(() => target.setSelectionRange(next.caret, next.caret));
+    }
+
+    document.addEventListener("keydown", handleNativeStoryDescriptionSpace, true);
+    return () => document.removeEventListener("keydown", handleNativeStoryDescriptionSpace, true);
+  }, []);
 
   function getUrlDraft(): OrderDraft {
     if (typeof window === "undefined") return {};
@@ -619,6 +664,23 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     persistDraft();
   }, [draftReady, form, draftImageUrls]);
 
+  useEffect(() => {
+    if (!draftReady || autoConfirmSubmittedRef.current || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("confirmOrder") !== "1") return;
+
+    const submitTimer = window.setTimeout(() => {
+      if (autoConfirmSubmittedRef.current) return;
+      autoConfirmSubmittedRef.current = true;
+      const nextParams = new URLSearchParams(window.location.search);
+      nextParams.delete("confirmOrder");
+      const nextQuery = nextParams.toString();
+      window.history.replaceState(window.history.state, "", nextQuery ? `/order?${nextQuery}` : "/order");
+      formRef.current?.requestSubmit();
+    }, 180);
+    return () => window.clearTimeout(submitTimer);
+  }, [draftReady]);
+
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => {
@@ -659,6 +721,22 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       story: cleanOrderStory(current.story).map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
     }));
     if (message) setMessage("");
+  }
+
+  function updateStoryDescription(index: number, value: string) {
+    updateStoryItem(index, { description: normalizeStoryDescriptionInput(value) });
+  }
+
+  function handleStoryDescriptionBeforeInput(index: number, event: FormEvent<HTMLTextAreaElement>) {
+    const inputEvent = event.nativeEvent as InputEvent;
+    if (inputEvent.inputType !== "insertText" || ![" ", "\u00a0", "\u202f"].includes(inputEvent.data || "")) return;
+
+    const target = event.currentTarget;
+    const next = getDescriptionWithInsertedSpace(target);
+    event.preventDefault();
+
+    flushSync(() => updateStoryDescription(index, next.description));
+    window.requestAnimationFrame(() => target.setSelectionRange(next.caret, next.caret));
   }
 
   function removeStoryItem(index: number) {
@@ -916,6 +994,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     if (values.mapUrl) params.set("mapUrl", values.mapUrl);
     if (values.openingText) params.set("openingText", values.openingText);
     if (imageUrls.length) params.set("gallery", imageUrls.join(","));
+    params.set("orderPreview", "1");
     const story = filledOrderStory(values.story);
     if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
     const gift = filledOrderGift(values.gift);
@@ -1453,7 +1532,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                     <article className="order-story-item" key={item.id || index}>
                       <div className="order-story-item-head">
                         <strong>مرحلة {index + 1}</strong>
-                        <button className="admin-icon-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة">
+                        <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -1467,7 +1546,17 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                       </div>
                       <div className="field full">
                         <label htmlFor={`storyDescription-${index}`}>الوصف</label>
-                        <textarea id={`storyDescription-${index}`} rows={3} value={item.description} onChange={(event) => updateStoryItem(index, { description: event.target.value })} placeholder="اكتبوا تفاصيل قصيرة وراقية لهذه المرحلة" />
+                        <textarea
+                          id={`storyDescription-${index}`}
+                          name={`storyDescription-${index}`}
+                          data-order-story-description="true"
+                          data-story-index={index}
+                          rows={3}
+                          value={item.description}
+                          onBeforeInput={(event) => handleStoryDescriptionBeforeInput(index, event)}
+                          onChange={(event) => updateStoryDescription(index, event.target.value)}
+                          placeholder="اكتبوا تفاصيل قصيرة وراقية لهذه المرحلة"
+                        />
                       </div>
                     </article>
                   ))}
