@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { RefreshCw } from "lucide-react";
-import { CopyButton } from "./CopyButton";
 
 type ErrorRecoveryActionsProps = {
   error: Error & { digest?: string };
@@ -64,23 +62,18 @@ export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryAct
     }).catch(() => undefined);
   }, [context, error.digest, error.message, error.name, error.stack, report]);
 
-  if (!isAdminContext) {
+  if (isAdminContext) {
     return null;
   }
 
-  const reloadPage = () => {
-    if (reset) reset();
-    window.location.reload();
-  };
-
   return (
-    <div className="site-error-notice">
-      <strong>error</strong>
-      <button className="site-error-refresh" type="button" onClick={reloadPage}>
-        <RefreshCw size={17} />
-        تحديث الصفحة
-      </button>
-      <CopyButton className="site-error-copy" value={errorCode} label="نسخ" copiedLabel="تم" title="نسخ كود الخطأ" />
-    </div>
+    <main className="site-fallback-error" dir="rtl">
+      <section>
+        <span>تعذر تحميل الصفحة</span>
+        <h1>حصل خطأ مؤقت داخل الموقع.</h1>
+        <p>تم تسجيل المشكلة تلقائياً للمراجعة. يمكنك الرجوع للصفحة الرئيسية والمتابعة من هناك.</p>
+        <a className="btn btn-primary" href="/">العودة للرئيسية</a>
+      </section>
+    </main>
   );
 }

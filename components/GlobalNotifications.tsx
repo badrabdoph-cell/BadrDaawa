@@ -192,7 +192,7 @@ function isAdminPath(pathname = typeof window === "undefined" ? "" : window.loca
 
 function getRouteNotification(pathname: string, params: URLSearchParams): InternalNotificationInput | null {
   const error = params.get("error");
-  if (error && isAdminPath(pathname)) {
+  if (error) {
     const messages: Record<string, string> = {
       images: "فشل رفع أو حفظ الصور.",
       invalid: "البيانات أو الإجراء غير صالح.",
@@ -203,13 +203,9 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
 
     return {
       type: "error",
-      title: pathname.startsWith("/admin") ? "خطأ في الأدمن" : "حصل خطأ",
+      title: pathname.startsWith("/admin") ? "خطأ في الأدمن" : "تعذر تنفيذ الإجراء",
       message: messages[error] || `حصل خطأ: ${error}`,
-      details: buildReport("Route error parameter", [
-        ["Path", pathname],
-        ["Query", params.toString()],
-        ["Error", error],
-      ]),
+      duration: 6500,
       signature: `route-error:${pathname}:${params.toString()}`,
     };
   }
@@ -229,17 +225,11 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
     };
 
     const isError = errorStatuses.has(status) || status.includes("error") || status.includes("failed");
-    if (isError && !isAdminPath(pathname)) return null;
     return {
       type: isError ? "error" : "success",
       title: isError ? "تعذر تنفيذ الإجراء" : "تم تنفيذ الإجراء",
       message: isError ? `فشل الإجراء: ${status}` : successMessages[status] || "تم تنفيذ الإجراء بنجاح.",
-      details: buildReport("Route status parameter", [
-        ["Path", pathname],
-        ["Query", params.toString()],
-        ["Status", status],
-      ]),
-      duration: isError ? 0 : 5000,
+      duration: isError ? 6500 : 5000,
       signature: `route-status:${pathname}:${params.toString()}`,
     };
   }
@@ -247,17 +237,11 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
   const saved = params.get("saved");
   if (saved) {
     const isError = saved.includes("error") || saved === "0";
-    if (isError && !isAdminPath(pathname)) return null;
     return {
       type: isError ? "error" : "success",
       title: isError ? "تعذر الحفظ" : "تم الحفظ",
       message: isError ? `الحفظ فشل: ${saved}` : "تم حفظ التعديل بنجاح.",
-      details: buildReport("Route saved parameter", [
-        ["Path", pathname],
-        ["Query", params.toString()],
-        ["Saved", saved],
-      ]),
-      duration: isError ? 0 : 4500,
+      duration: isError ? 6500 : 4500,
       signature: `route-saved:${pathname}:${params.toString()}`,
     };
   }
@@ -268,11 +252,6 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
       type: "success",
       title: "تم الإنشاء",
       message: "تم إنشاء العنصر بنجاح.",
-      details: buildReport("Route created parameter", [
-        ["Path", pathname],
-        ["Query", params.toString()],
-        ["Created", created],
-      ]),
       duration: 4500,
       signature: `route-created:${pathname}:${params.toString()}`,
     };
@@ -288,10 +267,6 @@ export function GlobalNotifications() {
   const lastRouteKeyRef = useRef("");
 
   const addNotification = useCallback((notification: InternalNotificationInput) => {
-    if (notification.type === "error" && !isAdminPath()) {
-      return "site-error";
-    }
-
     const message = notification.message?.trim() || "حصل إشعار جديد.";
     const signature = notification.signature || `${notification.type || "info"}:${notification.title || ""}:${message}:${notification.details?.slice(0, 220) || ""}`;
     const now = Date.now();
@@ -305,19 +280,18 @@ export function GlobalNotifications() {
 
     const isError = notification.type === "error";
     const errorCode = isError ? notification.code || createErrorCode(signature) : undefined;
-    const id = isError ? "site-error" : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const item: ToastItem = {
       id,
       type: notification.type || "info",
-      title: isError ? "error" : notification.title,
+      title: notification.title || (isError ? "تعذر تنفيذ الإجراء" : undefined),
       message,
       details: notification.details ? truncate(notification.details) : undefined,
       errorCode,
-      copyLabel: isError ? "نسخ" : undefined,
-      duration: notification.duration ?? (isError || notification.details ? 0 : 4000),
+      duration: notification.duration ?? (isError ? 6500 : notification.details ? 0 : 4000),
     };
 
-    setNotifications((current) => (isError ? [item] : [...current.filter((notificationItem) => notificationItem.type !== "error"), item].slice(-MAX_TOASTS)));
+    setNotifications((current) => [...current, item].slice(-MAX_TOASTS));
     return id;
   }, []);
 
@@ -376,16 +350,7 @@ export function GlobalNotifications() {
         stack: error?.stack || report,
         source: "window.error",
       });
-      if (isAdminPath()) {
-        addNotification({
-          type: "error",
-          title: "خطأ في الموقع",
-          message: "error",
-          details: report,
-          code,
-          signature: `window-error:${event.message}:${event.filename}:${event.lineno}:${event.colno}`,
-        });
-      }
+      void code;
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -396,16 +361,7 @@ export function GlobalNotifications() {
         stack: error?.stack || report,
         source: "unhandledrejection",
       });
-      if (isAdminPath()) {
-        addNotification({
-          type: "error",
-          title: "خطأ غير متوقع",
-          message: "error",
-          details: report,
-          code,
-          signature: `unhandled:${serializeValue(event.reason).slice(0, 220)}`,
-        });
-      }
+      void code;
     };
 
     window.addEventListener("error", handleWindowError);
@@ -426,15 +382,7 @@ export function GlobalNotifications() {
       const firstError = args.find((arg) => arg instanceof Error) as Error | undefined;
       const message = firstError?.message || args.map((arg) => serializeValue(arg)).join(" ").slice(0, 240) || "تم تسجيل خطأ في الكونسول.";
 
-      if (isAdminPath()) {
-        addNotification({
-          type: "error",
-          title: "خطأ في الكونسول",
-          message: "error",
-          details: buildReport("console.error", [["Arguments", args]]),
-          signature: `console-error:${message}`,
-        });
-      }
+      void message;
     };
 
     return () => {
@@ -488,24 +436,7 @@ export function GlobalNotifications() {
               stack: report,
               source: "fetch.non_ok",
             });
-            if (isAdminPath()) {
-              addNotification({
-                type: "error",
-                title: "فشل طلب في الموقع",
-                message: "error",
-                details: report,
-                code,
-                signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
-              });
-            }
-          } else if (isAdminPath()) {
-            addNotification({
-              type: "error",
-              title: "فشل طلب في الموقع",
-              message: "error",
-              details: report,
-              signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
-            });
+            void code;
           }
         }
 
@@ -523,24 +454,7 @@ export function GlobalNotifications() {
             stack: error instanceof Error ? error.stack || report : report,
             source: "fetch.network",
           });
-          if (isAdminPath()) {
-            addNotification({
-              type: "error",
-              title: "فشل الاتصال",
-              message: "error",
-              details: report,
-              code,
-              signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
-            });
-          }
-        } else if (isAdminPath()) {
-          addNotification({
-            type: "error",
-            title: "فشل الاتصال",
-            message: "error",
-            details: report,
-            signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
-          });
+          void code;
         }
         throw error;
       }

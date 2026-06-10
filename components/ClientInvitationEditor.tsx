@@ -429,8 +429,10 @@ export function ClientInvitationEditor({
   }
 
   return (
-    <section className="customer-live-editor builder-layout">
-      <div className="builder-editor-panel">
+    <section className="customer-editor-accordions">
+      <details className="customer-admin-accordion customer-editor-accordion">
+        <summary>تعديل الدعوة</summary>
+        <div className="builder-editor-panel">
         <div className={dirty ? "builder-save-state dirty" : "builder-save-state"}>{dirty ? "توجد تعديلات غير محفوظة" : "كل التعديلات محفوظة"}</div>
         <div className="builder-mini-grid">
           <label className="field">
@@ -685,18 +687,22 @@ export function ClientInvitationEditor({
             نسخ رابط الدعوة
           </button>
         </div>
-      </div>
+        </div>
+      </details>
 
-      <aside className="builder-preview-panel">
-        <div className="builder-phone-frame">
-          <div className="builder-phone-speaker" />
-          <iframe ref={iframeRef} src={previewUrl} title="Live Preview" onLoad={wirePreviewClicks} />
-        </div>
-        <div className="builder-preview-hint">
-          <Eye size={16} />
-          اضغط على الصور أو النصوص الأساسية داخل المعاينة للتعديل مباشرة.
-        </div>
-      </aside>
+      <details className="customer-admin-accordion customer-preview-accordion">
+        <summary>المعاينة الحية</summary>
+        <aside className="builder-preview-panel">
+          <div className="builder-phone-frame">
+            <div className="builder-phone-speaker" />
+            <iframe ref={iframeRef} src={previewUrl} title="Live Preview" onLoad={wirePreviewClicks} />
+          </div>
+          <div className="builder-preview-hint">
+            <Eye size={16} />
+            اضغط على الصور أو النصوص الأساسية داخل المعاينة للتعديل مباشرة.
+          </div>
+        </aside>
+      </details>
     </section>
   );
 }

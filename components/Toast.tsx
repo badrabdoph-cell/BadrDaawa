@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Copy, Info, RefreshCw, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Info, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
@@ -35,6 +35,8 @@ export function Toast({ id, message, type, title, details, errorCode, duration, 
     switch (type) {
       case "success":
         return <CheckCircle2 size={20} />;
+      case "error":
+        return <XCircle size={20} />;
       case "warning":
         return <AlertCircle size={20} />;
       case "info":
@@ -43,29 +45,13 @@ export function Toast({ id, message, type, title, details, errorCode, duration, 
     }
   };
 
-  if (type === "error") {
-    return (
-      <div className="site-error-toast" role="alert" dir="rtl" aria-label={message || "error"}>
-        <strong>error</strong>
-        <button className="site-error-refresh" type="button" onClick={() => window.location.reload()}>
-          <RefreshCw size={16} />
-          تحديث الصفحة
-        </button>
-        <button className="site-error-copy" type="button" onClick={() => onCopy?.(id)} disabled={!errorCode && !details}>
-          <Copy size={12} />
-          {copyLabel || "نسخ"}
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className={`toast toast-${type}`} role="status" dir="rtl">
+    <div className={`toast toast-${type}`} role={type === "error" ? "alert" : "status"} dir="rtl">
       <div className="toast-icon">{getIcon()}</div>
       <div className="toast-content">
         {title ? <strong className="toast-title">{title}</strong> : null}
         <div className="toast-message">{message}</div>
-        {details ? (
+        {details && type !== "error" ? (
           <div className="toast-actions">
             <button className="toast-copy" onClick={() => onCopy?.(id)} type="button">
               <Copy size={14} />

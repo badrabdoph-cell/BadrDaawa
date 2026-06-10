@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import { Download, ExternalLink, LogOut } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, Eye, LogOut, MessageCircle, UserCheck, UsersRound, UserX } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
 import { ClientShareTools } from "@/components/ClientShareTools";
@@ -23,13 +23,19 @@ import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
 import { getTemplateWithSettings } from "@/lib/template-settings";
-import { getPublicSiteUrl } from "@/lib/utils";
+import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
 
 export const metadata: Metadata = {
   title: "لوحة العميل",
   robots: { index: false, follow: false },
 };
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
 
 export default async function CustomerAdminPage({
   params,
@@ -73,23 +79,15 @@ export default async function CustomerAdminPage({
   const analytics = await getCustomerInvitationAnalytics(invitation, guests);
   const publicSlug = invitation.customSlug || invitation.code;
   const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${publicSlug}`;
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`يسعدنا دعوتكم لحضور حفل زفاف ${invitation.groomName} و ${invitation.brideName}\n${url}`)}`;
+  const unreadClientMessages = clientMessages.filter((message) => !message.readAt).length;
+  const guestBookPending = guestBookMessages.filter((message) => message.status === "pending").length;
 
   return (
     <main className="customer-admin">
-      <section className="customer-topbar">
-        <div>
-          <span className="eyebrow">Customer Admin</span>
-          <h1>
-            {invitation.groomName} &amp; {invitation.brideName}
-          </h1>
-          <p>{url}</p>
-        </div>
-        <div className="button-row">
-          <Link className="btn btn-soft" href={`/${publicSlug}`}>
-            <ExternalLink size={18} />
-            فتح الدعوة
-          </Link>
-          <CopyButton className="btn btn-gold" value={url} label="نسخ الرابط" title="نسخ رابط الدعوة" />
+      <section className="customer-mobile-hero">
+        <div className="customer-mobile-hero-head">
+          <span className="eyebrow">لوحة الدعوة</span>
           <form action="/api/auth/client/logout" method="post">
             <input name="code" type="hidden" value={invitation.code} />
             <button className="btn btn-soft btn-icon" type="submit" title="تسجيل خروج">
@@ -97,13 +95,92 @@ export default async function CustomerAdminPage({
             </button>
           </form>
         </div>
+        <h1>{invitation.groomName} و {invitation.brideName}</h1>
+        <p dir="ltr">{url}</p>
+        <div className="customer-mobile-hero-actions">
+          <Link className="btn btn-gold btn-glow" href={`/${publicSlug}`}>
+            <ExternalLink size={19} />
+            فتح الدعوة
+          </Link>
+          <CopyButton className="btn btn-soft" value={url} label="نسخ الرابط" title="نسخ رابط الدعوة" />
+          <a className="btn btn-soft whatsapp" href={whatsappShareUrl} target="_blank" rel="noreferrer">
+            <MessageCircle size={19} />
+            مشاركة واتساب
+          </a>
+        </div>
       </section>
 
-      <CustomerAnalyticsPanel analytics={analytics} />
+      <section className="customer-mobile-stats" aria-label="ملخص الدعوة">
+        <article>
+          <Eye size={20} />
+          <span>عدد الزيارات</span>
+          <strong>{formatArabicNumber(analytics.visits)}</strong>
+        </article>
+        <article>
+          <CheckCircle2 size={20} />
+          <span>الحضور المؤكد</span>
+          <strong>{formatArabicNumber(analytics.confirmedResponses)}</strong>
+        </article>
+        <article>
+          <UserX size={20} />
+          <span>المعتذرون</span>
+          <strong>{formatArabicNumber(analytics.declinedResponses)}</strong>
+        </article>
+        <article>
+          <UsersRound size={20} />
+          <span>إجمالي الأشخاص المتوقع حضورهم</span>
+          <strong>{formatArabicNumber(analytics.expectedAttendees)}</strong>
+        </article>
+      </section>
 
-      <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
+      <section className="panel customer-priority-panel customer-latest-rsvps">
+        <div className="customer-mobile-section-head">
+          <div>
+            <span className="eyebrow">Latest RSVP</span>
+            <h2>آخر الردود</h2>
+          </div>
+          <strong>{formatArabicNumber(analytics.recentResponses.length)}</strong>
+        </div>
+        {analytics.recentResponses.length ? (
+          <div className="customer-response-list mobile-first">
+            {analytics.recentResponses.map((guest) => (
+              <article className="customer-response-row mobile-card" key={guest.id}>
+                <span>
+                  <strong>{guest.name}</strong>
+                  <small>{formatArabicNumber(guest.attendees)} فرد · {formatDateTime(guest.createdAt)}</small>
+                </span>
+                <em className={guest.status === "confirmed" ? "status success" : "status danger"}>{guest.status === "confirmed" ? "حاضر" : "معتذر"}</em>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="admin-empty-state compact">
+            <UserCheck size={22} />
+            <strong>لا توجد ردود حتى الآن</strong>
+          </div>
+        )}
+      </section>
 
-      <CustomerGuestBookPanel invitationCode={invitation.code} messages={guestBookMessages} settings={coupleMessagesSettings} />
+      <section className="panel customer-priority-panel customer-guest-list-section">
+        <div className="customer-mobile-section-head">
+          <div>
+            <span className="eyebrow">Guest List</span>
+            <h2>قائمة الحضور</h2>
+          </div>
+        </div>
+        <GuestTable guests={guests} invitationCode={invitation.code} />
+      </section>
+
+      <section className="customer-mobile-section">
+        <div className="customer-mobile-section-head">
+          <div>
+            <span className="eyebrow">Messages</span>
+            <h2>رسائل وتهاني الضيوف</h2>
+          </div>
+          <strong>{formatArabicNumber(guestBookPending)} جديد</strong>
+        </div>
+        <CustomerGuestBookPanel invitationCode={invitation.code} messages={guestBookMessages} settings={coupleMessagesSettings} />
+      </section>
 
       {query.saved === "music-error" ? (
         <div className="notice danger customer-notice">الصوت لم يتم حفظه. استخدم ملف صوت صالح أو رابط مباشر مثل MP3/WAV.</div>
@@ -113,26 +190,50 @@ export default async function CustomerAdminPage({
         <div className="notice success customer-notice">تم حفظ التعديلات المتاحة لهذه الدعوة.</div>
       ) : null}
 
-      <section className="customer-control-grid customer-admin-tools">
-        <InvitationQrTools invitationUrl={url} title={`${invitation.groomName} و ${invitation.brideName}`} initialLogoUrl={invitation.photographer?.logoUrl || ""} />
-
-        <article className="panel">
-          <Download size={24} />
-          <h2>تصدير الحضور</h2>
-          <p>حمل قائمة الحضور Excel أو PDF.</p>
-          <div className="button-row">
-            <a className="btn btn-soft" href={`/api/invitations/${invitation.code}/export/excel`}>
-              Excel
-            </a>
-            <a className="btn btn-soft" href={`/api/invitations/${invitation.code}/export/pdf`}>
-              PDF
-            </a>
+      <section className="customer-mobile-section customer-accordion-stack">
+        <div className="customer-mobile-section-head">
+          <div>
+            <span className="eyebrow">Tools</span>
+            <h2>أدوات الدعوة</h2>
           </div>
-        </article>
-
-        <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} />
-
-        <ClientWeddingLiveModePanel invitationCode={invitation.code} initialConfig={liveModeConfig} />
+        </div>
+        <details className="customer-admin-accordion">
+          <summary>QR Code</summary>
+          <InvitationQrTools invitationUrl={url} title={`${invitation.groomName} و ${invitation.brideName}`} initialLogoUrl={invitation.photographer?.logoUrl || ""} />
+        </details>
+        <details className="customer-admin-accordion">
+          <summary>مشاركة الدعوة ورسالة واتساب</summary>
+          <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} />
+        </details>
+        <details className="customer-admin-accordion">
+          <summary>وضع الحفل المباشر</summary>
+          <ClientWeddingLiveModePanel invitationCode={invitation.code} initialConfig={liveModeConfig} />
+        </details>
+        <details className="customer-admin-accordion">
+          <summary>التصدير</summary>
+          <article className="panel customer-export-card">
+            <Download size={24} />
+            <h2>تصدير الحضور</h2>
+            <p>حمل قائمة الحضور Excel أو PDF.</p>
+            <div className="button-row">
+              <a className="btn btn-soft" href={`/api/invitations/${invitation.code}/export/excel`}>
+                Excel
+              </a>
+              <a className="btn btn-soft" href={`/api/invitations/${invitation.code}/export/pdf`}>
+                PDF
+              </a>
+            </div>
+          </article>
+        </details>
+        <details className="customer-admin-accordion">
+          <summary>رسائل الإدارة</summary>
+          <div className="customer-accordion-count">{formatArabicNumber(unreadClientMessages)} رسالة جديدة من الإدارة</div>
+          <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
+        </details>
+        <details className="customer-admin-accordion">
+          <summary>تفاصيل التحليلات</summary>
+          <CustomerAnalyticsPanel analytics={analytics} />
+        </details>
       </section>
 
       <ClientInvitationEditor
@@ -142,16 +243,6 @@ export default async function CustomerAdminPage({
         contentPresets={contentPresets}
         publicUrl={url}
       />
-
-      <section className="section compact">
-        <div className="dashboard-head">
-          <div>
-            <span className="eyebrow">Guest List</span>
-            <h2>قائمة الحضور</h2>
-          </div>
-        </div>
-        <GuestTable guests={guests} />
-      </section>
     </main>
   );
 }
