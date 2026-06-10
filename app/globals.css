@@ -4265,11 +4265,21 @@ img {
 .dashboard-sidebar {
   position: sticky;
   top: 0;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   padding: 24px;
   border-inline-end: 1px solid var(--line);
   background: #171614;
   color: #fff8ea;
+  overflow: hidden;
+}
+
+.dashboard-sidebar > div:first-child {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
 }
 
 .dashboard-sidebar .brand {
@@ -4279,6 +4289,31 @@ img {
 .dashboard-nav {
   display: grid;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-inline-end: 4px;
+  scrollbar-color: rgba(243, 207, 115, 0.55) rgba(255, 255, 255, 0.06);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-nav::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(243, 207, 115, 0.42);
+}
+
+.dashboard-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(243, 207, 115, 0.68);
 }
 
 .dashboard-nav a {
@@ -4515,6 +4550,7 @@ img {
 
 .dashboard-sidebar-footer {
   display: grid;
+  flex: 0 0 auto;
   gap: 8px;
 }
 
@@ -25148,10 +25184,14 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 90;
+    z-index: 2147483000;
     display: block;
     padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(14, 18, 30, 0), rgba(14, 18, 30, 0.86) 18%, rgba(14, 18, 30, 0.98));
+    pointer-events: none;
+  }
+
+  body:has(.admin-mobile-nav-shell) nextjs-portal {
     pointer-events: none;
   }
 
@@ -25227,7 +25267,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   .admin-mobile-menu-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 80;
+    z-index: 2147482990;
     display: block;
     background: rgba(3, 7, 18, 0.56);
     opacity: 0;
@@ -25245,7 +25285,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
     right: 8px;
     bottom: calc(88px + env(safe-area-inset-bottom));
     left: 8px;
-    z-index: 100;
+    z-index: 2147483010;
     display: grid;
     max-height: min(76dvh, 680px);
     gap: 12px;
