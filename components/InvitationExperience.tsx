@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Calendar, CalendarHeart, Camera, ChevronDown, Clock, Facebook, Flower2, Heart, Instagram, Leaf, MapPin, Music2, Share2, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { Countdown } from "./Countdown";
@@ -56,6 +57,10 @@ function getInvitationHeroVideo(invitation: Invitation) {
   return cleanInvitationHeroVideoUrl(invitation.heroVideoUrl || rawTexts.heroVideoUrl);
 }
 
+function canUseOptimizedImage(src: string) {
+  return src.startsWith("/") && !src.toLowerCase().endsWith(".svg");
+}
+
 function InviteHeroMedia({
   image,
   videoUrl,
@@ -72,7 +77,22 @@ function InviteHeroMedia({
   if (videoUrl) {
     return <video className={["invite-hero-video", className].filter(Boolean).join(" ")} src={videoUrl} poster={image} muted loop playsInline autoPlay preload="metadata" data-invite-parallax data-invite-parallax-strength={strength} />;
   }
-  return <img className={className || undefined} src={image} alt={alt} data-invite-parallax data-invite-parallax-strength={strength} />;
+  if (!canUseOptimizedImage(image)) {
+    return <img className={className || undefined} src={image} alt={alt} loading="lazy" decoding="async" data-invite-parallax data-invite-parallax-strength={strength} />;
+  }
+  return (
+    <Image
+      className={className || undefined}
+      src={image}
+      alt={alt}
+      width={1400}
+      height={1900}
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 760px"
+      loading="lazy"
+      data-invite-parallax
+      data-invite-parallax-strength={strength}
+    />
+  );
 }
 
 function InvitationOpeningLayer({ invitation }: { invitation: Invitation }) {

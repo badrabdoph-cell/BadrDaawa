@@ -122,18 +122,15 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
       continue;
     }
 
-    if ((value.startsWith("/uploads/") || value.startsWith("/assets/")) && isBrowserDisplayImageUrl(value)) {
-      savedUrls.push(value);
-      continue;
-    }
-
     if (value.startsWith("/uploads/") || value.startsWith("/assets/")) {
       try {
         const bytes = await readPublicMediaFile(value);
         const convertedUrl = bytes ? await saveBytes(bytes, imageExtensionFromName(value) || "jpg", `existing:${value}`) : "";
         if (convertedUrl) savedUrls.push(convertedUrl);
+        else if (isBrowserDisplayImageUrl(value)) savedUrls.push(value);
       } catch (error) {
         console.error(`[Order Images ${requestId}] Failed to convert existing non-displayable image for ${folder}: ${value}`, error);
+        if (isBrowserDisplayImageUrl(value)) savedUrls.push(value);
       }
       continue;
     }

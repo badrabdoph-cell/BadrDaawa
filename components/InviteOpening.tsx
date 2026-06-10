@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
@@ -14,6 +15,10 @@ type InviteOpeningProps = {
   openingText?: string;
   locale?: Language;
 };
+
+function canUseOptimizedImage(src: string) {
+  return src.startsWith("/") && !src.toLowerCase().endsWith(".svg");
+}
 
 export function InviteOpening({ groomName, brideName, coverImage, openingText, locale = "ar" }: InviteOpeningProps) {
   const t = getInvitationTranslator(resolveLocale(locale));
@@ -45,7 +50,11 @@ export function InviteOpening({ groomName, brideName, coverImage, openingText, l
   return (
     <section className={`invite-opening cinematic-opening ${phase === "leaving" ? "is-leaving" : ""}`} aria-label={t("invitation.openingLabel")}>
       <div className="cinematic-opening-media" aria-hidden="true">
-        <img src={coverImage} alt="" loading="eager" decoding="async" draggable={false} />
+        {canUseOptimizedImage(coverImage) ? (
+          <Image src={coverImage} alt="" fill priority sizes="100vw" draggable={false} />
+        ) : (
+          <img src={coverImage} alt="" loading="eager" decoding="async" draggable={false} />
+        )}
       </div>
       <div className="cinematic-opening-shade" aria-hidden="true" />
       <div className="cinematic-opening-content">

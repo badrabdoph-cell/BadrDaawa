@@ -39,10 +39,8 @@ async function saveImageBytes(bytes: Buffer, extension: string, sourceLabel: str
 
 async function saveExistingInternalImageUrl(value: string) {
   const normalized = normalizeInternalAssetUrl(value) || value;
-  if (isBrowserDisplayImageUrl(normalized)) return normalized;
   if (!normalized.startsWith("/uploads/") && !normalized.startsWith("/assets/")) {
-    console.error(`[Invitation Images] Existing image is not browser-displayable and cannot be converted without a local file: ${normalized}`);
-    return "";
+    return isBrowserDisplayImageUrl(normalized) ? normalized : "";
   }
 
   try {

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
@@ -46,6 +47,10 @@ function shouldShowSingleImage(className: string) {
   return className.split(/\s+/).some((name) => SINGLE_IMAGE_CLASSES.has(name));
 }
 
+function canUseOptimizedImage(src: string) {
+  return src.startsWith("/") && !src.toLowerCase().endsWith(".svg");
+}
+
 function getFigureClassName(className: string, index: number) {
   if (hasClass(className, "featured-gallery")) {
     return index === 1 ? "featured-photo-card" : "featured-arch-card";
@@ -72,8 +77,20 @@ export function InviteGallery({ images, locale = "ar", className = "", label, al
           <figure className={figureClassName} key={`${image}-${index}`}>
             {videoUrl ? (
               <video className="invite-hero-video" src={videoUrl} poster={image} muted loop playsInline autoPlay preload="metadata" data-invite-parallax data-invite-parallax-strength="0.72" />
+            ) : canUseOptimizedImage(image) ? (
+              <Image
+                src={image}
+                alt={`${altPrefix} ${index + 1}`}
+                width={1200}
+                height={1600}
+                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 70vw, 520px"
+                loading="lazy"
+                draggable={false}
+                data-invite-parallax
+                data-invite-parallax-strength="0.72"
+              />
             ) : (
-              <img src={image} alt={`${altPrefix} ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} decoding="async" draggable={false} data-invite-parallax data-invite-parallax-strength="0.72" />
+              <img src={image} alt={`${altPrefix} ${index + 1}`} loading="lazy" decoding="async" draggable={false} data-invite-parallax data-invite-parallax-strength="0.72" />
             )}
             {figureClassName === "featured-photo-card" ? <span aria-hidden="true" /> : null}
           </figure>

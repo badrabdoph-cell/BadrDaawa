@@ -1,6 +1,6 @@
 import Link from "next/link";
+import nextDynamic from "next/dynamic";
 import { BellRing, Check, Clock3, Eye, Headphones, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
-import { BroadcastAnnotator } from "@/components/BroadcastAnnotator";
 import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -9,6 +9,8 @@ import { getHomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
 import { getSiteSettings } from "@/lib/site-settings";
+
+const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
 const quickBenefits = [

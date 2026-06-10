@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
@@ -12,20 +11,24 @@ export function QrCodeBlock({ value, locale = "ar" }: { value: string; locale?: 
   useEffect(() => {
     let isCurrent = true;
 
-    QRCode.toDataURL(value, {
-      margin: 1,
-      width: 180,
-      color: {
-        dark: "#171614",
-        light: "#ffffff",
-      },
-    })
-      .then((nextDataUrl) => {
+    async function renderQrCode() {
+      try {
+        const QRCode = (await import("qrcode")).default;
+        const nextDataUrl = await QRCode.toDataURL(value, {
+          margin: 1,
+          width: 180,
+          color: {
+            dark: "#171614",
+            light: "#ffffff",
+          },
+        });
         if (isCurrent) setDataUrl(nextDataUrl);
-      })
-      .catch(() => {
+      } catch {
         if (isCurrent) setDataUrl("");
-      });
+      }
+    }
+
+    void renderQrCode();
 
     return () => {
       isCurrent = false;
