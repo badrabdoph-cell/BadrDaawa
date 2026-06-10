@@ -31,8 +31,6 @@ const excludedSelector = [
   ".global-notifications",
 ].join(",");
 
-const nativeErrorEventName = "badrdaawa:notify";
-
 declare global {
   interface Window {
     __badrErrorSurfaceReady?: boolean;
@@ -80,22 +78,6 @@ function createErrorCode(value: string) {
   return `ERR-${Date.now().toString(36).toUpperCase()}-${hashText(value).slice(0, 7)}`;
 }
 
-function copyErrorCode(code: string) {
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(code).catch(() => undefined);
-    return;
-  }
-  const textarea = document.createElement("textarea");
-  textarea.value = code;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.insetInlineStart = "-9999px";
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  textarea.remove();
-}
-
 function reportNativeError(input: { code: string; message: string; stack?: string; source: string }) {
   fetch("/api/errors", {
     method: "POST",
@@ -111,59 +93,14 @@ function reportNativeError(input: { code: string; message: string; stack?: strin
   }).catch(() => undefined);
 }
 
-function showNativeErrorToast(input: { message?: string; details?: string; code?: string }) {
-  const code = input.code || createErrorCode(`${input.message || "error"}:${input.details || ""}:${window.location.href}`);
-  document.querySelectorAll(".site-error-toast").forEach((node) => node.remove());
-
-  const toast = document.createElement("div");
-  toast.className = "site-error-toast";
-  toast.setAttribute("role", "alert");
-  toast.setAttribute("dir", "rtl");
-
-  const title = document.createElement("strong");
-  title.textContent = "error";
-
-  const refresh = document.createElement("button");
-  refresh.className = "site-error-refresh";
-  refresh.type = "button";
-  refresh.textContent = "تحديث الصفحة";
-  refresh.addEventListener("click", () => window.location.reload());
-
-  const copy = document.createElement("button");
-  copy.className = "site-error-copy";
-  copy.type = "button";
-  copy.textContent = "نسخ";
-  copy.addEventListener("click", () => copyErrorCode(code));
-
-  toast.append(title, refresh, copy);
-  let container = document.querySelector<HTMLElement>(".toast-container");
-  if (!container) {
-    container = document.createElement("div");
-    container.className = "toast-container";
-    document.body.appendChild(container);
-  }
-  container.appendChild(toast);
-}
-
 function setupNativeErrorSurface() {
   if (window.__badrErrorSurfaceReady) return;
   window.__badrErrorSurfaceReady = true;
 
   window.badrNotify = (notification) => {
     if (notification.type && notification.type !== "error") return "";
-    showNativeErrorToast(notification);
     return "site-error";
   };
-
-  window.addEventListener(nativeErrorEventName, (event) => {
-    const detail = "detail" in event ? (event as CustomEvent).detail : null;
-    if (detail?.type && detail.type !== "error") return;
-    showNativeErrorToast({
-      message: typeof detail?.message === "string" ? detail.message : "error",
-      details: typeof detail?.details === "string" ? detail.details : "",
-      code: typeof detail?.code === "string" ? detail.code : "",
-    });
-  });
 
   window.addEventListener("error", (event) => {
     const error = event.error instanceof Error ? event.error : null;
@@ -171,7 +108,6 @@ function setupNativeErrorSurface() {
     const stack = error?.stack || `${event.filename}:${event.lineno}:${event.colno}`;
     const code = createErrorCode(`window.error:${message}:${stack}`);
     reportNativeError({ code, message, stack, source: "window.error" });
-    showNativeErrorToast({ message, details: stack, code });
   });
 
   window.addEventListener("unhandledrejection", (event) => {
@@ -180,7 +116,6 @@ function setupNativeErrorSurface() {
     const stack = error?.stack || String(event.reason || "");
     const code = createErrorCode(`unhandledrejection:${message}:${stack}`);
     reportNativeError({ code, message, stack, source: "unhandledrejection" });
-    showNativeErrorToast({ message, details: stack, code });
   });
 }
 

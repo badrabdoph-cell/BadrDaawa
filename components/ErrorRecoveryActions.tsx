@@ -44,6 +44,7 @@ function buildErrorCode(error: ErrorRecoveryActionsProps["error"], context: stri
 export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryActionsProps) {
   const report = useMemo(() => buildErrorReport(error, context), [context, error]);
   const errorCode = useMemo(() => buildErrorCode(error, context), [context, error]);
+  const isAdminContext = context === "admin";
 
   useEffect(() => {
     const payload = {
@@ -62,6 +63,10 @@ export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryAct
       keepalive: true,
     }).catch(() => undefined);
   }, [context, error.digest, error.message, error.name, error.stack, report]);
+
+  if (!isAdminContext) {
+    return null;
+  }
 
   const reloadPage = () => {
     if (reset) reset();

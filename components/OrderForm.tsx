@@ -441,7 +441,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     story: cleanOrderStory(initialDraft?.story),
     giftEnabled: Boolean(initialDraft?.giftEnabled || Object.values(filledOrderGift(initialDraft?.gift)).some(Boolean)),
     gift: cleanOrderGift(initialDraft?.gift),
-    musicEnabled: Boolean(initialDraft?.musicEnabled),
+    musicEnabled: initialDraft?.musicEnabled ?? true,
     musicChoice: initialDraft?.musicChoice || "default",
     musicUrl: initialDraft?.musicUrl || "",
   });
@@ -458,7 +458,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
-  const autoConfirmSubmittedRef = useRef(false);
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
@@ -522,7 +521,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
       giftEnabled: params.get("giftEnabled") === "1" || undefined,
       gift: cleanOrderGift(parseDraftJson(params.get("gift"), {})),
-      musicEnabled: params.get("musicEnabled") === "1" || undefined,
+      musicEnabled: params.has("musicEnabled") ? params.get("musicEnabled") === "1" : undefined,
       musicChoice: isOrderMusicChoice(params.get("musicChoice")) ? (params.get("musicChoice") as MusicChoice) : undefined,
       musicUrl: params.get("musicUrl") || undefined,
       imageUrls,
@@ -561,9 +560,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       params.set("giftEnabled", "1");
       params.set("gift", JSON.stringify(gift));
     }
-    if (nextForm.musicEnabled) {
-      params.set("musicEnabled", "1");
-      params.set("musicChoice", nextForm.musicChoice || "default");
+    if (typeof nextForm.musicEnabled === "boolean") {
+      params.set("musicEnabled", nextForm.musicEnabled ? "1" : "0");
+      if (nextForm.musicEnabled) params.set("musicChoice", nextForm.musicChoice || "default");
     }
     if (nextImageUrls.length) params.set("gallery", nextImageUrls.join(","));
     window.history.replaceState(window.history.state, "", `/order?${params.toString()}`);
@@ -642,7 +641,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         story: cleanOrderStory(draft.story),
         giftEnabled: Boolean(draft.giftEnabled || Object.values(filledOrderGift(draft.gift)).some(Boolean)),
         gift: cleanOrderGift(draft.gift),
-        musicEnabled: Boolean(draft.musicEnabled),
+        musicEnabled: typeof draft.musicEnabled === "boolean" ? draft.musicEnabled : current.musicEnabled,
         musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
       }));
@@ -665,20 +664,32 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   }, [draftReady, form, draftImageUrls]);
 
   useEffect(() => {
-    if (!draftReady || autoConfirmSubmittedRef.current || typeof window === "undefined") return;
+    if (!draftReady || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("confirmOrder") !== "1") return;
 
-    const submitTimer = window.setTimeout(() => {
-      if (autoConfirmSubmittedRef.current) return;
-      autoConfirmSubmittedRef.current = true;
-      const nextParams = new URLSearchParams(window.location.search);
-      nextParams.delete("confirmOrder");
-      const nextQuery = nextParams.toString();
-      window.history.replaceState(window.history.state, "", nextQuery ? `/order?${nextQuery}` : "/order");
-      formRef.current?.requestSubmit();
-    }, 180);
-    return () => window.clearTimeout(submitTimer);
+    params.delete("confirmOrder");
+    const nextQuery = params.toString();
+    window.history.replaceState(window.history.state, "", nextQuery ? `/order?${nextQuery}` : "/order");
+
+    let focusTimer = 0;
+    const focusConfirmButton = (attempt = 0) => {
+      const formElement = formRef.current;
+      const submitButton = formElement?.querySelector<HTMLButtonElement>(".order-submit");
+
+      if (!submitButton) {
+        if (attempt < 30) focusTimer = window.setTimeout(() => focusConfirmButton(attempt + 1), 100);
+        return;
+      }
+
+      submitButton.scrollIntoView({ behavior: "auto", block: "center" });
+      submitButton.focus({ preventScroll: true });
+      submitButton.classList.add("order-submit-highlight");
+      window.setTimeout(() => submitButton.classList.remove("order-submit-highlight"), 1800);
+    };
+
+    focusTimer = window.setTimeout(() => focusConfirmButton(), 900);
+    return () => window.clearTimeout(focusTimer);
   }, [draftReady]);
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
@@ -978,8 +989,8 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   }
 
   function applyMusicParams(params: URLSearchParams, values: Partial<FormState>, musicUrl = values.musicUrl || "") {
+    params.set("musicEnabled", values.musicEnabled ? "1" : "0");
     if (!values.musicEnabled) return;
-    params.set("musicEnabled", "1");
     params.set("musicChoice", values.musicChoice || "default");
     if (musicUrl) params.set("musicUrl", musicUrl);
   }
@@ -1108,12 +1119,12 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     const musicUrl = values.musicUrl.trim();
     if (values.musicChoice === "default") return { musicEnabled: true, musicChoice: "default", musicUrl: "" };
     if (values.musicChoice === "upload") {
-      return uploadedMusic || musicUrl ? { musicEnabled: true, musicChoice: "upload", musicUrl } : { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+      return uploadedMusic || musicUrl ? { musicEnabled: true, musicChoice: "upload", musicUrl } : { musicEnabled: true, musicChoice: "default", musicUrl: "" };
     }
     if (values.musicChoice === "video") {
-      return musicUrl ? { musicEnabled: true, musicChoice: "video", musicUrl } : { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+      return musicUrl ? { musicEnabled: true, musicChoice: "video", musicUrl } : { musicEnabled: true, musicChoice: "default", musicUrl: "" };
     }
-    return musicUrl ? { musicEnabled: true, musicChoice: "url", musicUrl } : { musicEnabled: false, musicChoice: "default", musicUrl: "" };
+    return musicUrl ? { musicEnabled: true, musicChoice: "url", musicUrl } : { musicEnabled: true, musicChoice: "default", musicUrl: "" };
   }
 
   function validateOrder(values: OrderFormValues, photographerEnabled = form.photographerEnabled, musicEnabled = form.musicEnabled, musicChoice = form.musicChoice) {
@@ -1607,24 +1618,24 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           <button
             className={`photographer-toggle-button order-music-toggle ${form.musicEnabled ? "active" : ""}`}
             type="button"
-            aria-expanded={form.musicEnabled}
-            onClick={() => (form.musicEnabled ? selectMusicChoice("none") : selectMusicChoice("default"))}
+            aria-expanded="true"
+            onClick={() => selectMusicChoice("default")}
           >
             <Music2 size={18} />
-            <span>إضافة موسيقى للدعوة</span>
-            <strong>{form.musicEnabled ? "إخفاء الموسيقى" : "إضافة موسيقى"}</strong>
+            <span>{form.musicEnabled ? "الأغنية الأساسية مفعلة داخل الدعوة" : "الدعوة حالياً بدون موسيقى"}</span>
+            <strong>تغيير الأغنية الأساسية</strong>
           </button>
 
           <div className="order-music-fields">
-            <p className="order-music-note">اختياري، ولو لم تختار موسيقى ستُنشأ الدعوة بدون موسيقى.</p>
+            <p className="order-music-note">الموسيقى الأساسية تعمل تلقائياً، ويمكنك استبدالها أو إلغاء الموسيقى من هنا.</p>
             <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
+              <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
+                <Music2 size={16} />
+                الموسيقى الأساسية
+              </button>
               <button className={!form.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!form.musicEnabled} onClick={() => selectMusicChoice("none")}>
                 <Music2 size={16} />
                 بدون موسيقى
-              </button>
-              <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
-                <Music2 size={16} />
-                موسيقى أساسية
               </button>
               <button className={form.musicEnabled && form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
                 <UploadCloud size={16} />
@@ -1632,7 +1643,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
               </button>
               <button className={form.musicEnabled && form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
                 <FileVideo size={16} />
-                استخراج الصوت من فيديو
+                استخراج الصوت من فيديو أو ريلز
               </button>
               <button className={form.musicEnabled && form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
                 <Link2 size={16} />
@@ -1682,7 +1693,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
                   <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
                     <label htmlFor="musicUrl">رابط أغنية مباشر</label>
                     <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
-                    {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="field-preview">استخدم رابط ملف صوت مباشر، وليس رابط صفحة YouTube.</small>}
+                    {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="order-music-url-hint">ليس رابط فيديو بل موسيقى فقط</small>}
                   </div>
                 ) : null}
 
@@ -1694,16 +1705,16 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           </div>
         </section>
 
-        <div className="order-final-actions">
-          <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
+        <div className="order-final-actions" id="confirm-order">
+          <button className="btn btn-gold btn-glow home-cta home-cta-primary order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
             {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <Check size={19} />}
-            {state === "loading" ? "جاري التأكيد" : "تأكيد إنشاء الدعوة"}
+            <span>{state === "loading" ? "جاري التأكيد" : "تأكيد إنشاء الدعوة"}</span>
           </button>
           {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
 
-          <button className="btn btn-soft order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
+          <button className="btn btn-gold btn-glow home-cta home-cta-primary order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
             {isPreviewing ? <Loader2 size={19} className="animate-float" /> : <Eye size={19} />}
-            {isPreviewing ? "جاري تجهيز المعاينة" : "عاين دعوتك قبل التأكيد"}
+            <span>{isPreviewing ? "جاري تجهيز المعاينة" : "عاين دعوتك قبل التأكيد"}</span>
           </button>
         </div>
       </form>

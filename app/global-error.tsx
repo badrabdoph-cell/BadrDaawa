@@ -7,11 +7,7 @@ export default function GlobalErrorPage({ error, reset }: { error: Error & { dig
   return (
     <html lang="ar" dir="rtl">
       <body>
-        <main className="admin-error-page site-error-page">
-          <section className="site-error-card">
-            <ErrorRecoveryActions error={error} context="global" reset={reset} />
-          </section>
-        </main>
+        <ErrorRecoveryActions error={error} context="global" reset={reset} />
       </body>
     </html>
   );

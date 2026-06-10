@@ -186,9 +186,13 @@ function shortUrl(url: string) {
   }
 }
 
+function isAdminPath(pathname = typeof window === "undefined" ? "" : window.location.pathname) {
+  return pathname.startsWith("/admin");
+}
+
 function getRouteNotification(pathname: string, params: URLSearchParams): InternalNotificationInput | null {
   const error = params.get("error");
-  if (error) {
+  if (error && isAdminPath(pathname)) {
     const messages: Record<string, string> = {
       images: "فشل رفع أو حفظ الصور.",
       invalid: "البيانات أو الإجراء غير صالح.",
@@ -225,6 +229,7 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
     };
 
     const isError = errorStatuses.has(status) || status.includes("error") || status.includes("failed");
+    if (isError && !isAdminPath(pathname)) return null;
     return {
       type: isError ? "error" : "success",
       title: isError ? "تعذر تنفيذ الإجراء" : "تم تنفيذ الإجراء",
@@ -242,6 +247,7 @@ function getRouteNotification(pathname: string, params: URLSearchParams): Intern
   const saved = params.get("saved");
   if (saved) {
     const isError = saved.includes("error") || saved === "0";
+    if (isError && !isAdminPath(pathname)) return null;
     return {
       type: isError ? "error" : "success",
       title: isError ? "تعذر الحفظ" : "تم الحفظ",
@@ -282,6 +288,10 @@ export function GlobalNotifications() {
   const lastRouteKeyRef = useRef("");
 
   const addNotification = useCallback((notification: InternalNotificationInput) => {
+    if (notification.type === "error" && !isAdminPath()) {
+      return "site-error";
+    }
+
     const message = notification.message?.trim() || "حصل إشعار جديد.";
     const signature = notification.signature || `${notification.type || "info"}:${notification.title || ""}:${message}:${notification.details?.slice(0, 220) || ""}`;
     const now = Date.now();
@@ -366,14 +376,16 @@ export function GlobalNotifications() {
         stack: error?.stack || report,
         source: "window.error",
       });
-      addNotification({
-        type: "error",
-        title: "خطأ في الموقع",
-        message: "error",
-        details: report,
-        code,
-        signature: `window-error:${event.message}:${event.filename}:${event.lineno}:${event.colno}`,
-      });
+      if (isAdminPath()) {
+        addNotification({
+          type: "error",
+          title: "خطأ في الموقع",
+          message: "error",
+          details: report,
+          code,
+          signature: `window-error:${event.message}:${event.filename}:${event.lineno}:${event.colno}`,
+        });
+      }
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -384,14 +396,16 @@ export function GlobalNotifications() {
         stack: error?.stack || report,
         source: "unhandledrejection",
       });
-      addNotification({
-        type: "error",
-        title: "خطأ غير متوقع",
-        message: "error",
-        details: report,
-        code,
-        signature: `unhandled:${serializeValue(event.reason).slice(0, 220)}`,
-      });
+      if (isAdminPath()) {
+        addNotification({
+          type: "error",
+          title: "خطأ غير متوقع",
+          message: "error",
+          details: report,
+          code,
+          signature: `unhandled:${serializeValue(event.reason).slice(0, 220)}`,
+        });
+      }
     };
 
     window.addEventListener("error", handleWindowError);
@@ -412,13 +426,15 @@ export function GlobalNotifications() {
       const firstError = args.find((arg) => arg instanceof Error) as Error | undefined;
       const message = firstError?.message || args.map((arg) => serializeValue(arg)).join(" ").slice(0, 240) || "تم تسجيل خطأ في الكونسول.";
 
-      addNotification({
-        type: "error",
-        title: "خطأ في الكونسول",
-        message: "error",
-        details: buildReport("console.error", [["Arguments", args]]),
-        signature: `console-error:${message}`,
-      });
+      if (isAdminPath()) {
+        addNotification({
+          type: "error",
+          title: "خطأ في الكونسول",
+          message: "error",
+          details: buildReport("console.error", [["Arguments", args]]),
+          signature: `console-error:${message}`,
+        });
+      }
     };
 
     return () => {
@@ -472,15 +488,17 @@ export function GlobalNotifications() {
               stack: report,
               source: "fetch.non_ok",
             });
-            addNotification({
-              type: "error",
-              title: "فشل طلب في الموقع",
-              message: "error",
-              details: report,
-              code,
-              signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
-            });
-          } else {
+            if (isAdminPath()) {
+              addNotification({
+                type: "error",
+                title: "فشل طلب في الموقع",
+                message: "error",
+                details: report,
+                code,
+                signature: `fetch-status:${response.status}:${meta.method}:${meta.url}`,
+              });
+            }
+          } else if (isAdminPath()) {
             addNotification({
               type: "error",
               title: "فشل طلب في الموقع",
@@ -505,15 +523,17 @@ export function GlobalNotifications() {
             stack: error instanceof Error ? error.stack || report : report,
             source: "fetch.network",
           });
-          addNotification({
-            type: "error",
-            title: "فشل الاتصال",
-            message: "error",
-            details: report,
-            code,
-            signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
-          });
-        } else {
+          if (isAdminPath()) {
+            addNotification({
+              type: "error",
+              title: "فشل الاتصال",
+              message: "error",
+              details: report,
+              code,
+              signature: `fetch-error:${meta.method}:${meta.url}:${serializeValue(error).slice(0, 160)}`,
+            });
+          }
+        } else if (isAdminPath()) {
           addNotification({
             type: "error",
             title: "فشل الاتصال",

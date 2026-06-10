@@ -71,6 +71,17 @@ function cleanPreviewUrl(value: string | undefined, fallback: string) {
   return clean && /^https?:\/\/\S+\.\S+/.test(clean) ? clean : fallback;
 }
 
+function cleanPreviewMapUrl(value: string | undefined) {
+  const clean = value?.trim();
+  if (!clean) return "";
+  try {
+    const url = new URL(clean);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString().slice(0, 1200) : "";
+  } catch {
+    return "";
+  }
+}
+
 function cleanPreviewStory(value: string | undefined) {
   if (!value) return [];
   try {
@@ -131,7 +142,7 @@ function buildOrderConfirmHref(templateSlug: string, query?: TemplatePreviewSear
   if (query?.story?.trim()) params.set("storyEnabled", "1");
   if (query?.gift?.trim()) params.set("giftEnabled", "1");
 
-  return `/order?${params.toString()}`;
+  return `/order?${params.toString()}#confirm-order`;
 }
 
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
@@ -140,9 +151,10 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const [template, siteSettings] = await Promise.all([getTemplateWithPreviewMusic(slug), getSiteSettings()]);
   if (!template) notFound();
   const previewGallery = cleanPreviewGallery(query?.gallery);
-  const hasExplicitMusicPreview = query?.musicEnabled !== undefined || query?.musicUrl !== undefined;
+  const hasExplicitMusicPreview = query?.musicEnabled !== undefined || query?.musicChoice !== undefined || query?.musicUrl !== undefined;
   const explicitMusicUrl = cleanPlayableAudioUrl(query?.musicUrl || "");
-  const previewMusicUrl = hasExplicitMusicPreview ? explicitMusicUrl : cleanPlayableAudioUrl(template.musicUrl || "");
+  const templateMusicUrl = cleanPlayableAudioUrl(template.musicUrl || "");
+  const previewMusicUrl = hasExplicitMusicPreview && query?.musicChoice !== "default" ? explicitMusicUrl : templateMusicUrl;
   const previewHeroVideoUrl = cleanInvitationHeroVideoUrl(query?.heroVideoUrl);
   const previewMusicEnabled = hasExplicitMusicPreview ? query?.musicEnabled === "1" && Boolean(previewMusicUrl) : Boolean(previewMusicUrl);
   const hasExplicitPhotographerPreview = query?.photographerEnabled !== undefined;
@@ -186,6 +198,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const previewTexts = previewOpeningText || previewGalleryStories.length || previewStory.length || Object.values(previewGift).some(Boolean) ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: previewStory, gift: previewGift } : undefined;
   const isOrderRequestPreview = query?.orderPreview === "1";
   const orderConfirmHref = buildOrderConfirmHref(template.slug, query);
+  const previewMapUrl = query?.mapUrl?.trim() ? cleanPreviewMapUrl(query.mapUrl) : isOrderRequestPreview ? "" : "https://maps.google.com/?q=Royal+Hall+Beheira";
 
   const invitation: Invitation = {
     id: `preview-${template.slug}`,
@@ -198,7 +211,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     weddingTime: cleanPreviewText(query?.weddingTime, "07:00 مساءً"),
     venue: cleanPreviewText(query?.venue, "قاعة رويال"),
     city: cleanPreviewText(query?.city, "البحيرة"),
-    mapUrl: cleanPreviewText(query?.mapUrl, "https://maps.google.com/?q=Royal+Hall+Beheira"),
+    mapUrl: previewMapUrl,
     heroPhoto: previewGallery[0] || fallbackGallery[0],
     heroVideoUrl: previewHeroVideoUrl || undefined,
     gallery: previewGallery.length ? previewGallery : fallbackGallery,
