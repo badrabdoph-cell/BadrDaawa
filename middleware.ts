@@ -7,6 +7,7 @@ import { getRedirectUrl } from "@/lib/utils";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isUnsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+  const isClientInvitationsPath = pathname === "/client-invitations" || pathname.startsWith("/client-invitations/");
 
   if ((pathname.startsWith("/api/admin") || pathname.startsWith("/api/client")) && isUnsafeMethod && !isSameOriginRequest(request)) {
     return addSecurityHeaders(NextResponse.json({ error: "تم رفض الطلب بسبب مصدر غير موثوق." }, { status: 403 }));
@@ -23,7 +24,17 @@ export async function middleware(request: NextRequest) {
     const session = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
     if (!(await verifyAdminSessionCookie(session))) {
       const url = getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin);
-      url.searchParams.set("next", pathname);
+      url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+      return addSecurityHeaders(NextResponse.redirect(url));
+    }
+  }
+
+  if (isClientInvitationsPath) {
+    const session = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+    if (!(await verifyAdminSessionCookie(session))) {
+      const url = getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin);
+      url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+      url.searchParams.set("scope", "client-invitations");
       return addSecurityHeaders(NextResponse.redirect(url));
     }
   }
@@ -49,5 +60,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/api/client/:path*", "/:code/ad_3399", "/:code/ad_3399/:path*"],
+  matcher: ["/admin/:path*", "/client-invitations", "/client-invitations/:path*", "/api/admin/:path*", "/api/client/:path*", "/:code/ad_3399", "/:code/ad_3399/:path*"],
 };

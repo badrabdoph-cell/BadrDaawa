@@ -19,7 +19,7 @@ export function LoginPanel({
 }) {
   return (
     <main className="login-page">
-      <section className="login-shell-grid" aria-label="تسجيل الدخول">
+      <section className="login-shell-grid" aria-label="تسجيل الدخول" data-no-scroll-animation>
         <div className="login-side">
           <span className="login-orb">
             <ShieldCheck size={26} />

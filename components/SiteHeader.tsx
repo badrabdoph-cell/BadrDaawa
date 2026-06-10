@@ -6,9 +6,6 @@ import { getWhatsAppOrderUrl } from "@/lib/utils";
 const navLinks = [
   { href: "/templates", label: "القالب" },
   { href: "/client-invitations", label: "دعوات العميل" },
-  { href: "/pricing", label: "الأسعار" },
-  { href: "/faq", label: "الأسئلة" },
-  { href: "/contact", label: "تواصل" },
 ];
 
 export async function SiteHeader() {

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
-import { getDynamicPages } from "@/lib/dynamic-pages";
+import { getDynamicPages, isReservedDynamicPageSlug } from "@/lib/dynamic-pages";
 import { getFileInvitations } from "@/lib/file-store";
 import { getSiteUrl } from "@/lib/utils";
 
@@ -13,10 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: absoluteUrl("/templates"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: absoluteUrl("/pricing"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/order"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: absoluteUrl("/contact"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: absoluteUrl("/faq"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/privacy-policy"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: absoluteUrl("/terms"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: absoluteUrl("/refund-policy"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
@@ -25,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [dynamicPages, fileInvitations] = await Promise.all([getDynamicPages().catch(() => []), getFileInvitations().catch(() => [])]);
   for (const page of dynamicPages) {
-    if (!page.isPublished) continue;
+    if (!page.isPublished || isReservedDynamicPageSlug(page.slug)) continue;
     routes.push({
       url: absoluteUrl(`/${page.slug}`),
       lastModified: new Date(page.updatedAt),

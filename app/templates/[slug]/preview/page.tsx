@@ -10,7 +10,7 @@ import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
-import type { Invitation } from "@/lib/types";
+import type { CoupleStoryItem, Invitation } from "@/lib/types";
 
 type TemplatePreviewSearchParams = {
     silentPreview?: string;
@@ -55,6 +55,41 @@ function cleanPreviewDate(value: string | undefined) {
   const clean = value?.trim();
   if (!clean || Number.isNaN(Date.parse(clean))) return "2026-10-26";
   return clean;
+}
+
+function formatStoryDate(value: string) {
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[3]} / ${isoMatch[2]} / ${isoMatch[1]}`;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day} / ${month} / ${year}`;
+}
+
+function buildDefaultPreviewStory(weddingDate: string): CoupleStoryItem[] {
+  return [
+    {
+      id: "preview-story-first-meeting",
+      title: "أول مرة شوفنا بعض ❤️",
+      description: "كانت أول مقابلة بيننا في فرح صحبتي ، ومن هنا بدأت الحكاية.",
+      date: "15 / 11 / 2024",
+    },
+    {
+      id: "preview-story-engagement",
+      title: "الخطوبة 💍",
+      description: "اليوم الذي قررنا فيه أن نكمل رحلتنا معاً ونبدأ فصلًا جديداً من حياتنا.",
+      date: "02 / 02 / 2025",
+    },
+    {
+      id: "preview-story-wedding-day",
+      title: "يوم الزفاف 👰🤵",
+      description: "اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً.",
+      date: formatStoryDate(weddingDate),
+    },
+  ];
 }
 
 function cleanPreviewGallery(value: string | undefined) {
@@ -191,12 +226,14 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const fallbackGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
   const locale = resolveLocale(query?.language);
   const localeMeta = getLocaleMeta(locale);
+  const isOrderRequestPreview = query?.orderPreview === "1";
+  const previewWeddingDate = cleanPreviewDate(query?.weddingDate);
   const previewStory = cleanPreviewStory(query?.story);
+  const effectivePreviewStory = previewStory.length || query?.builderPreview === "1" || isOrderRequestPreview ? previewStory : buildDefaultPreviewStory(previewWeddingDate);
   const previewGalleryStories = cleanPreviewGalleryStories(query?.galleryStories);
   const previewGift = cleanPreviewGift(query?.gift);
   const previewOpeningText = cleanPreviewText(query?.openingText, "");
-  const previewTexts = previewOpeningText || previewGalleryStories.length || previewStory.length || Object.values(previewGift).some(Boolean) ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: previewStory, gift: previewGift } : undefined;
-  const isOrderRequestPreview = query?.orderPreview === "1";
+  const previewTexts = previewOpeningText || previewGalleryStories.length || effectivePreviewStory.length || Object.values(previewGift).some(Boolean) ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: effectivePreviewStory, gift: previewGift } : undefined;
   const orderConfirmHref = buildOrderConfirmHref(template.slug, query);
   const previewMapUrl = query?.mapUrl?.trim() ? cleanPreviewMapUrl(query.mapUrl) : isOrderRequestPreview ? "" : "https://maps.google.com/?q=Royal+Hall+Beheira";
 
@@ -207,7 +244,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     language: locale,
     groomName: cleanPreviewText(query?.groomName, "بدر"),
     brideName: cleanPreviewText(query?.brideName, "Sara"),
-    weddingDate: cleanPreviewDate(query?.weddingDate),
+    weddingDate: previewWeddingDate,
     weddingTime: cleanPreviewText(query?.weddingTime, "07:00 مساءً"),
     venue: cleanPreviewText(query?.venue, "قاعة رويال"),
     city: cleanPreviewText(query?.city, "البحيرة"),

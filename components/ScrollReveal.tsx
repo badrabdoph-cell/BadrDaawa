@@ -125,6 +125,11 @@ export function ScrollReveal() {
   useEffect(() => {
     setupNativeErrorSurface();
 
+    if (pathname.startsWith("/admin")) {
+      document.documentElement.classList.add("scroll-animations-disabled");
+      return;
+    }
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       document.documentElement.classList.add("scroll-animations-disabled");
       return;

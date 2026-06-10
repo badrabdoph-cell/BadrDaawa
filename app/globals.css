@@ -11087,6 +11087,73 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   gap: 8px;
 }
 
+.media-cleanup-summary,
+.media-cleanup-actions-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.media-cleanup-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.media-cleanup-summary span,
+.media-cleanup-warning {
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 234, 214, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(245, 234, 214, 0.68);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.media-cleanup-warning strong {
+  color: #f4d676;
+}
+
+.media-cleanup-actions-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.media-cleanup-action-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(245, 234, 214, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.media-cleanup-action-card > div,
+.media-cleanup-action-card form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.media-cleanup-action-card > div svg {
+  flex: 0 0 auto;
+  color: #f4d676;
+}
+
+.media-cleanup-action-card strong {
+  display: block;
+  color: #fff7e8;
+}
+
+.media-cleanup-action-card small,
+.media-cleanup-action-card > span {
+  display: block;
+  color: rgba(245, 234, 214, 0.58);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.media-cleanup-action-card input {
+  min-width: 120px;
+}
+
 .media-library-toolbar {
   display: flex;
   align-items: center;
@@ -11402,6 +11469,11 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
   .media-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .media-cleanup-summary,
+  .media-cleanup-actions-grid {
+    grid-template-columns: 1fr;
   }
 
   .new-invite-live-panel {
@@ -20501,6 +20573,18 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
 .footer-link:hover {
   color: var(--gold);
+}
+
+.footer-support-whatsapp {
+  min-height: 42px;
+  padding-inline: 12px 14px;
+  font-size: 0.88rem;
+  font-weight: 950;
+}
+
+.footer-support-whatsapp span {
+  position: relative;
+  z-index: 1;
 }
 
 .animate-float {

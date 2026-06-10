@@ -4,7 +4,7 @@ import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { createBackupSnapshot } from "./backups";
 import { getSystemHealthSnapshot } from "./system-health";
-import { deleteUnusedMediaFiles, getMediaCleanupReport } from "./media-cleanup";
+import { getMediaCleanupReport } from "./media-cleanup";
 import { ensureRuntimeDirectories, runtimeDataDir } from "./runtime-paths";
 
 export type ScheduledTaskId = "backup" | "media-cleanup" | "logs-cleanup" | "data-health";
@@ -77,8 +77,8 @@ const taskDefinitions: ScheduledTaskDefinition[] = [
   },
   {
     id: "media-cleanup",
-    title: "تنظيف الملفات غير المستخدمة",
-    description: "فحص الوسائط غير المرتبطة بأي سجل وحذفها بعد إنشاء Backup تلقائي.",
+    title: "فحص صيانة التخزين",
+    description: "فحص الوسائط والنسخ الاحتياطية واكتشاف الملفات اليتيمة والمكررة بدون حذف تلقائي.",
     category: "التخزين",
     intervalMs: 7 * 24 * 60 * 60 * 1000,
     defaultAutomaticEnabled: false,
@@ -225,25 +225,17 @@ async function runBackupTask(): Promise<TaskExecutionResult> {
 
 async function runMediaCleanupTask(): Promise<TaskExecutionResult> {
   const report = await getMediaCleanupReport();
-  if (!report.unusedFiles.length) {
-    return {
-      message: "لا توجد ملفات غير مستخدمة تحتاج حذف.",
-      metadata: {
-        totalFiles: report.totalFiles,
-        unusedFiles: 0,
-        unusedSizeBytes: 0,
-      },
-    };
-  }
-
-  const result = await deleteUnusedMediaFiles();
   return {
-    message: `تم حذف ${result.deletedFiles.length} ملف غير مستخدم.`,
+    message: report.recoverableSizeBytes
+      ? `الفحص اكتشف ${report.orphanFiles.length} ملف يتيم و ${report.duplicateFiles.length} ملف مكرر.`
+      : "فحص التخزين لم يجد عناصر تحتاج تنظيف.",
     metadata: {
-      deletedFiles: result.deletedFiles.length,
-      skippedFiles: result.skippedFiles.length,
-      deletedSizeBytes: result.deletedSizeBytes,
-      backupFileName: result.backupFileName,
+      totalFiles: report.totalFiles,
+      orphanFiles: report.orphanFiles.length,
+      duplicateFiles: report.duplicateFiles.length,
+      unusedMusicFiles: report.unusedMusicFiles.length,
+      oldBackupFiles: report.oldBackupFiles.length,
+      recoverableSizeBytes: report.recoverableSizeBytes,
     },
   };
 }

@@ -1,6 +1,6 @@
-import { AlertTriangle, CheckCircle2, DatabaseBackup, FileAudio, FileImage, Filter, HardDrive, ImageOff, Search, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CopyCheck, DatabaseBackup, FileAudio, FileImage, Filter, HardDrive, ImageOff, Music2, RotateCw, Search, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
-import { getMediaCleanupReport, type MediaFileReportItem, type MediaKind } from "@/lib/media-cleanup";
+import { getMediaCleanupReport, type MediaCleanupReport, type MediaFileReportItem, type MediaKind, type StorageCleanupAction } from "@/lib/media-cleanup";
 import { formatArabicNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,7 @@ type MediaPageParams = {
   backup?: string;
   mediaSaved?: string;
   mediaError?: string;
+  cleanupAction?: StorageCleanupAction;
 };
 
 function formatBytes(value: number) {
@@ -27,6 +28,8 @@ function sourceLabel(source: string) {
   if (source === "Invitation") return "دعوة";
   if (source === "Order") return "طلب";
   if (source === "Template") return "قالب";
+  if (source === "MusicLibrary") return "مكتبة الموسيقى";
+  if (source === "RuntimeData") return "بيانات التشغيل";
   return "إعدادات";
 }
 
@@ -36,8 +39,60 @@ function errorMessage(value?: string) {
   if (value === "extension") return "يجب أن يكون الملف البديل بنفس الامتداد حتى لا تنكسر الروابط الحالية.";
   if (value === "file") return "اختار ملفاً صالحاً للاستبدال.";
   if (value === "missing") return "لم يتم العثور على الملف.";
+  if (value === "confirm") return "اكتب كلمة تنظيف في خانة التأكيد قبل تنفيذ أي حذف.";
   return "تعذر تنفيذ العملية.";
 }
+
+const cleanupActions: Array<{ action: StorageCleanupAction; title: string; description: string; icon: typeof ImageOff; getCount: (report: MediaCleanupReport) => number; getSize: (report: MediaCleanupReport) => number }> = [
+  {
+    action: "orphans",
+    title: "تنظيف الملفات اليتيمة",
+    description: "ملفات داخل uploads لا تشير إليها الدعوات أو الطلبات أو القوالب أو الإعدادات أو مكتبة الموسيقى.",
+    icon: ImageOff,
+    getCount: (report) => report.orphanFiles.length,
+    getSize: (report) => report.orphanFiles.reduce((sum, file) => sum + file.sizeBytes, 0),
+  },
+  {
+    action: "duplicates",
+    title: "تنظيف الملفات المكررة",
+    description: "نسخ لها نفس المحتوى بالهاش، مع حذف النسخ غير المستخدمة فقط.",
+    icon: CopyCheck,
+    getCount: (report) => report.duplicateFiles.length,
+    getSize: (report) => report.duplicateSizeBytes,
+  },
+  {
+    action: "original-images",
+    title: "تنظيف الصور الأصلية غير المستخدمة",
+    description: "صور كبيرة بصيغ أصلية لم يعد لها أي مرجع فعلي داخل النظام.",
+    icon: FileImage,
+    getCount: (report) => report.unusedOriginalImages.length,
+    getSize: (report) => report.unusedOriginalImages.reduce((sum, file) => sum + file.sizeBytes, 0),
+  },
+  {
+    action: "music-unused",
+    title: "تنظيف الموسيقى غير المستخدمة",
+    description: "ملفات صوت غير مرتبطة بأي دعوة أو طلب أو مكتبة موسيقى أو إعداد.",
+    icon: Music2,
+    getCount: (report) => report.unusedMusicFiles.length,
+    getSize: (report) => report.unusedMusicFiles.reduce((sum, file) => sum + file.sizeBytes, 0),
+  },
+  {
+    action: "old-backups",
+    title: "تنظيف النسخ الاحتياطية القديمة",
+    description: "نسخ أقدم من سياسة الاحتفاظ أو مكررة، مع الحفاظ على أحدث نسخ لكل نوع.",
+    icon: DatabaseBackup,
+    getCount: (report) => report.oldBackupFiles.length,
+    getSize: (report) => report.oldBackupFiles.reduce((sum, file) => sum + file.sizeBytes, 0),
+  },
+  {
+    action: "all",
+    title: "تنظيف شامل",
+    description: "تنظيف كل العناصر القابلة للاسترداد بعد إنشاء Backup وإعادة الفحص.",
+    icon: RotateCw,
+    getCount: (report) => report.orphanFiles.length + report.oldBackupFiles.length,
+    getSize: (report) => report.recoverableSizeBytes,
+  },
+];
 
 function filterFiles(files: MediaFileReportItem[], params: MediaPageParams) {
   const query = (params.q || "").trim().toLowerCase();
@@ -94,6 +149,13 @@ function MediaRows({ files }: { files: MediaFileReportItem[] }) {
                 {file.usageDetails.length > 5 ? <small>+ {formatArabicNumber(file.usageDetails.length - 5)} استخدام آخر</small> : null}
               </div>
             ) : null}
+            {file.cleanupReasons.length ? (
+              <div className="media-usage-list">
+                {file.cleanupReasons.map((reason) => (
+                  <small key={reason}>سبب التنظيف: {reason}</small>
+                ))}
+              </div>
+            ) : null}
             <div className="media-library-actions">
               <CopyButton value={file.url} label="نسخ الرابط" className="btn btn-soft" />
               <form action="/api/admin/media/file" method="post" encType="multipart/form-data" className="media-replace-form">
@@ -122,6 +184,32 @@ function MediaRows({ files }: { files: MediaFileReportItem[] }) {
   );
 }
 
+function CleanupActionCard({ report, actionConfig }: { report: MediaCleanupReport; actionConfig: (typeof cleanupActions)[number] }) {
+  const Icon = actionConfig.icon;
+  const count = actionConfig.getCount(report);
+  const size = actionConfig.getSize(report);
+  return (
+    <article className="media-cleanup-action-card">
+      <div>
+        <Icon size={20} />
+        <div>
+          <strong>{actionConfig.title}</strong>
+          <small>{actionConfig.description}</small>
+        </div>
+      </div>
+      <span>{formatArabicNumber(count)} عنصر · {formatBytes(size)}</span>
+      <form action="/api/admin/media/cleanup" method="post">
+        <input type="hidden" name="cleanupAction" value={actionConfig.action} />
+        <input name="confirmText" placeholder="اكتب تنظيف" aria-label={`تأكيد ${actionConfig.title}`} />
+        <button className="btn btn-soft danger-button" type="submit" disabled={!count}>
+          <Trash2 size={16} />
+          تنفيذ
+        </button>
+      </form>
+    </article>
+  );
+}
+
 export default async function AdminMediaPage({ searchParams }: { searchParams: Promise<MediaPageParams> }) {
   const [params, report] = await Promise.all([searchParams, getMediaCleanupReport()]);
   const deletedCount = Number(params.deleted || 0);
@@ -141,7 +229,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       </div>
 
       {params.backup && params.deleted ? (
-        <div className="notice success"><CheckCircle2 size={18} /> تم حذف {formatArabicNumber(deletedCount)} ملف غير مستخدم بحجم {formatBytes(Number(params.size || 0))}. Backup: {params.backup}</div>
+        <div className="notice success"><CheckCircle2 size={18} /> تم حذف {formatArabicNumber(deletedCount)} عنصر بحجم {formatBytes(Number(params.size || 0))}. Backup: {params.backup}</div>
       ) : null}
       {params.mediaSaved ? (
         <div className="notice success"><CheckCircle2 size={18} /> {params.mediaSaved === "replaced" ? "تم استبدال الملف مع الحفاظ على الرابط." : "تم حذف الملف."} {params.backup ? `Backup: ${params.backup}` : ""}</div>
@@ -152,9 +240,17 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       <section className="media-stats-grid">
         <article className="admin-list-stat"><FileImage size={19} /><span>كل الملفات</span><strong>{formatArabicNumber(report.totalFiles)}</strong></article>
         <article className="admin-list-stat"><HardDrive size={19} /><span>الحجم الكلي</span><strong>{formatBytes(report.totalSizeBytes)}</strong></article>
+        <article className="admin-list-stat good"><ShieldCheck size={19} /><span>مستخدم</span><strong>{formatArabicNumber(report.usedFiles.length)} · {formatBytes(report.usedSizeBytes)}</strong></article>
+        <article className="admin-list-stat danger"><ImageOff size={19} /><span>يتيم</span><strong>{formatArabicNumber(report.orphanFiles.length)} · {formatBytes(report.unusedSizeBytes)}</strong></article>
+        <article className="admin-list-stat danger"><HardDrive size={19} /><span>قابل للاسترداد</span><strong>{formatBytes(report.recoverableSizeBytes)}</strong></article>
+      </section>
+
+      <section className="media-stats-grid">
         <article className="admin-list-stat good"><FileImage size={19} /><span>الصور</span><strong>{formatArabicNumber(report.imageFiles)}</strong></article>
         <article className="admin-list-stat good"><FileAudio size={19} /><span>الصوت</span><strong>{formatArabicNumber(report.audioFiles)}</strong></article>
-        <article className="admin-list-stat danger"><ImageOff size={19} /><span>غير مستخدم</span><strong>{formatArabicNumber(report.unusedFiles.length)} · {formatBytes(report.unusedSizeBytes)}</strong></article>
+        <article className="admin-list-stat"><CopyCheck size={19} /><span>مكرر</span><strong>{formatArabicNumber(report.duplicateFiles.length)} · {formatBytes(report.duplicateSizeBytes)}</strong></article>
+        <article className="admin-list-stat"><DatabaseBackup size={19} /><span>Backups قديمة</span><strong>{formatArabicNumber(report.oldBackupFiles.length)}</strong></article>
+        <article className="admin-list-stat"><Music2 size={19} /><span>موسيقى غير مستخدمة</span><strong>{formatArabicNumber(report.unusedMusicFiles.length)}</strong></article>
       </section>
 
       <section className="panel media-library-toolbar">
@@ -164,12 +260,34 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
           <label><ShieldCheck size={16} /><select name="usage" defaultValue={params.usage || "all"}><option value="all">كل الاستخدامات</option><option value="used">مستخدم</option><option value="unused">غير مستخدم</option></select></label>
           <button className="btn btn-soft" type="submit">تطبيق</button>
         </form>
-        <form action="/api/admin/media/cleanup" method="post">
-          <button className="btn btn-soft danger-button" type="submit" disabled={!report.unusedFiles.length}>
-            <DatabaseBackup size={17} />
-            تنظيف غير المستخدم
-          </button>
-        </form>
+        <a className="btn btn-soft" href="/admin/media?scan=1">
+          <Search size={17} />
+          فحص فقط
+        </a>
+      </section>
+
+      <section className="panel media-cleanup-panel">
+        <div className="admin-card-head">
+          <DatabaseBackup size={22} />
+          <div>
+            <span className="eyebrow">Storage Maintenance</span>
+            <h2>تقرير الصيانة والتنظيف</h2>
+          </div>
+        </div>
+        <div className="media-cleanup-summary">
+          <span>آخر فحص: {new Date(report.generatedAt).toLocaleString("ar-EG-u-nu-latn")}</span>
+          <span>المكرر: {formatArabicNumber(report.duplicateGroups.length)} مجموعة</span>
+          <span>المؤقت القديم: {formatArabicNumber(report.oldTemporaryFiles.length)} ملف</span>
+          <span>النسخ الاحتياطية: {formatArabicNumber(report.backupFiles.length)} نسخة</span>
+        </div>
+        <p className="media-cleanup-warning">
+          قبل أي حذف يتم إنشاء Backup تلقائي ثم إعادة الفحص. اكتب كلمة <strong>تنظيف</strong> داخل الإجراء المطلوب لتأكيد التنفيذ.
+        </p>
+        <div className="media-cleanup-actions-grid">
+          {cleanupActions.map((actionConfig) => (
+            <CleanupActionCard report={report} actionConfig={actionConfig} key={actionConfig.action} />
+          ))}
+        </div>
       </section>
 
       <section className="panel media-cleanup-panel">

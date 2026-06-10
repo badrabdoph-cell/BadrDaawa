@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       videoUrl: currentPreview.videoUrl,
     });
 
-    ["/", "/contact", "/templates", "/pricing", "/faq", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
+    ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
     queueGitHubSync("Site settings updated from admin.", { createSnapshot: true });
 
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);

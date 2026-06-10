@@ -80,9 +80,10 @@ function verifyPassword(password: string) {
 }
 
 function sanitizeAdminNext(value: string) {
-  if (!value.startsWith("/admin")) return "/admin";
-  if (value.startsWith("/admin/login") || value.startsWith("//")) return "/admin";
-  return value;
+  if (value.startsWith("//") || value.startsWith("/admin/login")) return "/admin";
+  if (value.startsWith("/admin")) return value;
+  if (value === "/client-invitations" || value.startsWith("/client-invitations/") || value.startsWith("/client-invitations?")) return value;
+  return "/admin";
 }
 
 function areLocalDevelopmentOrigins(...origins: string[]) {

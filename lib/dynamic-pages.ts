@@ -45,6 +45,8 @@ const reservedDynamicPageSlugs = new Set([
   "api",
   "client",
   "client-invitations",
+  "contact",
+  "faq",
   "manage",
   "order",
   "pricing",
@@ -113,6 +115,11 @@ export function normalizeDynamicPageSlug(value: unknown) {
   return normalizeCustomInvitationSlug(typeof value === "string" ? value : "");
 }
 
+export function isReservedDynamicPageSlug(value: unknown) {
+  const slug = normalizeDynamicPageSlug(value);
+  return !slug || reservedDynamicPageSlugs.has(slug);
+}
+
 export async function validateDynamicPageSlug(slugValue: unknown, currentId = "") {
   const slug = normalizeDynamicPageSlug(slugValue);
   if (!slug) return { slug: "", error: "اكتب رابط slug صالحاً بحروف إنجليزية أو أرقام." };
@@ -154,7 +161,7 @@ export async function getDynamicPages() {
 export async function getDynamicPageBySlug(slugValue: string, options: { includeHidden?: boolean } = {}) {
   noStore();
   const slug = normalizeDynamicPageSlug(slugValue);
-  if (!slug) return null;
+  if (!slug || reservedDynamicPageSlugs.has(slug)) return null;
   if (prisma) {
     try {
       const page = await prisma.dynamicPage.findUnique({ where: { slug } });

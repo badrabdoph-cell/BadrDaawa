@@ -229,8 +229,6 @@ export async function createBackupSnapshot(type = "manual") {
       .catch((error: any) => console.error("[Backup] Failed to record backup job", error));
   }
 
-  await cleanupOldBackups();
-
   return toBackupSummary(fileName, Buffer.byteLength(json), createdAt.toISOString(), database ? "database" : "files", Object.keys(dataFiles).length + uploads.length);
 }
 
