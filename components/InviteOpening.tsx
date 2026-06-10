@@ -68,11 +68,11 @@ export function InviteOpening({ groomName, brideName, coverImage, weddingDateLab
     <section
       className={`invite-opening cinematic-opening ${phase === "leaving" ? "is-leaving" : ""}`}
       aria-label={t("invitation.openingLabel")}
-      onAnimationEnd={() => {
-        if (phase === "leaving") finishOpening();
+      onAnimationEnd={(event) => {
+        if (event.currentTarget === event.target && phase === "leaving") finishOpening();
       }}
-      onTransitionEnd={() => {
-        if (phase === "leaving") finishOpening();
+      onTransitionEnd={(event) => {
+        if (event.currentTarget === event.target && phase === "leaving") finishOpening();
       }}
     >
       <div className="cinematic-opening-media" aria-hidden="true">
@@ -98,10 +98,8 @@ export function InviteOpening({ groomName, brideName, coverImage, weddingDateLab
         {openingText ? <p>{openingText}</p> : null}
         <button
           type="button"
+          onPointerDown={openInvitation}
           onClick={openInvitation}
-          onPointerUp={(event) => {
-            if (event.pointerType !== "mouse") openInvitation();
-          }}
         >
           {t("invitation.openingButton")}
         </button>
