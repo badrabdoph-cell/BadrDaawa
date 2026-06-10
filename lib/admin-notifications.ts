@@ -318,6 +318,12 @@ export async function getAdminNotifications(options: { includeHidden?: boolean }
   return summarize(merged, options.includeHidden);
 }
 
+export async function getAdminNotificationSnapshot(options: { includeHidden?: boolean } = {}) {
+  noStore();
+  const current = await readStore();
+  return summarize(current.notifications, options.includeHidden);
+}
+
 export async function updateAdminNotificationState(action: AdminNotificationAction, id?: string) {
   const current = await getAdminNotifications({ includeHidden: true });
   const now = new Date().toISOString();

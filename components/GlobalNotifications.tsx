@@ -186,6 +186,32 @@ function shortUrl(url: string) {
   }
 }
 
+function isAdminRequest(url: string) {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.pathname.startsWith("/api/admin") || parsed.pathname.startsWith("/api/auth/admin");
+  } catch {
+    return url.startsWith("/api/admin") || url.startsWith("/api/auth/admin");
+  }
+}
+
+function isMutatingMethod(method: string) {
+  return !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
+}
+
+function getAdminRequestLabel(url: string) {
+  const path = shortUrl(url).split("?")[0];
+  if (path.includes("/notification-center")) return "تحديث التنبيه";
+  if (path.includes("/orders")) return "تحديث الطلب";
+  if (path.includes("/invitations")) return "تحديث الدعوة";
+  if (path.includes("/templates")) return "تحديث القالب";
+  if (path.includes("/music")) return "تحديث الموسيقى";
+  if (path.includes("/media")) return "تحديث الوسائط";
+  if (path.includes("/sync")) return "المزامنة";
+  if (path.includes("/logout")) return "تسجيل الخروج";
+  return "الإجراء";
+}
+
 function isAdminPath(pathname = typeof window === "undefined" ? "" : window.location.pathname) {
   return pathname.startsWith("/admin");
 }
@@ -395,6 +421,18 @@ export function GlobalNotifications() {
 
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const meta = getFetchMeta(input, init);
+      const isAdminMutation = isAdminPath() && isAdminRequest(meta.url) && isMutatingMethod(meta.method) && !meta.url.includes("/api/errors");
+      const actionLabel = getAdminRequestLabel(meta.url);
+
+      if (isAdminMutation) {
+        addNotification({
+          type: "info",
+          title: "جاري التنفيذ",
+          message: `${actionLabel} قيد التنفيذ الآن...`,
+          duration: 1800,
+          signature: `admin-fetch-start:${meta.method}:${shortUrl(meta.url)}:${Date.now().toString().slice(0, -3)}`,
+        });
+      }
 
       try {
         const response = await previousFetch.call(window, input, init);
@@ -438,6 +476,25 @@ export function GlobalNotifications() {
             });
             void code;
           }
+
+          if (isAdminPath() && isAdminRequest(meta.url) && !meta.url.includes("/api/errors")) {
+            addNotification({
+              type: "error",
+              title: "فشل تنفيذ الإجراء",
+              message: `${actionLabel} لم يكتمل. كود الاستجابة ${response.status}.`,
+              details: report,
+              duration: 7000,
+              signature: `admin-fetch-error:${meta.method}:${meta.url}:${response.status}`,
+            });
+          }
+        } else if (isAdminMutation) {
+          addNotification({
+            type: "success",
+            title: "تم التنفيذ",
+            message: `${actionLabel} تم بنجاح.`,
+            duration: 3000,
+            signature: `admin-fetch-success:${meta.method}:${shortUrl(meta.url)}:${Date.now().toString().slice(0, -3)}`,
+          });
         }
 
         return response;
@@ -455,6 +512,16 @@ export function GlobalNotifications() {
             source: "fetch.network",
           });
           void code;
+        }
+        if (isAdminPath() && isAdminRequest(meta.url) && !meta.url.includes("/api/errors")) {
+          addNotification({
+            type: "error",
+            title: "تعذر الاتصال",
+            message: `${actionLabel} لم يصل للسيرفر. راجع الاتصال أو أعد المحاولة.`,
+            details: report,
+            duration: 7000,
+            signature: `admin-fetch-network:${meta.method}:${meta.url}`,
+          });
         }
         throw error;
       }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getAdminNotifications, updateAdminNotificationState, type AdminNotificationAction } from "@/lib/admin-notifications";
+import { getAdminNotifications, getAdminNotificationSnapshot, updateAdminNotificationState, type AdminNotificationAction } from "@/lib/admin-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
   }
 
   const includeHidden = request.nextUrl.searchParams.get("includeHidden") === "1";
-  return NextResponse.json(await getAdminNotifications({ includeHidden }));
+  const summaryOnly = request.nextUrl.searchParams.get("summary") === "1";
+  return NextResponse.json(summaryOnly ? await getAdminNotificationSnapshot({ includeHidden }) : await getAdminNotifications({ includeHidden }));
 }
 
 export async function POST(request: NextRequest) {
