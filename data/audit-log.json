@@ -1,5 +1,135 @@
 [
   {
+    "id": "audit-mq89hr2g-h2bp9ihh",
+    "createdAt": "2026-06-10T16:07:05.032Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781107625023",
+      "label": "Order published as invitation: publish-check."
+    },
+    "newValues": {
+      "startedAt": 1781107625032,
+      "status": "skipped",
+      "message": "GitHub sync variables are not configured.",
+      "duration": 0
+    },
+    "metadata": {
+      "reason": "Order published as invitation: publish-check.",
+      "status": "skipped",
+      "retryCount": 0,
+      "logId": null
+    }
+  },
+  {
+    "id": "audit-mq89hr2a-ou9rmebo",
+    "createdAt": "2026-06-10T16:07:05.026Z",
+    "actor": {
+      "type": "admin",
+      "id": "admin",
+      "label": "admin"
+    },
+    "action": "order.publish",
+    "entity": {
+      "type": "Order",
+      "id": "ord_publish_check",
+      "label": "ORD-PUBLISH-CHECK"
+    },
+    "oldValues": {
+      "id": "ord_publish_check",
+      "orderNumber": "ORD-PUBLISH-CHECK",
+      "dedupeKey": "publish-check-dedupe",
+      "groomName": "بدر",
+      "brideName": "سارة",
+      "phone": "01012345678",
+      "weddingDate": "2026-12-31",
+      "venue": "قاعة اختبار",
+      "mapUrl": "",
+      "notes": "اختبار قبول الطلب",
+      "imageUrls": [
+        "/assets/invite/badr-sarah-1.jpeg"
+      ],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "texts": {
+        "openingText": "نورتونا"
+      },
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "status": "new",
+      "publishedInvitationCode": "publish-check",
+      "manageToken": "publish-check-token-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      "submittedAt": "2026-06-10T12:00:00.000Z",
+      "createdAt": "2026-06-10T12:00:00.000Z",
+      "publicUrl": "http://127.0.0.1:3022/publish-check",
+      "adminUrl": "http://127.0.0.1:3022/publish-check/ad_3399"
+    },
+    "newValues": {
+      "id": "ord_publish_check",
+      "orderNumber": "ORD-PUBLISH-CHECK",
+      "dedupeKey": "publish-check-dedupe",
+      "groomName": "بدر",
+      "brideName": "سارة",
+      "phone": "01012345678",
+      "weddingDate": "2026-12-31",
+      "venue": "قاعة اختبار",
+      "mapUrl": "",
+      "notes": "اختبار قبول الطلب",
+      "imageUrls": [
+        "/uploads/client-invitations/invitation-1781107624989-d1147504.webp"
+      ],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "openingText": "نورتونا",
+        "inviteMessage": "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
+        "inviteMessageSecondary": "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "rsvpConfirmedSuccessMessage": "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+        "rsvpDeclinedSuccessMessage": "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+        "galleryStories": [],
+        "story": []
+      },
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "status": "published",
+      "publishedInvitationCode": "publish-check",
+      "manageToken": "publish-check-token-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      "submittedAt": "2026-06-10T12:00:00.000Z",
+      "createdAt": "2026-06-10T12:00:00.000Z",
+      "publicUrl": "http://127.0.0.1:3022/publish-check",
+      "adminUrl": "http://127.0.0.1:3022/manage/invitation/publish-check-token-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      "links": {
+        "publicUrl": "http://127.0.0.1:3022/publish-check",
+        "adminUrl": "http://127.0.0.1:3022/manage/invitation/publish-check-token-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+      }
+    },
+    "metadata": {
+      "invitationCode": "publish-check"
+    }
+  },
+  {
     "id": "audit-mq87c7kz-x3v7q60u",
     "createdAt": "2026-06-10T15:06:47.267Z",
     "actor": {

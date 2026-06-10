@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promi
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
+import { maxSafeJsonFileBytes, parseJsonFileIfSafe, readJsonFileIfSafe } from "./json-file-safety";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir } from "./runtime-paths";
 import { listUploadFiles, readUploadFile, writeUploadFile } from "./storage-provider";
 
@@ -34,8 +35,9 @@ type BackupPayload = {
 
 const backupDir = runtimeBackupDir;
 const dataDir = runtimeDataDir;
-const maxUploadFileBytes = 5 * 1024 * 1024;
-const maxUploadsTotalBytes = 40 * 1024 * 1024;
+const maxUploadFileBytes = (Number(process.env.BACKUP_MAX_UPLOAD_FILE_MB) || (process.env.RAILWAY_ENVIRONMENT ? 2 : 5)) * 1024 * 1024;
+const maxUploadsTotalBytes = (Number(process.env.BACKUP_MAX_UPLOADS_TOTAL_MB) || (process.env.RAILWAY_ENVIRONMENT ? 8 : 40)) * 1024 * 1024;
+const maxDataFileSnapshotBytes = maxSafeJsonFileBytes();
 const maxBackupAgeMs = 7 * 24 * 60 * 60 * 1000;
 const maxBackupsPerType = 5;
 
@@ -77,10 +79,17 @@ async function readDataFiles() {
   const output: Record<string, unknown> = {};
 
   for (const file of files) {
+    const filePath = path.join(dataDir, file);
     try {
-      output[file] = JSON.parse(await readFile(path.join(dataDir, file), "utf8"));
+      const parsed = await parseJsonFileIfSafe(filePath, file, maxDataFileSnapshotBytes);
+      if (parsed.skipped) {
+        output[file] = { skipped: true, reason: "oversized-json", sizeBytes: parsed.sizeBytes };
+        continue;
+      }
+      output[file] = parsed.value ?? "";
     } catch {
-      output[file] = await readFile(path.join(dataDir, file), "utf8");
+      const raw = await readJsonFileIfSafe(filePath, file, maxDataFileSnapshotBytes);
+      output[file] = raw.skipped ? { skipped: true, reason: "oversized-json", sizeBytes: raw.sizeBytes } : raw.raw;
     }
   }
 
@@ -259,11 +268,13 @@ export async function listBackupSnapshots() {
         let source: BackupSummary["source"] = "files";
         let items = 0;
         try {
-          const parsed = JSON.parse(await readFile(filePath, "utf8")) as {
+          const safe = await parseJsonFileIfSafe<{
             source?: BackupSummary["source"];
             dataFiles?: Record<string, unknown>;
             uploads?: unknown[];
-          };
+          }>(filePath, entry.name, 512 * 1024);
+          const parsed = safe.value;
+          if (!parsed) throw new Error(safe.skipped ? "oversized-backup" : "invalid-backup");
           source = parsed.source === "database" ? "database" : "files";
           items = Object.keys(parsed.dataFiles || {}).length + (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0);
         } catch {
@@ -289,11 +300,12 @@ export async function getBackupFile(fileName: string) {
 }
 
 async function readBackupPayload(fileName: string): Promise<BackupPayload | null> {
-  const backup = await getBackupFile(fileName);
-  if (!backup) return null;
+  if (!/^[a-z0-9-]+\.json$/i.test(fileName)) return null;
+  const filePath = path.join(backupDir, fileName);
+  if (!filePath.startsWith(backupDir) || !(await exists(filePath))) return null;
 
   try {
-    const parsed = JSON.parse(backup.bytes.toString("utf8")) as unknown;
+    const { value: parsed } = await parseJsonFileIfSafe<unknown>(filePath, fileName, 64 * 1024 * 1024);
     return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as BackupPayload) : null;
   } catch {
     return null;

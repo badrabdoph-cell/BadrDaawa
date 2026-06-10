@@ -1,9 +1,9 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { writeJsonFileAtomic } from "./atomic-file";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { cleanInvitationHeroVideoUrl } from "./invitation-media";
+import { parseJsonFileIfSafe } from "./json-file-safety";
 import { hashPassword } from "./password";
 import { makeNumberedInvitationSlug } from "./slug";
 import type { GuestRsvp, Invitation, OrderRequest } from "./types";
@@ -122,8 +122,8 @@ async function readStore(): Promise<FileStoreData> {
   noStore();
 
   try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<FileStoreData>;
+    const { value: parsed, skipped } = await parseJsonFileIfSafe<Partial<FileStoreData>>(storePath, "runtime-store.json");
+    if (skipped || !parsed) return createEmptyStore();
     return {
       invitations: Array.isArray(parsed.invitations) ? parsed.invitations : [],
       guests: Array.isArray(parsed.guests) ? parsed.guests : [],

@@ -78,7 +78,9 @@ const syncRoots = [
   { absolutePath: path.join(process.cwd(), "data"), repoPath: "data" },
   { absolutePath: runtimeUploadsDir, repoPath: path.join("public", "uploads") },
 ];
-const maxSyncFileBytes = 90 * 1024 * 1024;
+const maxSyncFileBytes = (Number(process.env.GITHUB_SYNC_MAX_FILE_MB) || (process.env.RAILWAY_ENVIRONMENT ? 8 : 25)) * 1024 * 1024;
+const maxSyncTotalBytes = (Number(process.env.GITHUB_SYNC_MAX_TOTAL_MB) || (process.env.RAILWAY_ENVIRONMENT ? 32 : 120)) * 1024 * 1024;
+const includeBackupFiles = process.env.GITHUB_SYNC_INCLUDE_BACKUPS === "true";
 
 // Retry delays in milliseconds: 5s, 15s, 45s
 const retryDelays = [5_000, 15_000, 45_000];
@@ -246,6 +248,7 @@ function toRepoPath(absolutePath: string, root: { absolutePath: string; repoPath
 async function walkFiles(dir: string, root: { absolutePath: string; repoPath: string }): Promise<SyncFile[]> {
   ensureRuntimeDirectories();
   if (!(await exists(dir))) return [];
+  if (!includeBackupFiles && root.repoPath === "data" && path.relative(root.absolutePath, dir).split(path.sep)[0] === "backups") return [];
   const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
     console.error(`[GitHub Sync] Failed to read sync directory: ${dir}`, error);
     return [];
@@ -265,7 +268,10 @@ async function walkFiles(dir: string, root: { absolutePath: string; repoPath: st
       return null;
     });
     if (!fileStat) continue;
-    if (!fileStat.size || fileStat.size > maxSyncFileBytes) continue;
+    if (!fileStat.size || fileStat.size > maxSyncFileBytes) {
+      console.warn(`[GitHub Sync] Skipping oversized file: ${toRepoPath(fullPath, root)} (${fileStat.size} bytes).`);
+      continue;
+    }
     files.push({
       absolutePath: fullPath,
       repoPath: toRepoPath(fullPath, root),
@@ -279,7 +285,18 @@ async function walkFiles(dir: string, root: { absolutePath: string; repoPath: st
 async function collectSyncFiles() {
   ensureRuntimeDirectories();
   const groups = await Promise.all(syncRoots.map((root) => walkFiles(root.absolutePath, root)));
-  return groups.flat().sort((a, b) => a.repoPath.localeCompare(b.repoPath));
+  const files = groups.flat().sort((a, b) => a.repoPath.localeCompare(b.repoPath));
+  const selected: SyncFile[] = [];
+  let totalBytes = 0;
+  for (const file of files) {
+    if (totalBytes + file.size > maxSyncTotalBytes) {
+      console.warn(`[GitHub Sync] Skipping file because sync payload limit was reached: ${file.repoPath} (${file.size} bytes).`);
+      continue;
+    }
+    selected.push(file);
+    totalBytes += file.size;
+  }
+  return selected;
 }
 
 /**
@@ -483,9 +500,11 @@ async function attemptSync(
   const { owner, repo } = config.repo;
   const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
   const headCommit = await githubRequest<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, { method: "GET" }, config.token);
-  const treeItems = (await Promise.all(files.map((file) => createBlob(owner, repo, config.token, file)))).filter(
-    (item): item is NonNullable<typeof item> => Boolean(item),
-  );
+  const treeItems: NonNullable<Awaited<ReturnType<typeof createBlob>>>[] = [];
+  for (const file of files) {
+    const item = await createBlob(owner, repo, config.token, file);
+    if (item) treeItems.push(item);
+  }
   if (!treeItems.length) {
     return {
       startedAt,

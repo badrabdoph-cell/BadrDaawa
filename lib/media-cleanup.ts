@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { getMusicLibrary } from "@/lib/music-library";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
+import { parseJsonFileIfSafe, readJsonFileIfSafe } from "@/lib/json-file-safety";
 import { ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir } from "@/lib/runtime-paths";
 import { deleteUploadFile, listUploadFiles, readUploadFile, storageKeyFromUploadUrl, writeUploadFile } from "@/lib/storage-provider";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
@@ -233,9 +234,12 @@ async function collectSettingsReferences(references: Map<string, MediaUsageDetai
     if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
     const filePath = path.join(runtimeDataDir, entry.name);
     try {
-      collectReferencesFromValue(references, JSON.parse(await readFile(filePath, "utf8")), "RuntimeData", entry.name);
+      const parsed = await parseJsonFileIfSafe(filePath, entry.name);
+      if (parsed.skipped) continue;
+      collectReferencesFromValue(references, parsed.value, "RuntimeData", entry.name);
     } catch {
-      collectReferencesFromValue(references, await readFile(filePath, "utf8"), "RuntimeData", entry.name);
+      const raw = await readJsonFileIfSafe(filePath, entry.name);
+      if (!raw.skipped) collectReferencesFromValue(references, raw.raw, "RuntimeData", entry.name);
     }
   }
 }
