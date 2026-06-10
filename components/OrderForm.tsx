@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { flushSync } from "react-dom";
-import { CalendarDays, Camera, Check, Eye, FileVideo, Gift, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
-import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
-import type { CoupleStoryItem, InvitationGift, TemplateDefinition } from "@/lib/types";
+import { CalendarDays, Camera, Check, Eye, FileVideo, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { normalizeCoupleStory } from "@/lib/invitation-texts";
+import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 
 type FormState = {
@@ -24,8 +24,6 @@ type FormState = {
   openingText: string;
   storyEnabled: boolean;
   story: CoupleStoryItem[];
-  giftEnabled: boolean;
-  gift: InvitationGift;
   musicEnabled: boolean;
   musicChoice: MusicChoice;
   musicUrl: string;
@@ -78,8 +76,6 @@ export type OrderInitialDraft = Pick<
   photographerEnabled: boolean;
   storyEnabled: boolean;
   story: CoupleStoryItem[];
-  giftEnabled: boolean;
-  gift: InvitationGift;
   musicEnabled: boolean;
   musicChoice: MusicChoice;
   imageUrls: string[];
@@ -91,6 +87,24 @@ const orderImageSlots = [
   { title: "الصورة الأولى", hint: "الغلاف" },
   { title: "الصورة الثانية", hint: "تفصيلة" },
   { title: "الصورة الثالثة", hint: "اختيارية" },
+];
+
+const orderStoryExamples = [
+  {
+    date: "مثال: 15 / 11 / 2024",
+    title: "مثال: أول مرة شوفنا بعض ❤️",
+    description: "مثال: كانت أول مقابلة بيننا في فرح صحبتي، ومن هنا بدأت الحكاية.",
+  },
+  {
+    date: "مثال: 02 / 02 / 2025",
+    title: "مثال: الخطوبة 💍",
+    description: "مثال: اليوم الذي قررنا فيه أن نكمل رحلتنا معاً ونبدأ فصلاً جديداً من حياتنا.",
+  },
+  {
+    date: "مثال: تاريخ يوم الزفاف من خانة تاريخ المناسبة",
+    title: "مثال: يوم الزفاف 👰🤵",
+    description: "مثال: اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً.",
+  },
 ];
 
 const acceptedAudioFormats = "audio/mpeg,.mp3";
@@ -232,20 +246,6 @@ function cleanOrderStory(value: unknown) {
 
 function filledOrderStory(value: unknown) {
   return normalizeCoupleStory(cleanOrderStory(value));
-}
-
-function cleanOrderGift(value: unknown): InvitationGift {
-  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-  return {
-    vodafoneCash: typeof raw.vodafoneCash === "string" ? raw.vodafoneCash.trim().slice(0, 80) : "",
-    instapay: typeof raw.instapay === "string" ? raw.instapay.trim().slice(0, 120) : "",
-    bankAccount: typeof raw.bankAccount === "string" ? raw.bankAccount.trim().slice(0, 180) : "",
-    customText: typeof raw.customText === "string" ? raw.customText.trim().slice(0, 500) : "",
-  };
-}
-
-function filledOrderGift(value: unknown) {
-  return normalizeInvitationGift(cleanOrderGift(value));
 }
 
 function parseDraftJson(value: string | null, fallback: unknown) {
@@ -439,8 +439,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     openingText: initialDraft?.openingText || "",
     storyEnabled: Boolean(initialDraft?.storyEnabled || filledOrderStory(initialDraft?.story).length),
     story: cleanOrderStory(initialDraft?.story),
-    giftEnabled: Boolean(initialDraft?.giftEnabled || Object.values(filledOrderGift(initialDraft?.gift)).some(Boolean)),
-    gift: cleanOrderGift(initialDraft?.gift),
     musicEnabled: initialDraft?.musicEnabled ?? true,
     musicChoice: initialDraft?.musicChoice || "default",
     musicUrl: initialDraft?.musicUrl || "",
@@ -519,8 +517,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
       storyEnabled: params.get("storyEnabled") === "1" || undefined,
       story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
-      giftEnabled: params.get("giftEnabled") === "1" || undefined,
-      gift: cleanOrderGift(parseDraftJson(params.get("gift"), {})),
       musicEnabled: params.has("musicEnabled") ? params.get("musicEnabled") === "1" : undefined,
       musicChoice: isOrderMusicChoice(params.get("musicChoice")) ? (params.get("musicChoice") as MusicChoice) : undefined,
       musicUrl: params.get("musicUrl") || undefined,
@@ -555,11 +551,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       params.set("storyEnabled", "1");
       params.set("story", JSON.stringify(story));
     }
-    const gift = filledOrderGift(nextForm.gift);
-    if (nextForm.giftEnabled && Object.values(gift).some(Boolean)) {
-      params.set("giftEnabled", "1");
-      params.set("gift", JSON.stringify(gift));
-    }
     if (typeof nextForm.musicEnabled === "boolean") {
       params.set("musicEnabled", nextForm.musicEnabled ? "1" : "0");
       if (nextForm.musicEnabled) params.set("musicChoice", nextForm.musicChoice || "default");
@@ -591,8 +582,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         photographerEnabled: form.photographerEnabled,
         storyEnabled: form.storyEnabled,
         story: form.story,
-        giftEnabled: form.giftEnabled,
-        gift: form.gift,
         musicEnabled: form.musicEnabled,
         musicChoice: form.musicChoice,
       },
@@ -639,8 +628,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
       storyEnabled: Boolean(draft.storyEnabled || filledOrderStory(draft.story).length),
         story: cleanOrderStory(draft.story),
-        giftEnabled: Boolean(draft.giftEnabled || Object.values(filledOrderGift(draft.gift)).some(Boolean)),
-        gift: cleanOrderGift(draft.gift),
         musicEnabled: typeof draft.musicEnabled === "boolean" ? draft.musicEnabled : current.musicEnabled,
         musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
@@ -755,15 +742,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
       return { ...current, story: nextStory, storyEnabled: nextStory.length ? current.storyEnabled : false };
     });
-    if (message) setMessage("");
-  }
-
-  function updateGiftField(field: keyof InvitationGift, value: string) {
-    setForm((current) => ({
-      ...current,
-      giftEnabled: true,
-      gift: { ...cleanOrderGift(current.gift), [field]: value },
-    }));
     if (message) setMessage("");
   }
 
@@ -1008,8 +986,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     params.set("orderPreview", "1");
     const story = filledOrderStory(values.story);
     if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
-    const gift = filledOrderGift(values.gift);
-    if (values.giftEnabled && Object.values(gift).some(Boolean)) params.set("gift", JSON.stringify(gift));
     applyPhotographerParams(params, values);
     applyMusicParams(params, values, musicUrl);
     return `/templates/${values.templateSlug || form.templateSlug}/preview?${params.toString()}`;
@@ -1191,17 +1167,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     ].join("\n");
   }
 
-  function getGiftNotes(values: Partial<FormState>) {
-    const gift = values.giftEnabled ? filledOrderGift(values.gift) : {};
-    const lines = [
-      gift.vodafoneCash ? `فودافون كاش: ${gift.vodafoneCash}` : "",
-      gift.instapay ? `إنستا باي: ${gift.instapay}` : "",
-      gift.bankAccount ? `حساب بنكي: ${gift.bankAccount}` : "",
-      gift.customText ? `نص مخصص: ${gift.customText}` : "",
-    ].filter(Boolean);
-    return lines.length ? ["هدية العروسين:", ...lines].join("\n") : "";
-  }
-
   async function openPreview() {
     const currentForm = getCurrentFormFromDom();
     if (showValidationErrors(validateOrder(currentForm))) return;
@@ -1260,8 +1225,6 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         photographerEnabled: form.photographerEnabled,
         storyEnabled: form.storyEnabled,
         story: filledOrderStory(form.story),
-        giftEnabled: form.giftEnabled,
-        gift: filledOrderGift(form.gift),
         ...effectiveMusic,
       };
       if (musicUrl) updateField("musicUrl", musicUrl);
@@ -1328,17 +1291,14 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       const photographerNotes = getPhotographerNotes(effectiveForm);
       const clientMusicNotes = getMusicNotes(effectiveForm, effectiveMusic.musicUrl || (orderMusic ? "ملف موسيقى مرفوع مع الطلب" : ""));
       const story = effectiveForm.storyEnabled ? filledOrderStory(effectiveForm.story) : [];
-      const gift = effectiveForm.giftEnabled ? filledOrderGift(effectiveForm.gift) : {};
       const storyNotes = getStoryNotes({ ...effectiveForm, story });
-      const giftNotes = getGiftNotes({ ...effectiveForm, gift });
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...effectiveForm,
           story,
-          gift,
-          notes: [photographerNotes, clientMusicNotes, storyNotes, giftNotes].filter(Boolean).join("\n\n"),
+          notes: [photographerNotes, clientMusicNotes, storyNotes].filter(Boolean).join("\n\n"),
           orderImages,
           orderMusic,
           idempotencyKey: orderSubmitKeyRef.current,
@@ -1352,12 +1312,34 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
         return;
       }
 
-      const data = (await response.json().catch(() => null)) as { whatsappUrl?: string; imageUrls?: string[]; musicUrl?: string } | null;
+      const data = (await response.json().catch(() => null)) as {
+        whatsappUrl?: string;
+        imageUrls?: string[];
+        musicUrl?: string;
+        orderNumber?: string;
+        invitationCode?: string;
+      } | null;
       try {
         window.sessionStorage?.removeItem(orderDraftStorageKey);
       } catch {}
       orderSubmitKeyRef.current = "";
-      window.location.href = data?.whatsappUrl || "https://wa.me/";
+      const whatsappUrl = data?.whatsappUrl || "https://wa.me/";
+      const successParams = new URLSearchParams();
+      if (data?.orderNumber) successParams.set("orderNumber", data.orderNumber);
+      if (data?.invitationCode) successParams.set("invitationCode", data.invitationCode);
+      try {
+        window.sessionStorage?.setItem(
+          "badrdaawa-order-success",
+          JSON.stringify({
+            whatsappUrl,
+            orderNumber: data?.orderNumber || "",
+            invitationCode: data?.invitationCode || "",
+          }),
+        );
+      } catch {
+        successParams.set("whatsappUrl", whatsappUrl);
+      }
+      window.location.href = `/order/success${successParams.size ? `?${successParams.toString()}` : ""}`;
     } catch {
       setState("error");
       setMessage("تعذر إرسال الطلب للخادم. حاول مرة أخرى.");
@@ -1532,84 +1514,52 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
             <div className="order-story-fields">
               <div className="order-story-head">
                 <p>أضفوا محطات رحلتكم، وستظهر كتسلسل زمني راقٍ داخل الدعوة. إذا تركتموها فارغة لن يظهر القسم.</p>
-                <button className="btn btn-soft" type="button" onClick={addStoryItem}>
-                  <Plus size={16} />
-                  إضافة مرحلة
-                </button>
               </div>
               {cleanOrderStory(form.story).length ? (
                 <div className="order-story-list">
-                  {cleanOrderStory(form.story).map((item, index) => (
-                    <article className="order-story-item" key={item.id || index}>
-                      <div className="order-story-item-head">
-                        <strong>مرحلة {index + 1}</strong>
-                        <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <div className="field">
-                        <label htmlFor={`storyDate-${index}`}>التاريخ</label>
-                        <input id={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder="مثلاً: 2022 أو أول لقاء" />
-                      </div>
-                      <div className="field">
-                        <label htmlFor={`storyTitle-${index}`}>العنوان</label>
-                        <input id={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder="أول لقاء" />
-                      </div>
-                      <div className="field full">
-                        <label htmlFor={`storyDescription-${index}`}>الوصف</label>
-                        <textarea
-                          id={`storyDescription-${index}`}
-                          name={`storyDescription-${index}`}
-                          data-order-story-description="true"
-                          data-story-index={index}
-                          rows={3}
-                          value={item.description}
-                          onBeforeInput={(event) => handleStoryDescriptionBeforeInput(index, event)}
-                          onChange={(event) => updateStoryDescription(index, event.target.value)}
-                          placeholder="اكتبوا تفاصيل قصيرة وراقية لهذه المرحلة"
-                        />
-                      </div>
-                    </article>
-                  ))}
+                  {cleanOrderStory(form.story).map((item, index) => {
+                    const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
+                    return (
+                      <article className="order-story-item" key={item.id || index}>
+                        <div className="order-story-item-head">
+                          <strong>مرحلة {index + 1}</strong>
+                          <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <div className="field">
+                          <label htmlFor={`storyDate-${index}`}>التاريخ</label>
+                          <input id={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder={example.date} />
+                        </div>
+                        <div className="field">
+                          <label htmlFor={`storyTitle-${index}`}>العنوان</label>
+                          <input id={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder={example.title} />
+                        </div>
+                        <div className="field full">
+                          <label htmlFor={`storyDescription-${index}`}>الوصف</label>
+                          <textarea
+                            id={`storyDescription-${index}`}
+                            name={`storyDescription-${index}`}
+                            data-order-story-description="true"
+                            data-story-index={index}
+                            rows={3}
+                            value={item.description}
+                            onBeforeInput={(event) => handleStoryDescriptionBeforeInput(index, event)}
+                            onChange={(event) => updateStoryDescription(index, event.target.value)}
+                            placeholder={example.description}
+                          />
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="order-story-empty">لن يظهر قسم قصة العروسين إلا بعد إضافة مرحلة واحدة على الأقل.</p>
               )}
-            </div>
-          ) : null}
-        </section>
-
-        <section className="order-gift-box">
-          <button
-            className={`photographer-toggle-button order-gift-toggle ${form.giftEnabled ? "active" : ""}`}
-            type="button"
-            aria-expanded={form.giftEnabled}
-            onClick={() => updateField("giftEnabled", !form.giftEnabled)}
-          >
-            <Gift size={18} />
-            <span>إضافة بيانات هدية العروسين</span>
-            <strong>{form.giftEnabled ? "إخفاء الهدية" : "إضافة الهدية"}</strong>
-          </button>
-
-          {form.giftEnabled ? (
-            <div className="order-gift-fields">
-              <p>اختياري تمامًا. إذا تركت كل البيانات فارغة لن يظهر القسم داخل الدعوة.</p>
-              <div className="field">
-                <label htmlFor="giftVodafoneCash">رقم فودافون كاش</label>
-                <input id="giftVodafoneCash" dir="ltr" inputMode="tel" value={form.gift.vodafoneCash || ""} onChange={(event) => updateGiftField("vodafoneCash", event.target.value)} placeholder="010..." />
-              </div>
-              <div className="field">
-                <label htmlFor="giftInstapay">إنستا باي</label>
-                <input id="giftInstapay" dir="ltr" value={form.gift.instapay || ""} onChange={(event) => updateGiftField("instapay", event.target.value)} placeholder="username@instapay أو رقم الهاتف" />
-              </div>
-              <div className="field">
-                <label htmlFor="giftBankAccount">حساب بنكي</label>
-                <input id="giftBankAccount" dir="ltr" value={form.gift.bankAccount || ""} onChange={(event) => updateGiftField("bankAccount", event.target.value)} placeholder="اسم البنك / رقم الحساب / IBAN" />
-              </div>
-              <div className="field full">
-                <label htmlFor="giftCustomText">نص مخصص</label>
-                <textarea id="giftCustomText" rows={3} value={form.gift.customText || ""} onChange={(event) => updateGiftField("customText", event.target.value)} placeholder="أي تفاصيل إضافية تريد ظهورها للضيوف" />
-              </div>
+              <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
+                <Plus size={16} />
+                إضافة مرحلة في حياتكم كمان
+              </button>
             </div>
           ) : null}
         </section>

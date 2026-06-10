@@ -8,7 +8,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
-import { normalizeCoupleStory, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
@@ -147,8 +147,7 @@ export async function POST(request: NextRequest) {
   const effectiveMusicChoice: OrderMusicChoice = effectiveMusicEnabled ? parsed.data.musicChoice : "default";
   const openingText = parsed.data.openingText.trim();
   const story = normalizeCoupleStory(parsed.data.story);
-  const gift = normalizeInvitationGift(parsed.data.gift);
-  const texts = openingText || story.length || Object.values(gift).some(Boolean) ? { openingText, story, gift } : undefined;
+  const texts = openingText || story.length ? { openingText, story } : undefined;
   const orderNumber = makeOrderNumber();
   const dedupeSource = parsed.data.idempotencyKey || JSON.stringify({
     groomName: parsed.data.groomName,
@@ -159,7 +158,6 @@ export async function POST(request: NextRequest) {
     templateSlug: selectedTemplate.slug,
     orderImages: parsed.data.orderImages,
     story,
-    gift,
     openingText,
   });
   const dedupeKey = makeDedupeKey(dedupeSource);
@@ -182,9 +180,8 @@ export async function POST(request: NextRequest) {
     ? ["بيانات المصور الفوتوغرافي:", parsed.data.photographerName ? `الاسم: ${parsed.data.photographerName}` : "", photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "", photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
     : "";
   const storyNotes = story.length ? ["قصة العروسين:", ...story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
-  const giftNotes = Object.values(gift).some(Boolean) ? ["هدية العروسين:", gift.vodafoneCash ? `فودافون كاش: ${gift.vodafoneCash}` : "", gift.instapay ? `إنستا باي: ${gift.instapay}` : "", gift.bankAccount ? `حساب بنكي: ${gift.bankAccount}` : "", gift.customText ? `نص مخصص: ${gift.customText}` : ""].filter(Boolean).join("\n") : "";
   const openingNotes = openingText ? `نص الافتتاح السينمائي:\n${openingText}` : "";
-  const notes = [parsed.data.notes, mapNotes, openingNotes, photographerNotes, musicNotes, storyNotes, giftNotes, imageNotes].filter(Boolean).join("\n\n");
+  const notes = [parsed.data.notes, mapNotes, openingNotes, photographerNotes, musicNotes, storyNotes, imageNotes].filter(Boolean).join("\n\n");
   let orderId = "";
   let effectiveOrderNumber = orderNumber;
   let effectiveInvitationCode = reservedInvitationCode;
@@ -383,7 +380,6 @@ export async function POST(request: NextRequest) {
       musicUrl: music.musicUrl,
       texts,
       story,
-      gift,
       photographer,
     },
     metadata: { source: "public-order-form" },

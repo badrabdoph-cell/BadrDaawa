@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, FileVideo, Gift, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, FileVideo, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@/components/AdminInvitationTools";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { defaultInvitationTexts, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { defaultInvitationTexts, normalizeGalleryStories } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import { getPrePublishValidationReport, prePublishStatusLabel, prePublishStatusSymbol } from "@/lib/pre-publish-validation";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts } from "@/lib/types";
@@ -906,21 +906,6 @@ export function AdminNewInvitationWizard({
             <p className="story-editor-empty">لن يظهر القسم داخل الدعوة إلا بعد إضافة محطة واحدة على الأقل.</p>
           )}
         </section>
-        <section className="story-editor full">
-          <div className="story-editor-head">
-            <div>
-              <span><Gift size={16} /> قسم اختياري</span>
-              <strong>هدية العروسين</strong>
-            </div>
-          </div>
-          <div className="story-editor-item">
-            <label className="field"><span>رقم فودافون كاش</span><input dir="ltr" value={draft.invitationTexts.gift.vodafoneCash || ""} onChange={(event) => patch({ invitationTexts: { ...draft.invitationTexts, gift: normalizeInvitationGift({ ...draft.invitationTexts.gift, vodafoneCash: event.target.value }) } })} placeholder="010..." /></label>
-            <label className="field"><span>إنستا باي</span><input dir="ltr" value={draft.invitationTexts.gift.instapay || ""} onChange={(event) => patch({ invitationTexts: { ...draft.invitationTexts, gift: normalizeInvitationGift({ ...draft.invitationTexts.gift, instapay: event.target.value }) } })} placeholder="username@instapay" /></label>
-            <label className="field"><span>حساب بنكي</span><input dir="ltr" value={draft.invitationTexts.gift.bankAccount || ""} onChange={(event) => patch({ invitationTexts: { ...draft.invitationTexts, gift: normalizeInvitationGift({ ...draft.invitationTexts.gift, bankAccount: event.target.value }) } })} placeholder="Bank / Account / IBAN" /></label>
-            <label className="field full"><span>نص مخصص</span><textarea rows={3} value={draft.invitationTexts.gift.customText || ""} onChange={(event) => patch({ invitationTexts: { ...draft.invitationTexts, gift: normalizeInvitationGift({ ...draft.invitationTexts.gift, customText: event.target.value }) } })} placeholder="أي تفاصيل إضافية تظهر داخل قسم الهدية" /></label>
-          </div>
-          <p className="story-editor-empty">إذا كانت كل البيانات فارغة لن يظهر قسم الهدية داخل الدعوة.</p>
-        </section>
       </div>
     );
   }
@@ -937,7 +922,6 @@ export function AdminNewInvitationWizard({
       ["Story Gallery", normalizeGalleryStories(draft.invitationTexts.galleryStories).some((item) => item.title || item.description) ? "مفعلة" : "غير مفعلة"],
       ["الموسيقى", draft.musicEnabled ? (draft.musicChoice === "default" ? "الموسيقى الافتراضية" : draft.musicChoice === "library" ? "من المكتبة" : draft.musicChoice === "upload" ? "ملف MP3 خاص" : draft.musicChoice === "video" ? "مستخرجة من فيديو" : "رابط مباشر") : "بدون موسيقى"],
       ["قصة العروسين", draft.invitationTexts.story.length ? `${draft.invitationTexts.story.length} مرحلة` : "غير مفعلة"],
-      ["هدية العروسين", Object.values(draft.invitationTexts.gift).some(Boolean) ? "مفعلة" : "غير مفعلة"],
       ["المصور", draft.photographerEnabled ? draft.photographerName || "مفعل" : "غير مفعل"],
     ];
     return (

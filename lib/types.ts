@@ -91,7 +91,6 @@ export type InvitationTexts = {
   heroVideoUrl?: string;
   galleryStories?: GalleryStoryItem[];
   story?: CoupleStoryItem[];
-  gift?: InvitationGift;
 };
 
 export type GalleryStoryItem = {
@@ -105,13 +104,6 @@ export type CoupleStoryItem = {
   description: string;
   imageUrl?: string;
   date?: string;
-};
-
-export type InvitationGift = {
-  vodafoneCash?: string;
-  instapay?: string;
-  bankAccount?: string;
-  customText?: string;
 };
 
 export type ContentPresetKind = "opening" | "welcome" | "rsvp";

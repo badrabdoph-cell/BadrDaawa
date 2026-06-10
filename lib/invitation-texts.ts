@@ -1,4 +1,4 @@
-import type { CoupleStoryItem, GalleryStoryItem, InvitationGift, InvitationTexts, Language } from "./types";
+import type { CoupleStoryItem, GalleryStoryItem, InvitationTexts, Language } from "./types";
 
 export const defaultInvitationTexts: Required<InvitationTexts> = {
   groomNameEn: "",
@@ -13,7 +13,6 @@ export const defaultInvitationTexts: Required<InvitationTexts> = {
   heroVideoUrl: "",
   galleryStories: [],
   story: [],
-  gift: {},
 };
 
 export const defaultInvitationTextsByLocale: Record<Language, Required<InvitationTexts>> = {
@@ -31,11 +30,10 @@ export const defaultInvitationTextsByLocale: Record<Language, Required<Invitatio
     heroVideoUrl: "",
     galleryStories: [],
     story: [],
-    gift: {},
   },
 };
 
-const textLimits: Record<Exclude<keyof InvitationTexts, "galleryStories" | "story" | "gift">, number> = {
+const textLimits: Record<Exclude<keyof InvitationTexts, "galleryStories" | "story">, number> = {
   groomNameEn: 120,
   brideNameEn: 120,
   openingText: 180,
@@ -86,17 +84,6 @@ export function normalizeGalleryStories(value: unknown): GalleryStoryItem[] {
   return stories.some((entry) => entry.title || entry.description) ? stories : [];
 }
 
-export function normalizeInvitationGift(value: unknown): InvitationGift {
-  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-  const gift = {
-    vodafoneCash: cleanOptionalText(raw.vodafoneCash, 80),
-    instapay: cleanOptionalText(raw.instapay, 120),
-    bankAccount: cleanOptionalText(raw.bankAccount, 180),
-    customText: cleanOptionalText(raw.customText, 500),
-  };
-  return Object.values(gift).some(Boolean) ? gift : {};
-}
-
 export function normalizeInvitationTexts(value: unknown, language: Language = "ar"): Required<InvitationTexts> {
   const defaults = defaultInvitationTextsByLocale[language] || defaultInvitationTexts;
   const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
@@ -113,6 +100,5 @@ export function normalizeInvitationTexts(value: unknown, language: Language = "a
     heroVideoUrl: cleanOptionalText(raw.heroVideoUrl, textLimits.heroVideoUrl),
     galleryStories: normalizeGalleryStories(raw.galleryStories),
     story: normalizeCoupleStory(raw.story),
-    gift: normalizeInvitationGift(raw.gift),
   };
 }

@@ -74,7 +74,7 @@ export const dictionaries = {
       map: {
         iframeTitle: "خريطة مكان الفرح",
         preview: "معاينة الموقع",
-        ready: "موقعك متزامن مع الخريطة",
+        ready: "موقع الخريطة",
         locating: "بنحدد موقعك الآن",
         actionsLabel: "خيارات فتح خريطة مكان الحفل",
         openGoogle: "فتح Google Maps",
@@ -105,16 +105,6 @@ export const dictionaries = {
         label: "قصة العروسين",
         title: "رحلتنا قبل يوم الفرح",
         itemAlt: "محطة {number} من قصة العروسين",
-      },
-      gift: {
-        label: "هدية العروسين",
-        title: "هدية محبة للعروسين",
-        vodafoneCash: "فودافون كاش",
-        instapay: "إنستا باي",
-        bankAccount: "حساب بنكي",
-        customText: "تفاصيل إضافية",
-        copy: "نسخ",
-        copied: "تم النسخ",
       },
       coupleMessages: {
         kicker: "Couple Messages",
@@ -200,7 +190,7 @@ export const dictionaries = {
       map: {
         iframeTitle: "Wedding venue map",
         preview: "Location preview",
-        ready: "Your location is synced with the map",
+        ready: "Map location",
         locating: "Detecting your location",
         actionsLabel: "Map navigation options",
         openGoogle: "Open Google Maps",
@@ -231,16 +221,6 @@ export const dictionaries = {
         label: "Couple Story",
         title: "Our journey before the wedding day",
         itemAlt: "Story moment {number}",
-      },
-      gift: {
-        label: "Couple Gift",
-        title: "A gift for the couple",
-        vodafoneCash: "Vodafone Cash",
-        instapay: "Instapay",
-        bankAccount: "Bank account",
-        customText: "Additional details",
-        copy: "Copy",
-        copied: "Copied",
       },
       coupleMessages: {
         kicker: "Couple Messages",

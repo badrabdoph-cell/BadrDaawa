@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CheckCircle2, Home, Sparkles } from "lucide-react";
+import { ArrowRight, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
-import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory, normalizeGalleryStories } from "@/lib/invitation-texts";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { CoupleStoryItem, Invitation } from "@/lib/types";
@@ -38,7 +38,6 @@ type TemplatePreviewSearchParams = {
     openingText?: string;
     galleryStories?: string;
     story?: string;
-    gift?: string;
 };
 
 type PageProps = {
@@ -135,15 +134,6 @@ function cleanPreviewGalleryStories(value: string | undefined) {
   }
 }
 
-function cleanPreviewGift(value: string | undefined) {
-  if (!value) return {};
-  try {
-    return normalizeInvitationGift(JSON.parse(value));
-  } catch {
-    return {};
-  }
-}
-
 function buildOrderConfirmHref(templateSlug: string, query?: TemplatePreviewSearchParams) {
   const params = new URLSearchParams();
   params.set("template", templateSlug);
@@ -167,7 +157,6 @@ function buildOrderConfirmHref(templateSlug: string, query?: TemplatePreviewSear
     "musicUrl",
     "openingText",
     "story",
-    "gift",
   ] as const;
 
   copiedKeys.forEach((key) => {
@@ -175,7 +164,6 @@ function buildOrderConfirmHref(templateSlug: string, query?: TemplatePreviewSear
     if (value) params.set(key, value);
   });
   if (query?.story?.trim()) params.set("storyEnabled", "1");
-  if (query?.gift?.trim()) params.set("giftEnabled", "1");
 
   return `/order?${params.toString()}#confirm-order`;
 }
@@ -231,9 +219,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const previewStory = cleanPreviewStory(query?.story);
   const effectivePreviewStory = previewStory.length || query?.builderPreview === "1" || isOrderRequestPreview ? previewStory : buildDefaultPreviewStory(previewWeddingDate);
   const previewGalleryStories = cleanPreviewGalleryStories(query?.galleryStories);
-  const previewGift = cleanPreviewGift(query?.gift);
   const previewOpeningText = cleanPreviewText(query?.openingText, "");
-  const previewTexts = previewOpeningText || previewGalleryStories.length || effectivePreviewStory.length || Object.values(previewGift).some(Boolean) ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: effectivePreviewStory, gift: previewGift } : undefined;
+  const previewTexts = previewOpeningText || previewGalleryStories.length || effectivePreviewStory.length ? { openingText: previewOpeningText, galleryStories: previewGalleryStories, story: effectivePreviewStory } : undefined;
   const orderConfirmHref = buildOrderConfirmHref(template.slug, query);
   const previewMapUrl = query?.mapUrl?.trim() ? cleanPreviewMapUrl(query.mapUrl) : isOrderRequestPreview ? "" : "https://maps.google.com/?q=Royal+Hall+Beheira";
 
@@ -296,8 +283,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
       {!hidePreviewActions ? (
         <nav className={`template-preview-floating-actions ${isOrderRequestPreview ? "template-preview-floating-actions-order" : ""}`} aria-label={isOrderRequestPreview ? "تأكيد الطلب" : "اختيارات القالب"}>
           {isOrderRequestPreview ? (
-            <Link className="template-preview-action template-preview-action-gold" href={orderConfirmHref}>
-              <CheckCircle2 size={18} />
+            <Link className="template-preview-action template-preview-confirm-action" href={orderConfirmHref}>
               تأكيد الطلب
             </Link>
           ) : (

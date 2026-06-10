@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, LocateFixed, MapPin } from "lucide-react";
+import { AlertTriangle, LocateFixed, MapPin, Navigation } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
@@ -42,30 +42,50 @@ function getGoogleSearchUrl(destination: string) {
 }
 
 function getGoogleCoordinatesUrl(coordinates: Coordinates) {
-  return `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
+  return `https://www.google.com/maps/@${coordinates.lat},${coordinates.lng},18z/data=!3m1!1e3`;
 }
 
 function getDirectionsDestination(destination: string, coordinates: Coordinates | null) {
   return coordinates ? `${coordinates.lat},${coordinates.lng}` : destination;
 }
 
-function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null) {
-  if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
-    return mapUrl;
+function withSatelliteMapType(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("google.") && !parsed.hostname.includes("maps.google.")) return url;
+    if (parsed.pathname.includes("/maps/embed/v1/")) {
+      parsed.searchParams.set("maptype", "satellite");
+    } else {
+      parsed.searchParams.set("t", "k");
+    }
+    return parsed.toString();
+  } catch {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}t=k`;
   }
-  if (userCoordinates) {
-    return `https://maps.google.com/maps?saddr=${userCoordinates.lat},${userCoordinates.lng}&daddr=${encodeURIComponent(getDirectionsDestination(destination, coordinates))}&z=14&output=embed`;
-  }
-  if (coordinates) {
-    return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=15&output=embed`;
-  }
-  return `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed`;
 }
 
-function getOpenUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null) {
-  if (userCoordinates) {
+function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null, hasVenueLink: boolean) {
+  if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
+    return withSatelliteMapType(mapUrl);
+  }
+  if (!hasVenueLink && userCoordinates) {
+    return withSatelliteMapType(`https://maps.google.com/maps?q=${userCoordinates.lat},${userCoordinates.lng}&z=17&output=embed`);
+  }
+  if (hasVenueLink && userCoordinates) {
+    return withSatelliteMapType(`https://maps.google.com/maps?saddr=${userCoordinates.lat},${userCoordinates.lng}&daddr=${encodeURIComponent(getDirectionsDestination(destination, coordinates))}&z=14&output=embed`);
+  }
+  if (coordinates) {
+    return withSatelliteMapType(`https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=17&output=embed`);
+  }
+  return withSatelliteMapType(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=16&output=embed`);
+}
+
+function getOpenUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null, hasVenueLink: boolean) {
+  if (hasVenueLink && userCoordinates) {
     return `https://www.google.com/maps/dir/?api=1&origin=${userCoordinates.lat},${userCoordinates.lng}&destination=${encodeURIComponent(getDirectionsDestination(destination, coordinates))}`;
   }
+  if (!hasVenueLink && userCoordinates) return getGoogleCoordinatesUrl(userCoordinates);
   if (coordinates) return getGoogleCoordinatesUrl(coordinates);
   if (mapUrl && !mapUrl.includes("/maps/embed") && !mapUrl.includes("output=embed")) return mapUrl;
   return getGoogleSearchUrl(destination);
@@ -77,8 +97,8 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
   const hasVenueLink = Boolean(mapUrl.trim());
   const destination = getSearchDestination(venue, city);
   const coordinates = useMemo(() => extractCoordinates(mapUrl), [mapUrl]);
-  const mapEmbed = useMemo(() => getEmbedUrl(mapUrl, destination, coordinates, userCoordinates), [coordinates, destination, mapUrl, userCoordinates]);
-  const openUrl = useMemo(() => getOpenUrl(mapUrl, destination, coordinates, userCoordinates), [coordinates, destination, mapUrl, userCoordinates]);
+  const mapEmbed = useMemo(() => getEmbedUrl(mapUrl, destination, coordinates, userCoordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl, userCoordinates]);
+  const openUrl = useMemo(() => getOpenUrl(mapUrl, destination, coordinates, userCoordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl, userCoordinates]);
 
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
@@ -123,6 +143,10 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
           <span>{t("invitation.map.ready")}</span>
         </div>
       ) : null}
+      <a className="map-directions" href={openUrl} target="_blank" rel="noreferrer" aria-label={t("invitation.map.openGoogle")}>
+        <Navigation size={18} />
+        <span>{t("invitation.map.openGoogle")}</span>
+      </a>
       <a className="map-open-layer" href={openUrl} target="_blank" rel="noreferrer" aria-label={t("invitation.map.openGoogle")} />
     </div>
   );

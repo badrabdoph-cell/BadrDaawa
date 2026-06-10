@@ -1,5 +1,72 @@
 [
   {
+    "id": "audit-mq87c7kz-x3v7q60u",
+    "createdAt": "2026-06-10T15:06:47.267Z",
+    "actor": {
+      "type": "system",
+      "label": "GitHub Sync Queue"
+    },
+    "action": "github.sync",
+    "entity": {
+      "type": "GitHubSync",
+      "id": "sync-1-1781104007263",
+      "label": "Order request created: ord_mq87c7ku_9kvef."
+    },
+    "newValues": {
+      "startedAt": 1781104007267,
+      "status": "skipped",
+      "message": "GitHub sync variables are not configured.",
+      "duration": 0
+    },
+    "metadata": {
+      "reason": "Order request created: ord_mq87c7ku_9kvef.",
+      "status": "skipped",
+      "retryCount": 0,
+      "logId": null
+    }
+  },
+  {
+    "id": "audit-mq87c7kv-3t2vub1n",
+    "createdAt": "2026-06-10T15:06:47.263Z",
+    "actor": {
+      "type": "public",
+      "label": "اختبار كودكس"
+    },
+    "action": "order.create",
+    "entity": {
+      "type": "Order",
+      "id": "ord_mq87c7ku_9kvef",
+      "label": "ORD-MQ87C7KS-6787"
+    },
+    "newValues": {
+      "orderId": "ord_mq87c7ku_9kvef",
+      "orderNumber": "ORD-MQ87C7KS-6787",
+      "invitationCode": "wedding-invitation-1",
+      "manageToken": "20ATCYoxJ5UmJ4-yHFRzNQtvCZzOTcikIYwjO0uy4ZYwullD18PI7pZX3qUZFs7x",
+      "groomName": "اختبار كودكس",
+      "brideName": "تجربة النجاح",
+      "phone": "",
+      "weddingDate": "2026-12-31",
+      "venue": "قاعة اختبار محلي",
+      "mapUrl": "",
+      "templateSlug": "featured-1",
+      "imageUrls": [],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "story": [],
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      }
+    },
+    "metadata": {
+      "source": "public-order-form"
+    }
+  },
+  {
     "id": "audit-mq5vhwbb-ygm32ml3",
     "createdAt": "2026-06-08T23:59:44.855Z",
     "actor": {

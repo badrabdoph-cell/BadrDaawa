@@ -9,13 +9,6 @@ const coupleStoryItemSchema = z.object({
   description: z.string().trim().max(700).optional().default(""),
 });
 
-const invitationGiftSchema = z.object({
-  vodafoneCash: z.string().trim().max(80).optional().default(""),
-  instapay: z.string().trim().max(120).optional().default(""),
-  bankAccount: z.string().trim().max(180).optional().default(""),
-  customText: z.string().trim().max(500).optional().default(""),
-});
-
 export const orderRequestSchema = z.object({
   groomName: z.string().trim().min(2),
   brideName: z.string().trim().min(2),
@@ -31,7 +24,6 @@ export const orderRequestSchema = z.object({
   photographerInstagramUrl: z.string().trim().max(500).optional().default(""),
   openingText: z.string().trim().max(180).optional().default(""),
   story: z.array(coupleStoryItemSchema).optional().default([]),
-  gift: invitationGiftSchema.optional().default({ vodafoneCash: "", instapay: "", bankAccount: "", customText: "" }),
   musicEnabled: z.boolean().optional().default(false),
   musicChoice: z.enum(["default", "library", "upload", "video", "url"]).optional().default("default"),
   musicUrl: z.string().trim().max(500).optional().default(""),

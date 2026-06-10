@@ -8,7 +8,6 @@ import { InviteOpening } from "./InviteOpening";
 import { InviteMap } from "./InviteMap";
 import { InviteMusic } from "./InviteMusic";
 import { InvitePoll } from "./InvitePoll";
-import { InviteGift } from "./InviteGift";
 import { InviteGallery, InviteGalleryStoryProvider } from "./InviteGallery";
 import { InviteParallax } from "./InviteParallax";
 import { InviteScrollAnimations } from "./InviteScrollAnimations";
@@ -140,7 +139,6 @@ function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
   return (
     <>
       <CoupleStoryTimeline story={getInvitationTexts(invitation).story} locale={invitation.language} />
-      <InviteGift gift={getInvitationTexts(invitation).gift} locale={invitation.language} />
       <AddToCalendar invitation={invitation} isPreview={isPreview} />
       {invitation.checkInEnabled === false ? null : <InviteCheckIn code={invitation.code} isPreview={isPreview} locale={invitation.language} />}
       <GuestBook code={invitation.code} isPreview={isPreview} locale={invitation.language} />
@@ -478,7 +476,6 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     rsvpDeclinedSuccessMessage: texts.rsvpDeclinedSuccessMessage,
     galleryStories: JSON.stringify(texts.galleryStories),
     story: JSON.stringify(texts.story),
-    gift: JSON.stringify(texts.gift),
     heroPhoto: imageSet.hero,
     gallery1: images[0] || "",
     gallery2: images[1] || images[0] || "",
@@ -490,7 +487,7 @@ function injectCustomTemplateData(html: string, invitation: Invitation, musicUrl
     output = output.replaceAll(`{{${key}}}`, escapeHtml(String(value)));
   });
 
-  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, galleryStories: texts.galleryStories, story: texts.story, gift: texts.gift, gallery: images }).replace(/</g, "\\u003c")};</script>`;
+  const bridge = `<script>window.BADR_INVITE=${JSON.stringify({ ...data, galleryStories: texts.galleryStories, story: texts.story, gallery: images }).replace(/</g, "\\u003c")};</script>`;
   const scrollAnimations = getCustomTemplateScrollAnimations();
   return output.includes("</body>") ? output.replace("</body>", `${bridge}${scrollAnimations}</body>`) : `${output}${bridge}${scrollAnimations}`;
 }

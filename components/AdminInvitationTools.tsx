@@ -1,11 +1,11 @@
 "use client";
 
 import type { MutableRefObject } from "react";
-import { FileVideo, Gift, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import { uploadBrowserPreviewImage, type BrowserImageUploadOptions } from "@/lib/browser-image-upload";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { normalizeCoupleStory, normalizeGalleryStories, normalizeInvitationGift } from "@/lib/invitation-texts";
+import { normalizeCoupleStory, normalizeGalleryStories } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts, TemplateDefinition } from "@/lib/types";
 
@@ -176,16 +176,12 @@ export function AdminInvitationTools({
 }) {
   const story = normalizeCoupleStory(values.invitationTexts.story);
   const galleryStories = unifiedImageSlots.map((_, index) => normalizeGalleryStories(values.invitationTexts.galleryStories)[index] || { title: "", description: "" });
-  const gift = normalizeInvitationGift(values.invitationTexts.gift);
   const updateGalleryStory = (index: number, patch: Partial<GalleryStoryItem>) => {
     const nextStories = galleryStories.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item));
     onPatch({ invitationTexts: { ...values.invitationTexts, galleryStories: normalizeGalleryStories(nextStories) } });
   };
   const updateStory = (nextStory: CoupleStoryItem[]) => {
     onPatch({ invitationTexts: { ...values.invitationTexts, story: normalizeCoupleStory(nextStory) } });
-  };
-  const updateGift = (field: keyof NonNullable<InvitationTexts["gift"]>, value: string) => {
-    onPatch({ invitationTexts: { ...values.invitationTexts, gift: normalizeInvitationGift({ ...gift, [field]: value }) } });
   };
 
   return (
@@ -407,32 +403,6 @@ export function AdminInvitationTools({
           ) : (
             <p className="story-editor-empty">لن يظهر قسم قصة العروسين داخل الدعوة إلا بعد إضافة مرحلة واحدة على الأقل.</p>
           )}
-        </div>
-      </div>
-
-      <div className={sectionClassName}>
-        <div className="builder-section-head">
-          <Gift size={18} />
-          <strong>هدية العروسين</strong>
-        </div>
-        <div className={gridClassName}>
-          <label className="field">
-            <span>رقم فودافون كاش</span>
-            <input dir="ltr" value={gift.vodafoneCash || ""} onChange={(event) => updateGift("vodafoneCash", event.target.value)} placeholder="010..." />
-          </label>
-          <label className="field">
-            <span>إنستا باي</span>
-            <input dir="ltr" value={gift.instapay || ""} onChange={(event) => updateGift("instapay", event.target.value)} placeholder="username@instapay" />
-          </label>
-          <label className="field">
-            <span>حساب بنكي</span>
-            <input dir="ltr" value={gift.bankAccount || ""} onChange={(event) => updateGift("bankAccount", event.target.value)} placeholder="Bank / Account / IBAN" />
-          </label>
-          <label className="field wide">
-            <span>نص مخصص</span>
-            <textarea rows={3} value={gift.customText || ""} onChange={(event) => updateGift("customText", event.target.value)} placeholder="أي تفاصيل إضافية تظهر داخل قسم الهدية" />
-            <small>إذا كانت كل البيانات فارغة لن يظهر قسم الهدية داخل الدعوة.</small>
-          </label>
         </div>
       </div>
 
