@@ -216,6 +216,7 @@ export function AdminOrderRequestsManager({
   const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles)));
   const [busy, setBusy] = useState<"idle" | "review" | "update" | "publish" | "reject">("idle");
   const [busyOrderId, setBusyOrderId] = useState("");
+  const [actionFeedback, setActionFeedback] = useState<Record<string, { kind: "pending" | "success" | "error"; text: string }>>({});
   const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
   const imageInputs = useRef<Array<HTMLInputElement | null>>([]);
@@ -367,17 +368,21 @@ export function AdminOrderRequestsManager({
     const validationError = validateAdminInvitationTools({ ...toolValuesFromForm(state), ...effectiveMusic });
     if (validationError) {
       setSelectedId(order.id);
+      setActionFeedback((current) => ({ ...current, [order.id]: { kind: "error", text: validationError } }));
       setNotice({ kind: "error", text: validationError });
       return;
     }
     if (action === "reject" && !state.rejectionReason.trim()) {
       setSelectedId(order.id);
+      setActionFeedback((current) => ({ ...current, [order.id]: { kind: "error", text: "اكتب سبب الرفض أولاً." } }));
       setNotice({ kind: "error", text: "اكتب سبب الرفض قبل تغيير حالة الطلب إلى مرفوض." });
       return;
     }
     setSelectedId(order.id);
     setBusy(action);
     setBusyOrderId(order.id);
+    const pendingText = action === "publish" ? "جاري الموافقة والنشر..." : action === "reject" ? "جاري رفض الطلب..." : "جاري الحفظ...";
+    setActionFeedback((current) => ({ ...current, [order.id]: { kind: "pending", text: pendingText } }));
     setNotice({ kind: "success", text: action === "publish" ? "جاري الموافقة ونشر الدعوة..." : action === "reject" ? "جاري رفض الطلب..." : "جاري حفظ التعديلات..." });
     try {
       const response = await fetch(`/api/admin/orders/${order.id}`, {
@@ -387,19 +392,25 @@ export function AdminOrderRequestsManager({
       });
       const data = (await response.json().catch(() => null)) as { order?: OrderRequest; error?: string; publicUrl?: string; adminUrl?: string } | null;
       if (!response.ok || !data?.order) {
-        setNotice({ kind: "error", text: data?.error || "تعذر تنفيذ الإجراء. راجع البيانات أو حاول مرة أخرى." });
+        const text = data?.error || "تعذر تنفيذ الإجراء. راجع البيانات أو حاول مرة أخرى.";
+        setActionFeedback((current) => ({ ...current, [order.id]: { kind: "error", text } }));
+        setNotice({ kind: "error", text });
         return;
       }
       setItems((current) => current.map((item) => (item.id === order.id ? data.order! : item)));
       setSelectedId(data.order.id);
       window.dispatchEvent(new Event("admin-orders-count-refresh"));
       if (data.publicUrl && data.adminUrl) setLinks({ publicUrl: data.publicUrl, adminUrl: data.adminUrl });
+      const successText = action === "publish" ? "تم النشر بنجاح" : action === "reject" ? "تم الرفض" : "تم الحفظ";
+      setActionFeedback((current) => ({ ...current, [order.id]: { kind: "success", text: successText } }));
       setNotice({
         kind: "success",
         text: action === "publish" ? "تمت الموافقة ونشر الدعوة وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
       });
     } catch {
-      setNotice({ kind: "error", text: "تعذر الاتصال بالخادم. تحقق من الاتصال أو سجل الدخول مرة أخرى ثم حاول." });
+      const text = "تعذر الاتصال بالخادم. تحقق من الاتصال أو سجل الدخول مرة أخرى ثم حاول.";
+      setActionFeedback((current) => ({ ...current, [order.id]: { kind: "error", text } }));
+      setNotice({ kind: "error", text });
     } finally {
       setBusy("idle");
       setBusyOrderId("");
@@ -523,6 +534,7 @@ export function AdminOrderRequestsManager({
             const active = selectedOrder?.id === order.id;
             const isFinal = ["published", "converted", "rejected"].includes(order.status);
             const isPublishingThisOrder = busy === "publish" && busyOrderId === order.id;
+            const feedback = actionFeedback[order.id];
             return (
               <article className={active ? "orders-queue-item active" : "orders-queue-item"} key={order.id}>
                 <button className="orders-queue-select" type="button" onClick={() => selectOrder(order)} aria-label={`فتح ${orderTitle(order, index)}`}>
@@ -534,6 +546,12 @@ export function AdminOrderRequestsManager({
                   {isPublishingThisOrder ? <Loader2 size={15} /> : <Send size={15} />}
                   موافقة ونشر
                 </button>
+                {feedback ? (
+                  <div className={`orders-queue-feedback ${feedback.kind}`} role="status" aria-live="polite">
+                    {feedback.kind === "success" ? <CheckCircle2 size={15} /> : feedback.kind === "error" ? <XCircle size={15} /> : <Loader2 size={15} />}
+                    <span>{feedback.text}</span>
+                  </div>
+                ) : null}
               </article>
             );
           })}

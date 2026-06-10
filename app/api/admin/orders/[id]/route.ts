@@ -658,8 +658,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
       revalidatePath(getCustomerAdminPath(code));
       revalidatePath(await getInvitationManagePath(code));
       queueGitHubSync(`Order published as invitation: ${code}.`, { createSnapshot: true });
-      const order = await getSnapshot(id, request);
       const links = await responseLinks(request, code);
+      const order =
+        (await getSnapshot(id, request)) ||
+        ({
+          ...(oldValues || {}),
+          id,
+          status: "published",
+          publishedInvitationCode: code,
+          publicUrl: links.publicUrl,
+          adminUrl: links.adminUrl,
+        } as AdminOrderSnapshot);
       await recordAuditLog({
         actor: await getAuditActorFromAdminRequest(request),
         action: "order.publish",

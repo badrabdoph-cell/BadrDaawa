@@ -7953,6 +7953,41 @@ img {
   z-index: 1;
 }
 
+.orders-queue-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 7px 9px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(245, 234, 214, 0.72);
+  font-size: 0.78rem;
+  font-weight: 950;
+  line-height: 1.35;
+}
+
+.orders-queue-feedback svg {
+  flex: 0 0 auto;
+}
+
+.orders-queue-feedback.pending svg {
+  animation: notification-spin 900ms linear infinite;
+}
+
+.orders-queue-feedback.success {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(52, 211, 153, 0.12);
+  color: #bff5d0;
+}
+
+.orders-queue-feedback.error {
+  border-color: rgba(255, 182, 174, 0.24);
+  background: rgba(135, 56, 56, 0.16);
+  color: #ffc0bd;
+}
+
 @keyframes orders-quick-publish-shine {
   0%,
   46% {
