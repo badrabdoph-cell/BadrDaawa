@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getInvitationByCode } from "@/lib/invitation-data";
-import { createGuestBookMessage, getApprovedGuestBookMessages, getCoupleMessagesSettings } from "@/lib/guest-book";
+import { createGuestBookMessage, getApprovedGuestBookMessages, getCoupleMessagesSettings, GuestBookStorageError } from "@/lib/guest-book";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
@@ -64,7 +64,13 @@ export async function POST(request: Request, context: RouteContext) {
     name,
     message,
     status: settings.mode === "auto" ? "approved" : "pending",
+  }).catch((error) => {
+    if (error instanceof GuestBookStorageError) return "storage-error" as const;
+    throw error;
   });
+  if (saved === "storage-error") {
+    return NextResponse.json({ error: "تعذر حفظ الرسالة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
+  }
   if (!saved) {
     return NextResponse.json({ error: "اكتب الاسم ورسالة واضحة للعروسين." }, { status: 400 });
   }

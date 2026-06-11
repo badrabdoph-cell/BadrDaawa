@@ -5,42 +5,68 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, UsersRound, X } from "lucide-react";
 
-const adminLinks = [
-  { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
-  { href: "/admin/search", label: "البحث العام", icon: Search },
-  { href: "/admin/favorites", label: "المفضلة", icon: Star },
-  { href: "/admin/notifications", label: "التنبيهات", icon: Bell, badgeKey: "notifications" },
-  { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
-  { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
-  { href: "/admin/invitations", label: "الدعوات", icon: Archive },
-  { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
-  { href: "/admin/check-ins", label: "الوصول الفعلي", icon: MapPinCheckInside },
-  { href: "/admin/guest-book", label: "رسائل للعروسين", icon: MessageCircleHeart },
-  { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
-  { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
-  { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
-  { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
-  { href: "/admin/templates", label: "القوالب", icon: Palette },
-  { href: "/admin/live-mode", label: "وضع الحفل", icon: RadioTower },
-  { href: "/admin/music", label: "الموسيقى", icon: Music2 },
-  { href: "/admin/media", label: "الوسائط", icon: FileImage },
-  { href: "/admin/broadcast", label: "شاشة بث الموقع", icon: RadioTower },
-  { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
-  { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
-  { href: "/admin/customers", label: "العملاء", icon: UsersRound },
-  { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
-  { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
-  { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
-  { href: "/admin/errors", label: "الأخطاء", icon: Bug },
-  { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
-  { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
-  { href: "/admin/audit-log", label: "سجل التدقيق", icon: ScrollText },
-  { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
-  { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
-  { href: "/admin/sync-history", label: "سجل المزامنة", icon: Github },
-  { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },
+const adminNavGroups = [
+  {
+    title: "إدارة الدعوات",
+    links: [
+      { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
+      { href: "/admin/invitations", label: "الدعوات", icon: Archive },
+      { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
+      { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
+    ],
+  },
+  {
+    title: "إدارة العملاء",
+    links: [
+      { href: "/admin/customers", label: "العملاء", icon: UsersRound },
+      { href: "/admin/messages", label: "رسائل العرسان", icon: MessageSquareText, badgeKey: "messages" },
+      { href: "/admin/guest-book", label: "رسائل للعروسين", icon: MessageCircleHeart },
+      { href: "/admin/favorites", label: "المفضلة", icon: Star },
+    ],
+  },
+  {
+    title: "إدارة الحدث",
+    links: [
+      { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
+      { href: "/admin/check-ins", label: "الوصول للفعاليات", icon: MapPinCheckInside },
+      { href: "/admin/live-mode", label: "البث المباشر", icon: RadioTower },
+      { href: "/admin/broadcast", label: "شاشة بث الموقع", icon: RadioTower },
+      { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
+    ],
+  },
+  {
+    title: "إدارة المحتوى",
+    links: [
+      { href: "/admin/music", label: "الموسيقى", icon: Music2 },
+      { href: "/admin/templates", label: "القوالب", icon: Palette },
+      { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
+      { href: "/admin/media", label: "الوسائط", icon: FileImage },
+      { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
+      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
+      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
+      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
+    ],
+  },
+  {
+    title: "النظام",
+    links: [
+      { href: "/admin/settings", label: "الإعدادات", icon: Settings },
+      { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
+      { href: "/admin/audit-log", label: "السجل", icon: ScrollText },
+      { href: "/admin/search", label: "البحث العام", icon: Search },
+      { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
+      { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+      { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
+      { href: "/admin/errors", label: "الأخطاء", icon: Bug },
+      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
+      { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
+      { href: "/admin/sync-history", label: "سجل المزامنة", icon: Github },
+      { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },
+    ],
+  },
 ];
 
+const adminLinks = adminNavGroups.flatMap((group) => group.links);
 const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications"]);
 const mobilePrimaryLinks = adminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
 const mobileMoreLinks = adminLinks.filter((link) => !mobilePrimaryHrefs.has(link.href));
@@ -292,18 +318,25 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <nav className="dashboard-nav" aria-label="لوحة الإدارة">
-            {adminLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = activeLink.href === link.href;
-              return (
-                <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
-                  <Icon size={18} />
-                  <span>{link.label}</span>
-                  {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
-                </Link>
-              );
-            })}
+          <nav className="dashboard-nav grouped" aria-label="لوحة الإدارة">
+            {adminNavGroups.map((group) => (
+              <section className="dashboard-nav-group" key={group.title} aria-label={group.title}>
+                <h2 className="dashboard-nav-heading">{group.title}</h2>
+                <div className="dashboard-nav-group-links">
+                  {group.links.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = activeLink.href === link.href;
+                    return (
+                      <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
+                        <Icon size={18} />
+                        <span>{link.label}</span>
+                        {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </nav>
         </div>
 

@@ -16,6 +16,13 @@ type CoupleMessagesSettingsStore = {
 export type GuestBookAction = "approve" | "reject" | "delete";
 export type CoupleMessagesAdminAction = GuestBookAction | "edit" | "settings";
 
+export class GuestBookStorageError extends Error {
+  constructor(message = "Failed to save guest book message to PostgreSQL") {
+    super(message);
+    this.name = "GuestBookStorageError";
+  }
+}
+
 const storePath = path.join(process.cwd(), "data", "guest-book.json");
 const settingsPath = path.join(process.cwd(), "data", "couple-messages-settings.json");
 const maxNameLength = 80;
@@ -245,7 +252,7 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
   };
   if (!prisma) {
     console.error("[Guest Book] PostgreSQL is not configured. Refusing guest-book JSON write.");
-    return null;
+    throw new GuestBookStorageError("PostgreSQL is not configured for guest book writes.");
   }
   try {
     const saved = await prisma.guestBookMessage.create({
@@ -260,7 +267,7 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
     return toGuestBookMessage(saved);
   } catch (error) {
     console.error("Failed to save guest book message to PostgreSQL", error);
-    return null;
+    throw new GuestBookStorageError();
   }
 }
 

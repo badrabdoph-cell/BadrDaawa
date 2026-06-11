@@ -12,6 +12,7 @@ type RsvpState = {
 };
 
 export function RsvpForm({ code }: { code: string }) {
+  const apiCode = encodeURIComponent(code);
   const [form, setForm] = useState<RsvpState>({ name: "", phone: "", attendees: 1, status: "confirmed", note: "" });
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -22,7 +23,7 @@ export function RsvpForm({ code }: { code: string }) {
     setMessage("");
 
     try {
-      const response = await fetch(`/api/invitations/${code}/rsvp`, {
+      const response = await fetch(`/api/invitations/${apiCode}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

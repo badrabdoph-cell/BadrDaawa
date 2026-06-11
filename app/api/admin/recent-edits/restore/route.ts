@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   }
 
   revalidateAdminState();
-  queueGitHubSync(`Restored admin snapshot: ${fileName}.`);
+  queueGitHubSync(`Restored admin snapshot: ${fileName}.`, { uploadExistingBackup: true });
   await recordAuditLog({
     actor: await getAuditActorFromAdminRequest(request),
     action: "backup.restore",

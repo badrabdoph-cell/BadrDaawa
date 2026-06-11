@@ -19,7 +19,8 @@ mkdirSync(dir, { recursive: true });
 mkdirSync(join(process.cwd(), "data", "backups"), { recursive: true });
 
 await new Promise((resolve, reject) => {
-  const child = spawn("pg_dump", ["--format=custom", "--compress=9", `--file=${file}`, databaseUrl], {
+  const child = spawn("pg_dump", ["--format=custom", "--compress=9", `--file=${file}`], {
+    env: { ...process.env, PGDATABASE: databaseUrl },
     stdio: "inherit",
   });
   child.on("exit", (code) => {

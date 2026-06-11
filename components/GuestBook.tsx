@@ -24,6 +24,7 @@ function getPreviewMessages(locale: Language): GuestBookMessage[] {
 export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: string; isPreview?: boolean; locale?: Language }) {
   const resolvedLocale = resolveLocale(locale);
   const t = getInvitationTranslator(resolvedLocale);
+  const apiCode = encodeURIComponent(code);
   const [messages, setMessages] = useState<GuestBookMessage[]>(isPreview ? getPreviewMessages(resolvedLocale) : []);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -35,7 +36,7 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
     if (isPreview) return;
     let alive = true;
     async function loadMessages() {
-      const response = await fetch(`/api/invitations/${code}/guest-book`, { cache: "no-store" }).catch(() => null);
+      const response = await fetch(`/api/invitations/${apiCode}/guest-book`, { cache: "no-store" }).catch(() => null);
       if (!alive || !response?.ok) return;
       const data = (await response.json().catch(() => null)) as { messages?: GuestBookMessage[]; settings?: CoupleMessagesSettings } | null;
       setMessages(Array.isArray(data?.messages) ? data.messages : []);
@@ -45,7 +46,7 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
     return () => {
       alive = false;
     };
-  }, [code, isPreview]);
+  }, [apiCode, isPreview]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,7 +62,7 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
     setNotice("");
 
     try {
-      const response = await fetch(`/api/invitations/${code}/guest-book`, {
+      const response = await fetch(`/api/invitations/${apiCode}/guest-book`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: cleanName, message: cleanMessage }),

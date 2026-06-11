@@ -5,6 +5,7 @@ import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages, type PreviewImageInput } from "@/lib/order-preview-images";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -26,6 +27,7 @@ async function getUploadActor(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
   const requestId = `preview-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
   const startedAt = Date.now();
   const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:preview-images"), RATE_LIMIT_CONFIGS.ORDER_IMAGE_UPLOAD);

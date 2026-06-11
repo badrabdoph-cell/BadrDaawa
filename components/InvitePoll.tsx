@@ -46,9 +46,10 @@ export function InvitePoll({
   declinedSuccessMessage?: string;
 }) {
   const t = getInvitationTranslator(resolveLocale(locale));
+  const apiCode = encodeURIComponent(invitation.code);
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const googleCalendarUrl = getGoogleCalendarUrl(invitation, invitationUrl);
-  const icsCalendarUrl = `/api/invitations/${invitation.code}/calendar/ics`;
+  const icsCalendarUrl = `/api/invitations/${apiCode}/calendar/ics`;
   const { start } = getInvitationCalendarRange(invitation);
   const dateLocale = getLocaleMeta(resolveLocale(locale)).dateLocale;
   const eventTime = `${new Intl.DateTimeFormat(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(invitation.weddingDate))} - ${start.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })}`;
@@ -114,7 +115,7 @@ export function InvitePoll({
     setSuccess(null);
 
     try {
-      const response = await fetch(`/api/invitations/${invitation.code}/rsvp`, {
+      const response = await fetch(`/api/invitations/${apiCode}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

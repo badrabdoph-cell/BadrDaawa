@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { createBackupSnapshot } from "./backups";
+import { syncAdminStateToGitHub } from "./github-sync";
 import { getSystemHealthSnapshot } from "./system-health";
 import { getMediaCleanupReport } from "./media-cleanup";
 import { ensureRuntimeDirectories, runtimeDataDir } from "./runtime-paths";
@@ -70,9 +71,9 @@ const taskDefinitions: ScheduledTaskDefinition[] = [
   {
     id: "backup",
     title: "إنشاء Backup",
-    description: "إنشاء نسخة احتياطية من قاعدة البيانات وملفات التشغيل والوسائط.",
+    description: "إنشاء نسخة احتياطية حقيقية من PostgreSQL ورفعها إلى GitHub.",
     category: "الحماية",
-    intervalMs: 24 * 60 * 60 * 1000,
+    intervalMs: 6 * 60 * 60 * 1000,
     defaultAutomaticEnabled: true,
   },
   {
@@ -212,13 +213,16 @@ function isDue(task: ScheduledTaskState) {
 
 async function runBackupTask(): Promise<TaskExecutionResult> {
   const backup = await createBackupSnapshot("scheduled");
+  const sync = await syncAdminStateToGitHub(`Scheduled backup upload: ${backup.fileName}`);
   return {
-    message: `تم إنشاء Backup: ${backup.fileName}`,
+    message: `تم إنشاء Backup: ${backup.fileName} (${sync.status})`,
     metadata: {
       fileName: backup.fileName,
       sizeBytes: backup.sizeBytes,
       items: backup.items,
       source: backup.source,
+      githubStatus: sync.status,
+      githubCommitSha: sync.commitSha || null,
     },
   };
 }
@@ -436,6 +440,7 @@ export async function runDueScheduledTasks() {
 
 export function startInternalTaskScheduler() {
   if (globalScheduler.__badrDaawaTaskSchedulerTimer) return;
+  runDueScheduledTasks().catch((error) => console.error("[Task Scheduler] Initial automatic run failed", error));
   const timer = setInterval(() => {
     runDueScheduledTasks().catch((error) => console.error("[Task Scheduler] Automatic run failed", error));
   }, schedulerIntervalMs);

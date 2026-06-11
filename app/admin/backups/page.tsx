@@ -33,7 +33,7 @@ export default async function BackupsPage({
         <div>
           <span className="eyebrow">Backups</span>
           <h1>النسخ الاحتياطي</h1>
-          <p>نسخ فعلية من بيانات المشروع وملفات الرفع، محفوظة محليًا داخل `data/backups` وقابلة للتحميل.</p>
+          <p>نسخ PostgreSQL حقيقية محفوظة محليًا داخل `data/backups` وترفع تلقائيًا إلى مجلد `backups` في GitHub.</p>
         </div>
         <form action="/api/admin/backups" method="post">
           <button className="btn btn-gold btn-glow" type="submit">
@@ -60,6 +60,8 @@ export default async function BackupsPage({
         <div className="notice danger">اكتب اسم ملف النسخة كما هو قبل الاستعادة.</div>
       ) : params.error === "missing" ? (
         <div className="notice danger">تعذر العثور على ملف النسخة أو قراءته.</div>
+      ) : params.error === "create" ? (
+        <div className="notice danger">فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL و pg_dump.</div>
       ) : null}
 
       <div className="backup-status-grid">
@@ -82,7 +84,7 @@ export default async function BackupsPage({
 
       <div className="backup-sync-note">
         <ShieldCheck size={18} />
-        <span>النسخة تحتوي على ملفات إعدادات `data/*.json`، وملفات الرفع من `public/uploads`، وتصدير قاعدة البيانات عند توفر `DATABASE_URL`.</span>
+        <span>PostgreSQL هو مصدر الحقيقة. ملفات JSON داخل النسخة محفوظة كإعدادات أو طبقة legacy فقط، ويتم الاحتفاظ بآخر 20 نسخة على GitHub.</span>
       </div>
 
       <div className="table-shell">
@@ -105,7 +107,7 @@ export default async function BackupsPage({
                   <td>
                     <span className="backup-file-name">{backup.fileName}</span>
                   </td>
-                  <td>{backup.source === "database" ? "قاعدة البيانات + الملفات" : "ملفات التشغيل"}</td>
+                  <td>{backup.source === "database" ? "PostgreSQL + إعدادات" : "Legacy files"}</td>
                   <td>{backup.items}</td>
                   <td>
                     <span className="status success">{backup.status}</span>

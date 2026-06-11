@@ -23,7 +23,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
-  const backup = await createBackupSnapshot("manual");
-  queueGitHubSync(`Manual backup created: ${backup.fileName}`);
-  return NextResponse.redirect(getRedirectUrl(`/admin/backups?created=${encodeURIComponent(backup.fileName)}`, request.headers, request.nextUrl.origin), 303);
+  try {
+    const backup = await createBackupSnapshot("manual");
+    queueGitHubSync(`Manual backup created: ${backup.fileName}`, { uploadExistingBackup: true });
+    return NextResponse.redirect(getRedirectUrl(`/admin/backups?created=${encodeURIComponent(backup.fileName)}`, request.headers, request.nextUrl.origin), 303);
+  } catch (error) {
+    console.error("[Backup] Manual backup failed", error);
+    return NextResponse.redirect(getRedirectUrl("/admin/backups?error=create", request.headers, request.nextUrl.origin), 303);
+  }
 }

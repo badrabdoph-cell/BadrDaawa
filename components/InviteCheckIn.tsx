@@ -18,6 +18,7 @@ function createVisitorKey(code: string) {
 
 export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code: string; isPreview?: boolean; locale?: Language }) {
   const t = getInvitationTranslator(resolveLocale(locale));
+  const apiCode = encodeURIComponent(code);
   const storageKey = useMemo(() => `badrdaawa-checked-in-${code}`, [code]);
   const [state, setState] = useState<CheckInState>(isPreview ? "idle" : "idle");
   const [checkedIn, setCheckedIn] = useState(false);
@@ -35,7 +36,7 @@ export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code
 
     try {
       const visitorKey = createVisitorKey(code);
-      const response = await fetch(`/api/invitations/${code}/check-in`, {
+      const response = await fetch(`/api/invitations/${apiCode}/check-in`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visitorKey }),

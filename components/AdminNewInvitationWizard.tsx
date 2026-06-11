@@ -84,6 +84,30 @@ type CropDraft = {
 };
 
 const draftStorageKey = "badrdaawa-admin-new-invitation-draft";
+const adminOrderImageSlots = [
+  { title: "الصورة الأولى", hint: "الغلاف" },
+  { title: "الصورة الثانية", hint: "تفصيلة" },
+  { title: "الصورة الثالثة", hint: "اختيارية" },
+];
+const adminStoryExamples = [
+  {
+    date: "مثال: 15 / 11 / 2024",
+    title: "مثال: أول مرة شوفنا بعض",
+    description: "مثال: كانت أول مقابلة بيننا، ومن هنا بدأت الحكاية.",
+  },
+  {
+    date: "مثال: 02 / 02 / 2025",
+    title: "مثال: الخطوبة",
+    description: "مثال: اليوم الذي قررنا فيه أن نبدأ فصلاً جديداً من حياتنا.",
+  },
+  {
+    date: "مثال: تاريخ يوم الزفاف",
+    title: "مثال: يوم الزفاف",
+    description: "مثال: اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة.",
+  },
+];
+const acceptedAudioFormats = "audio/mpeg,.mp3";
+const acceptedVideoFormats = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
 
 const steps: Array<{ id: StepId; title: string; short: string }> = [
   { id: "template", title: "اختيار القالب", short: "القالب" },
@@ -682,6 +706,376 @@ export function AdminNewInvitationWizard({
     setMessage({ kind: "success", text: "تم بدء دعوة جديدة فارغة." });
   }
 
+  function clearImageSlot(index: number) {
+    setDraft((current) => ({
+      ...current,
+      images: current.images.map((image, imageIndex) => (imageIndex === index ? { ...image, url: "", name: "", loading: false } : image)),
+    }));
+    setMessage(null);
+  }
+
+  function selectMusicChoice(choice: AdminToolMusicChoice | "none") {
+    patch({
+      musicEnabled: choice !== "none",
+      musicChoice: choice === "none" ? "default" : choice,
+      musicUrl: choice === "default" || choice === "none" ? "" : draft.musicUrl,
+      musicLibraryTrackId: "",
+      musicFileName: choice === "default" || choice === "none" ? "" : draft.musicFileName,
+    });
+  }
+
+  function enableOrderStory() {
+    const story = draft.invitationTexts.story.length ? draft.invitationTexts.story : [createStoryItem(), createStoryItem()];
+    patch({ invitationTexts: { ...draft.invitationTexts, story } });
+  }
+
+  function cancelOrderStory() {
+    patch({ invitationTexts: { ...draft.invitationTexts, story: [] } });
+  }
+
+  function renderOrderLikeImages() {
+    return (
+      <section className="order-compact-images" aria-labelledby="admin-order-images-title">
+        <div className="order-compact-section-head">
+          <h2 id="admin-order-images-title">رفع الصور</h2>
+          <p>3 صور فقط، وكل صورة تظهر فوراً في المعاينة الحية.</p>
+        </div>
+        <div className="compact-image-grid admin-order-image-grid">
+          {adminOrderImageSlots.map((slot, index) => {
+            const image = draft.images[index] || { url: "", name: "", loading: false };
+            return (
+              <div className="compact-image-slot" key={slot.title}>
+                <div className="compact-image-preview">
+                  {image.url ? (
+                    <img src={image.url} alt={slot.title} />
+                  ) : (
+                    <span>
+                      <ImagePlus size={22} />
+                      {slot.hint}
+                    </span>
+                  )}
+                </div>
+                <div className="compact-image-meta">
+                  <strong>{slot.title}</strong>
+                  <small>{image.name || slot.hint}</small>
+                </div>
+                <div className={image.loading ? "compact-upload-status uploading" : image.url ? "compact-upload-status saved" : "compact-upload-status"}>
+                  <span>{image.loading ? "جاري حفظ الصورة" : image.url ? "تم حفظ الصورة للمعاينة" : "لم يتم اختيار صورة"}</span>
+                  <strong>{image.loading ? "..." : image.url ? "100%" : "0%"}</strong>
+                </div>
+                <div className="compact-image-actions">
+                  <label>
+                    <UploadCloud size={15} />
+                    {image.url ? "استبدال" : "رفع"}
+                    <input type="file" accept={acceptedImageFormats} onChange={(event) => startImageCrop(index, event.target.files?.[0])} />
+                  </label>
+                  {image.url ? (
+                    <button type="button" onClick={() => clearImageSlot(index)} aria-label={`حذف ${slot.title}`}>
+                      <Trash2 size={15} />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="field-preview">ارفع الصور فقط، وسيتم ترتيبها تلقائياً داخل القالب مثل صفحة طلب الدعوة.</p>
+      </section>
+    );
+  }
+
+  function renderOrderLikeStory() {
+    const storyEnabled = draft.invitationTexts.story.length > 0;
+    return (
+      <section className="order-story-box">
+        <button
+          className={`photographer-toggle-button order-story-toggle ${storyEnabled ? "active" : ""}`}
+          type="button"
+          aria-expanded={storyEnabled}
+          onClick={storyEnabled ? cancelOrderStory : enableOrderStory}
+        >
+          <Heart size={18} />
+          <span>إضافة قصة العروسين داخل الدعوة</span>
+          <strong>{storyEnabled ? "إلغاء القصة" : "إضافة القصة"}</strong>
+        </button>
+
+        {storyEnabled ? (
+          <div className="order-story-fields">
+            <div className="order-story-head">
+              <p>القصة اختيارية، لكن بعد تفعيلها املأ المراحل التي تريد ظهورها داخل الدعوة.</p>
+            </div>
+            <div className="order-story-list">
+              {draft.invitationTexts.story.map((item, index) => {
+                const example = adminStoryExamples[index] || adminStoryExamples[adminStoryExamples.length - 1];
+                return (
+                  <article className="order-story-item" key={item.id || index}>
+                    <div className="order-story-item-head">
+                      <strong>مرحلة {index + 1}</strong>
+                      <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`adminStoryDate-${index}`}>التاريخ</label>
+                      <input id={`adminStoryDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryItem(index, { date: event.target.value })} placeholder={example.date} />
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`adminStoryTitle-${index}`}>العنوان</label>
+                      <input id={`adminStoryTitle-${index}`} value={item.title} onChange={(event) => updateStoryItem(index, { title: event.target.value })} placeholder={example.title} />
+                    </div>
+                    <div className="field full">
+                      <label htmlFor={`adminStoryDescription-${index}`}>الوصف</label>
+                      <textarea id={`adminStoryDescription-${index}`} rows={3} value={item.description} onChange={(event) => updateStoryItem(index, { description: event.target.value })} placeholder={example.description} />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
+              <Plus size={16} />
+              إضافة مرحلة في حياتكم كمان
+            </button>
+          </div>
+        ) : null}
+      </section>
+    );
+  }
+
+  function renderOrderLikeMusic() {
+    return (
+      <section className="order-music-box">
+        <button className={`photographer-toggle-button order-music-toggle ${draft.musicEnabled ? "active" : ""}`} type="button" aria-expanded="true" onClick={() => selectMusicChoice("default")}>
+          <Music2 size={18} />
+          <span>{draft.musicEnabled ? "الأغنية الأساسية مفعلة داخل الدعوة" : "الدعوة حالياً بدون موسيقى"}</span>
+          <strong>تغيير الأغنية الأساسية</strong>
+        </button>
+
+        <div className="order-music-fields">
+          <p className="order-music-note">الموسيقى الأساسية تعمل تلقائياً، ويمكنك استبدالها أو إلغاء الموسيقى من هنا.</p>
+          <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
+            <button className={draft.musicEnabled && draft.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
+              <Music2 size={16} />
+              الموسيقى الأساسية
+            </button>
+            <button className={!draft.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!draft.musicEnabled} onClick={() => selectMusicChoice("none")}>
+              <Music2 size={16} />
+              بدون موسيقى
+            </button>
+            <button className={draft.musicEnabled && draft.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
+              <UploadCloud size={16} />
+              رفع ملف MP3
+            </button>
+            <button className={draft.musicEnabled && draft.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
+              <FileVideo size={16} />
+              استخراج الصوت من فيديو
+            </button>
+            <button className={draft.musicEnabled && draft.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={draft.musicEnabled && draft.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
+              <Link2 size={16} />
+              رابط أغنية
+            </button>
+          </div>
+
+          {draft.musicEnabled ? (
+            <>
+              {draft.musicChoice === "upload" ? (
+                <label className="order-music-upload">
+                  <UploadCloud size={17} />
+                  <span>
+                    <strong>ارفع ملف MP3</strong>
+                    <small>{draft.musicFileName || draft.musicUrl || "mp3"}</small>
+                  </span>
+                  <input type="file" accept={acceptedAudioFormats} onChange={(event) => handleMusicFile(event.target.files?.[0])} />
+                </label>
+              ) : null}
+
+              {draft.musicChoice === "video" ? (
+                <label className="order-music-upload">
+                  {busy === "music" ? <Loader2 size={17} /> : <FileVideo size={17} />}
+                  <span>
+                    <strong>{busy === "music" ? "جاري استخراج الصوت..." : "ارفع فيديو لاستخراج الصوت"}</strong>
+                    <small>{draft.musicFileName || draft.musicUrl || "MP4 / MOV / WEBM"}</small>
+                    <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
+                  </span>
+                  <input type="file" accept={acceptedVideoFormats} disabled={busy === "music"} onChange={(event) => handleMusicVideoFile(event.target.files?.[0])} />
+                </label>
+              ) : null}
+
+              {draft.musicChoice === "url" ? (
+                <div className="field">
+                  <label htmlFor="adminMusicUrl">رابط أغنية مباشر</label>
+                  <input id="adminMusicUrl" dir="ltr" inputMode="url" placeholder="https://example.com/song.mp3" value={draft.musicUrl} onChange={(event) => patch({ musicUrl: event.target.value })} />
+                  <small className="order-music-url-hint">ليس رابط فيديو بل موسيقى فقط</small>
+                </div>
+              ) : null}
+
+              {draft.musicUrl ? <AudioPlayer src={draft.musicUrl} label="معاينة الموسيقى" /> : null}
+            </>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  function renderOrderLikeEditor() {
+    return (
+      <form className="form-panel details-form order-simple-form admin-order-like-form" onSubmit={(event) => { event.preventDefault(); void save("publish"); }} noValidate>
+        <div className="order-template-row field full">
+          <label htmlFor="adminTemplateSlug">
+            <Sparkles size={18} />
+            اختيار القالب
+          </label>
+          <select id="adminTemplateSlug" value={draft.templateSlug} onChange={(event) => patch({ templateSlug: event.target.value })}>
+            {templates.map((template) => (
+              <option key={template.slug} value={template.slug}>
+                {template.arabicName} - {template.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {message ? (
+          <div className={`order-alert ${message.kind === "error" ? "danger" : "success"}`} role="alert">
+            <strong>{message.kind === "error" ? "فيه بيانات محتاجة مراجعة" : "تمام"}</strong>
+            <p>{message.text}</p>
+          </div>
+        ) : null}
+
+        <div className="input-grid order-compact-grid">
+          <div className="field">
+            <label htmlFor="adminLanguage">
+              <Sparkles size={16} />
+              لغة الدعوة
+            </label>
+            <select id="adminLanguage" value={draft.language} onChange={(event) => patch({ language: event.target.value === "en" ? "en" : "ar" })}>
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
+          <div className="field">
+            <label htmlFor="adminGroomName">
+              <UserRound size={16} />
+              اسم العريس
+            </label>
+            <input id="adminGroomName" placeholder="مثال: بدر" value={draft.groomName} onChange={(event) => patch({ groomName: event.target.value })} required />
+          </div>
+
+          <div className="field">
+            <label htmlFor="adminBrideName">
+              <UserRound size={16} />
+              اسم العروسة
+            </label>
+            <input id="adminBrideName" placeholder="مثال: سارة" value={draft.brideName} onChange={(event) => patch({ brideName: event.target.value })} required />
+          </div>
+
+          <div className="field">
+            <label htmlFor="adminWeddingDate">
+              <CalendarDays size={16} />
+              تاريخ المناسبة
+            </label>
+            <input id="adminWeddingDate" type="date" value={draft.weddingDate} onChange={(event) => patch({ weddingDate: event.target.value })} required />
+          </div>
+
+          <div className="field">
+            <label htmlFor="adminVenue">عنوان المناسبة</label>
+            <input id="adminVenue" placeholder="مثال: قاعة رويال - البحيرة" value={draft.venue} onChange={(event) => patch({ venue: event.target.value })} required />
+          </div>
+
+          <div className="field">
+            <label htmlFor="adminMapUrl">
+              <Link2 size={16} />
+              رابط اللوكيشن
+            </label>
+            <input id="adminMapUrl" dir="ltr" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={draft.mapUrl} onChange={(event) => patch({ mapUrl: event.target.value })} />
+            <small className="field-preview">أفضل نتيجة تكون من رابط Google Maps المباشر للقاعة حتى تظهر المعاينة والمسافة بدقة.</small>
+          </div>
+
+          <div className="field full">
+            <label htmlFor="adminOpeningText">نص الافتتاح السينمائي</label>
+            <textarea id="adminOpeningText" rows={2} placeholder="مثال: افتحوا الدعوة وشاركونا أجمل لحظة في عمرنا" value={draft.invitationTexts.openingText} onChange={(event) => updateText("openingText", event.target.value)} />
+            <small className="field-preview">يظهر فوق صورة الغلاف قبل زر فتح الدعوة، واتركه فارغاً لاستخدام النص الافتراضي.</small>
+          </div>
+        </div>
+
+        {renderOrderLikeImages()}
+
+        <section className="order-photographer-box">
+          <button className={`photographer-toggle-button ${draft.photographerEnabled ? "active" : ""}`} type="button" aria-expanded={draft.photographerEnabled} onClick={() => patch({ photographerEnabled: !draft.photographerEnabled })}>
+            <Camera size={18} />
+            <span>هل تريد إضافة بيانات المصور الفوتوغرافي الذي سيوثق يومك؟</span>
+            <strong>{draft.photographerEnabled ? "إخفاء البيانات" : "إضافة بيانات المصور"}</strong>
+          </button>
+
+          {draft.photographerEnabled ? (
+            <div className="photographer-fields">
+              <div className="field">
+                <label htmlFor="adminPhotographerName">اسم المصور الفوتوغرافي</label>
+                <input id="adminPhotographerName" placeholder="اختياري" value={draft.photographerName} onChange={(event) => patch({ photographerName: event.target.value })} />
+              </div>
+              <div className="field">
+                <label htmlFor="adminPhotographerFacebook">رابط Facebook</label>
+                <input id="adminPhotographerFacebook" dir="ltr" inputMode="url" placeholder="https://facebook.com/..." value={draft.photographerFacebookUrl} onChange={(event) => patch({ photographerFacebookUrl: event.target.value })} />
+              </div>
+              <div className="field">
+                <label htmlFor="adminPhotographerInstagram">رابط Instagram</label>
+                <input id="adminPhotographerInstagram" dir="ltr" inputMode="url" placeholder="https://instagram.com/..." value={draft.photographerInstagramUrl} onChange={(event) => patch({ photographerInstagramUrl: event.target.value })} />
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        {renderOrderLikeStory()}
+        {renderOrderLikeMusic()}
+
+        <div className="admin-order-live-summary">
+          <div className="new-invite-complete-ring" style={{ "--complete": `${completion}%` } as CSSProperties}>
+            <strong>{completion}%</strong>
+            <span>اكتمال الدعوة</span>
+          </div>
+          <div className="pre-publish-report" aria-label="تقرير جاهزية الدعوة قبل النشر">
+            <div className="pre-publish-report-head">
+              <div>
+                <strong>تقرير ما قبل النشر</strong>
+                <span>{prePublishReport.canPublish ? "العناصر الأساسية جاهزة للنشر." : "أكمل العناصر الأساسية المفقودة قبل النشر."}</span>
+              </div>
+              <b>{prePublishReport.completed}/{prePublishReport.total}</b>
+            </div>
+            <div className="pre-publish-items compact">
+              {prePublishReport.items.map((item) => (
+                <article className={`pre-publish-item ${item.status}`} key={item.key}>
+                  <span aria-hidden="true">{prePublishStatusSymbol(item.status)}</span>
+                  <div>
+                    <strong>{item.label}</strong>
+                    <small>{item.message}</small>
+                  </div>
+                  <em>{prePublishStatusLabel(item.status)}</em>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {links ? (
+          <div className="builder-links new-invite-links">
+            <div><span>رابط الدعوة</span><strong>{links.publicUrl}</strong><button className="btn btn-soft" type="button" onClick={() => copy(links.publicUrl)}><Copy size={16} /> نسخ</button><a className="btn btn-soft" href={links.publicUrl} target="_blank"><ExternalLink size={16} /> فتح</a></div>
+            <div><span>لوحة العميل</span><strong>{links.adminUrl}</strong><button className="btn btn-soft" type="button" onClick={() => copy(links.adminUrl)}><Copy size={16} /> نسخ</button><a className="btn btn-soft" href={links.adminUrl} target="_blank"><ExternalLink size={16} /> فتح</a></div>
+          </div>
+        ) : null}
+
+        <div className="order-final-actions admin-order-final-actions">
+          <button className="btn btn-soft" type="button" disabled={busy !== "idle"} onClick={() => save("draft")}>
+            {busy === "draft" ? <Loader2 size={18} /> : <Save size={18} />}
+            حفظ كمسودة
+          </button>
+          <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={busy !== "idle" || !prePublishReport.canPublish}>
+            {busy === "publish" ? <Loader2 size={18} /> : <Send size={18} />}
+            نشر الدعوة
+          </button>
+        </div>
+      </form>
+    );
+  }
+
   function renderTemplateStep() {
     return (
       <div className="new-invite-template-grid">
@@ -997,7 +1391,7 @@ export function AdminNewInvitationWizard({
         <div>
           <span className="eyebrow">New Invitation</span>
           <h1>دعوة جديدة</h1>
-          <p>خطوات قصيرة مع معاينة حية. كل تعديل محفوظ محلياً ويمكن استكماله لاحقاً.</p>
+          <p>نفس طريقة طلب الدعوة في الموقع، مع معاينة حية تبث كل تغيير أثناء الإنشاء.</p>
         </div>
         <div className="new-invite-header-actions">
           <span className="new-invite-autosave"><CheckCircle2 size={16} /> {autosaveState}</span>
@@ -1005,35 +1399,9 @@ export function AdminNewInvitationWizard({
         </div>
       </div>
 
-      <div className="new-invite-progress">
-        <div className="new-invite-progress-bar"><span style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }} /></div>
-        <div className="new-invite-step-tabs">
-          {steps.map((step, index) => (
-            <button className={step.id === currentStep ? "active" : index < stepIndex ? "done" : ""} type="button" key={step.id} onClick={() => goToStep(step.id)}>
-              <b>{index + 1}</b>
-              <span>{step.short}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="new-invite-layout">
-        <main className="new-invite-editor-panel">
-          <div className="new-invite-step-head">
-            <span>{stepIndex + 1} / {steps.length}</span>
-            <h2>{steps[stepIndex]?.title}</h2>
-            <strong>{completion}% مكتمل</strong>
-          </div>
-          {message ? <div className={message.kind === "error" ? "notice danger" : "notice success"}>{message.text}</div> : null}
-          {renderCurrentStep()}
-          <div className="new-invite-nav-actions">
-            <button className="btn btn-soft" type="button" onClick={previousStep} disabled={stepIndex === 0}><ArrowRight size={17} /> السابق</button>
-            {currentStep === "publish" ? (
-              <button className="btn btn-gold btn-glow" type="button" onClick={() => save("publish")} disabled={busy !== "idle" || !prePublishReport.canPublish}>{busy === "publish" ? <Loader2 size={17} /> : <Send size={17} />} نشر الآن</button>
-            ) : (
-              <button className="btn btn-gold btn-glow" type="button" onClick={nextStep}>التالي <ArrowLeft size={17} /></button>
-            )}
-          </div>
+      <div className="new-invite-layout admin-order-like-layout">
+        <main className="new-invite-editor-panel admin-order-like-editor">
+          {renderOrderLikeEditor()}
         </main>
 
         <aside className="new-invite-live-panel">

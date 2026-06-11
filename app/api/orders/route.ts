@@ -11,6 +11,7 @@ import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -103,6 +104,7 @@ function buildOrderWhatsAppMessage(input: {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
   const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:create"), RATE_LIMIT_CONFIGS.API_GENERAL);
   if (!rateLimit.allowed) {
     return NextResponse.json(

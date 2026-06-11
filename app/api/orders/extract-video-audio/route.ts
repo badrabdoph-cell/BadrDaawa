@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveExtractedMp3Audio } from "@/lib/audio-files";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 import { extractMp3AudioFromVideo, maxVideoAudioExtractionBytes, validateVideoAudioFile } from "@/lib/video-audio-extraction";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
   const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:extract-video-audio"), RATE_LIMIT_CONFIGS.API_UPLOAD);
   if (!rateLimit.allowed) {
     return NextResponse.json(

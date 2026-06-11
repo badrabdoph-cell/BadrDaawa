@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cleanNewDirectAudioUrl, isBlockedMusicPageUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
+import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
 export const runtime = "nodejs";
 
 const maxMusicRequestBytes = 48 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
   const rateLimit = checkRateLimit(createRateLimitKey(getClientIdentifier(request), "orders:preview-music"), RATE_LIMIT_CONFIGS.API_UPLOAD);
   if (!rateLimit.allowed) {
     return NextResponse.json(

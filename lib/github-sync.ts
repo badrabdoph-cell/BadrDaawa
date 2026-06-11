@@ -36,6 +36,14 @@ type GitHubTree = {
   sha: string;
 };
 
+type GitHubTreeResponse = {
+  tree: Array<{
+    path: string;
+    type: string;
+    sha: string;
+  }>;
+};
+
 type GitHubCreatedCommit = {
   sha: string;
   html_url?: string;
@@ -75,10 +83,12 @@ export type SyncLogEntry = {
 };
 
 const syncRoots = [
-  { absolutePath: runtimeBackupDir, repoPath: path.join("data", "backups") },
+  { absolutePath: runtimeBackupDir, repoPath: (process.env.GITHUB_BACKUP_REPO_PATH || "backups").replace(/^\/+|\/+$/g, "") || "backups" },
 ];
-const maxSyncFileBytes = (Number(process.env.GITHUB_SYNC_MAX_FILE_MB) || (process.env.RAILWAY_ENVIRONMENT ? 8 : 25)) * 1024 * 1024;
-const maxSyncTotalBytes = (Number(process.env.GITHUB_SYNC_MAX_TOTAL_MB) || (process.env.RAILWAY_ENVIRONMENT ? 32 : 120)) * 1024 * 1024;
+const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
+const backupOnChangeMinIntervalMs = (Number(process.env.BACKUP_ON_CHANGE_MIN_MINUTES) || 360) * 60 * 1000;
+const maxSyncFileBytes = (Number(process.env.BACKUP_GITHUB_MAX_FILE_MB || process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
+const maxSyncTotalBytes = (Number(process.env.BACKUP_GITHUB_MAX_TOTAL_MB || process.env.GITHUB_SYNC_MAX_TOTAL_MB) || 180) * 1024 * 1024;
 
 // Retry delays in milliseconds: 5s, 15s, 45s
 const retryDelays = [5_000, 15_000, 45_000];
@@ -361,6 +371,42 @@ async function createBlob(owner: string, repo: string, token: string, file: Sync
   };
 }
 
+function backupTimeFromPath(repoPath: string) {
+  const match = repoPath.match(/(\d{8}T\d{6}Z)/);
+  if (!match) return 0;
+  const value = match[1];
+  const iso = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}Z`;
+  const time = Date.parse(iso);
+  return Number.isFinite(time) ? time : 0;
+}
+
+async function listRemoteBackupFiles(owner: string, repo: string, branch: string, token: string, treeSha: string) {
+  const response = await githubRequest<GitHubTreeResponse>(
+    `/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`,
+    { method: "GET" },
+    token,
+  );
+  const roots = syncRoots.map((root) => `${root.repoPath.replace(/^\/+|\/+$/g, "")}/`);
+  return response.tree.filter((item) => item.type === "blob" && roots.some((root) => item.path.startsWith(root)) && item.path.endsWith(".json"));
+}
+
+function buildRetentionDeletes(remoteFiles: Awaited<ReturnType<typeof listRemoteBackupFiles>>, uploadedPaths: Set<string>) {
+  const allPaths = Array.from(new Set([...remoteFiles.map((file) => file.path), ...uploadedPaths]));
+  const sorted = allPaths.sort((a, b) => {
+    const byTime = backupTimeFromPath(b) - backupTimeFromPath(a);
+    return byTime || b.localeCompare(a);
+  });
+  const keep = new Set(sorted.slice(0, backupRetentionCount));
+  return remoteFiles
+    .filter((file) => !keep.has(file.path) && !uploadedPaths.has(file.path))
+    .map((file) => ({
+      path: file.path,
+      mode: "100644",
+      type: "blob",
+      sha: null,
+    }));
+}
+
 // ─── Database logging helpers ────────────────────────────────────────────────
 
 async function getPrisma() {
@@ -480,8 +526,14 @@ async function attemptSync(
   }
 
   if (options.createSnapshot) {
-    const { createBackupSnapshot } = await import("./backups");
-    await createBackupSnapshot("admin-auto").catch((error) => console.error("Failed to create admin sync backup snapshot", error));
+    const { createBackupSnapshot, listBackupSnapshots } = await import("./backups");
+    const latestBackup = (await listBackupSnapshots())[0];
+    const latestBackupAge = latestBackup ? Date.now() - Date.parse(latestBackup.createdAt) : Number.POSITIVE_INFINITY;
+    if (!latestBackup || latestBackupAge >= backupOnChangeMinIntervalMs) {
+      await createBackupSnapshot("admin-auto");
+    } else {
+      console.log(`[GitHub Backup] Reusing recent backup: ${latestBackup.fileName}`);
+    }
   }
 
   const files = await collectSyncFiles();
@@ -497,6 +549,7 @@ async function attemptSync(
   const { owner, repo } = config.repo;
   const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
   const headCommit = await githubRequest<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, { method: "GET" }, config.token);
+  console.log("[GitHub Backup] GitHub Upload Started");
   const treeItems: NonNullable<Awaited<ReturnType<typeof createBlob>>>[] = [];
   for (const file of files) {
     const item = await createBlob(owner, repo, config.token, file);
@@ -510,13 +563,18 @@ async function attemptSync(
       duration: Date.now() - startedAt,
     };
   }
+  const remoteBackupFiles = await listRemoteBackupFiles(owner, repo, config.branch, config.token, headCommit.tree.sha);
+  const deleteItems = buildRetentionDeletes(remoteBackupFiles, new Set(treeItems.map((item) => item.path)));
+  if (deleteItems.length) {
+    console.log(`[GitHub Backup] Old Backups Deleted: ${deleteItems.length}`);
+  }
   const tree = await githubRequest<GitHubTree>(
     `/repos/${owner}/${repo}/git/trees`,
     {
       method: "POST",
       body: JSON.stringify({
         base_tree: headCommit.tree.sha,
-        tree: treeItems,
+        tree: [...treeItems, ...deleteItems],
       }),
     },
     config.token,
@@ -560,10 +618,10 @@ async function attemptSync(
   return {
     startedAt,
     status: "synced",
-    message: "Admin data synced to GitHub.",
+    message: `Database backup uploaded to GitHub. Retention keeps the latest ${backupRetentionCount} backup(s).`,
     commitUrl: commit.html_url,
     commitSha: commit.sha,
-    files: treeItems.length,
+    files: treeItems.length + deleteItems.length,
     duration: Date.now() - startedAt,
   };
 }
@@ -575,7 +633,7 @@ export async function syncAdminStateToGitHub(
   const logId = options.logId ?? (await createSyncLog({ reason, status: "processing", retryCount: options.retryCount ?? 0 }));
   const ts = () => new Date().toISOString();
 
-  console.log(`[GitHub Sync ${ts()}] Starting: ${reason}`);
+  console.log(`[GitHub Sync ${ts()}] GitHub Upload Started: ${reason}`);
 
   try {
     const result = await attemptSync(reason, options);
@@ -593,7 +651,7 @@ export async function syncAdminStateToGitHub(
       });
     }
 
-    console.log(`[GitHub Sync ${ts()}] Done (${duration}ms): ${result.status} — ${result.message}`);
+    console.log(`[GitHub Sync ${ts()}] GitHub Upload Completed (${duration}ms): ${result.status} — ${result.message}`);
     return result;
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : "Unknown GitHub sync error.";
