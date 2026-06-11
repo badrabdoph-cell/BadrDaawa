@@ -84,6 +84,10 @@ function logPostgresToolAvailability(command) {
   console.log(`[prepare] ${command} is available: ${output || "version detected"}`);
 }
 
+function shouldRunLegacyStartupBackfill() {
+  return process.env.ENABLE_LEGACY_FILE_STORE === "true" || process.env.ENABLE_STARTUP_LEGACY_BACKFILL === "true";
+}
+
 for (const dir of dirs) {
   mkdirSync(dir, { recursive: true });
 }
@@ -122,10 +126,17 @@ if (autoRestoreCompleted) {
   console.log("[prepare] GitHub auto restore completed. Skipping legacy JSON backfills to avoid mixing restored data with stale local files.");
 }
 
+const legacyStartupBackfillEnabled = shouldRunLegacyStartupBackfill();
+if (!legacyStartupBackfillEnabled) {
+  console.log("[prepare] Legacy JSON startup backfills are disabled. Set ENABLE_STARTUP_LEGACY_BACKFILL=true for a one-time controlled migration.");
+}
+
 if (process.env.SKIP_RUNTIME_STORE_BACKFILL === "true") {
   console.log("[prepare] Runtime-store backfill skipped by SKIP_RUNTIME_STORE_BACKFILL=true.");
 } else if (autoRestoreCompleted) {
   console.log("[prepare] Runtime-store backfill skipped after GitHub auto restore.");
+} else if (!legacyStartupBackfillEnabled) {
+  console.log("[prepare] Runtime-store backfill skipped because legacy startup backfills are disabled.");
 } else {
   console.log("[prepare] Backfilling legacy runtime-store data into PostgreSQL.");
   const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-runtime-store-to-postgres.mjs")], {
@@ -143,6 +154,8 @@ if (process.env.SKIP_OPERATIONAL_JSON_BACKFILL === "true") {
   console.log("[prepare] Operational JSON backfill skipped by SKIP_OPERATIONAL_JSON_BACKFILL=true.");
 } else if (autoRestoreCompleted) {
   console.log("[prepare] Operational JSON backfill skipped after GitHub auto restore.");
+} else if (!legacyStartupBackfillEnabled) {
+  console.log("[prepare] Operational JSON backfill skipped because legacy startup backfills are disabled.");
 } else {
   console.log("[prepare] Backfilling operational JSON data into PostgreSQL.");
   const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-operational-json-to-postgres.mjs")], {

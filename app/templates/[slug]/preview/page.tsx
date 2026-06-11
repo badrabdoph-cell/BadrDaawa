@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Home, Sparkles } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
+import { PreviewAutoFocus } from "@/components/PreviewAutoFocus";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
@@ -39,6 +40,7 @@ type TemplatePreviewSearchParams = {
     openingText?: string;
     galleryStories?: string;
     story?: string;
+    previewFocus?: string;
 };
 
 type PageProps = {
@@ -265,6 +267,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           }}
         />
       )}
+      <PreviewAutoFocus focus={query?.previewFocus} />
       {!hidePreviewActions ? (
         <nav className={`template-preview-floating-actions ${isOrderRequestPreview ? "template-preview-floating-actions-order" : ""}`} aria-label={isOrderRequestPreview ? "تأكيد الطلب" : "اختيارات القالب"}>
           {isOrderRequestPreview ? (

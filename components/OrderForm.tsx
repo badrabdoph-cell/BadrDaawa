@@ -516,9 +516,9 @@ export function OrderForm({
   const [musicVideoBusy, setMusicVideoBusy] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const livePreviewFrameRef = useRef<HTMLIFrameElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
@@ -548,6 +548,7 @@ export function OrderForm({
     previewImageUrls,
     form.musicEnabled && (form.musicChoice === "upload" || form.musicChoice === "video" || form.musicChoice === "url") ? form.musicUrl : "",
   );
+  const focusedLivePreviewUrl = `${livePreviewUrl}${livePreviewUrl.includes("?") ? "&" : "?"}embed=1&previewFocus=${activeStep.id}`;
 
   useEffect(() => {
     setActiveStepIndex((current) => {
@@ -607,6 +608,38 @@ export function OrderForm({
     if (isFirstStep) return;
     goToStep(activeStepIndex - 1);
   }
+
+  function scrollLivePreviewToStep(stepId: OrderWizardStepId = activeStep.id) {
+    const frame = livePreviewFrameRef.current;
+    const frameWindow = frame?.contentWindow;
+    const frameDocument = frameWindow?.document;
+    if (!frameWindow || !frameDocument) return;
+
+    const selectorMap: Record<OrderWizardStepId, string[]> = {
+      template: ["main", ".client-invitation-body", ".template-color-scope"],
+      couple: ["h1", "[class*='name']", "[class*='hero']", "[class*='story']"],
+      event: ["[class*='countdown']", "[class*='date']", "time"],
+      venue: ["[class*='map']", ".map-card", "[class*='venue']"],
+      photos: [".interactive-gallery", "[class*='gallery']", "[class*='photo']"],
+      music: ["main", ".client-invitation-body", ".template-color-scope"],
+      story: [".couple-story-timeline", "[class*='timeline']", "article[class*='story']"],
+      photographer: ["[class*='photographer']"],
+      review: ["main", ".client-invitation-body", ".template-color-scope"],
+    };
+
+    const selectors = selectorMap[stepId] || selectorMap.template;
+    const target = selectors.map((selector) => frameDocument.querySelector<HTMLElement>(selector)).find(Boolean);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    frameWindow.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => scrollLivePreviewToStep(activeStep.id), 180);
+    return () => window.clearTimeout(timeoutId);
+  }, [activeStep.id, livePreviewUrl]);
 
   useEffect(() => {
     function handleNativeStoryFieldSpace(event: globalThis.KeyboardEvent) {
@@ -1554,12 +1587,7 @@ export function OrderForm({
         </div>
       ) : null}
 
-      <button className="order-mobile-preview-toggle" type="button" onClick={() => setMobilePreviewOpen((current) => !current)}>
-        <Eye size={17} />
-        <span>{mobilePreviewOpen ? "إخفاء المعاينة" : "عرض المعاينة الحية"}</span>
-      </button>
-
-      <div className={`order-wizard-layout ${mobilePreviewOpen ? "preview-open" : ""}`}>
+      <div className="order-wizard-layout">
         <form className="form-panel details-form order-simple-form order-wizard-card" onSubmit={submitOrder} onInput={persistCurrentDomDraft} onChange={persistCurrentDomDraft} ref={formRef} noValidate>
           <header className="order-wizard-header">
             <div>
@@ -2007,7 +2035,7 @@ export function OrderForm({
           </div>
           <div className="order-phone-mockup" data-preview-target={activeStep.previewTarget}>
             <span className="order-phone-speaker" aria-hidden="true" />
-            <iframe title="معاينة الدعوة الحية" src={livePreviewUrl} loading="lazy" />
+            <iframe ref={livePreviewFrameRef} title="معاينة الدعوة الحية" src={focusedLivePreviewUrl} loading="lazy" onLoad={() => scrollLivePreviewToStep(activeStep.id)} />
           </div>
         </aside>
       </div>
