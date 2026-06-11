@@ -63,10 +63,34 @@ function runPrisma(args, options = {}) {
   }
 }
 
+function logPostgresToolAvailability(command) {
+  const result = spawnSync(command, ["--version"], {
+    cwd: root,
+    encoding: "utf8",
+    env: process.env,
+  });
+
+  const output = `${result.stdout || result.stderr || ""}`.trim();
+  if (result.error) {
+    console.warn(`[prepare] ${command} is not available in PATH. PostgreSQL backup/restore actions that need it will fail: ${result.error.message}`);
+    return;
+  }
+
+  if (result.status !== 0) {
+    console.warn(`[prepare] ${command} --version exited with code ${result.status || 1}${output ? `: ${output}` : ""}`);
+    return;
+  }
+
+  console.log(`[prepare] ${command} is available: ${output || "version detected"}`);
+}
+
 for (const dir of dirs) {
   mkdirSync(dir, { recursive: true });
 }
 console.log(`[prepare] Runtime directories are ready: ${dirs.length}`);
+
+logPostgresToolAvailability("pg_dump");
+logPostgresToolAvailability("pg_restore");
 
 runPrisma(["generate"]);
 
