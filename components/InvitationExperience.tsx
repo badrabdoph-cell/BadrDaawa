@@ -2165,7 +2165,6 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
       <div className="magazine-shell">
         <section className="magazine-cover">
           <h1 className="magazine-name magazine-name-top">{invitation.groomName}</h1>
-          <InviteGallery className="magazine-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
           <h1 className="magazine-name magazine-name-bottom">{invitation.brideName}</h1>
         </section>
 
@@ -2182,6 +2181,8 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
           <div className="magazine-poll-wrap">
             <InvitationPoll invitation={invitation} />
           </div>
+
+          <InviteGallery className="magazine-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
           <section className="magazine-map-card">
             <h2>{invitation.venue}</h2>
