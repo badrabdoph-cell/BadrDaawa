@@ -65,6 +65,33 @@ function getDatabaseUrl() {
   return url.toString();
 }
 
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function postgresToolEnv(urlValue) {
+  const env = { ...process.env };
+  try {
+    const url = new URL(urlValue);
+    if (url.protocol !== "postgresql:" && url.protocol !== "postgres:") return env;
+    env.PGHOST = url.hostname;
+    env.PGPORT = url.port || "5432";
+    env.PGUSER = safeDecode(url.username);
+    env.PGPASSWORD = safeDecode(url.password);
+    env.PGDATABASE = safeDecode(url.pathname.replace(/^\/+/, ""));
+    const sslMode = url.searchParams.get("sslmode");
+    if (sslMode) env.PGSSLMODE = sslMode;
+    env.PGCONNECT_TIMEOUT = env.PGCONNECT_TIMEOUT || "20";
+    return env;
+  } catch {
+    return env;
+  }
+}
+
 function normalizeGitHubToken(value) {
   if (!value) return "";
   let token = String(value).trim().replace(/[\u200B-\u200D\uFEFF\r\n\t ]+/g, "");
@@ -233,7 +260,7 @@ async function runPgRestore(dumpBytes, dumpFileName, databaseUrl) {
           "--exit-on-error",
           dumpPath,
         ],
-        { env: { ...process.env, PGDATABASE: databaseUrl }, stdio: ["ignore", "inherit", "pipe"] },
+        { env: postgresToolEnv(databaseUrl), stdio: ["ignore", "inherit", "pipe"] },
       );
       const stderr = [];
       child.stderr.on("data", (chunk) => stderr.push(chunk));

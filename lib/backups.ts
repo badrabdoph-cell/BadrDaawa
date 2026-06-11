@@ -78,6 +78,33 @@ function toErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error || "Unknown error");
 }
 
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function postgresToolEnv(databaseUrl: string) {
+  const env = { ...process.env };
+  try {
+    const url = new URL(databaseUrl);
+    if (url.protocol !== "postgresql:" && url.protocol !== "postgres:") return env;
+    env.PGHOST = url.hostname;
+    env.PGPORT = url.port || "5432";
+    env.PGUSER = safeDecode(url.username);
+    env.PGPASSWORD = safeDecode(url.password);
+    env.PGDATABASE = safeDecode(url.pathname.replace(/^\/+/, ""));
+    const sslMode = url.searchParams.get("sslmode");
+    if (sslMode) env.PGSSLMODE = sslMode;
+    env.PGCONNECT_TIMEOUT = env.PGCONNECT_TIMEOUT || "20";
+    return env;
+  } catch {
+    return env;
+  }
+}
+
 async function exists(filePath: string) {
   try {
     await stat(filePath);
@@ -210,7 +237,7 @@ async function createPostgresDump(type: string) {
   ];
 
   return await new Promise<NonNullable<BackupPayload["postgresDump"]>>((resolve, reject) => {
-    const child = spawn("pg_dump", args, { env: { ...process.env, PGDATABASE: databaseUrl }, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn("pg_dump", args, { env: postgresToolEnv(databaseUrl), stdio: ["ignore", "pipe", "pipe"] });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
 

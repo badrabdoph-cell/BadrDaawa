@@ -10,6 +10,33 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to create a PostgreSQL backup.");
 }
 
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function postgresToolEnv(urlValue) {
+  const env = { ...process.env };
+  try {
+    const url = new URL(urlValue);
+    if (url.protocol !== "postgresql:" && url.protocol !== "postgres:") return env;
+    env.PGHOST = url.hostname;
+    env.PGPORT = url.port || "5432";
+    env.PGUSER = safeDecode(url.username);
+    env.PGPASSWORD = safeDecode(url.password);
+    env.PGDATABASE = safeDecode(url.pathname.replace(/^\/+/, ""));
+    const sslMode = url.searchParams.get("sslmode");
+    if (sslMode) env.PGSSLMODE = sslMode;
+    env.PGCONNECT_TIMEOUT = env.PGCONNECT_TIMEOUT || "20";
+    return env;
+  } catch {
+    return env;
+  }
+}
+
 const now = new Date();
 const stamp = now.toISOString().replace(/[:.]/g, "-");
 const dir = join(process.cwd(), "backups", type);
@@ -20,7 +47,7 @@ mkdirSync(join(process.cwd(), "data", "backups"), { recursive: true });
 
 await new Promise((resolve, reject) => {
   const child = spawn("pg_dump", ["--format=custom", "--compress=9", `--file=${file}`], {
-    env: { ...process.env, PGDATABASE: databaseUrl },
+    env: postgresToolEnv(databaseUrl),
     stdio: "inherit",
   });
   child.on("exit", (code) => {
