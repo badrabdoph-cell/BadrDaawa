@@ -292,7 +292,11 @@ async function walkFiles(dir: string, root: { absolutePath: string; repoPath: st
 async function collectSyncFiles() {
   ensureRuntimeDirectories();
   const groups = await Promise.all(syncRoots.map((root) => walkFiles(root.absolutePath, root)));
-  const files = groups.flat().sort((a, b) => a.repoPath.localeCompare(b.repoPath));
+  const files = groups
+    .flat()
+    .filter((file) => isTopLevelBackupJson(file.repoPath))
+    .sort((a, b) => backupTimeFromPath(b.repoPath) - backupTimeFromPath(a.repoPath) || b.repoPath.localeCompare(a.repoPath))
+    .slice(0, 1);
   const selected: SyncFile[] = [];
   let totalBytes = 0;
   for (const file of files) {
@@ -380,6 +384,16 @@ function backupTimeFromPath(repoPath: string) {
   return Number.isFinite(time) ? time : 0;
 }
 
+function isTopLevelBackupJson(repoPath: string) {
+  for (const root of syncRoots) {
+    const prefix = `${root.repoPath.replace(/^\/+|\/+$/g, "")}/`;
+    if (!repoPath.startsWith(prefix) || !repoPath.endsWith(".json")) continue;
+    const relativePath = repoPath.slice(prefix.length);
+    return Boolean(relativePath) && !relativePath.includes("/") && backupTimeFromPath(repoPath) > 0;
+  }
+  return false;
+}
+
 async function listRemoteBackupFiles(owner: string, repo: string, branch: string, token: string, treeSha: string) {
   const response = await githubRequest<GitHubTreeResponse>(
     `/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`,
@@ -387,7 +401,7 @@ async function listRemoteBackupFiles(owner: string, repo: string, branch: string
     token,
   );
   const roots = syncRoots.map((root) => `${root.repoPath.replace(/^\/+|\/+$/g, "")}/`);
-  return response.tree.filter((item) => item.type === "blob" && roots.some((root) => item.path.startsWith(root)) && item.path.endsWith(".json"));
+  return response.tree.filter((item) => item.type === "blob" && roots.some((root) => item.path.startsWith(root)) && isTopLevelBackupJson(item.path));
 }
 
 function buildRetentionDeletes(remoteFiles: Awaited<ReturnType<typeof listRemoteBackupFiles>>, uploadedPaths: Set<string>) {
