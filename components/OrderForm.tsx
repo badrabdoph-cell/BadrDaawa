@@ -2,7 +2,28 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { flushSync } from "react-dom";
-import { CalendarDays, Camera, Check, Eye, FileVideo, Heart, ImagePlus, LayoutTemplate, Link2, Loader2, Music2, Plus, Trash2, UploadCloud, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Camera,
+  Check,
+  Eye,
+  FileVideo,
+  Heart,
+  ImagePlus,
+  LayoutTemplate,
+  Link2,
+  Loader2,
+  MapPin,
+  Music2,
+  Phone,
+  Plus,
+  Sparkles,
+  Trash2,
+  UploadCloud,
+  UserRound,
+} from "lucide-react";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
@@ -110,6 +131,21 @@ const orderStoryExamples = [
 ];
 
 const minimumOrderStoryStages = 2;
+const maximumOrderStoryStages = 4;
+
+const orderWizardSteps = [
+  { id: "template", title: "اختيار القالب", previewTarget: "cover" },
+  { id: "couple", title: "بيانات العروسين", previewTarget: "names" },
+  { id: "event", title: "بيانات المناسبة", previewTarget: "date" },
+  { id: "venue", title: "مكان الحفل", previewTarget: "venue" },
+  { id: "photos", title: "الصور", previewTarget: "gallery" },
+  { id: "music", title: "الموسيقى", previewTarget: "music" },
+  { id: "story", title: "قصة العروسين", previewTarget: "story" },
+  { id: "photographer", title: "بيانات المصور", previewTarget: "photographer" },
+  { id: "review", title: "مراجعة الطلب", previewTarget: "review" },
+] as const;
+
+type OrderWizardStepId = (typeof orderWizardSteps)[number]["id"];
 
 const acceptedAudioFormats = "audio/mpeg,.mp3";
 const acceptedVideoFormats = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
@@ -433,7 +469,17 @@ function CompactOrderImageInput({
   );
 }
 
-export function OrderForm({ initialTemplate, initialDraft, templates }: { initialTemplate?: string; initialDraft?: OrderInitialDraft; templates: OrderTemplateOption[] }) {
+export function OrderForm({
+  initialTemplate,
+  initialDraft,
+  templates,
+  skipTemplateStep = false,
+}: {
+  initialTemplate?: string;
+  initialDraft?: OrderInitialDraft;
+  templates: OrderTemplateOption[];
+  skipTemplateStep?: boolean;
+}) {
   const fallbackTemplate = templates[0] || { slug: "featured-1", name: "Featured 1", arabicName: "مميز 1", previewImage: "/assets/templates/featured-1.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
   const [form, setForm] = useState<FormState>({
@@ -468,6 +514,9 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   );
   const [musicFileName, setMusicFileName] = useState("");
   const [musicVideoBusy, setMusicVideoBusy] = useState(false);
+  const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
+  const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
@@ -482,6 +531,76 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   );
   const uploadingImageCount = imageUploads.filter((upload) => upload.phase === "selected" || upload.phase === "compressing" || upload.phase === "uploading").length;
   const hasImageUploadInProgress = uploadingImageCount > 0;
+  const activeStep = orderWizardSteps[activeStepIndex] || orderWizardSteps[0];
+  const isFirstStep = activeStepIndex === 0 || (skipTemplateStep && activeStepIndex === 1);
+  const isLastStep = activeStepIndex === orderWizardSteps.length - 1;
+  const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
+  const previewImageUrls = draftImageUrls.filter(Boolean);
+  const livePreviewUrl = previewHref(
+    {
+      ...form,
+      groomName: form.groomName || "اسم العريس",
+      brideName: form.brideName || "اسم العروس",
+      weddingDate: normalizeWeddingDate(form.weddingDate) || form.weddingDate,
+      venue: form.venue || "اسم القاعة",
+      story: form.storyEnabled ? filledOrderStory(form.story) : [],
+    },
+    previewImageUrls,
+    form.musicEnabled && (form.musicChoice === "upload" || form.musicChoice === "video" || form.musicChoice === "url") ? form.musicUrl : "",
+  );
+
+  useEffect(() => {
+    setActiveStepIndex((current) => {
+      if (!skipTemplateStep || current !== 0) return current;
+      return 1;
+    });
+  }, [skipTemplateStep]);
+
+  function goToStep(index: number) {
+    const nextIndex = Math.min(Math.max(skipTemplateStep ? Math.max(index, 1) : index, 0), orderWizardSteps.length - 1);
+    setActiveStepIndex(nextIndex);
+    window.setTimeout(() => {
+      formRef.current?.querySelector<HTMLElement>(".order-wizard-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 40);
+  }
+
+  function getStepErrors(stepId: OrderWizardStepId, values: OrderFormValues = getCurrentFormFromDom()) {
+    const allErrors = validateOrder(values, form.photographerEnabled, form.musicEnabled, form.musicChoice);
+    const nextErrors: FieldErrors = {};
+    if (stepId === "couple") {
+      if (allErrors.groomName) nextErrors.groomName = allErrors.groomName;
+      if (allErrors.brideName) nextErrors.brideName = allErrors.brideName;
+    }
+    if (stepId === "event" && allErrors.weddingDate) nextErrors.weddingDate = allErrors.weddingDate;
+    if (stepId === "venue") {
+      if (allErrors.venue) nextErrors.venue = allErrors.venue;
+      if (allErrors.mapUrl) nextErrors.mapUrl = allErrors.mapUrl;
+    }
+    if (stepId === "music" && allErrors.musicUrl) nextErrors.musicUrl = allErrors.musicUrl;
+    if (stepId === "photographer") {
+      if (allErrors.photographerFacebookUrl) nextErrors.photographerFacebookUrl = allErrors.photographerFacebookUrl;
+      if (allErrors.photographerInstagramUrl) nextErrors.photographerInstagramUrl = allErrors.photographerInstagramUrl;
+    }
+    return nextErrors;
+  }
+
+  function canLeaveStep(stepId: OrderWizardStepId) {
+    const stepErrors = getStepErrors(stepId);
+    if (showValidationErrors(stepErrors)) return false;
+    if (stepId === "story" && showStoryValidationErrors(form)) return false;
+    return true;
+  }
+
+  function goNext() {
+    if (isLastStep) return;
+    if (!canLeaveStep(activeStep.id)) return;
+    goToStep(activeStepIndex + 1);
+  }
+
+  function goBack() {
+    if (isFirstStep) return;
+    goToStep(activeStepIndex - 1);
+  }
 
   useEffect(() => {
     function handleNativeStoryFieldSpace(event: globalThis.KeyboardEvent) {
@@ -738,7 +857,11 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
 
   function addStoryItem() {
     const currentValues = getCurrentFormFromDom();
-    setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: [...ensureMinimumOrderStoryItems(current.story), createOrderStoryItem()] }));
+    setForm((current) => {
+      const currentStory = ensureMinimumOrderStoryItems(current.story).slice(0, maximumOrderStoryStages);
+      if (currentStory.length >= maximumOrderStoryStages) return { ...current, ...currentValues, storyEnabled: true, story: currentStory };
+      return { ...current, ...currentValues, storyEnabled: true, story: [...currentStory, createOrderStoryItem()] };
+    });
     if (message) setMessage("");
   }
 
@@ -1035,7 +1158,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
     return {
       groomName: String(formData.get("groomName") || "").trim(),
       brideName: String(formData.get("brideName") || "").trim(),
-      phone: "",
+      phone: String(formData.get("phone") || "").trim(),
       weddingDate: String(formData.get("weddingDate") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
       mapUrl: String(formData.get("mapUrl") || "").trim(),
@@ -1325,7 +1448,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
       templateSlug: selectedTemplate.slug,
       groomName: String(formData.get("groomName") || "").trim(),
       brideName: String(formData.get("brideName") || "").trim(),
-      phone: "",
+      phone: String(formData.get("phone") || "").trim(),
       weddingDate: normalizeWeddingDate(rawWeddingDate) || rawWeddingDate,
       mapUrl: String(formData.get("mapUrl") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
@@ -1416,7 +1539,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   }
 
   return (
-    <div className="order-flow order-flow-simple">
+    <div className="order-flow order-wizard-flow">
       {hasImageUploadInProgress ? (
         <div className="order-upload-floating-warning" role="status" aria-live="polite">
           <Loader2 size={18} className="animate-float" />
@@ -1424,352 +1547,464 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           <strong>{uploadingImageCount}</strong>
         </div>
       ) : null}
-      <form className="form-panel details-form order-simple-form" onSubmit={submitOrder} onInput={persistCurrentDomDraft} onChange={persistCurrentDomDraft} ref={formRef} noValidate>
-        <div className="order-template-row field full">
-          <label htmlFor="templateSlug">
-            <LayoutTemplate size={18} />
-            اختيار القالب
-          </label>
-          <select id="templateSlug" name="templateSlug" value={form.templateSlug} onChange={(event) => updateField("templateSlug", event.target.value)}>
-            {templates.map((template) => (
-              <option key={template.slug} value={template.slug}>
-                {template.arabicName} - {template.name}
-              </option>
+
+      <button className="order-mobile-preview-toggle" type="button" onClick={() => setMobilePreviewOpen((current) => !current)}>
+        <Eye size={17} />
+        <span>{mobilePreviewOpen ? "إخفاء المعاينة" : "عرض المعاينة الحية"}</span>
+      </button>
+
+      <div className={`order-wizard-layout ${mobilePreviewOpen ? "preview-open" : ""}`}>
+        <form className="form-panel details-form order-simple-form order-wizard-card" onSubmit={submitOrder} onInput={persistCurrentDomDraft} onChange={persistCurrentDomDraft} ref={formRef} noValidate>
+          <header className="order-wizard-header">
+            <div>
+              <span>خطوة {activeStepIndex + 1} من {orderWizardSteps.length}</span>
+              <h2>{activeStep.title}</h2>
+            </div>
+            <strong>{progressPercent}%</strong>
+          </header>
+
+          <div className="order-progress-track" aria-hidden="true">
+            <span style={{ width: `${progressPercent}%` }} />
+          </div>
+
+          <nav className="order-step-tabs" aria-label="خطوات طلب الدعوة">
+            {orderWizardSteps.map((step, index) => (
+              <button
+                key={step.id}
+                type="button"
+                className={index === activeStepIndex ? "active" : index < activeStepIndex ? "done" : ""}
+                onClick={() => goToStep(index)}
+              >
+                <span>{index + 1}</span>
+                {step.title}
+              </button>
             ))}
-          </select>
-        </div>
+          </nav>
 
-        {message ? (
-          <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
-            <strong>{state === "error" ? "فيه بيانات محتاجة مراجعة" : "تمام"}</strong>
-            <p>{message}</p>
-          </div>
-        ) : null}
+          {message ? (
+            <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
+              <strong>{state === "error" ? "فيه بيانات محتاجة مراجعة" : "تمام"}</strong>
+              <p>{message}</p>
+            </div>
+          ) : null}
 
-        <div className="input-grid order-compact-grid">
-          <div className="field">
-            <label htmlFor="language">
-              <LayoutTemplate size={16} />
-              لغة الدعوة
-            </label>
-            <select id="language" name="language" value={form.language} onChange={(event) => updateField("language", event.target.value === "en" ? "en" : "ar")}>
-              <option value="ar">العربية</option>
-              <option value="en">English</option>
-            </select>
-          </div>
+          <input type="hidden" name="templateSlug" value={form.templateSlug} />
 
-          <div className={`field ${errors.groomName ? "has-error" : ""}`}>
-            <label htmlFor="groomName">
-              <UserRound size={16} />
-              اسم العريس
-            </label>
-            <input id="groomName" name="groomName" placeholder="مثال: بدر" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
-            {errors.groomName ? <small className="field-error" id="groomName-error">{errors.groomName}</small> : null}
-          </div>
+          <section className={`order-wizard-step ${activeStep.id === "template" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "template"}>
+            <div className="order-step-copy">
+              <p>اختار شكل الدعوة الذي سيظهر للضيوف. يمكنك تغييره لاحقاً من المراجعة.</p>
+            </div>
+            <div className="order-template-card-grid">
+              {templates.map((template) => (
+                <button
+                  className={`order-template-card ${template.slug === form.templateSlug ? "active" : ""}`}
+                  key={template.slug}
+                  type="button"
+                  onClick={() => updateField("templateSlug", template.slug)}
+                >
+                  <span className="order-template-thumb">
+                    <img src={template.previewImage} alt="" loading="lazy" />
+                  </span>
+                  <span>
+                    <strong>{template.arabicName}</strong>
+                    <small>{template.name}</small>
+                  </span>
+                  {template.slug === form.templateSlug ? <Check size={18} /> : null}
+                </button>
+              ))}
+            </div>
+            <div className="field order-language-field">
+              <label htmlFor="language">
+                <LayoutTemplate size={16} />
+                لغة الدعوة
+              </label>
+              <select id="language" name="language" value={form.language} onChange={(event) => updateField("language", event.target.value === "en" ? "en" : "ar")}>
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </section>
 
-          <div className={`field ${errors.brideName ? "has-error" : ""}`}>
-            <label htmlFor="brideName">
-              <UserRound size={16} />
-              اسم العروس
-            </label>
-            <input id="brideName" name="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
-            {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
-          </div>
-
-          <div className={`field ${errors.weddingDate ? "has-error" : ""}`}>
-            <label htmlFor="weddingDate">
-              <CalendarDays size={16} />
-              تاريخ المناسبة
-            </label>
-            <input id="weddingDate" name="weddingDate" type="date" value={normalizedDate || form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
-            {readableDate ? <small className="field-preview" id="weddingDate-hint">هيظهر في الدعوة: {readableDate}</small> : null}
-            {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
-          </div>
-
-          <div className={`field ${errors.venue ? "has-error" : ""}`}>
-            <label htmlFor="venue">مكان الحفل</label>
-            <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required aria-invalid={Boolean(errors.venue)} aria-describedby={errors.venue ? "venue-error" : undefined} />
-            {errors.venue ? <small className="field-error" id="venue-error">{errors.venue}</small> : null}
-          </div>
-
-          <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
-            <label htmlFor="mapUrl">
-              <Link2 size={16} />
-              رابط موقع القاعه
-            </label>
-            <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
-            <small className="field-preview" id="mapUrl-hint">أفضل نتيجة تكون من رابط Google Maps المباشر للقاعة حتى تظهر المعاينة والمسافة بدقة.</small>
-            {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
-          </div>
-
-          <div className="field full">
-            <label htmlFor="openingText">نص الافتتاح السينمائي</label>
-            <textarea id="openingText" name="openingText" rows={2} placeholder="مثال: افتحوا الدعوة وشاركونا أجمل لحظة في عمرنا" value={form.openingText} onChange={(event) => updateField("openingText", event.target.value)} />
-            <small className="field-preview">يظهر فوق صورة الغلاف قبل زر فتح الدعوة، واتركه فارغاً لاستخدام النص الافتراضي.</small>
-          </div>
-        </div>
-
-        <section className="order-compact-images" aria-labelledby="order-images-title">
-          <div className="order-compact-section-head">
-            <h2 id="order-images-title">رفع الصور</h2>
-            <p>3 صور فقط، وكل صورة تظهر معاينتها قبل المعاينة أو التأكيد.</p>
-          </div>
-          <div className="compact-image-grid">
-            {orderImageSlots.map((slot, index) => (
-              <div className="compact-image-card" key={slot.title}>
-                <CompactOrderImageInput
-                  index={index}
-                  defaultImage={draftImageUrls[index]}
-                  upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
-                  onFileSelected={handleOrderImageSelected}
-                  onClearDefault={() => clearOrderImage(index)}
-                />
+          <section className={`order-wizard-step ${activeStep.id === "couple" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "couple"}>
+            <div className="input-grid order-compact-grid">
+              <div className={`field ${errors.groomName ? "has-error" : ""}`}>
+                <label htmlFor="groomName">
+                  <UserRound size={16} />
+                  اسم العريس
+                </label>
+                <input id="groomName" name="groomName" placeholder="مثال: بدر" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
+                {errors.groomName ? <small className="field-error" id="groomName-error">{errors.groomName}</small> : null}
               </div>
-            ))}
-          </div>
-          <p className="field-preview">ارفع الصور فقط، وسيتم ترتيبها تلقائياً داخل القالب.</p>
-        </section>
 
-        <section className="order-photographer-box">
-          <button
-            className={`photographer-toggle-button ${form.photographerEnabled ? "active" : ""}`}
-            type="button"
-            aria-expanded={form.photographerEnabled}
-            onClick={() => updateField("photographerEnabled", !form.photographerEnabled)}
-          >
-            <Camera size={18} />
-            <span>هل تريد إضافة بيانات المصور الفوتوغرافي الذي سيوثق يومك؟</span>
-            <strong>{form.photographerEnabled ? "إخفاء البيانات" : "إضافة بيانات المصور"}</strong>
-          </button>
+              <div className={`field ${errors.brideName ? "has-error" : ""}`}>
+                <label htmlFor="brideName">
+                  <UserRound size={16} />
+                  اسم العروس
+                </label>
+                <input id="brideName" name="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
+                {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
+              </div>
 
-          {form.photographerEnabled ? (
-            <div className="photographer-fields">
+              <div className="field full">
+                <label htmlFor="openingText">نص الافتتاح السينمائي</label>
+                <textarea id="openingText" name="openingText" rows={2} placeholder="مثال: افتحوا الدعوة وشاركونا أجمل لحظة في عمرنا" value={form.openingText} onChange={(event) => updateField("openingText", event.target.value)} />
+                <small className="field-preview">اختياري، يظهر قبل زر فتح الدعوة.</small>
+              </div>
+            </div>
+          </section>
+
+          <section className={`order-wizard-step ${activeStep.id === "event" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "event"}>
+            <div className="input-grid order-compact-grid">
+              <div className={`field ${errors.weddingDate ? "has-error" : ""}`}>
+                <label htmlFor="weddingDate">
+                  <CalendarDays size={16} />
+                  تاريخ المناسبة
+                </label>
+                <input id="weddingDate" name="weddingDate" type="date" value={normalizedDate || form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
+                {readableDate ? <small className="field-preview" id="weddingDate-hint">هيظهر في الدعوة: {readableDate}</small> : null}
+                {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
+              </div>
+
               <div className="field">
-                <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
-                <input id="photographerName" name="photographerName" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
-              </div>
-              <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
-                <label htmlFor="photographerFacebookUrl">رابط Facebook</label>
-                <input id="photographerFacebookUrl" name="photographerFacebookUrl" inputMode="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
-                {errors.photographerFacebookUrl ? <small className="field-error">{errors.photographerFacebookUrl}</small> : null}
-              </div>
-              <div className={`field ${errors.photographerInstagramUrl ? "has-error" : ""}`}>
-                <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
-                <input id="photographerInstagramUrl" name="photographerInstagramUrl" inputMode="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
-                {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
+                <label htmlFor="phone">
+                  <Phone size={16} />
+                  رقم الهاتف
+                </label>
+                <input id="phone" name="phone" inputMode="tel" placeholder="مثال: 01000000000" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
+                <small className="field-preview">يساعدنا على متابعة الطلب والتأكيد.</small>
               </div>
             </div>
-          ) : null}
-        </section>
+          </section>
 
-        <section className="order-story-box">
-          <button
-            className={`photographer-toggle-button order-story-toggle ${form.storyEnabled ? "active" : ""}`}
-            type="button"
-            aria-expanded={form.storyEnabled}
-            onClick={() => {
-              if (form.storyEnabled) cancelOrderStory();
-              else {
-                const currentValues = getCurrentFormFromDom();
-                setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
-                setStoryErrors({});
-                if (message) setMessage("");
-              }
-            }}
-          >
-            <Heart size={18} />
-            <span>إضافة قصة العروسين داخل الدعوة</span>
-            <strong>{form.storyEnabled ? "إلغاء القصة" : "إضافة القصة"}</strong>
-          </button>
-
-          {form.storyEnabled ? (
-            <div className="order-story-fields">
-              <div className="order-story-head">
-                <p>القصة اختيارية، لكن بعد تفعيلها يجب إكمال تاريخ وعنوان ووصف مرحلتين على الأقل، أو إلغاء القصة للمتابعة بدونها.</p>
+          <section className={`order-wizard-step ${activeStep.id === "venue" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "venue"}>
+            <div className="input-grid order-compact-grid">
+              <div className={`field ${errors.venue ? "has-error" : ""}`}>
+                <label htmlFor="venue">
+                  <MapPin size={16} />
+                  اسم القاعة
+                </label>
+                <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required aria-invalid={Boolean(errors.venue)} aria-describedby={errors.venue ? "venue-error" : undefined} />
+                {errors.venue ? <small className="field-error" id="venue-error">{errors.venue}</small> : null}
               </div>
-              {ensureMinimumOrderStoryItems(form.story).length ? (
-                <div className="order-story-list">
-                  {ensureMinimumOrderStoryItems(form.story).map((item, index) => {
-                    const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
-                    const dateError = storyErrors[storyFieldErrorKey(index, "date")];
-                    const titleError = storyErrors[storyFieldErrorKey(index, "title")];
-                    const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
-                    return (
-                      <article className="order-story-item" key={item.id || index}>
-                        <div className="order-story-item-head">
-                          <strong>مرحلة {index + 1}</strong>
-                          <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                        <div className="field">
-                          <label htmlFor={`storyDate-${index}`}>التاريخ</label>
-                          <input
-                            id={`storyDate-${index}`}
-                            name={`storyDate-${index}`}
-                            data-order-story-field="true"
-                            data-story-field="date"
-                            data-story-index={index}
-                            value={item.date || ""}
-                            onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "date", event)}
-                            onChange={(event) => updateStoryText(index, "date", event.target.value)}
-                            placeholder={example.date}
-                            aria-invalid={Boolean(dateError)}
-                          />
-                          {dateError ? <small className="field-error">{dateError}</small> : null}
-                        </div>
-                        <div className="field">
-                          <label htmlFor={`storyTitle-${index}`}>العنوان</label>
-                          <input
-                            id={`storyTitle-${index}`}
-                            name={`storyTitle-${index}`}
-                            data-order-story-field="true"
-                            data-story-field="title"
-                            data-story-index={index}
-                            value={item.title}
-                            onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "title", event)}
-                            onChange={(event) => updateStoryText(index, "title", event.target.value)}
-                            placeholder={example.title}
-                            aria-invalid={Boolean(titleError)}
-                          />
-                          {titleError ? <small className="field-error">{titleError}</small> : null}
-                        </div>
-                        <div className="field full">
-                          <label htmlFor={`storyDescription-${index}`}>الوصف</label>
-                          <textarea
-                            id={`storyDescription-${index}`}
-                            name={`storyDescription-${index}`}
-                            data-order-story-field="true"
-                            data-story-field="description"
-                            data-story-index={index}
-                            rows={3}
-                            value={item.description}
-                            aria-invalid={Boolean(descriptionError)}
-                            onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "description", event)}
-                            onChange={(event) => updateStoryText(index, "description", event.target.value)}
-                            placeholder={example.description}
-                          />
-                          {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="order-story-empty">لن يظهر قسم قصة العروسين إلا بعد إضافة مرحلة واحدة على الأقل.</p>
-              )}
-              <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
-                <Plus size={16} />
-                إضافة مرحلة في حياتكم كمان
-              </button>
+
+              <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
+                <label htmlFor="mapUrl">
+                  <Link2 size={16} />
+                  رابط اللوكيشن
+                </label>
+                <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
+                <small className="field-preview" id="mapUrl-hint">أفضل رابط يكون من Google Maps مباشرة.</small>
+                {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
+              </div>
             </div>
-          ) : null}
-        </section>
-
-        <section className="order-music-box">
-          <button
-            className={`photographer-toggle-button order-music-toggle ${form.musicEnabled ? "active" : ""}`}
-            type="button"
-            aria-expanded="true"
-            onClick={() => selectMusicChoice("default")}
-          >
-            <Music2 size={18} />
-            <span>{form.musicEnabled ? "الأغنية الأساسية مفعلة داخل الدعوة" : "الدعوة حالياً بدون موسيقى"}</span>
-            <strong>تغيير الأغنية الأساسية</strong>
-          </button>
-
-          <div className="order-music-fields">
-            <p className="order-music-note">الموسيقى الأساسية تعمل تلقائياً، ويمكنك استبدالها أو إلغاء الموسيقى من هنا.</p>
-            <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
-              <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
-                <Music2 size={16} />
-                الموسيقى الأساسية
-              </button>
-              <button className={!form.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!form.musicEnabled} onClick={() => selectMusicChoice("none")}>
-                <Music2 size={16} />
-                بدون موسيقى
-              </button>
-              <button className={form.musicEnabled && form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
-                <UploadCloud size={16} />
-                رفع ملف MP3
-              </button>
-              <button className={form.musicEnabled && form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
-                <FileVideo size={16} />
-                استخراج الصوت من فيديو أو ريلز
-              </button>
-              <button className={form.musicEnabled && form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
-                <Link2 size={16} />
-                رابط أغنية
-              </button>
+            <div className="order-location-preview">
+              <MapPin size={19} />
+              <div>
+                <strong>{fieldValue(form.venue, "سيظهر اسم القاعة هنا")}</strong>
+                <span>{form.mapUrl ? "تم إضافة رابط اللوكيشن وسيظهر داخل الدعوة." : "يمكنك ترك الرابط فارغاً وإضافته لاحقاً."}</span>
+              </div>
             </div>
+          </section>
 
-            {form.musicEnabled ? (
-              <>
-                {form.musicChoice === "upload" ? (
-                  <label className="order-music-upload">
-                    <UploadCloud size={17} />
-                    <span>
-                      <strong>ارفع ملف MP3</strong>
-                      <small>{musicFileName || form.musicUrl || "mp3"}</small>
-                    </span>
-                    <input
-                      name="orderMusicFile"
-                      type="file"
-                      accept={acceptedAudioFormats}
-                      onChange={(event) => {
-                        setMusicFileName(event.target.files?.[0]?.name || "");
-                        if (message) setMessage("");
-                      }}
+          <section className={`order-wizard-step ${activeStep.id === "photos" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photos"}>
+            <section className="order-compact-images" aria-labelledby="order-images-title">
+              <div className="order-compact-section-head">
+                <h2 id="order-images-title">رفع الصور</h2>
+                <p>3 صور فقط، وكل صورة تظهر معاينتها قبل المعاينة أو التأكيد.</p>
+              </div>
+              <div className="compact-image-grid">
+                {orderImageSlots.map((slot, index) => (
+                  <div className="compact-image-card" key={slot.title}>
+                    <CompactOrderImageInput
+                      index={index}
+                      defaultImage={draftImageUrls[index]}
+                      upload={imageUploads[index] || createIdleUploadState(draftImageUrls[index])}
+                      onFileSelected={handleOrderImageSelected}
+                      onClearDefault={() => clearOrderImage(index)}
                     />
-                  </label>
-                ) : null}
-
-                {form.musicChoice === "video" ? (
-                  <label className="order-music-upload">
-                    {musicVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
-                    <span>
-                      <strong>{musicVideoBusy ? "جاري استخراج الصوت..." : "ارفع فيديو لاستخراج الصوت"}</strong>
-                      <small>{musicFileName || form.musicUrl || "MP4 / MOV / WEBM"}</small>
-                      <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
-                    </span>
-                    <input
-                      type="file"
-                      accept={acceptedVideoFormats}
-                      disabled={musicVideoBusy}
-                      onChange={(event) => handleOrderMusicVideoFile(event.target.files?.[0])}
-                    />
-                  </label>
-                ) : null}
-
-                {form.musicChoice === "url" ? (
-                  <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
-                    <label htmlFor="musicUrl">رابط أغنية مباشر</label>
-                    <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
-                    {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="order-music-url-hint">ليس رابط فيديو بل موسيقى فقط</small>}
                   </div>
-                ) : null}
+                ))}
+              </div>
+              <p className="field-preview">سيتم ضغط الصور وحفظها تلقائياً للمعاينة والطلب.</p>
+            </section>
+          </section>
 
-                {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
-                  <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
-                ) : null}
-              </>
-            ) : null}
+          <section className={`order-wizard-step ${activeStep.id === "music" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "music"}>
+            <section className="order-music-box">
+              <div className={`order-music-default-card ${form.musicEnabled && form.musicChoice === "default" ? "active" : ""}`}>
+                <Music2 size={22} />
+                <div>
+                  <strong>{form.musicEnabled && form.musicChoice === "default" ? "الموسيقى الافتراضية مفعلة" : form.musicEnabled ? "تم تغيير إعدادات الموسيقى" : "الموسيقى متوقفة"}</strong>
+                  <span>يمكنك المتابعة مباشرة، أو تغيير الإعدادات عند الحاجة.</span>
+                </div>
+                <button className="btn btn-soft" type="button" onClick={() => setMusicSettingsOpen((current) => !current)}>
+                  تغيير إعدادات الموسيقى
+                </button>
+              </div>
+
+              {musicSettingsOpen ? (
+                <div className="order-music-fields">
+                  <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
+                    <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
+                      <Music2 size={16} />
+                      الموسيقى الأساسية
+                    </button>
+                    <button className={form.musicEnabled && form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
+                      <UploadCloud size={16} />
+                      رفع MP3
+                    </button>
+                    <button className={form.musicEnabled && form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
+                      <FileVideo size={16} />
+                      صوت من فيديو
+                    </button>
+                    <button className={form.musicEnabled && form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
+                      <Link2 size={16} />
+                      رابط أغنية
+                    </button>
+                    <button className={!form.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!form.musicEnabled} onClick={() => selectMusicChoice("none")}>
+                      <Music2 size={16} />
+                      إيقاف الموسيقى
+                    </button>
+                  </div>
+
+                  {form.musicEnabled ? (
+                    <>
+                      {form.musicChoice === "upload" ? (
+                        <label className="order-music-upload">
+                          <UploadCloud size={17} />
+                          <span>
+                            <strong>ارفع ملف MP3</strong>
+                            <small>{musicFileName || form.musicUrl || "mp3"}</small>
+                          </span>
+                          <input
+                            name="orderMusicFile"
+                            type="file"
+                            accept={acceptedAudioFormats}
+                            onChange={(event) => {
+                              setMusicFileName(event.target.files?.[0]?.name || "");
+                              if (message) setMessage("");
+                            }}
+                          />
+                        </label>
+                      ) : null}
+
+                      {form.musicChoice === "video" ? (
+                        <label className="order-music-upload">
+                          {musicVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
+                          <span>
+                            <strong>{musicVideoBusy ? "جاري استخراج الصوت..." : "ارفع فيديو لاستخراج الصوت"}</strong>
+                            <small>{musicFileName || form.musicUrl || "MP4 / MOV / WEBM"}</small>
+                            <small>يمكنك رفع فيديو وسيتم استخراج الموسيقى منه تلقائياً واستخدامها داخل الدعوة.</small>
+                          </span>
+                          <input type="file" accept={acceptedVideoFormats} disabled={musicVideoBusy} onChange={(event) => handleOrderMusicVideoFile(event.target.files?.[0])} />
+                        </label>
+                      ) : null}
+
+                      {form.musicChoice === "url" ? (
+                        <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
+                          <label htmlFor="musicUrl">رابط أغنية مباشر</label>
+                          <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
+                          {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="order-music-url-hint">ليس رابط فيديو بل موسيقى فقط</small>}
+                        </div>
+                      ) : null}
+
+                      {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
+                        <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
+          </section>
+
+          <section className={`order-wizard-step ${activeStep.id === "story" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "story"}>
+            <section className="order-story-box">
+              <div className="order-optional-card">
+                <Heart size={22} />
+                <div>
+                  <strong>هل تريد إضافة قصة العروسين؟</strong>
+                  <span>اختياري، ويمكن تخطيه لتسريع إنشاء الدعوة.</span>
+                </div>
+                <div>
+                  <button className="btn btn-soft" type="button" onClick={() => {
+                    const currentValues = getCurrentFormFromDom();
+                    setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
+                    setStoryErrors({});
+                    if (message) setMessage("");
+                  }}>
+                    إضافة القصة
+                  </button>
+                  <button className="btn btn-glass" type="button" onClick={() => {
+                    cancelOrderStory();
+                    goToStep(activeStepIndex + 1);
+                  }}>
+                    تخطي
+                  </button>
+                </div>
+              </div>
+
+              {form.storyEnabled ? (
+                <div className="order-story-fields">
+                  <div className="order-story-head">
+                    <p>اكتب مرحلتين على الأقل، ويمكنك إضافة حتى 4 مراحل فقط.</p>
+                  </div>
+                  <div className="order-story-list">
+                    {ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages).map((item, index) => {
+                      const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
+                      const dateError = storyErrors[storyFieldErrorKey(index, "date")];
+                      const titleError = storyErrors[storyFieldErrorKey(index, "title")];
+                      const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
+                      return (
+                        <article className="order-story-item" key={item.id || index}>
+                          <div className="order-story-item-head">
+                            <strong>مرحلة {index + 1}</strong>
+                            <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                          <div className="field">
+                            <label htmlFor={`storyDate-${index}`}>التاريخ</label>
+                            <input id={`storyDate-${index}`} name={`storyDate-${index}`} data-order-story-field="true" data-story-field="date" data-story-index={index} value={item.date || ""} onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "date", event)} onChange={(event) => updateStoryText(index, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
+                            {dateError ? <small className="field-error">{dateError}</small> : null}
+                          </div>
+                          <div className="field">
+                            <label htmlFor={`storyTitle-${index}`}>العنوان</label>
+                            <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} data-order-story-field="true" data-story-field="title" data-story-index={index} value={item.title} onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "title", event)} onChange={(event) => updateStoryText(index, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
+                            {titleError ? <small className="field-error">{titleError}</small> : null}
+                          </div>
+                          <div className="field full">
+                            <label htmlFor={`storyDescription-${index}`}>الوصف</label>
+                            <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} data-order-story-field="true" data-story-field="description" data-story-index={index} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "description", event)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
+                            {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                  {ensureMinimumOrderStoryItems(form.story).length < maximumOrderStoryStages ? (
+                    <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
+                      <Plus size={16} />
+                      إضافة مرحلة في حياتكم كمان
+                    </button>
+                  ) : (
+                    <p className="field-preview">تم الوصول إلى الحد الأقصى: 4 مراحل.</p>
+                  )}
+                </div>
+              ) : null}
+            </section>
+          </section>
+
+          <section className={`order-wizard-step ${activeStep.id === "photographer" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photographer"}>
+            <section className="order-photographer-box">
+              <div className="order-optional-card">
+                <Camera size={22} />
+                <div>
+                  <strong>هل تريد إضافة بيانات المصور؟</strong>
+                  <span>سيظهر كارت المصور داخل الدعوة إذا أضفت البيانات.</span>
+                </div>
+                <div>
+                  <button className="btn btn-soft" type="button" onClick={() => updateField("photographerEnabled", true)}>
+                    إضافة المصور
+                  </button>
+                  <button className="btn btn-glass" type="button" onClick={() => {
+                    updateField("photographerEnabled", false);
+                    goToStep(activeStepIndex + 1);
+                  }}>
+                    تخطي
+                  </button>
+                </div>
+              </div>
+
+              {form.photographerEnabled ? (
+                <div className="photographer-fields">
+                  <div className="field">
+                    <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
+                    <input id="photographerName" name="photographerName" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
+                  </div>
+                  <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
+                    <label htmlFor="photographerFacebookUrl">رابط Facebook</label>
+                    <input id="photographerFacebookUrl" name="photographerFacebookUrl" inputMode="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
+                    {errors.photographerFacebookUrl ? <small className="field-error">{errors.photographerFacebookUrl}</small> : null}
+                  </div>
+                  <div className={`field ${errors.photographerInstagramUrl ? "has-error" : ""}`}>
+                    <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
+                    <input id="photographerInstagramUrl" name="photographerInstagramUrl" inputMode="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
+                    {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          </section>
+
+          <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
+            <div className="order-review-grid">
+              {[
+                ["القالب", selectedTemplate.arabicName, 0],
+                ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
+                ["التاريخ", readableDate || "لم يحدد بعد", 2],
+                ["الهاتف", fieldValue(form.phone), 2],
+                ["القاعة", fieldValue(form.venue), 3],
+                ["الصور", `${previewImageUrls.length} من 3`, 4],
+                ["الموسيقى", !form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : form.musicChoice === "upload" ? "ملف MP3" : form.musicChoice === "video" ? "صوت من فيديو" : "رابط أغنية", 5],
+                ["القصة", form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "غير مضافة", 6],
+                ["المصور", form.photographerEnabled ? fieldValue(form.photographerName, "مضاف") : "غير مضاف", 7],
+              ].map(([label, value, step]) => (
+                <div className="order-review-item" key={String(label)}>
+                  <span>✓ {label}</span>
+                  <strong>{value}</strong>
+                  <button type="button" onClick={() => goToStep(Number(step))}>تعديل</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="order-final-actions" id="confirm-order">
+              <button className="btn btn-gold btn-glow home-cta home-cta-primary order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
+                {isPreviewing ? <Loader2 size={19} className="animate-float" /> : <Eye size={19} />}
+                <span>{isPreviewing ? "جاري تجهيز المعاينة" : "معاينة كاملة"}</span>
+              </button>
+
+              <button className="btn btn-gold btn-glow home-cta home-cta-primary order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
+                {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <Check size={19} />}
+                <span>{state === "loading" ? "جاري التأكيد" : "إنشاء الدعوة"}</span>
+              </button>
+              {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
+            </div>
+          </section>
+
+          {!isLastStep ? (
+            <div className="order-wizard-actions">
+              <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
+                <ArrowRight size={17} />
+                رجوع
+              </button>
+              <button className="btn btn-gold btn-glow" type="button" onClick={goNext}>
+                التالي
+                <ArrowLeft size={17} />
+              </button>
+            </div>
+          ) : (
+            <div className="order-wizard-actions">
+              <button className="btn btn-glass" type="button" onClick={goBack}>
+                <ArrowRight size={17} />
+                رجوع
+              </button>
+            </div>
+          )}
+        </form>
+
+        <aside className="order-live-preview-panel" aria-label="المعاينة الحية">
+          <div className="order-live-preview-copy">
+            <Sparkles size={18} />
+            <span>معاينة حية</span>
+            <strong>{activeStep.title}</strong>
           </div>
-        </section>
-
-        <div className="order-final-actions" id="confirm-order">
-          <button className="btn btn-gold btn-glow home-cta home-cta-primary order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
-            {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <Check size={19} />}
-            <span>{state === "loading" ? "جاري التأكيد" : "تأكيد إنشاء الدعوة"}</span>
-          </button>
-          {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
-
-          <button className="btn btn-gold btn-glow home-cta home-cta-primary order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
-            {isPreviewing ? <Loader2 size={19} className="animate-float" /> : <Eye size={19} />}
-            <span>{isPreviewing ? "جاري تجهيز المعاينة" : "عاين دعوتك قبل التأكيد"}</span>
-          </button>
-        </div>
-      </form>
+          <div className="order-phone-mockup" data-preview-target={activeStep.previewTarget}>
+            <span className="order-phone-speaker" aria-hidden="true" />
+            <iframe title="معاينة الدعوة الحية" src={livePreviewUrl} loading="lazy" />
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,9 @@
 .next
 .pnpm-store
 node_modules
+backups
+data/backups
+homepage-related-files.zip
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*

@@ -66,7 +66,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
     openingText: params.openingText || "",
     storyEnabled: params.storyEnabled === "1",
     story: parseStoryParam(params.story),
-    musicEnabled: params.musicEnabled === "1",
+    musicEnabled: params.musicEnabled ? params.musicEnabled === "1" : true,
     musicChoice: params.musicChoice === "upload" || params.musicChoice === "video" || params.musicChoice === "url" ? params.musicChoice : "default",
     musicUrl: params.musicUrl || "",
     imageUrls: (params.gallery || "").split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3),
@@ -78,7 +78,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <main className="section compact">
         <div className="container order-shell">
           <SectionIntro eyebrow="طلب دعوة" title="أنشئ دعوتك" lead="اختار التصميم، اكتب بيانات المناسبة، وارفع الصور. تقدر تعاين الدعوة قبل تأكيد الطلب." />
-          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} />
+          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} />
         </div>
       </main>
       <SiteFooter />
