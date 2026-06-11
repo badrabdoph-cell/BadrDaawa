@@ -1,9 +1,11 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
 const prismaBin = path.join(root, "node_modules", ".bin", "prisma");
+const autoRestoreScript = path.join(root, "scripts", "auto-restore-from-github.mjs");
+const autoRestoreMarker = path.join(root, "data", ".auto-restore-from-github-restored");
 const dirs = [
   path.join(root, "data"),
   path.join(root, "data", "backups"),
@@ -61,6 +63,23 @@ function runPrisma(args, options = {}) {
   }
 }
 
+function requireCommand(command, reason) {
+  const result = spawnSync(command, ["--version"], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  if (result.status !== 0) {
+    const detail = (result.stderr || result.stdout || "").trim();
+    console.error(`[prepare] Required command is unavailable: ${command}. ${reason}${detail ? ` Details: ${detail}` : ""}`);
+    process.exit(result.status || 1);
+  }
+
+  const version = (result.stdout || result.stderr || "").trim().split("\n")[0] || "version detected";
+  console.log(`[prepare] ${command} is available: ${version}`);
+}
+
 for (const dir of dirs) {
   mkdirSync(dir, { recursive: true });
 }
@@ -77,8 +96,30 @@ if (!databaseUrl) {
 console.log("[prepare] Running prisma migrate deploy.");
 runPrisma(["migrate", "deploy"], { env: { DATABASE_URL: databaseUrl } });
 
+rmSync(autoRestoreMarker, { force: true });
+if (process.env.AUTO_RESTORE_FROM_GITHUB === "true" && process.env.AUTO_RESTORE_ONLY_IF_DB_EMPTY === "true") {
+  requireCommand("pg_restore", "GitHub auto restore requires PostgreSQL client tools.");
+  console.log("[prepare] Checking GitHub auto restore before legacy backfills.");
+  const result = spawnSync(process.execPath, [autoRestoreScript], {
+    cwd: root,
+    stdio: "inherit",
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+  });
+
+  if (result.status !== 0) {
+    process.exit(result.status || 1);
+  }
+}
+
+const autoRestoreCompleted = existsSync(autoRestoreMarker);
+if (autoRestoreCompleted) {
+  console.log("[prepare] GitHub auto restore completed. Skipping legacy JSON backfills to avoid mixing restored data with stale local files.");
+}
+
 if (process.env.SKIP_RUNTIME_STORE_BACKFILL === "true") {
   console.log("[prepare] Runtime-store backfill skipped by SKIP_RUNTIME_STORE_BACKFILL=true.");
+} else if (autoRestoreCompleted) {
+  console.log("[prepare] Runtime-store backfill skipped after GitHub auto restore.");
 } else {
   console.log("[prepare] Backfilling legacy runtime-store data into PostgreSQL.");
   const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-runtime-store-to-postgres.mjs")], {
@@ -94,6 +135,8 @@ if (process.env.SKIP_RUNTIME_STORE_BACKFILL === "true") {
 
 if (process.env.SKIP_OPERATIONAL_JSON_BACKFILL === "true") {
   console.log("[prepare] Operational JSON backfill skipped by SKIP_OPERATIONAL_JSON_BACKFILL=true.");
+} else if (autoRestoreCompleted) {
+  console.log("[prepare] Operational JSON backfill skipped after GitHub auto restore.");
 } else {
   console.log("[prepare] Backfilling operational JSON data into PostgreSQL.");
   const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-operational-json-to-postgres.mjs")], {
