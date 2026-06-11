@@ -1622,6 +1622,10 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
+        <div className="botanical-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         <InviteGallery className="botanical-cover-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="botanical-map-card">
@@ -1650,7 +1654,6 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
         ) : null}
 
         <div className="botanical-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1691,11 +1694,15 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
           <p>{invitation.weddingTime}</p>
         </section>
 
-        <InviteGallery className="royal-gold-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="royal-gold-countdown">
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
+
+        <div className="royal-gold-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="royal-gold-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="royal-gold-map-card">
           <MapPin size={26} />
@@ -1709,7 +1716,6 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
         <TemplatePhotographerCard photographer={photographer} className="royal-gold-photographer" invitation={invitation} />
 
         <div className="royal-gold-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1738,8 +1744,6 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
       <WeddingLiveMode code={invitation.code} />
 
       <div className="boho-sand-shell">
-        <InviteGallery className="boho-sand-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="boho-sand-names">
           <h1>{invitation.groomName}</h1>
           <h1>{invitation.brideName}</h1>
@@ -1754,6 +1758,12 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
+        <div className="boho-sand-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="boho-sand-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
+
         <section className="boho-sand-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
@@ -1765,7 +1775,6 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
         <TemplatePhotographerCard photographer={photographer} className="boho-sand-photographer" invitation={invitation} />
 
         <div className="boho-sand-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1800,8 +1809,6 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
           <h1>{invitation.brideName}</h1>
         </section>
 
-        <InviteGallery className="pure-white-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="pure-white-date">
           <p>{formatInvitationDate(invitation)}</p>
           <span>{invitation.weddingTime}</span>
@@ -1810,6 +1817,12 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
         <section className="pure-white-countdown">
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
+
+        <div className="pure-white-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="pure-white-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="pure-white-map-card">
           <h2>{invitation.venue}</h2>
@@ -1822,7 +1835,6 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
         <TemplatePhotographerCard photographer={photographer} className="pure-white-photographer" invitation={invitation} />
 
         <div className="pure-white-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1860,11 +1872,15 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
           </div>
         </section>
 
-        <InviteGallery className="neon-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="neon-countdown">
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
+
+        <div className="neon-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="neon-cover" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="neon-map-card">
           <h2>{invitation.venue}</h2>
@@ -1877,7 +1893,6 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
         <TemplatePhotographerCard photographer={photographer} className="neon-photographer" invitation={invitation} />
 
         <div className="neon-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1916,11 +1931,15 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
           </p>
         </section>
 
-        <InviteGallery className="vintage-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="vintage-countdown">
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
+
+        <div className="vintage-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="vintage-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="vintage-map-card">
           <h2>{invitation.venue}</h2>
@@ -1933,7 +1952,6 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
         <TemplatePhotographerCard photographer={photographer} className="vintage-photographer" invitation={invitation} />
 
         <div className="vintage-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1967,8 +1985,6 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
           <h1>{invitation.brideName}</h1>
         </section>
 
-        <InviteGallery className="fairytale-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="fairytale-date-card">
           <p>{formatInvitationDate(invitation)}</p>
           <span>{invitation.weddingTime}</span>
@@ -1977,6 +1993,12 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
         <section className="fairytale-countdown">
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
+
+        <div className="fairytale-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="fairytale-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="fairytale-map-card">
           <h2>{invitation.venue}</h2>
@@ -1989,7 +2011,6 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
         <TemplatePhotographerCard photographer={photographer} className="fairytale-photographer" invitation={invitation} />
 
         <div className="fairytale-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -2022,8 +2043,6 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
       </section>
 
       <div className="ocean-shell">
-        <InviteGallery className="ocean-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="ocean-date-grid">
           <div>
             <p>Date</p>
@@ -2039,6 +2058,12 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
+        <div className="ocean-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="ocean-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
+
         <section className="ocean-map-card">
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
@@ -2050,7 +2075,6 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
         <TemplatePhotographerCard photographer={photographer} className="ocean-photographer" invitation={invitation} />
 
         <div className="ocean-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -2086,8 +2110,6 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
           </div>
         </section>
 
-        <InviteGallery className="artdeco-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
-
         <section className="artdeco-date-card">
           <p>{formatInvitationDate(invitation)}</p>
           <span>{invitation.weddingTime}</span>
@@ -2096,6 +2118,12 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
         <section className="artdeco-countdown">
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
+
+        <div className="artdeco-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        <InviteGallery className="artdeco-photo" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} altPrefix="غلاف الدعوة" />
 
         <section className="artdeco-map-card">
           <h2>{invitation.venue}</h2>
@@ -2108,7 +2136,6 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
         <TemplatePhotographerCard photographer={photographer} className="artdeco-photographer" invitation={invitation} />
 
         <div className="artdeco-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -2152,6 +2179,10 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
             <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </section>
 
+          <div className="magazine-poll-wrap">
+            <InvitationPoll invitation={invitation} />
+          </div>
+
           <section className="magazine-map-card">
             <h2>{invitation.venue}</h2>
             <p>{invitation.city}</p>
@@ -2163,7 +2194,6 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
           <TemplatePhotographerCard photographer={photographer} className="magazine-photographer" invitation={invitation} />
 
           <div className="magazine-poll-wrap">
-            <InvitationPoll invitation={invitation} />
             <InvitationGuestBook invitation={invitation} />
           </div>
 
@@ -2228,6 +2258,10 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
           </div>
         </section>
 
+        <div className="cinematic-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         {images.length > 1 ? <InviteGallery className="cinematic-gallery-stack" images={images.slice(1)} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} /> : null}
 
         <section className="cinematic-map-card">
@@ -2258,7 +2292,6 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
         ) : null}
 
         <div className="cinematic-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
