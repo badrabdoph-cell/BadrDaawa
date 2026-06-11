@@ -427,6 +427,8 @@ export function InvitationExperience({
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </div>
 
+        <InvitationPoll invitation={invitation} />
+
         <InviteGallery className="luxury-gallery" images={getInvitationImages(invitation).gallery} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="invite-card invite-message">
@@ -468,8 +470,6 @@ export function InvitationExperience({
             </div>
           </section>
         ) : null}
-
-        <InvitationPoll invitation={invitation} />
 
         <InvitationGuestBook invitation={invitation} />
 
@@ -626,6 +626,8 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           </div>
         </div>
 
+        <InvitationPoll invitation={invitation} />
+
         <section className="noir-message">
           <span>
             <Music2 size={28} strokeWidth={1.5} />
@@ -680,8 +682,6 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
           </section>
         ) : null}
 
-        <InvitationPoll invitation={invitation} />
-
         <InvitationGuestBook invitation={invitation} />
 
         <section className="noir-qr-card">
@@ -726,6 +726,10 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
           <div className="ivory-countdown">
             <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
+        </div>
+
+        <div className="ivory-poll-wrap">
+          <InvitationPoll invitation={invitation} />
         </div>
 
         <section className="ivory-quote">
@@ -777,7 +781,6 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
         ) : null}
 
         <div className="ivory-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -830,6 +833,10 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
           </div>
         </div>
 
+        <div className="mobile-gold-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         <InviteGallery className="mobile-gold-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <div className="mobile-gold-message">
@@ -879,7 +886,6 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
         ) : null}
 
         <div className="mobile-gold-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -944,6 +950,10 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
           </div>
         </section>
 
+        <div className="boho-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         <InviteGallery className="boho-gallery-wrap boho-gallery-scroll" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="boho-map-card">
@@ -978,7 +988,6 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
         ) : null}
 
         <div className="boho-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1078,11 +1087,15 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
+        <div className="garden-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
+        {images.length > 1 ? <InviteGallery className="garden-gallery-grid" images={images.slice(1)} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} /> : null}
+
         <section className="garden-map-frame">
           <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
         </section>
-
-        {images.length > 1 ? <InviteGallery className="garden-gallery-grid" images={images.slice(1)} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} /> : null}
 
         {showPhotographer ? (
           <section className="garden-photographer">
@@ -1110,7 +1123,6 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
         ) : null}
 
         <div className="garden-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1205,6 +1217,10 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
+        <div className="featured-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         <InviteGallery className="featured-gallery" images={images} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <section className="featured-map-card">
@@ -1242,7 +1258,6 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
         ) : null}
 
         <div className="featured-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1302,6 +1317,10 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
         <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
       </section>
 
+      <div className="cinema-rose-poll-wrap">
+        <InvitationPoll invitation={invitation} />
+      </div>
+
       <section className="cinema-rose-content">
         <div className="cinema-rose-message">
           <Heart size={34} />
@@ -1349,7 +1368,6 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
         ) : null}
 
         <div className="cinema-rose-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
@@ -1411,6 +1429,10 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </div>
 
+        <div className="modern-cinema-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         <div className="modern-cinema-message">
           <h2>
             "<PrimaryInvitationMessage invitation={invitation} />
@@ -1452,7 +1474,6 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
         ) : null}
 
         <div className="modern-cinema-poll-wrap">
-          <InvitationPoll invitation={invitation} />
           <InvitationGuestBook invitation={invitation} />
         </div>
 
