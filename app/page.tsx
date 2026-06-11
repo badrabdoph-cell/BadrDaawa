@@ -1,23 +1,25 @@
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
-import { BellRing, Check, Clock3, Eye, Headphones, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
+import { BellRing, Check, Eye, Headphones, Link2, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
 import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { TemplateCard } from "@/components/TemplateCard";
 import { getHomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
 import { getSiteSettings } from "@/lib/site-settings";
+import { getPublicTemplatesWithPreviewMusic } from "@/lib/template-settings";
 
 const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
-const quickBenefits = [
-  { label: "إنشاء سريع", icon: Clock3 },
-  { label: "تصاميم فاخرة", icon: LayoutTemplate },
-  { label: "إدارة الحضور", icon: UserCheck },
-  { label: "مشاركة فورية", icon: MessageCircle },
+const featureDescriptions = [
+  "تابع الردود والأرقام بدون جداول مشتتة.",
+  "كل بيانات ضيوفك في مكان واضح وسهل.",
+  "لوحة تحكم عملية لتعديل ومتابعة الدعوة.",
+  "تذكير ذكي يساعد ضيوفك قبل الموعد.",
 ];
 
 function HomeSectionDivider({ variant = "wave" }: { variant?: "wave" | "lace" | "arc" }) {
@@ -55,10 +57,18 @@ export const revalidate = 0;
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
-  const [previewSettings, content, siteSettings, platformStats] = await Promise.all([getHomePreviewSettings(), getHomeContent(), getSiteSettings(), getHomePlatformStats()]);
+  const [previewSettings, content, siteSettings, platformStats, publicTemplates] = await Promise.all([
+    getHomePreviewSettings(),
+    getHomeContent(),
+    getSiteSettings(),
+    getHomePlatformStats(),
+    getPublicTemplatesWithPreviewMusic(),
+  ]);
   const previewTemplateSrc = `/templates/${previewSettings.templateSlug}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
-  const showHomePanels = siteSettings.homepage.showFeatures || siteSettings.homepage.showPreview || siteSettings.homepage.showPricing;
+  const showPreviewPanels = siteSettings.homepage.showPreview || siteSettings.homepage.showPricing;
+  const homeTemplates = publicTemplates.slice(0, 6);
+  const featureHighlights = content.features.points.slice(0, 4);
   const publicStatsBase = {
     invitations: 113,
     customers: 113,
@@ -78,16 +88,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           <div className="container hero-grid hero-grid-single">
             <div className="hero-copy">
               <h1 className="home-hero-title">
-                <span className="home-hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content.hero.kicker}>
-                  {content.hero.kicker}
-                </span>
                 <span className="home-hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={content.hero.mainTitle}>
                   {content.hero.mainTitle}
-                </span>
-                <span className="home-hero-title-divider" aria-hidden="true">
-                  <span />
-                  <Sparkles size={18} />
-                  <span />
                 </span>
                 <span className="home-hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="العنوان الملون" data-broadcast-kind="text" data-broadcast-value={content.hero.accentTitle}>
                   <span>{content.hero.accentTitle}</span>
@@ -96,17 +98,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               <p className="hero-shine-copy" data-broadcast-key="hero.description" data-broadcast-label="وصف البداية" data-broadcast-kind="text" data-broadcast-value={content.hero.description}>
                 {content.hero.description}
               </p>
-              <div className="home-quick-benefits" aria-label="مزايا سريعة">
-                {quickBenefits.map((benefit) => {
-                  const Icon = benefit.icon;
-                  return (
-                    <span key={benefit.label}>
-                      <Icon size={16} />
-                      {benefit.label}
-                    </span>
-                  );
-                })}
-              </div>
               <div className="button-row home-cta-row">
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <WandSparkles size={19} />
@@ -114,13 +105,30 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                     {siteSettings.homepage.primaryCtaLabel || content.hero.primaryCta}
                   </span>
                 </Link>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-                  <Palette size={19} />
-                  <span data-broadcast-key="hero.secondaryCta" data-broadcast-label="زر الأشكال" data-broadcast-kind="text" data-broadcast-value={content.hero.secondaryCta}>
-                    {siteSettings.homepage.secondaryCtaLabel || content.hero.secondaryCta}
-                  </span>
-                </Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section home-template-showcase" id="templates" aria-label="قوالب الدعوات">
+          <div className="container">
+            <div className="home-template-head">
+              <div>
+                <span className="eyebrow" data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content.preview.eyebrow}>
+                  {content.preview.eyebrow}
+                </span>
+                <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value={content.preview.title}>
+                  {content.preview.title}
+                </h2>
+              </div>
+              <Link className="btn btn-soft home-template-all-link" href="/templates">
+                {siteSettings.homepage.secondaryCtaLabel || content.hero.secondaryCta}
+              </Link>
+            </div>
+            <div className="templates-grid home-template-grid">
+              {homeTemplates.map((template) => (
+                <TemplateCard key={template.slug} template={template} />
+              ))}
             </div>
           </div>
         </section>
@@ -153,46 +161,50 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </section>
 
-        {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
-
-        {showHomePanels ? (
-          <section className="section compact live-template-section">
-            <div className="container live-template-wrap">
-              <div className="live-preview-stack">
-                {siteSettings.homepage.showFeatures ? (
-                  <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
-                <div className="home-features-head">
-                  <span>
+        {siteSettings.homepage.showFeatures ? (
+          <section className="section home-features-grid-section" aria-label="مميزات الدعوة الرقمية">
+            <div className="container">
+              <div className="home-template-head home-features-modern-head">
+                <div>
+                  <span className="eyebrow">
                     <Sparkles size={16} />
+                    تجربة أسهل لضيوفك
                   </span>
                   <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value={content.features.title}>
                     {content.features.title}
                   </h2>
                 </div>
-                <div className="home-feature-points">
-                  {content.features.points.map((item, index) => {
-                    const Icon = featureIcons[index] || Sparkles;
-                    return (
-                      <div className="home-feature-point" key={item.id}>
-                        <span>
-                          <Icon size={17} />
-                        </span>
-                        <strong data-broadcast-key={`features.points.${item.id}.text`} data-broadcast-label={`ميزة: ${item.text}`} data-broadcast-kind="text" data-broadcast-value={item.text}>
-                          {item.text}
-                        </strong>
-                      </div>
-                    );
-                  })}
-                </div>
-                  </div>
-                ) : null}
-                {siteSettings.homepage.showFeatures && (siteSettings.homepage.showPreview || siteSettings.homepage.showPricing) ? <HomeSectionDivider variant="lace" /> : null}
+              </div>
+              <div className="home-features-modern-grid">
+                {featureHighlights.map((item, index) => {
+                  const Icon = featureIcons[index] || Sparkles;
+                  return (
+                    <article className="home-feature-modern-card" key={item.id}>
+                      <span>
+                        <Icon size={19} />
+                      </span>
+                      <h3 data-broadcast-key={`features.points.${item.id}.text`} data-broadcast-label={`ميزة: ${item.text}`} data-broadcast-kind="text" data-broadcast-value={item.text}>
+                        {item.text}
+                      </h3>
+                      <p>{featureDescriptions[index] || "ميزة عملية تجعل الدعوة أوضح وأسرع في الاستخدام."}</p>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {showPreviewPanels ? <HomeSectionDivider variant="wave" /> : null}
+
+        {showPreviewPanels ? (
+          <section className="section compact live-template-section">
+            <div className="container live-template-wrap">
+              <div className="live-preview-stack">
                 {siteSettings.homepage.showPreview ? (
                   <>
                     <div className="live-preview-title">
-                <span data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content.preview.eyebrow}>
-                  {content.preview.eyebrow}
-                </span>
+                <span>معاينة مباشرة</span>
                 <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value={content.preview.title}>
                   {content.preview.title}
                 </h2>

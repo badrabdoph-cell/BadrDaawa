@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
-  const result = await syncAdminStateToGitHub("Manual admin sync requested.", { createSnapshot: true });
+  const result = await syncAdminStateToGitHub("Manual GitHub backup upload requested.");
   const wantsJson = request.headers.get("accept")?.includes("application/json") || request.headers.get("content-type")?.includes("application/json");
   if (wantsJson) {
     return NextResponse.json(

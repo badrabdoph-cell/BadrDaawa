@@ -16,7 +16,7 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         } as CSSProperties
       }
     >
-      <Link href={`/templates/${template.slug}/preview`} className="template-preview" aria-label={`معاينة تصميم ${template.arabicName}`}>
+      <Link href={`/order?template=${template.slug}`} className="template-preview" aria-label={`استخدم تصميم ${template.arabicName}`}>
         <span className="template-preview-screen">
           <img src={template.previewImage} alt={`معاينة تصميم ${template.arabicName}`} loading="lazy" decoding="async" />
         </span>
@@ -27,18 +27,18 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         </span>
       </Link>
       <div className="template-body">
-        <Link className="template-name-link" href={`/templates/${template.slug}/preview`}>
+        <Link className="template-name-link" href={`/order?template=${template.slug}`}>
           <h3>{template.arabicName}</h3>
         </Link>
         <p>{template.concept}</p>
         <div className="button-row">
-          <Link className="btn btn-soft btn-glass template-card-preview-button" href={`/templates/${template.slug}/preview`}>
-            <Eye size={17} />
-            معاينة
-          </Link>
           <Link className="btn btn-gold btn-glow template-card-select-button" href={`/order?template=${template.slug}`}>
             <Sparkles size={17} />
-            استخدم التصميم
+            استخدم هذا التصميم
+          </Link>
+          <Link className="btn btn-soft btn-glass template-card-preview-button" href={`/templates/${template.slug}/preview`}>
+            <Eye size={17} />
+            معاينة كاملة
           </Link>
         </div>
       </div>

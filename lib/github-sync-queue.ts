@@ -72,15 +72,19 @@ export function queueGitHubSync(
     affectedResource?: string;
   } = {},
 ) {
-  if (!options.createSnapshot && !options.uploadExistingBackup) {
-    console.log(`[GitHub Backup Queue] Ignoring non-backup sync request: ${reason}`);
+  const allowOperationalSnapshots = process.env.GITHUB_SYNC_ON_CHANGE === "true";
+  const shouldCreateSnapshot = Boolean(options.createSnapshot && allowOperationalSnapshots);
+  const shouldUploadExistingBackup = Boolean(options.uploadExistingBackup);
+
+  if (!shouldCreateSnapshot && !shouldUploadExistingBackup) {
+    console.log(`[GitHub Backup Queue] Ignoring operational sync request. Backups run manually or on schedule only: ${reason}`);
     return "";
   }
 
   const item: SyncQueueItem = {
     id: `sync-${++syncJobCounter}-${Date.now()}`,
-    reason: options.createSnapshot ? `Backup snapshot: ${reason}` : `Backup upload: ${reason}`,
-    createSnapshot: Boolean(options.createSnapshot),
+    reason: shouldCreateSnapshot ? `Backup snapshot: ${reason}` : `Backup upload: ${reason}`,
+    createSnapshot: shouldCreateSnapshot,
     timestamp: Date.now(),
     status: "pending",
     retryCount: 0,
