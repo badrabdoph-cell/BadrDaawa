@@ -14,10 +14,10 @@ const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnot
 
 const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, SlidersHorizontal, Sparkles, Headphones, Send, SlidersHorizontal, Vote, Link2, BellRing];
 const quickBenefits = [
-  { label: "إنشاء خلال دقائق", icon: Clock3 },
-  { label: "قوالب جاهزة", icon: LayoutTemplate },
-  { label: "تأكيد حضور", icon: UserCheck },
-  { label: "مشاركة واتساب", icon: MessageCircle },
+  { label: "إنشاء سريع", icon: Clock3 },
+  { label: "تصاميم فاخرة", icon: LayoutTemplate },
+  { label: "إدارة الحضور", icon: UserCheck },
+  { label: "مشاركة فورية", icon: MessageCircle },
 ];
 
 function HomeSectionDivider({ variant = "wave" }: { variant?: "wave" | "lace" | "arc" }) {
@@ -65,9 +65,9 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
     confirmedRsvps: 31640,
   };
   const stats = [
-    { label: "دعوة منشأة", value: publicStatsBase.invitations + platformStats.invitations, icon: Sparkles },
-    { label: "عميل", value: publicStatsBase.customers + platformStats.customers, icon: UsersRound },
-    { label: "تأكيد حضور", value: publicStatsBase.confirmedRsvps + platformStats.confirmedRsvps, icon: UserCheck },
+    { label: "دعوة رقمية", value: publicStatsBase.invitations + platformStats.invitations, icon: Sparkles },
+    { label: "عميل سعيد", value: publicStatsBase.customers + platformStats.customers, icon: UsersRound },
+    { label: "تسجيل حضور", value: publicStatsBase.confirmedRsvps + platformStats.confirmedRsvps, icon: UserCheck },
   ];
 
   return (
@@ -130,7 +130,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <div className="home-platform-stats-head">
               <span className="eyebrow">
                 <Sparkles size={16} />
-                أرقام حقيقية من النظام
+                آلاف الدعوات بدأت من هنا
               </span>
             </div>
             <div className="home-platform-stats-grid">

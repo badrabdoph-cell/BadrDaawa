@@ -4,8 +4,8 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/templates", label: "القالب" },
-  { href: "/client-invitations", label: "دعوات العميل" },
+  { href: "/templates", label: "التصاميم" },
+  { href: "/client-invitations", label: "دعوات حقيقية" },
 ];
 
 export async function SiteHeader() {
@@ -37,7 +37,7 @@ export async function SiteHeader() {
           </a>
           <Link className="btn btn-gold btn-glow" href="/templates">
             <Send size={18} />
-            اطلب دعوتك
+            صمّم دعوتك الآن
           </Link>
         </div>
       </div>
