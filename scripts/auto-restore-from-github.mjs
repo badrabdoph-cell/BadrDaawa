@@ -139,25 +139,39 @@ async function fetchLatestGitHubBackup(config) {
   const tree = await githubRequest(`/repos/${owner}/${repo}/git/trees/${commit.tree.sha}?recursive=1`, { method: "GET" }, config.token);
   const prefix = `${backupRepoPath}/`;
   const backups = tree.tree
-    .filter((item) => item.type === "blob" && item.path.startsWith(prefix) && item.path.endsWith(".json"))
+    .filter((item) => {
+      if (item.type !== "blob" || !item.path.startsWith(prefix) || !item.path.endsWith(".json")) return false;
+      const relativePath = item.path.slice(prefix.length);
+      return Boolean(relativePath) && !relativePath.includes("/") && backupTimeFromPath(item.path) > 0;
+    })
     .sort((a, b) => backupTimeFromPath(b.path) - backupTimeFromPath(a.path) || b.path.localeCompare(a.path));
 
-  const latest = backups[0];
-  if (!latest) return null;
+  for (const backup of backups) {
+    try {
+      const blob = await githubRequest(`/repos/${owner}/${repo}/git/blobs/${backup.sha}`, { method: "GET" }, config.token);
+      if (blob.encoding !== "base64" || !blob.content) {
+        console.warn(`[Auto Restore] Skipping non-base64 GitHub backup candidate: ${backup.path}`);
+        continue;
+      }
 
-  const blob = await githubRequest(`/repos/${owner}/${repo}/git/blobs/${latest.sha}`, { method: "GET" }, config.token);
-  if (blob.encoding !== "base64" || !blob.content) {
-    throw new Error(`Latest GitHub backup is not a base64 blob: ${latest.path}`);
+      const jsonBytes = Buffer.from(String(blob.content).replace(/\n/g, ""), "base64");
+      const payload = JSON.parse(jsonBytes.toString("utf8"));
+      const candidate = {
+        path: backup.path,
+        sha: backup.sha,
+        size: backup.size,
+        jsonBytes,
+        payload,
+      };
+      validateBackupPayload(candidate);
+      return candidate;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || "Unknown validation error");
+      console.warn(`[Auto Restore] Skipping invalid GitHub backup candidate: ${backup.path}. ${message}`);
+    }
   }
 
-  const jsonBytes = Buffer.from(String(blob.content).replace(/\n/g, ""), "base64");
-  return {
-    path: latest.path,
-    sha: latest.sha,
-    size: latest.size,
-    jsonBytes,
-    payload: JSON.parse(jsonBytes.toString("utf8")),
-  };
+  return null;
 }
 
 function validateBackupPayload(backup) {
@@ -344,7 +358,8 @@ async function main() {
   console.log("[Auto Restore] Database is empty. Fetching latest GitHub backup.");
   const backup = await fetchLatestGitHubBackup(config);
   if (!backup) {
-    throw new Error(`No GitHub backups were found under ${backupRepoPath}/.`);
+    console.warn(`[Auto Restore] Skipped. No valid top-level database backups were found under ${backupRepoPath}/.`);
+    return;
   }
 
   const { dumpBytes, dumpFileName } = validateBackupPayload(backup);

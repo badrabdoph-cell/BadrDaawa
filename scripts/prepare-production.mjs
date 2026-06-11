@@ -89,7 +89,7 @@ if (process.env.AUTO_RESTORE_FROM_GITHUB === "true" && process.env.AUTO_RESTORE_
   });
 
   if (result.status !== 0) {
-    process.exit(result.status || 1);
+    console.warn(`[prepare] GitHub auto restore failed with exit code ${result.status || 1}. Continuing startup without restore.`);
   }
 }
 
