@@ -19,10 +19,10 @@ import {
   Music2,
   Phone,
   Plus,
-  Sparkles,
   Trash2,
   UploadCloud,
   UserRound,
+  X,
 } from "lucide-react";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
@@ -134,15 +134,13 @@ const minimumOrderStoryStages = 2;
 const maximumOrderStoryStages = 4;
 
 const orderWizardSteps = [
-  { id: "template", title: "اختيار القالب", previewTarget: "cover" },
-  { id: "couple", title: "بيانات العروسين", previewTarget: "names" },
-  { id: "event", title: "بيانات المناسبة", previewTarget: "date" },
-  { id: "venue", title: "مكان الحفل", previewTarget: "venue" },
-  { id: "photos", title: "الصور", previewTarget: "gallery" },
-  { id: "music", title: "الموسيقى", previewTarget: "music" },
-  { id: "story", title: "قصة العروسين", previewTarget: "story" },
-  { id: "photographer", title: "بيانات المصور", previewTarget: "photographer" },
-  { id: "review", title: "مراجعة الطلب", previewTarget: "review" },
+  { id: "template", title: "اختيار القالب" },
+  { id: "couple", title: "بيانات العروسين" },
+  { id: "event", title: "بيانات المناسبة" },
+  { id: "venue", title: "مكان الحفل" },
+  { id: "photos", title: "الصور" },
+  { id: "music", title: "الموسيقى" },
+  { id: "review", title: "مراجعة الطلب" },
 ] as const;
 
 type OrderWizardStepId = (typeof orderWizardSteps)[number]["id"];
@@ -504,7 +502,6 @@ export function OrderForm({
     musicUrl: initialDraft?.musicUrl || "",
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
-  const [isPreviewing, setIsPreviewing] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [storyErrors, setStoryErrors] = useState<StoryFieldErrors>({});
@@ -516,9 +513,10 @@ export function OrderForm({
   const [musicVideoBusy, setMusicVideoBusy] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
+  const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
+  const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
-  const livePreviewFrameRef = useRef<HTMLIFrameElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
@@ -536,7 +534,7 @@ export function OrderForm({
   const isLastStep = activeStepIndex === orderWizardSteps.length - 1;
   const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
   const previewImageUrls = draftImageUrls.filter(Boolean);
-  const livePreviewUrl = previewHref(
+  const previewSheetUrl = `${previewHref(
     {
       ...form,
       groomName: form.groomName || "اسم العريس",
@@ -547,8 +545,7 @@ export function OrderForm({
     },
     previewImageUrls,
     form.musicEnabled && (form.musicChoice === "upload" || form.musicChoice === "video" || form.musicChoice === "url") ? form.musicUrl : "",
-  );
-  const focusedLivePreviewUrl = `${livePreviewUrl}${livePreviewUrl.includes("?") ? "&" : "?"}embed=1&previewFocus=${activeStep.id}`;
+  )}&embed=1`;
 
   useEffect(() => {
     setActiveStepIndex((current) => {
@@ -582,7 +579,7 @@ export function OrderForm({
       if (allErrors.mapUrl) nextErrors.mapUrl = allErrors.mapUrl;
     }
     if (stepId === "music" && allErrors.musicUrl) nextErrors.musicUrl = allErrors.musicUrl;
-    if (stepId === "photographer") {
+    if (stepId === "review") {
       if (allErrors.photographerFacebookUrl) nextErrors.photographerFacebookUrl = allErrors.photographerFacebookUrl;
       if (allErrors.photographerInstagramUrl) nextErrors.photographerInstagramUrl = allErrors.photographerInstagramUrl;
     }
@@ -593,7 +590,7 @@ export function OrderForm({
     const currentValues = getCurrentFormFromDom();
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
-    if (stepId === "story" && showStoryValidationErrors(form)) return false;
+    if (stepId === "review" && showStoryValidationErrors(form)) return false;
     setForm((current) => ({ ...current, ...currentValues }));
     return true;
   }
@@ -608,38 +605,6 @@ export function OrderForm({
     if (isFirstStep) return;
     goToStep(activeStepIndex - 1);
   }
-
-  function scrollLivePreviewToStep(stepId: OrderWizardStepId = activeStep.id) {
-    const frame = livePreviewFrameRef.current;
-    const frameWindow = frame?.contentWindow;
-    const frameDocument = frameWindow?.document;
-    if (!frameWindow || !frameDocument) return;
-
-    const selectorMap: Record<OrderWizardStepId, string[]> = {
-      template: ["main", ".client-invitation-body", ".template-color-scope"],
-      couple: ["h1", "[class*='name']", "[class*='hero']", "[class*='story']"],
-      event: ["[class*='countdown']", "[class*='date']", "time"],
-      venue: ["[class*='map']", ".map-card", "[class*='venue']"],
-      photos: [".interactive-gallery", "[class*='gallery']", "[class*='photo']"],
-      music: ["main", ".client-invitation-body", ".template-color-scope"],
-      story: [".couple-story-timeline", "[class*='timeline']", "article[class*='story']"],
-      photographer: ["[class*='photographer']"],
-      review: ["main", ".client-invitation-body", ".template-color-scope"],
-    };
-
-    const selectors = selectorMap[stepId] || selectorMap.template;
-    const target = selectors.map((selector) => frameDocument.querySelector<HTMLElement>(selector)).find(Boolean);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    frameWindow.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => scrollLivePreviewToStep(activeStep.id), 180);
-    return () => window.clearTimeout(timeoutId);
-  }, [activeStep.id, livePreviewUrl]);
 
   useEffect(() => {
     function handleNativeStoryFieldSpace(event: globalThis.KeyboardEvent) {
@@ -1396,78 +1361,6 @@ export function OrderForm({
     ].join("\n");
   }
 
-  async function openPreview() {
-    const currentForm = getCurrentFormFromDom();
-    if (showValidationErrors(validateOrder(currentForm))) return;
-    if (showStoryValidationErrors(form)) return;
-    setIsPreviewing(true);
-    setMessage("");
-
-    try {
-      const formData = new FormData(formRef.current || undefined);
-      const orderImages = await getOrderImageDataUrls(formData);
-      const orderMusic = await getOrderMusicDataUrl(formData);
-      let imageUrls: string[] = [];
-      let musicUrl = form.musicEnabled && form.musicChoice === "url" ? currentForm.musicUrl : form.musicEnabled && (form.musicChoice === "upload" || form.musicChoice === "video") ? form.musicUrl : "";
-
-      if (orderImages.length) {
-        imageUrls = orderImages;
-      }
-
-      if (selectedRawImageCount(formData) > orderImages.length) {
-        setState("error");
-        setMessage("في صورة لم يتم حفظها للمعاينة. ارفعها مرة أخرى أو اختار صورة أصغر.");
-        setIsPreviewing(false);
-        return;
-      }
-
-      const hasSelectedImageStillUploading = imageUploads.some((upload) => upload.phase === "compressing" || upload.phase === "uploading" || upload.phase === "selected");
-      const hasImageError = imageUploads.some((upload) => upload.phase === "error");
-      if (hasSelectedImageStillUploading || hasImageError) {
-        setState("error");
-        setMessage(hasImageError ? "في صورة فشلت في الرفع. احذفها أو ارفعها مرة أخرى قبل المعاينة." : "استنى انتهاء رفع الصور قبل فتح المعاينة.");
-        setIsPreviewing(false);
-        return;
-      }
-
-      if (form.musicEnabled && form.musicChoice !== "default" && (orderMusic || currentForm.musicUrl)) {
-        const response = await fetch("/api/orders/preview-music", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ music: orderMusic, musicUrl: form.musicChoice === "url" ? currentForm.musicUrl : form.musicUrl }),
-        });
-        const data = (await response.json().catch(() => null)) as { musicUrl?: string; error?: string } | null;
-        if (!response.ok) {
-          setState("error");
-          setMessage(data?.error || "رابط أو ملف الموسيقى غير قابل للتشغيل.");
-          setIsPreviewing(false);
-          return;
-        }
-        musicUrl = data?.musicUrl || "";
-      }
-
-      const effectiveMusic = getEffectiveOrderMusicState({ musicEnabled: form.musicEnabled, musicChoice: form.musicChoice, musicUrl }, orderMusic);
-      const nextImageUrls = imageUrls.length ? imageUrls : draftImageUrls;
-      const nextForm = {
-        ...currentForm,
-        weddingDate: normalizeWeddingDate(currentForm.weddingDate),
-        templateSlug: selectedTemplate.slug,
-        photographerEnabled: form.photographerEnabled,
-        storyEnabled: form.storyEnabled,
-        story: filledOrderStory(form.story),
-        ...effectiveMusic,
-      };
-      if (musicUrl) updateField("musicUrl", musicUrl);
-      if (nextImageUrls.length) setDraftImageUrls(nextImageUrls);
-      persistDraft(nextForm, nextImageUrls);
-      window.location.href = previewHref(nextForm, nextImageUrls, effectiveMusic.musicUrl);
-    } catch {
-      setState("error");
-      setMessage("تعذر تجهيز المعاينة. جرّب مرة أخرى أو اضغط تأكيد إنشاء الدعوة.");
-      setIsPreviewing(false);
-    }
-  }
-
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state === "loading") return;
@@ -1601,20 +1494,6 @@ export function OrderForm({
             <span style={{ width: `${progressPercent}%` }} />
           </div>
 
-          <nav className="order-step-tabs" aria-label="خطوات طلب الدعوة">
-            {orderWizardSteps.map((step, index) => (
-              <button
-                key={step.id}
-                type="button"
-                className={index === activeStepIndex ? "active" : index < activeStepIndex ? "done" : ""}
-                onClick={() => goToStep(index)}
-              >
-                <span>{index + 1}</span>
-                {step.title}
-              </button>
-            ))}
-          </nav>
-
           {message ? (
             <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
               <strong>{state === "error" ? "فيه بيانات محتاجة مراجعة" : "تمام"}</strong>
@@ -1679,11 +1558,6 @@ export function OrderForm({
                 {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
               </div>
 
-              <div className="field full">
-                <label htmlFor="openingText">نص الافتتاح السينمائي</label>
-                <textarea id="openingText" name="openingText" rows={2} placeholder="مثال: افتحوا الدعوة وشاركونا أجمل لحظة في عمرنا" value={form.openingText} onChange={(event) => updateField("openingText", event.target.value)} />
-                <small className="field-preview">اختياري، يظهر قبل زر فتح الدعوة.</small>
-              </div>
             </div>
           </section>
 
@@ -1852,34 +1726,79 @@ export function OrderForm({
             </section>
           </section>
 
-          <section className={`order-wizard-step ${activeStep.id === "story" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "story"}>
-            <section className="order-story-box">
-              <div className="order-optional-card">
-                <Heart size={22} />
-                <div>
-                  <strong>هل تريد إضافة قصة العروسين؟</strong>
-                  <span>اختياري، ويمكن تخطيه لتسريع إنشاء الدعوة.</span>
+          <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
+            <div className="order-review-grid">
+              {[
+                ["القالب", selectedTemplate.arabicName, 0],
+                ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
+                ["التاريخ", readableDate || "لم يحدد بعد", 2],
+                ["الهاتف", fieldValue(form.phone), 2],
+                ["القاعة", fieldValue(form.venue), 3],
+                ["الصور", `${previewImageUrls.length} من 3`, 4],
+                ["الموسيقى", !form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : form.musicChoice === "upload" ? "ملف MP3" : form.musicChoice === "video" ? "صوت من فيديو" : "رابط أغنية", 5],
+              ].map(([label, value, step]) => (
+                <div className="order-review-item" key={String(label)}>
+                  <span>✓ {label}</span>
+                  <strong>{value}</strong>
+                  <button type="button" onClick={() => goToStep(Number(step))}>تعديل</button>
                 </div>
-                <div>
-                  <button className="btn btn-soft" type="button" onClick={() => {
-                    const currentValues = getCurrentFormFromDom();
-                    setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
-                    setStoryErrors({});
-                    if (message) setMessage("");
-                  }}>
-                    إضافة القصة
-                  </button>
-                  <button className="btn btn-glass" type="button" onClick={() => {
-                    cancelOrderStory();
-                    goToStep(activeStepIndex + 1);
-                  }}>
-                    تخطي
-                  </button>
-                </div>
+              ))}
+            </div>
+
+            <div className="order-review-customizations">
+              <div className="order-compact-section-head">
+                <h2>تخصيصات اختيارية</h2>
+                <p>يمكنك تركها فارغة والضغط على التالي مباشرة لإنشاء الدعوة.</p>
               </div>
 
+              <article className="order-customization-card">
+                <Heart size={19} />
+                <div>
+                  <strong>نص الافتتاح السينمائي</strong>
+                  <span>اختياري</span>
+                </div>
+                <button className="btn btn-soft" type="button" onClick={() => setOpeningTextOpen((current) => !current)}>
+                  {openingTextOpen ? "إخفاء" : form.openingText ? "تعديل" : "إضافة"}
+                </button>
+              </article>
+              {openingTextOpen ? (
+                <div className="order-customization-fields">
+                  <div className="field">
+                    <label htmlFor="openingText">نص الافتتاح السينمائي</label>
+                    <textarea
+                      id="openingText"
+                      name="openingText"
+                      rows={3}
+                      placeholder="مثال: بعض الحكايات تبدأ بنظرة، وحكايتنا تبدأ اليوم..."
+                      value={form.openingText}
+                      onChange={(event) => updateField("openingText", event.target.value)}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              <article className="order-customization-card">
+                <Heart size={19} />
+                <div>
+                  <strong>قصة العروسين</strong>
+                  <span>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "اختياري"}</span>
+                </div>
+                <button className="btn btn-soft" type="button" onClick={() => {
+                  if (form.storyEnabled) {
+                    cancelOrderStory();
+                    return;
+                  }
+                  const currentValues = getCurrentFormFromDom();
+                  setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
+                  setStoryErrors({});
+                  if (message) setMessage("");
+                }}>
+                  {form.storyEnabled ? "إخفاء" : "إضافة"}
+                </button>
+              </article>
+
               {form.storyEnabled ? (
-                <div className="order-story-fields">
+                <div className="order-story-fields order-customization-fields">
                   <div className="order-story-head">
                     <p>اكتب مرحلتين على الأقل، ويمكنك إضافة حتى 4 مراحل فقط.</p>
                   </div>
@@ -1919,39 +1838,27 @@ export function OrderForm({
                   {ensureMinimumOrderStoryItems(form.story).length < maximumOrderStoryStages ? (
                     <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
                       <Plus size={16} />
-                      إضافة مرحلة في حياتكم كمان
+                      إضافة مرحلة
                     </button>
                   ) : (
                     <p className="field-preview">تم الوصول إلى الحد الأقصى: 4 مراحل.</p>
                   )}
                 </div>
               ) : null}
-            </section>
-          </section>
 
-          <section className={`order-wizard-step ${activeStep.id === "photographer" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photographer"}>
-            <section className="order-photographer-box">
-              <div className="order-optional-card">
-                <Camera size={22} />
+              <article className="order-customization-card">
+                <Camera size={19} />
                 <div>
-                  <strong>هل تريد إضافة بيانات المصور؟</strong>
-                  <span>سيظهر كارت المصور داخل الدعوة إذا أضفت البيانات.</span>
+                  <strong>بيانات المصور</strong>
+                  <span>{form.photographerEnabled ? fieldValue(form.photographerName, "مضاف") : "اختياري"}</span>
                 </div>
-                <div>
-                  <button className="btn btn-soft" type="button" onClick={() => updateField("photographerEnabled", true)}>
-                    إضافة المصور
-                  </button>
-                  <button className="btn btn-glass" type="button" onClick={() => {
-                    updateField("photographerEnabled", false);
-                    goToStep(activeStepIndex + 1);
-                  }}>
-                    تخطي
-                  </button>
-                </div>
-              </div>
+                <button className="btn btn-soft" type="button" onClick={() => updateField("photographerEnabled", !form.photographerEnabled)}>
+                  {form.photographerEnabled ? "إخفاء" : "إضافة"}
+                </button>
+              </article>
 
               {form.photographerEnabled ? (
-                <div className="photographer-fields">
+                <div className="photographer-fields order-customization-fields">
                   <div className="field">
                     <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
                     <input id="photographerName" name="photographerName" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
@@ -1968,77 +1875,55 @@ export function OrderForm({
                   </div>
                 </div>
               ) : null}
-            </section>
-          </section>
-
-          <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
-            <div className="order-review-grid">
-              {[
-                ["القالب", selectedTemplate.arabicName, 0],
-                ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
-                ["التاريخ", readableDate || "لم يحدد بعد", 2],
-                ["الهاتف", fieldValue(form.phone), 2],
-                ["القاعة", fieldValue(form.venue), 3],
-                ["الصور", `${previewImageUrls.length} من 3`, 4],
-                ["الموسيقى", !form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : form.musicChoice === "upload" ? "ملف MP3" : form.musicChoice === "video" ? "صوت من فيديو" : "رابط أغنية", 5],
-                ["القصة", form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "غير مضافة", 6],
-                ["المصور", form.photographerEnabled ? fieldValue(form.photographerName, "مضاف") : "غير مضاف", 7],
-              ].map(([label, value, step]) => (
-                <div className="order-review-item" key={String(label)}>
-                  <span>✓ {label}</span>
-                  <strong>{value}</strong>
-                  <button type="button" onClick={() => goToStep(Number(step))}>تعديل</button>
-                </div>
-              ))}
             </div>
 
-            <div className="order-final-actions" id="confirm-order">
-              <button className="btn btn-gold btn-glow home-cta home-cta-primary order-preview-button" type="button" onClick={openPreview} disabled={isPreviewing || state === "loading"}>
-                {isPreviewing ? <Loader2 size={19} className="animate-float" /> : <Eye size={19} />}
-                <span>{isPreviewing ? "جاري تجهيز المعاينة" : "معاينة كاملة"}</span>
-              </button>
-
-              <button className="btn btn-gold btn-glow home-cta home-cta-primary order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
-                {state === "loading" ? <Loader2 size={19} className="animate-float" /> : <Check size={19} />}
-                <span>{state === "loading" ? "جاري التأكيد" : "إنشاء الدعوة"}</span>
-              </button>
-              {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
-            </div>
+            <p className="order-review-submit-note" id="confirm-order">
+              راجع البيانات، ثم اضغط التالي لإنشاء الدعوة.
+            </p>
+            {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
           </section>
 
-          {!isLastStep ? (
-            <div className="order-wizard-actions">
-              <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
-                <ArrowRight size={17} />
-                رجوع
+          <div className="order-wizard-actions">
+            <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
+              <ArrowRight size={17} />
+              رجوع
+            </button>
+            {isLastStep ? (
+              <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
+                {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
+                التالي
               </button>
+            ) : (
               <button className="btn btn-gold btn-glow" type="button" onClick={goNext}>
                 التالي
                 <ArrowLeft size={17} />
               </button>
-            </div>
-          ) : (
-            <div className="order-wizard-actions">
-              <button className="btn btn-glass" type="button" onClick={goBack}>
-                <ArrowRight size={17} />
-                رجوع
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </form>
-
-        <aside className="order-live-preview-panel" aria-label="المعاينة الحية">
-          <div className="order-live-preview-copy">
-            <Sparkles size={18} />
-            <span>معاينة حية</span>
-            <strong>{activeStep.title}</strong>
-          </div>
-          <div className="order-phone-mockup" data-preview-target={activeStep.previewTarget}>
-            <span className="order-phone-speaker" aria-hidden="true" />
-            <iframe ref={livePreviewFrameRef} title="معاينة الدعوة الحية" src={focusedLivePreviewUrl} loading="lazy" onLoad={() => scrollLivePreviewToStep(activeStep.id)} />
-          </div>
-        </aside>
       </div>
+
+      <button className="order-floating-preview-button" type="button" onClick={() => setPreviewSheetOpen(true)} aria-haspopup="dialog">
+        <Eye size={17} />
+        معاينة الدعوة
+      </button>
+
+      {previewSheetOpen ? (
+        <div className="order-preview-sheet-backdrop" role="dialog" aria-modal="true" aria-label="معاينة الدعوة">
+          <div className="order-preview-sheet">
+            <header className="order-preview-sheet-header">
+              <div>
+                <strong>معاينة الدعوة</strong>
+                <span>{selectedTemplate.arabicName}</span>
+              </div>
+              <button className="order-preview-sheet-close" type="button" onClick={() => setPreviewSheetOpen(false)} aria-label="إغلاق المعاينة">
+                <X size={18} />
+              </button>
+            </header>
+            <iframe title="معاينة الدعوة" src={previewSheetUrl} loading="lazy" />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

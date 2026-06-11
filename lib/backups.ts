@@ -53,6 +53,7 @@ const maxUploadsTotalBytes = (Number(process.env.BACKUP_MAX_UPLOADS_TOTAL_MB) ||
 const maxDataFileSnapshotBytes = maxSafeJsonFileBytes();
 const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
 const maxBackupSummaryBytes = (Number(process.env.BACKUP_SUMMARY_MAX_MB) || 128) * 1024 * 1024;
+const includeLegacyFilesInBackup = process.env.BACKUP_INCLUDE_LEGACY_FILES === "true";
 
 function jsonReplacer(_key: string, value: unknown) {
   if (typeof value === "bigint") return value.toString();
@@ -351,7 +352,11 @@ export async function createBackupSnapshot(type = "manual") {
 
   try {
     const postgresDump = await createPostgresDump(type);
-    const [database, dataFiles, uploads] = await Promise.all([readDatabaseMetadata(), readDataFiles(), walkUploads()]);
+    const [database, dataFiles, uploads] = await Promise.all([
+      readDatabaseMetadata(),
+      includeLegacyFilesInBackup ? readDataFiles() : Promise.resolve({} as Record<string, unknown>),
+      includeLegacyFilesInBackup ? walkUploads() : Promise.resolve([] as BackupUploadFile[]),
+    ]);
     const fileName = formatBackupName(type);
     const payload: BackupPayload & {
       app: "BadrDaawa";
@@ -373,6 +378,7 @@ export async function createBackupSnapshot(type = "manual") {
           sizeBytes: postgresDump.sizeBytes,
           sha256: postgresDump.sha256,
         },
+        legacyFilesIncluded: includeLegacyFilesInBackup,
       },
       database,
       postgresDump,

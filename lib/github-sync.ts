@@ -55,6 +55,18 @@ type SyncFile = {
   size: number;
 };
 
+type BackupPayloadForSync = {
+  source?: string;
+  postgresDump?: {
+    tool?: string;
+    format?: string;
+    encoding?: string;
+    sizeBytes?: number;
+    sha256?: string;
+    base64?: string;
+  };
+};
+
 type SyncConfig = {
   token: string;
   tokenSource: string;
@@ -295,19 +307,57 @@ async function collectSyncFiles() {
   const files = groups
     .flat()
     .filter((file) => isTopLevelBackupJson(file.repoPath))
-    .sort((a, b) => backupTimeFromPath(b.repoPath) - backupTimeFromPath(a.repoPath) || b.repoPath.localeCompare(a.repoPath))
-    .slice(0, 1);
+    .sort((a, b) => backupTimeFromPath(b.repoPath) - backupTimeFromPath(a.repoPath) || b.repoPath.localeCompare(a.repoPath));
   const selected: SyncFile[] = [];
   let totalBytes = 0;
   for (const file of files) {
+    const valid = await isValidDatabaseBackupFile(file);
+    if (!valid) continue;
     if (totalBytes + file.size > maxSyncTotalBytes) {
       console.warn(`[GitHub Sync] Skipping file because sync payload limit was reached: ${file.repoPath} (${file.size} bytes).`);
       continue;
     }
     selected.push(file);
     totalBytes += file.size;
+    break;
   }
   return selected;
+}
+
+async function isValidDatabaseBackupFile(file: SyncFile) {
+  try {
+    const bytes = await readFile(file.absolutePath);
+    const payload = JSON.parse(bytes.toString("utf8")) as BackupPayloadForSync;
+    const dump = payload.postgresDump;
+    if (payload.source !== "database" || !dump) {
+      console.warn(`[GitHub Sync] Skipping non-database backup: ${file.repoPath}`);
+      return false;
+    }
+    if (dump.tool !== "pg_dump" || dump.format !== "custom" || dump.encoding !== "base64" || !dump.base64) {
+      console.warn(`[GitHub Sync] Skipping backup without a valid PostgreSQL dump: ${file.repoPath}`);
+      return false;
+    }
+    const dumpBytes = Buffer.from(dump.base64, "base64");
+    if (!dumpBytes.length) {
+      console.warn(`[GitHub Sync] Skipping backup with an empty PostgreSQL dump: ${file.repoPath}`);
+      return false;
+    }
+    if (Number(dump.sizeBytes) && Number(dump.sizeBytes) !== dumpBytes.length) {
+      console.warn(`[GitHub Sync] Skipping backup with dump size mismatch: ${file.repoPath}`);
+      return false;
+    }
+    if (dump.sha256) {
+      const sha256 = createHash("sha256").update(dumpBytes).digest("hex");
+      if (sha256 !== dump.sha256) {
+        console.warn(`[GitHub Sync] Skipping backup with dump hash mismatch: ${file.repoPath}`);
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.warn(`[GitHub Sync] Skipping invalid backup file: ${file.repoPath}`, error);
+    return false;
+  }
 }
 
 /**
@@ -521,6 +571,25 @@ export async function getLastSuccessfulSync(): Promise<SyncLogEntry | null> {
   }
 }
 
+async function markBackupJobsUploaded(files: SyncFile[], commitSha: string | undefined) {
+  if (!commitSha) return;
+  const fileNames = files
+    .map((file) => path.basename(file.repoPath))
+    .filter((fileName) => /^[a-z0-9-]+\.json$/i.test(fileName));
+  if (!fileNames.length) return;
+
+  try {
+    const prisma = await getPrisma();
+    if (!prisma) return;
+    await prisma.backupJob.updateMany({
+      where: { fileName: { in: fileNames } },
+      data: { githubSha: commitSha },
+    });
+  } catch (error) {
+    console.error("[BackupJob] Failed to mark GitHub upload commit.", error);
+  }
+}
+
 // ─── Core sync function ───────────────────────────────────────────────────────
 
 async function attemptSync(
@@ -595,6 +664,7 @@ async function attemptSync(
   );
 
   if (tree.sha === headCommit.tree.sha) {
+    await markBackupJobsUploaded(files, ref.object.sha);
     return {
       startedAt,
       status: "unchanged",
@@ -628,6 +698,8 @@ async function attemptSync(
     },
     config.token,
   );
+
+  await markBackupJobsUploaded(files, commit.sha);
 
   return {
     startedAt,

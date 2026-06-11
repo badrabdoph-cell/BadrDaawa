@@ -3,6 +3,7 @@ import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
 import { getSiteSettings } from "@/lib/site-settings";
+import { startInternalTaskScheduler } from "@/lib/task-scheduler";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
@@ -36,7 +37,14 @@ export const viewport: Viewport = {
   themeColor: "#fbf7ef",
 };
 
+function startSchedulerAfterBuild() {
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+  startInternalTaskScheduler();
+}
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  startSchedulerAfterBuild();
+
   return (
     <html lang="ar" dir="rtl">
       <body>
