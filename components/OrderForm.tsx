@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Camera,
   Check,
-  Eye,
   FileVideo,
   Heart,
   ImagePlus,
@@ -22,7 +21,6 @@ import {
   Trash2,
   UploadCloud,
   UserRound,
-  X,
 } from "lucide-react";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
@@ -513,7 +511,6 @@ export function OrderForm({
   const [musicVideoBusy, setMusicVideoBusy] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
-  const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
   const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -534,18 +531,6 @@ export function OrderForm({
   const isLastStep = activeStepIndex === orderWizardSteps.length - 1;
   const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
   const previewImageUrls = draftImageUrls.filter(Boolean);
-  const previewSheetUrl = `${previewHref(
-    {
-      ...form,
-      groomName: form.groomName || "اسم العريس",
-      brideName: form.brideName || "اسم العروس",
-      weddingDate: normalizeWeddingDate(form.weddingDate) || form.weddingDate,
-      venue: form.venue || "اسم القاعة",
-      story: form.storyEnabled ? filledOrderStory(form.story) : [],
-    },
-    previewImageUrls,
-    form.musicEnabled && (form.musicChoice === "upload" || form.musicChoice === "video" || form.musicChoice === "url") ? form.musicUrl : "",
-  )}&embed=1`;
 
   useEffect(() => {
     setActiveStepIndex((current) => {
@@ -1124,39 +1109,6 @@ export function OrderForm({
   const normalizedDate = normalizeWeddingDate(form.weddingDate);
   const readableDate = normalizedDate ? displayWeddingDate(normalizedDate) : "";
 
-  function applyPhotographerParams(params: URLSearchParams, values: Partial<FormState>) {
-    if (!values.photographerEnabled) return;
-    params.set("photographerEnabled", "1");
-    if (values.photographerName) params.set("photographerName", values.photographerName);
-    if (values.photographerFacebookUrl) params.set("photographerFacebookUrl", values.photographerFacebookUrl);
-    if (values.photographerInstagramUrl) params.set("photographerInstagramUrl", values.photographerInstagramUrl);
-  }
-
-  function applyMusicParams(params: URLSearchParams, values: Partial<FormState>, musicUrl = values.musicUrl || "") {
-    params.set("musicEnabled", values.musicEnabled ? "1" : "0");
-    if (!values.musicEnabled) return;
-    params.set("musicChoice", values.musicChoice || "default");
-    if (musicUrl) params.set("musicUrl", musicUrl);
-  }
-
-  function previewHref(values: Partial<FormState> = form, imageUrls: string[] = [], musicUrl = "") {
-    const params = new URLSearchParams();
-    params.set("groomName", values.groomName || "اسم العريس");
-    params.set("brideName", values.brideName || "اسم العروس");
-    const weddingDate = normalizeWeddingDate(values.weddingDate || "");
-    if (weddingDate) params.set("weddingDate", weddingDate);
-    if (values.venue) params.set("venue", values.venue);
-    if (values.mapUrl) params.set("mapUrl", values.mapUrl);
-    if (values.openingText) params.set("openingText", values.openingText);
-    if (imageUrls.length) params.set("gallery", imageUrls.join(","));
-    params.set("orderPreview", "1");
-    const story = filledOrderStory(values.story);
-    if (values.storyEnabled && story.length) params.set("story", JSON.stringify(story));
-    applyPhotographerParams(params, values);
-    applyMusicParams(params, values, musicUrl);
-    return `/templates/${values.templateSlug || form.templateSlug}/preview?${params.toString()}`;
-  }
-
   function getCurrentFormFromDom(): OrderFormValues {
     const formData = new FormData(formRef.current || undefined);
     return {
@@ -1493,6 +1445,28 @@ export function OrderForm({
           <div className="order-progress-track" aria-hidden="true">
             <span style={{ width: `${progressPercent}%` }} />
           </div>
+
+          <nav className="order-step-tabs" aria-label="خطوات إنشاء الدعوة">
+            {orderWizardSteps.map((step, index) => {
+              const done = index < activeStepIndex;
+              const active = index === activeStepIndex;
+              return (
+                <button
+                  className={`${active ? "active" : ""} ${done ? "done" : ""}`}
+                  key={step.id}
+                  type="button"
+                  onClick={() => {
+                    if (index <= activeStepIndex || canLeaveStep(activeStep.id)) goToStep(index);
+                  }}
+                  aria-current={active ? "step" : undefined}
+                  disabled={skipTemplateStep && index === 0}
+                >
+                  <span>{done ? <Check size={13} /> : index + 1}</span>
+                  {step.title}
+                </button>
+              );
+            })}
+          </nav>
 
           {message ? (
             <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
@@ -1903,27 +1877,6 @@ export function OrderForm({
         </form>
       </div>
 
-      <button className="order-floating-preview-button" type="button" onClick={() => setPreviewSheetOpen(true)} aria-haspopup="dialog">
-        <Eye size={17} />
-        معاينة الدعوة
-      </button>
-
-      {previewSheetOpen ? (
-        <div className="order-preview-sheet-backdrop" role="dialog" aria-modal="true" aria-label="معاينة الدعوة">
-          <div className="order-preview-sheet">
-            <header className="order-preview-sheet-header">
-              <div>
-                <strong>معاينة الدعوة</strong>
-                <span>{selectedTemplate.arabicName}</span>
-              </div>
-              <button className="order-preview-sheet-close" type="button" onClick={() => setPreviewSheetOpen(false)} aria-label="إغلاق المعاينة">
-                <X size={18} />
-              </button>
-            </header>
-            <iframe title="معاينة الدعوة" src={previewSheetUrl} loading="lazy" />
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

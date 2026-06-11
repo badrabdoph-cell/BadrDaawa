@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowRight, Crown } from "lucide-react";
 import type { OrderInitialDraft } from "@/components/OrderForm";
 import { OrderForm } from "@/components/OrderForm";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SectionIntro } from "@/components/SectionIntro";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
@@ -47,7 +47,7 @@ function parseStoryParam(value?: string) {
 
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
-  const templates = await getPublicTemplatesWithSettings();
+  const [templates, siteSettings] = await Promise.all([getPublicTemplatesWithSettings(), getSiteSettings()]);
   const selected = (params.template ? templates.find((template) => template.slug === params.template) : undefined) || templates[0];
   if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
@@ -73,15 +73,26 @@ export default async function OrderPage({ searchParams }: PageProps) {
   };
 
   return (
-    <div className="page-shell">
-      <SiteHeader />
-      <main className="section compact">
+    <div className="page-shell order-builder-page">
+      <header className="order-builder-header">
+        <div className="container order-builder-nav">
+          <Link href="/" className="brand" aria-label={siteSettings.siteName}>
+            <span className="brand-mark">
+              {siteSettings.logoUrl ? <img className="brand-logo-image" src={siteSettings.logoUrl} alt="" /> : <Crown size={21} />}
+            </span>
+            <span>{siteSettings.siteName}</span>
+          </Link>
+          <Link className="btn btn-soft order-builder-back-link" href="/templates">
+            <ArrowRight size={17} />
+            رجوع للقوالب
+          </Link>
+        </div>
+      </header>
+      <main className="order-builder-main">
         <div className="container order-shell">
-          <SectionIntro eyebrow="طلب دعوة" title="أنشئ دعوتك" lead="اختار التصميم، اكتب بيانات المناسبة، وارفع الصور. تقدر تعاين الدعوة قبل تأكيد الطلب." />
           <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} />
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }
