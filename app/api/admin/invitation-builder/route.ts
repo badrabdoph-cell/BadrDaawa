@@ -5,7 +5,7 @@ import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
-import { createFileInvitation, getFileInvitationByCode, setFileInvitationActive, updateFileInvitation } from "@/lib/file-store";
+import { getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
@@ -230,60 +230,10 @@ export async function POST(request: NextRequest) {
   const customSlug = customSlugResult.slug || "";
   const oldValues = existingCode ? await getBuilderAuditSnapshot(existingCode) : null;
 
-  async function createOrUpdateFileInvitation() {
-    if (existingCode && (await getFileInvitationByCode(existingCode))) {
-      await updateFileInvitation(existingCode, {
-        templateSlug: templateDefinition.slug,
-        customSlug: customSlug || undefined,
-        language,
-        groomName,
-        brideName,
-        weddingDate,
-        weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
-        venue,
-        city: cleanText(input.city),
-        mapUrl: cleanText(input.mapUrl),
-        gallery,
-        heroPhoto: gallery[0],
-        heroVideoUrl,
-        musicUrl,
-        musicEnabled: effectiveMusicEnabled,
-        texts,
-        photographer,
-        isActive,
-      });
-      return existingCode;
-    }
-
-    const storeInvitation = await createFileInvitation({
-      baseSlug,
-      templateSlug: templateDefinition.slug,
-      language,
-      groomName,
-      brideName,
-      phone: "",
-      username: `client_${Date.now().toString(36)}`,
-      password: `bd-${Date.now().toString(36)}`,
-      weddingDate,
-      weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
-      venue,
-      city: cleanText(input.city),
-      mapUrl: cleanText(input.mapUrl),
-      gallery,
-      heroVideoUrl,
-      musicUrl,
-      musicEnabled: effectiveMusicEnabled,
-      texts,
-      photographer,
-      customSlug: customSlug || undefined,
-    });
-    if (!isActive) await setFileInvitationActive(storeInvitation.code, false);
-    return storeInvitation.code;
-  }
-
   async function createOrUpdatePrismaInvitation() {
-    if (!prisma) return null;
-    const template = await prisma.weddingTemplate.upsert({
+    const db = prisma;
+    if (!db) throw new Error("PostgreSQL is not configured.");
+    const template = await db.weddingTemplate.upsert({
       where: { slug: templateDefinition.slug },
       update: {
         name: templateDefinition.name,
@@ -317,17 +267,17 @@ export async function POST(request: NextRequest) {
     });
 
     const existing = existingCode
-      ? await prisma.invitation.findUnique({ where: { code: existingCode }, select: { code: true, customerId: true } }).catch(() => null)
+      ? await db.invitation.findUnique({ where: { code: existingCode }, select: { code: true, customerId: true } }).catch(() => null)
       : null;
     const code =
       existing?.code ||
       makeNumberedInvitationSlug(
         baseSlug,
-        (await prisma.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } })).map((item) => item.code),
+        (await db.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } })).map((item) => item.code),
       );
 
     const username = `client_${code.replace(/[^a-z0-9]+/gi, "_")}`;
-    const customer = await prisma.customer.upsert({
+    const customer = await db.customer.upsert({
       where: { username },
       update: {
         name: `${groomName} و ${brideName}`,
@@ -366,15 +316,26 @@ export async function POST(request: NextRequest) {
     };
 
     if (existing?.code) {
-      await prisma.invitation.update({ where: { code: existing.code }, data });
+      await db.invitation.update({ where: { code: existing.code }, data });
       return existing.code;
     }
 
-    await prisma.invitation.create({ data: { code, ...data } });
+    await db.invitation.create({ data: { code, ...data } });
     return code;
   }
 
-  const code = (await createOrUpdatePrismaInvitation()) || (await createOrUpdateFileInvitation());
+  if (!prisma) {
+    console.error("[Invitation Builder] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return NextResponse.json({ error: "قاعدة البيانات غير متاحة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
+  }
+
+  let code = "";
+  try {
+    code = await createOrUpdatePrismaInvitation();
+  } catch (error) {
+    console.error("[Invitation Builder] Failed to persist invitation in PostgreSQL", error);
+    return NextResponse.json({ error: "تعذر حفظ الدعوة في قاعدة البيانات." }, { status: 500 });
+  }
   const managePath = await getInvitationManagePath(code);
   revalidatePath(`/${code}`);
   if (customSlug) revalidatePath(`/${customSlug}`);

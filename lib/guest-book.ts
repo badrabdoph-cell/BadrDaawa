@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { writeJsonFileAtomic } from "./atomic-file";
+import { prisma } from "./db";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "./types";
 
 type GuestBookStore = {
@@ -117,7 +118,35 @@ function createId() {
   return `gb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function toGuestBookMessage(row: {
+  id: string;
+  invitationCode: string;
+  name: string;
+  message: string;
+  status: string;
+  createdAt: Date;
+  reviewedAt: Date | null;
+}): GuestBookMessage {
+  return {
+    id: row.id,
+    invitationCode: row.invitationCode,
+    name: row.name,
+    message: row.message,
+    status: normalizeStatus(row.status),
+    createdAt: row.createdAt.toISOString(),
+    ...(row.reviewedAt ? { reviewedAt: row.reviewedAt.toISOString() } : {}),
+  };
+}
+
 export async function getAllGuestBookMessages() {
+  if (prisma) {
+    try {
+      const messages = await prisma.guestBookMessage.findMany({ orderBy: { createdAt: "desc" } });
+      if (messages.length) return messages.map(toGuestBookMessage);
+    } catch (error) {
+      console.error("Failed to load guest book messages from PostgreSQL", error);
+    }
+  }
   const store = await readStore();
   return store.messages.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
@@ -138,12 +167,28 @@ export async function getApprovedGuestBookMessages(invitationCode: string) {
 
 export async function getCoupleMessagesSettings(invitationCode: string): Promise<CoupleMessagesSettings> {
   const cleanCode = cleanText(invitationCode, 160);
+  if (prisma && cleanCode) {
+    try {
+      const saved = await prisma.coupleMessagesSetting.findUnique({ where: { invitationCode: cleanCode } });
+      if (saved) return { invitationCode: saved.invitationCode, mode: normalizeMode(saved.mode), updatedAt: saved.updatedAt.toISOString() };
+    } catch (error) {
+      console.error("Failed to load couple messages settings from PostgreSQL", error);
+    }
+  }
   const store = await readSettingsStore();
   const saved = store.settings.find((setting) => setting.invitationCode.toLowerCase() === cleanCode.toLowerCase());
   return saved || { invitationCode: cleanCode, mode: defaultMessagesMode };
 }
 
 export async function getAllCoupleMessagesSettings() {
+  if (prisma) {
+    try {
+      const settings = await prisma.coupleMessagesSetting.findMany({ orderBy: { updatedAt: "desc" } });
+      if (settings.length) return settings.map((setting) => ({ invitationCode: setting.invitationCode, mode: normalizeMode(setting.mode), updatedAt: setting.updatedAt.toISOString() }));
+    } catch (error) {
+      console.error("Failed to load all couple messages settings from PostgreSQL", error);
+    }
+  }
   const store = await readSettingsStore();
   return store.settings;
 }
@@ -156,15 +201,21 @@ export async function updateCoupleMessagesSettings(invitationCode: unknown, mode
     mode: normalizeMode(mode),
     updatedAt: new Date().toISOString(),
   };
-  const store = await readSettingsStore();
-  const index = store.settings.findIndex((setting) => setting.invitationCode.toLowerCase() === cleanCode.toLowerCase());
-  if (index >= 0) {
-    store.settings[index] = next;
-  } else {
-    store.settings.push(next);
+  if (!prisma) {
+    console.error("[Guest Book] PostgreSQL is not configured. Refusing couple settings JSON write.");
+    return null;
   }
-  await writeSettingsStore(store);
-  return next;
+  try {
+    const saved = await prisma.coupleMessagesSetting.upsert({
+      where: { invitationCode: cleanCode },
+      update: { mode: next.mode },
+      create: { invitationCode: cleanCode, mode: next.mode },
+    });
+    return { invitationCode: saved.invitationCode, mode: normalizeMode(saved.mode), updatedAt: saved.updatedAt.toISOString() };
+  } catch (error) {
+    console.error("Failed to save couple messages settings to PostgreSQL", error);
+    return null;
+  }
 }
 
 export async function getCoupleMessagesStats(invitationCode?: string) {
@@ -184,7 +235,6 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
   const message = cleanText(input.message, maxMessageLength);
   if (!invitationCode || !name || !message) return null;
 
-  const store = await readStore();
   const guestMessage: GuestBookMessage = {
     id: createId(),
     invitationCode,
@@ -193,52 +243,66 @@ export async function createGuestBookMessage(input: { invitationCode: unknown; n
     status: normalizeStatus(input.status),
     createdAt: new Date().toISOString(),
   };
-  store.messages.unshift(guestMessage);
-  await writeStore(store);
-  return guestMessage;
+  if (!prisma) {
+    console.error("[Guest Book] PostgreSQL is not configured. Refusing guest-book JSON write.");
+    return null;
+  }
+  try {
+    const saved = await prisma.guestBookMessage.create({
+      data: {
+        id: guestMessage.id,
+        invitationCode,
+        name,
+        message,
+        status: guestMessage.status,
+      },
+    });
+    return toGuestBookMessage(saved);
+  } catch (error) {
+    console.error("Failed to save guest book message to PostgreSQL", error);
+    return null;
+  }
 }
 
 export async function updateGuestBookMessage(id: string, input: { name?: unknown; message?: unknown; status?: unknown }) {
   const cleanId = id.trim();
   if (!cleanId) return null;
-  const store = await readStore();
-  const target = store.messages.find((message) => message.id === cleanId);
+  if (!prisma) {
+    console.error("[Guest Book] PostgreSQL is not configured. Refusing guest-book JSON write.");
+    return null;
+  }
+  const target = await prisma.guestBookMessage.findUnique({ where: { id: cleanId } }).catch(() => null);
   if (!target) return null;
 
   const nextName = input.name === undefined ? target.name : cleanText(input.name, maxNameLength);
   const nextMessage = input.message === undefined ? target.message : cleanText(input.message, maxMessageLength);
   if (!nextName || !nextMessage) return null;
 
-  const reviewedAt = input.status !== undefined && normalizeStatus(input.status) !== target.status ? new Date().toISOString() : target.reviewedAt;
-  const updated: GuestBookMessage = {
-    ...target,
-    name: nextName,
-    message: nextMessage,
-    status: input.status === undefined ? target.status : normalizeStatus(input.status),
-    ...(reviewedAt ? { reviewedAt } : {}),
-  };
-
-  store.messages = store.messages.map((message) => (message.id === cleanId ? updated : message));
-  await writeStore(store);
-  return updated;
+  const nextStatus = input.status === undefined ? normalizeStatus(target.status) : normalizeStatus(input.status);
+  const reviewedAt = input.status !== undefined && nextStatus !== normalizeStatus(target.status) ? new Date() : target.reviewedAt;
+  const updated = await prisma.guestBookMessage.update({
+    where: { id: cleanId },
+    data: { name: nextName, message: nextMessage, status: nextStatus, reviewedAt },
+  });
+  return toGuestBookMessage(updated);
 }
 
 export async function moderateGuestBookMessage(id: string, action: GuestBookAction) {
   const cleanId = id.trim();
   if (!cleanId) return null;
-  const store = await readStore();
-  const target = store.messages.find((message) => message.id === cleanId);
+  if (!prisma) {
+    console.error("[Guest Book] PostgreSQL is not configured. Refusing guest-book JSON write.");
+    return null;
+  }
+  const target = await prisma.guestBookMessage.findUnique({ where: { id: cleanId } }).catch(() => null);
   if (!target) return null;
 
   if (action === "delete") {
-    store.messages = store.messages.filter((message) => message.id !== cleanId);
-    await writeStore(store);
-    return { message: target, deleted: true };
+    await prisma.guestBookMessage.delete({ where: { id: cleanId } });
+    return { message: toGuestBookMessage(target), deleted: true };
   }
 
   const nextStatus: GuestBookStatus = action === "approve" ? "approved" : "rejected";
-  const reviewedAt = new Date().toISOString();
-  store.messages = store.messages.map((message) => (message.id === cleanId ? { ...message, status: nextStatus, reviewedAt } : message));
-  await writeStore(store);
-  return { message: { ...target, status: nextStatus, reviewedAt }, deleted: false };
+  const updated = await prisma.guestBookMessage.update({ where: { id: cleanId }, data: { status: nextStatus, reviewedAt: new Date() } });
+  return { message: toGuestBookMessage(updated), deleted: false };
 }

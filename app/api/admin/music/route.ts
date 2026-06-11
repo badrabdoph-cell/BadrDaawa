@@ -4,7 +4,6 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAdminInvitations } from "@/lib/admin-data";
 import { cleanNewDirectAudioUrl, deleteUploadedMusicFile, isBlockedMusicPageUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { updateFileInvitationsMusicUrl } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteMusicSlot, getMusicLibrary, getMusicUsage, renameMusicSlot, saveMusicSlot, setMusicSlotEnabled } from "@/lib/music-library";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
@@ -40,20 +39,15 @@ function revalidateTemplatesPreviewPages(templateSlugs: string[]) {
 
 async function convertInvitationsToDefaultMusic(trackUrl: string) {
   if (!trackUrl) return 0;
-  let databaseCount = 0;
-  if (prisma) {
-    try {
-      const result = await prisma.invitation.updateMany({
-        where: { musicUrl: trackUrl },
-        data: { musicUrl: null, musicEnabled: true },
-      });
-      databaseCount = result.count;
-    } catch (error) {
-      console.error("Failed to convert database invitations to default music", error);
-    }
+  if (!prisma) {
+    console.error("[Music] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return 0;
   }
-  const fileCount = await updateFileInvitationsMusicUrl(trackUrl, { musicUrl: undefined, musicEnabled: true }).catch(() => 0);
-  return databaseCount + fileCount;
+  const result = await prisma.invitation.updateMany({
+    where: { musicUrl: trackUrl },
+    data: { musicUrl: null, musicEnabled: true },
+  });
+  return result.count;
 }
 
 function redirectWith(request: NextRequest, params: Record<string, string>) {

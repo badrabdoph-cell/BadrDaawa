@@ -4,7 +4,6 @@ import {
   getFileInvitationByManageToken,
   getFileInvitationManageToken,
   isFileInvitationManageTokenAvailable,
-  setFileInvitationManageToken,
 } from "./file-store";
 
 export type InvitationManageTokenResult =
@@ -73,9 +72,8 @@ export async function ensureInvitationManageToken(code: string) {
   const fileToken = await getFileInvitationManageToken(cleanCode).catch(() => null);
   if (!fileToken) return "";
   if (fileToken.manageToken && !isExpired(fileToken.manageTokenExpiresAt)) return fileToken.manageToken;
-  const token = await createUniqueToken(fileToken.code);
-  await setFileInvitationManageToken(fileToken.code, token);
-  return token;
+  console.error("[Invitation Manage Token] Legacy file-store token creation is read-only.");
+  return "";
 }
 
 export async function resolveInvitationManageToken(tokenValue: string): Promise<InvitationManageTokenResult> {

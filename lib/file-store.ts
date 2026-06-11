@@ -108,6 +108,15 @@ type FileOrderUpdate = Partial<
 
 const storePath = path.join(process.cwd(), "data", "runtime-store.json");
 
+export function isLegacyFileStoreEnabled() {
+  return process.env.ENABLE_LEGACY_FILE_STORE === "true";
+}
+
+function assertLegacyFileStoreWriteEnabled() {
+  if (isLegacyFileStoreEnabled()) return;
+  throw new Error("Legacy runtime-store writes are disabled. PostgreSQL is the operational source of truth.");
+}
+
 function createEmptyStore(): FileStoreData {
   return {
     invitations: [],
@@ -137,6 +146,7 @@ async function readStore(): Promise<FileStoreData> {
 }
 
 async function writeStore(store: FileStoreData) {
+  assertLegacyFileStoreWriteEnabled();
   await writeJsonFileAtomic(storePath, store);
 }
 
@@ -393,6 +403,7 @@ function shouldArchiveInvitation(invitation: Invitation, now = Date.now()) {
 }
 
 export async function archiveExpiredFileInvitations(code?: string) {
+  if (!isLegacyFileStoreEnabled()) return 0;
   const store = await readStore();
   let count = 0;
   const lookup = code?.toLowerCase();

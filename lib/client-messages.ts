@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { prisma } from "./db";
 import type { ClientMessage } from "./types";
 
 type ClientMessageStore = {
@@ -52,7 +53,35 @@ async function writeMessageStore(store: ClientMessageStore) {
   await writeFile(messageStorePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 }
 
+function toClientMessage(row: {
+  id: string;
+  invitationCode: string;
+  title: string;
+  body: string;
+  sender: string;
+  createdAt: Date;
+  readAt: Date | null;
+}): ClientMessage {
+  return {
+    id: row.id,
+    invitationCode: row.invitationCode,
+    title: row.title,
+    body: row.body,
+    sender: "admin",
+    createdAt: row.createdAt.toISOString(),
+    ...(row.readAt ? { readAt: row.readAt.toISOString() } : {}),
+  };
+}
+
 export async function getAllClientMessages() {
+  if (prisma) {
+    try {
+      const messages = await prisma.clientMessage.findMany({ orderBy: { createdAt: "desc" } });
+      if (messages.length) return messages.map(toClientMessage);
+    } catch (error) {
+      console.error("Failed to load client messages from PostgreSQL", error);
+    }
+  }
   const store = await readMessageStore();
   return store.messages.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
@@ -78,32 +107,35 @@ export async function createClientMessage(input: { invitationCode: string; title
   const body = cleanText(input.body, maxMessageLength);
   if (!invitationCode || !body) return null;
   const title = cleanText(input.title || "رسالة من الإدارة", maxTitleLength) || "رسالة من الإدارة";
-  const store = await readMessageStore();
-  const message: ClientMessage = {
-    id: `msg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-    invitationCode,
-    title,
-    body,
-    sender: "admin",
-    createdAt: new Date().toISOString(),
-  };
-  store.messages.unshift(message);
-  await writeMessageStore(store);
-  return message;
+  if (!prisma) {
+    console.error("[Client Messages] PostgreSQL is not configured. Refusing JSON write.");
+    return null;
+  }
+  const saved = await prisma.clientMessage.create({
+    data: {
+      id: `msg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      invitationCode,
+      title,
+      body,
+      sender: "admin",
+    },
+  });
+  return toClientMessage(saved);
 }
 
 export async function markClientMessageRead(invitationCode: string, messageId?: string) {
   const cleanCode = invitationCode.trim().toLowerCase();
-  const now = new Date().toISOString();
-  const store = await readMessageStore();
-  let changed = false;
-  store.messages = store.messages.map((message) => {
-    const matchesCode = message.invitationCode.toLowerCase() === cleanCode;
-    const matchesMessage = !messageId || message.id === messageId;
-    if (!matchesCode || !matchesMessage || message.readAt) return message;
-    changed = true;
-    return { ...message, readAt: now };
+  if (!prisma) {
+    console.error("[Client Messages] PostgreSQL is not configured. Refusing JSON write.");
+    return false;
+  }
+  const result = await prisma.clientMessage.updateMany({
+    where: {
+      invitationCode: { equals: cleanCode, mode: "insensitive" },
+      ...(messageId ? { id: messageId } : {}),
+      readAt: null,
+    },
+    data: { readAt: new Date() },
   });
-  if (changed) await writeMessageStore(store);
-  return changed;
+  return result.count > 0;
 }

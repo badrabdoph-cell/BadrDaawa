@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { prisma } from "./db";
 import type { WeddingLiveEvent, WeddingLiveModeConfig } from "./types";
 
 type WeddingLiveStore = {
@@ -102,13 +103,47 @@ export function serializeLiveModeEvents(events: WeddingLiveEvent[]) {
   return events.map((event) => [event.time, `${event.title}${event.description ? ` - ${event.description}` : ""}`].filter(Boolean).join("|")).join("\n");
 }
 
+function toLiveModeConfig(row: {
+  invitationCode: string;
+  enabled: boolean;
+  announcement: string | null;
+  events: unknown;
+  updatedAt: Date;
+  updatedBy: string;
+}): WeddingLiveModeConfig {
+  return {
+    invitationCode: row.invitationCode,
+    enabled: row.enabled,
+    announcement: row.announcement || "",
+    events: normalizeEvents(row.events),
+    updatedAt: row.updatedAt.toISOString(),
+    updatedBy: row.updatedBy === "client" ? "client" : "admin",
+  };
+}
+
 export async function getWeddingLiveMode(invitationCode: string) {
   const cleanCode = invitationCode.trim().toLowerCase();
+  if (prisma && cleanCode) {
+    try {
+      const config = await prisma.weddingLiveMode.findUnique({ where: { invitationCode: cleanCode } });
+      if (config) return toLiveModeConfig(config);
+    } catch (error) {
+      console.error("Failed to load wedding live mode from PostgreSQL", error);
+    }
+  }
   const store = await readStore();
   return store.liveModes.find((config) => config.invitationCode.toLowerCase() === cleanCode) || null;
 }
 
 export async function getAllWeddingLiveModes() {
+  if (prisma) {
+    try {
+      const configs = await prisma.weddingLiveMode.findMany({ orderBy: { updatedAt: "desc" } });
+      if (configs.length) return configs.map(toLiveModeConfig);
+    } catch (error) {
+      console.error("Failed to load all wedding live modes from PostgreSQL", error);
+    }
+  }
   const store = await readStore();
   return store.liveModes.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
@@ -117,20 +152,29 @@ export async function upsertWeddingLiveMode(input: WeddingLiveModeInput) {
   const invitationCode = cleanText(input.invitationCode, 160);
   if (!invitationCode) return null;
 
-  const store = await readStore();
-  const current = store.liveModes.find((config) => config.invitationCode.toLowerCase() === invitationCode.toLowerCase());
+  if (!prisma) {
+    console.error("[Live Mode] PostgreSQL is not configured. Refusing JSON write.");
+    return null;
+  }
+  const current = await getWeddingLiveMode(invitationCode);
   const events = Array.isArray(input.events) ? normalizeEvents(input.events) : current?.events || [];
-  const next: WeddingLiveModeConfig = {
-    invitationCode,
-    enabled: typeof input.enabled === "boolean" ? input.enabled : current?.enabled === true,
-    announcement: input.announcement === undefined ? current?.announcement || "" : cleanText(input.announcement, 500),
-    events,
-    updatedAt: new Date().toISOString(),
-    updatedBy: input.updatedBy || "admin",
-  };
-  store.liveModes = [next, ...store.liveModes.filter((config) => config.invitationCode.toLowerCase() !== invitationCode.toLowerCase())];
-  await writeStore(store);
-  return next;
+  const saved = await prisma.weddingLiveMode.upsert({
+    where: { invitationCode },
+    update: {
+      enabled: typeof input.enabled === "boolean" ? input.enabled : current?.enabled === true,
+      announcement: input.announcement === undefined ? current?.announcement || "" : cleanText(input.announcement, 500),
+      events,
+      updatedBy: input.updatedBy || "admin",
+    },
+    create: {
+      invitationCode,
+      enabled: typeof input.enabled === "boolean" ? input.enabled : current?.enabled === true,
+      announcement: input.announcement === undefined ? current?.announcement || "" : cleanText(input.announcement, 500),
+      events,
+      updatedBy: input.updatedBy || "admin",
+    },
+  });
+  return toLiveModeConfig(saved);
 }
 
 export async function setWeddingLiveModeEnabled(invitationCode: string, enabled: boolean, updatedBy: "admin" | "client") {

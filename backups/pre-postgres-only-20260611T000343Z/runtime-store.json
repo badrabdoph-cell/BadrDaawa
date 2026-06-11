@@ -1,0 +1,161 @@
+{
+  "invitations": [
+    {
+      "id": "inv_qa_groom_qa_bride_1",
+      "code": "qa-groom-qa-bride-1",
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "groomName": "QA Groom",
+      "brideName": "QA Bride",
+      "weddingDate": "2026-12-31",
+      "weddingTime": "07:00 مساءً",
+      "venue": "QA Hall",
+      "city": "",
+      "mapUrl": "",
+      "heroPhoto": "/assets/invite/badr-sarah-1.jpeg",
+      "gallery": [
+        "/assets/invite/badr-sarah-1.jpeg",
+        "/assets/invite/badr-sarah-2.jpeg",
+        "/assets/invite/badr-sarah-3.jpeg"
+      ],
+      "musicEnabled": false,
+      "manageToken": "bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "openingText": "ليلة جديدة تبدأ باسم الحب. افتحوا الدعوة وشاركونا الفرحة.",
+        "inviteMessage": "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
+        "inviteMessageSecondary": "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "rsvpConfirmedSuccessMessage": "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+        "rsvpDeclinedSuccessMessage": "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+        "galleryStories": [],
+        "story": []
+      },
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "status": "active",
+      "isActive": true,
+      "views": 1,
+      "customerId": "cus_client_ord_mq8abjls_xcbgb"
+    }
+  ],
+  "guests": [
+    {
+      "id": "gst_mq8ad6mg_b6y3d",
+      "invitationCode": "qa-groom-qa-bride-1",
+      "createdAt": "2026-06-10T16:31:31.528Z",
+      "name": "Guest QA",
+      "phone": "01000000000",
+      "attendees": 2,
+      "status": "confirmed",
+      "note": "QA test"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cus_client_ord_mq8abjls_xcbgb",
+      "name": "QA Groom و QA Bride",
+      "phone": "",
+      "username": "client_ord_mq8abjls_xcbgb",
+      "passwordHash": "pbkdf2-sha256:210000:12d05e83848d6d2b903bab9370ddffa6:811e7984c063efc5f7401f54fd57aa73968ee716c9908ea64c31fba2fe3d7c2d",
+      "isActive": true,
+      "createdAt": "2026-06-10T16:31:15.773Z"
+    }
+  ],
+  "orders": [
+    {
+      "orderNumber": "ORD-MQ8ABJLB-F4CC",
+      "dedupeKey": "833e31ebe69e05d45855502fe627e64bf0cab0a7931fbe1ee72fc8b5ef40e8a8",
+      "groomName": "QA Groom",
+      "brideName": "QA Bride",
+      "phone": "",
+      "weddingDate": "2026-12-31",
+      "venue": "QA Hall",
+      "mapUrl": "",
+      "notes": "",
+      "imageUrls": [
+        "/assets/invite/badr-sarah-1.jpeg",
+        "/assets/invite/badr-sarah-2.jpeg",
+        "/assets/invite/badr-sarah-3.jpeg"
+      ],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "publishedInvitationCode": "qa-groom-qa-bride-1",
+      "manageToken": "bjfNcHe3Xop0PtD3v0nTOBDFCRbeb5RC9FA6I358yyrgNOuhXXut-wF5JoaB-4yJ",
+      "id": "ord_mq8abjls_xcbgb",
+      "status": "published",
+      "submittedAt": "2026-06-10T16:30:15.040Z",
+      "createdAt": "2026-06-10T16:30:15.040Z",
+      "texts": {
+        "groomNameEn": "",
+        "brideNameEn": "",
+        "openingText": "ليلة جديدة تبدأ باسم الحب. افتحوا الدعوة وشاركونا الفرحة.",
+        "inviteMessage": "بكل الحب والامتنان، ندعوكم لمشاركتنا هذه الليلة المميزة، حيث تبدأ حكاية جديدة ونحتفل بها برفقتكم.",
+        "inviteMessageSecondary": "هنفرح أكتر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+        "rsvpQuestion": "ناوي تحضر وتشاركنا فرحه عمرنا؟",
+        "rsvpDeclinedMessage": "حزين إنك مش معايا في يومي المفضل 🥹",
+        "rsvpConfirmedSuccessMessage": "شكراً لتأكيد حضورك. وجودك يفرحنا ويكمل ليلتنا.",
+        "rsvpDeclinedSuccessMessage": "شكراً لردك. نتمنى لك كل الخير ونقدر مشاركتك لنا الفرحة.",
+        "galleryStories": [],
+        "story": []
+      }
+    },
+    {
+      "orderNumber": "ORD-MQ87C7KS-6787",
+      "dedupeKey": "fef8e45a09dd8acb43b2b374d704f027a3e18ebdd302a5d94735a8c3c247166f",
+      "groomName": "اختبار كودكس",
+      "brideName": "تجربة النجاح",
+      "phone": "",
+      "weddingDate": "2026-12-31",
+      "venue": "قاعة اختبار محلي",
+      "mapUrl": "",
+      "notes": "",
+      "imageUrls": [],
+      "musicEnabled": false,
+      "musicChoice": "default",
+      "musicUrl": "",
+      "photographer": {
+        "enabled": false,
+        "name": "",
+        "facebookUrl": "",
+        "instagramUrl": ""
+      },
+      "templateSlug": "featured-1",
+      "language": "ar",
+      "publishedInvitationCode": "wedding-invitation-1",
+      "manageToken": "20ATCYoxJ5UmJ4-yHFRzNQtvCZzOTcikIYwjO0uy4ZYwullD18PI7pZX3qUZFs7x",
+      "id": "ord_mq87c7ku_9kvef",
+      "status": "new",
+      "submittedAt": "2026-06-10T15:06:47.262Z",
+      "createdAt": "2026-06-10T15:06:47.262Z"
+    }
+  ],
+  "analyticsEvents": [
+    {
+      "id": "evt_mq8ad570_xog9ea",
+      "invitationCode": "qa-groom-qa-bride-1",
+      "eventType": "VIEW",
+      "metadata": {
+        "source": "Direct",
+        "sourceLabel": "مباشر",
+        "userAgent": "curl/8.7.1"
+      },
+      "createdAt": "2026-06-10T16:31:29.676Z"
+    }
+  ]
+}

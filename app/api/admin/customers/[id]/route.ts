@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import { softDeleteFileCustomer } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -30,16 +29,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const action = String(formData.get("action") || "");
   if (!id || action !== "delete") return redirectCustomers(request, "invalid");
 
-  let changed = false;
-  if (prisma) {
-    const result = await prisma.customer.updateMany({
-      where: { id, deletedAt: null },
-      data: { deletedAt: new Date(), isActive: false },
-    });
-    changed = result.count > 0;
+  if (!prisma) {
+    console.error("[Admin Customer] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return redirectCustomers(request, "database");
   }
 
-  if (!changed) changed = await softDeleteFileCustomer(id).catch(() => false);
+  const result = await prisma.customer.updateMany({
+    where: { id, deletedAt: null },
+    data: { deletedAt: new Date(), isActive: false },
+  });
+  const changed = result.count > 0;
   if (!changed) return redirectCustomers(request, "missing");
 
   revalidatePath("/admin/customers");

@@ -76,3 +76,33 @@ if (!databaseUrl) {
 
 console.log("[prepare] Running prisma migrate deploy.");
 runPrisma(["migrate", "deploy"], { env: { DATABASE_URL: databaseUrl } });
+
+if (process.env.SKIP_RUNTIME_STORE_BACKFILL === "true") {
+  console.log("[prepare] Runtime-store backfill skipped by SKIP_RUNTIME_STORE_BACKFILL=true.");
+} else {
+  console.log("[prepare] Backfilling legacy runtime-store data into PostgreSQL.");
+  const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-runtime-store-to-postgres.mjs")], {
+    cwd: root,
+    stdio: "inherit",
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+  });
+
+  if (result.status !== 0) {
+    process.exit(result.status || 1);
+  }
+}
+
+if (process.env.SKIP_OPERATIONAL_JSON_BACKFILL === "true") {
+  console.log("[prepare] Operational JSON backfill skipped by SKIP_OPERATIONAL_JSON_BACKFILL=true.");
+} else {
+  console.log("[prepare] Backfilling operational JSON data into PostgreSQL.");
+  const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-operational-json-to-postgres.mjs")], {
+    cwd: root,
+    stdio: "inherit",
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+  });
+
+  if (result.status !== 0) {
+    process.exit(result.status || 1);
+  }
+}

@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import { deleteFileGuest, updateFileGuest } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { rsvpSchema } from "@/lib/validation";
 import { getRedirectUrl } from "@/lib/utils";
@@ -41,21 +40,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const formData = await request.formData();
   const action = String(formData.get("action") || "update");
 
+  if (!prisma) {
+    console.error("[Admin RSVP] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return redirectAttendance(request, { error: "database" });
+  }
+
   if (action === "delete") {
-    if (prisma) {
-      const existing = await prisma.guestRsvp.findUnique({ where: { id }, include: { invitation: { select: { code: true } } } }).catch(() => null);
-      if (existing) {
-        await prisma.guestRsvp.delete({ where: { id } });
-        revalidateRsvpPages(existing.invitation.code);
-        queueGitHubSync(`Admin RSVP deleted: ${existing.invitation.code}.`, { createSnapshot: true });
-        return redirectAttendance(request, { saved: "deleted" });
-      }
+    const existing = await prisma.guestRsvp.findUnique({ where: { id }, include: { invitation: { select: { code: true } } } }).catch(() => null);
+    if (existing) {
+      await prisma.guestRsvp.delete({ where: { id } });
+      revalidateRsvpPages(existing.invitation.code);
+      queueGitHubSync(`Admin RSVP deleted: ${existing.invitation.code}.`, { createSnapshot: true });
+      return redirectAttendance(request, { saved: "deleted" });
     }
-    const deleted = await deleteFileGuest(id);
-    if (!deleted) return redirectAttendance(request, { error: "not-found" });
-    revalidateRsvpPages(deleted.invitationCode);
-    queueGitHubSync(`Admin file RSVP deleted: ${deleted.invitationCode}.`, { createSnapshot: true });
-    return redirectAttendance(request, { saved: "deleted" });
+    return redirectAttendance(request, { error: "not-found" });
   }
 
   const parsed = rsvpSchema.safeParse({
@@ -67,28 +65,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
   });
   if (!parsed.success) return redirectAttendance(request, { error: "invalid" });
 
-  if (prisma) {
-    const existing = await prisma.guestRsvp.findUnique({ where: { id }, include: { invitation: { select: { code: true } } } }).catch(() => null);
-    if (existing) {
-      await prisma.guestRsvp.update({
-        where: { id },
-        data: {
-          name: parsed.data.name,
-          phone: parsed.data.phone,
-          attendees: parsed.data.attendees,
-          status: parsed.data.status === "confirmed" ? "CONFIRMED" : "DECLINED",
-          note: parsed.data.note || null,
-        },
-      });
-      revalidateRsvpPages(existing.invitation.code);
-      queueGitHubSync(`Admin RSVP updated: ${existing.invitation.code}.`, { createSnapshot: true });
-      return redirectAttendance(request, { saved: "updated" });
-    }
+  const existing = await prisma.guestRsvp.findUnique({ where: { id }, include: { invitation: { select: { code: true } } } }).catch(() => null);
+  if (existing) {
+    await prisma.guestRsvp.update({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        phone: parsed.data.phone,
+        attendees: parsed.data.attendees,
+        status: parsed.data.status === "confirmed" ? "CONFIRMED" : "DECLINED",
+        note: parsed.data.note || null,
+      },
+    });
+    revalidateRsvpPages(existing.invitation.code);
+    queueGitHubSync(`Admin RSVP updated: ${existing.invitation.code}.`, { createSnapshot: true });
+    return redirectAttendance(request, { saved: "updated" });
   }
 
-  const updated = await updateFileGuest(id, parsed.data);
-  if (!updated) return redirectAttendance(request, { error: "not-found" });
-  revalidateRsvpPages(updated.invitationCode);
-  queueGitHubSync(`Admin file RSVP updated: ${updated.invitationCode}.`, { createSnapshot: true });
-  return redirectAttendance(request, { saved: "updated" });
+  return redirectAttendance(request, { error: "not-found" });
 }

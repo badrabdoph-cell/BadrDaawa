@@ -4,7 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { createFileInvitation, getFileOrder, softDeleteFileOrder, updateFileOrder } from "@/lib/file-store";
+import { getFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
@@ -328,63 +328,6 @@ async function upsertTemplate(templateSlug: string) {
   return { definition: selectedTemplate, dbTemplate };
 }
 
-async function publishFileOrder(id: string, payload: AdminOrderPayload) {
-  const order = await getFileOrder(id);
-  if (!order) return null;
-  const draft = getOrderDraft(payload, order);
-  const error = validateDraft(draft, true);
-  if (error) throw new Error(error);
-  const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
-  const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
-  const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
-  const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
-  const digits = digitsOnly(draft.phone);
-  const username = `client_${digits || order.id.replace(/[^a-z0-9]/gi, "_").slice(0, 18)}`;
-  const password = digits.slice(-6) || order.id.slice(-6) || "123456";
-  const invitation = await createFileInvitation({
-    baseSlug: buildInvitationBaseSlug(draft.groomName, draft.brideName),
-    code: order.publishedInvitationCode,
-    templateSlug: draft.templateSlug,
-    groomName: draft.groomName,
-    brideName: draft.brideName,
-    phone: draft.phone,
-    username,
-    password,
-    weddingDate: draft.weddingDateText,
-    weddingTime: "07:00 مساءً",
-    venue: draft.venue,
-    city: "",
-    mapUrl: draft.mapUrl,
-    gallery: gallery.length ? gallery : fallbackGallery,
-    heroVideoUrl: draft.heroVideoUrl,
-    musicUrl,
-    musicEnabled: effectiveMusicEnabled,
-    manageToken: order.manageToken || undefined,
-    manageTokenExpiresAt: order.manageTokenExpiresAt || undefined,
-    texts: draft.texts,
-    photographer: draft.photographer,
-  });
-  await updateFileOrder(id, {
-    groomName: draft.groomName,
-    brideName: draft.brideName,
-    phone: draft.phone,
-    weddingDate: draft.weddingDateText,
-    venue: draft.venue,
-    mapUrl: draft.mapUrl,
-    notes: draft.notes,
-    imageUrls: gallery.length ? gallery : fallbackGallery,
-    templateSlug: draft.templateSlug,
-    musicEnabled: effectiveMusicEnabled,
-    musicChoice: effectiveMusicChoice,
-    musicUrl,
-    texts: draft.texts,
-    photographer: draft.photographer,
-    status: "published",
-    publishedInvitationCode: invitation.code,
-  });
-  return invitation.code;
-}
-
 async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
   if (!prisma) return null;
   const order = await prisma.orderRequest.findFirst({
@@ -509,8 +452,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
 }
 
 async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVIEWING" | "EDITED" | "REJECTED" | null) {
-  const fileOrder = await getFileOrder(id);
-  const existingFile: Partial<OrderRequest> | null = fileOrder || null;
+  if (!prisma) return null;
   const existingPrisma = prisma
     ? await prisma.orderRequest.findFirst({ where: { id, deletedAt: null }, include: { template: { select: { slug: true } } } }).catch(() => null)
     : null;
@@ -532,7 +474,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         rejectionReason: existingPrisma.rejectionReason || undefined,
         templateSlug: existingPrisma.template?.slug || "featured-1",
       }
-    : existingFile;
+    : null;
   if (!existingOrder) return null;
   const draft = getOrderDraft(payload, existingOrder);
   const error = status === "REVIEWING" ? "" : validateDraft(draft);
@@ -567,26 +509,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
     return true;
   }
 
-  const fileStatus = status === "REVIEWING" ? "reviewing" : status === "REJECTED" ? "rejected" : status === "EDITED" ? "edited" : undefined;
-  await updateFileOrder(id, {
-    groomName: draft.groomName,
-    brideName: draft.brideName,
-    phone: draft.phone,
-    weddingDate: draft.weddingDateText,
-    venue: draft.venue,
-    mapUrl: draft.mapUrl,
-    notes: draft.notes,
-    imageUrls: draft.imageUrls,
-    templateSlug: draft.templateSlug,
-    musicEnabled: effectiveMusicEnabled,
-    musicChoice: effectiveMusicChoice,
-    musicUrl,
-    texts: draft.texts,
-    photographer: draft.photographer,
-    rejectionReason: status === "REJECTED" ? draft.rejectionReason || "تم رفض الطلب من لوحة الإدارة." : undefined,
-    ...(fileStatus ? { status: fileStatus as OrderRequest["status"] } : {}),
-  });
-  return getFileOrder(id);
+  return null;
 }
 
 async function getSnapshot(id: string, request: NextRequest) {
@@ -621,11 +544,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const payload = jsonMode ? ((await request.json().catch(() => null)) as AdminOrderPayload | null) : payloadFromForm(await request.formData());
   if (!payload) return jsonMode ? jsonError("بيانات الطلب غير صالحة.") : redirectBack(request, "failed");
   const action = payload.action || "update";
+  if (!prisma) {
+    console.error("[Admin Order] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return jsonMode ? jsonError("قاعدة البيانات غير متاحة حالياً.", 503) : redirectBack(request, "database");
+  }
 
   try {
     if (action === "delete") {
-      if (prisma) await prisma.orderRequest.updateMany({ where: { id, deletedAt: null }, data: { deletedAt: new Date() } }).catch(() => null);
-      await softDeleteFileOrder(id).catch(() => null);
+      const result = await prisma.orderRequest.updateMany({ where: { id, deletedAt: null }, data: { deletedAt: new Date() } });
+      if (!result.count) throw new Error("لم يتم العثور على الطلب.");
       revalidatePath("/admin/orders");
       revalidatePath("/admin/trash");
       queueGitHubSync(`Order deleted from admin: ${id}.`, { createSnapshot: true });
@@ -650,7 +577,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (action === "publish") {
       const oldValues = await getSnapshot(id, request);
-      const code = (await publishPrismaOrder(id, payload)) || (await publishFileOrder(id, payload));
+      const code = await publishPrismaOrder(id, payload);
       if (!code) throw new Error("لم يتم العثور على الطلب.");
       revalidatePath("/admin/orders");
       revalidatePath("/admin/invitations");

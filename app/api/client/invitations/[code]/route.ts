@@ -4,7 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveAudioDataUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
-import { getFileInvitationByCode, updateFileInvitation } from "@/lib/file-store";
+import { getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
@@ -151,6 +151,10 @@ async function resolveJsonPhotographer(payload: ClientInvitationPayload) {
 async function handleJsonUpdate(request: NextRequest, code: string) {
   const payload = (await request.json().catch(() => null)) as ClientInvitationPayload | null;
   if (!payload) return NextResponse.json({ error: "بيانات غير صالحة." }, { status: 400 });
+  if (!prisma) {
+    console.error("[Client Invitation] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return NextResponse.json({ error: "قاعدة البيانات غير متاحة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
+  }
   const oldValues = await getClientInvitationAuditSnapshot(code);
 
   const data: Record<string, unknown> = {};
@@ -236,19 +240,14 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   }
 
   let updated = false;
-  if (prisma) {
-    try {
-      if (Object.keys(data).length) {
-        const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
-        updated = result.count > 0;
-      }
-    } catch (error) {
-      console.error("Failed to update database invitation from client JSON editor", error);
+  try {
+    if (Object.keys(data).length) {
+      const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
+      updated = result.count > 0;
     }
-  }
-
-  if (!updated && Object.keys(fileData).length) {
-    updated = await updateFileInvitation(code, fileData);
+  } catch (error) {
+    console.error("Failed to update database invitation from client JSON editor", error);
+    return NextResponse.json({ error: "تعذر حفظ التعديلات في قاعدة البيانات." }, { status: 500 });
   }
 
   revalidatePath(`/${code}`);
@@ -291,6 +290,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const formData = await request.formData();
+  if (!prisma) {
+    console.error("[Client Invitation] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, request.url), 303);
+  }
   const oldValues = await getClientInvitationAuditSnapshot(code);
   const galleryImages = getInvitationGalleryEntries(formData);
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
@@ -321,12 +324,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
     }
 
-    if (prisma) {
-      const existing = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { musicUrl: true } }).catch(() => null);
-      currentMusicUrl = existing?.musicUrl || "";
-    } else {
-      currentMusicUrl = (await getFileInvitationByCode(code))?.musicUrl || "";
-    }
+    const existing = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { musicUrl: true } }).catch(() => null);
+    currentMusicUrl = existing?.musicUrl || "";
   }
 
   if (groomName) {
@@ -383,58 +382,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     fileData.heroPhoto = savedGallery[0];
   }
 
-  if (prisma) {
-    try {
-      if (Object.keys(data).length) {
-        const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
-        if (!result.count) throw new Error("Invitation is deleted or missing.");
-        if (savedGallery.length) {
-          console.log(`[Client Invitation] Database invitation ${code} updated with heroPhoto=${savedGallery[0]}.`);
-        }
-      }
-      revalidatePath(`/${code}`);
-      revalidatePath(`/${code}/ad_3399`);
-      queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
-      await recordAuditLog({
-        actor: getClientAuditActor(code),
-        action: "invitation.update",
-        entity: { type: "Invitation", id: code, label: code },
-        oldValues,
-        newValues: data,
-        metadata: { source: "client-settings-form", storage: "database" },
-      });
+  try {
+    if (Object.keys(data).length) {
+      const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
+      if (!result.count) throw new Error("Invitation is deleted or missing.");
       if (savedGallery.length) {
-        await recordAuditLog({
-          actor: getClientAuditActor(code),
-          action: "media.image.upload",
-          entity: { type: "Media", id: savedGallery[0], label: savedGallery.length > 1 ? `${savedGallery.length} invitation images` : savedGallery[0] },
-          newValues: { imageUrls: savedGallery },
-          metadata: { invitationCode: code, source: "client-settings-form" },
-        });
+        console.log(`[Client Invitation] Database invitation ${code} updated with heroPhoto=${savedGallery[0]}.`);
       }
-      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
-    } catch (error) {
-      console.error("Failed to update database invitation from client admin", error);
     }
-  }
-
-  if (Object.keys(fileData).length) {
-    const updated = await updateFileInvitation(code, fileData);
-    if (savedGallery.length) {
-      console.log(`[Client Invitation] File invitation ${code} gallery update result=${updated}.`);
-    }
-  }
-  revalidatePath(`/${code}`);
-  revalidatePath(`/${code}/ad_3399`);
-  queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
-  if (Object.keys(fileData).length) {
+    revalidatePath(`/${code}`);
+    revalidatePath(`/${code}/ad_3399`);
+    queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
     await recordAuditLog({
       actor: getClientAuditActor(code),
       action: "invitation.update",
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
-      newValues: fileData,
-      metadata: { source: "client-settings-form", storage: "file" },
+      newValues: data,
+      metadata: { source: "client-settings-form", storage: "database" },
     });
     if (savedGallery.length) {
       await recordAuditLog({
@@ -445,6 +410,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         metadata: { invitationCode: code, source: "client-settings-form" },
       });
     }
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
+  } catch (error) {
+    console.error("Failed to update database invitation from client admin", error);
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, request.url), 303);
   }
-  return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
 }

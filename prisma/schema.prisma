@@ -248,3 +248,95 @@ model SyncLog {
   @@index([status, createdAt])
   @@index([createdAt])
 }
+
+model GuestBookMessage {
+  id             String   @id
+  invitationCode String
+  name           String
+  message        String
+  status         String   @default("pending")
+  reviewedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([invitationCode, status, createdAt])
+  @@index([createdAt])
+}
+
+model CoupleMessagesSetting {
+  invitationCode String   @id
+  mode           String   @default("moderated")
+  updatedAt      DateTime @updatedAt
+
+  @@index([mode])
+}
+
+model ClientMessage {
+  id             String   @id
+  invitationCode String
+  title          String
+  body           String
+  sender         String   @default("admin")
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([invitationCode, createdAt])
+  @@index([readAt])
+}
+
+model InvitationCheckIn {
+  id             String   @id
+  invitationCode String
+  visitorKey     String
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@unique([invitationCode, visitorKey])
+  @@index([invitationCode, createdAt])
+  @@index([createdAt])
+}
+
+model WeddingLiveMode {
+  invitationCode String   @id
+  enabled        Boolean  @default(false)
+  announcement   String?
+  events         Json     @default("[]")
+  updatedBy      String   @default("admin")
+  updatedAt      DateTime @updatedAt
+
+  @@index([enabled, updatedAt])
+}
+
+model InternalNote {
+  id          String   @id
+  entityType  String
+  entityId    String
+  body        String
+  authorLabel String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityType, entityId, updatedAt])
+  @@index([updatedAt])
+}
+
+model AuditLog {
+  id         String   @id
+  actorType  String
+  actorId    String?
+  actorLabel String
+  action     String
+  entityType String
+  entityId   String
+  entityLabel String?
+  oldValues  Json?
+  newValues  Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([actorType, createdAt])
+  @@index([createdAt])
+}

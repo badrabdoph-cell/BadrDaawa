@@ -3,7 +3,6 @@ import crypto from "node:crypto";
 import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { createFileOrder, updateFileOrder } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
@@ -188,38 +187,11 @@ export async function POST(request: NextRequest) {
   let effectiveManageToken = reservedManageToken;
 
   if (!prisma) {
-    const order = await createFileOrder({
-      orderNumber,
-      dedupeKey,
-      groomName: parsed.data.groomName,
-      brideName: parsed.data.brideName,
-      phone: parsed.data.phone || "",
-      weddingDate: parsed.data.weddingDate,
-      venue: parsed.data.venue || "",
-      mapUrl,
-      notes,
-      imageUrls,
-      musicEnabled: effectiveMusicEnabled,
-      musicChoice: effectiveMusicChoice,
-      musicUrl: music.musicUrl,
-      texts,
-      photographer,
-      templateSlug: selectedTemplate.slug,
-      language: parsed.data.language,
-      publishedInvitationCode: reservedInvitationCode,
-      manageToken: reservedManageToken,
-    });
-    orderId = order.id;
-    effectiveOrderNumber = order.orderNumber || orderNumber;
-    effectiveInvitationCode = order.publishedInvitationCode || reservedInvitationCode;
-    effectiveManageToken = order.manageToken || reservedManageToken;
-    if (!order.publishedInvitationCode) {
-      await updateFileOrder(order.id, { publishedInvitationCode: effectiveInvitationCode }).catch(() => null);
-    }
-    if (!order.manageToken) {
-      await updateFileOrder(order.id, { manageToken: effectiveManageToken }).catch(() => null);
-    }
-  } else {
+    console.error("[Order API] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return NextResponse.json({ error: "قاعدة البيانات غير متاحة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
+  }
+
+  try {
     try {
       const template = await prisma.weddingTemplate.upsert({
         where: { slug: parsed.data.templateSlug },
@@ -315,38 +287,11 @@ export async function POST(request: NextRequest) {
       effectiveManageToken = reservedManageToken;
     } catch (error) {
       console.error("Failed to persist order request", error);
-      const order = await createFileOrder({
-        orderNumber,
-        dedupeKey,
-        groomName: parsed.data.groomName,
-        brideName: parsed.data.brideName,
-        phone: parsed.data.phone || "",
-        weddingDate: parsed.data.weddingDate,
-        venue: parsed.data.venue || "",
-        mapUrl,
-        notes,
-        imageUrls,
-        musicEnabled: effectiveMusicEnabled,
-        musicChoice: effectiveMusicChoice,
-        musicUrl: music.musicUrl,
-        texts,
-        photographer,
-        templateSlug: selectedTemplate.slug,
-        language: parsed.data.language,
-        publishedInvitationCode: reservedInvitationCode,
-        manageToken: reservedManageToken,
-      });
-      orderId = order.id;
-      effectiveOrderNumber = order.orderNumber || orderNumber;
-      effectiveInvitationCode = order.publishedInvitationCode || reservedInvitationCode;
-      effectiveManageToken = order.manageToken || reservedManageToken;
-      if (!order.publishedInvitationCode) {
-        await updateFileOrder(order.id, { publishedInvitationCode: effectiveInvitationCode }).catch(() => null);
-      }
-      if (!order.manageToken) {
-        await updateFileOrder(order.id, { manageToken: effectiveManageToken }).catch(() => null);
-      }
+      return NextResponse.json({ error: "تعذر حفظ الطلب في قاعدة البيانات. لم يتم استخدام تخزين الملفات الاحتياطي." }, { status: 500 });
     }
+  } catch (error) {
+    console.error("[Order API] Unexpected PostgreSQL write failure", error);
+    return NextResponse.json({ error: "تعذر حفظ الطلب في قاعدة البيانات." }, { status: 500 });
   }
 
   const links = buildReservedInvitationLinks(siteUrl, effectiveInvitationCode, effectiveManageToken);

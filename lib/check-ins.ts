@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { writeJsonFileAtomic } from "./atomic-file";
+import { prisma } from "./db";
 import type { InvitationCheckIn } from "./types";
 
 type CheckInStore = {
@@ -56,7 +57,25 @@ function createId() {
   return `ci_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function toCheckIn(row: { id: string; invitationCode: string; visitorKey: string; createdAt: Date; userAgent: string | null }): InvitationCheckIn {
+  return {
+    id: row.id,
+    invitationCode: row.invitationCode,
+    visitorKey: row.visitorKey,
+    createdAt: row.createdAt.toISOString(),
+    ...(row.userAgent ? { userAgent: row.userAgent } : {}),
+  };
+}
+
 export async function getAllCheckIns() {
+  if (prisma) {
+    try {
+      const checkIns = await prisma.invitationCheckIn.findMany({ orderBy: { createdAt: "desc" } });
+      if (checkIns.length) return checkIns.map(toCheckIn);
+    } catch (error) {
+      console.error("Failed to load check-ins from PostgreSQL", error);
+    }
+  }
   const store = await readStore();
   return store.checkIns.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
@@ -80,20 +99,25 @@ export async function createCheckIn(input: { invitationCode: unknown; visitorKey
   const visitorKey = cleanText(input.visitorKey, 160) || createId();
   if (!invitationCode) return null;
 
-  const store = await readStore();
-  const existing = store.checkIns.find((item) => item.invitationCode.toLowerCase() === invitationCode.toLowerCase() && item.visitorKey === visitorKey);
-  if (existing) return { checkIn: existing, duplicate: true };
+  if (!prisma) {
+    console.error("[Check-ins] PostgreSQL is not configured. Refusing JSON write.");
+    return null;
+  }
 
-  const checkIn: InvitationCheckIn = {
-    id: createId(),
-    invitationCode,
-    visitorKey,
-    createdAt: new Date().toISOString(),
-    ...(input.userAgent ? { userAgent: cleanText(input.userAgent, 240) } : {}),
-  };
-  store.checkIns.unshift(checkIn);
-  await writeStore(store);
-  return { checkIn, duplicate: false };
+  const existing = await prisma.invitationCheckIn.findUnique({
+    where: { invitationCode_visitorKey: { invitationCode, visitorKey } },
+  }).catch(() => null);
+  if (existing) return { checkIn: toCheckIn(existing), duplicate: true };
+
+  const saved = await prisma.invitationCheckIn.create({
+    data: {
+      id: createId(),
+      invitationCode,
+      visitorKey,
+      userAgent: input.userAgent ? cleanText(input.userAgent, 240) : null,
+    },
+  });
+  return { checkIn: toCheckIn(saved), duplicate: false };
 }
 
 export async function getCheckInDashboard() {

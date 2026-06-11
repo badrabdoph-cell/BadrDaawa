@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { ensureRuntimeDirectories, runtimeUploadsDir } from "./runtime-paths";
+import { ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
 
 type GitHubSyncStatus = "synced" | "skipped" | "unchanged" | "failed";
 
@@ -75,12 +75,10 @@ export type SyncLogEntry = {
 };
 
 const syncRoots = [
-  { absolutePath: path.join(process.cwd(), "data"), repoPath: "data" },
-  { absolutePath: runtimeUploadsDir, repoPath: path.join("public", "uploads") },
+  { absolutePath: runtimeBackupDir, repoPath: path.join("data", "backups") },
 ];
 const maxSyncFileBytes = (Number(process.env.GITHUB_SYNC_MAX_FILE_MB) || (process.env.RAILWAY_ENVIRONMENT ? 8 : 25)) * 1024 * 1024;
 const maxSyncTotalBytes = (Number(process.env.GITHUB_SYNC_MAX_TOTAL_MB) || (process.env.RAILWAY_ENVIRONMENT ? 32 : 120)) * 1024 * 1024;
-const includeBackupFiles = process.env.GITHUB_SYNC_INCLUDE_BACKUPS === "true";
 
 // Retry delays in milliseconds: 5s, 15s, 45s
 const retryDelays = [5_000, 15_000, 45_000];
@@ -248,7 +246,6 @@ function toRepoPath(absolutePath: string, root: { absolutePath: string; repoPath
 async function walkFiles(dir: string, root: { absolutePath: string; repoPath: string }): Promise<SyncFile[]> {
   ensureRuntimeDirectories();
   if (!(await exists(dir))) return [];
-  if (!includeBackupFiles && root.repoPath === "data" && path.relative(root.absolutePath, dir).split(path.sep)[0] === "backups") return [];
   const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
     console.error(`[GitHub Sync] Failed to read sync directory: ${dir}`, error);
     return [];

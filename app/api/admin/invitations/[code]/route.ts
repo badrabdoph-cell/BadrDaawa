@@ -4,7 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
-import { getFileInvitationByCode, setFileInvitationActive, setFileInvitationArchived, softDeleteFileInvitation, updateFileInvitation } from "@/lib/file-store";
+import { getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -51,15 +51,6 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     console.error("Failed to update database invitation from admin", error);
   }
 
-  return false;
-}
-
-async function updateFileInvitationAction(code: string, action: string, customSlug?: string) {
-  if (action === "custom-slug") return updateFileInvitation(code, { customSlug: customSlug || undefined });
-  if (action === "delete") return softDeleteFileInvitation(code);
-  if (action === "pause") return setFileInvitationActive(code, false);
-  if (action === "resume") return setFileInvitationActive(code, true);
-  if (action === "archive") return setFileInvitationArchived(code, true);
   return false;
 }
 
@@ -123,9 +114,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     customSlug = result.slug;
   }
 
+  if (!prisma) {
+    console.error("[Admin Invitation Action] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    return redirectBack(request, "database");
+  }
+
   const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug);
-  const updatedFile = updatedDatabase ? false : await updateFileInvitationAction(code, action, customSlug);
-  const changed = updatedDatabase || updatedFile;
+  const changed = updatedDatabase;
 
   if (changed) {
     safeRevalidatePath("/admin/invitations");
@@ -141,7 +136,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
       newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
-      metadata: { storage: updatedDatabase ? "database" : "file" },
+      metadata: { storage: "database" },
     });
   }
 

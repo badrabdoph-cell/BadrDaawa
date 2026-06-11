@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { getFileTrashItems, hardDeleteFileTrashItem, restoreFileTrashItem } from "./file-store";
+import { getFileTrashItems } from "./file-store";
 import { prisma } from "./db";
 
 export type TrashEntityType = "invitation" | "order" | "customer";
@@ -114,7 +114,11 @@ export async function getTrashItems(): Promise<TrashItem[]> {
 }
 
 export async function restoreTrashItem(type: TrashEntityType, id: string, storage: "database" | "file" = "database") {
-  if (storage === "file" || !prisma) return restoreFileTrashItem(type, id);
+  if (storage === "file") {
+    console.error("[Trash] Legacy file-store restore is read-only.");
+    return false;
+  }
+  if (!prisma) return false;
 
   if (type === "invitation") {
     const result = await prisma.invitation.updateMany({ where: { code: id, deletedAt: { not: null } }, data: { deletedAt: null, status: "ACTIVE" } });
@@ -131,7 +135,11 @@ export async function restoreTrashItem(type: TrashEntityType, id: string, storag
 }
 
 export async function hardDeleteTrashItem(type: TrashEntityType, id: string, storage: "database" | "file" = "database") {
-  if (storage === "file" || !prisma) return hardDeleteFileTrashItem(type, id);
+  if (storage === "file") {
+    console.error("[Trash] Legacy file-store hard delete is read-only.");
+    return false;
+  }
+  if (!prisma) return false;
 
   if (type === "invitation") {
     const result = await prisma.invitation.deleteMany({ where: { code: id, deletedAt: { not: null } } });

@@ -71,14 +71,19 @@ export function queueGitHubSync(
     affectedResource?: string;
   } = {},
 ) {
+  if (!options.createSnapshot) {
+    console.log(`[GitHub Backup Queue] Ignoring non-backup sync request: ${reason}`);
+    return "";
+  }
+
   const item: SyncQueueItem = {
     id: `sync-${++syncJobCounter}-${Date.now()}`,
-    reason,
-    createSnapshot: options.createSnapshot ?? false,
+    reason: `Backup snapshot: ${reason}`,
+    createSnapshot: true,
     timestamp: Date.now(),
     status: "pending",
     retryCount: 0,
-    changeType: options.changeType,
+    changeType: options.changeType || "backup",
     affectedResource: options.affectedResource,
   };
 

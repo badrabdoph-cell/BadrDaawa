@@ -1,6 +1,6 @@
 import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode as getDemoInvitationByCode } from "./demo-data";
 import { prisma } from "./db";
-import { getFileGuestsByInvitation, getFileInvitationByCode, recordFileInvitationView } from "./file-store";
+import { getFileGuestsByInvitation, getFileInvitationByCode } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { archiveExpiredInvitations } from "./invitation-archiving";
 import { cleanInvitationHeroVideoUrl } from "./invitation-media";
@@ -179,7 +179,7 @@ export type InvitationViewTrackingInput = {
 export async function recordInvitationView(code: string, tracking?: InvitationViewTrackingInput) {
   const metadata = tracking ? createVisitEventMetadata(tracking) : undefined;
   if (!prisma) {
-    await recordFileInvitationView(code, metadata);
+    console.error("[Analytics] PostgreSQL is not configured. Refusing runtime-store fallback write.");
     return;
   }
 
@@ -201,6 +201,5 @@ export async function recordInvitationView(code: string, tracking?: InvitationVi
     });
   } catch (error) {
     console.error("Failed to record invitation view", error);
-    await recordFileInvitationView(code, metadata);
   }
 }

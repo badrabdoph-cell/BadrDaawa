@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { prisma } from "./db";
 import type { InternalNote, InternalNoteEntityType } from "./types";
 
 const notesPath = path.join(process.cwd(), "data", "internal-notes.json");
@@ -81,8 +82,37 @@ function matchesQuery(note: InternalNote, query: string) {
   return haystack.includes(query);
 }
 
+function toInternalNote(row: { id: string; entityType: string; entityId: string; body: string; authorLabel: string; createdAt: Date; updatedAt: Date }): InternalNote {
+  return {
+    id: row.id,
+    entityType: normalizeEntityType(row.entityType) || "order",
+    entityId: row.entityId,
+    body: row.body,
+    authorLabel: row.authorLabel,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 export async function getInternalNotes(filters: InternalNoteFilters = {}) {
   noStore();
+  if (prisma) {
+    try {
+      const rows = await prisma.internalNote.findMany({
+        where: {
+          ...(filters.entityType ? { entityType: filters.entityType } : {}),
+          ...(filters.entityId ? { entityId: filters.entityId } : {}),
+        },
+        orderBy: { updatedAt: "desc" },
+        take: maxStoredNotes,
+      });
+      const notes = rows.map(toInternalNote);
+      const query = cleanText(filters.q, 200).toLowerCase();
+      if (notes.length) return notes.filter((note) => matchesQuery(note, query));
+    } catch (error) {
+      console.error("Failed to load internal notes from PostgreSQL", error);
+    }
+  }
   const notes = await readNotesRaw();
   const query = cleanText(filters.q, 200).toLowerCase();
   return notes.filter((note) => (!filters.entityType || note.entityType === filters.entityType) && (!filters.entityId || note.entityId === filters.entityId) && matchesQuery(note, query));
@@ -108,35 +138,55 @@ export async function createInternalNote(input: {
     updatedAt: nowIso(),
   });
   if (!note) return null;
-  const notes = await readNotesRaw();
-  await writeNotes([note, ...notes]);
-  return note;
+  if (!prisma) {
+    console.error("[Internal Notes] PostgreSQL is not configured. Refusing JSON write.");
+    return null;
+  }
+  const saved = await prisma.internalNote.create({
+    data: {
+      id: note.id,
+      entityType: note.entityType,
+      entityId: note.entityId,
+      body: note.body,
+      authorLabel: note.authorLabel,
+      createdAt: new Date(note.createdAt),
+      updatedAt: new Date(note.updatedAt),
+    },
+  });
+  return toInternalNote(saved);
 }
 
 export async function updateInternalNote(id: string, input: { body: unknown; authorLabel?: unknown }) {
   const noteId = cleanText(id, 120);
-  const notes = await readNotesRaw();
-  const index = notes.findIndex((note) => note.id === noteId);
-  if (index === -1) return null;
+  if (!prisma) {
+    console.error("[Internal Notes] PostgreSQL is not configured. Refusing JSON write.");
+    return null;
+  }
+  const existing = await prisma.internalNote.findUnique({ where: { id: noteId } }).catch(() => null);
+  if (!existing) return null;
   const updated = normalizeNote({
-    ...notes[index],
+    ...toInternalNote(existing),
     body: input.body,
-    authorLabel: input.authorLabel || notes[index].authorLabel,
+    authorLabel: input.authorLabel || existing.authorLabel,
     updatedAt: nowIso(),
   });
   if (!updated) return null;
-  const next = notes.slice();
-  next[index] = updated;
-  await writeNotes(next);
-  return updated;
+  const saved = await prisma.internalNote.update({
+    where: { id: noteId },
+    data: { body: updated.body, authorLabel: updated.authorLabel, updatedAt: new Date(updated.updatedAt) },
+  });
+  return toInternalNote(saved);
 }
 
 export async function deleteInternalNote(id: string) {
   const noteId = cleanText(id, 120);
-  const notes = await readNotesRaw();
-  const next = notes.filter((note) => note.id !== noteId);
-  if (next.length === notes.length) return false;
-  await writeNotes(next);
+  if (!prisma) {
+    console.error("[Internal Notes] PostgreSQL is not configured. Refusing JSON write.");
+    return false;
+  }
+  const existing = await prisma.internalNote.findUnique({ where: { id: noteId }, select: { id: true } }).catch(() => null);
+  if (!existing) return false;
+  await prisma.internalNote.delete({ where: { id: noteId } });
   return true;
 }
 

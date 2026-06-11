@@ -1,7 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, getAdminSessionUser } from "./admin-session";
+import { prisma } from "./db";
 
 export type AuditActorType = "admin" | "client" | "public" | "system";
 
@@ -85,6 +87,12 @@ function safeSnapshot(value: unknown, depth = 0): unknown {
   return String(value);
 }
 
+function toPrismaJson(value: unknown) {
+  if (value === undefined) return undefined;
+  if (value === null) return Prisma.JsonNull;
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
 async function ensureAuditDirectory() {
   await mkdir(path.dirname(auditLogPath), { recursive: true });
 }
@@ -147,16 +155,31 @@ export async function recordAuditLog(input: AuditLogInput) {
     ...(input.metadata ? { metadata: safeSnapshot(input.metadata) as Record<string, unknown> } : {}),
   };
 
-  writeChain = writeChain
-    .then(async () => {
-      const entries = await readAuditLogFile();
-      await writeAuditLogFile([entry, ...entries]);
-    })
-    .catch((error) => {
-      console.error("Failed to write audit log", error);
-    });
+  if (!prisma) {
+    console.error("[Audit Log] PostgreSQL is not configured. Refusing JSON write.");
+    return entry;
+  }
 
-  await writeChain;
+  try {
+    await prisma.auditLog.create({
+      data: {
+        id: entry.id,
+        actorType: entry.actor.type,
+        actorId: entry.actor.id || null,
+        actorLabel: entry.actor.label,
+        action: entry.action,
+        entityType: entry.entity.type,
+        entityId: entry.entity.id,
+        entityLabel: entry.entity.label || null,
+        oldValues: toPrismaJson(entry.oldValues),
+        newValues: toPrismaJson(entry.newValues),
+        metadata: toPrismaJson(entry.metadata),
+        createdAt: new Date(entry.createdAt),
+      },
+    });
+  } catch (error) {
+    console.error("Failed to write audit log to PostgreSQL", error);
+  }
   return entry;
 }
 
@@ -171,7 +194,25 @@ function dateValue(value?: string) {
 }
 
 export async function listAuditLogEntries(filters: AuditLogFilters = {}) {
-  const entries = await readAuditLogFile();
+  let entries: AuditLogEntry[] = [];
+  if (prisma) {
+    try {
+      const rows = await prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: maxStoredEntries });
+      entries = rows.map((row) => ({
+        id: row.id,
+        createdAt: row.createdAt.toISOString(),
+        actor: { type: row.actorType as AuditActorType, ...(row.actorId ? { id: row.actorId } : {}), label: row.actorLabel },
+        action: row.action as AuditAction,
+        entity: { type: row.entityType as AuditEntityType, id: row.entityId, ...(row.entityLabel ? { label: row.entityLabel } : {}) },
+        ...(row.oldValues !== null ? { oldValues: row.oldValues } : {}),
+        ...(row.newValues !== null ? { newValues: row.newValues } : {}),
+        ...(row.metadata !== null ? { metadata: row.metadata as Record<string, unknown> } : {}),
+      }));
+    } catch (error) {
+      console.error("Failed to read audit log from PostgreSQL", error);
+    }
+  }
+  if (!entries.length) entries = await readAuditLogFile();
   const query = normalizeText(filters.q).trim();
   const from = dateValue(filters.from);
   const to = dateValue(filters.to);
