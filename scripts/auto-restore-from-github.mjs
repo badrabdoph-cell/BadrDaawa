@@ -235,6 +235,26 @@ async function runPgRestore(dumpBytes, dumpFileName, databaseUrl) {
   }
 }
 
+async function assertPgRestoreAvailable() {
+  await new Promise((resolve, reject) => {
+    const child = spawn("pg_restore", ["--version"], { stdio: ["ignore", "pipe", "pipe"] });
+    const stdout = [];
+    const stderr = [];
+    child.stdout.on("data", (chunk) => stdout.push(chunk));
+    child.stderr.on("data", (chunk) => stderr.push(chunk));
+    child.on("error", (error) => reject(new Error(`pg_restore is required for auto restore but is not available: ${error.message}`)));
+    child.on("close", (code) => {
+      const output = Buffer.concat([...stdout, ...stderr]).toString("utf8").trim().split("\n")[0] || "";
+      if (code === 0) {
+        console.log(`[Auto Restore] pg_restore is available: ${output || "version detected"}`);
+        resolve();
+        return;
+      }
+      reject(new Error(`pg_restore is required for auto restore but exited with code ${code}${output ? `: ${output}` : ""}`));
+    });
+  });
+}
+
 async function recordRestoreSuccess(databaseUrl, backup, startedAt, jsonSizeBytes) {
   const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   try {
@@ -328,6 +348,7 @@ async function main() {
   }
 
   const { dumpBytes, dumpFileName } = validateBackupPayload(backup);
+  await assertPgRestoreAvailable();
 
   const verifyPrisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   try {

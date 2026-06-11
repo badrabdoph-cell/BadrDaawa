@@ -63,23 +63,6 @@ function runPrisma(args, options = {}) {
   }
 }
 
-function requireCommand(command, reason) {
-  const result = spawnSync(command, ["--version"], {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  if (result.status !== 0) {
-    const detail = (result.stderr || result.stdout || "").trim();
-    console.error(`[prepare] Required command is unavailable: ${command}. ${reason}${detail ? ` Details: ${detail}` : ""}`);
-    process.exit(result.status || 1);
-  }
-
-  const version = (result.stdout || result.stderr || "").trim().split("\n")[0] || "version detected";
-  console.log(`[prepare] ${command} is available: ${version}`);
-}
-
 for (const dir of dirs) {
   mkdirSync(dir, { recursive: true });
 }
@@ -98,7 +81,6 @@ runPrisma(["migrate", "deploy"], { env: { DATABASE_URL: databaseUrl } });
 
 rmSync(autoRestoreMarker, { force: true });
 if (process.env.AUTO_RESTORE_FROM_GITHUB === "true" && process.env.AUTO_RESTORE_ONLY_IF_DB_EMPTY === "true") {
-  requireCommand("pg_restore", "GitHub auto restore requires PostgreSQL client tools.");
   console.log("[prepare] Checking GitHub auto restore before legacy backfills.");
   const result = spawnSync(process.execPath, [autoRestoreScript], {
     cwd: root,
