@@ -195,6 +195,15 @@ function isAdminRequest(url: string) {
   }
 }
 
+function isApplicationApiRequest(url: string) {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.pathname.startsWith("/api/");
+  } catch {
+    return url.startsWith("/api/");
+  }
+}
+
 function isMutatingMethod(method: string) {
   return !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
 }
@@ -214,6 +223,13 @@ function getAdminRequestLabel(url: string) {
 
 function isAdminPath(pathname = typeof window === "undefined" ? "" : window.location.pathname) {
   return pathname.startsWith("/admin");
+}
+
+function redirectToAdminLogin() {
+  const next = `${window.location.pathname}${window.location.search}`;
+  const loginUrl = new URL("/admin/login", window.location.origin);
+  loginUrl.searchParams.set("next", next.startsWith("/admin") ? next : "/admin");
+  window.location.assign(loginUrl.toString());
 }
 
 function getRouteNotification(pathname: string, params: URLSearchParams): InternalNotificationInput | null {
@@ -421,7 +437,9 @@ export function GlobalNotifications() {
 
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const meta = getFetchMeta(input, init);
-      const isAdminMutation = isAdminPath() && isAdminRequest(meta.url) && isMutatingMethod(meta.method) && !meta.url.includes("/api/errors");
+      const isApplicationApi = isApplicationApiRequest(meta.url);
+      const isAdminApi = isAdminRequest(meta.url);
+      const isAdminMutation = isAdminPath() && isAdminApi && isMutatingMethod(meta.method) && !meta.url.includes("/api/errors");
       const actionLabel = getAdminRequestLabel(meta.url);
 
       if (isAdminMutation) {
@@ -451,7 +469,18 @@ export function GlobalNotifications() {
           });
         }
 
-        if (!response.ok) {
+        if (isAdminPath() && isAdminApi && response.status === 401 && !meta.url.includes("/api/errors")) {
+          addNotification({
+            type: "warning",
+            title: "جلسة الأدمن انتهت",
+            message: "سجل الدخول مرة أخرى لإكمال الإجراء.",
+            duration: 3500,
+            signature: `admin-session-expired:${meta.method}:${shortUrl(meta.url)}`,
+          });
+          window.setTimeout(redirectToAdminLogin, 250);
+        }
+
+        if (isApplicationApi && !response.ok) {
           let responseText = "";
           try {
             responseText = await response.clone().text();
@@ -477,7 +506,7 @@ export function GlobalNotifications() {
             void code;
           }
 
-          if (isAdminPath() && isAdminRequest(meta.url) && !meta.url.includes("/api/errors")) {
+          if (isAdminPath() && isAdminApi && !meta.url.includes("/api/errors")) {
             addNotification({
               type: "error",
               title: "فشل تنفيذ الإجراء",
@@ -504,7 +533,7 @@ export function GlobalNotifications() {
           ["Method", meta.method],
           ["Error", error],
         ]);
-        if (!meta.url.includes("/api/errors")) {
+        if (isApplicationApi && !meta.url.includes("/api/errors")) {
           const code = trackClientError({
             route: meta.url,
             message: error instanceof Error ? error.message : "تعذر تنفيذ طلب الشبكة.",
@@ -513,7 +542,7 @@ export function GlobalNotifications() {
           });
           void code;
         }
-        if (isAdminPath() && isAdminRequest(meta.url) && !meta.url.includes("/api/errors")) {
+        if (isAdminPath() && isAdminApi && !meta.url.includes("/api/errors")) {
           addNotification({
             type: "error",
             title: "تعذر الاتصال",
