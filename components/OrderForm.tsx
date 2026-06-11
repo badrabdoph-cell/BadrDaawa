@@ -557,6 +557,10 @@ export function OrderForm({
   }, [skipTemplateStep]);
 
   function goToStep(index: number) {
+    if (formRef.current) {
+      const currentValues = getCurrentFormFromDom();
+      setForm((current) => ({ ...current, ...currentValues }));
+    }
     const nextIndex = Math.min(Math.max(skipTemplateStep ? Math.max(index, 1) : index, 0), orderWizardSteps.length - 1);
     setActiveStepIndex(nextIndex);
     window.setTimeout(() => {
@@ -585,9 +589,11 @@ export function OrderForm({
   }
 
   function canLeaveStep(stepId: OrderWizardStepId) {
-    const stepErrors = getStepErrors(stepId);
+    const currentValues = getCurrentFormFromDom();
+    const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
     if (stepId === "story" && showStoryValidationErrors(form)) return false;
+    setForm((current) => ({ ...current, ...currentValues }));
     return true;
   }
 
