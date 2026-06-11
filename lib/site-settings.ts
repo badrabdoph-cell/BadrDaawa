@@ -68,15 +68,15 @@ export const defaultSiteSettings: SiteSettings = {
     title: "BadrDaawa | دعوات زفاف رقمية فاخرة",
     description: "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
     keywords: "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, BadrDaawa",
-    ogTitle: "BadrDaawa | فرحتك تستاهل أكثر من مجرد دعوة",
+    ogTitle: "BadrDaawa | دعوة تليق بأجمل يوم في حياتكم",
     ogDescription: "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة.",
   },
   homepage: {
     showFeatures: true,
     showPreview: true,
     showPricing: true,
-    primaryCtaLabel: "ابدأ إنشاء دعوتك",
-    secondaryCtaLabel: "شاهد التصاميم المختلفة",
+    primaryCtaLabel: "ابدأ تصميم دعوتك",
+    secondaryCtaLabel: "استعرض التصاميم",
   },
   photographer: {
     showPhotographerCard: process.env.SHOW_PHOTOGRAPHER_CARD !== "false",
