@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getTaskExecutionLog, listScheduledTasks, runScheduledTask, setScheduledTaskAutomatic, startInternalTaskScheduler } from "@/lib/task-scheduler";
+import { getTaskExecutionLog, listScheduledTasks, runScheduledTask, setScheduledTaskAutomatic, setScheduledTaskInterval, startInternalTaskScheduler } from "@/lib/task-scheduler";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -14,8 +14,12 @@ function wantsJson(request: NextRequest) {
   return request.headers.get("accept")?.includes("application/json");
 }
 
-function redirectToTasks(request: NextRequest, params: Record<string, string>) {
-  const url = getRedirectUrl("/admin/tasks", request.headers, request.nextUrl.origin);
+function getReturnPath(value: string) {
+  return value === "/admin/sync-settings" ? value : "/admin/tasks";
+}
+
+function redirectToTasks(request: NextRequest, params: Record<string, string>, returnTo = "/admin/tasks") {
+  const url = getRedirectUrl(getReturnPath(returnTo), request.headers, request.nextUrl.origin);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return NextResponse.redirect(url, 303);
 }
@@ -39,27 +43,34 @@ export async function POST(request: NextRequest) {
 
   const contentType = request.headers.get("content-type") || "";
   const body = contentType.includes("application/json")
-    ? ((await request.json().catch(() => null)) as { action?: string; taskId?: string; enabled?: boolean } | null)
+    ? ((await request.json().catch(() => null)) as { action?: string; taskId?: string; enabled?: boolean; intervalHours?: number; returnTo?: string } | null)
     : null;
   const form = body ? null : await request.formData();
   const action = body?.action || String(form?.get("action") || "");
   const taskId = body?.taskId || String(form?.get("taskId") || "");
+  const returnTo = body?.returnTo || String(form?.get("returnTo") || "/admin/tasks");
 
   try {
     if (action === "run") {
       const run = await runScheduledTask(taskId, "manual");
-      return wantsJson(request) ? NextResponse.json({ run }) : redirectToTasks(request, { task: taskId, result: run.status });
+      return wantsJson(request) ? NextResponse.json({ run }) : redirectToTasks(request, { task: taskId, result: run.status }, returnTo);
     }
 
     if (action === "toggle") {
       const enabled = body ? Boolean(body.enabled) : String(form?.get("enabled") || "") === "1";
       await setScheduledTaskAutomatic(taskId, enabled);
-      return wantsJson(request) ? NextResponse.json({ ok: true, taskId, enabled }) : redirectToTasks(request, { task: taskId, automatic: enabled ? "enabled" : "disabled" });
+      return wantsJson(request) ? NextResponse.json({ ok: true, taskId, enabled }) : redirectToTasks(request, { task: taskId, automatic: enabled ? "enabled" : "disabled" }, returnTo);
     }
 
-    return wantsJson(request) ? NextResponse.json({ error: "Invalid action" }, { status: 400 }) : redirectToTasks(request, { error: "invalid-action" });
+    if (action === "interval") {
+      const intervalHours = body ? Number(body.intervalHours) : Number(form?.get("intervalHours") || "");
+      await setScheduledTaskInterval(taskId, intervalHours);
+      return wantsJson(request) ? NextResponse.json({ ok: true, taskId, intervalHours }) : redirectToTasks(request, { task: taskId, interval: String(intervalHours) }, returnTo);
+    }
+
+    return wantsJson(request) ? NextResponse.json({ error: "Invalid action" }, { status: 400 }) : redirectToTasks(request, { error: "invalid-action" }, returnTo);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error || "Unknown error");
-    return wantsJson(request) ? NextResponse.json({ error: message }, { status: 400 }) : redirectToTasks(request, { task: taskId || "unknown", error: encodeURIComponent(message) });
+    return wantsJson(request) ? NextResponse.json({ error: message }, { status: 400 }) : redirectToTasks(request, { task: taskId || "unknown", error: encodeURIComponent(message) }, returnTo);
   }
 }

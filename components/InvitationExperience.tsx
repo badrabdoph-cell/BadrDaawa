@@ -1518,6 +1518,10 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
           <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
         </section>
 
+        <div className="ethereal-glass-poll-wrap">
+          <InvitationPoll invitation={invitation} />
+        </div>
+
         <InviteGallery className="ethereal-glass-gallery" images={[images[1] || galleryImages[1], images[2] || galleryImages[2]]} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} />
 
         <div className="ethereal-glass-message">
@@ -1555,10 +1559,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
           </section>
         ) : null}
 
-        <div className="ethereal-glass-poll-wrap">
-          <InvitationPoll invitation={invitation} />
-          <InvitationGuestBook invitation={invitation} />
-        </div>
+        <InvitationGuestBook invitation={invitation} />
 
         <section className="ethereal-glass-card ethereal-glass-qr-card">
           <h4>{invitationT(invitation, "invitation.shareCard")}</h4>

@@ -354,8 +354,8 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           </div>
           <div className="admin-mini-links">
             <Link href="/admin/customers">حسابات العملاء</Link>
-            <Link href="/admin/backups">النسخ الاحتياطي</Link>
-            <Link href="/admin/sync-history">سجل المزامنة</Link>
+            <Link href="/admin/sync">النسخ والمزامنة</Link>
+            <Link href="/admin/monitoring">مراقبة النظام</Link>
             <Link href="/admin/recent-edits">
               <CalendarClock size={16} />
               آخر التعديلات

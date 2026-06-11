@@ -7,44 +7,38 @@ import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, 
 
 const adminNavGroups = [
   {
-    title: "إدارة الدعوات",
+    title: "الدعوات",
     links: [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
-      { href: "/admin/invitations", label: "الدعوات", icon: Archive },
+      { href: "/admin/invitations", label: "كل الدعوات", icon: Archive },
       { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
-      { href: "/admin/orders", label: "طلبات الدعوات", icon: FileText, badgeKey: "orders" },
+      { href: "/admin/orders", label: "الطلبات", icon: FileText, badgeKey: "orders" },
     ],
   },
   {
-    title: "إدارة العملاء",
+    title: "العملاء والرسائل",
     links: [
       { href: "/admin/customers", label: "العملاء", icon: UsersRound },
-      { href: "/admin/messages", label: "رسائل العرسان", icon: MessageSquareText, badgeKey: "messages" },
-      { href: "/admin/guest-book", label: "رسائل للعروسين", icon: MessageCircleHeart },
-      { href: "/admin/favorites", label: "المفضلة", icon: Star },
+      { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
+      { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
     ],
   },
   {
-    title: "إدارة الحدث",
+    title: "الفعاليات",
     links: [
       { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
-      { href: "/admin/check-ins", label: "الوصول للفعاليات", icon: MapPinCheckInside },
+      { href: "/admin/check-ins", label: "تسجيل الوصول", icon: MapPinCheckInside },
       { href: "/admin/live-mode", label: "البث المباشر", icon: RadioTower },
-      { href: "/admin/broadcast", label: "شاشة بث الموقع", icon: RadioTower },
       { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
     ],
   },
   {
-    title: "إدارة المحتوى",
+    title: "المحتوى",
     links: [
-      { href: "/admin/music", label: "الموسيقى", icon: Music2 },
       { href: "/admin/templates", label: "القوالب", icon: Palette },
-      { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
+      { href: "/admin/music", label: "الموسيقى", icon: Music2 },
       { href: "/admin/media", label: "الوسائط", icon: FileImage },
-      { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
-      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
-      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
-      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
+      { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
     ],
   },
   {
@@ -52,30 +46,58 @@ const adminNavGroups = [
     links: [
       { href: "/admin/settings", label: "الإعدادات", icon: Settings },
       { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
-      { href: "/admin/audit-log", label: "السجل", icon: ScrollText },
+      { href: "/admin/sync", label: "النسخ والمزامنة", icon: DatabaseBackup },
+      { href: "/admin/monitoring", label: "مراقبة النظام", icon: Activity },
+    ],
+  },
+];
+
+const adminUtilityGroups = [
+  {
+    title: "أدوات المحتوى",
+    links: [
+      { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
+      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
+      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
+      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
+      { href: "/admin/broadcast", label: "شاشة البث", icon: RadioTower },
+    ],
+  },
+  {
+    title: "أدوات النظام",
+    links: [
       { href: "/admin/search", label: "البحث العام", icon: Search },
-      { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
-      { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
-      { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
-      { href: "/admin/errors", label: "الأخطاء", icon: Bug },
-      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
+      { href: "/admin/favorites", label: "المفضلة", icon: Star },
+      { href: "/admin/sync", label: "مركز النسخ والمزامنة", icon: DatabaseBackup },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
-      { href: "/admin/sync-history", label: "سجل المزامنة", icon: Github },
-      { href: "/admin/sync-settings", label: "إعدادات المزامنة", icon: Github },
+      { href: "/admin/sync-settings", label: "إعدادات GitHub", icon: Github },
+      { href: "/admin/sync-history", label: "سجل GitHub", icon: History },
+      { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
+      { href: "/admin/monitoring", label: "مركز مراقبة النظام", icon: Activity },
+      { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+      { href: "/admin/errors", label: "الأخطاء", icon: Bug },
+      { href: "/admin/audit-log", label: "السجل", icon: ScrollText },
+      { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
+      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
     ],
   },
 ];
 
 const adminLinks = adminNavGroups.flatMap((group) => group.links);
+const adminUtilityLinks = adminUtilityGroups.flatMap((group) => group.links);
+const allAdminLinks = [...adminLinks, ...adminUtilityLinks];
 const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications"]);
-const mobilePrimaryLinks = adminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
-const mobileMoreLinks = adminLinks.filter((link) => !mobilePrimaryHrefs.has(link.href));
+const mobilePrimaryLinks = allAdminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
+const mobileMoreLinks = allAdminLinks.filter((link) => !mobilePrimaryHrefs.has(link.href));
 const pendingAdminActionKey = "badr-admin-pending-action";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeLink = adminLinks.find((link) => (link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href))) || adminLinks[0];
+  const activeLink =
+    allAdminLinks
+      .filter((link) => (link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href)))
+      .sort((a, b) => b.href.length - a.href.length)[0] || allAdminLinks[0];
   const [ordersBadge, setOrdersBadge] = useState(0);
   const [messagesBadge, setMessagesBadge] = useState(0);
   const [notificationsBadge, setNotificationsBadge] = useState(0);
@@ -232,7 +254,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     };
   }, [mobileMenuOpen]);
 
-  function badgeFor(link: (typeof adminLinks)[number]) {
+  function badgeFor(link: (typeof allAdminLinks)[number]) {
     if (!("badgeKey" in link)) return null;
     if (link.badgeKey === "orders" && ordersBadge > 0) return ordersBadge;
     if (link.badgeKey === "messages" && messagesBadge > 0) return messagesBadge;
@@ -365,6 +387,30 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <button type="submit">بحث</button>
           </form>
           <div className="dashboard-topbar-actions">
+            <details className="dashboard-utility-menu">
+              <summary className="admin-icon-button" title="الأدوات">
+                <Menu size={18} />
+              </summary>
+              <div className="dashboard-utility-panel" role="menu" aria-label="أدوات الإدارة">
+                {adminUtilityGroups.map((group) => (
+                  <section key={group.title}>
+                    <h2>{group.title}</h2>
+                    <div>
+                      {group.links.map((link) => {
+                        const Icon = link.icon;
+                        const isActive = activeLink.href === link.href;
+                        return (
+                          <Link className={isActive ? "active" : ""} href={link.href} key={link.href} role="menuitem" aria-current={isActive ? "page" : undefined}>
+                            <Icon size={16} />
+                            <span>{link.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </details>
             <Link className="admin-icon-button" href="/admin/templates" title="القوالب">
               <Palette size={18} />
             </Link>

@@ -103,6 +103,7 @@ const taskDefinitions: ScheduledTaskDefinition[] = [
 ];
 
 const definitionById = new Map(taskDefinitions.map((task) => [task.id, task]));
+const allowedBackupIntervalsHours = [1, 3, 6, 12, 24, 48] as const;
 
 const globalScheduler = globalThis as typeof globalThis & {
   __badrDaawaTaskSchedulerTimer?: NodeJS.Timeout;
@@ -131,6 +132,12 @@ function initialTaskState(task: ScheduledTaskDefinition): ScheduledTaskState {
   };
 }
 
+function normalizeIntervalMs(definition: ScheduledTaskDefinition, value: unknown) {
+  if (definition.id !== "backup") return definition.intervalMs;
+  const hours = Math.round(Number(value) / (60 * 60 * 1000));
+  return allowedBackupIntervalsHours.includes(hours as (typeof allowedBackupIntervalsHours)[number]) ? hours * 60 * 60 * 1000 : definition.intervalMs;
+}
+
 async function readJsonFile(filePath: string) {
   try {
     return JSON.parse(await readFile(filePath, "utf8")) as unknown;
@@ -154,7 +161,7 @@ function normalizeStore(input: unknown): SchedulerStore {
       ...initialTaskState(definition),
       ...(saved && typeof saved === "object" ? saved : {}),
       id: definition.id,
-      intervalMs: definition.intervalMs,
+      intervalMs: normalizeIntervalMs(definition, saved?.intervalMs),
     };
   }
 
@@ -358,7 +365,25 @@ export async function setScheduledTaskAutomatic(taskIdInput: string, enabled: bo
   await updateStore((store) => {
     const task = store.tasks[taskId] || initialTaskState(definition);
     task.automaticEnabled = enabled;
-    task.nextRunAt = enabled ? task.nextRunAt || nextRunFrom(definition.intervalMs) : undefined;
+    task.nextRunAt = enabled ? task.nextRunAt || nextRunFrom(task.intervalMs) : undefined;
+    task.status = task.status === "running" ? task.status : task.lastRun?.status || "idle";
+    task.updatedAt = nowIso();
+    store.tasks[taskId] = task;
+  });
+}
+
+export async function setScheduledTaskInterval(taskIdInput: string, intervalHoursInput: number) {
+  const taskId = assertTaskId(taskIdInput);
+  if (taskId !== "backup") throw new Error("Only backup interval can be changed");
+  if (!allowedBackupIntervalsHours.includes(intervalHoursInput as (typeof allowedBackupIntervalsHours)[number])) {
+    throw new Error("Invalid backup interval");
+  }
+  const definition = definitionById.get(taskId)!;
+  const intervalMs = intervalHoursInput * 60 * 60 * 1000;
+  await updateStore((store) => {
+    const task = store.tasks[taskId] || initialTaskState(definition);
+    task.intervalMs = intervalMs;
+    task.nextRunAt = task.automaticEnabled ? nextRunFrom(intervalMs) : undefined;
     task.status = task.status === "running" ? task.status : task.lastRun?.status || "idle";
     task.updatedAt = nowIso();
     store.tasks[taskId] = task;
@@ -415,7 +440,7 @@ export async function runScheduledTask(taskIdInput: string, trigger: ScheduledTa
     const task = store.tasks[taskId] || initialTaskState(definition);
     task.status = run.status;
     task.lastRun = run;
-    task.nextRunAt = task.automaticEnabled ? nextRunFrom(definition.intervalMs) : undefined;
+    task.nextRunAt = task.automaticEnabled ? nextRunFrom(task.intervalMs) : undefined;
     task.updatedAt = nowIso();
     store.tasks[taskId] = task;
     store.runs = [run, ...store.runs].slice(0, maxRuns);

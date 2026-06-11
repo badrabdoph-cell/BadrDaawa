@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { CheckCircle2, Github, History, RefreshCw, Settings, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, Github, History, RefreshCw, Settings, XCircle } from "lucide-react";
 import { getGitHubSyncReadiness, getSyncHistory } from "@/lib/github-sync";
 import { getSyncQueueStatus } from "@/lib/github-sync-queue";
+import { listScheduledTasks } from "@/lib/task-scheduler";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +21,22 @@ function formatDuration(ms: number | null) {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-export default async function SyncSettingsPage() {
-  const [readiness, queue, { logs, total }] = await Promise.all([
+function formatInterval(ms?: number) {
+  if (!ms) return "—";
+  const hours = Math.round(ms / (60 * 60 * 1000));
+  if (hours < 24) return `كل ${hours} ساعة`;
+  return hours === 24 ? "كل 24 ساعة" : `كل ${hours} ساعة`;
+}
+
+export default async function SyncSettingsPage({ searchParams }: { searchParams?: Promise<{ task?: string; interval?: string; error?: string }> }) {
+  const [params, readiness, queue, tasks, { logs, total }] = await Promise.all([
+    searchParams,
     Promise.resolve(getGitHubSyncReadiness()),
     Promise.resolve(getSyncQueueStatus()),
+    listScheduledTasks(),
     getSyncHistory({ limit: 10 }),
   ]);
+  const backupTask = tasks.find((task) => task.id === "backup");
 
   const completedLogs = logs.filter((l) => l.status === "completed");
   const failedLogs = logs.filter((l) => l.status === "failed");
@@ -103,6 +114,55 @@ export default async function SyncSettingsPage() {
             ))}
           </div>
         </div>
+      </section>
+
+      {params?.interval && params.task === "backup" ? (
+        <div className="notice success">
+          <CheckCircle2 size={18} />
+          تم تحديث وقت النسخ الاحتياطي التلقائي إلى كل {params.interval} ساعة.
+        </div>
+      ) : null}
+      {params?.error ? (
+        <div className="notice danger">
+          <XCircle size={18} />
+          تعذر حفظ إعداد النسخ الاحتياطي: {decodeURIComponent(params.error)}
+        </div>
+      ) : null}
+
+      <section className="panel" style={{ marginBottom: "16px" }}>
+        <div className="admin-card-head">
+          <CalendarClock size={22} />
+          <div>
+            <span className="eyebrow">Backup Schedule</span>
+            <h2>أوقات النسخ الاحتياطي إلى GitHub</h2>
+          </div>
+        </div>
+        <p style={{ margin: "10px 0 0", color: "rgba(245,234,214,0.62)", fontWeight: 850, lineHeight: 1.7 }}>
+          النسخ التلقائي يعمل من مهمة Backup الداخلية. الإعداد الحالي: {formatInterval(backupTask?.intervalMs)}، والموعد القادم: {backupTask?.automaticEnabled ? formatDate(backupTask.nextRunAt || "") : "متوقف"}.
+        </p>
+        <form action="/api/admin/tasks" method="post" style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
+          <input name="action" type="hidden" value="interval" />
+          <input name="taskId" type="hidden" value="backup" />
+          <input name="returnTo" type="hidden" value="/admin/sync-settings" />
+          <div className="backup-status-grid">
+            {[1, 3, 6, 12, 24, 48].map((hours) => (
+              <label className="panel backup-status-card" key={hours} style={{ cursor: "pointer" }}>
+                <input name="intervalHours" type="radio" value={hours} defaultChecked={Math.round((backupTask?.intervalMs || 0) / (60 * 60 * 1000)) === hours} />
+                <span>كل</span>
+                <strong>{hours} ساعة</strong>
+              </label>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+            <button className="btn btn-gold btn-glow" type="submit">
+              <CalendarClock size={16} />
+              حفظ وقت النسخ
+            </button>
+            <Link href="/admin/tasks" className="btn btn-soft btn-glass">
+              إدارة المهام المجدولة
+            </Link>
+          </div>
+        </form>
       </section>
 
       {/* Statistics */}
