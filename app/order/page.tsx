@@ -8,7 +8,7 @@ import { SectionIntro } from "@/components/SectionIntro";
 import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
-  title: "اطلب دعوتك",
+  title: "صمّم دعوتك الآن",
 };
 
 type PageProps = {
@@ -77,7 +77,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       <SiteHeader />
       <main className="section compact">
         <div className="container order-shell">
-          <SectionIntro eyebrow="طلب دعوة" title="بيانات الدعوة" lead="اختار القالب، اكتب بيانات المناسبة، وارفع الصور. تقدر تعاين الدعوة قبل تأكيد الطلب." />
+          <SectionIntro eyebrow="طلب دعوة" title="أنشئ دعوتك" lead="اختار التصميم، اكتب بيانات المناسبة، وارفع الصور. تقدر تعاين الدعوة قبل تأكيد الطلب." />
           <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} />
         </div>
       </main>

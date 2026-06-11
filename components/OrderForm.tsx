@@ -1015,7 +1015,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   function previewHref(values: Partial<FormState> = form, imageUrls: string[] = [], musicUrl = "") {
     const params = new URLSearchParams();
     params.set("groomName", values.groomName || "اسم العريس");
-    params.set("brideName", values.brideName || "اسم العروسة");
+    params.set("brideName", values.brideName || "اسم العروس");
     const weddingDate = normalizeWeddingDate(values.weddingDate || "");
     if (weddingDate) params.set("weddingDate", weddingDate);
     if (values.venue) params.set("venue", values.venue);
@@ -1145,11 +1145,11 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
   function validateOrder(values: OrderFormValues, photographerEnabled = form.photographerEnabled, musicEnabled = form.musicEnabled, musicChoice = form.musicChoice) {
     const nextErrors: FieldErrors = {};
     if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
-    if (!values.brideName) nextErrors.brideName = "اكتب اسم العروسة كما تحب ظهوره في الدعوة.";
+    if (!values.brideName) nextErrors.brideName = "اكتب اسم العروس كما تحب ظهوره في الدعوة.";
     if (!values.weddingDate) nextErrors.weddingDate = "اختار تاريخ المناسبة من التقويم.";
     else if (!normalizeWeddingDate(values.weddingDate)) nextErrors.weddingDate = "اختار تاريخ صحيح من التقويم.";
-    if (!values.venue) nextErrors.venue = "اكتب عنوان المناسبة أو اسم القاعة.";
-    if (values.mapUrl && !isValidOptionalUrl(values.mapUrl)) nextErrors.mapUrl = "رابط اللوكيشن لازم يبدأ بـ https://";
+    if (!values.venue) nextErrors.venue = "اكتب مكان الحفل أو اسم القاعة.";
+    if (values.mapUrl && !isValidOptionalUrl(values.mapUrl)) nextErrors.mapUrl = "رابط موقع القاعه لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerFacebookUrl)) nextErrors.photographerFacebookUrl = "رابط Facebook لازم يبدأ بـ https://";
     if (photographerEnabled && !isValidOptionalUrl(values.photographerInstagramUrl)) nextErrors.photographerInstagramUrl = "رابط Instagram لازم يبدأ بـ https://";
     if (musicEnabled && musicChoice === "url" && values.musicUrl && !isPlayableAudioUrl(values.musicUrl)) nextErrors.musicUrl = "رابط الموسيقى لازم يكون مباشر مثل mp3 أو m4a أو wav.";
@@ -1470,7 +1470,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           <div className={`field ${errors.brideName ? "has-error" : ""}`}>
             <label htmlFor="brideName">
               <UserRound size={16} />
-              اسم العروسة
+              اسم العروس
             </label>
             <input id="brideName" name="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
             {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
@@ -1487,7 +1487,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           </div>
 
           <div className={`field ${errors.venue ? "has-error" : ""}`}>
-            <label htmlFor="venue">عنوان المناسبة</label>
+            <label htmlFor="venue">مكان الحفل</label>
             <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required aria-invalid={Boolean(errors.venue)} aria-describedby={errors.venue ? "venue-error" : undefined} />
             {errors.venue ? <small className="field-error" id="venue-error">{errors.venue}</small> : null}
           </div>
@@ -1495,7 +1495,7 @@ export function OrderForm({ initialTemplate, initialDraft, templates }: { initia
           <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
             <label htmlFor="mapUrl">
               <Link2 size={16} />
-              رابط اللوكيشن
+              رابط موقع القاعه
             </label>
             <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
             <small className="field-preview" id="mapUrl-hint">أفضل نتيجة تكون من رابط Google Maps المباشر للقاعة حتى تظهر المعاينة والمسافة بدقة.</small>

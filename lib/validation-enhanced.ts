@@ -3,18 +3,18 @@ import { z } from "zod";
 // Validation schemas for admin operations
 export const orderUpdateSchema = z.object({
   groomName: z.string().min(1, "اسم العريس مطلوب").max(100, "اسم العريس طويل جداً"),
-  brideName: z.string().min(1, "اسم العروسة مطلوب").max(100, "اسم العروسة طويل جداً"),
+  brideName: z.string().min(1, "اسم العروس مطلوب").max(100, "اسم العروس طويل جداً"),
   phone: z.string().optional().default(""),
   weddingDate: z.string().refine((date) => !Number.isNaN(new Date(date).getTime()), "تاريخ الفرح غير صحيح"),
   venue: z.string().optional().default(""),
-  mapUrl: z.string().url("رابط اللوكيشن غير صحيح").optional().or(z.literal("")),
+  mapUrl: z.string().url("رابط موقع القاعه غير صحيح").optional().or(z.literal("")),
   notes: z.string().optional().default(""),
   templateSlug: z.string().optional().default("featured-1"),
 });
 
 export const invitationUpdateSchema = z.object({
   groomName: z.string().min(1, "اسم العريس مطلوب").max(100, "اسم العريس طويل جداً"),
-  brideName: z.string().min(1, "اسم العروسة مطلوب").max(100, "اسم العروسة طويل جداً"),
+  brideName: z.string().min(1, "اسم العروس مطلوب").max(100, "اسم العروس طويل جداً"),
   weddingDate: z.string().refine((date) => !Number.isNaN(new Date(date).getTime()), "تاريخ الفرح غير صحيح"),
   weddingTime: z.string().optional().default("07:00 مساءً"),
   venue: z.string().optional().default(""),

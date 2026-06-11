@@ -963,7 +963,7 @@ export function AdminNewInvitationWizard({
           <div className="field">
             <label htmlFor="adminBrideName">
               <UserRound size={16} />
-              اسم العروسة
+              اسم العروس
             </label>
             <input id="adminBrideName" placeholder="مثال: سارة" value={draft.brideName} onChange={(event) => patch({ brideName: event.target.value })} required />
           </div>
@@ -977,14 +977,14 @@ export function AdminNewInvitationWizard({
           </div>
 
           <div className="field">
-            <label htmlFor="adminVenue">عنوان المناسبة</label>
+            <label htmlFor="adminVenue">مكان الحفل</label>
             <input id="adminVenue" placeholder="مثال: قاعة رويال - البحيرة" value={draft.venue} onChange={(event) => patch({ venue: event.target.value })} required />
           </div>
 
           <div className="field">
             <label htmlFor="adminMapUrl">
               <Link2 size={16} />
-              رابط اللوكيشن
+              رابط موقع القاعه
             </label>
             <input id="adminMapUrl" dir="ltr" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={draft.mapUrl} onChange={(event) => patch({ mapUrl: event.target.value })} />
             <small className="field-preview">أفضل نتيجة تكون من رابط Google Maps المباشر للقاعة حتى تظهر المعاينة والمسافة بدقة.</small>

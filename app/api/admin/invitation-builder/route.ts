@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!groomName || !brideName || !parsedDate || !venue) {
-    return NextResponse.json({ error: "اكتب اسم العريس واسم العروسة والتاريخ والعنوان قبل الحفظ." }, { status: 400 });
+    return NextResponse.json({ error: "اكتب اسم العريس واسم العروس والتاريخ ومكان الحفل قبل الحفظ." }, { status: 400 });
   }
 
   const selectedTemplate = await getTemplateWithSettings(templateSlug);

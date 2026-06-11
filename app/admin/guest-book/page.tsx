@@ -77,7 +77,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Couple Messages</span>
-          <h1>رسائل للعروسين</h1>
+          <h1>كلمات وذكريات للعرسان ❤️</h1>
           <p>مكان موحد لرسائل وتهاني الضيوف، مع صور اختيارية ومراجعة قبل النشر أو نشر تلقائي حسب إعداد كل دعوة.</p>
         </div>
       </div>

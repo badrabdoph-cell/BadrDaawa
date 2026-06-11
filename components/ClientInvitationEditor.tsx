@@ -440,7 +440,7 @@ export function ClientInvitationEditor({
             <input ref={fieldRefs.groomName} value={groomName} onChange={(event) => { setGroomName(event.target.value); markDirty(); }} />
           </label>
           <label className="field">
-            <span>اسم العروسة</span>
+            <span>اسم العروس</span>
             <input ref={fieldRefs.brideName} value={brideName} onChange={(event) => { setBrideName(event.target.value); markDirty(); }} />
           </label>
           <label className="field">

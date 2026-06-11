@@ -279,11 +279,11 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
               </Link>
               <Link className="template-preview-action template-preview-action-soft" href="/templates">
                 <ArrowRight size={17} />
-                اختار واحد تاني
+                اختر تصميمًا آخر
               </Link>
               <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
                 <Sparkles size={17} />
-                اختار القالب دا
+                استخدم هذا التصميم
               </Link>
             </>
           )}

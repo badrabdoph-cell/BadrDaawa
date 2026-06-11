@@ -16,9 +16,9 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         } as CSSProperties
       }
     >
-      <Link href={`/templates/${template.slug}/preview`} className="template-preview" aria-label={`معاينة قالب ${template.arabicName}`}>
+      <Link href={`/templates/${template.slug}/preview`} className="template-preview" aria-label={`معاينة تصميم ${template.arabicName}`}>
         <span className="template-preview-screen">
-          <img src={template.previewImage} alt={`معاينة قالب ${template.arabicName}`} loading="lazy" decoding="async" />
+          <img src={template.previewImage} alt={`معاينة تصميم ${template.arabicName}`} loading="lazy" decoding="async" />
         </span>
         <span className="template-badge">{template.category}</span>
         <span className="template-preview-caption">
@@ -38,7 +38,7 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
           </Link>
           <Link className="btn btn-gold btn-glow template-card-select-button" href={`/order?template=${template.slug}`}>
             <Sparkles size={17} />
-            اختار
+            استخدم التصميم
           </Link>
         </div>
       </div>

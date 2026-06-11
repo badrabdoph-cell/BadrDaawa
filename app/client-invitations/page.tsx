@@ -9,8 +9,8 @@ import { getTemplatesWithSettings } from "@/lib/template-settings";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "دعوات العميل",
-  description: "صفحة مستقلة للدعوات التي تم إنشاؤها للعملاء من لوحة إدارة BadrDaawa.",
+  title: "دعوات حقيقية",
+  description: "مجموعة من الدعوات المنشورة لعملائنا من BadrDaawa.",
 };
 
 export default async function ClientInvitationsPublicPage() {
@@ -27,8 +27,8 @@ export default async function ClientInvitationsPublicPage() {
               <Sparkles size={16} />
               Client Invitations
             </span>
-            <h1 className="section-title">دعوات العميل</h1>
-            <p className="section-lead">دعوات العملاء المنشأة من لوحة الأدمن، منفصلة تماما عن صفحة القوالب.</p>
+            <h1 className="section-title">دعوات حقيقية</h1>
+            <p className="section-lead">مجموعة من الدعوات المنشورة لعملائنا.</p>
           </div>
 
           {activeInvitations.length ? (
@@ -65,10 +65,10 @@ export default async function ClientInvitationsPublicPage() {
             </div>
           ) : (
             <div className="empty-state">
-              <h2>لسه مفيش دعوات عملاء منشورة</h2>
-              <p>أول دعوة تنشئها من الأدمن هتظهر هنا تلقائيا.</p>
+              <h2>لا توجد دعوات منشورة حالياً</h2>
+              <p>ستظهر الدعوات المنشورة هنا تلقائياً.</p>
               <Link className="btn btn-gold" href="/templates">
-                مشاهدة القوالب
+                مشاهدة التصاميم
               </Link>
             </div>
           )}

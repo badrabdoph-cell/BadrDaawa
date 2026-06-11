@@ -58,7 +58,7 @@ export default async function AdminLiveModePage({ searchParams }: { searchParams
         </article>
         <article className="admin-list-stat">
           <UsersRound size={19} />
-          <span>إجمالي Check-In</span>
+          <span>إجمالي تسجيل الوصول</span>
           <strong>{formatArabicNumber(checkInDashboard.totals.checkIns)}</strong>
         </article>
         <article className="admin-list-stat warning">

@@ -202,7 +202,7 @@ export function AdminInvitationTools({
           <input ref={refs?.fieldRefs?.groomName} value={values.groomName} onChange={(event) => onPatch({ groomName: event.target.value })} />
         </label>
         <label className="field">
-          <span>اسم العروسة</span>
+          <span>اسم العروس</span>
           <input ref={refs?.fieldRefs?.brideName} value={values.brideName} onChange={(event) => onPatch({ brideName: event.target.value })} />
         </label>
         {showPhone ? (
@@ -216,11 +216,11 @@ export function AdminInvitationTools({
           <input ref={refs?.fieldRefs?.weddingDate} type="date" value={values.weddingDate} onChange={(event) => onPatch({ weddingDate: event.target.value })} />
         </label>
         <label className="field wide">
-          <span>عنوان المناسبة</span>
+          <span>مكان الحفل</span>
           <input ref={refs?.fieldRefs?.venue} value={values.venue} onChange={(event) => onPatch({ venue: event.target.value })} />
         </label>
         <label className="field wide">
-          <span><Link2 size={15} /> رابط اللوكيشن</span>
+          <span><Link2 size={15} /> رابط موقع القاعه</span>
           <input value={values.mapUrl} onChange={(event) => onPatch({ mapUrl: event.target.value })} placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" />
           <small>يفضل رابط Google Maps المباشر حتى تظهر معاينة الموقع والمسافة التقريبية للضيف.</small>
         </label>

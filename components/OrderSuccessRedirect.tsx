@@ -94,9 +94,9 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
 
         <div className="order-success-copy">
           <p className="order-success-kicker">تم استلام الطلب</p>
-          <h1 id="order-success-title">تم إرسال طلب الدعوة بنجاح ❤️</h1>
-          <p>تم استلام طلبك وإرساله للمراجعة.</p>
-          <p>سيتم تحويلك تلقائياً إلى واتساب لإرسال التفاصيل والإيصال إلى الأدمن.</p>
+          <h1 id="order-success-title">تم استلام طلبكم بنجاح ❤️</h1>
+          <p>تم إرسال طلب الدعوة وسنتواصل معكم خلال وقت قصير.</p>
+          <p>سيتم فتح واتساب لإكمال التفاصيل وتأكيد الطلب.</p>
         </div>
 
         <div className="order-success-countdown" role="timer" aria-live="polite">

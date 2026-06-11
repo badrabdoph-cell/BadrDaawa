@@ -5,8 +5,8 @@ import { TemplateBrowser } from "@/components/TemplateBrowser";
 import { getPublicTemplatesWithPreviewMusic } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
-  title: "قوالب الدعوات",
-  description: "شاهد التصاميم المختلفة واختر قالب دعوتك الرقمية من BadrDaawa.",
+  title: "تصاميم الدعوات",
+  description: "استعرض التصاميم المختلفة واختر الشكل الأقرب ليومكم المميز من BadrDaawa.",
 };
 
 export default async function TemplatesPage() {
@@ -18,9 +18,9 @@ export default async function TemplatesPage() {
       <main className="section compact">
         <div className="container">
           <div className="section-title-block templates-title-block">
-            <span className="eyebrow">شاهد التصاميم المختلفة</span>
-            <h1 className="section-title">فرحتك تستاهل دعوة مميزة 🤍</h1>
-            <p className="section-lead">عاين كل القوالب، اختار ستايل دعوتك المفضل، وسيب الباقي علينا. ✨</p>
+            <span className="eyebrow">استعرض التصاميم</span>
+            <h1 className="section-title">اختار التصميم اللي يشبه فرحتكم 🤍</h1>
+            <p className="section-lead">استعرض التصاميم المختلفة واختر الشكل الأقرب ليومكم المميز ✨</p>
           </div>
           <TemplateBrowser templates={templates} />
         </div>

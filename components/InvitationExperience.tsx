@@ -1045,7 +1045,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
                 <Calendar size={14} />
               </span>
               <div>
-                <p>اليوم والتاريخ</p>
+                <p>موعد الحفل</p>
                 <strong>{formatInvitationDate(invitation)}</strong>
               </div>
             </div>
@@ -1055,7 +1055,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
                 <Clock size={14} />
               </span>
               <div>
-                <p>موعد الحضور</p>
+                <p>وقت الحضور</p>
                 <strong>{invitation.weddingTime}</strong>
               </div>
             </div>
@@ -1065,7 +1065,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
                 <MapPin size={14} />
               </span>
               <div>
-                <p>القاعة والموقع</p>
+                <p>مكان الحفل</p>
                 <strong>{invitation.venue}</strong>
                 <small>{invitation.city}</small>
               </div>
@@ -1150,7 +1150,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
         </div>
 
         <div className="featured-hero-copy">
-          <p>Forever Begins Here</p>
+          <p>هنا تبدأ الحكاية ❤️</p>
           <h1>{invitation.groomName}</h1>
           <div className="featured-heart-line" aria-hidden="true">
             <span />
@@ -1172,7 +1172,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
                 <Calendar size={14} />
               </span>
               <div>
-                <p>اليوم والتاريخ</p>
+                <p>موعد الحفل</p>
                 <strong>{formatInvitationDate(invitation)}</strong>
               </div>
             </div>
@@ -1182,7 +1182,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
                 <Clock size={14} />
               </span>
               <div>
-                <p>موعد الحضور</p>
+                <p>وقت الحضور</p>
                 <strong>{invitation.weddingTime}</strong>
               </div>
             </div>
@@ -1192,7 +1192,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
                 <MapPin size={14} />
               </span>
               <div>
-                <p>القاعة والموقع</p>
+                <p>مكان الحفل</p>
                 <strong>{invitation.venue}</strong>
                 <small>{invitation.city}</small>
               </div>
@@ -2177,7 +2177,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
         </div>
 
         <div className="cinematic-hero-copy">
-          <p>Forever Begins Here</p>
+          <p>هنا تبدأ الحكاية ❤️</p>
           <h1>{invitation.groomName}</h1>
           <div className="cinematic-heart-line">
             <span />
@@ -2202,7 +2202,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
           </div>
 
           <div className="cinematic-countdown">
-            <p>يتبقى على الفرحة</p>
+            <p>العد التنازلي ليوم الحفل</p>
             <Countdown targetDate={invitation.weddingDate} targetTime={invitation.weddingTime} locale={invitation.language} />
           </div>
         </section>

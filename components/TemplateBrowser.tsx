@@ -44,11 +44,11 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
   }, [activeStyle, query, templates]);
 
   return (
-    <section className="template-browser" aria-label="استعراض القوالب">
+    <section className="template-browser" aria-label="استعراض التصاميم">
       <div className="template-browser-tools">
         <label className="template-search-box">
           <Search size={18} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث باسم القالب، اللون، أو الطابع..." />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث عن التصميم المناسب..." />
           {query ? (
             <button type="button" onClick={() => setQuery("")} aria-label="مسح البحث">
               <X size={16} />
@@ -56,7 +56,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
           ) : null}
         </label>
 
-        <div className="template-filter-row" aria-label="فلترة القوالب">
+        <div className="template-filter-row" aria-label="فلترة التصاميم">
           <span>
             <SlidersHorizontal size={16} />
             فلترة
@@ -71,7 +71,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
 
       <div className="template-result-count">
         <strong>{filteredTemplates.length}</strong>
-        <span>{filteredTemplates.length === 1 ? "قالب مناسب لاختيارك" : "قوالب مناسبة لاختيارك"}</span>
+        <span>{filteredTemplates.length === 1 ? "تصميم مناسب لاختيارك" : "تصاميم مناسبة لاختيارك"}</span>
       </div>
 
       {filteredTemplates.length ? (
@@ -82,8 +82,8 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
         </div>
       ) : (
         <div className="template-empty-state">
-          <strong>لا يوجد قالب مطابق الآن</strong>
-          <p>جرّب كلمة أبسط، أو اعرض كل القوالب واختار حسب الإحساس الأقرب للمناسبة.</p>
+          <strong>لا يوجد تصميم مطابق الآن</strong>
+          <p>جرّب كلمة أبسط، أو اعرض كل التصاميم واختر الإحساس الأقرب للمناسبة.</p>
           <button
             className="btn btn-gold"
             type="button"
@@ -92,7 +92,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
               setActiveStyle("all");
             }}
           >
-            عرض كل القوالب
+            عرض كل التصاميم
           </button>
         </div>
       )}

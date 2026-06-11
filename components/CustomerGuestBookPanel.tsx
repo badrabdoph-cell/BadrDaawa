@@ -28,11 +28,11 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
   };
 
   return (
-    <section className="panel customer-guest-book-panel" aria-label="رسائل العروسين">
+    <section className="panel customer-guest-book-panel" aria-label="كلمات وذكريات للعرسان">
       <div className="customer-messages-head">
         <MessageCircleHeart size={24} />
         <div>
-          <h2>رسائل للعروسين</h2>
+          <h2>كلمات وذكريات للعرسان ❤️</h2>
           <p>رسائل وتهاني الضيوف الخاصة بهذه الدعوة فقط، وتبقى كجزء من الذكريات بعد الفرح.</p>
         </div>
         <strong className="customer-unread-badge">{formatArabicNumber(stats.total)} رسالة</strong>

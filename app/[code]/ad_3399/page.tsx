@@ -105,7 +105,7 @@ export default async function CustomerAdminPage({
           <CopyButton className="btn btn-soft" value={url} label="نسخ الرابط" title="نسخ رابط الدعوة" />
           <a className="btn btn-soft whatsapp" href={whatsappShareUrl} target="_blank" rel="noreferrer">
             <MessageCircle size={19} />
-            مشاركة واتساب
+            مشاركة فورية
           </a>
         </div>
       </section>

@@ -61,7 +61,7 @@ export default async function AdminCheckInsPage({ searchParams }: { searchParams
         <div>
           <span className="eyebrow">Actual Attendance</span>
           <h1>الوصول الفعلي</h1>
-          <p>إحصائيات Check-In منفصلة عن RSVP التقليدي، لتعرف من وصل فعليًا لمكان الحفل.</p>
+          <p>إحصائيات تسجيل الوصول منفصلة عن RSVP التقليدي، لتعرف من وصل فعليًا لمكان الحفل.</p>
         </div>
       </div>
 
@@ -153,7 +153,7 @@ export default async function AdminCheckInsPage({ searchParams }: { searchParams
         <div className="admin-card-head">
           <BarChart3 size={20} />
           <div>
-            <span className="eyebrow">Latest Check-Ins</span>
+            <span className="eyebrow">آخر تسجيلات الوصول</span>
             <h2>آخر الوصول الفعلي</h2>
           </div>
         </div>

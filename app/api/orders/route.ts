@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
   const parsed = orderRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "اكتب اسم العريس واسم العروسة وتاريخ الفرح، وبعدها تقدر تكمل الطلب على واتساب.", details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: "اكتب اسم العريس واسم العروس وتاريخ الفرح، وبعدها تقدر تكمل الطلب على واتساب.", details: parsed.error.flatten() }, { status: 400 });
   }
 
   const selectedTemplate = await getPublicTemplateWithSettings(parsed.data.templateSlug);
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
   };
   const mapUrl = cleanExternalUrl(parsed.data.mapUrl);
   const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
-  const mapNotes = mapUrl ? `رابط اللوكيشن:\n${mapUrl}` : "";
+  const mapNotes = mapUrl ? `رابط موقع القاعه:\n${mapUrl}` : "";
   const musicNotes = effectiveMusicEnabled
     ? ["موسيقى الدعوة:", effectiveMusicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", effectiveMusicChoice === "library" ? "اختار العميل مقطعًا من مكتبة الموقع." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
     : "";

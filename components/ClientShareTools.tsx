@@ -98,7 +98,7 @@ export function ClientShareTools(props: ClientShareToolsProps) {
         </button>
         <a className="btn btn-gold" href={shareLinks.whatsapp} target="_blank" rel="noreferrer">
           <MessageCircle size={17} />
-          مشاركة واتساب
+          مشاركة فورية
         </a>
         <a className="btn btn-soft" href={shareLinks.telegram} target="_blank" rel="noreferrer">
           <Send size={17} />
