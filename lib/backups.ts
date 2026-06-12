@@ -37,7 +37,8 @@ type BackupPayload = {
 };
 
 const backupDir = runtimeBackupDir;
-const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
+// We keep exactly the last 20 backups to save storage and maintain history.
+const backupRetentionCount = 20;
 const maxBackupSummaryBytes = (Number(process.env.BACKUP_SUMMARY_MAX_MB) || 128) * 1024 * 1024;
 
 function jsonReplacer(_key: string, value: unknown) {

@@ -1,5 +1,0 @@
-Rollback plan:
-1. Revert code changes with git revert/checkout of this task changes.
-2. Restore data JSON files from this backup directory if local JSON data is accidentally changed.
-3. In production, restore PostgreSQL from provider backup before re-running any backfill if conflicts appear.
-4. runtime-store.json is not deleted by this migration plan.
