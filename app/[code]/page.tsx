@@ -8,6 +8,7 @@ import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-page
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
+import { getMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
@@ -67,11 +68,17 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     redirect(`/${invitation.customSlug}${params.size ? `?${params.toString()}` : ""}`);
   }
 
-  const [template, fallbackTemplate, siteSettings] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getSiteSettings()]);
+  const [template, fallbackTemplate, siteSettings, musicLibrary] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getSiteSettings(), getMusicLibrary()]);
   const resolvedTemplate = template || fallbackTemplate;
   if (!resolvedTemplate) {
     notFound();
   }
+  const resolvedMusic = resolveInvitationMusic({
+    invitation,
+    library: musicLibrary,
+    fallbackMusicUrl: resolvedTemplate.musicUrl,
+    disableMusic: isSilentPreview,
+  });
 
   if (!isSilentPreview) {
     const referrer = requestHeaders.get("referer");
@@ -95,6 +102,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
         invitation={invitation}
         template={resolvedTemplate}
         disableMusic={isSilentPreview}
+        resolvedMusicUrl={resolvedMusic.url}
         settings={{
           showPhotographerCard: siteSettings.photographer.showPhotographerCard,
           photographerName: siteSettings.photographer.defaultName,

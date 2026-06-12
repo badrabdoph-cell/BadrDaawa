@@ -155,7 +155,11 @@ function cleanPhotographer(value: unknown): Invitation["photographer"] | undefin
   };
 }
 
-async function resolveMusic(payload: AdminOrderPayload, existingUrl?: string | null, existingEnabled = false) {
+async function resolveMusic(
+  payload: Pick<AdminOrderPayload, "musicEnabled" | "musicChoice" | "musicUrl" | "musicDataUrl">,
+  existingUrl?: string | null,
+  existingEnabled = false,
+) {
   const musicEnabled = payload.musicEnabled ?? existingEnabled;
   if (!musicEnabled) return "";
   if (payload.musicChoice === "default") return "";
@@ -363,7 +367,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
 
   const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
   const finalGallery = gallery.length ? gallery : fallbackGallery;
-  const musicUrl = await resolveMusic(payload, order.musicUrl, order.musicEnabled);
+  const musicUrl = await resolveMusic(draft, order.musicUrl, order.musicEnabled);
   const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
   const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
   const baseSlug = buildInvitationBaseSlug(draft.groomName, draft.brideName);
@@ -489,7 +493,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
   const draft = getOrderDraft(payload, existingOrder);
   const error = status === "REVIEWING" ? "" : validateDraft(draft);
   if (error) throw new Error(error);
-  const musicUrl = await resolveMusic(payload, existingOrder.musicUrl, Boolean(existingOrder.musicEnabled));
+  const musicUrl = await resolveMusic(draft, existingOrder.musicUrl, Boolean(existingOrder.musicEnabled));
   const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
   const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
 

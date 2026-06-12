@@ -314,14 +314,16 @@ export function InvitationExperience({
   invitation,
   template,
   disableMusic = false,
+  resolvedMusicUrl,
   settings,
 }: {
   invitation: Invitation;
   template: TemplateDefinition;
   disableMusic?: boolean;
+  resolvedMusicUrl?: string | null;
   settings?: InvitationExperienceSettings;
 }) {
-  const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : invitation.musicUrl || template.musicUrl;
+  const templateMusicUrl = disableMusic || invitation.musicEnabled === false ? null : (resolvedMusicUrl ?? (invitation.musicUrl || template.musicUrl));
   const photographer = getTemplatePhotographer(template, invitation, settings);
   const galleryImagesForStories = getInvitationImages(invitation).gallery;
   const galleryStories = getInvitationTexts(invitation).galleryStories;
