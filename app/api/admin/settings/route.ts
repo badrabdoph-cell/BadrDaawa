@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getHomeContent, updateHomeContent } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
@@ -104,7 +103,6 @@ export async function POST(request: NextRequest) {
     });
 
     ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
-    queueGitHubSync("Site settings updated from admin.", { createSnapshot: true });
 
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);
   } catch (error) {

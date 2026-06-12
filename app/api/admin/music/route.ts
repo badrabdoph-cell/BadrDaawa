@@ -4,7 +4,6 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAdminInvitations } from "@/lib/admin-data";
 import { cleanNewDirectAudioUrl, deleteUploadedMusicFile, isBlockedMusicPageUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteMusicSlot, getMusicLibrary, getMusicUsage, renameMusicSlot, saveMusicSlot, setMusicSlotEnabled } from "@/lib/music-library";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { clearTemplatesPreviewMusicIfTrackDeleted, updateTemplatesPreviewMusicSettings } from "@/lib/templates-preview-music";
@@ -77,7 +76,6 @@ export async function POST(request: NextRequest) {
     if (enabled && !selectedTrack) return redirectWith(request, { error: "templates-preview-track" });
     const settings = await updateTemplatesPreviewMusicSettings({ enabled, trackId: selectedTrack?.id || "" });
     revalidateTemplatesPreviewPages(allTemplateSlugs);
-    queueGitHubSync(`Templates preview music updated: ${settings.enabled ? settings.trackId : "off"}.`, { createSnapshot: true });
     return redirectWith(request, { saved: "templates-preview" });
   }
 
@@ -90,7 +88,6 @@ export async function POST(request: NextRequest) {
     if (!name) return redirectWith(request, { error: "name" });
     const saved = await renameMusicSlot(slotId, name);
     await revalidateMusicPages(allTemplateSlugs);
-    if (saved) queueGitHubSync(`Music track renamed: ${saved.id}.`, { createSnapshot: true });
     return redirectWith(request, saved ? { saved: "renamed" } : { error: "slot" });
   }
 
@@ -98,14 +95,12 @@ export async function POST(request: NextRequest) {
     if (!currentSlot?.url) return redirectWith(request, { error: "audio" });
     const saved = await setMusicSlotEnabled(slotId, true);
     await revalidateMusicPages(allTemplateSlugs);
-    queueGitHubSync(`Default music set: ${saved?.id || slotId}.`, { createSnapshot: true });
     return redirectWith(request, { saved: "default", count: String(allTemplateSlugs.length) });
   }
 
   if (action === "disable") {
     const saved = await setMusicSlotEnabled(slotId, false);
     await revalidateMusicPages(allTemplateSlugs);
-    queueGitHubSync(`Default music disabled: ${saved?.id || slotId}.`, { createSnapshot: true });
     return redirectWith(request, { saved: "disabled" });
   }
 
@@ -120,7 +115,6 @@ export async function POST(request: NextRequest) {
     if (deleted) await clearTemplatesPreviewMusicIfTrackDeleted(deleted.id);
     if (deleted) await deleteUploadedMusicFile(deleted.url);
     await revalidateMusicPages(allTemplateSlugs);
-    queueGitHubSync(`Music track deleted: ${deleted?.id || slotId}; converted ${converted} invitation(s).`, { createSnapshot: true });
     return redirectWith(request, deleted ? { saved: "deleted", converted: String(converted) } : { error: "slot" });
   }
 
@@ -161,6 +155,5 @@ export async function POST(request: NextRequest) {
 
   if (!savedSlot) return redirectWith(request, { error: "slot" });
   await revalidateMusicPages(allTemplateSlugs);
-  queueGitHubSync(`Music track saved: ${savedSlot.id}.`, { createSnapshot: true });
   return redirectWith(request, { saved: enabled ? "default" : "saved", count: String(allTemplateSlugs.length) });
 }
