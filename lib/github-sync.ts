@@ -112,6 +112,10 @@ const projectSyncFiles = [
   "data/content-presets.json",
   "data/custom-templates.json",
 ];
+
+// Project files are always synced to GitHub as part of the project configuration.
+// Operational data (customers, invitations, etc.) is NEVER synced to GitHub directly.
+// GitHub is NOT a database for operational data.
 const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
 const maxSyncFileBytes = (Number(process.env.BACKUP_GITHUB_MAX_FILE_MB || process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
 const maxSyncTotalBytes = (Number(process.env.BACKUP_GITHUB_MAX_TOTAL_MB || process.env.GITHUB_SYNC_MAX_TOTAL_MB) || 180) * 1024 * 1024;
