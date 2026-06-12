@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import {
   ArrowLeft,
@@ -105,9 +105,9 @@ export type OrderInitialDraft = Pick<
 const orderDraftStorageKey = "badrdaawa-order-draft";
 
 const orderImageSlots = [
-  { title: "الصورة الأولى", hint: "الغلاف" },
-  { title: "الصورة الثانية", hint: "تفصيلة" },
-  { title: "الصورة الثالثة", hint: "اختيارية" },
+  { title: "الغلاف", hint: "الرئيسية" },
+  { title: "التفاصيل", hint: "قريبة" },
+  { title: "صورة إضافية", hint: "اختيارية" },
 ];
 
 const orderStoryExamples = [
@@ -366,6 +366,7 @@ function CompactOrderImageInput({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef("");
+  const lastFileRef = useRef<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState(defaultImage || "");
   const [fileName, setFileName] = useState("");
   const [previewFailed, setPreviewFailed] = useState(false);
@@ -405,58 +406,105 @@ function CompactOrderImageInput({
 
     const objectUrl = URL.createObjectURL(file);
     objectUrlRef.current = objectUrl;
+    lastFileRef.current = file;
     setPreviewUrl(objectUrl);
     setFileName(file.name);
     onFileSelected(index, file);
   }
 
+  function openFilePicker() {
+    if (inputRef.current) inputRef.current.value = "";
+    inputRef.current?.click();
+  }
+
+  function retryUpload(event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    if (lastFileRef.current) onFileSelected(index, lastFileRef.current);
+  }
+
   function clearImage() {
     revokeObjectUrl();
     if (inputRef.current) inputRef.current.value = "";
+    lastFileRef.current = null;
     setPreviewUrl("");
     setFileName("");
     setPreviewFailed(false);
     onClearDefault();
   }
 
+  const isBusy = upload.phase === "selected" || upload.phase === "compressing" || upload.phase === "uploading";
+  const isSaved = upload.phase === "saved";
+  const isError = upload.phase === "error";
+  const statusText = isSaved ? "تم الرفع" : isError ? "فشل الرفع" : upload.phase === "idle" ? "اضغط" : upload.message;
+  const slotHint = orderImageSlots[index]?.hint || "صورة";
+
   return (
-    <div className={`compact-image-slot ${previewUrl ? "has-image" : ""}`}>
+    <div
+      className={`compact-image-slot ${previewUrl ? "has-image" : ""} is-${upload.phase}`}
+      role="button"
+      tabIndex={0}
+      onClick={openFilePicker}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        openFilePicker();
+      }}
+      aria-label={`اختيار ${orderImageSlots[index]?.title || `الصورة ${index + 1}`}`}
+    >
+      <input
+        ref={inputRef}
+        className="compact-image-input"
+        name={`orderImage${index}Raw`}
+        type="file"
+        accept={acceptedImageFormats}
+        onClick={(event) => event.stopPropagation()}
+        onChange={(event) => handleFile(event.target.files?.[0])}
+      />
       <div className="compact-image-preview">
         {previewUrl && !previewFailed ? (
           <img src={previewUrl} alt={`معاينة الصورة ${index + 1}`} decoding="async" onError={() => setPreviewFailed(true)} />
         ) : (
           <span>
-            <ImagePlus size={18} />
-            {fileName || "صورة"}
+            <ImagePlus size={22} />
+            <strong>{slotHint}</strong>
+            <small>اضغط هنا</small>
           </span>
         )}
+        <em className="compact-image-badge">
+          {isSaved ? <Check size={13} /> : isBusy ? <Loader2 size={13} className="animate-float" /> : <ImagePlus size={13} />}
+        </em>
       </div>
       <div className="compact-image-meta">
         <strong>{orderImageSlots[index]?.title}</strong>
-        <small>{upload.fileName || fileName || orderImageSlots[index]?.hint}</small>
+        <small>{upload.fileName || fileName || slotHint}</small>
         <div className={`compact-upload-status ${upload.phase}`}>
-          <span>{upload.message}</span>
+          <span>{isSaved ? "✓ تم الرفع" : statusText}</span>
           <strong>{upload.progress}%</strong>
         </div>
         <div className="compact-upload-track" aria-hidden="true">
           <span style={{ width: `${upload.progress}%` }} />
         </div>
-        {upload.error ? <small className="compact-upload-error">{upload.error}</small> : null}
+        {upload.error ? (
+          <div className="compact-upload-error">
+            <small>{upload.error}</small>
+            {lastFileRef.current ? (
+              <button type="button" onClick={retryUpload}>
+                إعادة المحاولة
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <div className="compact-image-actions">
-        <label>
-          <ImagePlus size={15} />
-          رفع
-          <input
-            ref={inputRef}
-            name={`orderImage${index}Raw`}
-            type="file"
-            accept={acceptedImageFormats}
-            onChange={(event) => handleFile(event.target.files?.[0])}
-          />
-        </label>
         {previewUrl ? (
-          <button type="button" onClick={clearImage} aria-label={`حذف الصورة ${index + 1}`}>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              clearImage();
+            }}
+            aria-label={`حذف الصورة ${index + 1}`}
+          >
             <Trash2 size={15} />
           </button>
         ) : null}

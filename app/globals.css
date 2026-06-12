@@ -3154,26 +3154,64 @@ img {
 .compact-image-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: clamp(6px, 1.6vw, 12px);
 }
 
 .compact-image-slot {
+  position: relative;
   display: grid;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-  padding: 8px;
-  border: 1px solid rgba(33, 28, 24, 0.1);
+  min-height: 168px;
+  padding: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 92, 54, 0.22);
   border-radius: 8px;
-  background: rgba(255, 253, 248, 0.78);
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.94), rgba(255, 247, 229, 0.76));
+  box-shadow: 0 10px 24px rgba(61, 43, 22, 0.06);
+  cursor: pointer;
+  outline: 0;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.compact-image-slot:hover,
+.compact-image-slot:focus-visible {
+  border-color: rgba(180, 139, 57, 0.58);
+  background: linear-gradient(145deg, #fffdf8, #fff2d4);
+  box-shadow: 0 14px 30px rgba(61, 43, 22, 0.1);
+  transform: translateY(-1px);
+}
+
+.compact-image-slot:active {
+  transform: scale(0.985);
+}
+
+.compact-image-slot.has-image {
+  animation: compact-image-in 260ms ease both;
+}
+
+.compact-image-slot.is-saved {
+  border-color: rgba(180, 139, 57, 0.68);
+  box-shadow: 0 0 0 1px rgba(243, 207, 115, 0.35), 0 0 20px rgba(243, 207, 115, 0.22);
+}
+
+.compact-image-slot.is-error {
+  border-color: rgba(167, 55, 55, 0.42);
+  background: linear-gradient(145deg, #fff8f6, #fffdf8);
+}
+
+.compact-image-input {
+  display: none;
 }
 
 .compact-image-preview {
+  position: relative;
   display: grid;
   place-items: center;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  min-height: 70px;
-  border: 1px dashed rgba(180, 139, 57, 0.34);
+  min-height: 58px;
+  border: 1px dashed rgba(120, 92, 54, 0.34);
   border-radius: 8px;
   background: linear-gradient(145deg, rgba(255, 248, 235, 0.9), rgba(255, 255, 255, 0.76));
 }
@@ -3182,35 +3220,83 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  animation: compact-image-preview-in 300ms ease both;
 }
 
 .compact-image-preview span {
   display: grid;
   justify-items: center;
-  gap: 4px;
+  gap: 2px;
   max-width: 100%;
-  padding: 8px;
-  color: rgba(81, 67, 55, 0.72);
-  font-size: 0.78rem;
+  padding: 6px;
+  color: rgba(81, 67, 55, 0.78);
+  font-size: 0.7rem;
   overflow-wrap: anywhere;
+}
+
+.compact-image-preview span svg {
+  color: #9f742b;
+}
+
+.compact-image-preview span strong,
+.compact-image-preview span small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-image-preview span strong {
+  color: #392a16;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.compact-image-preview span small {
+  color: rgba(81, 67, 55, 0.6);
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.compact-image-badge {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 6px;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 999px;
+  background: rgba(53, 40, 26, 0.72);
+  color: #fff7e5;
+  box-shadow: 0 8px 18px rgba(37, 27, 15, 0.18);
+}
+
+.compact-image-slot.is-saved .compact-image-badge {
+  background: linear-gradient(135deg, #f3cf73, #b48b39);
+  color: #2f210d;
+  animation: compact-check-pop 460ms cubic-bezier(0.2, 0.85, 0.2, 1.25) both;
 }
 
 .compact-image-meta {
   display: grid;
-  gap: 1px;
+  gap: 3px;
   min-width: 0;
   text-align: center;
 }
 
 .compact-image-meta strong {
   color: #392a16;
-  font-size: 0.86rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
 }
 
 .compact-image-meta small {
-  color: rgba(81, 67, 55, 0.62);
-  font-size: 0.76rem;
+  color: rgba(81, 67, 55, 0.68);
+  font-size: 0.68rem;
   font-weight: 850;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
@@ -3218,14 +3304,14 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  min-height: 24px;
-  margin-top: 4px;
-  padding: 4px 6px;
+  gap: 4px;
+  min-height: 23px;
+  margin-top: 2px;
+  padding: 4px 5px;
   border-radius: 7px;
-  background: rgba(81, 67, 55, 0.06);
-  color: rgba(81, 67, 55, 0.72);
-  font-size: 0.68rem;
+  background: rgba(81, 67, 55, 0.08);
+  color: rgba(53, 40, 26, 0.78);
+  font-size: 0.62rem;
   font-weight: 900;
   line-height: 1.25;
 }
@@ -3240,7 +3326,7 @@ img {
 .compact-upload-status strong {
   flex: 0 0 auto;
   color: inherit;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
 }
 
 .compact-upload-status.compressing,
@@ -3251,8 +3337,8 @@ img {
 }
 
 .compact-upload-status.saved {
-  background: rgba(34, 132, 83, 0.12);
-  color: #1f744d;
+  background: rgba(180, 139, 57, 0.17);
+  color: #5c4218;
 }
 
 .compact-upload-status.error {
@@ -3301,7 +3387,7 @@ img {
 }
 
 .compact-upload-track {
-  height: 5px;
+  height: 4px;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(81, 67, 55, 0.1);
@@ -3316,46 +3402,88 @@ img {
 }
 
 .compact-upload-error {
+  display: grid;
+  gap: 5px;
   color: #873838;
-  line-height: 1.45;
+  line-height: 1.35;
+}
+
+.compact-upload-error small {
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.compact-upload-error button {
+  min-height: 28px;
+  padding: 5px 7px;
+  border: 1px solid rgba(167, 55, 55, 0.24);
+  border-radius: 7px;
+  background: #fff;
+  color: #873838;
+  font-size: 0.68rem;
+  font-weight: 950;
+  cursor: pointer;
 }
 
 .compact-image-actions {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
 }
 
-.compact-image-actions label,
 .compact-image-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-height: 32px;
-  padding: 7px 10px;
-  border: 1px solid rgba(180, 139, 57, 0.24);
-  border-radius: 8px;
-  background: #fff;
-  color: #5c4218;
-  font-size: 0.82rem;
-  font-weight: 950;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #8f3434;
+  box-shadow: 0 8px 18px rgba(37, 27, 15, 0.16);
   cursor: pointer;
 }
 
-.compact-image-actions input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
+.compact-image-actions button:hover {
+  transform: scale(1.04);
 }
 
-.compact-image-actions button {
-  width: 32px;
-  padding: 0;
-  color: #8f3434;
+@keyframes compact-image-in {
+  from {
+    transform: translateY(4px) scale(0.99);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes compact-image-preview-in {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes compact-check-pop {
+  0% {
+    transform: scale(0.72);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .photographer-toggle-button {
@@ -30132,9 +30260,45 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
   .order-builder-page .order-template-card-grid,
   .order-builder-page .order-review-grid,
-  .order-builder-page .compact-image-grid,
   .order-builder-page .order-music-choice-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .order-builder-page .compact-image-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px;
+  }
+
+  .order-builder-page .compact-image-slot {
+    min-height: 150px;
+    padding: 6px;
+  }
+
+  .order-builder-page .compact-image-preview {
+    min-height: 56px;
+  }
+
+  .order-builder-page .compact-image-meta strong {
+    font-size: 0.7rem;
+  }
+
+  .order-builder-page .compact-image-meta small {
+    font-size: 0.61rem;
+  }
+
+  .order-builder-page .compact-upload-status {
+    display: flex;
+    padding: 4px;
+    font-size: 0.56rem;
+  }
+
+  .order-builder-page .compact-upload-status strong {
+    font-size: 0.56rem;
+  }
+
+  .order-builder-page .compact-upload-error small,
+  .order-builder-page .compact-upload-error button {
+    font-size: 0.6rem;
   }
 
   .order-builder-page .order-template-card {
