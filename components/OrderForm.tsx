@@ -1773,6 +1773,9 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
+            <div className="order-review-final-note" role="note">
+              هذه هي المرحلة الأخيرة. يرجى مراجعة جميع البيانات والتأكد من صحتها قبل تأكيد الدعوة.
+            </div>
             <div className="order-review-grid">
               {[
                 ["القالب", selectedTemplate.arabicName, 0],
@@ -1916,7 +1919,7 @@ export function OrderForm({
                 </button>
                 <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
                   {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
-                  إنشاء الدعوة
+                  الانتهاء وتأكيد الدعوة
                 </button>
                 <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
                   <ArrowRight size={17} />
