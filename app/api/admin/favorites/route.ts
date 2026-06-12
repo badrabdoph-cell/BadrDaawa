@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { removeAdminFavorite, toggleAdminFavorite } from "@/lib/admin-favorites";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -45,7 +44,6 @@ export async function POST(request: NextRequest) {
     const removed = await removeAdminFavorite(entityType, entityId);
     if (!removed) return redirectFavorites(request, returnTo, "missing");
     revalidateFavorites();
-    queueGitHubSync(`Admin favorite removed: ${String(entityType)}/${String(entityId)}.`, { createSnapshot: true });
     return redirectFavorites(request, returnTo, "removed");
   }
 
@@ -57,6 +55,5 @@ export async function POST(request: NextRequest) {
   });
   if (!result) return redirectFavorites(request, returnTo, "invalid");
   revalidateFavorites();
-  queueGitHubSync(`Admin favorite ${result.favorited ? "added" : "removed"}: ${String(entityType)}/${String(entityId)}.`, { createSnapshot: true });
   return redirectFavorites(request, returnTo, result.favorited ? "added" : "removed");
 }

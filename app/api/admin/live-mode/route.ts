@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAdminInvitations } from "@/lib/admin-data";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 import { parseLiveModeEventsText, upsertWeddingLiveMode } from "@/lib/wedding-live-mode";
 
@@ -35,6 +34,5 @@ export async function POST(request: NextRequest) {
   revalidatePath("/admin/live-mode");
   revalidatePath("/admin");
   revalidatePath(`/${invitationCode}`);
-  queueGitHubSync(`Wedding live mode updated: ${invitationCode}.`, { createSnapshot: true });
   return NextResponse.redirect(getRedirectUrl(`/admin/live-mode?saved=${encodeURIComponent(invitationCode)}`, request.headers, request.nextUrl.origin), 303);
 }

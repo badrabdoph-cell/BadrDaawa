@@ -6,7 +6,6 @@ import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
 import { getFileInvitationByCode } from "@/lib/file-store";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
@@ -352,7 +351,6 @@ export async function POST(request: NextRequest) {
   revalidatePath(getCustomerAdminPath(code));
   revalidatePath(managePath);
   revalidatePath("/admin/invitations");
-  queueGitHubSync(`Invitation builder ${action}: ${code}.`, { createSnapshot: true });
   const actor = await getAuditActorFromAdminRequest(request);
   const newValues = {
     code,

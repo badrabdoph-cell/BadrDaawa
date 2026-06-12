@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 type RouteContext = {
@@ -43,6 +42,5 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   revalidatePath("/admin/customers");
   revalidatePath("/admin/trash");
-  queueGitHubSync(`Customer moved to trash: ${id}.`, { createSnapshot: true });
   return redirectCustomers(request, "deleted");
 }

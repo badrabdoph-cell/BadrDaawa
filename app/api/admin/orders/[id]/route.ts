@@ -5,7 +5,6 @@ import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { getFileOrder } from "@/lib/file-store";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
@@ -569,7 +568,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       if (!result.count) throw new Error("لم يتم العثور على الطلب.");
       revalidatePath("/admin/orders");
       revalidatePath("/admin/trash");
-      queueGitHubSync(`Order deleted from admin: ${id}.`, { createSnapshot: true });
       return jsonMode ? NextResponse.json({ ok: true, deleted: true }) : redirectBack(request, "deleted");
     }
 
@@ -577,7 +575,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       await updateOrder(id, payload, "REVIEWING");
       const order = await getSnapshot(id, request);
       revalidatePath("/admin/orders");
-      queueGitHubSync(`Order marked reviewing: ${id}.`, { createSnapshot: true });
       return jsonMode ? NextResponse.json({ ok: true, order }) : redirectBack(request, "accepted");
     }
 
@@ -585,7 +582,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       await updateOrder(id, payload, "REJECTED");
       const order = await getSnapshot(id, request);
       revalidatePath("/admin/orders");
-      queueGitHubSync(`Order rejected from admin: ${id}.`, { createSnapshot: true });
       return jsonMode ? NextResponse.json({ ok: true, order }) : redirectBack(request, "rejected");
     }
 
@@ -598,7 +594,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       revalidatePath(`/${code}`);
       revalidatePath(getCustomerAdminPath(code));
       revalidatePath(await getInvitationManagePath(code));
-      queueGitHubSync(`Order published as invitation: ${code}.`, { createSnapshot: true });
       const links = await responseLinks(request, code);
       const order =
         (await getSnapshot(id, request)) ||
@@ -624,7 +619,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     await updateOrder(id, payload, "EDITED");
     const order = await getSnapshot(id, request);
     revalidatePath("/admin/orders");
-    queueGitHubSync(`Order updated from admin: ${id}.`, { createSnapshot: true });
     return jsonMode ? NextResponse.json({ ok: true, order }) : redirectBack(request, "updated");
   } catch (error) {
     console.error("Failed to handle admin order action", { id, action, error });

@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { hardDeleteTrashItem, restoreTrashItem, type TrashEntityType } from "@/lib/trash";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -52,6 +51,5 @@ export async function POST(request: NextRequest) {
   if (!ok) return redirectTrash(request, "missing");
 
   revalidateAdminTrash(entityType, id);
-  queueGitHubSync(`Trash ${action}: ${entityType} ${id}.`, { createSnapshot: true });
   return redirectTrash(request, action === "restore" ? "restored" : "deleted");
 }
