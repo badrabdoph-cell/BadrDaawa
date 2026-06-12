@@ -544,6 +544,7 @@ export function OrderForm({
     orderImageSlots.map((_, index) => createIdleUploadState(cleanOrderDraftImageUrls(initialDraft?.imageUrls)[index] || "")),
   );
   const [musicFileName, setMusicFileName] = useState("");
+  const [musicUploadBusy, setMusicUploadBusy] = useState(false);
   const [musicVideoBusy, setMusicVideoBusy] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
@@ -566,6 +567,8 @@ export function OrderForm({
   );
   const uploadingImageCount = imageUploads.filter((upload) => upload.phase === "selected" || upload.phase === "compressing" || upload.phase === "uploading").length;
   const hasImageUploadInProgress = uploadingImageCount > 0;
+  const hasMusicUploadInProgress = musicUploadBusy || musicVideoBusy;
+  const hasMediaUploadInProgress = hasImageUploadInProgress || hasMusicUploadInProgress;
   const activeStep = orderWizardSteps[activeStepIndex] || orderWizardSteps[0];
   const isFirstStep = activeStepIndex === 0 || (skipTemplateStep && activeStepIndex === 1);
   const isLastStep = activeStepIndex === orderWizardSteps.length - 1;
@@ -574,7 +577,8 @@ export function OrderForm({
   const orderPreviewSrc = useMemo(() => {
     const params = new URLSearchParams();
     params.set("orderPreview", "1");
-    params.set("embed", "1");
+    params.set("orderFullPreview", "1");
+    params.set("hidePreviewChrome", "1");
     params.set("template", selectedTemplate.slug);
     params.set("language", form.language);
     params.set("groomName", form.groomName);
@@ -662,6 +666,12 @@ export function OrderForm({
   }
 
   function openOrderPreview() {
+    if (hasMediaUploadInProgress) {
+      setState("error");
+      setMessage("انتظر حتى يكتمل حفظ الصور والموسيقى قبل فتح المعاينة.");
+      formRef.current?.querySelector<HTMLElement>(".order-upload-floating-warning")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     const currentValues = getCurrentFormFromDom();
     setForm((current) => ({ ...current, ...currentValues }));
     persistDraft(
@@ -1192,6 +1202,32 @@ export function OrderForm({
     }
   }
 
+  async function handleOrderMusicFile(file?: File | null) {
+    setMusicFileName(file?.name || "");
+    if (!file) return;
+    setMusicUploadBusy(true);
+    setState("idle");
+    setMessage("جاري حفظ ملف الموسيقى للمعاينة.");
+    try {
+      const musicDataUrl = await readFileAsDataUrl(file);
+      const response = await fetch("/api/orders/preview-music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ music: musicDataUrl }),
+      });
+      const data = (await response.json().catch(() => null)) as { musicUrl?: string; error?: string } | null;
+      if (!response.ok || !data?.musicUrl) throw new Error(data?.error || "تعذر حفظ ملف الموسيقى.");
+      updateField("musicUrl", data.musicUrl);
+      updateField("musicChoice", "upload");
+      setMessage("تم حفظ الموسيقى وستعمل داخل المعاينة والدعوة.");
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "تعذر حفظ ملف الموسيقى.");
+    } finally {
+      setMusicUploadBusy(false);
+    }
+  }
+
   function readFileAsDataUrl(file: File) {
     return new Promise<string>((resolve) => {
       if (!file.size) {
@@ -1249,6 +1285,7 @@ export function OrderForm({
 
   async function getOrderMusicDataUrl(formData: FormData) {
     if (!form.musicEnabled || form.musicChoice !== "upload") return "";
+    if (form.musicUrl.startsWith("/uploads/music/")) return "";
     const rawFile = formData.get("orderMusicFile");
     if (rawFile instanceof File && rawFile.size > 0) return readFileAsDataUrl(rawFile);
     return "";
@@ -1362,9 +1399,9 @@ export function OrderForm({
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state === "loading") return;
-    if (hasImageUploadInProgress) {
+    if (hasMediaUploadInProgress) {
       setState("error");
-      setMessage("انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل");
+      setMessage("انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل");
       formRef.current?.querySelector<HTMLElement>(".order-upload-floating-warning")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
@@ -1575,11 +1612,11 @@ export function OrderForm({
 
   return (
     <div className="order-flow order-wizard-flow">
-      {hasImageUploadInProgress ? (
+      {hasMediaUploadInProgress ? (
         <div className="order-upload-floating-warning" role="status" aria-live="polite">
           <Loader2 size={18} className="animate-float" />
-          <span>انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</span>
-          <strong>{uploadingImageCount}</strong>
+          <span>انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل</span>
+          <strong>{uploadingImageCount + (hasMusicUploadInProgress ? 1 : 0)}</strong>
         </div>
       ) : null}
 
@@ -1804,18 +1841,18 @@ export function OrderForm({
                     <>
                       {form.musicChoice === "upload" ? (
                         <label className="order-music-upload">
-                          <UploadCloud size={17} />
+                          {musicUploadBusy ? <Loader2 size={17} className="animate-float" /> : <UploadCloud size={17} />}
                           <span>
-                            <strong>ارفع ملف MP3</strong>
+                            <strong>{musicUploadBusy ? "جاري حفظ ملف الموسيقى..." : "ارفع ملف MP3"}</strong>
                             <small>{musicFileName || form.musicUrl || "mp3"}</small>
                           </span>
                           <input
                             name="orderMusicFile"
                             type="file"
                             accept={acceptedAudioFormats}
+                            disabled={musicUploadBusy}
                             onChange={(event) => {
-                              setMusicFileName(event.target.files?.[0]?.name || "");
-                              if (message) setMessage("");
+                              void handleOrderMusicFile(event.target.files?.[0]);
                             }}
                           />
                         </label>
@@ -1939,17 +1976,17 @@ export function OrderForm({
             <p className="order-review-submit-note" id="confirm-order">
               اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل تأكيد الدعوة.
             </p>
-            {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
+            {hasMediaUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل</p> : null}
           </section>
 
           <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
               <>
-                <button className="btn btn-gold btn-glow order-preview-action" type="button" onClick={openOrderPreview}>
+                <button className="btn btn-gold btn-glow order-preview-action" type="button" onClick={openOrderPreview} disabled={hasMediaUploadInProgress}>
                   <Eye size={17} />
                   معاينة الدعوة
                 </button>
-                <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
+                <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasMediaUploadInProgress} aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}>
                   {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
                   الانتهاء وتأكيد الدعوة
                 </button>
@@ -1975,20 +2012,11 @@ export function OrderForm({
       </div>
 
       {orderPreviewOpen ? (
-        <div className="order-preview-sheet-backdrop" role="dialog" aria-modal="true" aria-label="معاينة الدعوة">
-          <div className="order-preview-sheet">
-            <div className="order-preview-sheet-header">
-              <div>
-                <strong>معاينة الدعوة</strong>
-                <span>راجع التصميم، ثم أكد الطلب للعودة لخطوة الإنشاء.</span>
-              </div>
-              <button className="order-preview-sheet-close" type="button" onClick={() => setOrderPreviewOpen(false)} aria-label="إغلاق المعاينة">
-                ×
-              </button>
-            </div>
-            <iframe src={orderPreviewSrc} title="معاينة الدعوة قبل التأكيد" />
+        <div className="order-preview-fullscreen" role="dialog" aria-modal="true" aria-label="معاينة الدعوة">
+          <div className="order-preview-fullscreen-stage">
+            <iframe src={orderPreviewSrc} title="معاينة الدعوة قبل التأكيد" allow="autoplay; encrypted-media; fullscreen" />
             <button className="order-preview-confirm-floating" type="button" onClick={returnFromOrderPreview}>
-              تأكيد الطلب
+              العودة لتأكيد الدعوة
             </button>
           </div>
         </div>

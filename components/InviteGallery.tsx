@@ -48,7 +48,7 @@ function shouldShowSingleImage(className: string) {
 }
 
 function canUseOptimizedImage(src: string) {
-  return src.startsWith("/") && !src.toLowerCase().endsWith(".svg");
+  return src.startsWith("/") && !src.startsWith("/uploads/") && !src.toLowerCase().endsWith(".svg");
 }
 
 function getFigureClassName(className: string, index: number) {

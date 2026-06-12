@@ -18,7 +18,7 @@ type InviteOpeningProps = {
 };
 
 function canUseOptimizedImage(src: string) {
-  return src.startsWith("/") && !src.toLowerCase().endsWith(".svg");
+  return src.startsWith("/") && !src.startsWith("/uploads/") && !src.toLowerCase().endsWith(".svg");
 }
 
 export function InviteOpening({ groomName, brideName, coverImage, weddingDateLabel, openingText, locale = "ar" }: InviteOpeningProps) {

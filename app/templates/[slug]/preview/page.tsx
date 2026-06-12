@@ -39,6 +39,8 @@ type TemplatePreviewSearchParams = {
     openingText?: string;
     galleryStories?: string;
     story?: string;
+    orderFullPreview?: string;
+    hidePreviewChrome?: string;
 };
 
 type PageProps = {
@@ -98,40 +100,6 @@ function cleanPreviewGalleryStories(value: string | undefined) {
   } catch {
     return [];
   }
-}
-
-function buildOrderConfirmHref(templateSlug: string, query?: TemplatePreviewSearchParams) {
-  const params = new URLSearchParams();
-  params.set("template", templateSlug);
-  params.set("confirmOrder", "1");
-
-  const copiedKeys = [
-    "groomName",
-    "brideName",
-    "weddingDate",
-    "weddingTime",
-    "venue",
-    "city",
-    "mapUrl",
-    "gallery",
-    "photographerEnabled",
-    "photographerName",
-    "photographerFacebookUrl",
-    "photographerInstagramUrl",
-    "musicEnabled",
-    "musicChoice",
-    "musicUrl",
-    "openingText",
-    "story",
-  ] as const;
-
-  copiedKeys.forEach((key) => {
-    const value = query?.[key]?.trim();
-    if (value) params.set(key, value);
-  });
-  if (query?.story?.trim()) params.set("storyEnabled", "1");
-
-  return `/order?${params.toString()}#confirm-order`;
 }
 
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
@@ -202,7 +170,6 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
       ? { openingText: previewOpeningText, galleryStories: effectiveGalleryStories, story: effectivePreviewStory }
       : undefined
     : { ...templatePreviewInfo.texts, openingText: previewOpeningText, galleryStories: effectiveGalleryStories, story: effectivePreviewStory };
-  const orderConfirmHref = buildOrderConfirmHref(template.slug, query);
   const previewMapUrl = query?.mapUrl?.trim() ? cleanPreviewMapUrl(query.mapUrl) : isOrderRequestPreview ? "" : templatePreviewInfo.mapUrl;
 
   const invitation: Invitation = {
@@ -230,7 +197,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   };
 
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
-  const hidePreviewActions = isSilentPreview || query?.builderPreview === "1";
+  const hidePreviewActions = isSilentPreview || query?.builderPreview === "1" || isOrderRequestPreview || query?.hidePreviewChrome === "1" || query?.orderFullPreview === "1";
 
   return (
     <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>
@@ -266,27 +233,19 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
         />
       )}
       {!hidePreviewActions ? (
-        <nav className={`template-preview-floating-actions ${isOrderRequestPreview ? "template-preview-floating-actions-order" : ""}`} aria-label={isOrderRequestPreview ? "تأكيد الطلب" : "اختيارات القالب"}>
-          {isOrderRequestPreview ? (
-            <Link className="template-preview-action template-preview-confirm-action" href={orderConfirmHref}>
-              تأكيد الطلب
-            </Link>
-          ) : (
-            <>
-              <Link className="template-preview-action template-preview-action-soft" href="/">
-                <Home size={17} />
-                الصفحة الرئيسية
-              </Link>
-              <Link className="template-preview-action template-preview-action-soft" href="/templates">
-                <ArrowRight size={17} />
-                اختر تصميمًا آخر
-              </Link>
-              <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
-                <Sparkles size={17} />
-                استخدم هذا التصميم
-              </Link>
-            </>
-          )}
+        <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
+          <Link className="template-preview-action template-preview-action-soft" href="/">
+            <Home size={17} />
+            الصفحة الرئيسية
+          </Link>
+          <Link className="template-preview-action template-preview-action-soft" href="/templates">
+            <ArrowRight size={17} />
+            اختر تصميمًا آخر
+          </Link>
+          <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
+            <Sparkles size={17} />
+            استخدم هذا التصميم
+          </Link>
         </nav>
       ) : null}
     </div>

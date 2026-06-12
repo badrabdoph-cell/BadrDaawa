@@ -58,7 +58,7 @@ function getInvitationHeroVideo(invitation: Invitation) {
 }
 
 function canUseOptimizedImage(src: string) {
-  return src.startsWith("/") && !src.toLowerCase().endsWith(".svg");
+  return src.startsWith("/") && !src.startsWith("/uploads/") && !src.toLowerCase().endsWith(".svg");
 }
 
 function InviteHeroMedia({

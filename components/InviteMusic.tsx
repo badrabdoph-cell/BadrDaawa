@@ -23,8 +23,6 @@ function stopAudio(audio: HTMLAudioElement | null) {
   if (!audio) return;
   audio.pause();
   audio.currentTime = 0;
-  audio.removeAttribute("src");
-  audio.load();
   if (activeInviteAudio === audio) activeInviteAudio = null;
 }
 
@@ -74,11 +72,11 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       return;
     }
 
-    const audio = new Audio(cleanMusicUrl);
+    const audio = audioRef.current;
+    if (!audio) return;
     audio.loop = true;
     audio.preload = "metadata";
     audio.setAttribute("playsinline", "");
-    audioRef.current = audio;
 
     const onPlay = () => {
       setNeedsGesture(false);
@@ -112,7 +110,6 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
       stopAudio(audio);
-      if (audioRef.current === audio) audioRef.current = null;
     };
   }, [cleanMusicUrl, enabledPath, pathname, play]);
 
@@ -124,6 +121,7 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
 
   return (
     <div className="music-control" aria-live="polite">
+      <audio ref={audioRef} src={cleanMusicUrl} loop preload="metadata" playsInline />
       <button
         className={["music-button", needsGesture ? "attention" : "", isPlaying && !isMuted ? "playing" : ""].filter(Boolean).join(" ")}
         type="button"
