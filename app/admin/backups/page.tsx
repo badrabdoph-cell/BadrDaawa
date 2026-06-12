@@ -96,6 +96,13 @@ export default async function BackupsPage({
       </div>
       </section>
 
+      <section id="backup-restore" className="admin-tab-section" aria-label="استعادة النسخ الاحتياطية">
+        <div className="backup-sync-note">
+          <RotateCcw size={18} />
+          <span>لاستعادة نسخة، اختر ملفاً من السجل بالأسفل واكتب اسم الملف كما هو داخل خانة التأكيد ثم اضغط زر الاستعادة. يتم إنشاء نسخة أمان قبل الاستعادة تلقائياً.</span>
+        </div>
+      </section>
+
       <section id="backup-log" className="admin-tab-section" aria-label="سجل النسخ والاستعادة">
       <div className="table-shell">
         <table className="data-table">

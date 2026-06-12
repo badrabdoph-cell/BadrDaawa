@@ -6,6 +6,7 @@ import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { CoupleMessagesSettings, GuestBookMessage, Language } from "@/lib/types";
 
 type GuestBookState = "idle" | "loading" | "success" | "error";
+type GuestBookSubmitResponse = { error?: string; status?: GuestBookMessage["status"]; message?: GuestBookMessage };
 
 function getPreviewMessages(locale: Language): GuestBookMessage[] {
   const t = getInvitationTranslator(locale);
@@ -61,28 +62,33 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
     setState("loading");
     setNotice("");
 
+    let response: Response;
+    let data: GuestBookSubmitResponse | null = null;
+
     try {
-      const response = await fetch(`/api/invitations/${apiCode}/guest-book`, {
+      response = await fetch(`/api/invitations/${apiCode}/guest-book`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: cleanName, message: cleanMessage }),
       });
-      const data = (await response.json().catch(() => null)) as { error?: string; status?: GuestBookMessage["status"]; message?: GuestBookMessage } | null;
-      if (!response.ok) {
-        setState("error");
-        setNotice(data?.error || t("invitation.coupleMessages.sendError"));
-        return;
-      }
-      setState("success");
-      setNotice(data?.status === "approved" ? t("invitation.coupleMessages.published") : t("invitation.coupleMessages.pending"));
-      if (data?.message) setMessages((current) => [data.message as GuestBookMessage, ...current]);
-      setName("");
-      setMessage("");
-      event.currentTarget.reset();
+      data = (await response.json().catch(() => null)) as GuestBookSubmitResponse | null;
     } catch {
       setState("error");
       setNotice(t("common.connectionError"));
+      return;
     }
+
+    if (!response.ok) {
+      setState("error");
+      setNotice(data?.error || t("invitation.coupleMessages.sendError"));
+      return;
+    }
+
+    setState("success");
+    setNotice(data?.status === "approved" ? t("invitation.coupleMessages.published") : t("invitation.coupleMessages.pending"));
+    if (data?.message) setMessages((current) => [data.message as GuestBookMessage, ...current]);
+    setName("");
+    setMessage("");
   }
 
   if (!isPreview && settings.mode === "disabled") {

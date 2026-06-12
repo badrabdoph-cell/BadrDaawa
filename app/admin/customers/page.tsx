@@ -58,7 +58,7 @@ export default async function CustomersPage({
           <span className="eyebrow">Customers</span>
           <h1>العملاء وبيانات الدخول</h1>
         </div>
-        <button className="btn btn-gold" type="button">
+        <button className="btn btn-gold" type="button" disabled title="إضافة العملاء تتم حالياً تلقائياً عند إنشاء الدعوات.">
           <UserPlus size={18} />
           عميل جديد
         </button>
@@ -124,7 +124,7 @@ export default async function CustomersPage({
                       active={isAdminFavorite(favorites, "customer", customer.id)}
                       iconOnly
                     />
-                    <button className="btn btn-soft" type="button">
+                    <button className="btn btn-soft" type="button" disabled title="تغيير كلمة مرور العميل غير مربوط بإجراء حالي.">
                       <KeyRound size={17} />
                       Reset Password
                     </button>

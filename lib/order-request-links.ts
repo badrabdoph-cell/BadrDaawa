@@ -80,15 +80,20 @@ export async function createReservedInvitationCode(groomName: string, brideName:
     try {
       const [invitations, orders] = await Promise.all([
         prisma.invitation.findMany({
-          where: { code: { startsWith: baseSlug } },
-          select: { code: true },
+          where: {
+            OR: [
+              { code: { startsWith: baseSlug } },
+              { customSlug: { startsWith: baseSlug } },
+            ],
+          },
+          select: { code: true, customSlug: true },
         }),
         prisma.orderRequest.findMany({
           where: { publishedInvitationCode: { startsWith: baseSlug }, deletedAt: null },
           select: { publishedInvitationCode: true },
         }),
       ]);
-      existingCodes.push(...invitations.map((item) => item.code));
+      existingCodes.push(...invitations.flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean));
       existingCodes.push(...orders.map((item) => item.publishedInvitationCode || "").filter(Boolean));
     } catch (error) {
       console.error("Failed to collect database reserved invitation codes", error);
@@ -99,7 +104,7 @@ export async function createReservedInvitationCode(groomName: string, brideName:
     getFileInvitations().catch(() => []),
     getFileOrders().catch(() => []),
   ]);
-  existingCodes.push(...fileInvitations.map((item) => item.code));
+  existingCodes.push(...fileInvitations.flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean));
   existingCodes.push(...fileOrders.map((item) => item.publishedInvitationCode || "").filter(Boolean));
 
   return makeNumberedInvitationSlug(baseSlug, existingCodes);

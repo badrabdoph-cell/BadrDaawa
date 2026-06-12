@@ -92,10 +92,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const existing = await prisma.invitation.findMany({
-      where: { code: { startsWith: baseSlug } },
-      select: { code: true },
+      where: {
+        OR: [
+          { code: { startsWith: baseSlug } },
+          { customSlug: { startsWith: baseSlug } },
+        ],
+      },
+      select: { code: true, customSlug: true },
     });
-    const existingCodes = new Set(existing.map((item: { code: string }) => item.code));
+    const existingCodes = new Set(existing.flatMap((item: { code: string; customSlug: string | null }) => [item.code, item.customSlug || ""]).filter(Boolean));
 
     const template = await prisma.weddingTemplate.upsert({
       where: { slug: selectedTemplate.slug },

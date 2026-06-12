@@ -369,13 +369,23 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
   const baseSlug = buildInvitationBaseSlug(draft.groomName, draft.brideName);
   const publishedCode = order.publishedInvitationCode || "";
   const existingPublishedInvitation = publishedCode ? await prisma.invitation.findUnique({ where: { code: publishedCode }, select: { code: true } }).catch(() => null) : null;
-  const existingCodes = existingPublishedInvitation ? [] : await prisma.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } });
+  const existingCodes = existingPublishedInvitation
+    ? []
+    : await prisma.invitation.findMany({
+        where: {
+          OR: [
+            { code: { startsWith: baseSlug } },
+            { customSlug: { startsWith: baseSlug } },
+          ],
+        },
+        select: { code: true, customSlug: true },
+      });
   const code =
     existingPublishedInvitation?.code ||
     publishedCode ||
     makeNumberedInvitationSlug(
       baseSlug,
-      existingCodes.map((item) => item.code),
+      existingCodes.flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean),
     );
   const digits = digitsOnly(draft.phone);
   const username = `client_${digits || code.replace(/[^a-z0-9]/gi, "_")}`;

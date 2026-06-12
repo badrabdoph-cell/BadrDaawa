@@ -308,7 +308,7 @@ export async function getFileGuestsByInvitation(code: string) {
 
 export async function createFileInvitation(input: CreateFileInvitationInput) {
   const store = await readStore();
-  const existingCodes = store.invitations.map((invitation) => invitation.code);
+  const existingCodes = store.invitations.flatMap((invitation) => [invitation.code, invitation.customSlug || ""]).filter(Boolean);
   const requestedCode = input.code?.trim();
   const code = requestedCode && !existingCodes.some((item) => item.toLowerCase() === requestedCode.toLowerCase())
     ? requestedCode

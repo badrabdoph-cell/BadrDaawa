@@ -273,7 +273,17 @@ export async function POST(request: NextRequest) {
       existing?.code ||
       makeNumberedInvitationSlug(
         baseSlug,
-        (await db.invitation.findMany({ where: { code: { startsWith: baseSlug } }, select: { code: true } })).map((item) => item.code),
+        (
+          await db.invitation.findMany({
+            where: {
+              OR: [
+                { code: { startsWith: baseSlug } },
+                { customSlug: { startsWith: baseSlug } },
+              ],
+            },
+            select: { code: true, customSlug: true },
+          })
+        ).flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean),
       );
 
     const username = `client_${code.replace(/[^a-z0-9]+/gi, "_")}`;
