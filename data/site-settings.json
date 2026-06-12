@@ -1,0 +1,38 @@
+{
+  "siteName": "BadrDaawa",
+  "logoUrl": "",
+  "siteDescription": "Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك.",
+  "contactPhones": [
+    "01038434472"
+  ],
+  "whatsappUrl": "https://wa.me/201038434472",
+  "email": "",
+  "socialLinks": {
+    "facebook": "",
+    "instagram": "",
+    "tiktok": "",
+    "youtube": "",
+    "telegram": ""
+  },
+  "seo": {
+    "title": "BadrDaawa | دعوات زفاف رقمية فاخرة",
+    "description": "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
+    "keywords": "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, BadrDaawa",
+    "ogTitle": "BadrDaawa | دعوة تليق بأجمل يوم في حياتكم",
+    "ogDescription": "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة."
+  },
+  "homepage": {
+    "showFeatures": true,
+    "showPreview": true,
+    "showPricing": true,
+    "primaryCtaLabel": "ابدأ تصميم دعوتك",
+    "secondaryCtaLabel": "استعرض التصاميم"
+  },
+  "photographer": {
+    "showPhotographerCard": true,
+    "defaultName": "badrabdoph",
+    "defaultInstagramUrl": "https://www.instagram.com/",
+    "defaultFacebookUrl": "https://www.facebook.com/"
+  },
+  "updatedAt": "2026-06-12T22:16:25.305Z"
+}
