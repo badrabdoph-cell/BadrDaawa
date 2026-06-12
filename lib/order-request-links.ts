@@ -1,6 +1,5 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "./db";
-import { getFileInvitations, getFileOrders } from "./file-store";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "./slug";
 import type { OrderRequest } from "./types";
 
@@ -53,13 +52,6 @@ async function collectManageTokens() {
     }
   }
 
-  const [fileInvitations, fileOrders] = await Promise.all([
-    getFileInvitations().catch(() => []),
-    getFileOrders().catch(() => []),
-  ]);
-  tokens.push(...fileInvitations.map((item) => item.manageToken || "").filter(Boolean));
-  tokens.push(...fileOrders.map((item) => item.manageToken || "").filter(Boolean));
-
   return new Set(tokens);
 }
 
@@ -100,13 +92,6 @@ export async function createReservedInvitationCode(groomName: string, brideName:
     }
   }
 
-  const [fileInvitations, fileOrders] = await Promise.all([
-    getFileInvitations().catch(() => []),
-    getFileOrders().catch(() => []),
-  ]);
-  existingCodes.push(...fileInvitations.flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean));
-  existingCodes.push(...fileOrders.map((item) => item.publishedInvitationCode || "").filter(Boolean));
-
   return makeNumberedInvitationSlug(baseSlug, existingCodes);
 }
 
@@ -144,17 +129,7 @@ export async function getPendingOrderByManageToken(token: string): Promise<Pendi
     }
   }
 
-  const fileOrders = await getFileOrders().catch(() => []);
-  const order = fileOrders.find((item) => item.manageToken === cleanToken && isPendingOrderStatus(item.status));
-  return order?.publishedInvitationCode
-    ? {
-        id: order.id,
-        code: order.publishedInvitationCode,
-        groomName: order.groomName,
-        brideName: order.brideName,
-        status: normalizeOrderStatus(order.status),
-      }
-    : null;
+  return null;
 }
 
 export async function getPendingOrderByInvitationCode(code: string): Promise<PendingOrderSummary | null> {
@@ -191,15 +166,5 @@ export async function getPendingOrderByInvitationCode(code: string): Promise<Pen
     }
   }
 
-  const fileOrders = await getFileOrders().catch(() => []);
-  const order = fileOrders.find((item) => item.publishedInvitationCode === cleanCode && isPendingOrderStatus(item.status));
-  return order?.publishedInvitationCode
-    ? {
-        id: order.id,
-        code: order.publishedInvitationCode,
-        groomName: order.groomName,
-        brideName: order.brideName,
-        status: normalizeOrderStatus(order.status),
-      }
-    : null;
+  return null;
 }

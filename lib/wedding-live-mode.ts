@@ -1,12 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import type { WeddingLiveEvent, WeddingLiveModeConfig } from "./types";
-
-type WeddingLiveStore = {
-  liveModes: WeddingLiveModeConfig[];
-};
 
 export type WeddingLiveModeInput = {
   invitationCode: unknown;
@@ -16,14 +9,8 @@ export type WeddingLiveModeInput = {
   updatedBy?: "admin" | "client";
 };
 
-const storePath = path.join(process.cwd(), "data", "wedding-live-mode.json");
-
 function cleanText(value: unknown, limit: number) {
   return (typeof value === "string" ? value : "").trim().replace(/\r\n/g, "\n").slice(0, limit);
-}
-
-function createEmptyStore(): WeddingLiveStore {
-  return { liveModes: [] };
 }
 
 function createId(prefix = "evt") {
@@ -46,39 +33,6 @@ function normalizeEvent(value: unknown): WeddingLiveEvent | null {
 function normalizeEvents(value: unknown) {
   if (!Array.isArray(value)) return [];
   return value.map(normalizeEvent).filter((event): event is WeddingLiveEvent => Boolean(event)).slice(0, 12);
-}
-
-function normalizeConfig(value: unknown): WeddingLiveModeConfig | null {
-  if (!value || typeof value !== "object") return null;
-  const raw = value as Partial<WeddingLiveModeConfig>;
-  const invitationCode = cleanText(raw.invitationCode, 160);
-  if (!invitationCode) return null;
-  return {
-    invitationCode,
-    enabled: raw.enabled === true,
-    announcement: cleanText(raw.announcement, 500),
-    events: normalizeEvents(raw.events),
-    updatedAt: cleanText(raw.updatedAt, 80) || new Date(0).toISOString(),
-    updatedBy: raw.updatedBy === "client" ? "client" : "admin",
-  };
-}
-
-async function readStore(): Promise<WeddingLiveStore> {
-  noStore();
-  try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<WeddingLiveStore>;
-    return {
-      liveModes: Array.isArray(parsed.liveModes) ? parsed.liveModes.map(normalizeConfig).filter((config): config is WeddingLiveModeConfig => Boolean(config)) : [],
-    };
-  } catch {
-    return createEmptyStore();
-  }
-}
-
-async function writeStore(store: WeddingLiveStore) {
-  await mkdir(path.dirname(storePath), { recursive: true });
-  await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 }
 
 export function parseLiveModeEventsText(value: unknown) {
@@ -131,21 +85,19 @@ export async function getWeddingLiveMode(invitationCode: string) {
       console.error("Failed to load wedding live mode from PostgreSQL", error);
     }
   }
-  const store = await readStore();
-  return store.liveModes.find((config) => config.invitationCode.toLowerCase() === cleanCode) || null;
+  return null;
 }
 
 export async function getAllWeddingLiveModes() {
   if (prisma) {
     try {
       const configs = await prisma.weddingLiveMode.findMany({ orderBy: { updatedAt: "desc" } });
-      if (configs.length) return configs.map(toLiveModeConfig);
+      return configs.map(toLiveModeConfig);
     } catch (error) {
       console.error("Failed to load all wedding live modes from PostgreSQL", error);
     }
   }
-  const store = await readStore();
-  return store.liveModes.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  return [];
 }
 
 export async function upsertWeddingLiveMode(input: WeddingLiveModeInput) {

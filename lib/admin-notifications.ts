@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { getAdminInvitations, getAdminOrders } from "./admin-data";
 import { listBackupSnapshots } from "./backups";
 import { prisma } from "./db";
@@ -43,6 +44,7 @@ type NotificationStore = {
 };
 
 const storePath = path.join(process.cwd(), "data", "admin-notifications.json");
+const storeKey = "admin-notifications";
 const recentErrorWindowMs = 24 * 60 * 60 * 1000;
 const defaultStorageLimitBytes = 1024 * 1024 * 1024;
 
@@ -75,18 +77,19 @@ function parseStorageLimit() {
 
 async function readStore(): Promise<NotificationStore> {
   noStore();
-  try {
+  return readAppSettingOrSeed(storeKey, async () => {
+    try {
     const raw = await readFile(storePath, "utf8");
     const parsed = JSON.parse(raw) as Partial<NotificationStore>;
     return { notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [] };
-  } catch {
+    } catch {
     return { notifications: [] };
-  }
+    }
+  });
 }
 
 async function writeStore(store: NotificationStore) {
-  await mkdir(path.dirname(storePath), { recursive: true });
-  await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await writeAppSetting(storeKey, store);
 }
 
 function mergeNotifications(current: AdminNotification[], previous: AdminNotification[]) {

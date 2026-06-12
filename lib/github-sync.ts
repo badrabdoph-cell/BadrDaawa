@@ -98,7 +98,6 @@ const syncRoots = [
   { absolutePath: runtimeBackupDir, repoPath: (process.env.GITHUB_BACKUP_REPO_PATH || "backups").replace(/^\/+|\/+$/g, "") || "backups" },
 ];
 const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
-const backupOnChangeMinIntervalMs = (Number(process.env.BACKUP_ON_CHANGE_MIN_MINUTES) || 360) * 60 * 1000;
 const maxSyncFileBytes = (Number(process.env.BACKUP_GITHUB_MAX_FILE_MB || process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
 const maxSyncTotalBytes = (Number(process.env.BACKUP_GITHUB_MAX_TOTAL_MB || process.env.GITHUB_SYNC_MAX_TOTAL_MB) || 180) * 1024 * 1024;
 
@@ -592,10 +591,7 @@ async function markBackupJobsUploaded(files: SyncFile[], commitSha: string | und
 
 // ─── Core sync function ───────────────────────────────────────────────────────
 
-async function attemptSync(
-  reason: string,
-  options: { createSnapshot?: boolean } = {},
-): Promise<GitHubSyncResult & { startedAt: number }> {
+async function attemptSync(reason: string): Promise<GitHubSyncResult & { startedAt: number }> {
   const startedAt = Date.now();
   const config = getSyncConfig();
 
@@ -606,17 +602,6 @@ async function attemptSync(
       message: "GitHub sync variables are not configured.",
       duration: Date.now() - startedAt,
     };
-  }
-
-  if (options.createSnapshot) {
-    const { createBackupSnapshot, listBackupSnapshots } = await import("./backups");
-    const latestBackup = (await listBackupSnapshots())[0];
-    const latestBackupAge = latestBackup ? Date.now() - Date.parse(latestBackup.createdAt) : Number.POSITIVE_INFINITY;
-    if (!latestBackup || latestBackupAge >= backupOnChangeMinIntervalMs) {
-      await createBackupSnapshot("admin-auto");
-    } else {
-      console.log(`[GitHub Backup] Reusing recent backup: ${latestBackup.fileName}`);
-    }
   }
 
   const files = await collectSyncFiles();
@@ -722,7 +707,10 @@ export async function syncAdminStateToGitHub(
   console.log(`[GitHub Sync ${ts()}] GitHub Upload Started: ${reason}`);
 
   try {
-    const result = await attemptSync(reason, options);
+    if (options.createSnapshot) {
+      console.log("[GitHub Sync] createSnapshot ignored. Backups are created only by manual or scheduled backup jobs.");
+    }
+    const result = await attemptSync(reason);
     const duration = result.duration ?? 0;
 
     const dbStatus = result.status === "synced" || result.status === "unchanged" ? "completed" : result.status;

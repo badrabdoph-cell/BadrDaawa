@@ -1,9 +1,11 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import type { AdminFavorite, AdminFavoriteEntityType } from "./types";
 
 const favoritesPath = path.join(process.cwd(), "data", "admin-favorites.json");
+const favoritesKey = "admin-favorites";
 const maxStoredFavorites = 1000;
 
 type AdminFavoriteInput = {
@@ -62,19 +64,20 @@ function sortFavorites(favorites: AdminFavorite[]) {
 }
 
 async function readFavoritesRaw() {
-  try {
+  return readAppSettingOrSeed(favoritesKey, async () => {
+    try {
     const raw = await readFile(favoritesPath, "utf8");
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return sortFavorites(parsed.map((item) => normalizeFavorite(item as AdminFavoriteInput)).filter(Boolean) as AdminFavorite[]);
-  } catch {
+    } catch {
     return [];
-  }
+    }
+  });
 }
 
 async function writeFavorites(favorites: AdminFavorite[]) {
-  await mkdir(path.dirname(favoritesPath), { recursive: true });
-  await writeFile(favoritesPath, `${JSON.stringify(sortFavorites(favorites).slice(0, maxStoredFavorites), null, 2)}\n`, "utf8");
+  await writeAppSetting(favoritesKey, sortFavorites(favorites).slice(0, maxStoredFavorites));
 }
 
 export async function getAdminFavorites(filters: { entityType?: AdminFavoriteEntityType; q?: string } = {}) {

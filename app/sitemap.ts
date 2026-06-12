@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { getDynamicPages, isReservedDynamicPageSlug } from "@/lib/dynamic-pages";
-import { getFileInvitations } from "@/lib/file-store";
 import { getSiteUrl } from "@/lib/utils";
 
 function absoluteUrl(path: string) {
@@ -20,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/usage-policy"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  const [dynamicPages, fileInvitations] = await Promise.all([getDynamicPages().catch(() => []), getFileInvitations().catch(() => [])]);
+  const dynamicPages = await getDynamicPages().catch(() => []);
   for (const page of dynamicPages) {
     if (!page.isPublished || isReservedDynamicPageSlug(page.slug)) continue;
     routes.push({
@@ -49,16 +48,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.4,
       });
     }
-  }
-
-  for (const invitation of fileInvitations) {
-    if (!invitation.isActive) continue;
-    routes.push({
-      url: absoluteUrl(`/${invitation.customSlug || invitation.code}`),
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.4,
-    });
   }
 
   const seen = new Set<string>();

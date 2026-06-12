@@ -1,6 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { imageExtensionFromName } from "./image-formats";
 import { getTemplateWithSettings } from "./template-settings";
 
@@ -14,6 +15,7 @@ export type HomePreviewSettings = {
 };
 
 const settingsPath = path.join(process.cwd(), "data", "home-preview-settings.json");
+const settingsKey = "home-preview-settings";
 
 export const defaultHomePreviewSettings: HomePreviewSettings = {
   mode: "template",
@@ -58,15 +60,10 @@ async function readHomePreviewSettingsFile(): Promise<Partial<HomePreviewSetting
   }
 }
 
-async function writeHomePreviewSettingsFile(settings: HomePreviewSettings) {
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
-}
-
 export async function getHomePreviewSettings(): Promise<HomePreviewSettings> {
   noStore();
 
-  const saved = await readHomePreviewSettingsFile();
+  const saved = await readAppSettingOrSeed(settingsKey, readHomePreviewSettingsFile);
   const mode = saved.mode && isHomePreviewMode(saved.mode) ? saved.mode : defaultHomePreviewSettings.mode;
   const templateSlug = typeof saved.templateSlug === "string" && saved.templateSlug.trim() ? saved.templateSlug.trim() : defaultHomePreviewSettings.templateSlug;
   const template = await getTemplateWithSettings(templateSlug);
@@ -113,6 +110,5 @@ export async function updateHomePreviewSettings(input: {
     videoUrl,
   };
 
-  await writeHomePreviewSettingsFile(nextSettings);
-  return nextSettings;
+  return writeAppSetting(settingsKey, nextSettings);
 }

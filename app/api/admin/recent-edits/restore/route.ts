@@ -1,25 +1,11 @@
-import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { restoreBackupSnapshot } from "@/lib/backups";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
-}
-
-function revalidateAdminState() {
-  for (const path of ["/", "/admin", "/admin/recent-edits", "/admin/broadcast", "/admin/invitations", "/admin/templates", "/admin/music", "/admin/media", "/admin/backups"]) {
-    try {
-      revalidatePath(path);
-    } catch (error) {
-      console.error(`Failed to revalidate ${path} after restore`, error);
-    }
-  }
 }
 
 function sanitizeReturnTo(value: string) {
@@ -32,42 +18,8 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const fileName = String(formData.get("fileName") || "").trim();
-  const confirmFileName = String(formData.get("confirmFileName") || "").trim();
   const returnTo = sanitizeReturnTo(String(formData.get("returnTo") || ""));
   const url = getRedirectUrl(returnTo, request.headers, request.nextUrl.origin);
-
-  if (!fileName || confirmFileName !== fileName) {
-    url.searchParams.set("error", "confirm");
-    return NextResponse.redirect(url, 303);
-  }
-
-  const result = await restoreBackupSnapshot(fileName);
-  if (!result) {
-    url.searchParams.set("error", "missing");
-    return NextResponse.redirect(url, 303);
-  }
-
-  revalidateAdminState();
-  queueGitHubSync(`Restored admin snapshot: ${fileName}.`, { uploadExistingBackup: true });
-  await recordAuditLog({
-    actor: await getAuditActorFromAdminRequest(request),
-    action: "backup.restore",
-    entity: { type: "Backup", id: result.fileName, label: result.fileName },
-    oldValues: { beforeRestoreFileName: result.beforeRestoreFileName },
-    newValues: {
-      restoredFileName: result.fileName,
-      restoredDataFiles: result.restoredDataFiles,
-      restoredUploads: result.restoredUploads,
-      includesDatabaseDump: result.includesDatabaseDump,
-    },
-    metadata: { returnTo },
-  });
-
-  url.searchParams.set("restored", result.fileName);
-  url.searchParams.set("before", result.beforeRestoreFileName);
-  url.searchParams.set("files", String(result.restoredDataFiles));
-  url.searchParams.set("uploads", String(result.restoredUploads));
-  if (result.includesDatabaseDump) url.searchParams.set("db", "reference");
+  url.searchParams.set("error", "manual-restore-only");
   return NextResponse.redirect(url, 303);
 }

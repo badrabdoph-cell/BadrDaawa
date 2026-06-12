@@ -72,12 +72,11 @@ export function queueGitHubSync(
     affectedResource?: string;
   } = {},
 ) {
-  const allowOperationalSnapshots = process.env.GITHUB_SYNC_ON_CHANGE === "true";
-  const shouldCreateSnapshot = Boolean(options.createSnapshot && allowOperationalSnapshots);
+  const shouldCreateSnapshot = false;
   const shouldUploadExistingBackup = Boolean(options.uploadExistingBackup);
 
   if (!shouldCreateSnapshot && !shouldUploadExistingBackup) {
-    console.log(`[GitHub Backup Queue] Ignoring operational sync request. Backups run manually or on schedule only: ${reason}`);
+    console.log(`[GitHub Backup Queue] Ignoring non-backup sync request. PostgreSQL is the live source of truth: ${reason}`);
     return "";
   }
 

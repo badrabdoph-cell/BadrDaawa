@@ -1,4 +1,4 @@
-import { Archive, CloudDownload, DatabaseBackup, FileJson, RotateCcw, ShieldCheck } from "lucide-react";
+import { Archive, CloudDownload, DatabaseBackup, FileJson, ShieldCheck } from "lucide-react";
 import { listBackupSnapshots } from "@/lib/backups";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ function formatBackupDate(value: string) {
 export default async function BackupsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; restored?: string; before?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; error?: string }>;
 }) {
   const [params, backups] = await Promise.all([searchParams, listBackupSnapshots()]);
   const latest = backups[0];
@@ -49,24 +49,15 @@ export default async function BackupsPage({
           تم إنشاء النسخة: <strong>{params.created}</strong>
         </div>
       ) : null}
-      {params.restored ? (
-        <div className="notice success">
-          <RotateCcw size={18} />
-          تم استعادة النسخة: <strong>{params.restored}</strong>
-          {params.before ? <span> وتم إنشاء نسخة أمان قبل الاستعادة: <strong>{params.before}</strong></span> : null}
-        </div>
-      ) : null}
-      {params.error === "confirm" ? (
-        <div className="notice danger">اكتب اسم ملف النسخة كما هو قبل الاستعادة.</div>
-      ) : params.error === "missing" ? (
-        <div className="notice danger">تعذر العثور على ملف النسخة أو قراءته.</div>
+      {params.error === "manual-restore-only" ? (
+        <div className="notice danger">الاستعادة داخل التطبيق متوقفة. الاستعادة تتم يدوياً فقط عبر PostgreSQL بعد اختيار ملف backup مقصود.</div>
       ) : params.error === "create" ? (
         <div className="notice danger">فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL و pg_dump.</div>
       ) : null}
 
       <nav className="admin-page-tabs" aria-label="أقسام النسخ الاحتياطي">
         <a href="#backup-create">النسخ</a>
-        <a href="#backup-restore">الاستعادة</a>
+        <a href="#backup-restore">سياسة الاستعادة</a>
         <a href="#backup-log">السجل</a>
         <a href="/admin/sync-settings">الإعدادات</a>
       </nav>
@@ -98,8 +89,8 @@ export default async function BackupsPage({
 
       <section id="backup-restore" className="admin-tab-section" aria-label="استعادة النسخ الاحتياطية">
         <div className="backup-sync-note">
-          <RotateCcw size={18} />
-          <span>لاستعادة نسخة، اختر ملفاً من السجل بالأسفل واكتب اسم الملف كما هو داخل خانة التأكيد ثم اضغط زر الاستعادة. يتم إنشاء نسخة أمان قبل الاستعادة تلقائياً.</span>
+          <ShieldCheck size={18} />
+          <span>Backups للRecovery فقط. لا توجد استعادة تلقائية أو استعادة من GitHub داخل التطبيق. الاستعادة اليدوية تتم خارج التطبيق باستخدام `scripts/restore-postgres-backup.mjs` على قاعدة PostgreSQL المقصودة.</span>
         </div>
       </section>
 
@@ -136,14 +127,6 @@ export default async function BackupsPage({
                       <a className="btn btn-soft btn-icon" href={`/api/admin/backups/${backup.fileName}`} title="تحميل">
                         <CloudDownload size={17} />
                       </a>
-                      <form className="backup-restore-form" action="/api/admin/recent-edits/restore" method="post">
-                        <input name="fileName" type="hidden" value={backup.fileName} />
-                        <input name="returnTo" type="hidden" value="/admin/backups" />
-                        <input aria-label="تأكيد اسم ملف النسخة" name="confirmFileName" placeholder={backup.fileName} required />
-                        <button className="btn btn-soft btn-icon admin-action-restore" type="submit" title="استعادة">
-                          <RotateCcw size={17} />
-                        </button>
-                      </form>
                     </div>
                   </td>
                 </tr>

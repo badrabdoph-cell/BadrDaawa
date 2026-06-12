@@ -139,24 +139,7 @@ async function getBuilderAuditSnapshot(code: string) {
       };
     }
   }
-  const fileInvitation = await getFileInvitationByCode(code).catch(() => null);
-  if (!fileInvitation) return null;
-  return {
-    code: fileInvitation.code,
-    customSlug: fileInvitation.customSlug,
-    isActive: fileInvitation.isActive,
-    templateSlug: fileInvitation.templateSlug,
-    groomName: fileInvitation.groomName,
-    brideName: fileInvitation.brideName,
-    weddingDate: fileInvitation.weddingDate,
-    weddingTime: fileInvitation.weddingTime,
-    venue: fileInvitation.venue,
-    city: fileInvitation.city,
-    mapUrl: fileInvitation.mapUrl,
-    gallery: fileInvitation.gallery,
-    musicEnabled: fileInvitation.musicEnabled,
-    musicUrl: fileInvitation.musicUrl,
-  };
+  return null;
 }
 
 export async function POST(request: NextRequest) {

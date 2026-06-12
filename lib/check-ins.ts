@@ -1,56 +1,8 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { unstable_noStore as noStore } from "next/cache";
-import { writeJsonFileAtomic } from "./atomic-file";
 import { prisma } from "./db";
 import type { InvitationCheckIn } from "./types";
 
-type CheckInStore = {
-  checkIns: InvitationCheckIn[];
-};
-
-const storePath = path.join(process.cwd(), "data", "check-ins.json");
-
 function cleanText(value: unknown, limit: number) {
   return (typeof value === "string" ? value : "").trim().slice(0, limit);
-}
-
-function createEmptyStore(): CheckInStore {
-  return { checkIns: [] };
-}
-
-function normalizeCheckIn(value: unknown): InvitationCheckIn | null {
-  if (!value || typeof value !== "object") return null;
-  const raw = value as Partial<InvitationCheckIn>;
-  const id = cleanText(raw.id, 120);
-  const invitationCode = cleanText(raw.invitationCode, 160);
-  const visitorKey = cleanText(raw.visitorKey, 160);
-  const createdAt = cleanText(raw.createdAt, 80);
-  if (!id || !invitationCode || !visitorKey || !createdAt) return null;
-  return {
-    id,
-    invitationCode,
-    visitorKey,
-    createdAt,
-    ...(raw.userAgent ? { userAgent: cleanText(raw.userAgent, 240) } : {}),
-  };
-}
-
-async function readStore(): Promise<CheckInStore> {
-  noStore();
-  try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<CheckInStore>;
-    return {
-      checkIns: Array.isArray(parsed.checkIns) ? parsed.checkIns.map(normalizeCheckIn).filter((item): item is InvitationCheckIn => Boolean(item)) : [],
-    };
-  } catch {
-    return createEmptyStore();
-  }
-}
-
-async function writeStore(store: CheckInStore) {
-  await writeJsonFileAtomic(storePath, store);
 }
 
 function createId() {
@@ -71,13 +23,12 @@ export async function getAllCheckIns() {
   if (prisma) {
     try {
       const checkIns = await prisma.invitationCheckIn.findMany({ orderBy: { createdAt: "desc" } });
-      if (checkIns.length) return checkIns.map(toCheckIn);
+      return checkIns.map(toCheckIn);
     } catch (error) {
       console.error("Failed to load check-ins from PostgreSQL", error);
     }
   }
-  const store = await readStore();
-  return store.checkIns.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return [];
 }
 
 export async function getCheckInsByInvitation(invitationCode: string) {

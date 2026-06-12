@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { writeJsonFileAtomic } from "./atomic-file";
+import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 
 export type ErrorTrackingEvent = {
   id: string;
@@ -34,6 +34,7 @@ type ErrorTrackingInput = {
 };
 
 const storePath = path.join(process.cwd(), "data", "error-events.json");
+const storeKey = "error-events";
 const maxStoredEvents = 2500;
 const maxMessageLength = 700;
 const maxStackLength = 6000;
@@ -52,17 +53,19 @@ function cleanText(value: unknown, maxLength: number) {
 
 async function readStore(): Promise<ErrorTrackingStore> {
   noStore();
-  try {
+  return readAppSettingOrSeed(storeKey, async () => {
+    try {
     const raw = await readFile(storePath, "utf8");
     const parsed = JSON.parse(raw) as Partial<ErrorTrackingStore>;
     return { events: Array.isArray(parsed.events) ? parsed.events : [] };
-  } catch {
+    } catch {
     return { events: [] };
-  }
+    }
+  });
 }
 
 async function writeStore(store: ErrorTrackingStore) {
-  await writeJsonFileAtomic(storePath, store);
+  await writeAppSetting(storeKey, store);
 }
 
 function matches(value: ErrorTrackingEvent, filters: ErrorTrackingFilters) {

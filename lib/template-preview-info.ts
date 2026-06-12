@@ -1,6 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import type { CoupleStoryItem, GalleryStoryItem, InvitationTexts, Language } from "./types";
 
 export type TemplatePreviewInfo = {
@@ -29,6 +30,7 @@ export type TemplatePreviewInfo = {
 };
 
 const settingsPath = path.join(process.cwd(), "data", "template-preview-info.json");
+const settingsKey = "template-preview-info";
 
 export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
   language: "ar",
@@ -199,11 +201,11 @@ async function readTemplatePreviewInfoFile(): Promise<Partial<TemplatePreviewInf
 
 export async function getTemplatePreviewInfo() {
   noStore();
-  return normalizeTemplatePreviewInfo(await readTemplatePreviewInfoFile());
+  return normalizeTemplatePreviewInfo(await readAppSettingOrSeed(settingsKey, readTemplatePreviewInfoFile));
 }
 
 export async function updateTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>) {
-  const current = normalizeTemplatePreviewInfo(await readTemplatePreviewInfoFile());
+  const current = await getTemplatePreviewInfo();
   const next = normalizeTemplatePreviewInfo({
     ...current,
     ...input,
@@ -218,7 +220,5 @@ export async function updateTemplatePreviewInfo(input: Partial<TemplatePreviewIn
     updatedAt: new Date().toISOString(),
   });
 
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  return next;
+  return writeAppSetting(settingsKey, next);
 }

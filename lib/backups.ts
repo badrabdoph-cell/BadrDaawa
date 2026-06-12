@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
+import { readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
 import { maxSafeJsonFileBytes, parseJsonFileIfSafe, readJsonFileIfSafe } from "./json-file-safety";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir } from "./runtime-paths";
-import { listUploadFiles, readUploadFile, writeUploadFile } from "./storage-provider";
+import { listUploadFiles, readUploadFile } from "./storage-provider";
 
 export type BackupSummary = {
   fileName: string;
@@ -470,62 +470,5 @@ export async function getBackupFile(fileName: string) {
   return {
     fileName,
     bytes: await readFile(filePath),
-  };
-}
-
-async function readBackupPayload(fileName: string): Promise<BackupPayload | null> {
-  if (!/^[a-z0-9-]+\.json$/i.test(fileName)) return null;
-  const filePath = path.join(backupDir, fileName);
-  if (!filePath.startsWith(backupDir) || !(await exists(filePath))) return null;
-
-  try {
-    const { value: parsed } = await parseJsonFileIfSafe<unknown>(filePath, fileName, maxBackupSummaryBytes);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as BackupPayload) : null;
-  } catch {
-    return null;
-  }
-}
-
-function isSafeDataFileName(fileName: string) {
-  return /^[a-z0-9._-]+\.json$/i.test(fileName) && !fileName.includes("..") && !fileName.startsWith("backup");
-}
-
-function isSafeUploadPath(filePath: string) {
-  return /^[a-z0-9._\-\/]+$/i.test(filePath) && !path.isAbsolute(filePath) && !filePath.split(/[\\/]+/).includes("..");
-}
-
-export async function restoreBackupSnapshot(fileName: string) {
-  noStore();
-  ensureRuntimeDirectories();
-
-  const payload = await readBackupPayload(fileName);
-  if (!payload?.dataFiles || typeof payload.dataFiles !== "object") return null;
-
-  const beforeRestore = await createBackupSnapshot("restore-before");
-  let restoredDataFiles = 0;
-  let restoredUploads = 0;
-
-  await mkdir(dataDir, { recursive: true });
-  for (const [name, value] of Object.entries(payload.dataFiles)) {
-    if (!isSafeDataFileName(name)) continue;
-    await writeFile(path.join(dataDir, name), `${JSON.stringify(value, null, 2)}\n`, "utf8");
-    restoredDataFiles += 1;
-  }
-
-  if (Array.isArray(payload.uploads)) {
-    for (const upload of payload.uploads) {
-      if (!upload?.path || !upload.base64 || !isSafeUploadPath(upload.path)) continue;
-      await writeUploadFile(upload.path, Buffer.from(upload.base64, "base64"));
-      restoredUploads += 1;
-    }
-  }
-
-  return {
-    fileName,
-    beforeRestoreFileName: beforeRestore.fileName,
-    restoredDataFiles,
-    restoredUploads,
-    source: payload.source || "files",
-    includesDatabaseDump: Boolean(payload.source === "database" && payload.postgresDump),
   };
 }

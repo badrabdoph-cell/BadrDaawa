@@ -4,7 +4,6 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
-import { getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -74,19 +73,7 @@ async function getInvitationAuditSnapshot(code: string) {
       .catch(() => null);
     if (invitation) return invitation;
   }
-  const fileInvitation = await getFileInvitationByCode(code).catch(() => null);
-  if (!fileInvitation) return null;
-  return {
-    code: fileInvitation.code,
-    customSlug: fileInvitation.customSlug,
-    isActive: fileInvitation.isActive,
-    groomName: fileInvitation.groomName,
-    brideName: fileInvitation.brideName,
-    weddingDate: fileInvitation.weddingDate,
-    venue: fileInvitation.venue,
-    musicEnabled: fileInvitation.musicEnabled,
-    musicUrl: fileInvitation.musicUrl,
-  };
+  return null;
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {

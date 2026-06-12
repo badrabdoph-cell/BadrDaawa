@@ -1,10 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import type { InternalNote, InternalNoteEntityType } from "./types";
 
-const notesPath = path.join(process.cwd(), "data", "internal-notes.json");
 const maxStoredNotes = 5000;
 
 type InternalNoteInput = {
@@ -56,26 +53,6 @@ function normalizeNote(value: InternalNoteInput): InternalNote | null {
   };
 }
 
-function sortNotes(notes: InternalNote[]) {
-  return [...notes].sort((first, second) => second.updatedAt.localeCompare(first.updatedAt));
-}
-
-async function readNotesRaw() {
-  try {
-    const raw = await readFile(notesPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return sortNotes(parsed.map((item) => normalizeNote(item as InternalNoteInput)).filter(Boolean) as InternalNote[]);
-  } catch {
-    return [];
-  }
-}
-
-async function writeNotes(notes: InternalNote[]) {
-  await mkdir(path.dirname(notesPath), { recursive: true });
-  await writeFile(notesPath, `${JSON.stringify(sortNotes(notes).slice(0, maxStoredNotes), null, 2)}\n`, "utf8");
-}
-
 function matchesQuery(note: InternalNote, query: string) {
   if (!query) return true;
   const haystack = [note.body, note.authorLabel, note.entityType, note.entityId, note.createdAt, note.updatedAt].join(" ").toLowerCase();
@@ -108,14 +85,12 @@ export async function getInternalNotes(filters: InternalNoteFilters = {}) {
       });
       const notes = rows.map(toInternalNote);
       const query = cleanText(filters.q, 200).toLowerCase();
-      if (notes.length) return notes.filter((note) => matchesQuery(note, query));
+      return notes.filter((note) => matchesQuery(note, query));
     } catch (error) {
       console.error("Failed to load internal notes from PostgreSQL", error);
     }
   }
-  const notes = await readNotesRaw();
-  const query = cleanText(filters.q, 200).toLowerCase();
-  return notes.filter((note) => (!filters.entityType || note.entityType === filters.entityType) && (!filters.entityId || note.entityId === filters.entityId) && matchesQuery(note, query));
+  return [];
 }
 
 export async function getInternalNotesForEntity(entityType: InternalNoteEntityType, entityId: string, q?: string) {

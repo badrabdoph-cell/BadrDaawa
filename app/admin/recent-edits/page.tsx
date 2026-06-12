@@ -1,4 +1,4 @@
-import { CloudDownload, FileClock, History, RotateCcw, ShieldAlert, ShieldCheck, Undo2 } from "lucide-react";
+import { CloudDownload, FileClock, History, ShieldAlert, Undo2 } from "lucide-react";
 import { listBackupSnapshots, type BackupSummary } from "@/lib/backups";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ function getUsefulBackups(backups: BackupSummary[]) {
 export default async function RecentEditsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ restored?: string; before?: string; error?: string; files?: string; uploads?: string; db?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const [params, backups] = await Promise.all([searchParams, listBackupSnapshots()]);
   const recentBackups = getUsefulBackups(backups);
@@ -47,21 +47,14 @@ export default async function RecentEditsPage({
         <div>
           <span className="eyebrow">Recent Edits</span>
           <h1>التعديلات الأخيرة</h1>
-          <p>آخر نقاط حفظ تلقائية من تعديلات الأدمن. تقدر ترجع لنسخة سابقة، وقبل الرجوع النظام بيحفظ نسخة حماية للحالة الحالية.</p>
+          <p>سجل backups الأخيرة للتحميل والمراجعة. الاستعادة لا تتم تلقائياً ولا من داخل التطبيق.</p>
         </div>
       </div>
-
-      {params.restored ? (
-        <div className="notice success">
-          <ShieldCheck size={18} />
-          تم الرجوع إلى <strong>{params.restored}</strong>. تم حفظ نسخة حماية قبل الرجوع: <strong>{params.before}</strong>
-        </div>
-      ) : null}
 
       {params.error ? (
         <div className="notice danger">
           <ShieldAlert size={18} />
-          {params.error === "confirm" ? "اكتب اسم ملف النسخة بالضبط قبل الاسترجاع." : "تعذر العثور على النسخة المطلوبة."}
+          الاستعادة داخل التطبيق متوقفة. الاستعادة اليدوية تتم فقط عبر PostgreSQL وبقرار صريح.
         </div>
       ) : null}
 
@@ -77,7 +70,7 @@ export default async function RecentEditsPage({
           <strong>{latestAuto ? formatEditDate(latestAuto.createdAt) : "لا يوجد"}</strong>
         </article>
         <article className="panel backup-status-card">
-          <RotateCcw size={24} />
+          <CloudDownload size={24} />
           <span>أحدث نقطة حفظ</span>
           <strong>{latestBackup ? getEditTypeLabel(latestBackup.type) : "لا يوجد"}</strong>
         </article>
@@ -85,7 +78,7 @@ export default async function RecentEditsPage({
 
       <div className="recent-edit-warning">
         <ShieldAlert size={18} />
-        <span>الاسترجاع يعيد ملفات `data/*.json` وملفات `public/uploads` من النسخة المختارة. تعديلات قاعدة البيانات تظهر داخل النسخة كمرجع، لكن الاسترجاع المباشر الآمن هنا مخصص لملفات المشروع والرفع.</span>
+        <span>GitHub والنسخ الاحتياطية ليست قاعدة بيانات. هذه الصفحة تعرض ملفات Recovery فقط، ولا يوجد أي مسار يعيد snapshot فوق PostgreSQL تلقائياً.</span>
       </div>
 
       <div className="recent-edit-list">
@@ -114,23 +107,6 @@ export default async function RecentEditsPage({
                   <CloudDownload size={17} />
                   تحميل
                 </a>
-                <details className="recent-restore-details">
-                  <summary className="btn btn-gold btn-glow">
-                    <RotateCcw size={17} />
-                    رجوع لهذه النسخة
-                  </summary>
-                  <form action="/api/admin/recent-edits/restore" method="post">
-                    <input type="hidden" name="fileName" value={backup.fileName} />
-                    <label className="field">
-                      <span>اكتب اسم الملف للتأكيد</span>
-                      <input name="confirmFileName" placeholder={backup.fileName} autoComplete="off" />
-                    </label>
-                    <button className="btn btn-gold btn-glow" type="submit">
-                      <RotateCcw size={17} />
-                      تأكيد الرجوع
-                    </button>
-                  </form>
-                </details>
               </div>
             </article>
           ))

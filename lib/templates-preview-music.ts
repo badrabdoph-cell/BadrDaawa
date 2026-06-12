@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { getMusicLibrary, getMusicSlotByIdOrUrl, type MusicLibrary, type MusicSlot } from "./music-library";
 
 export type TemplatesPreviewMusicSettings = {
@@ -16,6 +17,7 @@ export type ResolvedTemplatesPreviewMusic = {
 };
 
 const settingsPath = path.join(process.cwd(), "data", "templates-preview-music.json");
+const settingsKey = "templates-preview-music";
 
 const defaultSettings: TemplatesPreviewMusicSettings = {
   enabled: false,
@@ -42,13 +44,12 @@ async function readSettingsFile() {
 }
 
 async function writeSettings(settings: TemplatesPreviewMusicSettings) {
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+  await writeAppSetting(settingsKey, settings);
 }
 
 export async function getTemplatesPreviewMusicSettings() {
   noStore();
-  return readSettingsFile();
+  return readAppSettingOrSeed(settingsKey, readSettingsFile);
 }
 
 export async function updateTemplatesPreviewMusicSettings(input: { enabled: boolean; trackId?: string }) {
@@ -62,7 +63,7 @@ export async function updateTemplatesPreviewMusicSettings(input: { enabled: bool
 }
 
 export async function clearTemplatesPreviewMusicIfTrackDeleted(trackId: string) {
-  const settings = await readSettingsFile();
+  const settings = await getTemplatesPreviewMusicSettings();
   if (settings.trackId !== trackId) return false;
   await writeSettings({ enabled: false, trackId: "", updatedAt: new Date().toISOString() });
   return true;
@@ -70,7 +71,7 @@ export async function clearTemplatesPreviewMusicIfTrackDeleted(trackId: string) 
 
 export async function resolveTemplatesPreviewMusic(library?: MusicLibrary): Promise<ResolvedTemplatesPreviewMusic> {
   noStore();
-  const [settings, resolvedLibrary] = await Promise.all([readSettingsFile(), library ? Promise.resolve(library) : getMusicLibrary()]);
+  const [settings, resolvedLibrary] = await Promise.all([getTemplatesPreviewMusicSettings(), library ? Promise.resolve(library) : getMusicLibrary()]);
   const track = settings.enabled ? getMusicSlotByIdOrUrl(resolvedLibrary, settings.trackId) : undefined;
   return {
     settings,

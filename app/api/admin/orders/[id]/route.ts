@@ -529,8 +529,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
 async function getSnapshot(id: string, request: NextRequest) {
   const dbOrder = prisma ? await serializePrismaOrder(id, request).catch(() => null) : null;
   if (dbOrder) return dbOrder;
-  const fileOrder = await getFileOrder(id);
-  return fileOrder ? serializeFileOrder(fileOrder, request) : null;
+  return null;
 }
 
 function payloadFromForm(formData: FormData): AdminOrderPayload {

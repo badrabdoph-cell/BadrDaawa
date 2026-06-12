@@ -1,6 +1,4 @@
-import { getGuestsByInvitation as getDemoGuestsByInvitation, getInvitationByCode as getDemoInvitationByCode } from "./demo-data";
 import { prisma } from "./db";
-import { getFileGuestsByInvitation, getFileInvitationByCode } from "./file-store";
 import { isBrowserDisplayImageUrl } from "./image-formats";
 import { archiveExpiredInvitations } from "./invitation-archiving";
 import { cleanInvitationHeroVideoUrl } from "./invitation-media";
@@ -126,9 +124,7 @@ function toGuestRsvp(guest: DatabaseGuest): GuestRsvp {
 
 export async function getInvitationByCode(code: string): Promise<Invitation | undefined> {
   await archiveExpiredInvitations(code);
-  if (!prisma) {
-    return (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
-  }
+  if (!prisma) return undefined;
 
   try {
     const invitation = await prisma.invitation.findFirst({
@@ -139,18 +135,15 @@ export async function getInvitationByCode(code: string): Promise<Invitation | un
       include: { template: { select: { slug: true } } },
     });
 
-    return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
+    return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : undefined;
   } catch (error) {
     console.error("Failed to load invitation", error);
-    return (await getFileInvitationByCode(code)) || getDemoInvitationByCode(code);
+    return undefined;
   }
 }
 
 export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> {
-  if (!prisma) {
-    const fileGuests = await getFileGuestsByInvitation(code);
-    return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
-  }
+  if (!prisma) return [];
 
   try {
     const guests = await prisma.guestRsvp.findMany({
@@ -159,13 +152,10 @@ export async function getGuestsByInvitation(code: string): Promise<GuestRsvp[]> 
       orderBy: { createdAt: "desc" },
     });
 
-    if (guests.length) return guests.map((guest: any) => toGuestRsvp(guest as DatabaseGuest));
-    const fileGuests = await getFileGuestsByInvitation(code);
-    return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
+    return guests.map((guest: any) => toGuestRsvp(guest as DatabaseGuest));
   } catch (error) {
     console.error("Failed to load invitation guests", error);
-    const fileGuests = await getFileGuestsByInvitation(code);
-    return fileGuests.length ? fileGuests : getDemoGuestsByInvitation(code);
+    return [];
   }
 }
 

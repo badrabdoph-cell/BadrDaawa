@@ -4,7 +4,6 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveAudioDataUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
-import { getFileInvitationByCode } from "@/lib/file-store";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
@@ -63,7 +62,7 @@ async function getCurrentMusicUrl(code: string) {
     const existing = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { musicUrl: true } }).catch(() => null);
     if (existing?.musicUrl) return existing.musicUrl;
   }
-  return (await getFileInvitationByCode(code))?.musicUrl || "";
+  return "";
 }
 
 async function getClientInvitationAuditSnapshot(code: string) {
@@ -92,26 +91,7 @@ async function getClientInvitationAuditSnapshot(code: string) {
       .catch(() => null);
     if (invitation) return invitation;
   }
-  const fileInvitation = await getFileInvitationByCode(code).catch(() => null);
-  if (!fileInvitation) return null;
-  return {
-    code: fileInvitation.code,
-    isActive: fileInvitation.isActive,
-    groomName: fileInvitation.groomName,
-    brideName: fileInvitation.brideName,
-    weddingDate: fileInvitation.weddingDate,
-    weddingTime: fileInvitation.weddingTime,
-    venue: fileInvitation.venue,
-    city: fileInvitation.city,
-    mapUrl: fileInvitation.mapUrl,
-    gallery: fileInvitation.gallery,
-    heroPhoto: fileInvitation.heroPhoto,
-    heroVideoUrl: fileInvitation.heroVideoUrl,
-    musicEnabled: fileInvitation.musicEnabled,
-    musicUrl: fileInvitation.musicUrl,
-    texts: fileInvitation.texts,
-    photographer: fileInvitation.photographer,
-  };
+  return null;
 }
 
 async function resolveJsonMusic(code: string, payload: ClientInvitationPayload) {

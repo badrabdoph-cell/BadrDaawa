@@ -1,10 +1,6 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type { Metadata } from "next";
 import { unstable_noStore as noStore } from "next/cache";
-import { writeJsonFileAtomic } from "./atomic-file";
 import { prisma } from "./db";
-import { getFileInvitations } from "./file-store";
 import { normalizeCustomInvitationSlug } from "./slug";
 import { getMetadataBaseUrl, getSiteUrl } from "./utils";
 
@@ -29,17 +25,12 @@ export type DynamicPageInput = {
   isPublished?: unknown;
 };
 
-type DynamicPagesStore = {
-  pages: DynamicPage[];
-};
-
 type DynamicPageRow = Omit<Partial<DynamicPage>, "coverImageUrl" | "createdAt" | "updatedAt"> & {
   coverImageUrl?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 };
 
-const storePath = path.join(process.cwd(), "data", "dynamic-pages.json");
 const reservedDynamicPageSlugs = new Set([
   "admin",
   "api",
@@ -96,21 +87,6 @@ function normalizePage(row: DynamicPageRow): DynamicPage {
   };
 }
 
-async function readStore(): Promise<DynamicPagesStore> {
-  noStore();
-  try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<DynamicPagesStore>;
-    return { pages: Array.isArray(parsed.pages) ? parsed.pages.map(normalizePage).filter((page) => page.slug) : [] };
-  } catch {
-    return { pages: [] };
-  }
-}
-
-async function writeStore(store: DynamicPagesStore) {
-  await writeJsonFileAtomic(storePath, store);
-}
-
 export function normalizeDynamicPageSlug(value: unknown) {
   return normalizeCustomInvitationSlug(typeof value === "string" ? value : "");
 }
@@ -135,13 +111,6 @@ export async function validateDynamicPageSlug(slugValue: unknown, currentId = ""
     if (page && page.id !== current) return { slug, error: "يوجد صفحة أخرى بنفس الرابط." };
     if (invitation) return { slug, error: "هذا الرابط مستخدم في دعوة حالية." };
   }
-
-  const [store, fileInvitations] = await Promise.all([readStore(), getFileInvitations().catch(() => [])]);
-  if (store.pages.some((page) => page.slug === slug && page.id !== current)) return { slug, error: "يوجد صفحة أخرى بنفس الرابط." };
-  if (fileInvitations.some((invitation) => invitation.code.toLowerCase() === slug || invitation.customSlug?.toLowerCase() === slug)) {
-    return { slug, error: "هذا الرابط مستخدم في دعوة حالية." };
-  }
-
   return { slug, error: "" };
 }
 
@@ -155,7 +124,7 @@ export async function getDynamicPages() {
       console.error("Failed to load dynamic pages from database", error);
     }
   }
-  return (await readStore()).pages.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  return [];
 }
 
 export async function getDynamicPageBySlug(slugValue: string, options: { includeHidden?: boolean } = {}) {
@@ -171,8 +140,7 @@ export async function getDynamicPageBySlug(slugValue: string, options: { include
       console.error("Failed to load dynamic page from database", error);
     }
   }
-  const page = (await readStore()).pages.find((item) => item.slug === slug);
-  return page && (options.includeHidden || page.isPublished) ? page : null;
+  return null;
 }
 
 export async function upsertDynamicPage(input: DynamicPageInput & { id?: unknown }) {
@@ -227,15 +195,7 @@ export async function upsertDynamicPage(input: DynamicPageInput & { id?: unknown
     }
   }
 
-  const store = await readStore();
-  const existingIndex = id ? store.pages.findIndex((item) => item.id === id) : -1;
-  if (existingIndex >= 0) {
-    store.pages[existingIndex] = { ...page, id, createdAt: store.pages[existingIndex].createdAt, updatedAt: now };
-  } else {
-    store.pages.unshift(page);
-  }
-  await writeStore(store);
-  return { page: existingIndex >= 0 ? store.pages[existingIndex] : page, error: "" };
+  return { page: null, error: "PostgreSQL غير متاح، ولا يسمح بالحفظ في JSON." };
 }
 
 export async function setDynamicPagePublished(id: string, isPublished: boolean) {
@@ -247,12 +207,7 @@ export async function setDynamicPagePublished(id: string, isPublished: boolean) 
       console.error("Failed to toggle dynamic page", error);
     }
   }
-  const store = await readStore();
-  const index = store.pages.findIndex((page) => page.id === id);
-  if (index < 0) return null;
-  store.pages[index] = { ...store.pages[index], isPublished, updatedAt: new Date().toISOString() };
-  await writeStore(store);
-  return store.pages[index];
+  return null;
 }
 
 export async function deleteDynamicPage(id: string) {
@@ -264,11 +219,7 @@ export async function deleteDynamicPage(id: string) {
       console.error("Failed to delete dynamic page", error);
     }
   }
-  const store = await readStore();
-  const page = store.pages.find((item) => item.id === id) || null;
-  store.pages = store.pages.filter((item) => item.id !== id);
-  await writeStore(store);
-  return page;
+  return null;
 }
 
 export function getDynamicPageMetadata(page: DynamicPage): Metadata {

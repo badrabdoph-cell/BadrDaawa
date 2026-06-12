@@ -1,17 +1,5 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { unstable_noStore as noStore } from "next/cache";
-import { writeJsonFileAtomic } from "./atomic-file";
 import { prisma } from "./db";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "./types";
-
-type GuestBookStore = {
-  messages: GuestBookMessage[];
-};
-
-type CoupleMessagesSettingsStore = {
-  settings: CoupleMessagesSettings[];
-};
 
 export type GuestBookAction = "approve" | "reject" | "delete";
 export type CoupleMessagesAdminAction = GuestBookAction | "edit" | "settings";
@@ -23,8 +11,6 @@ export class GuestBookStorageError extends Error {
   }
 }
 
-const storePath = path.join(process.cwd(), "data", "guest-book.json");
-const settingsPath = path.join(process.cwd(), "data", "couple-messages-settings.json");
 const maxNameLength = 80;
 const maxMessageLength = 600;
 const fallbackGuestName = "ضيف عزيز";
@@ -39,86 +25,12 @@ function cleanText(value: unknown, limit: number) {
     .slice(0, limit);
 }
 
-function createEmptyStore(): GuestBookStore {
-  return { messages: [] };
-}
-
 function normalizeStatus(value: unknown): GuestBookStatus {
   return value === "approved" || value === "rejected" || value === "pending" ? value : "pending";
 }
 
 function normalizeMode(value: unknown): GuestBookMode {
   return value === "disabled" || value === "auto" || value === "moderated" ? value : defaultMessagesMode;
-}
-
-function normalizeMessage(value: unknown): GuestBookMessage | null {
-  if (!value || typeof value !== "object") return null;
-  const raw = value as Partial<GuestBookMessage>;
-  const id = cleanText(raw.id, 120);
-  const invitationCode = cleanText(raw.invitationCode, 160);
-  const name = cleanText(raw.name, maxNameLength) || fallbackGuestName;
-  const message = cleanText(raw.message, maxMessageLength);
-  const createdAt = cleanText(raw.createdAt, 80);
-  if (!id || !invitationCode || !message || !createdAt) return null;
-  return {
-    id,
-    invitationCode,
-    name,
-    message,
-    status: normalizeStatus(raw.status),
-    createdAt,
-    ...(raw.reviewedAt ? { reviewedAt: cleanText(raw.reviewedAt, 80) } : {}),
-  };
-}
-
-function normalizeSetting(value: unknown): CoupleMessagesSettings | null {
-  if (!value || typeof value !== "object") return null;
-  const raw = value as Partial<CoupleMessagesSettings>;
-  const invitationCode = cleanText(raw.invitationCode, 160);
-  if (!invitationCode) return null;
-  return {
-    invitationCode,
-    mode: normalizeMode(raw.mode),
-    ...(raw.updatedAt ? { updatedAt: cleanText(raw.updatedAt, 80) } : {}),
-  };
-}
-
-async function readStore(): Promise<GuestBookStore> {
-  noStore();
-  try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<GuestBookStore>;
-    return {
-      messages: Array.isArray(parsed.messages) ? parsed.messages.map(normalizeMessage).filter((message): message is GuestBookMessage => Boolean(message)) : [],
-    };
-  } catch {
-    return createEmptyStore();
-  }
-}
-
-async function writeStore(store: GuestBookStore) {
-  await writeJsonFileAtomic(storePath, store);
-}
-
-function createEmptySettingsStore(): CoupleMessagesSettingsStore {
-  return { settings: [] };
-}
-
-async function readSettingsStore(): Promise<CoupleMessagesSettingsStore> {
-  noStore();
-  try {
-    const raw = await readFile(settingsPath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<CoupleMessagesSettingsStore>;
-    return {
-      settings: Array.isArray(parsed.settings) ? parsed.settings.map(normalizeSetting).filter((setting): setting is CoupleMessagesSettings => Boolean(setting)) : [],
-    };
-  } catch {
-    return createEmptySettingsStore();
-  }
-}
-
-async function writeSettingsStore(store: CoupleMessagesSettingsStore) {
-  await writeJsonFileAtomic(settingsPath, store);
 }
 
 function createId() {
@@ -149,13 +61,12 @@ export async function getAllGuestBookMessages() {
   if (prisma) {
     try {
       const messages = await prisma.guestBookMessage.findMany({ orderBy: { createdAt: "desc" } });
-      if (messages.length) return messages.map(toGuestBookMessage);
+      return messages.map(toGuestBookMessage);
     } catch (error) {
       console.error("Failed to load guest book messages from PostgreSQL", error);
     }
   }
-  const store = await readStore();
-  return store.messages.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return [];
 }
 
 export async function getGuestBookMessages(invitationCode: string, status: GuestBookStatus | "all" = "all") {
@@ -182,22 +93,19 @@ export async function getCoupleMessagesSettings(invitationCode: string): Promise
       console.error("Failed to load couple messages settings from PostgreSQL", error);
     }
   }
-  const store = await readSettingsStore();
-  const saved = store.settings.find((setting) => setting.invitationCode.toLowerCase() === cleanCode.toLowerCase());
-  return saved || { invitationCode: cleanCode, mode: defaultMessagesMode };
+  return { invitationCode: cleanCode, mode: defaultMessagesMode };
 }
 
 export async function getAllCoupleMessagesSettings() {
   if (prisma) {
     try {
       const settings = await prisma.coupleMessagesSetting.findMany({ orderBy: { updatedAt: "desc" } });
-      if (settings.length) return settings.map((setting) => ({ invitationCode: setting.invitationCode, mode: normalizeMode(setting.mode), updatedAt: setting.updatedAt.toISOString() }));
+      return settings.map((setting) => ({ invitationCode: setting.invitationCode, mode: normalizeMode(setting.mode), updatedAt: setting.updatedAt.toISOString() }));
     } catch (error) {
       console.error("Failed to load all couple messages settings from PostgreSQL", error);
     }
   }
-  const store = await readSettingsStore();
-  return store.settings;
+  return [];
 }
 
 export async function updateCoupleMessagesSettings(invitationCode: unknown, mode: unknown) {
