@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const deleted = await deleteContentPreset(id);
     if (!deleted) return redirectPresets(request, { error: "id" });
     revalidatePresetConsumers();
-    queueGitHubSync(`Content preset deleted: ${id}.`, { createSnapshot: true });
+    queueGitHubSync(`Content preset deleted: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectPresets(request, { saved: "deleted" });
   }
 
@@ -57,13 +57,13 @@ export async function POST(request: NextRequest) {
     const updated = await updateContentPreset(id, input);
     if (!updated) return redirectPresets(request, { error: "id" });
     revalidatePresetConsumers();
-    queueGitHubSync(`Content preset updated: ${updated.id}.`, { createSnapshot: true });
+    queueGitHubSync(`Content preset updated: ${updated.id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectPresets(request, { saved: "updated" });
   }
 
   const created = await createContentPreset(input);
   if (!created) return redirectPresets(request, { error: "required" });
   revalidatePresetConsumers();
-  queueGitHubSync(`Content preset created: ${created.id}.`, { createSnapshot: true });
+  queueGitHubSync(`Content preset created: ${created.id}.`, { uploadProjectFiles: true, changeType: "project" });
   return redirectPresets(request, { saved: "created" });
 }

@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/");
   revalidatePath("/admin/preview");
-  queueGitHubSync("Homepage preview settings updated from admin.", { createSnapshot: true });
+  queueGitHubSync("Homepage preview settings updated from admin.", { uploadProjectFiles: true, changeType: "project" });
 
   return NextResponse.redirect(getRedirectUrl("/admin/preview?saved=1", request.headers, request.nextUrl.origin), 303);
 }

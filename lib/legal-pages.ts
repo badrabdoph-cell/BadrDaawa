@@ -1,7 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
+import { writeJsonFileAtomic } from "./atomic-file";
 
 export type LegalPageSlug = "privacy-policy" | "terms" | "refund-policy" | "usage-policy";
 
@@ -23,7 +23,6 @@ type LegalPageInput = {
 export const legalPageSlugs: LegalPageSlug[] = ["privacy-policy", "terms", "refund-policy", "usage-policy"];
 
 const legalPagesPath = path.join(process.cwd(), "data", "legal-pages.json");
-const legalPagesKey = "legal-pages";
 
 const defaultLegalPages: Record<LegalPageSlug, LegalPageContent> = {
   "privacy-policy": {
@@ -88,12 +87,12 @@ async function readLegalPagesFile() {
 }
 
 async function writeLegalPages(pages: Record<LegalPageSlug, LegalPageContent>) {
-  await writeAppSetting(legalPagesKey, pages);
+  await writeJsonFileAtomic(legalPagesPath, pages);
 }
 
 export async function getLegalPages() {
   noStore();
-  return readAppSettingOrSeed(legalPagesKey, readLegalPagesFile);
+  return readLegalPagesFile();
 }
 
 export async function getLegalPage(slug: LegalPageSlug) {

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { DashboardShell } from "@/components/DashboardShell";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { startInternalTaskScheduler } from "@/lib/task-scheduler";
 
 export const metadata: Metadata = {
   title: "لوحة الإدارة",
@@ -15,8 +14,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!(await verifyAdminSessionCookie(session))) {
     return <div className="admin-dark-shell">{children}</div>;
   }
-
-  startInternalTaskScheduler();
 
   return (
     <div className="admin-dark-shell">

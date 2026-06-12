@@ -68,26 +68,28 @@ export function queueGitHubSync(
   options: {
     createSnapshot?: boolean;
     uploadExistingBackup?: boolean;
+    uploadProjectFiles?: boolean;
     changeType?: string;
     affectedResource?: string;
   } = {},
 ) {
   const shouldCreateSnapshot = false;
   const shouldUploadExistingBackup = Boolean(options.uploadExistingBackup);
+  const shouldUploadProjectFiles = Boolean(options.uploadProjectFiles);
 
-  if (!shouldCreateSnapshot && !shouldUploadExistingBackup) {
+  if (!shouldCreateSnapshot && !shouldUploadExistingBackup && !shouldUploadProjectFiles) {
     console.log(`[GitHub Backup Queue] Ignoring non-backup sync request. PostgreSQL is the live source of truth: ${reason}`);
     return "";
   }
 
   const item: SyncQueueItem = {
     id: `sync-${++syncJobCounter}-${Date.now()}`,
-    reason: shouldCreateSnapshot ? `Backup snapshot: ${reason}` : `Backup upload: ${reason}`,
+    reason: shouldUploadProjectFiles ? `Project files upload: ${reason}` : shouldCreateSnapshot ? `Backup snapshot: ${reason}` : `Backup upload: ${reason}`,
     createSnapshot: shouldCreateSnapshot,
     timestamp: Date.now(),
     status: "pending",
     retryCount: 0,
-    changeType: options.changeType || "backup",
+    changeType: options.changeType || (shouldUploadProjectFiles ? "project" : "backup"),
     affectedResource: options.affectedResource,
   };
 
@@ -156,6 +158,7 @@ async function processSyncQueue() {
       try {
         const result = await syncAdminStateToGitHub(item.reason, {
           createSnapshot: item.createSnapshot,
+          uploadProjectFiles: item.changeType === "project",
           logId: item.logId ?? undefined,
           retryCount: item.retryCount,
         });

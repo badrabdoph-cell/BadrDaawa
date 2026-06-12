@@ -3,6 +3,7 @@ import { queueGitHubSync } from "./github-sync-queue";
 export type SyncTriggerOptions = {
   reason: string;
   createSnapshot?: boolean;
+  uploadProjectFiles?: boolean;
   changeType?: string;
   affectedResource?: string;
 };
@@ -19,6 +20,7 @@ export async function withAutoSync<T>(
   try {
     queueGitHubSync(syncOptions.reason, {
       createSnapshot: syncOptions.createSnapshot ?? true,
+      uploadProjectFiles: syncOptions.uploadProjectFiles,
       changeType: syncOptions.changeType,
       affectedResource: syncOptions.affectedResource,
     });

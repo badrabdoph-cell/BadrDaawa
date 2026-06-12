@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getTaskExecutionLog, listScheduledTasks, runScheduledTask, setScheduledTaskAutomatic, setScheduledTaskInterval, startInternalTaskScheduler } from "@/lib/task-scheduler";
+import { getTaskExecutionLog, listScheduledTasks, runScheduledTask, setScheduledTaskAutomatic, setScheduledTaskInterval } from "@/lib/task-scheduler";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -29,8 +29,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  startInternalTaskScheduler();
-  const [tasks, runs] = await Promise.all([listScheduledTasks({ runDue: true }), getTaskExecutionLog(50)]);
+  const [tasks, runs] = await Promise.all([listScheduledTasks(), getTaskExecutionLog(50)]);
   return NextResponse.json({ tasks, runs });
 }
 
@@ -38,8 +37,6 @@ export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return wantsJson(request) ? NextResponse.json({ error: "Unauthorized" }, { status: 401 }) : NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
-
-  startInternalTaskScheduler();
 
   const contentType = request.headers.get("content-type") || "";
   const body = contentType.includes("application/json")

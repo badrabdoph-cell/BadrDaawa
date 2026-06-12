@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/templates");
     revalidatePath("/order");
     revalidatePath(`/templates/${result.template.slug}/preview`);
-    queueGitHubSync(`Custom template imported: ${result.template.slug}.`, { createSnapshot: true });
+    queueGitHubSync(`Custom template imported: .`, { uploadProjectFiles: true, changeType: "project" });
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
       action: "template.change",

@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { cleanPlayableAudioUrl } from "./audio-files";
 import { getActiveMusicSlot, getMusicLibrary } from "./music-library";
 import { getTemplateBySlug, invitationTemplates } from "./templates";
@@ -34,7 +33,6 @@ type TemplateSettings = Record<
 >;
 
 const settingsPath = path.join(process.cwd(), "data", "template-settings.json");
-const settingsKey = "template-settings";
 
 function cleanUrl(value: string) {
   const trimmed = value.trim();
@@ -70,19 +68,18 @@ async function getGlobalMusicOverride() {
 async function readTemplateSettings(): Promise<TemplateSettings> {
   noStore();
 
-  return readAppSettingOrSeed(settingsKey, async () => {
-    try {
+  try {
     const raw = await readFile(settingsPath, "utf8");
     const parsed = JSON.parse(raw) as unknown;
     return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as TemplateSettings) : {};
-    } catch {
+  } catch {
     return {};
-    }
-  });
+  }
 }
 
 async function writeTemplateSettings(settings: TemplateSettings) {
-  await writeAppSetting(settingsKey, settings);
+  await mkdir(path.dirname(settingsPath), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
 }
 
 function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings, globalMusicUrl?: string): TemplateDefinition {

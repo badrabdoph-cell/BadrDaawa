@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
 
     ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
-    queueGitHubSync("Site settings updated from admin.", { createSnapshot: true });
+    queueGitHubSync("Site settings updated from admin.", { uploadProjectFiles: true, changeType: "project" });
 
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);
   } catch (error) {

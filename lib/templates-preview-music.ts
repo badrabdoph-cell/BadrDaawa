@@ -1,7 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { getMusicLibrary, getMusicSlotByIdOrUrl, type MusicLibrary, type MusicSlot } from "./music-library";
 
 export type TemplatesPreviewMusicSettings = {
@@ -17,7 +16,6 @@ export type ResolvedTemplatesPreviewMusic = {
 };
 
 const settingsPath = path.join(process.cwd(), "data", "templates-preview-music.json");
-const settingsKey = "templates-preview-music";
 
 const defaultSettings: TemplatesPreviewMusicSettings = {
   enabled: false,
@@ -44,12 +42,13 @@ async function readSettingsFile() {
 }
 
 async function writeSettings(settings: TemplatesPreviewMusicSettings) {
-  await writeAppSetting(settingsKey, settings);
+  await mkdir(path.dirname(settingsPath), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
 }
 
 export async function getTemplatesPreviewMusicSettings() {
   noStore();
-  return readAppSettingOrSeed(settingsKey, readSettingsFile);
+  return readSettingsFile();
 }
 
 export async function updateTemplatesPreviewMusicSettings(input: { enabled: boolean; trackId?: string }) {

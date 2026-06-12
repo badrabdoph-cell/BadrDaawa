@@ -37,6 +37,6 @@ export async function POST(request: NextRequest) {
     content: formData.get("content"),
   });
   revalidateLegalPages();
-  queueGitHubSync(`Legal page updated: ${page.slug}.`, { createSnapshot: true });
+  queueGitHubSync(`Legal page updated: .`, { uploadProjectFiles: true, changeType: "project" });
   return NextResponse.redirect(getRedirectUrl(`/admin/legal?saved=${page.slug}`, request.headers, request.nextUrl.origin), 303);
 }

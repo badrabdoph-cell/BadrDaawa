@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { cleanNewDirectAudioUrl, cleanPlayableAudioUrl, isUploadedMusicUrl } from "./audio-files";
 import { statUploadFile } from "./storage-provider";
 import type { Invitation } from "./types";
@@ -36,7 +35,6 @@ export type ResolvedInvitationMusic = {
 };
 
 const libraryPath = path.join(process.cwd(), "data", "music-library.json");
-const libraryKey = "music-library";
 const defaultSlotId = "global-track";
 
 const defaultMusicSlot: MusicSlot = {
@@ -187,12 +185,13 @@ async function enrichMusicSlot(slot: MusicSlot): Promise<MusicSlot> {
 }
 
 async function writeMusicLibrary(library: MusicLibrary) {
-  await writeAppSetting(libraryKey, normalizeMusicLibrary(library));
+  await mkdir(path.dirname(libraryPath), { recursive: true });
+  await writeFile(libraryPath, `${JSON.stringify(normalizeMusicLibrary(library), null, 2)}\n`, "utf8");
 }
 
 export async function getMusicLibrary() {
   noStore();
-  const normalized = normalizeMusicLibrary(await readAppSettingOrSeed(libraryKey, readMusicLibraryFile));
+  const normalized = normalizeMusicLibrary(await readMusicLibraryFile());
   return { slots: await Promise.all(normalized.slots.map(enrichMusicSlot)) };
 }
 

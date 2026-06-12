@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const deleted = await deleteMessageTemplate(id);
     if (!deleted) return redirectTemplates(request, { error: "id" });
     revalidateConsumers();
-    queueGitHubSync(`Message template deleted: ${id}.`, { createSnapshot: true });
+    queueGitHubSync(`Message template deleted: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectTemplates(request, { saved: "deleted" });
   }
 
@@ -56,13 +56,13 @@ export async function POST(request: NextRequest) {
     const updated = await updateMessageTemplate(id, input);
     if (!updated) return redirectTemplates(request, { error: "id" });
     revalidateConsumers();
-    queueGitHubSync(`Message template updated: ${updated.id}.`, { createSnapshot: true });
+    queueGitHubSync(`Message template updated: ${updated.id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectTemplates(request, { saved: "updated" });
   }
 
   const created = await createMessageTemplate(input);
   if (!created) return redirectTemplates(request, { error: "required" });
   revalidateConsumers();
-  queueGitHubSync(`Message template created: ${created.id}.`, { createSnapshot: true });
+  queueGitHubSync(`Message template created: ${created.id}.`, { uploadProjectFiles: true, changeType: "project" });
   return redirectTemplates(request, { saved: "created" });
 }

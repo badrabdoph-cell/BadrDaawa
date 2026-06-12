@@ -1,5 +1,5 @@
 import { Activity, CalendarClock, CheckCircle2, Clock3, DatabaseBackup, History, Play, ShieldCheck, ToggleLeft, ToggleRight, TriangleAlert } from "lucide-react";
-import { getTaskExecutionLog, listScheduledTasks, startInternalTaskScheduler, type ScheduledTaskRun, type ScheduledTaskStatus, type ScheduledTaskView } from "@/lib/task-scheduler";
+import { getTaskExecutionLog, listScheduledTasks, type ScheduledTaskRun, type ScheduledTaskStatus, type ScheduledTaskView } from "@/lib/task-scheduler";
 import { formatArabicNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -125,8 +125,7 @@ function RunRow({ run, tasks }: { run: ScheduledTaskRun; tasks: ScheduledTaskVie
 }
 
 export default async function AdminTasksPage({ searchParams }: { searchParams: Promise<TasksPageParams> }) {
-  startInternalTaskScheduler();
-  const [params, tasks, runs] = await Promise.all([searchParams, listScheduledTasks({ runDue: true }), getTaskExecutionLog(80)]);
+  const [params, tasks, runs] = await Promise.all([searchParams, listScheduledTasks(), getTaskExecutionLog(80)]);
   const selectedTask = taskById(tasks, params.task);
   const automaticEnabled = tasks.filter((task) => task.automaticEnabled).length;
   const successfulRuns = runs.filter((run) => run.status === "success").length;

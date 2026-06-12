@@ -97,6 +97,19 @@ export type SyncLogEntry = {
 const syncRoots = [
   { absolutePath: runtimeBackupDir, repoPath: (process.env.GITHUB_BACKUP_REPO_PATH || "backups").replace(/^\/+|\/+$/g, "") || "backups" },
 ];
+const projectSyncFiles = [
+  "data/site-settings.json",
+  "data/home-content.json",
+  "data/home-preview-settings.json",
+  "data/template-settings.json",
+  "data/template-preview-info.json",
+  "data/templates-preview-music.json",
+  "data/music-library.json",
+  "data/legal-pages.json",
+  "data/message-templates.json",
+  "data/content-presets.json",
+  "data/custom-templates.json",
+];
 const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
 const maxSyncFileBytes = (Number(process.env.BACKUP_GITHUB_MAX_FILE_MB || process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
 const maxSyncTotalBytes = (Number(process.env.BACKUP_GITHUB_MAX_TOTAL_MB || process.env.GITHUB_SYNC_MAX_TOTAL_MB) || 180) * 1024 * 1024;
@@ -321,6 +334,18 @@ async function collectSyncFiles() {
     break;
   }
   return selected;
+}
+
+async function collectProjectSyncFiles() {
+  const root = process.cwd();
+  const files: SyncFile[] = [];
+  for (const repoPath of projectSyncFiles) {
+    const absolutePath = path.join(root, repoPath);
+    const fileStat = await stat(absolutePath).catch(() => null);
+    if (!fileStat?.isFile() || !fileStat.size || fileStat.size > maxSyncFileBytes) continue;
+    files.push({ absolutePath, repoPath, size: fileStat.size });
+  }
+  return files;
 }
 
 async function isValidDatabaseBackupFile(file: SyncFile) {
@@ -591,7 +616,7 @@ async function markBackupJobsUploaded(files: SyncFile[], commitSha: string | und
 
 // ─── Core sync function ───────────────────────────────────────────────────────
 
-async function attemptSync(reason: string): Promise<GitHubSyncResult & { startedAt: number }> {
+async function attemptSync(reason: string, options: { uploadProjectFiles?: boolean } = {}): Promise<GitHubSyncResult & { startedAt: number }> {
   const startedAt = Date.now();
   const config = getSyncConfig();
 
@@ -604,7 +629,7 @@ async function attemptSync(reason: string): Promise<GitHubSyncResult & { started
     };
   }
 
-  const files = await collectSyncFiles();
+  const files = options.uploadProjectFiles ? await collectProjectSyncFiles() : await collectSyncFiles();
   if (!files.length) {
     return {
       startedAt,
@@ -631,8 +656,8 @@ async function attemptSync(reason: string): Promise<GitHubSyncResult & { started
       duration: Date.now() - startedAt,
     };
   }
-  const remoteBackupFiles = await listRemoteBackupFiles(owner, repo, config.branch, config.token, headCommit.tree.sha);
-  const deleteItems = buildRetentionDeletes(remoteBackupFiles, new Set(treeItems.map((item) => item.path)));
+  const remoteBackupFiles = options.uploadProjectFiles ? [] : await listRemoteBackupFiles(owner, repo, config.branch, config.token, headCommit.tree.sha);
+  const deleteItems = options.uploadProjectFiles ? [] : buildRetentionDeletes(remoteBackupFiles, new Set(treeItems.map((item) => item.path)));
   if (deleteItems.length) {
     console.log(`[GitHub Backup] Old Backups Deleted: ${deleteItems.length}`);
   }
@@ -689,7 +714,7 @@ async function attemptSync(reason: string): Promise<GitHubSyncResult & { started
   return {
     startedAt,
     status: "synced",
-    message: `Database backup uploaded to GitHub. Retention keeps the latest ${backupRetentionCount} backup(s).`,
+    message: options.uploadProjectFiles ? "Project configuration files uploaded to GitHub." : `Database backup uploaded to GitHub. Retention keeps the latest ${backupRetentionCount} backup(s).`,
     commitUrl: commit.html_url,
     commitSha: commit.sha,
     files: treeItems.length + deleteItems.length,
@@ -699,7 +724,7 @@ async function attemptSync(reason: string): Promise<GitHubSyncResult & { started
 
 export async function syncAdminStateToGitHub(
   reason: string,
-  options: { createSnapshot?: boolean; logId?: string; retryCount?: number } = {},
+  options: { createSnapshot?: boolean; uploadProjectFiles?: boolean; logId?: string; retryCount?: number } = {},
 ): Promise<GitHubSyncResult> {
   const logId = options.logId ?? (await createSyncLog({ reason, status: "processing", retryCount: options.retryCount ?? 0 }));
   const ts = () => new Date().toISOString();
@@ -710,7 +735,7 @@ export async function syncAdminStateToGitHub(
     if (options.createSnapshot) {
       console.log("[GitHub Sync] createSnapshot ignored. Backups are created only by manual or scheduled backup jobs.");
     }
-    const result = await attemptSync(reason);
+    const result = await attemptSync(reason, { uploadProjectFiles: options.uploadProjectFiles });
     const duration = result.duration ?? 0;
 
     const dbStatus = result.status === "synced" || result.status === "unchanged" ? "completed" : result.status;

@@ -1,12 +1,10 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { defaultTemplateMusicUrl, getTemplateBySlug, invitationTemplates } from "./templates";
 import type { TemplateDefinition } from "./types";
 
 const customTemplatesPath = path.join(process.cwd(), "data", "custom-templates.json");
-const customTemplatesKey = "custom-templates";
 
 type StoredCustomTemplate = {
   id: string;
@@ -52,20 +50,19 @@ function cleanHtml(value: string) {
 async function readStoredCustomTemplates(): Promise<StoredCustomTemplate[]> {
   noStore();
 
-  return readAppSettingOrSeed(customTemplatesKey, async () => {
-    try {
+  try {
     const raw = await readFile(customTemplatesPath, "utf8");
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((item): item is StoredCustomTemplate => Boolean(item && typeof item === "object" && "slug" in item && "html" in item));
-    } catch {
+  } catch {
     return [];
-    }
-  });
+  }
 }
 
 async function writeStoredCustomTemplates(templates: StoredCustomTemplate[]) {
-  await writeAppSetting(customTemplatesKey, templates);
+  await mkdir(path.dirname(customTemplatesPath), { recursive: true });
+  await writeFile(customTemplatesPath, `${JSON.stringify(templates, null, 2)}\n`, "utf8");
 }
 
 function toTemplateDefinition(template: StoredCustomTemplate): TemplateDefinition {

@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
   revalidatePath("/admin/templates");
   revalidatePath("/templates");
   for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);
-  queueGitHubSync("Templates preview information updated from admin.", { createSnapshot: true });
+  queueGitHubSync("Templates preview information updated from admin.", { uploadProjectFiles: true, changeType: "project" });
 
   const actor = await getAuditActorFromAdminRequest(request);
   await recordAuditLog({

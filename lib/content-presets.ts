@@ -1,12 +1,10 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { defaultInvitationTexts } from "./invitation-texts";
 import type { ContentPreset, ContentPresetKind } from "./types";
 
 const presetsPath = path.join(process.cwd(), "data", "content-presets.json");
-const presetsKey = "content-presets";
 
 type ContentPresetInput = {
   id?: unknown;
@@ -93,21 +91,20 @@ function createPresetId() {
 }
 
 async function readPresetsRaw() {
-  return readAppSettingOrSeed(presetsKey, async () => {
-    try {
+  try {
     const raw = await readFile(presetsPath, "utf8");
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return seedPresets();
     const presets = parsed.map((item) => normalizePreset(item as ContentPresetInput)).filter(Boolean) as ContentPreset[];
     return presets.length ? sortPresets(presets) : seedPresets();
-    } catch {
+  } catch {
     return seedPresets();
-    }
-  });
+  }
 }
 
 async function writePresets(presets: ContentPreset[]) {
-  await writeAppSetting(presetsKey, sortPresets(presets));
+  await mkdir(path.dirname(presetsPath), { recursive: true });
+  await writeFile(presetsPath, `${JSON.stringify(sortPresets(presets), null, 2)}\n`, "utf8");
 }
 
 export async function getContentPresets() {

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       const deleted = await deleteDynamicPage(id);
       if (!deleted) return redirectPages(request, { error: "id" });
       revalidatePageRoutes([deleted.slug]);
-      queueGitHubSync(`Dynamic page deleted: ${deleted.slug}.`, { createSnapshot: true });
+      queueGitHubSync(`Dynamic page deleted: ${deleted.slug}.`, { uploadProjectFiles: true, changeType: "project" });
       return redirectPages(request, { saved: "deleted" });
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       const page = await setDynamicPagePublished(id, isPublished);
       if (!page) return redirectPages(request, { error: "id" });
       revalidatePageRoutes([page.slug]);
-      queueGitHubSync(`Dynamic page visibility changed: ${page.slug}.`, { createSnapshot: true });
+      queueGitHubSync(`Dynamic page visibility changed: ${page.slug}.`, { uploadProjectFiles: true, changeType: "project" });
       return redirectPages(request, { saved: "visibility" });
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     if (!result.page) return redirectPages(request, { error: "validation", message: result.error || "بيانات الصفحة غير مكتملة." });
 
     revalidatePageRoutes([previous?.slug, result.page.slug]);
-    queueGitHubSync(`Dynamic page saved: ${result.page.slug}.`, { createSnapshot: true });
+    queueGitHubSync(`Dynamic page saved: ${result.page.slug}.`, { uploadProjectFiles: true, changeType: "project" });
     const params: Record<string, string> = { saved: id ? "updated" : "created", edit: result.page.id };
     const url = getRedirectUrl("/admin/pages", request.headers, request.nextUrl.origin);
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);

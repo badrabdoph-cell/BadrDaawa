@@ -180,7 +180,7 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
 
   revalidatePath("/");
   revalidatePath("/admin/broadcast");
-  queueGitHubSync(`Broadcast screen updated: ${action}.`, { createSnapshot: true });
+  queueGitHubSync(`Broadcast screen updated: ${action}.`, { uploadProjectFiles: true, changeType: "project" });
 
   return { content, previewSettings };
 }
