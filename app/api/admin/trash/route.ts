@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { hardDeleteInvitationCompletely } from "@/lib/invitation-deletion";
 import { hardDeleteTrashItem, restoreTrashItem, type TrashEntityType } from "@/lib/trash";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -47,11 +49,40 @@ export async function POST(request: NextRequest) {
 
   const entityType = type as TrashEntityType;
   const storageType = storage as "database" | "file";
-  const ok = action === "restore" ? await restoreTrashItem(entityType, id, storageType) : await hardDeleteTrashItem(entityType, id, storageType);
+  let ok = false;
+  let hardDeleteSummary: Awaited<ReturnType<typeof hardDeleteInvitationCompletely>> | null = null;
+  if (action === "restore") {
+    ok = await restoreTrashItem(entityType, id, storageType);
+  } else if (entityType === "invitation" && storageType === "database") {
+    hardDeleteSummary = await hardDeleteInvitationCompletely(id);
+    ok = hardDeleteSummary.ok;
+  } else {
+    ok = await hardDeleteTrashItem(entityType, id, storageType);
+  }
 
   if (!ok) return redirectTrash(request, "missing");
 
   revalidateAdminTrash(entityType, id);
+  if (hardDeleteSummary) {
+    await recordAuditLog({
+      actor: await getAuditActorFromAdminRequest(request),
+      action: "invitation.delete",
+      entity: { type: "Invitation", id, label: id },
+      oldValues: { hardDelete: true },
+      newValues: {
+        deleted: true,
+        deletedRecords: hardDeleteSummary.deletedRecords,
+        deletedFiles: hardDeleteSummary.deletedFiles.length,
+        skippedFiles: hardDeleteSummary.skippedFiles.length,
+      },
+      metadata: {
+        storage: "database",
+        source: "trash-hard-delete",
+        deletedFiles: hardDeleteSummary.deletedFiles,
+        skippedFiles: hardDeleteSummary.skippedFiles,
+      },
+    });
+  }
   queueGitHubSync(`Trash ${action}: ${entityType} ${id}.`, { createSnapshot: true });
   return redirectTrash(request, action === "restore" ? "restored" : "deleted");
 }

@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 
 export type HomeFeaturePoint = {
   id: string;
@@ -47,7 +46,6 @@ export type HomeContent = {
 };
 
 const contentPath = path.join(process.cwd(), "data", "home-content.json");
-const contentKey = "home-content";
 
 export const defaultHomeContent: HomeContent = {
   hero: {
@@ -214,10 +212,12 @@ async function readContentFile() {
 
 export async function getHomeContent() {
   noStore();
-  return normalizeContent(await readAppSettingOrSeed(contentKey, readContentFile));
+  return normalizeContent(await readContentFile());
 }
 
 export async function updateHomeContent(input: Partial<HomeContent>) {
   const next = normalizeContent(input);
-  return writeAppSetting(contentKey, next);
+  await mkdir(path.dirname(contentPath), { recursive: true });
+  await writeFile(contentPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return next;
 }

@@ -14,8 +14,25 @@ import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { imageExtensionFromName } from "@/lib/image-formats";
 
 export type MediaReferenceSource = "Invitation" | "Order" | "Template" | "Settings" | "MusicLibrary" | "RuntimeData";
-export type MediaKind = "image" | "audio";
-export type StorageCleanupAction = "orphans" | "duplicates" | "original-images" | "music-unused" | "old-backups" | "all";
+export type MediaKind = "image" | "audio" | "video";
+export type StorageCleanupAction = "orphans" | "duplicates" | "original-images" | "music-unused" | "database-orphans" | "old-backups" | "all";
+export type DatabaseOrphanKind =
+  | "guestBook"
+  | "coupleSettings"
+  | "clientMessages"
+  | "checkIns"
+  | "liveModes"
+  | "guestRsvp"
+  | "analyticsEvents"
+  | "internalInvitationNotes"
+  | "internalOrderNotes"
+  | "internalCustomerNotes";
+export type DatabaseOrphanReportItem = {
+  kind: DatabaseOrphanKind;
+  label: string;
+  count: number;
+  sampleIds: string[];
+};
 export type MediaUsageDetail = {
   source: MediaReferenceSource;
   label: string;
@@ -57,6 +74,7 @@ export type MediaCleanupReport = {
   totalSizeBytes: number;
   imageFiles: number;
   audioFiles: number;
+  videoFiles: number;
   usedSizeBytes: number;
   usedFiles: MediaFileReportItem[];
   unusedFiles: MediaFileReportItem[];
@@ -66,6 +84,8 @@ export type MediaCleanupReport = {
   unusedOriginalImages: MediaFileReportItem[];
   unusedMusicFiles: MediaFileReportItem[];
   oldTemporaryFiles: MediaFileReportItem[];
+  databaseOrphans: DatabaseOrphanReportItem[];
+  databaseOrphanRecords: number;
   backupFiles: BackupCleanupReportItem[];
   oldBackupFiles: BackupCleanupReportItem[];
   unusedSizeBytes: number;
@@ -77,6 +97,7 @@ export type MediaCleanupResult = {
   reportBeforeDelete: MediaCleanupReport;
   deletedFiles: MediaFileReportItem[];
   deletedBackups: BackupCleanupReportItem[];
+  deletedDatabaseOrphans: DatabaseOrphanReportItem[];
   skippedFiles: MediaFileReportItem[];
   skippedBackups: BackupCleanupReportItem[];
   deletedSizeBytes: number;
@@ -84,7 +105,8 @@ export type MediaCleanupResult = {
   action: StorageCleanupAction;
 };
 
-const audioExtensions = new Set(["mp3", "wav", "ogg", "aac", "m4a", "webm", "flac", "mp4", "aif", "aiff"]);
+const videoExtensions = new Set(["mp4", "mov", "webm"]);
+const audioExtensions = new Set(["mp3", "wav", "ogg", "aac", "m4a", "flac", "aif", "aiff"]);
 const temporaryUploadPrefixes = ["order-previews/", "order-requests/", "previews/", "template-previews/"];
 const originalImageExtensions = new Set(["jpg", "jpeg", "png", "heic", "heif", "bmp", "tiff"]);
 const uploadUrlPattern = /(?:https?:\/\/[^"'\s<>)]+)?\/uploads\/[^"'\s<>)]+/gi;
@@ -99,6 +121,7 @@ function extensionFromPath(value: string) {
 function mediaKindFromPath(value: string): MediaKind | "" {
   const extension = extensionFromPath(value);
   if (imageExtensionFromName(value)) return "image";
+  if (videoExtensions.has(extension)) return "video";
   if (audioExtensions.has(extension)) return "audio";
   return "";
 }
@@ -341,6 +364,118 @@ async function getBackupCleanupReport(): Promise<BackupCleanupReportItem[]> {
   });
 }
 
+async function getDatabaseOrphanReport(): Promise<DatabaseOrphanReportItem[]> {
+  if (!prisma) return [];
+  const [invitations, orders, customers] = await Promise.all([
+    prisma.invitation.findMany({ select: { id: true, code: true, customSlug: true } }),
+    prisma.orderRequest.findMany({ select: { id: true, orderNumber: true } }),
+    prisma.customer.findMany({ select: { id: true, username: true } }),
+  ]);
+  const invitationAliases = new Set<string>();
+  invitations.forEach((invitation) => {
+    invitationAliases.add(invitation.id);
+    invitationAliases.add(invitation.code);
+    if (invitation.customSlug) invitationAliases.add(invitation.customSlug);
+  });
+  const orderIds = new Set<string>();
+  orders.forEach((order) => {
+    orderIds.add(order.id);
+    if (order.orderNumber) orderIds.add(order.orderNumber);
+  });
+  const customerIds = new Set<string>();
+  customers.forEach((customer) => {
+    customerIds.add(customer.id);
+    customerIds.add(customer.username);
+  });
+  const [
+    guestBookMessages,
+    coupleSettings,
+    clientMessages,
+    checkIns,
+    liveModes,
+    guestRsvpRows,
+    analyticsRows,
+    internalInvitationNotes,
+    internalOrderNotes,
+    internalCustomerNotes,
+  ] = await Promise.all([
+    prisma.guestBookMessage.findMany({ select: { id: true, invitationCode: true } }),
+    prisma.coupleMessagesSetting.findMany({ select: { invitationCode: true } }),
+    prisma.clientMessage.findMany({ select: { id: true, invitationCode: true } }),
+    prisma.invitationCheckIn.findMany({ select: { id: true, invitationCode: true } }),
+    prisma.weddingLiveMode.findMany({ select: { invitationCode: true } }),
+    prisma.$queryRaw<Array<{ id: string }>>`SELECT r."id" FROM "GuestRsvp" r LEFT JOIN "Invitation" i ON i."id" = r."invitationId" WHERE i."id" IS NULL`,
+    prisma.$queryRaw<Array<{ id: string }>>`SELECT e."id" FROM "AnalyticsEvent" e LEFT JOIN "Invitation" i ON i."id" = e."invitationId" WHERE i."id" IS NULL`,
+    prisma.internalNote.findMany({ where: { entityType: "invitation" }, select: { id: true, entityId: true } }),
+    prisma.internalNote.findMany({ where: { entityType: "order" }, select: { id: true, entityId: true } }),
+    prisma.internalNote.findMany({ where: { entityType: "customer" }, select: { id: true, entityId: true } }),
+  ]);
+
+  const groups: DatabaseOrphanReportItem[] = [
+    {
+      kind: "guestBook",
+      label: "رسائل تهنئة بدون دعوة",
+      sampleIds: guestBookMessages.filter((item) => !invitationAliases.has(item.invitationCode)).map((item) => item.id).slice(0, 20),
+      count: guestBookMessages.filter((item) => !invitationAliases.has(item.invitationCode)).length,
+    },
+    {
+      kind: "coupleSettings",
+      label: "إعدادات رسائل بدون دعوة",
+      sampleIds: coupleSettings.filter((item) => !invitationAliases.has(item.invitationCode)).map((item) => item.invitationCode).slice(0, 20),
+      count: coupleSettings.filter((item) => !invitationAliases.has(item.invitationCode)).length,
+    },
+    {
+      kind: "clientMessages",
+      label: "رسائل عملاء بدون دعوة",
+      sampleIds: clientMessages.filter((item) => !invitationAliases.has(item.invitationCode)).map((item) => item.id).slice(0, 20),
+      count: clientMessages.filter((item) => !invitationAliases.has(item.invitationCode)).length,
+    },
+    {
+      kind: "checkIns",
+      label: "تسجيلات حضور بدون دعوة",
+      sampleIds: checkIns.filter((item) => !invitationAliases.has(item.invitationCode)).map((item) => item.id).slice(0, 20),
+      count: checkIns.filter((item) => !invitationAliases.has(item.invitationCode)).length,
+    },
+    {
+      kind: "liveModes",
+      label: "Live Mode بدون دعوة",
+      sampleIds: liveModes.filter((item) => !invitationAliases.has(item.invitationCode)).map((item) => item.invitationCode).slice(0, 20),
+      count: liveModes.filter((item) => !invitationAliases.has(item.invitationCode)).length,
+    },
+    {
+      kind: "guestRsvp",
+      label: "RSVP بدون دعوة",
+      sampleIds: guestRsvpRows.map((item) => item.id).slice(0, 20),
+      count: guestRsvpRows.length,
+    },
+    {
+      kind: "analyticsEvents",
+      label: "Analytics بدون دعوة",
+      sampleIds: analyticsRows.map((item) => item.id).slice(0, 20),
+      count: analyticsRows.length,
+    },
+    {
+      kind: "internalInvitationNotes",
+      label: "ملاحظات دعوة بدون دعوة",
+      sampleIds: internalInvitationNotes.filter((item) => !invitationAliases.has(item.entityId)).map((item) => item.id).slice(0, 20),
+      count: internalInvitationNotes.filter((item) => !invitationAliases.has(item.entityId)).length,
+    },
+    {
+      kind: "internalOrderNotes",
+      label: "ملاحظات طلب بدون طلب",
+      sampleIds: internalOrderNotes.filter((item) => !orderIds.has(item.entityId)).map((item) => item.id).slice(0, 20),
+      count: internalOrderNotes.filter((item) => !orderIds.has(item.entityId)).length,
+    },
+    {
+      kind: "internalCustomerNotes",
+      label: "ملاحظات عميل بدون عميل",
+      sampleIds: internalCustomerNotes.filter((item) => !customerIds.has(item.entityId)).map((item) => item.id).slice(0, 20),
+      count: internalCustomerNotes.filter((item) => !customerIds.has(item.entityId)).length,
+    },
+  ];
+  return groups.filter((group) => group.count > 0);
+}
+
 export async function getMediaCleanupReport(): Promise<MediaCleanupReport> {
   noStore();
   ensureRuntimeDirectories();
@@ -380,8 +515,8 @@ export async function getMediaCleanupReport(): Promise<MediaCleanupReport> {
     .map((file) => ({ ...file, cleanupReasons: [...file.cleanupReasons, "صورة أصلية كبيرة وغير مستخدمة"] }));
   const originalUrls = new Set(unusedOriginalImages.map((file) => file.url));
   const unusedMusicFiles = unusedFiles
-    .filter((file) => file.kind === "audio")
-    .map((file) => ({ ...file, cleanupReasons: [...file.cleanupReasons, "ملف موسيقى غير مرتبط"] }));
+    .filter((file) => file.kind === "audio" || file.kind === "video")
+    .map((file) => ({ ...file, cleanupReasons: [...file.cleanupReasons, file.kind === "video" ? "ملف فيديو غير مرتبط" : "ملف موسيقى غير مرتبط"] }));
   const musicUrls = new Set(unusedMusicFiles.map((file) => file.url));
   const orphanFiles = unusedFiles.map((file) => {
     const reasons = ["ملف يتيم لا يوجد له مرجع فعلي"];
@@ -398,6 +533,8 @@ export async function getMediaCleanupReport(): Promise<MediaCleanupReport> {
   const normalizedTemporaryFiles = oldTemporaryFiles.map((file) => orphanFiles.find((orphan) => orphan.url === file.url) || file);
   const backupFiles = await getBackupCleanupReport();
   const oldBackupFiles = backupFiles.filter((backup) => backup.canDelete);
+  const databaseOrphans = await getDatabaseOrphanReport();
+  const databaseOrphanRecords = databaseOrphans.reduce((sum, group) => sum + group.count, 0);
   const recoverableMedia = new Map<string, MediaFileReportItem>();
   for (const file of [...orphanFiles, ...normalizedDuplicateFiles, ...normalizedOriginalImages, ...normalizedMusicFiles, ...normalizedTemporaryFiles]) {
     if (orphanUrls.has(file.url) && file.sources.length === 0) recoverableMedia.set(file.url, file);
@@ -409,6 +546,7 @@ export async function getMediaCleanupReport(): Promise<MediaCleanupReport> {
     totalSizeBytes: filesWithSources.reduce((sum, file) => sum + file.sizeBytes, 0),
     imageFiles: filesWithSources.filter((file) => file.kind === "image").length,
     audioFiles: filesWithSources.filter((file) => file.kind === "audio").length,
+    videoFiles: filesWithSources.filter((file) => file.kind === "video").length,
     usedSizeBytes: usedFiles.reduce((sum, file) => sum + file.sizeBytes, 0),
     usedFiles,
     unusedFiles,
@@ -418,6 +556,8 @@ export async function getMediaCleanupReport(): Promise<MediaCleanupReport> {
     unusedOriginalImages: normalizedOriginalImages,
     unusedMusicFiles: normalizedMusicFiles,
     oldTemporaryFiles: normalizedTemporaryFiles,
+    databaseOrphans,
+    databaseOrphanRecords,
     backupFiles,
     oldBackupFiles,
     unusedSizeBytes: unusedFiles.reduce((sum, file) => sum + file.sizeBytes, 0),
@@ -454,11 +594,12 @@ export async function replaceMediaFile(url: string, file: File | null) {
   if (!replacementExtension || replacementExtension !== current.extension) return { ok: false, reason: "extension", file: current };
   if (current.kind === "image" && !imageExtensionFromName(file.name)) return { ok: false, reason: "type", file: current };
   if (current.kind === "audio" && !audioExtensions.has(replacementExtension)) return { ok: false, reason: "type", file: current };
+  if (current.kind === "video" && !videoExtensions.has(replacementExtension)) return { ok: false, reason: "type", file: current };
 
   const backup = await createBackupSnapshot("media-replace");
   const key = storageKeyFromUploadUrl(current.url);
   if (!key) return { ok: false, reason: "invalid", file: current, backupFileName: backup.fileName };
-  await writeUploadFile(key, Buffer.from(await file.arrayBuffer()), current.kind === "image" ? `image/${current.extension}` : `audio/${current.extension}`);
+  await writeUploadFile(key, Buffer.from(await file.arrayBuffer()), current.kind === "image" ? `image/${current.extension}` : current.kind === "video" ? `video/${current.extension}` : `audio/${current.extension}`);
   revalidatePath("/admin/media");
   return { ok: true, reason: "", file: current, backupFileName: backup.fileName };
 }
@@ -476,6 +617,7 @@ function filesForCleanupAction(report: MediaCleanupReport, action: StorageCleanu
   if (action === "duplicates") return uniqueFiles(report.duplicateFiles);
   if (action === "original-images") return uniqueFiles(report.unusedOriginalImages);
   if (action === "music-unused") return uniqueFiles(report.unusedMusicFiles);
+  if (action === "database-orphans") return [];
   if (action === "old-backups") return [];
   if (action === "all") return uniqueFiles([...report.orphanFiles, ...report.duplicateFiles, ...report.unusedOriginalImages, ...report.unusedMusicFiles, ...report.oldTemporaryFiles]);
   return uniqueFiles(report.orphanFiles);
@@ -483,6 +625,11 @@ function filesForCleanupAction(report: MediaCleanupReport, action: StorageCleanu
 
 function backupsForCleanupAction(report: MediaCleanupReport, action: StorageCleanupAction) {
   if (action === "old-backups" || action === "all") return report.oldBackupFiles;
+  return [];
+}
+
+function databaseOrphansForCleanupAction(report: MediaCleanupReport, action: StorageCleanupAction) {
+  if (action === "database-orphans" || action === "all") return report.databaseOrphans;
   return [];
 }
 
@@ -506,8 +653,10 @@ export async function deleteMediaFilesByAction(action: StorageCleanupAction): Pr
   const freshReport = await getMediaCleanupReport();
   const targetFiles = filesForCleanupAction(freshReport, action);
   const targetBackups = backupsForCleanupAction(freshReport, action);
+  const targetDatabaseOrphans = databaseOrphansForCleanupAction(freshReport, action);
   const deletedFiles: MediaFileReportItem[] = [];
   const deletedBackups: BackupCleanupReportItem[] = [];
+  const deletedDatabaseOrphans: DatabaseOrphanReportItem[] = [];
   const skippedFiles: MediaFileReportItem[] = [];
   const skippedBackups: BackupCleanupReportItem[] = [];
 
@@ -540,6 +689,85 @@ export async function deleteMediaFilesByAction(action: StorageCleanupAction): Pr
     else skippedBackups.push(backupFile);
   }
 
+  if (prisma && targetDatabaseOrphans.length) {
+    const db = prisma;
+    const invitations = await db.invitation.findMany({ select: { id: true, code: true, customSlug: true } });
+    const orders = await db.orderRequest.findMany({ select: { id: true, orderNumber: true } });
+    const customers = await db.customer.findMany({ select: { id: true, username: true } });
+    const invitationAliases = new Set<string>();
+    invitations.forEach((invitation) => {
+      invitationAliases.add(invitation.id);
+      invitationAliases.add(invitation.code);
+      if (invitation.customSlug) invitationAliases.add(invitation.customSlug);
+    });
+    const orderIds = new Set<string>();
+    orders.forEach((order) => {
+      orderIds.add(order.id);
+      if (order.orderNumber) orderIds.add(order.orderNumber);
+    });
+    const customerIds = new Set<string>();
+    customers.forEach((customer) => {
+      customerIds.add(customer.id);
+      customerIds.add(customer.username);
+    });
+
+    const countDeleted = async (kind: DatabaseOrphanKind, label: string, callback: () => Promise<{ count: number }>) => {
+      const deleted = await callback();
+      if (deleted.count) deletedDatabaseOrphans.push({ kind, label, count: deleted.count, sampleIds: [] });
+    };
+
+    for (const group of targetDatabaseOrphans) {
+      if (group.kind === "guestBook") {
+        const rows = await db.guestBookMessage.findMany({ select: { id: true, invitationCode: true } });
+        const ids = rows.filter((row) => !invitationAliases.has(row.invitationCode)).map((row) => row.id);
+        await countDeleted(group.kind, group.label, () => db.guestBookMessage.deleteMany({ where: { id: { in: ids } } }));
+      }
+      if (group.kind === "coupleSettings") {
+        const rows = await db.coupleMessagesSetting.findMany({ select: { invitationCode: true } });
+        const codes = rows.filter((row) => !invitationAliases.has(row.invitationCode)).map((row) => row.invitationCode);
+        await countDeleted(group.kind, group.label, () => db.coupleMessagesSetting.deleteMany({ where: { invitationCode: { in: codes } } }));
+      }
+      if (group.kind === "clientMessages") {
+        const rows = await db.clientMessage.findMany({ select: { id: true, invitationCode: true } });
+        const ids = rows.filter((row) => !invitationAliases.has(row.invitationCode)).map((row) => row.id);
+        await countDeleted(group.kind, group.label, () => db.clientMessage.deleteMany({ where: { id: { in: ids } } }));
+      }
+      if (group.kind === "checkIns") {
+        const rows = await db.invitationCheckIn.findMany({ select: { id: true, invitationCode: true } });
+        const ids = rows.filter((row) => !invitationAliases.has(row.invitationCode)).map((row) => row.id);
+        await countDeleted(group.kind, group.label, () => db.invitationCheckIn.deleteMany({ where: { id: { in: ids } } }));
+      }
+      if (group.kind === "liveModes") {
+        const rows = await db.weddingLiveMode.findMany({ select: { invitationCode: true } });
+        const codes = rows.filter((row) => !invitationAliases.has(row.invitationCode)).map((row) => row.invitationCode);
+        await countDeleted(group.kind, group.label, () => db.weddingLiveMode.deleteMany({ where: { invitationCode: { in: codes } } }));
+      }
+      if (group.kind === "guestRsvp") {
+        const rows = await db.$queryRaw<Array<{ id: string }>>`SELECT r."id" FROM "GuestRsvp" r LEFT JOIN "Invitation" i ON i."id" = r."invitationId" WHERE i."id" IS NULL`;
+        await countDeleted(group.kind, group.label, () => db.guestRsvp.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } }));
+      }
+      if (group.kind === "analyticsEvents") {
+        const rows = await db.$queryRaw<Array<{ id: string }>>`SELECT e."id" FROM "AnalyticsEvent" e LEFT JOIN "Invitation" i ON i."id" = e."invitationId" WHERE i."id" IS NULL`;
+        await countDeleted(group.kind, group.label, () => db.analyticsEvent.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } }));
+      }
+      if (group.kind === "internalInvitationNotes") {
+        const rows = await db.internalNote.findMany({ where: { entityType: "invitation" }, select: { id: true, entityId: true } });
+        const ids = rows.filter((row) => !invitationAliases.has(row.entityId)).map((row) => row.id);
+        await countDeleted(group.kind, group.label, () => db.internalNote.deleteMany({ where: { id: { in: ids } } }));
+      }
+      if (group.kind === "internalOrderNotes") {
+        const rows = await db.internalNote.findMany({ where: { entityType: "order" }, select: { id: true, entityId: true } });
+        const ids = rows.filter((row) => !orderIds.has(row.entityId)).map((row) => row.id);
+        await countDeleted(group.kind, group.label, () => db.internalNote.deleteMany({ where: { id: { in: ids } } }));
+      }
+      if (group.kind === "internalCustomerNotes") {
+        const rows = await db.internalNote.findMany({ where: { entityType: "customer" }, select: { id: true, entityId: true } });
+        const ids = rows.filter((row) => !customerIds.has(row.entityId)).map((row) => row.id);
+        await countDeleted(group.kind, group.label, () => db.internalNote.deleteMany({ where: { id: { in: ids } } }));
+      }
+    }
+  }
+
   revalidatePath("/admin/media");
   revalidatePath("/admin/backups");
 
@@ -547,6 +775,7 @@ export async function deleteMediaFilesByAction(action: StorageCleanupAction): Pr
     reportBeforeDelete,
     deletedFiles,
     deletedBackups,
+    deletedDatabaseOrphans,
     skippedFiles,
     skippedBackups,
     deletedSizeBytes: deletedFiles.reduce((sum, file) => sum + file.sizeBytes, 0) + deletedBackups.reduce((sum, file) => sum + file.sizeBytes, 0),

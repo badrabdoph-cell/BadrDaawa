@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { normalizePhoneForWhatsApp } from "./utils";
 
 export type SiteSocialLinks = {
@@ -50,7 +49,6 @@ export type SiteSettings = {
 };
 
 const settingsPath = path.join(process.cwd(), "data", "site-settings.json");
-const settingsKey = "site-settings";
 
 export const defaultSiteSettings: SiteSettings = {
   siteName: "BadrDaawa",
@@ -184,7 +182,7 @@ async function readSiteSettingsFile(): Promise<Partial<SiteSettings>> {
 
 export async function getSiteSettings() {
   noStore();
-  return normalizeSettings(await readAppSettingOrSeed(settingsKey, readSiteSettingsFile));
+  return normalizeSettings(await readSiteSettingsFile());
 }
 
 export async function updateSiteSettings(input: Partial<SiteSettings>) {
@@ -199,7 +197,9 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     updatedAt: new Date().toISOString(),
   });
 
-  return writeAppSetting(settingsKey, next);
+  await mkdir(path.dirname(settingsPath), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return next;
 }
 
 export function shouldShowPhotographerCard() {

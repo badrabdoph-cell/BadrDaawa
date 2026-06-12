@@ -2,7 +2,16 @@ import { prisma } from "./db";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "./types";
 
 export type GuestBookAction = "approve" | "reject" | "delete";
-export type CoupleMessagesAdminAction = GuestBookAction | "edit" | "settings";
+export type GuestBookBulkAction = "bulk-delete-all" | "bulk-delete-pending" | "bulk-delete-rejected" | "bulk-delete-invitation" | "bulk-approve-pending" | "bulk-selected-delete" | "bulk-selected-approve";
+export type CoupleMessagesAdminAction = GuestBookAction | GuestBookBulkAction | "edit" | "settings";
+export type GuestBookBulkResult = {
+  action: GuestBookBulkAction;
+  matchedCount: number;
+  deletedCount: number;
+  approvedCount: number;
+  invitationCodes: string[];
+  messageIds: string[];
+};
 
 export class GuestBookStorageError extends Error {
   constructor(message = "Failed to save guest book message to PostgreSQL") {
@@ -35,6 +44,10 @@ function normalizeMode(value: unknown): GuestBookMode {
 
 function createId() {
   return `gb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function uniqueStrings(values: unknown[]) {
+  return Array.from(new Set(values.map((value) => cleanText(value, 180)).filter(Boolean)));
 }
 
 function toGuestBookMessage(row: {
@@ -220,4 +233,79 @@ export async function moderateGuestBookMessage(id: string, action: GuestBookActi
   const nextStatus: GuestBookStatus = action === "approve" ? "approved" : "rejected";
   const updated = await prisma.guestBookMessage.update({ where: { id: cleanId }, data: { status: nextStatus, reviewedAt: new Date() } });
   return { message: toGuestBookMessage(updated), deleted: false };
+}
+
+export async function countGuestBookBulkTargets(action: GuestBookBulkAction, input: { invitationCode?: unknown; messageIds?: unknown[] } = {}) {
+  if (!prisma) return 0;
+  const invitationCode = cleanText(input.invitationCode, 160);
+  const ids = uniqueStrings(input.messageIds || []);
+  const where =
+    action === "bulk-delete-all"
+      ? {}
+      : action === "bulk-delete-pending" || action === "bulk-approve-pending"
+        ? { status: "pending" }
+        : action === "bulk-delete-rejected"
+          ? { status: "rejected" }
+          : action === "bulk-delete-invitation"
+            ? invitationCode
+              ? { invitationCode }
+              : { id: "__missing__" }
+            : ids.length
+              ? { id: { in: ids }, ...(action === "bulk-selected-approve" ? { status: "pending" } : {}) }
+              : { id: "__missing__" };
+  return prisma.guestBookMessage.count({ where });
+}
+
+export async function bulkModerateGuestBookMessages(action: GuestBookBulkAction, input: { invitationCode?: unknown; messageIds?: unknown[] } = {}): Promise<GuestBookBulkResult | null> {
+  if (!prisma) {
+    console.error("[Guest Book] PostgreSQL is not configured. Refusing guest-book bulk write.");
+    return null;
+  }
+
+  const invitationCode = cleanText(input.invitationCode, 160);
+  const ids = uniqueStrings(input.messageIds || []);
+  const where =
+    action === "bulk-delete-all"
+      ? {}
+      : action === "bulk-delete-pending" || action === "bulk-approve-pending"
+        ? { status: "pending" }
+        : action === "bulk-delete-rejected"
+          ? { status: "rejected" }
+          : action === "bulk-delete-invitation"
+            ? invitationCode
+              ? { invitationCode }
+              : { id: "__missing__" }
+            : ids.length
+              ? { id: { in: ids }, ...(action === "bulk-selected-approve" ? { status: "pending" } : {}) }
+              : { id: "__missing__" };
+
+  const targets = await prisma.guestBookMessage.findMany({ where, select: { id: true, invitationCode: true } });
+  if (!targets.length) {
+    return { action, matchedCount: 0, deletedCount: 0, approvedCount: 0, invitationCodes: [], messageIds: [] };
+  }
+
+  if (action === "bulk-approve-pending" || action === "bulk-selected-approve") {
+    const updated = await prisma.guestBookMessage.updateMany({
+      where: { id: { in: targets.map((target) => target.id) }, status: "pending" },
+      data: { status: "approved", reviewedAt: new Date() },
+    });
+    return {
+      action,
+      matchedCount: targets.length,
+      deletedCount: 0,
+      approvedCount: updated.count,
+      invitationCodes: Array.from(new Set(targets.map((target) => target.invitationCode))),
+      messageIds: targets.map((target) => target.id),
+    };
+  }
+
+  const deleted = await prisma.guestBookMessage.deleteMany({ where: { id: { in: targets.map((target) => target.id) } } });
+  return {
+    action,
+    matchedCount: targets.length,
+    deletedCount: deleted.count,
+    approvedCount: 0,
+    invitationCodes: Array.from(new Set(targets.map((target) => target.invitationCode))),
+    messageIds: targets.map((target) => target.id),
+  };
 }

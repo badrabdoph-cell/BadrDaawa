@@ -1,7 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { moderateGuestBookMessage, updateCoupleMessagesSettings, updateGuestBookMessage, type CoupleMessagesAdminAction } from "@/lib/guest-book";
+import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
+import {
+  bulkModerateGuestBookMessages,
+  countGuestBookBulkTargets,
+  moderateGuestBookMessage,
+  updateCoupleMessagesSettings,
+  updateGuestBookMessage,
+  type CoupleMessagesAdminAction,
+  type GuestBookBulkAction,
+} from "@/lib/guest-book";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { getRedirectUrl } from "@/lib/utils";
@@ -13,7 +22,37 @@ async function isAdmin(request: NextRequest) {
 }
 
 function isCoupleMessagesAction(value: string): value is CoupleMessagesAdminAction {
-  return value === "approve" || value === "reject" || value === "delete" || value === "edit" || value === "settings";
+  return (
+    value === "approve" ||
+    value === "reject" ||
+    value === "delete" ||
+    value === "edit" ||
+    value === "settings" ||
+    value === "bulk-delete-all" ||
+    value === "bulk-delete-pending" ||
+    value === "bulk-delete-rejected" ||
+    value === "bulk-delete-invitation" ||
+    value === "bulk-approve-pending" ||
+    value === "bulk-selected-delete" ||
+    value === "bulk-selected-approve"
+  );
+}
+
+function isBulkAction(value: CoupleMessagesAdminAction): value is GuestBookBulkAction {
+  return value.startsWith("bulk-");
+}
+
+function savedValue(action: GuestBookBulkAction) {
+  return action.includes("approve") ? "bulk-approve" : "bulk-delete";
+}
+
+function revalidateGuestBook(invitationCodes: string[]) {
+  revalidatePath("/admin/guest-book");
+  revalidatePath("/admin");
+  invitationCodes.forEach((code) => {
+    revalidatePath(`/${code}`);
+    revalidatePath(`/${code}/ad_3399`);
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -41,6 +80,44 @@ export async function POST(request: NextRequest) {
     if (invitation?.customSlug) revalidatePath(`/${invitation.customSlug}`);
     queueGitHubSync(`Couple messages settings updated: ${settings.invitationCode}.`, { createSnapshot: true });
     return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?saved=settings&invitation=${encodeURIComponent(settings.invitationCode)}`, request.headers, request.nextUrl.origin), 303);
+  }
+
+  if (isBulkAction(action)) {
+    const invitationCode = String(formData.get("bulkInvitationCode") || "").trim();
+    const messageIds = formData.getAll("selectedMessageId");
+    const expectedCount = Number(formData.get("expectedCount") || 0);
+    const confirmText = String(formData.get("confirmText") || "").trim();
+    const targetCount = await countGuestBookBulkTargets(action, { invitationCode, messageIds });
+    const isDelete = action.includes("delete");
+    const requiredConfirm = isDelete ? "حذف" : "اعتماد";
+
+    if (!targetCount || confirmText !== requiredConfirm || (expectedCount > 0 && targetCount > expectedCount && action !== "bulk-selected-delete" && action !== "bulk-selected-approve")) {
+      return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?error=bulk-confirm&bulkCount=${targetCount}`, request.headers, request.nextUrl.origin), 303);
+    }
+
+    const result = await bulkModerateGuestBookMessages(action, { invitationCode, messageIds });
+    if (!result) {
+      return NextResponse.redirect(getRedirectUrl("/admin/guest-book?error=bulk", request.headers, request.nextUrl.origin), 303);
+    }
+
+    revalidateGuestBook(result.invitationCodes);
+    await Promise.all(
+      result.invitationCodes.map(async (code) => {
+        const invitation = await getInvitationByCode(code).catch(() => null);
+        if (invitation?.customSlug) revalidatePath(`/${invitation.customSlug}`);
+      }),
+    );
+    await recordAuditLog({
+      actor: await getAuditActorFromAdminRequest(request),
+      action: isDelete ? "guestbook.bulk.delete" : "guestbook.bulk.approve",
+      entity: { type: "GuestBookMessage", id: action, label: `${result.deletedCount || result.approvedCount} message(s)` },
+      oldValues: { action, targetCount, invitationCode, selectedCount: messageIds.length },
+      newValues: { deletedCount: result.deletedCount, approvedCount: result.approvedCount, matchedCount: result.matchedCount },
+      metadata: { invitationCodes: result.invitationCodes, messageIds: result.messageIds.slice(0, 100), source: "admin-guest-book-bulk" },
+    });
+    queueGitHubSync(`Couple messages bulk ${action}: ${result.deletedCount || result.approvedCount} message(s).`, { createSnapshot: true });
+
+    return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?saved=${savedValue(action)}&bulkCount=${result.deletedCount || result.approvedCount}`, request.headers, request.nextUrl.origin), 303);
   }
 
   if (!messageId) {

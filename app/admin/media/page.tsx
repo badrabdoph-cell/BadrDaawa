@@ -16,6 +16,7 @@ type MediaPageParams = {
   mediaSaved?: string;
   mediaError?: string;
   cleanupAction?: StorageCleanupAction;
+  deletedRecords?: string;
 };
 
 function formatBytes(value: number) {
@@ -77,6 +78,14 @@ const cleanupActions: Array<{ action: StorageCleanupAction; title: string; descr
     getSize: (report) => report.unusedMusicFiles.reduce((sum, file) => sum + file.sizeBytes, 0),
   },
   {
+    action: "database-orphans",
+    title: "تنظيف سجلات قاعدة البيانات اليتيمة",
+    description: "رسائل تهنئة، RSVP غير مباشر، Check-ins، Live Mode، رسائل عملاء، وملاحظات داخلية لا تشير إلى دعوة أو طلب أو عميل موجود.",
+    icon: DatabaseBackup,
+    getCount: (report) => report.databaseOrphanRecords,
+    getSize: () => 0,
+  },
+  {
     action: "old-backups",
     title: "تنظيف النسخ الاحتياطية القديمة",
     description: "نسخ أقدم من سياسة الاحتفاظ أو مكررة، مع الحفاظ على أحدث نسخ لكل نوع.",
@@ -87,9 +96,9 @@ const cleanupActions: Array<{ action: StorageCleanupAction; title: string; descr
   {
     action: "all",
     title: "تنظيف شامل",
-    description: "تنظيف كل العناصر القابلة للاسترداد بعد إنشاء Backup وإعادة الفحص.",
+    description: "تنظيف كل الملفات والنسخ والسجلات اليتيمة القابلة للحذف بعد إنشاء Backup وإعادة الفحص.",
     icon: RotateCw,
-    getCount: (report) => report.orphanFiles.length + report.oldBackupFiles.length,
+    getCount: (report) => report.orphanFiles.length + report.oldBackupFiles.length + report.databaseOrphanRecords,
     getSize: (report) => report.recoverableSizeBytes,
   },
 ];
@@ -105,6 +114,14 @@ function filterFiles(files: MediaFileReportItem[], params: MediaPageParams) {
 }
 
 function MediaPreview({ file }: { file: MediaFileReportItem }) {
+  if (file.kind === "video") {
+    return (
+      <div className="media-library-audio-preview">
+        <FileAudio size={24} />
+        <video controls preload="metadata" src={file.url} />
+      </div>
+    );
+  }
   if (file.kind === "audio") {
     return (
       <div className="media-library-audio-preview">
@@ -130,13 +147,13 @@ function MediaRows({ files }: { files: MediaFileReportItem[] }) {
     <div className="media-library-grid">
       {files.map((file) => (
         <article className="media-library-card" key={file.url}>
-          <div className={file.kind === "audio" ? "media-library-preview audio" : "media-library-preview"}>
+          <div className={file.kind === "audio" || file.kind === "video" ? "media-library-preview audio" : "media-library-preview"}>
             <MediaPreview file={file} />
           </div>
           <div className="media-library-card-body">
             <div>
               <strong>{file.relativePath}</strong>
-              <span>{file.kind === "image" ? "صورة" : "صوت"} · {file.extension.toUpperCase()} · {formatBytes(file.sizeBytes)}</span>
+              <span>{file.kind === "image" ? "صورة" : file.kind === "video" ? "فيديو" : "صوت"} · {file.extension.toUpperCase()} · {formatBytes(file.sizeBytes)}</span>
             </div>
             <div className="media-source-badges">
               {file.sources.length ? file.sources.map((source) => <em key={source}>{sourceLabel(source)}</em>) : <em className="unused">غير مستخدم</em>}
@@ -164,7 +181,17 @@ function MediaRows({ files }: { files: MediaFileReportItem[] }) {
                 <label className="btn btn-soft">
                   <UploadCloud size={16} />
                   استبدال
-                  <input name="file" type="file" accept={file.kind === "image" ? `image/*,.${file.extension}` : `audio/*,.${file.extension}`} />
+                  <input
+                    name="file"
+                    type="file"
+                    accept={
+                      file.kind === "image"
+                        ? `image/*,.${file.extension}`
+                        : file.kind === "video"
+                          ? `video/*,.${file.extension}`
+                          : `audio/*,.${file.extension}`
+                    }
+                  />
                 </label>
                 <button className="btn btn-soft" type="submit">حفظ</button>
               </form>
@@ -213,6 +240,7 @@ function CleanupActionCard({ report, actionConfig }: { report: MediaCleanupRepor
 export default async function AdminMediaPage({ searchParams }: { searchParams: Promise<MediaPageParams> }) {
   const [params, report] = await Promise.all([searchParams, getMediaCleanupReport()]);
   const deletedCount = Number(params.deleted || 0);
+  const deletedRecords = Number(params.deletedRecords || 0);
   const skippedCount = Number(params.skipped || 0);
   const allFiles = report.usedFiles.concat(report.unusedFiles);
   const filteredFiles = filterFiles(allFiles, params);
@@ -229,7 +257,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       </div>
 
       {params.backup && params.deleted ? (
-        <div className="notice success"><CheckCircle2 size={18} /> تم حذف {formatArabicNumber(deletedCount)} عنصر بحجم {formatBytes(Number(params.size || 0))}. Backup: {params.backup}</div>
+        <div className="notice success"><CheckCircle2 size={18} /> تم حذف {formatArabicNumber(deletedCount)} ملف/نسخة و {formatArabicNumber(deletedRecords)} سجل قاعدة بيانات بحجم {formatBytes(Number(params.size || 0))}. Backup: {params.backup}</div>
       ) : null}
       {params.mediaSaved ? (
         <div className="notice success"><CheckCircle2 size={18} /> {params.mediaSaved === "replaced" ? "تم استبدال الملف مع الحفاظ على الرابط." : "تم حذف الملف."} {params.backup ? `Backup: ${params.backup}` : ""}</div>
@@ -242,12 +270,14 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
         <article className="admin-list-stat"><HardDrive size={19} /><span>الحجم الكلي</span><strong>{formatBytes(report.totalSizeBytes)}</strong></article>
         <article className="admin-list-stat good"><ShieldCheck size={19} /><span>مستخدم</span><strong>{formatArabicNumber(report.usedFiles.length)} · {formatBytes(report.usedSizeBytes)}</strong></article>
         <article className="admin-list-stat danger"><ImageOff size={19} /><span>يتيم</span><strong>{formatArabicNumber(report.orphanFiles.length)} · {formatBytes(report.unusedSizeBytes)}</strong></article>
+        <article className="admin-list-stat danger"><DatabaseBackup size={19} /><span>سجلات يتيمة</span><strong>{formatArabicNumber(report.databaseOrphanRecords)}</strong></article>
         <article className="admin-list-stat danger"><HardDrive size={19} /><span>قابل للاسترداد</span><strong>{formatBytes(report.recoverableSizeBytes)}</strong></article>
       </section>
 
       <section className="media-stats-grid">
         <article className="admin-list-stat good"><FileImage size={19} /><span>الصور</span><strong>{formatArabicNumber(report.imageFiles)}</strong></article>
         <article className="admin-list-stat good"><FileAudio size={19} /><span>الصوت</span><strong>{formatArabicNumber(report.audioFiles)}</strong></article>
+        <article className="admin-list-stat good"><FileAudio size={19} /><span>الفيديو</span><strong>{formatArabicNumber(report.videoFiles)}</strong></article>
         <article className="admin-list-stat"><CopyCheck size={19} /><span>مكرر</span><strong>{formatArabicNumber(report.duplicateFiles.length)} · {formatBytes(report.duplicateSizeBytes)}</strong></article>
         <article className="admin-list-stat"><DatabaseBackup size={19} /><span>Backups قديمة</span><strong>{formatArabicNumber(report.oldBackupFiles.length)}</strong></article>
         <article className="admin-list-stat"><Music2 size={19} /><span>موسيقى غير مستخدمة</span><strong>{formatArabicNumber(report.unusedMusicFiles.length)}</strong></article>
@@ -256,7 +286,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       <section className="panel media-library-toolbar">
         <form action="/admin/media" method="get">
           <label className="media-search-field"><Search size={17} /><input name="q" defaultValue={params.q || ""} placeholder="ابحث باسم الملف أو مكان الاستخدام" /></label>
-          <label><Filter size={16} /><select name="type" defaultValue={params.type || "all"}><option value="all">كل الأنواع</option><option value="image">صور</option><option value="audio">صوت</option></select></label>
+          <label><Filter size={16} /><select name="type" defaultValue={params.type || "all"}><option value="all">كل الأنواع</option><option value="image">صور</option><option value="audio">صوت</option><option value="video">فيديو</option></select></label>
           <label><ShieldCheck size={16} /><select name="usage" defaultValue={params.usage || "all"}><option value="all">كل الاستخدامات</option><option value="used">مستخدم</option><option value="unused">غير مستخدم</option></select></label>
           <button className="btn btn-soft" type="submit">تطبيق</button>
         </form>
@@ -279,7 +309,15 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
           <span>المكرر: {formatArabicNumber(report.duplicateGroups.length)} مجموعة</span>
           <span>المؤقت القديم: {formatArabicNumber(report.oldTemporaryFiles.length)} ملف</span>
           <span>النسخ الاحتياطية: {formatArabicNumber(report.backupFiles.length)} نسخة</span>
+          <span>سجلات PostgreSQL اليتيمة: {formatArabicNumber(report.databaseOrphanRecords)} سجل</span>
         </div>
+        {report.databaseOrphans.length ? (
+          <div className="media-cleanup-summary database-orphans">
+            {report.databaseOrphans.map((group) => (
+              <span key={group.kind}>{group.label}: {formatArabicNumber(group.count)}</span>
+            ))}
+          </div>
+        ) : null}
         <p className="media-cleanup-warning">
           قبل أي حذف يتم إنشاء Backup تلقائي ثم إعادة الفحص. اكتب كلمة <strong>تنظيف</strong> داخل الإجراء المطلوب لتأكيد التنفيذ.
         </p>

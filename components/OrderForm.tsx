@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
-import { flushSync } from "react-dom";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -139,6 +138,7 @@ const orderWizardSteps = [
   { id: "venue", title: "مكان الحفل" },
   { id: "photos", title: "الصور" },
   { id: "music", title: "الموسيقى" },
+  { id: "extras", title: "إضافات مهمة" },
   { id: "review", title: "مراجعة الطلب" },
 ] as const;
 
@@ -275,9 +275,9 @@ function cleanOrderStory(value: unknown) {
     .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
     .map((item) => ({
       id: typeof item.id === "string" && item.id.trim() ? item.id.trim().slice(0, 80) : `story-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
-      date: typeof item.date === "string" ? item.date.trim().slice(0, 80) : "",
-      title: typeof item.title === "string" ? item.title.trim().slice(0, 120) : "",
-      description: typeof item.description === "string" ? item.description.trim().slice(0, 700) : "",
+      date: typeof item.date === "string" ? item.date.slice(0, 80) : "",
+      title: typeof item.title === "string" ? item.title.slice(0, 160) : "",
+      description: typeof item.description === "string" ? item.description.slice(0, 1600) : "",
     }));
 }
 
@@ -306,19 +306,6 @@ function ensureMinimumOrderStoryItems(value: unknown) {
   const story = cleanOrderStory(value);
   while (story.length < minimumOrderStoryStages) story.push(createOrderStoryItem());
   return story;
-}
-
-function normalizeStoryTextInput(value: string) {
-  return value.replace(/[\u00a0\u202f]/g, " ").replace(/[\u200b-\u200d\ufeff]/g, "");
-}
-
-function getStoryTextWithInsertedSpace(target: HTMLInputElement | HTMLTextAreaElement) {
-  const start = target.selectionStart ?? target.value.length;
-  const end = target.selectionEnd ?? start;
-  return {
-    caret: start + 1,
-    value: `${target.value.slice(0, start)} ${target.value.slice(end)}`,
-  };
 }
 
 function isValidOptionalUrl(value: string) {
@@ -561,10 +548,13 @@ export function OrderForm({
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
   const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
+  const [photographerFieldsOpen, setPhotographerFieldsOpen] = useState(false);
+  const [storyFieldsOpen, setStoryFieldsOpen] = useState(false);
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
+  const reviewHintPlayedRef = useRef(false);
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
@@ -621,6 +611,10 @@ export function OrderForm({
       setForm((current) => ({ ...current, ...currentValues }));
     }
     const nextIndex = Math.min(Math.max(skipTemplateStep ? Math.max(index, 1) : index, 0), orderWizardSteps.length - 1);
+    if (orderWizardSteps[nextIndex]?.id === "review") {
+      setPhotographerFieldsOpen(false);
+      setStoryFieldsOpen(false);
+    }
     setActiveStepIndex(nextIndex);
     window.setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -640,7 +634,7 @@ export function OrderForm({
       if (allErrors.mapUrl) nextErrors.mapUrl = allErrors.mapUrl;
     }
     if (stepId === "music" && allErrors.musicUrl) nextErrors.musicUrl = allErrors.musicUrl;
-    if (stepId === "review") {
+    if (stepId === "extras" || stepId === "review") {
       if (allErrors.photographerFacebookUrl) nextErrors.photographerFacebookUrl = allErrors.photographerFacebookUrl;
       if (allErrors.photographerInstagramUrl) nextErrors.photographerInstagramUrl = allErrors.photographerInstagramUrl;
     }
@@ -651,7 +645,7 @@ export function OrderForm({
     const currentValues = getCurrentFormFromDom();
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
-    if (stepId === "review" && showStoryValidationErrors(form)) return false;
+    if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
     setForm((current) => ({ ...current, ...currentValues }));
     return true;
   }
@@ -693,41 +687,17 @@ export function OrderForm({
   }
 
   useEffect(() => {
-    function handleNativeStoryFieldSpace(event: globalThis.KeyboardEvent) {
-      if ((event.key !== " " && event.code !== "Space") || event.ctrlKey || event.metaKey || event.altKey) return;
-      const target = event.target;
-      if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) || target.dataset.orderStoryField !== "true") return;
-
-      const index = Number(target.dataset.storyIndex);
-      const field = target.dataset.storyField;
-      if (!Number.isInteger(index) || index < 0) return;
-      if (field !== "date" && field !== "title" && field !== "description") return;
-
-      const next = getStoryTextWithInsertedSpace(target);
-      event.preventDefault();
-      event.stopPropagation();
-
-      flushSync(() => {
-        setForm((current) => ({
-          ...current,
-          storyEnabled: true,
-          story: cleanOrderStory(current.story).map((item, itemIndex) =>
-            itemIndex === index ? { ...item, [field]: normalizeStoryTextInput(next.value) } : item,
-          ),
-        }));
-        setStoryErrors((current) => {
-          const nextErrors = { ...current };
-          delete nextErrors[storyFieldErrorKey(index, field)];
-          return nextErrors;
-        });
-        setMessage("");
-      });
-      window.requestAnimationFrame(() => target.setSelectionRange(next.caret, next.caret));
-    }
-
-    document.addEventListener("keydown", handleNativeStoryFieldSpace, true);
-    return () => document.removeEventListener("keydown", handleNativeStoryFieldSpace, true);
-  }, []);
+    if (activeStep.id !== "review" || reviewHintPlayedRef.current || typeof window === "undefined") return;
+    reviewHintPlayedRef.current = true;
+    const startY = window.scrollY;
+    const downTimer = window.setTimeout(() => {
+      window.scrollTo({ top: startY + 44, behavior: "smooth" });
+      window.setTimeout(() => {
+        window.scrollTo({ top: startY, behavior: "smooth" });
+      }, 420);
+    }, 420);
+    return () => window.clearTimeout(downTimer);
+  }, [activeStep.id]);
 
   function getUrlDraft(): OrderDraft {
     if (typeof window === "undefined") return {};
@@ -896,6 +866,22 @@ export function OrderForm({
     const currentValues = getCurrentFormFromDom();
     setForm((current) => ({ ...current, ...currentValues, storyEnabled: false, story: [] }));
     setStoryErrors({});
+    setStoryFieldsOpen(false);
+    if (message) setMessage("");
+  }
+
+  function togglePhotographerFields() {
+    const currentValues = getCurrentFormFromDom();
+    setForm((current) => ({ ...current, ...currentValues, photographerEnabled: true }));
+    setPhotographerFieldsOpen((current) => !current || !form.photographerEnabled);
+    if (message) setMessage("");
+  }
+
+  function toggleStoryFields() {
+    const currentValues = getCurrentFormFromDom();
+    setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
+    setStoryErrors({});
+    setStoryFieldsOpen((current) => !current || !form.storyEnabled);
     if (message) setMessage("");
   }
 
@@ -943,19 +929,7 @@ export function OrderForm({
   }
 
   function updateStoryText(index: number, field: "date" | "title" | "description", value: string) {
-    updateStoryItem(index, { [field]: normalizeStoryTextInput(value) });
-  }
-
-  function handleStoryFieldBeforeInput(index: number, field: "date" | "title" | "description", event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const inputEvent = event.nativeEvent as InputEvent;
-    if (inputEvent.inputType !== "insertText" || ![" ", "\u00a0", "\u202f"].includes(inputEvent.data || "")) return;
-
-    const target = event.currentTarget;
-    const next = getStoryTextWithInsertedSpace(target);
-    event.preventDefault();
-
-    flushSync(() => updateStoryText(index, field, next.value));
-    window.requestAnimationFrame(() => target.setSelectionRange(next.caret, next.caret));
+    updateStoryItem(index, { [field]: value });
   }
 
   function removeStoryItem(index: number) {
@@ -1418,7 +1392,7 @@ export function OrderForm({
     if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled, currentForm.musicEnabled, currentForm.musicChoice))) return;
     if (showStoryValidationErrors(currentForm)) return;
     setState("loading");
-    setMessage("جاري التأكد من حفظ الصور قبل إنشاء الدعوة.");
+    setMessage("جاري التأكد من حفظ الصور قبل تأكيد الدعوة.");
 
     try {
       const orderImages = await getOrderImageDataUrls(formData);
@@ -1492,6 +1466,111 @@ export function OrderForm({
       setState("error");
       setMessage("تعذر إرسال الطلب للخادم. حاول مرة أخرى.");
     }
+  }
+
+  function renderOpeningTextFields() {
+    return (
+      <div className="order-customization-fields">
+        <div className="field">
+          <label htmlFor="openingText">نص الافتتاح السينمائي</label>
+          <textarea
+            id="openingText"
+            name="openingText"
+            rows={3}
+            placeholder="مثال: بعض الحكايات تبدأ بنظرة، وحكايتنا تبدأ اليوم..."
+            value={form.openingText}
+            onChange={(event) => updateField("openingText", event.target.value)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function renderPhotographerFields() {
+    return (
+      <div className="photographer-fields order-customization-fields">
+        <div className="order-fields-toolbar">
+          <strong>معلومات الفوتوغرافي</strong>
+          <button
+            type="button"
+            onClick={() => {
+              updateField("photographerEnabled", false);
+              setPhotographerFieldsOpen(false);
+            }}
+          >
+            إلغاء
+          </button>
+        </div>
+        <div className="field">
+          <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
+          <input id="photographerName" name="photographerName" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
+        </div>
+        <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
+          <label htmlFor="photographerFacebookUrl">رابط Facebook</label>
+          <input id="photographerFacebookUrl" name="photographerFacebookUrl" inputMode="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
+          {errors.photographerFacebookUrl ? <small className="field-error">{errors.photographerFacebookUrl}</small> : null}
+        </div>
+        <div className={`field ${errors.photographerInstagramUrl ? "has-error" : ""}`}>
+          <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
+          <input id="photographerInstagramUrl" name="photographerInstagramUrl" inputMode="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
+          {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
+        </div>
+      </div>
+    );
+  }
+
+  function renderStoryFields() {
+    return (
+      <div className="order-story-fields order-customization-fields">
+        <div className="order-story-head">
+          <p>اكتب مرحلتين على الأقل، ويمكنك إضافة حتى 4 مراحل فقط.</p>
+          <button className="btn btn-soft order-story-cancel-button" type="button" onClick={cancelOrderStory}>
+            إلغاء
+          </button>
+        </div>
+        <div className="order-story-list">
+          {ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages).map((item, index) => {
+            const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
+            const dateError = storyErrors[storyFieldErrorKey(index, "date")];
+            const titleError = storyErrors[storyFieldErrorKey(index, "title")];
+            const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
+            return (
+              <article className="order-story-item" key={item.id || index}>
+                <div className="order-story-item-head">
+                  <strong>مرحلة {index + 1}</strong>
+                  <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="field">
+                  <label htmlFor={`storyDate-${index}`}>التاريخ</label>
+                  <input id={`storyDate-${index}`} name={`storyDate-${index}`} type="date" value={item.date || ""} onChange={(event) => updateStoryText(index, "date", event.target.value)} aria-invalid={Boolean(dateError)} />
+                  {dateError ? <small className="field-error">{dateError}</small> : null}
+                </div>
+                <div className="field">
+                  <label htmlFor={`storyTitle-${index}`}>العنوان</label>
+                  <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryText(index, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
+                  {titleError ? <small className="field-error">{titleError}</small> : null}
+                </div>
+                <div className="field full">
+                  <label htmlFor={`storyDescription-${index}`}>الوصف</label>
+                  <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
+                  {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        {ensureMinimumOrderStoryItems(form.story).length < maximumOrderStoryStages ? (
+          <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
+            <Plus size={16} />
+            إضافة مرحلة
+          </button>
+        ) : (
+          <p className="field-preview">تم الوصول إلى الحد الأقصى: 4 مراحل.</p>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -1772,6 +1851,30 @@ export function OrderForm({
             </section>
           </section>
 
+          <section className={`order-wizard-step ${activeStep.id === "extras" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "extras"}>
+            <div className="order-extras-grid">
+              <button className={`order-extra-card ${form.photographerEnabled ? "is-added" : ""} ${photographerFieldsOpen ? "is-open" : ""}`} type="button" onClick={togglePhotographerFields} aria-expanded={photographerFieldsOpen}>
+                <Camera size={20} />
+                <span>
+                  <strong>معلومات الفوتوغرافي</strong>
+                  <small>{form.photographerEnabled ? fieldValue(form.photographerName, "تمت إضافته") : "اختياري"}</small>
+                </span>
+              </button>
+
+              <button className={`order-extra-card order-extra-story-card ${form.storyEnabled ? "is-added" : ""} ${storyFieldsOpen ? "is-open" : ""}`} type="button" onClick={toggleStoryFields} aria-expanded={storyFieldsOpen}>
+                <Heart size={20} />
+                <span>
+                  <strong>حكايتكم الخاصة</strong>
+                  <small>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "اختيارية"}</small>
+                </span>
+                <em>مهم ولكن اختياري</em>
+              </button>
+            </div>
+
+            {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
+            {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
+          </section>
+
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
             <div className="order-review-final-note" role="note">
               هذه هي المرحلة الأخيرة. يرجى مراجعة جميع البيانات والتأكد من صحتها قبل تأكيد الدعوة.
@@ -1796,116 +1899,45 @@ export function OrderForm({
                 <span>♡ نص الافتتاح</span>
                 <strong>{form.openingText.trim() ? "تمت إضافته" : "غير مضاف"}</strong>
               </button>
-              {openingTextOpen ? (
-                <div className="order-customization-fields">
-                  <div className="field">
-                    <label htmlFor="openingText">نص الافتتاح السينمائي</label>
-                    <textarea
-                      id="openingText"
-                      name="openingText"
-                      rows={3}
-                      placeholder="مثال: بعض الحكايات تبدأ بنظرة، وحكايتنا تبدأ اليوم..."
-                      value={form.openingText}
-                      onChange={(event) => updateField("openingText", event.target.value)}
-                    />
-                  </div>
-                </div>
-              ) : null}
+              {openingTextOpen ? renderOpeningTextFields() : null}
 
               <button
                 className="order-review-item order-review-item-optional"
                 type="button"
                 onClick={() => {
                   if (form.storyEnabled) {
-                    cancelOrderStory();
+                    setStoryFieldsOpen((current) => !current);
                     return;
                   }
-                  const currentValues = getCurrentFormFromDom();
-                  setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
-                  setStoryErrors({});
-                  if (message) setMessage("");
+                  goToStep(6);
                 }}
+                aria-expanded={storyFieldsOpen && form.storyEnabled}
               >
                 <span>♡ قصة العروسين</span>
                 <strong>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "غير مضافة"}</strong>
               </button>
+              {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
 
-              {form.storyEnabled ? (
-                <div className="order-story-fields order-customization-fields">
-                  <div className="order-story-head">
-                    <p>اكتب مرحلتين على الأقل، ويمكنك إضافة حتى 4 مراحل فقط.</p>
-                  </div>
-                  <div className="order-story-list">
-                    {ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages).map((item, index) => {
-                      const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
-                      const dateError = storyErrors[storyFieldErrorKey(index, "date")];
-                      const titleError = storyErrors[storyFieldErrorKey(index, "title")];
-                      const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
-                      return (
-                        <article className="order-story-item" key={item.id || index}>
-                          <div className="order-story-item-head">
-                            <strong>مرحلة {index + 1}</strong>
-                            <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                          <div className="field">
-                            <label htmlFor={`storyDate-${index}`}>التاريخ</label>
-                            <input id={`storyDate-${index}`} name={`storyDate-${index}`} data-order-story-field="true" data-story-field="date" data-story-index={index} value={item.date || ""} onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "date", event)} onChange={(event) => updateStoryText(index, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
-                            {dateError ? <small className="field-error">{dateError}</small> : null}
-                          </div>
-                          <div className="field">
-                            <label htmlFor={`storyTitle-${index}`}>العنوان</label>
-                            <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} data-order-story-field="true" data-story-field="title" data-story-index={index} value={item.title} onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "title", event)} onChange={(event) => updateStoryText(index, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
-                            {titleError ? <small className="field-error">{titleError}</small> : null}
-                          </div>
-                          <div className="field full">
-                            <label htmlFor={`storyDescription-${index}`}>الوصف</label>
-                            <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} data-order-story-field="true" data-story-field="description" data-story-index={index} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onBeforeInput={(event) => handleStoryFieldBeforeInput(index, "description", event)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
-                            {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                  {ensureMinimumOrderStoryItems(form.story).length < maximumOrderStoryStages ? (
-                    <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
-                      <Plus size={16} />
-                      إضافة مرحلة
-                    </button>
-                  ) : (
-                    <p className="field-preview">تم الوصول إلى الحد الأقصى: 4 مراحل.</p>
-                  )}
-                </div>
-              ) : null}
-
-              <button className="order-review-item order-review-item-optional" type="button" onClick={() => updateField("photographerEnabled", !form.photographerEnabled)}>
+              <button
+                className="order-review-item order-review-item-optional"
+                type="button"
+                onClick={() => {
+                  if (form.photographerEnabled) {
+                    setPhotographerFieldsOpen((current) => !current);
+                    return;
+                  }
+                  goToStep(6);
+                }}
+                aria-expanded={photographerFieldsOpen && form.photographerEnabled}
+              >
                 <span>♡ بيانات المصور</span>
                 <strong>{form.photographerEnabled ? fieldValue(form.photographerName, "تمت إضافته") : "غير مضافة"}</strong>
               </button>
-
-              {form.photographerEnabled ? (
-                <div className="photographer-fields order-customization-fields">
-                  <div className="field">
-                    <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
-                    <input id="photographerName" name="photographerName" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
-                  </div>
-                  <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
-                    <label htmlFor="photographerFacebookUrl">رابط Facebook</label>
-                    <input id="photographerFacebookUrl" name="photographerFacebookUrl" inputMode="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
-                    {errors.photographerFacebookUrl ? <small className="field-error">{errors.photographerFacebookUrl}</small> : null}
-                  </div>
-                  <div className={`field ${errors.photographerInstagramUrl ? "has-error" : ""}`}>
-                    <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
-                    <input id="photographerInstagramUrl" name="photographerInstagramUrl" inputMode="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
-                    {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
-                  </div>
-                </div>
-              ) : null}
+              {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
             </div>
 
             <p className="order-review-submit-note" id="confirm-order">
-              اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل إنشاء الدعوة.
+              اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل تأكيد الدعوة.
             </p>
             {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
           </section>

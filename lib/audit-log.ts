@@ -19,10 +19,14 @@ export type AuditAction =
   | "template.change"
   | "media.image.upload"
   | "media.image.delete"
+  | "guestbook.bulk.approve"
+  | "guestbook.bulk.delete"
+  | "cleanup.database.delete"
+  | "cleanup.storage.delete"
   | "github.sync"
   | "backup.restore";
 
-export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GitHubSync" | "Backup";
+export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GuestBookMessage" | "Cleanup" | "GitHubSync" | "Backup";
 
 export type AuditLogEntry = {
   id: string;
@@ -281,6 +285,10 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "template.change": "تغيير قالب",
   "media.image.upload": "رفع صورة",
   "media.image.delete": "حذف صورة",
+  "guestbook.bulk.approve": "اعتماد رسائل تهنئة جماعي",
+  "guestbook.bulk.delete": "حذف رسائل تهنئة جماعي",
+  "cleanup.database.delete": "تنظيف قاعدة البيانات",
+  "cleanup.storage.delete": "تنظيف التخزين",
   "github.sync": "مزامنة GitHub",
   "backup.restore": "استعادة Backup",
 };

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Filter, MessageCircleHeart, Pencil, Search, Trash2, XCircle } from "lucide-react";
+import { ConfirmingSubmitButton } from "@/components/ConfirmingSubmitButton";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getAllCoupleMessagesSettings, getAllGuestBookMessages } from "@/lib/guest-book";
 import type { GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
@@ -37,6 +38,8 @@ function notice(saved?: string, error?: string) {
   if (saved === "approve") return { kind: "success", text: "تم نشر رسالة التهنئة داخل الدعوة." };
   if (saved === "reject") return { kind: "success", text: "تم رفض رسالة التهنئة." };
   if (saved === "delete") return { kind: "success", text: "تم حذف رسالة التهنئة." };
+  if (saved === "bulk-delete") return { kind: "success", text: "تم حذف الرسائل المحددة ضمن العملية الجماعية." };
+  if (saved === "bulk-approve") return { kind: "success", text: "تم اعتماد الرسائل المعلقة ضمن العملية الجماعية." };
   if (saved === "edit") return { kind: "success", text: "تم تعديل رسالة العروسين." };
   if (saved === "settings") return { kind: "success", text: "تم حفظ إعدادات رسائل العروسين لهذه الدعوة." };
   if (error) return { kind: "danger", text: "تعذر تنفيذ العملية المطلوبة." };
@@ -70,6 +73,8 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
     approved: messages.filter((message) => message.status === "approved").length,
     rejected: messages.filter((message) => message.status === "rejected").length,
   };
+  const invitationCounts = new Map<string, number>();
+  messages.forEach((message) => invitationCounts.set(message.invitationCode, (invitationCounts.get(message.invitationCode) || 0) + 1));
   const pageNotice = notice(params.saved, params.error);
 
   return (
@@ -161,10 +166,70 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
           <Link className="btn btn-soft" href="/admin/guest-book">إعادة ضبط</Link>
         </form>
 
+        <section className="guest-book-bulk-panel" aria-label="إدارة جماعية لرسائل التهنئة">
+          <div className="admin-card-head">
+            <Trash2 size={20} />
+            <div>
+              <span className="eyebrow">Bulk Actions</span>
+              <h2>إدارة جماعية آمنة</h2>
+            </div>
+          </div>
+          <div className="guest-book-bulk-grid">
+            {[
+              { action: "bulk-delete-all", label: "حذف جميع الرسائل", count: stats.total, confirm: "حذف" },
+              { action: "bulk-delete-pending", label: "حذف الرسائل المعلقة فقط", count: stats.pending, confirm: "حذف" },
+              { action: "bulk-delete-rejected", label: "حذف الرسائل المرفوضة فقط", count: stats.rejected, confirm: "حذف" },
+              { action: "bulk-approve-pending", label: "اعتماد جميع الرسائل المعلقة", count: stats.pending, confirm: "اعتماد" },
+            ].map((item) => (
+              <form className="guest-book-bulk-card" action="/api/admin/guest-book" method="post" key={item.action}>
+                <input type="hidden" name="action" value={item.action} />
+                <input type="hidden" name="expectedCount" value={item.count} />
+                <strong>{item.label}</strong>
+                <span>{formatArabicNumber(item.count)} رسالة</span>
+                <input name="confirmText" placeholder={`اكتب ${item.confirm}`} aria-label={`تأكيد ${item.label}`} />
+                <ConfirmingSubmitButton className="btn btn-soft danger-button" disabled={!item.count} fallbackCount={item.count} confirmTitle={item.label} confirmMessage={`سيتم تنفيذ الإجراء على ${formatArabicNumber(item.count)} رسالة.`}>
+                  تنفيذ
+                </ConfirmingSubmitButton>
+              </form>
+            ))}
+
+            <form className="guest-book-bulk-card wide" action="/api/admin/guest-book" method="post">
+              <input type="hidden" name="action" value="bulk-delete-invitation" />
+              <strong>حذف الرسائل الخاصة بدعوة محددة</strong>
+              <label className="admin-select-field">
+                <span>الدعوة</span>
+                <select id="guest-book-bulk-invitation-select" name="bulkInvitationCode" defaultValue={settingsInvitationCode}>
+                  {invitations.map((invitation) => (
+                    <option key={invitation.code} value={invitation.code} data-count={invitationCounts.get(invitation.code) || 0}>
+                      {invitation.groomName} و {invitation.brideName} - {formatArabicNumber(invitationCounts.get(invitation.code) || 0)} رسالة
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <input name="confirmText" placeholder="اكتب حذف" aria-label="تأكيد حذف رسائل دعوة محددة" />
+              <ConfirmingSubmitButton className="btn btn-soft danger-button" selectCountSelector="#guest-book-bulk-invitation-select" confirmTitle="حذف رسائل دعوة محددة" confirmMessage="سيتم حذف رسائل التهنئة الخاصة بالدعوة التي اخترتها. سيعيد الخادم حساب العدد قبل الحذف.">
+                حذف رسائل الدعوة
+              </ConfirmingSubmitButton>
+            </form>
+          </div>
+
+          <form id="guest-book-bulk-selected-form" className="guest-book-selected-actions" action="/api/admin/guest-book" method="post">
+            <input type="hidden" name="action" value="bulk-selected-delete" />
+            <input name="confirmText" placeholder="اكتب حذف أو اعتماد حسب الإجراء" aria-label="تأكيد الإجراء الجماعي المحدد" />
+            <ConfirmingSubmitButton className="btn btn-soft danger-button" name="action" value="bulk-selected-delete" countSelector=".guest-book-select-checkbox:checked" confirmTitle="حذف الرسائل المحددة" confirmMessage="سيتم حذف الرسائل التي قمت بتحديدها فقط.">
+              حذف المحدد
+            </ConfirmingSubmitButton>
+            <ConfirmingSubmitButton className="btn btn-gold" name="action" value="bulk-selected-approve" countSelector=".guest-book-select-checkbox:checked" confirmTitle="اعتماد الرسائل المحددة" confirmMessage="سيتم اعتماد الرسائل المعلقة من العناصر المحددة فقط.">
+              اعتماد المحدد
+            </ConfirmingSubmitButton>
+          </form>
+        </section>
+
         <div className="table-shell">
           <table className="data-table guest-book-admin-table">
             <thead>
               <tr>
+                <th>تحديد</th>
                 <th>الدعوة</th>
                 <th>الاسم</th>
                 <th>الرسالة</th>
@@ -176,6 +241,9 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
             <tbody>
               {filtered.map((message) => (
                 <tr key={message.id}>
+                  <td>
+                    <input className="guest-book-select-checkbox" form="guest-book-bulk-selected-form" type="checkbox" name="selectedMessageId" value={message.id} aria-label={`تحديد رسالة ${message.name}`} />
+                  </td>
                   <td>
                     <strong>{invitationMap.get(message.invitationCode) || message.invitationCode}</strong>
                     <small>{message.invitationCode}</small>
