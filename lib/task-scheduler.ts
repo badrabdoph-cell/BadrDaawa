@@ -516,6 +516,11 @@ export async function runDueScheduledTasks() {
   return runs;
 }
 
+// NOTE: Automatic backup scheduling no longer relies on startInternalTaskScheduler()
+// or setInterval. Instead, an external cron service (e.g. EasyCron, cron-job.org)
+// must call POST /api/cron/backup with Authorization: Bearer {BACKUP_CRON_SECRET}
+// every 6 hours. This ensures backups run independently of HTTP traffic and survive
+// container restarts and redeployments.
 export function startInternalTaskScheduler() {
   if (globalScheduler.__badrDaawaTaskSchedulerTimer) return;
   runDueScheduledTasks().catch((error) => console.error("[Task Scheduler] Initial automatic run failed", error));
@@ -524,4 +529,24 @@ export function startInternalTaskScheduler() {
   }, schedulerIntervalMs);
   timer.unref?.();
   globalScheduler.__badrDaawaTaskSchedulerTimer = timer;
+}
+
+export function checkCronConfiguration(): { configured: boolean; warning?: string } {
+  const secret = (process.env.BACKUP_CRON_SECRET || process.env.CRON_SECRET || "").trim();
+  if (!secret) {
+    return {
+      configured: false,
+      warning:
+        "BACKUP_CRON_SECRET غير مضبوط. النسخ الاحتياطية التلقائية لن تعمل حتى يتم ضبط هذا المتغير وتهيئة خدمة cron خارجية لاستدعاء /api/cron/backup كل 6 ساعات.",
+    };
+  }
+  const cronUrl = (process.env.BACKUP_CRON_URL || "").trim();
+  if (!cronUrl) {
+    return {
+      configured: false,
+      warning:
+        "BACKUP_CRON_URL غير مضبوط. تأكد من تهيئة خدمة cron خارجية لاستدعاء /api/cron/backup كل 6 ساعات.",
+    };
+  }
+  return { configured: true };
 }
