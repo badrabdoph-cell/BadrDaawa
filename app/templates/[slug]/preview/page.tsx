@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Home, Sparkles } from "lucide-react";
+import { ArrowRight, Home, Sparkles, X } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
@@ -41,6 +41,7 @@ type TemplatePreviewSearchParams = {
     story?: string;
     orderFullPreview?: string;
     hidePreviewChrome?: string;
+    galleryPreview?: string;
 };
 
 type PageProps = {
@@ -198,6 +199,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
 
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
   const hidePreviewActions = isSilentPreview || query?.builderPreview === "1" || isOrderRequestPreview || query?.hidePreviewChrome === "1" || query?.orderFullPreview === "1";
+  const showGalleryClose = hidePreviewActions && query?.galleryPreview === "1";
 
   return (
     <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>
@@ -232,6 +234,11 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           }}
         />
       )}
+      {showGalleryClose ? (
+        <Link className="template-preview-close-fab" href="/templates" aria-label="العودة إلى معرض التصاميم">
+          <X size={20} />
+        </Link>
+      ) : null}
       {!hidePreviewActions ? (
         <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
           <Link className="template-preview-action template-preview-action-soft" href="/">
