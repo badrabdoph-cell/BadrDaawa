@@ -29571,7 +29571,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
 .home-template-head {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: clamp(14px, 2.4vw, 22px);
