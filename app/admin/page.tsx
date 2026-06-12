@@ -1,36 +1,21 @@
 import Link from "next/link";
 import {
   Activity,
-  AlertTriangle,
   Archive,
   ArrowUpLeft,
-  BarChart3,
-  CalendarClock,
-  CheckCircle2,
   Clock3,
-  Database,
-  DatabaseBackup,
   Eye,
   FileText,
-  MapPinCheckInside,
   MessageCircleHeart,
-  MonitorPlay,
-  Music2,
-  Palette,
   Plus,
   Sparkles,
-  TrendingUp,
   UserCheck,
   UsersRound,
 } from "lucide-react";
-import { getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
-import { listBackupSnapshots } from "@/lib/backups";
-import { getCheckInDashboard } from "@/lib/check-ins";
+import { getAdminCustomers, getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { hasDatabaseConfig } from "@/lib/database-url";
 import { getAllGuestBookMessages } from "@/lib/guest-book";
-import { getMusicLibrary } from "@/lib/music-library";
 import { formatArabicNumber } from "@/lib/utils";
-import { SyncStatus } from "@/app/admin/components/sync-status";
 
 function formatOrderDate(value: string) {
   const date = new Date(value);
@@ -42,12 +27,6 @@ function formatAdminNumber(value: number) {
   return formatArabicNumber(Math.max(0, Math.round(value)));
 }
 
-function formatShortDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
-}
-
 function statusLabel(status: string) {
   if (status === "new") return "جديد";
   if (status === "reviewing") return "قيد المراجعة";
@@ -57,46 +36,18 @@ function statusLabel(status: string) {
   return status;
 }
 
-function isExpiredInvitation(weddingDate: string) {
-  const date = new Date(weddingDate);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.getTime() < Date.now();
-}
-
-function formatBackupSize(bytes?: number) {
-  if (!bytes) return "0 KB";
-  if (bytes < 1024 * 1024) return `${formatAdminNumber(bytes / 1024)} KB`;
-  return `${formatAdminNumber(bytes / (1024 * 1024))} MB`;
-}
-
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, backups, musicLibrary, checkInDashboard, guestBookMessages] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), listBackupSnapshots(), getMusicLibrary(), getCheckInDashboard(), getAllGuestBookMessages()]);
+  const [invitations, orders, guests, customers, guestBookMessages] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), getAdminCustomers(), getAllGuestBookMessages()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
   const recentInvitations = invitations.slice(0, 5);
   const hasDatabase = hasDatabaseConfig();
-  const activeMusicSlots = musicLibrary.slots.filter((slot) => slot.enabled && slot.url).length;
-  const latestBackup = backups[0];
-  const activeInvitations = invitations.filter((invitation) => invitation.isActive).length;
-  const expiredInvitations = invitations.filter((invitation) => isExpiredInvitation(invitation.weddingDate)).length;
   const totalViews = invitations.reduce((sum, invitation) => sum + invitation.views, 0);
   const confirmedGuests = guests.filter((guest) => guest.status === "confirmed");
-  const declinedGuests = guests.filter((guest) => guest.status === "declined");
   const pendingGuestBookMessages = guestBookMessages.filter((message) => message.status === "pending");
   const expectedAttendees = confirmedGuests.reduce((sum, guest) => sum + Math.max(1, guest.attendees || 1), 0);
-  const responseRate = guests.length ? Math.round((confirmedGuests.length / guests.length) * 100) : 0;
-  const backupAgeMs = latestBackup ? Date.now() - new Date(latestBackup.createdAt).getTime() : Number.POSITIVE_INFINITY;
-  const backupNeedsAttention = !latestBackup || backupAgeMs > 24 * 60 * 60 * 1000;
-  const topInvitation = [...invitations].sort((a, b) => b.views - a.views)[0];
-  const alerts = [
-    !hasDatabase ? "قاعدة البيانات غير متصلة، البيانات الحالية قد تكون من الملفات المحلية." : "",
-    newOrders.length ? `${formatAdminNumber(newOrders.length)} طلب جديد يحتاج متابعة.` : "",
-    pendingGuestBookMessages.length ? `${formatAdminNumber(pendingGuestBookMessages.length)} رسالة للعروسين بانتظار المراجعة.` : "",
-    backupNeedsAttention ? (latestBackup ? "آخر نسخة احتياطية أقدم من 24 ساعة." : "لا توجد نسخة احتياطية محفوظة بعد.") : "",
-    activeMusicSlots === 0 ? "لا توجد مقاطع موسيقى مفعلة للقوالب." : "",
-  ].filter(Boolean);
 
   return (
     <>
@@ -136,114 +87,58 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         </div>
       ) : null}
 
-      <section className="panel admin-command-center" aria-label="ملخص الإدارة اليومي">
+      <section className="panel admin-command-center admin-dashboard-summary" aria-label="ملخص الإدارة اليومي">
         <div className="admin-command-head">
           <div className="admin-card-head">
             <Activity size={22} />
             <div>
-              <span className="eyebrow">Command Center</span>
-              <h2>ملخص اليوم التشغيلي</h2>
+              <span className="eyebrow">Dashboard</span>
+              <h2>نظرة مختصرة</h2>
             </div>
           </div>
-          <Link className="btn btn-soft btn-glass" href="/admin/analytics">
-            <BarChart3 size={17} />
-            التحليلات التفصيلية
+          <Link className="btn btn-gold btn-glow" href="/admin/new-invitation">
+            <Plus size={17} />
+            إنشاء دعوة
           </Link>
         </div>
 
         <div className="admin-metrics-grid">
           <Link className="admin-metric-card" href="/admin/invitations">
             <Archive size={20} />
-            <span>إجمالي الدعوات</span>
+            <span>عدد الدعوات</span>
             <strong>{formatAdminNumber(invitations.length)}</strong>
-            <small>{formatAdminNumber(activeInvitations)} نشطة / {formatAdminNumber(expiredInvitations)} منتهية</small>
+            <small>كل الدعوات المنشورة والمسجلة</small>
           </Link>
-          <Link className="admin-metric-card" href="/admin/invitations">
+          <Link className="admin-metric-card" href="/admin/customers">
+            <UsersRound size={20} />
+            <span>عدد العملاء</span>
+            <strong>{formatAdminNumber(customers.length)}</strong>
+            <small>حسابات العملاء المتاحة للإدارة</small>
+          </Link>
+          <Link className="admin-metric-card" href="/admin/analytics">
             <Eye size={20} />
-            <span>زيارات الدعوات</span>
+            <span>عدد الزوار</span>
             <strong>{formatAdminNumber(totalViews)}</strong>
-            <small>{topInvitation ? `الأعلى: ${topInvitation.groomName} و ${topInvitation.brideName}` : "لا توجد زيارات بعد"}</small>
+            <small>إجمالي مشاهدات الدعوات</small>
           </Link>
           <Link className="admin-metric-card" href="/admin/orders">
             <Clock3 size={20} />
-            <span>طلبات مفتوحة</span>
+            <span>عدد الطلبات</span>
             <strong>{formatAdminNumber(openOrders.length)}</strong>
             <small>{formatAdminNumber(newOrders.length)} طلب جديد ينتظر قرار</small>
           </Link>
-          <Link className="admin-metric-card" href="/admin/analytics">
+          <Link className="admin-metric-card" href="/admin/attendance">
             <UserCheck size={20} />
             <span>ردود الحضور</span>
             <strong>{formatAdminNumber(guests.length)}</strong>
-            <small>{formatAdminNumber(expectedAttendees)} ضيف متوقع / {formatAdminNumber(responseRate)}% موافقة</small>
-          </Link>
-          <Link className="admin-metric-card" href="/admin/check-ins">
-            <MapPinCheckInside size={20} />
-            <span>الوصول الفعلي</span>
-            <strong>{formatAdminNumber(checkInDashboard.totals.checkIns)}</strong>
-            <small>{formatAdminNumber(checkInDashboard.totals.today)} اليوم / منفصل عن RSVP</small>
+            <small>{formatAdminNumber(expectedAttendees)} ضيف متوقع</small>
           </Link>
           <Link className="admin-metric-card" href="/admin/guest-book">
             <MessageCircleHeart size={20} />
-            <span>كلمات وذكريات للعرسان ❤️</span>
+            <span>آخر الرسائل</span>
             <strong>{formatAdminNumber(guestBookMessages.length)}</strong>
             <small>{formatAdminNumber(pendingGuestBookMessages.length)} بانتظار المراجعة</small>
           </Link>
-        </div>
-
-        <div className="admin-ops-grid">
-          <article className="admin-ops-panel">
-            <div className="admin-ops-head">
-              <CheckCircle2 size={19} />
-              <h3>أحدث الدعوات</h3>
-            </div>
-            {recentInvitations.length ? (
-              <div className="admin-compact-list">
-                {recentInvitations.map((invitation) => (
-                  <Link className="admin-compact-row" href={`/${invitation.customSlug || invitation.code}`} key={invitation.id}>
-                    <span>
-                      <strong>{invitation.groomName} و {invitation.brideName}</strong>
-                      <small>{invitation.code} · {formatOrderDate(invitation.weddingDate)}</small>
-                    </span>
-                    <em className={invitation.isActive && !isExpiredInvitation(invitation.weddingDate) ? "status success" : "status danger"}>
-                      {invitation.isActive ? (isExpiredInvitation(invitation.weddingDate) ? "منتهية" : "نشطة") : "متوقفة"}
-                    </em>
-                    <b>{formatAdminNumber(invitation.views)} زيارة</b>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="admin-empty-state">
-                <strong>لا توجد دعوات بعد</strong>
-                <p>ابدأ بإنشاء أول دعوة عميل من قسم دعوة جديدة.</p>
-              </div>
-            )}
-          </article>
-
-          <article className="admin-ops-panel">
-            <div className="admin-ops-head">
-              <AlertTriangle size={19} />
-              <h3>تنبيهات تحتاج قرار</h3>
-            </div>
-            {alerts.length ? (
-              <div className="admin-alert-list">
-                {alerts.map((alert) => (
-                  <div className="admin-alert-item" key={alert}>
-                    <AlertTriangle size={17} />
-                    <span>{alert}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="admin-clear-state">
-                <CheckCircle2 size={18} />
-                كل الأنظمة الأساسية مستقرة الآن.
-              </div>
-            )}
-            <div className="admin-backup-chip">
-              <DatabaseBackup size={17} />
-              <span>{latestBackup ? `آخر نسخة ${formatShortDateTime(latestBackup.createdAt)} · ${formatBackupSize(latestBackup.sizeBytes)}` : "لا توجد نسخة احتياطية"}</span>
-            </div>
-          </article>
         </div>
       </section>
 
@@ -264,56 +159,25 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           </span>
           <ArrowUpLeft size={18} />
         </Link>
-        <Link className="admin-start-card" href="/admin/templates">
-          <Palette size={22} />
+        <Link className="admin-start-card" href="/admin/customers">
+          <UsersRound size={22} />
           <span>
-            <strong>القوالب</strong>
-            <small>إضافة قالب أو تعديل معاينة وموسيقى</small>
+            <strong>العملاء</strong>
+            <small>{formatArabicNumber(customers.length)} حساب عميل</small>
           </span>
           <ArrowUpLeft size={18} />
         </Link>
-        <Link className="admin-start-card" href="/admin/preview">
-          <MonitorPlay size={22} />
+        <Link className="admin-start-card" href="/admin/guest-book">
+          <MessageCircleHeart size={22} />
           <span>
-            <strong>معاينة الرئيسية</strong>
-            <small>اختار اللي يظهر في واجهة الموقع</small>
+            <strong>الرسائل والتهاني</strong>
+            <small>{formatArabicNumber(pendingGuestBookMessages.length)} رسالة معلقة</small>
           </span>
           <ArrowUpLeft size={18} />
         </Link>
       </section>
 
-      <section className="panel admin-health-overview" aria-label="حالة التشغيل">
-        <div className="admin-card-head">
-          <Database size={22} />
-          <div>
-            <span className="eyebrow">System Health</span>
-            <h2>حالة التشغيل</h2>
-          </div>
-        </div>
-        <div className="admin-health-grid">
-          <div className="admin-health-card">
-            <Database size={19} />
-            <span className={hasDatabase ? "admin-health-pill good" : "admin-health-pill danger"}>{hasDatabase ? "متصلة" : "ملفات محلية"}</span>
-            <strong>قاعدة البيانات</strong>
-            <small>{hasDatabase ? "الطلبات والدعوات تقرأ من قاعدة البيانات." : "اربط DATABASE_URL للبيانات الحقيقية على الإنتاج."}</small>
-          </div>
-          <SyncStatus />
-          <div className="admin-health-card">
-            <DatabaseBackup size={19} />
-            <span className={backups.length ? "admin-health-pill good" : "admin-health-pill danger"}>{formatArabicNumber(backups.length)}</span>
-            <strong>النسخ الاحتياطي</strong>
-            <small>{latestBackup ? `آخر نسخة: ${formatOrderDate(latestBackup.createdAt)} · ${formatBackupSize(latestBackup.sizeBytes)}` : "لا توجد نسخة محفوظة بعد."}</small>
-          </div>
-          <div className="admin-health-card">
-            <Music2 size={19} />
-            <span className={activeMusicSlots ? "admin-health-pill good" : "admin-health-pill danger"}>{formatArabicNumber(activeMusicSlots)}/5</span>
-            <strong>الموسيقى</strong>
-            <small>{activeMusicSlots ? "فيه مقاطع مفعلة على القوالب." : "لا توجد مقاطع مفعلة حاليا."}</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="admin-home-grid admin-home-grid-simple">
+      <section className="admin-home-grid admin-home-grid-simple admin-activity-grid">
         <article className="panel admin-work-card admin-recent-panel">
           <div className="admin-card-head">
             <Sparkles size={22} />
@@ -344,28 +208,33 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           )}
         </article>
 
-        <aside className="panel admin-work-card admin-side-shortcuts">
+        <article className="panel admin-work-card admin-recent-panel">
           <div className="admin-card-head">
-            <UsersRound size={22} />
+            <Archive size={22} />
             <div>
-              <span className="eyebrow">اختصارات</span>
-              <h2>إدارة سريعة</h2>
+              <span className="eyebrow">نشاط الدعوات</span>
+              <h2>آخر الدعوات</h2>
             </div>
           </div>
-          <div className="admin-mini-links">
-            <Link href="/admin/customers">حسابات العملاء</Link>
-            <Link href="/admin/sync">النسخ والمزامنة</Link>
-            <Link href="/admin/monitoring">مراقبة النظام</Link>
-            <Link href="/admin/recent-edits">
-              <CalendarClock size={16} />
-              آخر التعديلات
-            </Link>
-            <Link href="/admin/analytics">
-              <TrendingUp size={16} />
-              التحليلات والأرقام
-            </Link>
-          </div>
-        </aside>
+          {recentInvitations.length ? (
+            <div className="admin-order-list">
+              {recentInvitations.map((invitation) => (
+                <Link className="admin-order-item" href={`/admin/invitations/${encodeURIComponent(invitation.code)}`} key={invitation.id}>
+                  <span>
+                    <strong>{invitation.groomName} و {invitation.brideName}</strong>
+                    <small>{formatOrderDate(invitation.weddingDate)}</small>
+                  </span>
+                  <em className={invitation.isActive ? "status success" : "status danger"}>{invitation.isActive ? "نشطة" : "متوقفة"}</em>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="admin-empty-state">
+              <strong>لا توجد دعوات بعد</strong>
+              <p>ابدأ بإنشاء أول دعوة عميل من قسم إنشاء دعوة.</p>
+            </div>
+          )}
+        </article>
       </section>
     </>
   );

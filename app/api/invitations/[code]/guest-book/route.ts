@@ -25,60 +25,81 @@ async function readMessagePayload(request: Request) {
 
 export async function GET(_request: Request, context: RouteContext) {
   const { code } = await context.params;
-  const settings = await getCoupleMessagesSettings(code);
+  const invitation = await getInvitationByCode(code).catch((error) => {
+    console.error("[Guest Book] Failed to resolve invitation for messages", error);
+    return null;
+  });
+  const invitationCode = invitation?.code || code;
+  const settings = await getCoupleMessagesSettings(invitationCode);
   if (settings.mode === "disabled") {
     return NextResponse.json({ messages: [], settings });
   }
-  const messages = await getApprovedGuestBookMessages(code);
+  const messages = await getApprovedGuestBookMessages(invitationCode);
   return NextResponse.json({ messages, settings });
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  const { code } = await context.params;
-  if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
-  const limit = checkRequestRateLimit(request, `guest-book:${code}`, { windowMs: 60000, maxRequests: 6 });
-  if (!limit.allowed) return rateLimitResponse(limit.resetAt);
+  try {
+    const { code } = await context.params;
+    if (!isSameOriginRequest(request)) return sameOriginErrorResponse();
+    const limit = checkRequestRateLimit(request, `guest-book:${code}`, { windowMs: 60000, maxRequests: 6 });
+    if (!limit.allowed) return rateLimitResponse(limit.resetAt);
 
-  const contentLength = Number(request.headers.get("content-length") || "0");
-  if (contentLength > 32 * 1024) {
-    return NextResponse.json({ error: "حجم الطلب كبير جدًا." }, { status: 413 });
-  }
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (contentLength > 32 * 1024) {
+      return NextResponse.json({ error: "حجم الطلب كبير جدًا." }, { status: 413 });
+    }
 
-  const invitation = await getInvitationByCode(code);
-  if (!invitation || !invitation.isActive) {
-    return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
-  }
+    const invitation = await getInvitationByCode(code);
+    if (!invitation || !invitation.isActive) {
+      return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
+    }
 
-  const settings = await getCoupleMessagesSettings(code);
-  if (settings.mode === "disabled") {
-    return NextResponse.json({ error: "قسم رسائل العروسين غير مفعل لهذه الدعوة." }, { status: 403 });
-  }
+    const invitationCode = invitation.code;
+    const settings = await getCoupleMessagesSettings(invitationCode);
+    if (settings.mode === "disabled") {
+      return NextResponse.json({ error: "قسم رسائل العروسين غير مفعل لهذه الدعوة." }, { status: 403 });
+    }
 
-  const payload = await readMessagePayload(request);
-  const formData = "formData" in payload ? payload.formData : null;
-  const body = "body" in payload ? payload.body : null;
-  const name = formData ? formData.get("name") : body?.name;
-  const message = formData ? formData.get("message") : body?.message;
-  const saved = await createGuestBookMessage({
-    invitationCode: code,
-    name,
-    message,
-    status: settings.mode === "auto" ? "approved" : "pending",
-  }).catch((error) => {
-    if (error instanceof GuestBookStorageError) return "storage-error" as const;
-    throw error;
-  });
-  if (saved === "storage-error") {
-    return NextResponse.json({ error: "تعذر حفظ الرسالة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
-  }
-  if (!saved) {
-    return NextResponse.json({ error: "اكتب الاسم ورسالة واضحة للعروسين." }, { status: 400 });
-  }
+    const payload = await readMessagePayload(request);
+    const formData = "formData" in payload ? payload.formData : null;
+    const body = "body" in payload ? payload.body : null;
+    const name = formData ? formData.get("name") : body?.name;
+    const message = formData ? formData.get("message") : body?.message;
+    const saved = await createGuestBookMessage({
+      invitationCode,
+      name,
+      message,
+      status: settings.mode === "auto" ? "approved" : "pending",
+    }).catch((error) => {
+      if (error instanceof GuestBookStorageError) return "storage-error" as const;
+      throw error;
+    });
+    if (saved === "storage-error") {
+      return NextResponse.json({ error: "تعذر حفظ الرسالة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
+    }
+    if (!saved) {
+      return NextResponse.json({ error: "اكتب الاسم ورسالة واضحة للعروسين." }, { status: 400 });
+    }
 
-  revalidatePath("/admin/guest-book");
-  revalidatePath("/admin");
-  revalidatePath(`/${code}/ad_3399`);
-  revalidatePath(`/${invitation.customSlug || invitation.code}`);
-  queueGitHubSync(`Couple message ${saved.status}: ${code}.`, { createSnapshot: true });
-  return NextResponse.json({ ok: true, status: saved.status, message: saved.status === "approved" ? saved : undefined });
+    try {
+      revalidatePath("/admin/guest-book");
+      revalidatePath("/admin");
+      revalidatePath(`/${invitationCode}/ad_3399`);
+      revalidatePath(`/${invitation.customSlug || invitationCode}`);
+    } catch (error) {
+      console.error("[Guest Book] Message saved, but cache revalidation failed", error);
+    }
+
+    try {
+      queueGitHubSync(`Couple message ${saved.status}: ${invitationCode}.`, { createSnapshot: true });
+    } catch (error) {
+      console.error("[Guest Book] Message saved, but GitHub backup queue failed", error);
+    }
+
+    return NextResponse.json({ ok: true, status: saved.status, message: saved.status === "approved" ? saved : undefined });
+  } catch (error) {
+    console.error("[Guest Book] Unexpected message submit failure", error);
+    return NextResponse.json({ error: "تعذر إرسال الرسالة حالياً. حاول مرة أخرى بعد قليل." }, { status: 500 });
+  }
 }

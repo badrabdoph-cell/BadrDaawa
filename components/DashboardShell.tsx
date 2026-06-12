@@ -5,26 +5,39 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, UsersRound, X } from "lucide-react";
 
-const adminNavGroups = [
+const adminSections = [
   {
+    id: "overview",
     title: "الدعوات",
+    description: "إنشاء ومتابعة الدعوات والطلبات",
+    accent: "gold",
+    icon: Archive,
     links: [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
-      { href: "/admin/invitations", label: "كل الدعوات", icon: Archive },
-      { href: "/admin/new-invitation", label: "دعوة جديدة", icon: PlusCircle },
-      { href: "/admin/orders", label: "الطلبات", icon: FileText, badgeKey: "orders" },
+      { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
+      { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
+      { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
     ],
   },
   {
-    title: "العملاء والرسائل",
+    id: "customers",
+    title: "العملاء",
+    description: "حسابات العملاء والتواصل والملاحظات",
+    accent: "teal",
+    icon: UsersRound,
     links: [
       { href: "/admin/customers", label: "العملاء", icon: UsersRound },
       { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
       { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
+      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
     ],
   },
   {
+    id: "events",
     title: "الفعاليات",
+    description: "الحضور والتحليلات وتشغيل يوم الفرح",
+    accent: "blue",
+    icon: ClipboardList,
     links: [
       { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
       { href: "/admin/check-ins", label: "تسجيل الوصول", icon: MapPinCheckInside },
@@ -33,46 +46,45 @@ const adminNavGroups = [
     ],
   },
   {
+    id: "content",
     title: "المحتوى",
+    description: "القوالب والوسائط والصفحات العامة",
+    accent: "rose",
+    icon: Palette,
     links: [
       { href: "/admin/templates", label: "القوالب", icon: Palette },
       { href: "/admin/music", label: "الموسيقى", icon: Music2 },
       { href: "/admin/media", label: "الوسائط", icon: FileImage },
       { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
-    ],
-  },
-  {
-    title: "النظام",
-    links: [
-      { href: "/admin/settings", label: "الإعدادات", icon: Settings },
-      { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
-      { href: "/admin/sync", label: "النسخ والمزامنة", icon: DatabaseBackup },
-      { href: "/admin/monitoring", label: "مراقبة النظام", icon: Activity },
-    ],
-  },
-];
-
-const adminUtilityGroups = [
-  {
-    title: "أدوات المحتوى",
-    links: [
       { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
-      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
       { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
       { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
       { href: "/admin/broadcast", label: "شاشة البث", icon: RadioTower },
     ],
   },
   {
-    title: "أدوات النظام",
+    id: "sync",
+    title: "النسخ والمزامنة",
+    description: "النسخ الاحتياطي وGitHub والمهام",
+    accent: "violet",
+    icon: DatabaseBackup,
     links: [
-      { href: "/admin/search", label: "البحث العام", icon: Search },
-      { href: "/admin/favorites", label: "المفضلة", icon: Star },
       { href: "/admin/sync", label: "مركز النسخ والمزامنة", icon: DatabaseBackup },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
-      { href: "/admin/sync-settings", label: "إعدادات GitHub", icon: Github },
       { href: "/admin/sync-history", label: "سجل GitHub", icon: History },
+      { href: "/admin/sync-settings", label: "GitHub", icon: Github },
       { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
+    ],
+  },
+  {
+    id: "system",
+    title: "الإعدادات والنظام",
+    description: "الإشعارات والمراقبة والسجلات",
+    accent: "slate",
+    icon: Settings,
+    links: [
+      { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
+      { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
       { href: "/admin/monitoring", label: "مركز مراقبة النظام", icon: Activity },
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
       { href: "/admin/errors", label: "الأخطاء", icon: Bug },
@@ -81,14 +93,22 @@ const adminUtilityGroups = [
       { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
     ],
   },
+  {
+    id: "workspace",
+    title: "مساحة العمل",
+    description: "بحث ومفضلة وروابط يومية",
+    accent: "green",
+    icon: Search,
+    links: [
+      { href: "/admin/search", label: "البحث العام", icon: Search },
+      { href: "/admin/favorites", label: "المفضلة", icon: Star },
+    ],
+  },
 ];
 
-const adminLinks = adminNavGroups.flatMap((group) => group.links);
-const adminUtilityLinks = adminUtilityGroups.flatMap((group) => group.links);
-const allAdminLinks = [...adminLinks, ...adminUtilityLinks];
+const allAdminLinks = adminSections.flatMap((group) => group.links);
 const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications"]);
 const mobilePrimaryLinks = allAdminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
-const mobileMoreLinks = allAdminLinks.filter((link) => !mobilePrimaryHrefs.has(link.href));
 const pendingAdminActionKey = "badr-admin-pending-action";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -98,6 +118,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     allAdminLinks
       .filter((link) => (link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href)))
       .sort((a, b) => b.href.length - a.href.length)[0] || allAdminLinks[0];
+  const activeSection = adminSections.find((section) => section.links.some((link) => activeLink.href === link.href)) || adminSections[0];
+  const [selectedSectionId, setSelectedSectionId] = useState(activeSection.id);
+  const selectedSection = adminSections.find((section) => section.id === selectedSectionId) || activeSection;
   const [ordersBadge, setOrdersBadge] = useState(0);
   const [messagesBadge, setMessagesBadge] = useState(0);
   const [notificationsBadge, setNotificationsBadge] = useState(0);
@@ -106,13 +129,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const routeBusyTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    setSelectedSectionId(activeSection.id);
     setMobileMenuOpen(false);
     setRouteBusy(false);
     if (routeBusyTimerRef.current) {
       window.clearTimeout(routeBusyTimerRef.current);
       routeBusyTimerRef.current = null;
     }
-  }, [pathname]);
+  }, [pathname, activeSection.id]);
 
   useEffect(() => {
     setRouteBusy(false);
@@ -340,25 +364,50 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <nav className="dashboard-nav grouped" aria-label="لوحة الإدارة">
-            {adminNavGroups.map((group) => (
-              <section className="dashboard-nav-group" key={group.title} aria-label={group.title}>
-                <h2 className="dashboard-nav-heading">{group.title}</h2>
-                <div className="dashboard-nav-group-links">
-                  {group.links.map((link) => {
-                    const Icon = link.icon;
-                    const isActive = activeLink.href === link.href;
-                    return (
-                      <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
-                        <Icon size={18} />
-                        <span>{link.label}</span>
-                        {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+          <nav className="dashboard-nav dashboard-section-nav" aria-label="لوحة الإدارة">
+            <div className="dashboard-primary-sections" aria-label="الأقسام الرئيسية">
+              {adminSections.map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection.id === section.id;
+                const isSelected = selectedSection.id === section.id;
+                return (
+                  <button
+                    className={`${isSelected ? "selected" : ""} ${isActive ? "active" : ""}`}
+                    data-accent={section.accent}
+                    type="button"
+                    key={section.id}
+                    onClick={() => setSelectedSectionId(section.id)}
+                    aria-pressed={isSelected}
+                  >
+                    <span>
+                      <Icon size={18} />
+                    </span>
+                    <strong>{section.title}</strong>
+                    <small>{section.description}</small>
+                  </button>
+                );
+              })}
+            </div>
+            <section className="dashboard-secondary-panel" data-accent={selectedSection.accent} aria-label={selectedSection.title}>
+              <div className="dashboard-secondary-head">
+                <span className="eyebrow">القسم الفرعي</span>
+                <h2>{selectedSection.title}</h2>
+                <p>{selectedSection.description}</p>
+              </div>
+              <div className="dashboard-nav-group-links">
+                {selectedSection.links.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = activeLink.href === link.href;
+                  return (
+                    <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
+                      <Icon size={18} />
+                      <span>{link.label}</span>
+                      {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
           </nav>
         </div>
 
@@ -378,7 +427,19 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div>
-            <span className="eyebrow">Admin Panel</span>
+            <nav className="admin-breadcrumb" aria-label="مسار التنقل">
+              <Link href="/admin">الرئيسية</Link>
+              {activeLink.href === "/admin" ? null : (
+                <>
+                  <span>/</span>
+                  <button type="button" onClick={() => setSelectedSectionId(activeSection.id)}>
+                    {activeSection.title}
+                  </button>
+                  <span>/</span>
+                  <Link href={activeLink.href}>{activeLink.label}</Link>
+                </>
+              )}
+            </nav>
             <h1>{activeLink.label}</h1>
           </div>
           <form className="dashboard-global-search" action="/admin/search" method="get">
@@ -387,30 +448,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <button type="submit">بحث</button>
           </form>
           <div className="dashboard-topbar-actions">
-            <details className="dashboard-utility-menu">
-              <summary className="admin-icon-button" title="الأدوات">
-                <Menu size={18} />
-              </summary>
-              <div className="dashboard-utility-panel" role="menu" aria-label="أدوات الإدارة">
-                {adminUtilityGroups.map((group) => (
-                  <section key={group.title}>
-                    <h2>{group.title}</h2>
-                    <div>
-                      {group.links.map((link) => {
-                        const Icon = link.icon;
-                        const isActive = activeLink.href === link.href;
-                        return (
-                          <Link className={isActive ? "active" : ""} href={link.href} key={link.href} role="menuitem" aria-current={isActive ? "page" : undefined}>
-                            <Icon size={16} />
-                            <span>{link.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </details>
             <Link className="admin-icon-button" href="/admin/templates" title="القوالب">
               <Palette size={18} />
             </Link>
@@ -465,17 +502,34 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <input name="q" placeholder="بحث عام..." defaultValue={pathname === "/admin/search" ? searchParams.get("q") || "" : ""} />
           <button type="submit">بحث</button>
         </form>
-        <nav className="admin-mobile-menu-grid" aria-label="كل أقسام لوحة الإدارة">
-          {mobileMoreLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = activeLink.href === link.href;
-            const badge = badgeFor(link);
+        <nav className="admin-mobile-section-list" aria-label="كل أقسام لوحة الإدارة">
+          {adminSections.map((section) => {
+            const Icon = section.icon;
+            const isCurrentSection = activeSection.id === section.id;
             return (
-              <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
-                <Icon size={18} />
-                <span>{link.label}</span>
-                {badge ? <strong className="dashboard-nav-badge">{badge}</strong> : null}
-              </Link>
+              <details key={section.id} open={isCurrentSection}>
+                <summary data-accent={section.accent}>
+                  <span>
+                    <Icon size={18} />
+                  </span>
+                  <strong>{section.title}</strong>
+                  <small>{section.description}</small>
+                </summary>
+                <div>
+                  {section.links.map((link) => {
+                    const LinkIcon = link.icon;
+                    const isActive = activeLink.href === link.href;
+                    const badge = badgeFor(link);
+                    return (
+                      <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
+                        <LinkIcon size={18} />
+                        <span>{link.label}</span>
+                        {badge ? <strong className="dashboard-nav-badge">{badge}</strong> : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </details>
             );
           })}
         </nav>

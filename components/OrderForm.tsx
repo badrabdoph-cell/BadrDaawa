@@ -547,7 +547,7 @@ export function OrderForm({
     const nextIndex = Math.min(Math.max(skipTemplateStep ? Math.max(index, 1) : index, 0), orderWizardSteps.length - 1);
     setActiveStepIndex(nextIndex);
     window.setTimeout(() => {
-      formRef.current?.querySelector<HTMLElement>(".order-wizard-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 40);
   }
 
@@ -1852,7 +1852,7 @@ export function OrderForm({
             </div>
 
             <p className="order-review-submit-note" id="confirm-order">
-              راجع البيانات، ثم اضغط التالي لإنشاء الدعوة.
+              راجع البيانات، ثم اضغط إنشاء الدعوة لإرسال الطلب.
             </p>
             {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
           </section>
@@ -1865,7 +1865,7 @@ export function OrderForm({
             {isLastStep ? (
               <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
                 {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
-                التالي
+                إنشاء الدعوة
               </button>
             ) : (
               <button className="btn btn-gold btn-glow" type="button" onClick={goNext}>

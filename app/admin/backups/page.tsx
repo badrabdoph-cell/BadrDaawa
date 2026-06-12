@@ -64,6 +64,14 @@ export default async function BackupsPage({
         <div className="notice danger">فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL و pg_dump.</div>
       ) : null}
 
+      <nav className="admin-page-tabs" aria-label="أقسام النسخ الاحتياطي">
+        <a href="#backup-create">النسخ</a>
+        <a href="#backup-restore">الاستعادة</a>
+        <a href="#backup-log">السجل</a>
+        <a href="/admin/sync-settings">الإعدادات</a>
+      </nav>
+
+      <section id="backup-create" className="admin-tab-section" aria-label="ملخص النسخ">
       <div className="backup-status-grid">
         <article className="panel backup-status-card">
           <Archive size={24} />
@@ -86,7 +94,9 @@ export default async function BackupsPage({
         <ShieldCheck size={18} />
         <span>PostgreSQL هو مصدر الحقيقة. ملفات JSON داخل النسخة محفوظة كإعدادات أو طبقة legacy فقط، ويتم الاحتفاظ بآخر 20 نسخة على GitHub.</span>
       </div>
+      </section>
 
+      <section id="backup-log" className="admin-tab-section" aria-label="سجل النسخ والاستعادة">
       <div className="table-shell">
         <table className="data-table">
           <thead>
@@ -123,7 +133,7 @@ export default async function BackupsPage({
                         <input name="fileName" type="hidden" value={backup.fileName} />
                         <input name="returnTo" type="hidden" value="/admin/backups" />
                         <input aria-label="تأكيد اسم ملف النسخة" name="confirmFileName" placeholder={backup.fileName} required />
-                        <button className="btn btn-soft btn-icon" type="submit" title="استعادة">
+                        <button className="btn btn-soft btn-icon admin-action-restore" type="submit" title="استعادة">
                           <RotateCcw size={17} />
                         </button>
                       </form>
@@ -144,6 +154,7 @@ export default async function BackupsPage({
           </tbody>
         </table>
       </div>
+      </section>
     </>
   );
 }
