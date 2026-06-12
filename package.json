@@ -19,7 +19,8 @@
     "db:backfill:operational-json": "node scripts/backfill-operational-json-to-postgres.mjs",
     "db:studio": "prisma studio",
     "audit:cleanup": "node scripts/safe-cleanup-audit.mjs",
-    "backup": "node scripts/backup.mjs"
+    "backup": "node scripts/backup.mjs",
+    "backup:trigger": "node scripts/trigger-backup-cron.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
-import { createBackupSnapshot } from "./backups";
+import { createBackupSnapshot, listBackupSnapshots } from "./backups";
 import { syncAdminStateToGitHub } from "./github-sync";
 import { getSystemHealthSnapshot } from "./system-health";
 import { getMediaCleanupReport } from "./media-cleanup";
@@ -189,7 +189,9 @@ function isRun(value: unknown): value is ScheduledTaskRun {
 async function readStore() {
   noStore();
   ensureRuntimeDirectories();
-  return normalizeStore(await readJsonFile(storePath));
+  const store = normalizeStore(await readJsonFile(storePath));
+  await hydrateBackupTaskFromSnapshots(store);
+  return store;
 }
 
 async function writeStore(store: SchedulerStore) {
@@ -221,6 +223,9 @@ function isDue(task: ScheduledTaskState) {
 async function runBackupTask(): Promise<TaskExecutionResult> {
   const backup = await createBackupSnapshot("scheduled");
   const sync = await syncAdminStateToGitHub(`Scheduled backup upload: ${backup.fileName}`);
+  if (sync.status !== "synced" && sync.status !== "unchanged") {
+    throw new Error(`تم إنشاء Backup محلياً (${backup.fileName}) لكن رفع GitHub لم ينجح: ${sync.status} - ${sync.message}`);
+  }
   return {
     message: `تم إنشاء Backup: ${backup.fileName} (${sync.status})`,
     metadata: {
@@ -232,6 +237,54 @@ async function runBackupTask(): Promise<TaskExecutionResult> {
       githubCommitSha: sync.commitSha || null,
     },
   };
+}
+
+async function hydrateBackupTaskFromSnapshots(store: SchedulerStore) {
+  const definition = definitionById.get("backup");
+  if (!definition) return;
+
+  const task = store.tasks.backup || initialTaskState(definition);
+  store.tasks.backup = task;
+  if (!task.automaticEnabled) return;
+
+  const latestBackup = (await listBackupSnapshots().catch(() => []))[0];
+  if (!latestBackup) {
+    if (!task.lastRun) task.nextRunAt = new Date(Date.now() - 1).toISOString();
+    return;
+  }
+
+  const latestTime = Date.parse(latestBackup.createdAt);
+  if (!Number.isFinite(latestTime)) return;
+
+  const lastRunTime = Date.parse(task.lastRun?.finishedAt || "");
+  const shouldHydrateLastRun = !task.lastRun || !Number.isFinite(lastRunTime) || latestTime > lastRunTime;
+  if (shouldHydrateLastRun) {
+    const run: ScheduledTaskRun = {
+      id: `backup-snapshot-${latestBackup.fileName}`,
+      taskId: "backup",
+      trigger: "automatic",
+      status: "success",
+      startedAt: latestBackup.createdAt,
+      finishedAt: latestBackup.createdAt,
+      durationMs: 0,
+      message: `آخر Backup موجود: ${latestBackup.fileName}`,
+      metadata: {
+        fileName: latestBackup.fileName,
+        sizeBytes: latestBackup.sizeBytes,
+        items: latestBackup.items,
+        source: latestBackup.source,
+        hydratedFromBackupFile: true,
+      },
+    };
+    task.lastRun = run;
+    task.status = task.status === "running" ? task.status : "success";
+    if (!store.runs.some((item) => item.id === run.id)) {
+      store.runs = [run, ...store.runs].slice(0, maxRuns);
+    }
+  }
+
+  task.nextRunAt = new Date(latestTime + task.intervalMs).toISOString();
+  task.updatedAt = task.updatedAt || nowIso();
 }
 
 async function runMediaCleanupTask(): Promise<TaskExecutionResult> {

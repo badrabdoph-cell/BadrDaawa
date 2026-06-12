@@ -47,6 +47,15 @@ pnpm db:migrate
 - نسخة كل ساعة داخل `backups/hourly`.
 - نسخة يومية كاملة داخل `backups/daily`.
 
+ولتشغيل Backup لوحة الإدارة نفسها كل 6 ساعات على Railway، أضف Scheduled Job مستقل:
+
+- اضبط `BACKUP_CRON_SECRET` في خدمة الموقع الرئيسية وفي الـ Scheduled Job بنفس القيمة.
+- اضبط `BACKUP_CRON_URL=https://BadrDaawa.com/api/cron/backup`.
+- استخدم الأمر `pnpm backup:trigger`.
+- استخدم schedule مثل `0 */6 * * *`.
+
+يعيد endpoint `/api/cron/backup` كود `200` عند نجاح إنشاء النسخة ورفعها، ويعيد `500` إذا فشل الرفع إلى GitHub حتى لا يظهر نجاح وهمي.
+
 الاسترجاع يتم عبر:
 
 ```bash

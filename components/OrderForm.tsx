@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Camera,
   Check,
+  Eye,
   FileVideo,
   Heart,
   ImagePlus,
@@ -560,6 +561,7 @@ export function OrderForm({
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
   const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
+  const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
@@ -579,6 +581,32 @@ export function OrderForm({
   const isLastStep = activeStepIndex === orderWizardSteps.length - 1;
   const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
   const previewImageUrls = draftImageUrls.filter(Boolean);
+  const orderPreviewSrc = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("orderPreview", "1");
+    params.set("embed", "1");
+    params.set("template", selectedTemplate.slug);
+    params.set("language", form.language);
+    params.set("groomName", form.groomName);
+    params.set("brideName", form.brideName);
+    params.set("weddingDate", form.weddingDate);
+    params.set("venue", form.venue);
+    if (form.mapUrl.trim()) params.set("mapUrl", form.mapUrl.trim());
+    if (form.photographerEnabled) {
+      params.set("photographerEnabled", "1");
+      if (form.photographerName.trim()) params.set("photographerName", form.photographerName.trim());
+      if (form.photographerFacebookUrl.trim()) params.set("photographerFacebookUrl", form.photographerFacebookUrl.trim());
+      if (form.photographerInstagramUrl.trim()) params.set("photographerInstagramUrl", form.photographerInstagramUrl.trim());
+    }
+    params.set("musicEnabled", form.musicEnabled ? "1" : "0");
+    if (form.musicEnabled) params.set("musicChoice", form.musicChoice);
+    if (form.musicUrl.trim()) params.set("musicUrl", form.musicUrl.trim());
+    if (form.openingText.trim()) params.set("openingText", form.openingText.trim());
+    const story = filledOrderStory(form.story);
+    if (form.storyEnabled && story.length) params.set("story", JSON.stringify(story));
+    if (previewImageUrls.length) params.set("gallery", previewImageUrls.join(","));
+    return `/templates/${encodeURIComponent(selectedTemplate.slug)}/preview?${params.toString()}`;
+  }, [form, previewImageUrls, selectedTemplate.slug]);
 
   useEffect(() => {
     setActiveStepIndex((current) => {
@@ -637,6 +665,31 @@ export function OrderForm({
   function goBack() {
     if (isFirstStep) return;
     goToStep(activeStepIndex - 1);
+  }
+
+  function openOrderPreview() {
+    const currentValues = getCurrentFormFromDom();
+    setForm((current) => ({ ...current, ...currentValues }));
+    persistDraft(
+      {
+        ...currentValues,
+        templateSlug: selectedTemplate.slug,
+        photographerEnabled: form.photographerEnabled,
+        storyEnabled: form.storyEnabled,
+        story: form.story,
+        musicEnabled: form.musicEnabled,
+        musicChoice: form.musicChoice,
+      },
+      draftImageUrls,
+    );
+    setOrderPreviewOpen(true);
+  }
+
+  function returnFromOrderPreview() {
+    setOrderPreviewOpen(false);
+    window.setTimeout(() => {
+      formRef.current?.querySelector<HTMLElement>(".order-review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 40);
   }
 
   useEffect(() => {
@@ -827,35 +880,6 @@ export function OrderForm({
     if (!draftReady) return;
     persistDraft();
   }, [draftReady, form, draftImageUrls]);
-
-  useEffect(() => {
-    if (!draftReady || typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("confirmOrder") !== "1") return;
-
-    params.delete("confirmOrder");
-    const nextQuery = params.toString();
-    window.history.replaceState(window.history.state, "", nextQuery ? `/order?${nextQuery}` : "/order");
-
-    let focusTimer = 0;
-    const focusConfirmButton = (attempt = 0) => {
-      const formElement = formRef.current;
-      const submitButton = formElement?.querySelector<HTMLButtonElement>(".order-submit");
-
-      if (!submitButton) {
-        if (attempt < 30) focusTimer = window.setTimeout(() => focusConfirmButton(attempt + 1), 100);
-        return;
-      }
-
-      submitButton.scrollIntoView({ behavior: "auto", block: "center" });
-      submitButton.focus({ preventScroll: true });
-      submitButton.classList.add("order-submit-highlight");
-      window.setTimeout(() => submitButton.classList.remove("order-submit-highlight"), 1800);
-    };
-
-    focusTimer = window.setTimeout(() => focusConfirmButton(), 900);
-    return () => window.clearTimeout(focusTimer);
-  }, [draftReady]);
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -1755,34 +1779,20 @@ export function OrderForm({
                 ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
                 ["التاريخ", readableDate || "لم يحدد بعد", 2],
                 ["الهاتف", fieldValue(form.phone), 2],
-                ["القاعة", fieldValue(form.venue), 3],
+                ["مكان الحفل", form.venue.trim() ? "تمت إضافته" : "غير مضاف", 3],
                 ["الصور", `${previewImageUrls.length} من 3`, 4],
                 ["الموسيقى", !form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : form.musicChoice === "upload" ? "ملف MP3" : form.musicChoice === "video" ? "صوت من فيديو" : "رابط أغنية", 5],
               ].map(([label, value, step]) => (
-                <div className="order-review-item" key={String(label)}>
+                <button className="order-review-item" key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
                   <span>✓ {label}</span>
                   <strong>{value}</strong>
-                  <button type="button" onClick={() => goToStep(Number(step))}>تعديل</button>
-                </div>
-              ))}
-            </div>
-
-            <div className="order-review-customizations">
-              <div className="order-compact-section-head">
-                <h2>تخصيصات اختيارية</h2>
-                <p>يمكنك تركها فارغة والضغط على التالي مباشرة لإنشاء الدعوة.</p>
-              </div>
-
-              <article className="order-customization-card">
-                <Heart size={19} />
-                <div>
-                  <strong>نص الافتتاح السينمائي</strong>
-                  <span>اختياري</span>
-                </div>
-                <button className="btn btn-soft" type="button" onClick={() => setOpeningTextOpen((current) => !current)}>
-                  {openingTextOpen ? "إخفاء" : form.openingText ? "تعديل" : "إضافة"}
                 </button>
-              </article>
+              ))}
+
+              <button className="order-review-item order-review-item-optional" type="button" onClick={() => setOpeningTextOpen((current) => !current)}>
+                <span>♡ نص الافتتاح</span>
+                <strong>{form.openingText.trim() ? "تمت إضافته" : "غير مضاف"}</strong>
+              </button>
               {openingTextOpen ? (
                 <div className="order-customization-fields">
                   <div className="field">
@@ -1799,13 +1809,10 @@ export function OrderForm({
                 </div>
               ) : null}
 
-              <article className="order-customization-card">
-                <Heart size={19} />
-                <div>
-                  <strong>قصة العروسين</strong>
-                  <span>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "اختياري"}</span>
-                </div>
-                <button className="btn btn-soft" type="button" onClick={() => {
+              <button
+                className="order-review-item order-review-item-optional"
+                type="button"
+                onClick={() => {
                   if (form.storyEnabled) {
                     cancelOrderStory();
                     return;
@@ -1814,10 +1821,11 @@ export function OrderForm({
                   setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
                   setStoryErrors({});
                   if (message) setMessage("");
-                }}>
-                  {form.storyEnabled ? "إخفاء" : "إضافة"}
-                </button>
-              </article>
+                }}
+              >
+                <span>♡ قصة العروسين</span>
+                <strong>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "غير مضافة"}</strong>
+              </button>
 
               {form.storyEnabled ? (
                 <div className="order-story-fields order-customization-fields">
@@ -1868,16 +1876,10 @@ export function OrderForm({
                 </div>
               ) : null}
 
-              <article className="order-customization-card">
-                <Camera size={19} />
-                <div>
-                  <strong>بيانات المصور</strong>
-                  <span>{form.photographerEnabled ? fieldValue(form.photographerName, "مضاف") : "اختياري"}</span>
-                </div>
-                <button className="btn btn-soft" type="button" onClick={() => updateField("photographerEnabled", !form.photographerEnabled)}>
-                  {form.photographerEnabled ? "إخفاء" : "إضافة"}
-                </button>
-              </article>
+              <button className="order-review-item order-review-item-optional" type="button" onClick={() => updateField("photographerEnabled", !form.photographerEnabled)}>
+                <span>♡ بيانات المصور</span>
+                <strong>{form.photographerEnabled ? fieldValue(form.photographerName, "تمت إضافته") : "غير مضافة"}</strong>
+              </button>
 
               {form.photographerEnabled ? (
                 <div className="photographer-fields order-customization-fields">
@@ -1900,30 +1902,62 @@ export function OrderForm({
             </div>
 
             <p className="order-review-submit-note" id="confirm-order">
-              راجع البيانات، ثم اضغط إنشاء الدعوة لإرسال الطلب.
+              اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل إنشاء الدعوة.
             </p>
             {hasImageUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور الي الدعوه وبعدها اكمل</p> : null}
           </section>
 
-          <div className="order-wizard-actions">
-            <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
-              <ArrowRight size={17} />
-              رجوع
-            </button>
+          <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
-              <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
-                {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
-                إنشاء الدعوة
-              </button>
+              <>
+                <button className="btn btn-gold btn-glow order-preview-action" type="button" onClick={openOrderPreview}>
+                  <Eye size={17} />
+                  معاينة الدعوة
+                </button>
+                <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasImageUploadInProgress} aria-describedby={hasImageUploadInProgress ? "order-upload-wait-hint" : undefined}>
+                  {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
+                  إنشاء الدعوة
+                </button>
+                <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
+                  <ArrowRight size={17} />
+                  رجوع
+                </button>
+              </>
             ) : (
-              <button className="btn btn-gold btn-glow" type="button" onClick={goNext}>
-                التالي
-                <ArrowLeft size={17} />
-              </button>
+              <>
+                <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
+                  <ArrowRight size={17} />
+                  رجوع
+                </button>
+                <button className="btn btn-gold btn-glow" type="button" onClick={goNext}>
+                  التالي
+                  <ArrowLeft size={17} />
+                </button>
+              </>
             )}
           </div>
         </form>
       </div>
+
+      {orderPreviewOpen ? (
+        <div className="order-preview-sheet-backdrop" role="dialog" aria-modal="true" aria-label="معاينة الدعوة">
+          <div className="order-preview-sheet">
+            <div className="order-preview-sheet-header">
+              <div>
+                <strong>معاينة الدعوة</strong>
+                <span>راجع التصميم، ثم أكد الطلب للعودة لخطوة الإنشاء.</span>
+              </div>
+              <button className="order-preview-sheet-close" type="button" onClick={() => setOrderPreviewOpen(false)} aria-label="إغلاق المعاينة">
+                ×
+              </button>
+            </div>
+            <iframe src={orderPreviewSrc} title="معاينة الدعوة قبل التأكيد" />
+            <button className="order-preview-confirm-floating" type="button" onClick={returnFromOrderPreview}>
+              تأكيد الطلب
+            </button>
+          </div>
+        </div>
+      ) : null}
 
     </div>
   );
