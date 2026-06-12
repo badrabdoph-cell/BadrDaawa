@@ -93,7 +93,9 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     audio.addEventListener("error", onError);
 
     function playAfterOpening() {
-      if (audioRef.current === audio && !audio.paused) return;
+      const currentAudio = audioRef.current;
+      if (!currentAudio) return;
+      if (currentAudio === audio && !currentAudio.paused) return;
       void play();
     }
     function stopOnLeave() {
