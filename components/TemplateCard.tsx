@@ -4,9 +4,6 @@ import type { CSSProperties } from "react";
 import type { TemplateDefinition } from "@/lib/types";
 
 export function TemplateCard({ template }: { template: TemplateDefinition }) {
-  const previewHref = `/templates/${template.slug}/preview?hidePreviewChrome=1&galleryPreview=1`;
-  const orderHref = `/order?template=${template.slug}`;
-
   return (
     <article
       className="template-card"
@@ -19,31 +16,29 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
         } as CSSProperties
       }
     >
-      <Link href={previewHref} className="template-card-hit" aria-label={`معاينة تصميم ${template.arabicName}`} />
-      <div className="template-preview">
+      <Link href={`/order?template=${template.slug}`} className="template-preview" aria-label={`استخدم تصميم ${template.arabicName}`}>
         <span className="template-preview-screen">
           <img src={template.previewImage} alt={`معاينة تصميم ${template.arabicName}`} loading="lazy" decoding="async" />
-        </span>
-        <span className="template-preview-peek" aria-hidden="true">
-          <Eye size={28} />
         </span>
         <span className="template-badge">{template.category}</span>
         <span className="template-preview-caption">
           <strong>{template.arabicName}</strong>
           <small>{template.name}</small>
         </span>
-      </div>
+      </Link>
       <div className="template-body">
-        <h3>{template.arabicName}</h3>
+        <Link className="template-name-link" href={`/order?template=${template.slug}`}>
+          <h3>{template.arabicName}</h3>
+        </Link>
         <p>{template.concept}</p>
-        <div className="template-card-actions button-row">
-          <Link className="btn btn-gold btn-glow template-card-select-button" href={orderHref}>
+        <div className="button-row">
+          <Link className="btn btn-gold btn-glow template-card-select-button" href={`/order?template=${template.slug}`}>
             <Sparkles size={17} />
             استخدم هذا التصميم
           </Link>
-          <Link className="btn btn-soft btn-glass template-card-preview-button" href={previewHref}>
+          <Link className="btn btn-soft btn-glass template-card-preview-button" href={`/templates/${template.slug}/preview`}>
             <Eye size={17} />
-            معاينة
+            معاينة كاملة
           </Link>
         </div>
       </div>
