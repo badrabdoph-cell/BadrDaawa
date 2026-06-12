@@ -1,6 +1,4 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { getAdminInvitations, getAdminOrders } from "./admin-data";
@@ -43,7 +41,6 @@ type NotificationStore = {
   notifications: AdminNotification[];
 };
 
-const storePath = path.join(process.cwd(), "data", "admin-notifications.json");
 const storeKey = "admin-notifications";
 const recentErrorWindowMs = 24 * 60 * 60 * 1000;
 const defaultStorageLimitBytes = 1024 * 1024 * 1024;
@@ -77,15 +74,7 @@ function parseStorageLimit() {
 
 async function readStore(): Promise<NotificationStore> {
   noStore();
-  return readAppSettingOrSeed(storeKey, async () => {
-    try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<NotificationStore>;
-    return { notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [] };
-    } catch {
-    return { notifications: [] };
-    }
-  });
+  return readAppSettingOrSeed(storeKey, () => ({ notifications: [] }));
 }
 
 async function writeStore(store: NotificationStore) {

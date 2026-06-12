@@ -1,5 +1,3 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, getAdminSessionUser } from "./admin-session";
@@ -60,10 +58,8 @@ type AuditLogInput = Omit<AuditLogEntry, "id" | "createdAt"> & {
   createdAt?: string;
 };
 
-const auditLogPath = path.join(process.cwd(), "data", "audit-log.json");
 const maxStoredEntries = 5000;
 const maxStringLength = 900;
-let writeChain = Promise.resolve();
 
 function createAuditId() {
   return `audit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -95,33 +91,6 @@ function toPrismaJson(value: unknown) {
   if (value === undefined) return undefined;
   if (value === null) return Prisma.JsonNull;
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
-}
-
-async function ensureAuditDirectory() {
-  await mkdir(path.dirname(auditLogPath), { recursive: true });
-}
-
-async function readAuditLogFile() {
-  try {
-    const raw = await readFile(auditLogPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? parsed.filter(isAuditLogEntry) : [];
-  } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return [];
-    console.error("Failed to read audit log", error);
-    return [];
-  }
-}
-
-function isAuditLogEntry(value: unknown): value is AuditLogEntry {
-  if (!value || typeof value !== "object") return false;
-  const entry = value as Partial<AuditLogEntry>;
-  return Boolean(entry.id && entry.createdAt && entry.actor && entry.action && entry.entity);
-}
-
-async function writeAuditLogFile(entries: AuditLogEntry[]) {
-  await ensureAuditDirectory();
-  await writeFile(auditLogPath, `${JSON.stringify(entries.slice(0, maxStoredEntries), null, 2)}\n`, "utf8");
 }
 
 export async function getAuditActorFromAdminRequest(request: NextRequest) {
@@ -216,7 +185,6 @@ export async function listAuditLogEntries(filters: AuditLogFilters = {}) {
       console.error("Failed to read audit log from PostgreSQL", error);
     }
   }
-  if (!entries.length) entries = await readAuditLogFile();
   const query = normalizeText(filters.q).trim();
   const from = dateValue(filters.from);
   const to = dateValue(filters.to);

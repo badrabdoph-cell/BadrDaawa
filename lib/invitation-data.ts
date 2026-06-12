@@ -169,7 +169,7 @@ export type InvitationViewTrackingInput = {
 export async function recordInvitationView(code: string, tracking?: InvitationViewTrackingInput) {
   const metadata = tracking ? createVisitEventMetadata(tracking) : undefined;
   if (!prisma) {
-    console.error("[Analytics] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Analytics] PostgreSQL is not configured. Refusing operational write.");
     return;
   }
 

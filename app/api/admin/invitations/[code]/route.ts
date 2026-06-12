@@ -4,7 +4,6 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   if (!prisma) {
-    console.error("[Admin Invitation Action] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Admin Invitation Action] PostgreSQL is not configured. Refusing operational write.");
     return redirectBack(request, "database");
   }
 
@@ -116,7 +115,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (oldValues && "customSlug" in oldValues && typeof oldValues.customSlug === "string") safeRevalidatePath(`/${oldValues.customSlug}`);
     if (customSlug) safeRevalidatePath(`/${customSlug}`);
     safeRevalidatePath(`/${code}/ad_3399`);
-    queueGitHubSync(`Client invitation ${action}: ${code}.`, { createSnapshot: true });
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
       action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "custom-slug" ? "invitation.update" : "invitation.resume",

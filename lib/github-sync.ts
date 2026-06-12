@@ -89,13 +89,15 @@ export type SyncLogEntry = {
   errorMessage: string | null;
   duration: number | null;
   retryCount: number;
-  nextRetryAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
 const syncRoots = [
   { absolutePath: runtimeBackupDir, repoPath: (process.env.GITHUB_BACKUP_REPO_PATH || "backups").replace(/^\/+|\/+$/g, "") || "backups" },
+];
+const projectAssetRoots = [
+  { absolutePath: path.join(process.cwd(), "public", "assets", "admin"), repoPath: "public/assets/admin" },
 ];
 const projectSyncFiles = [
   "data/site-settings.json",
@@ -113,10 +115,6 @@ const projectSyncFiles = [
 const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
 const maxSyncFileBytes = (Number(process.env.BACKUP_GITHUB_MAX_FILE_MB || process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
 const maxSyncTotalBytes = (Number(process.env.BACKUP_GITHUB_MAX_TOTAL_MB || process.env.GITHUB_SYNC_MAX_TOTAL_MB) || 180) * 1024 * 1024;
-
-// Retry delays in milliseconds: 5s, 15s, 45s
-const retryDelays = [5_000, 15_000, 45_000];
-const maxRetries = 3;
 
 class GitHubSyncHttpError extends Error {
   status: number;
@@ -345,7 +343,8 @@ async function collectProjectSyncFiles() {
     if (!fileStat?.isFile() || !fileStat.size || fileStat.size > maxSyncFileBytes) continue;
     files.push({ absolutePath, repoPath, size: fileStat.size });
   }
-  return files;
+  const assetGroups = await Promise.all(projectAssetRoots.map((assetRoot) => walkFiles(assetRoot.absolutePath, assetRoot)));
+  return [...files, ...assetGroups.flat()];
 }
 
 async function isValidDatabaseBackupFile(file: SyncFile) {
@@ -535,10 +534,9 @@ export async function updateSyncLog(
     filesCount: number;
     commitSha: string;
     commitUrl: string;
-    errorMessage: string;
+    errorMessage: string | null;
     duration: number;
     retryCount: number;
-    nextRetryAt: Date;
   }>,
 ): Promise<void> {
   try {
@@ -724,7 +722,7 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
 
 export async function syncAdminStateToGitHub(
   reason: string,
-  options: { createSnapshot?: boolean; uploadProjectFiles?: boolean; logId?: string; retryCount?: number } = {},
+  options: { uploadProjectFiles?: boolean; logId?: string; retryCount?: number } = {},
 ): Promise<GitHubSyncResult> {
   const logId = options.logId ?? (await createSyncLog({ reason, status: "processing", retryCount: options.retryCount ?? 0 }));
   const ts = () => new Date().toISOString();
@@ -732,9 +730,6 @@ export async function syncAdminStateToGitHub(
   console.log(`[GitHub Sync ${ts()}] GitHub Upload Started: ${reason}`);
 
   try {
-    if (options.createSnapshot) {
-      console.log("[GitHub Sync] createSnapshot ignored. Backups are created only by manual or scheduled backup jobs.");
-    }
     const result = await attemptSync(reason, { uploadProjectFiles: options.uploadProjectFiles });
     const duration = result.duration ?? 0;
 
@@ -757,18 +752,14 @@ export async function syncAdminStateToGitHub(
     const authFailed = isGitHubSyncAuthFailure(error);
     const message = authFailed ? gitHubAuthFailureMessage(rawMessage, getSyncConfig()) : rawMessage;
     const retryCount = options.retryCount ?? 0;
-    const canRetry = !authFailed && retryCount < maxRetries;
-    const nextRetryDelay = canRetry ? retryDelays[retryCount] : null;
-    const nextRetryAt = nextRetryDelay ? new Date(Date.now() + nextRetryDelay) : null;
 
-    console.error(`[GitHub Sync ${ts()}] Failed (retry ${retryCount}/${maxRetries}, authFailed=${authFailed}): ${message}`);
+    console.error(`[GitHub Sync ${ts()}] Failed (manual retry only, authFailed=${authFailed}): ${message}`);
 
     if (logId) {
       await updateSyncLog(logId, {
-        status: canRetry ? "pending" : "failed",
+        status: "failed",
         errorMessage: message,
         retryCount,
-        ...(nextRetryAt ? { nextRetryAt } : {}),
       });
     }
 

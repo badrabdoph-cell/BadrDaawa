@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { deleteMediaFile, replaceMediaFile } from "@/lib/media-cleanup";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -29,7 +28,6 @@ export async function POST(request: NextRequest) {
   if (action === "delete") {
     const result = await deleteMediaFile(url);
     if (!result.ok) return redirectMedia(request, { mediaError: result.reason || "delete" });
-    queueGitHubSync(`Media file deleted: ${result.file?.url}. Backup: ${result.backupFileName}.`, { createSnapshot: true });
     if (result.file?.kind === "image") {
       await recordAuditLog({
         actor: await getAuditActorFromAdminRequest(request),
@@ -47,7 +45,6 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file");
     const result = await replaceMediaFile(url, file instanceof File ? file : null);
     if (!result.ok) return redirectMedia(request, { mediaError: result.reason || "replace" });
-    queueGitHubSync(`Media file replaced: ${result.file?.url}. Backup: ${result.backupFileName}.`, { createSnapshot: true });
     return redirectMedia(request, { mediaSaved: "replaced", backup: result.backupFileName || "" });
   }
 

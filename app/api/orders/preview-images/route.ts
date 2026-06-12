@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, getAdminSessionUser } from "@/lib/admin-session";
 import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages, type PreviewImageInput } from "@/lib/order-preview-images";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
@@ -87,7 +86,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    queueGitHubSync(`Order preview image uploaded: ${imageUrls.join(", ")}.`);
     await recordAuditLog({
       actor: await getUploadActor(request),
       action: "media.image.upload",

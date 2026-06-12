@@ -1,5 +1,4 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { getFileTrashItems } from "./file-store";
 import { prisma } from "./db";
 
 export type TrashEntityType = "invitation" | "order" | "customer";
@@ -24,8 +23,7 @@ function dateToString(value: Date | string | null | undefined) {
 export async function getTrashItems(): Promise<TrashItem[]> {
   noStore();
 
-  const fileItems = (await getFileTrashItems()).map((item) => ({ ...item, storage: "file" as const }));
-  if (!prisma) return fileItems;
+  if (!prisma) return [];
 
   try {
     const [invitations, orders, customers] = await Promise.all([
@@ -106,16 +104,15 @@ export async function getTrashItems(): Promise<TrashItem[]> {
       })),
     ];
 
-    return [...databaseItems, ...fileItems].sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime());
+    return databaseItems.sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime());
   } catch (error) {
     console.error("Failed to load database trash items", error);
-    return fileItems;
+    return [];
   }
 }
 
 export async function restoreTrashItem(type: TrashEntityType, id: string, storage: "database" | "file" = "database") {
   if (storage === "file") {
-    console.error("[Trash] Legacy file-store restore is read-only.");
     return false;
   }
   if (!prisma) return false;
@@ -136,7 +133,6 @@ export async function restoreTrashItem(type: TrashEntityType, id: string, storag
 
 export async function hardDeleteTrashItem(type: TrashEntityType, id: string, storage: "database" | "file" = "database") {
   if (storage === "file") {
-    console.error("[Trash] Legacy file-store hard delete is read-only.");
     return false;
   }
   if (!prisma) return false;

@@ -6,6 +6,7 @@ interface RateLimitEntry {
 }
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
+let nextCleanupAt = 0;
 
 export function getClientIdentifier(request: Request): string {
   const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -26,6 +27,12 @@ export interface RateLimitConfig {
 
 export function checkRateLimit(key: string, config: RateLimitConfig): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
+  if (now >= nextCleanupAt) {
+    for (const [entryKey, value] of rateLimitMap.entries()) {
+      if (value.resetAt <= now) rateLimitMap.delete(entryKey);
+    }
+    nextCleanupAt = now + 60_000;
+  }
   const entry = rateLimitMap.get(key);
 
   if (!entry || entry.resetAt <= now) {
@@ -81,16 +88,6 @@ export function rateLimitResponse(resetAt: number) {
 export function resetRateLimit(key: string): void {
   rateLimitMap.delete(key);
 }
-
-// Cleanup old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitMap.entries()) {
-    if (entry.resetAt <= now) {
-      rateLimitMap.delete(key);
-    }
-  }
-}, 60000); // Cleanup every minute
 
 // Default rate limit configs
 export const RATE_LIMIT_CONFIGS = {

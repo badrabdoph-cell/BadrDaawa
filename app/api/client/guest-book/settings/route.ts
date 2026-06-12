@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { updateCoupleMessagesSettings } from "@/lib/guest-book";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -29,6 +28,5 @@ export async function POST(request: NextRequest) {
   revalidatePath(`/${invitation.code}`);
   revalidatePath(`/${invitation.code}/ad_3399`);
   if (invitation.customSlug) revalidatePath(`/${invitation.customSlug}`);
-  queueGitHubSync(`Client couple messages settings updated: ${invitation.code}.`, { createSnapshot: true });
   return NextResponse.redirect(getRedirectUrl(`/${invitation.code}/ad_3399?saved=messages-settings`, request.headers, request.nextUrl.origin), 303);
 }

@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createClientMessage } from "@/lib/client-messages";
 import { getAdminInvitations } from "@/lib/admin-data";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getCustomerAdminPath } from "@/lib/slug";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -35,7 +34,6 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/admin/messages");
   revalidatePath(getCustomerAdminPath(invitationCode));
-  queueGitHubSync(`Client message sent: ${invitationCode}.`, { createSnapshot: true });
 
   return NextResponse.redirect(getRedirectUrl(`/admin/messages?sent=${encodeURIComponent(invitationCode)}`, request.headers, request.nextUrl.origin), 303);
 }

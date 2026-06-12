@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { createGuestBookMessage, getApprovedGuestBookMessages, getCoupleMessagesSettings, GuestBookStorageError } from "@/lib/guest-book";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
@@ -92,7 +91,6 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     try {
-      queueGitHubSync(`Couple message ${saved.status}: ${invitationCode}.`, { createSnapshot: true });
     } catch (error) {
       console.error("[Guest Book] Message saved, but GitHub backup queue failed", error);
     }

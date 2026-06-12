@@ -1,10 +1,5 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "./db";
-import {
-  getFileInvitationByManageToken,
-  getFileInvitationManageToken,
-  isFileInvitationManageTokenAvailable,
-} from "./file-store";
 
 export type InvitationManageTokenResult =
   | { ok: true; code: string }
@@ -39,11 +34,8 @@ async function isDatabaseTokenAvailable(token: string, currentCode = "") {
 async function createUniqueToken(currentCode = "") {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const token = generateInvitationManageToken();
-    const [databaseAvailable, fileAvailable] = await Promise.all([
-      isDatabaseTokenAvailable(token, currentCode),
-      isFileInvitationManageTokenAvailable(token, currentCode).catch(() => true),
-    ]);
-    if (databaseAvailable && fileAvailable) return token;
+    const databaseAvailable = await isDatabaseTokenAvailable(token, currentCode);
+    if (databaseAvailable) return token;
   }
   throw new Error("Unable to generate a unique invitation management token.");
 }
@@ -69,10 +61,6 @@ export async function ensureInvitationManageToken(code: string) {
     }
   }
 
-  const fileToken = await getFileInvitationManageToken(cleanCode).catch(() => null);
-  if (!fileToken) return "";
-  if (fileToken.manageToken && !isExpired(fileToken.manageTokenExpiresAt)) return fileToken.manageToken;
-  console.error("[Invitation Manage Token] Legacy file-store token creation is read-only.");
   return "";
 }
 
@@ -96,10 +84,7 @@ export async function resolveInvitationManageToken(tokenValue: string): Promise<
     }
   }
 
-  const fileInvitation = await getFileInvitationByManageToken(token).catch(() => null);
-  if (!fileInvitation) return { ok: false, reason: "missing" };
-  if (isExpired(fileInvitation.manageTokenExpiresAt)) return { ok: false, reason: "expired" };
-  return { ok: true, code: fileInvitation.code };
+  return { ok: false, reason: "missing" };
 }
 
 export async function getInvitationManagePath(code: string) {

@@ -310,7 +310,7 @@ async function listBackupFilesFast(): Promise<BackupSummary[]> {
           status: "SUCCESS" as const,
           sizeBytes: fileStat.size,
           createdAt: fileStat.mtime.toISOString(),
-          source: "files" as const,
+          source: "database" as const,
           items: 0,
         };
       }),

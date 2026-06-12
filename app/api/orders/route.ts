@@ -3,7 +3,6 @@ import crypto from "node:crypto";
 import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
@@ -189,7 +188,7 @@ export async function POST(request: NextRequest) {
   let effectiveManageToken = reservedManageToken;
 
   if (!prisma) {
-    console.error("[Order API] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Order API] PostgreSQL is not configured. Refusing operational write.");
     return NextResponse.json({ error: "قاعدة البيانات غير متاحة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
   }
 
@@ -304,7 +303,6 @@ export async function POST(request: NextRequest) {
     publicUrl: links.publicUrl,
     adminUrl: links.adminUrl,
   });
-  queueGitHubSync(`Order request created: ${orderId}.`, { createSnapshot: true });
   await recordAuditLog({
     actor: getPublicAuditActor(parsed.data.phone || parsed.data.groomName || "Public order"),
     action: "order.create",

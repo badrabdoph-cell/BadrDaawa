@@ -159,55 +159,6 @@ async function auditLegacyJson() {
     }
   }
 
-  const runtime = await readJson(path.join(dataDir, "runtime-store.json"));
-  const guestBook = await readJson(path.join(dataDir, "guest-book.json"));
-  const runtimeValue = runtime.ok && runtime.value && typeof runtime.value === "object" ? runtime.value : {};
-  const invitations = Array.isArray(runtimeValue.invitations) ? runtimeValue.invitations : [];
-  const guests = Array.isArray(runtimeValue.guests) ? runtimeValue.guests : [];
-  const customers = Array.isArray(runtimeValue.customers) ? runtimeValue.customers : [];
-  const orders = Array.isArray(runtimeValue.orders) ? runtimeValue.orders : [];
-  const analyticsEvents = Array.isArray(runtimeValue.analyticsEvents) ? runtimeValue.analyticsEvents : [];
-  const guestBookMessages =
-    guestBook.ok && guestBook.value && Array.isArray(guestBook.value.messages) ? guestBook.value.messages : [];
-  const invitationCodes = new Set(invitations.map((item) => normalizeString(item.code)).filter(Boolean));
-  const invitationIds = new Set(invitations.map((item) => normalizeString(item.id)).filter(Boolean));
-  const customerIds = new Set(customers.map((item) => normalizeString(item.id)).filter(Boolean));
-
-  result.duplicates = {
-    invitationsByCode: groupDuplicates(invitations, (item) => normalizeString(item.code)),
-    ordersById: groupDuplicates(orders, (item) => normalizeString(item.id)),
-    ordersByDedupeKey: groupDuplicates(orders, (item) => normalizeString(item.dedupeKey)),
-    customersByUsername: groupDuplicates(customers, (item) => normalizeString(item.username)),
-    customersByPhone: groupDuplicates(customers, (item) => normalizeString(item.phone)),
-    guestsByInvitationPhone: groupDuplicates(guests, (item) => `${normalizeString(item.invitationId)}|${normalizeString(item.phone)}`),
-    guestBookByNameMessageCode: groupDuplicates(
-      guestBookMessages,
-      (item) => `${normalizeString(item.invitationCode)}|${normalizeString(item.name)}|${normalizeString(item.message)}`,
-    ),
-  };
-
-  result.orphans = {
-    guests: guests.filter((item) => !invitationIds.has(normalizeString(item.invitationId))),
-    analytics: analyticsEvents.filter((item) => !invitationIds.has(normalizeString(item.invitationId))),
-    orders: orders.filter((item) => normalizeString(item.customerId) && !customerIds.has(normalizeString(item.customerId))),
-    guestBook: guestBookMessages.filter((item) => !invitationCodes.has(normalizeString(item.invitationCode))),
-  };
-
-  for (const invitation of invitations) {
-    if (!normalizeString(invitation.code)) result.emptyOrCorruptFields.push({ table: "legacy.invitations", id: invitation.id, field: "code" });
-    if (!normalizeString(invitation.groomName)) result.emptyOrCorruptFields.push({ table: "legacy.invitations", id: invitation.id, field: "groomName" });
-    if (!normalizeString(invitation.brideName)) result.emptyOrCorruptFields.push({ table: "legacy.invitations", id: invitation.id, field: "brideName" });
-  }
-  for (const order of orders) {
-    if (!normalizeString(order.phone)) result.emptyOrCorruptFields.push({ table: "legacy.orders", id: order.id, field: "phone" });
-    if (!normalizeString(order.groomName)) result.emptyOrCorruptFields.push({ table: "legacy.orders", id: order.id, field: "groomName" });
-    if (!normalizeString(order.brideName)) result.emptyOrCorruptFields.push({ table: "legacy.orders", id: order.id, field: "brideName" });
-  }
-  for (const customer of customers) {
-    if (!normalizeString(customer.phone)) result.emptyOrCorruptFields.push({ table: "legacy.customers", id: customer.id, field: "phone" });
-    if (!normalizeString(customer.username)) result.emptyOrCorruptFields.push({ table: "legacy.customers", id: customer.id, field: "username" });
-  }
-
   return result;
 }
 
@@ -461,7 +412,7 @@ async function auditDatabase() {
       safeFindMany(prisma.weddingLiveMode, { select: { invitationCode: true, enabled: true, events: true } }),
       safeFindMany(prisma.internalNote, { select: { id: true, entityType: true, entityId: true, body: true, authorLabel: true } }),
       safeFindMany(prisma.backupJob, { select: { id: true, type: true, status: true, fileName: true, startedAt: true, finishedAt: true, error: true, createdAt: true } }),
-      safeFindMany(prisma.syncLog, { select: { id: true, reason: true, status: true, errorMessage: true, retryCount: true, nextRetryAt: true, createdAt: true } }),
+      safeFindMany(prisma.syncLog, { select: { id: true, reason: true, status: true, errorMessage: true, retryCount: true, createdAt: true } }),
       safeFindMany(prisma.dynamicPage, { select: { id: true, slug: true, coverImageUrl: true } }),
       safeFindMany(prisma.weddingTemplate, { select: { id: true, slug: true, previewUrl: true } }),
     ]);

@@ -4,7 +4,6 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, deleteUploadedMusicFile, isYouTubeUrl, saveAudioDataUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
@@ -132,7 +131,7 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   const payload = (await request.json().catch(() => null)) as ClientInvitationPayload | null;
   if (!payload) return NextResponse.json({ error: "بيانات غير صالحة." }, { status: 400 });
   if (!prisma) {
-    console.error("[Client Invitation] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Client Invitation] PostgreSQL is not configured. Refusing operational write.");
     return NextResponse.json({ error: "قاعدة البيانات غير متاحة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
   }
   const oldValues = await getClientInvitationAuditSnapshot(code);
@@ -232,7 +231,6 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
 
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);
-  queueGitHubSync(`Client invitation live editor updated: ${code}.`, { createSnapshot: true });
   if (updated) {
     await recordAuditLog({
       actor: getClientAuditActor(code),
@@ -271,7 +269,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const formData = await request.formData();
   if (!prisma) {
-    console.error("[Client Invitation] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Client Invitation] PostgreSQL is not configured. Refusing operational write.");
     return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, request.url), 303);
   }
   const oldValues = await getClientInvitationAuditSnapshot(code);
@@ -372,7 +370,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);
-    queueGitHubSync(`Client invitation settings updated: ${code}.`, { createSnapshot: true });
     await recordAuditLog({
       actor: getClientAuditActor(code),
       action: "invitation.update",

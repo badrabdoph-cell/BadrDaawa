@@ -8,7 +8,8 @@ const dirs = [
   path.join(root, "data"),
   path.join(root, "data", "backups"),
   path.join(root, "public", "uploads"),
-  ...["client-invitations", "order-requests", "order-previews", "music", "previews", "template-previews"].map((subdir) =>
+  path.join(root, "public", "assets", "admin"),
+  ...["client-invitations", "order-requests", "order-previews", "music"].map((subdir) =>
     path.join(root, "public", "uploads", subdir),
   ),
 ];
@@ -82,10 +83,6 @@ function logPostgresToolAvailability(command) {
   console.log(`[prepare] ${command} is available: ${output || "version detected"}`);
 }
 
-function shouldRunLegacyStartupBackfill() {
-  return process.env.ENABLE_LEGACY_FILE_STORE === "true" || process.env.ENABLE_STARTUP_LEGACY_BACKFILL === "true";
-}
-
 for (const dir of dirs) {
   mkdirSync(dir, { recursive: true });
 }
@@ -105,45 +102,4 @@ if (!databaseUrl) {
 console.log("[prepare] Running prisma migrate deploy.");
 runPrisma(["migrate", "deploy"], { env: { DATABASE_URL: databaseUrl } });
 
-if (process.env.AUTO_RESTORE_FROM_GITHUB === "true") {
-  console.warn("[prepare] AUTO_RESTORE_FROM_GITHUB is ignored. Automatic restore is disabled; PostgreSQL is the only live source of truth.");
-}
-
-const legacyStartupBackfillEnabled = shouldRunLegacyStartupBackfill();
-if (!legacyStartupBackfillEnabled) {
-  console.log("[prepare] Legacy JSON startup backfills are disabled. Set ENABLE_STARTUP_LEGACY_BACKFILL=true for a one-time controlled migration.");
-}
-
-if (process.env.SKIP_RUNTIME_STORE_BACKFILL === "true") {
-  console.log("[prepare] Runtime-store backfill skipped by SKIP_RUNTIME_STORE_BACKFILL=true.");
-} else if (!legacyStartupBackfillEnabled) {
-  console.log("[prepare] Runtime-store backfill skipped because legacy startup backfills are disabled.");
-} else {
-  console.log("[prepare] Backfilling legacy runtime-store data into PostgreSQL.");
-  const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-runtime-store-to-postgres.mjs")], {
-    cwd: root,
-    stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-  });
-
-  if (result.status !== 0) {
-    process.exit(result.status || 1);
-  }
-}
-
-if (process.env.SKIP_OPERATIONAL_JSON_BACKFILL === "true") {
-  console.log("[prepare] Operational JSON backfill skipped by SKIP_OPERATIONAL_JSON_BACKFILL=true.");
-} else if (!legacyStartupBackfillEnabled) {
-  console.log("[prepare] Operational JSON backfill skipped because legacy startup backfills are disabled.");
-} else {
-  console.log("[prepare] Backfilling operational JSON data into PostgreSQL.");
-  const result = spawnSync(process.execPath, [path.join(root, "scripts", "backfill-operational-json-to-postgres.mjs")], {
-    cwd: root,
-    stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-  });
-
-  if (result.status !== 0) {
-    process.exit(result.status || 1);
-  }
-}
+console.log("[prepare] Startup restore and legacy JSON backfills are disabled permanently.");

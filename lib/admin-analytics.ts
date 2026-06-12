@@ -1,7 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getAdminGuests, getAdminInvitations } from "./admin-data";
 import { prisma } from "./db";
-import { getFileAnalyticsEvents } from "./file-store";
 import type { GuestRsvp, Invitation } from "./types";
 import { normalizeVisitSource, visitSourceLabels, visitSources, type VisitSource } from "./visit-source";
 
@@ -175,13 +174,7 @@ function buildVisitHours(events: AnalyticsEventRow[]) {
 
 async function getAnalyticsEvents() {
   if (!prisma) {
-    const events = await getFileAnalyticsEvents();
-    return events.map((event) => ({
-      invitationCode: event.invitationCode,
-      eventType: event.eventType,
-      source: sourceFromMetadata(event.metadata),
-      createdAt: event.createdAt,
-    }));
+    return [];
   }
 
   try {
@@ -204,13 +197,7 @@ async function getAnalyticsEvents() {
     }));
   } catch (error) {
     console.error("Failed to load admin analytics events", error);
-    const events = await getFileAnalyticsEvents();
-    return events.map((event) => ({
-      invitationCode: event.invitationCode,
-      eventType: event.eventType,
-      source: sourceFromMetadata(event.metadata),
-      createdAt: event.createdAt,
-    }));
+    return [];
   }
 }
 

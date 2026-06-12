@@ -223,14 +223,6 @@ export async function listScheduledTasks() {
   });
 }
 
-export async function setScheduledTaskAutomatic() {
-  throw new Error("Automatic scheduling is managed only by Railway Cron.");
-}
-
-export async function setScheduledTaskInterval() {
-  throw new Error("Backup interval is fixed at 6 hours and managed by Railway Cron.");
-}
-
 export async function runScheduledTask(taskIdInput: string, trigger: ScheduledTaskTrigger = "manual") {
   const taskId = assertTaskId(taskIdInput);
   if (runningTasks.has(taskId)) throw new Error("Task is already running");
@@ -266,8 +258,4 @@ export async function runScheduledTask(taskIdInput: string, trigger: ScheduledTa
   } finally {
     runningTasks.delete(taskId);
   }
-}
-
-export function startInternalTaskScheduler() {
-  return;
 }

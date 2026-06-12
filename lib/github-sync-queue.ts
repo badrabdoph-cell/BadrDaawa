@@ -8,14 +8,12 @@ type SyncQueueStatus = "pending" | "processing" | "completed" | "failed";
 type SyncQueueItem = {
   id: string;
   reason: string;
-  createSnapshot: boolean;
   timestamp: number;
   status: SyncQueueStatus;
   error?: string;
   result?: GitHubSyncResult;
   completedAt?: number;
   retryCount: number;
-  nextRetryAt?: number;
   logId?: string | null;
   changeType?: string;
   affectedResource?: string;
@@ -26,10 +24,6 @@ const syncQueue: SyncQueueItem[] = [];
 const trackedJobs = new Map<string, SyncQueueItem>();
 let isSyncing = false;
 let syncJobCounter = 0;
-
-// Retry delays in milliseconds: 5s, 15s, 45s
-const retryDelays = [5_000, 15_000, 45_000];
-const maxRetries = 3;
 
 function scheduleQueueProcessing() {
   const runner = () => {
@@ -49,8 +43,7 @@ function scheduleQueueProcessing() {
     setImmediate(runner);
     return;
   }
-
-  setTimeout(runner, 0);
+  void runner();
 }
 
 function trimTrackedJobs() {
@@ -66,26 +59,23 @@ function trimTrackedJobs() {
 export function queueGitHubSync(
   reason: string,
   options: {
-    createSnapshot?: boolean;
     uploadExistingBackup?: boolean;
     uploadProjectFiles?: boolean;
     changeType?: string;
     affectedResource?: string;
   } = {},
 ) {
-  const shouldCreateSnapshot = false;
   const shouldUploadExistingBackup = Boolean(options.uploadExistingBackup);
   const shouldUploadProjectFiles = Boolean(options.uploadProjectFiles);
 
-  if (!shouldCreateSnapshot && !shouldUploadExistingBackup && !shouldUploadProjectFiles) {
+  if (!shouldUploadExistingBackup && !shouldUploadProjectFiles) {
     console.log(`[GitHub Backup Queue] Ignoring non-backup sync request. PostgreSQL is the live source of truth: ${reason}`);
     return "";
   }
 
   const item: SyncQueueItem = {
     id: `sync-${++syncJobCounter}-${Date.now()}`,
-    reason: shouldUploadProjectFiles ? `Project files upload: ${reason}` : shouldCreateSnapshot ? `Backup snapshot: ${reason}` : `Backup upload: ${reason}`,
-    createSnapshot: shouldCreateSnapshot,
+    reason: shouldUploadProjectFiles ? `Project files upload: ${reason}` : `Backup upload: ${reason}`,
     timestamp: Date.now(),
     status: "pending",
     retryCount: 0,
@@ -103,31 +93,6 @@ export function queueGitHubSync(
   return item.id;
 }
 
-async function scheduleRetry(item: SyncQueueItem) {
-  if (item.retryCount >= maxRetries) {
-    item.status = "failed";
-    item.completedAt = Date.now();
-    console.error(`[GitHub Sync Queue] Max retries (${maxRetries}) reached for: ${item.reason}`);
-    return;
-  }
-
-  const delay = retryDelays[item.retryCount] ?? retryDelays[retryDelays.length - 1];
-  item.retryCount += 1;
-  item.nextRetryAt = Date.now() + delay;
-  item.status = "pending";
-
-  console.log(`[GitHub Sync Queue] Scheduling retry ${item.retryCount}/${maxRetries} in ${delay / 1000}s for: ${item.reason}`);
-
-  setTimeout(() => {
-    if (!syncQueue.includes(item)) {
-      syncQueue.push(item);
-    }
-    if (!isSyncing) {
-      scheduleQueueProcessing();
-    }
-  }, delay);
-}
-
 async function processSyncQueue() {
   if (isSyncing) return;
   isSyncing = true;
@@ -136,13 +101,6 @@ async function processSyncQueue() {
     while (syncQueue.length > 0) {
       const item = syncQueue.shift();
       if (!item) break;
-
-      // Skip items that are not yet due for retry
-      if (item.nextRetryAt && Date.now() < item.nextRetryAt) {
-        syncQueue.push(item);
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        continue;
-      }
 
       item.status = "processing";
 
@@ -157,7 +115,6 @@ async function processSyncQueue() {
 
       try {
         const result = await syncAdminStateToGitHub(item.reason, {
-          createSnapshot: item.createSnapshot,
           uploadProjectFiles: item.changeType === "project",
           logId: item.logId ?? undefined,
           retryCount: item.retryCount,
@@ -165,14 +122,10 @@ async function processSyncQueue() {
         item.result = result;
 
         if (result.status === "failed") {
-          if (result.authFailed) {
-            item.status = "failed";
-            item.error = result.message;
-            item.completedAt = Date.now();
-            console.error(`[GitHub Sync Queue] Not retrying auth failure for: ${item.reason}`);
-          } else {
-            await scheduleRetry(item);
-          }
+          item.status = "failed";
+          item.error = result.message;
+          item.completedAt = Date.now();
+          if (result.authFailed) console.error(`[GitHub Sync Queue] Not retrying auth failure for: ${item.reason}`);
         } else {
           item.status = "completed";
           item.completedAt = Date.now();
@@ -199,7 +152,8 @@ async function processSyncQueue() {
           item.completedAt = Date.now();
           console.error(`[GitHub Sync Queue] Not retrying thrown auth failure for: ${item.reason}`);
         } else {
-          await scheduleRetry(item);
+          item.status = "failed";
+          item.completedAt = Date.now();
         }
         await recordAuditLog({
           actor: getSystemAuditActor("GitHub Sync Queue"),
@@ -215,7 +169,6 @@ async function processSyncQueue() {
       }
 
       trimTrackedJobs();
-      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   } finally {
     isSyncing = false;
@@ -235,7 +188,6 @@ export function getSyncQueueStatus() {
       result: item.result,
       completedAt: item.completedAt,
       retryCount: item.retryCount,
-      nextRetryAt: item.nextRetryAt,
       changeType: item.changeType,
       affectedResource: item.affectedResource,
     })),
@@ -254,7 +206,6 @@ export function getSyncJobStatus(jobId: string) {
     completedAt: item.completedAt,
     error: item.error,
     retryCount: item.retryCount,
-    nextRetryAt: item.nextRetryAt,
   };
 }
 

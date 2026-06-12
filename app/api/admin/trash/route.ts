@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { hardDeleteInvitationCompletely } from "@/lib/invitation-deletion";
 import { hardDeleteTrashItem, restoreTrashItem, type TrashEntityType } from "@/lib/trash";
 import { getRedirectUrl } from "@/lib/utils";
@@ -83,6 +82,5 @@ export async function POST(request: NextRequest) {
       },
     });
   }
-  queueGitHubSync(`Trash ${action}: ${entityType} ${id}.`, { createSnapshot: true });
   return redirectTrash(request, action === "restore" ? "restored" : "deleted");
 }

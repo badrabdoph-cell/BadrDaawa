@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, getAdminSessionUser, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createInternalNote, deleteInternalNote, updateInternalNote } from "@/lib/internal-notes";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
     const deleted = await deleteInternalNote(id);
     if (!deleted) return redirectNotes(request, returnTo, { noteStatus: "missing" });
     revalidateAdminNotes();
-    queueGitHubSync(`Internal note deleted: ${id}.`, { createSnapshot: true });
     return redirectNotes(request, returnTo, { noteStatus: "deleted" });
   }
 
@@ -55,7 +53,6 @@ export async function POST(request: NextRequest) {
     const updated = await updateInternalNote(id, { body: formData.get("body") });
     if (!updated) return redirectNotes(request, returnTo, { noteStatus: "invalid" });
     revalidateAdminNotes();
-    queueGitHubSync(`Internal note updated: ${updated.id}.`, { createSnapshot: true });
     return redirectNotes(request, returnTo, { noteStatus: "updated" });
   }
 
@@ -67,6 +64,5 @@ export async function POST(request: NextRequest) {
   });
   if (!created) return redirectNotes(request, returnTo, { noteStatus: "invalid" });
   revalidateAdminNotes();
-  queueGitHubSync(`Internal note created: ${created.entityType}/${created.entityId}.`, { createSnapshot: true });
   return redirectNotes(request, returnTo, { noteStatus: "created" });
 }

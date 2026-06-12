@@ -2,7 +2,6 @@ import Link from "next/link";
 import { CalendarClock, CheckCircle2, Github, History, RefreshCw, Settings, XCircle } from "lucide-react";
 import { getGitHubSyncReadiness, getSyncHistory } from "@/lib/github-sync";
 import { getSyncQueueStatus } from "@/lib/github-sync-queue";
-import { listScheduledTasks } from "@/lib/task-scheduler";
 
 export const dynamic = "force-dynamic";
 
@@ -21,22 +20,13 @@ function formatDuration(ms: number | null) {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-function formatInterval(ms?: number) {
-  if (!ms) return "—";
-  const hours = Math.round(ms / (60 * 60 * 1000));
-  if (hours < 24) return `كل ${hours} ساعة`;
-  return hours === 24 ? "كل 24 ساعة" : `كل ${hours} ساعة`;
-}
-
 export default async function SyncSettingsPage({ searchParams }: { searchParams?: Promise<{ task?: string; interval?: string; error?: string }> }) {
-  const [params, readiness, queue, tasks, { logs, total }] = await Promise.all([
+  const [params, readiness, queue, { logs, total }] = await Promise.all([
     searchParams,
     Promise.resolve(getGitHubSyncReadiness()),
     Promise.resolve(getSyncQueueStatus()),
-    listScheduledTasks(),
     getSyncHistory({ limit: 10 }),
   ]);
-  const backupTask = tasks.find((task) => task.id === "backup");
 
   const completedLogs = logs.filter((l) => l.status === "completed");
   const failedLogs = logs.filter((l) => l.status === "failed");
@@ -69,7 +59,7 @@ export default async function SyncSettingsPage({ searchParams }: { searchParams?
           <form action="/api/admin/sync-status" method="post">
             <button className="btn btn-gold btn-glow" type="submit">
               <RefreshCw size={16} />
-              مزامنة الآن
+              رفع أحدث Backup
             </button>
           </form>
         </div>
@@ -138,31 +128,13 @@ export default async function SyncSettingsPage({ searchParams }: { searchParams?
           </div>
         </div>
         <p style={{ margin: "10px 0 0", color: "rgba(245,234,214,0.62)", fontWeight: 850, lineHeight: 1.7 }}>
-          النسخ التلقائي يعمل من مهمة Backup الداخلية. الإعداد الحالي: {formatInterval(backupTask?.intervalMs)}، والموعد القادم: {backupTask?.automaticEnabled ? formatDate(backupTask.nextRunAt || "") : "متوقف"}.
+          النسخ التلقائي لا يعمل من التطبيق. Railway Cron يستدعي <code>/api/cron/backup</code> كل 6 ساعات باستخدام <code>BACKUP_CRON_SECRET</code>. التطبيق لا يملك مؤقتات داخلية ولا يغير الجدول من لوحة الأدمن.
         </p>
-        <form action="/api/admin/tasks" method="post" style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
-          <input name="action" type="hidden" value="interval" />
-          <input name="taskId" type="hidden" value="backup" />
-          <input name="returnTo" type="hidden" value="/admin/sync-settings" />
-          <div className="backup-status-grid">
-            {[1, 3, 6, 12, 24, 48].map((hours) => (
-              <label className="panel backup-status-card" key={hours} style={{ cursor: "pointer" }}>
-                <input name="intervalHours" type="radio" value={hours} defaultChecked={Math.round((backupTask?.intervalMs || 0) / (60 * 60 * 1000)) === hours} />
-                <span>كل</span>
-                <strong>{hours} ساعة</strong>
-              </label>
-            ))}
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            <button className="btn btn-gold btn-glow" type="submit">
-              <CalendarClock size={16} />
-              حفظ وقت النسخ
-            </button>
-            <Link href="/admin/tasks" className="btn btn-soft btn-glass">
-              إدارة المهام المجدولة
-            </Link>
-          </div>
-        </form>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "16px" }}>
+          <Link href="/admin/tasks" className="btn btn-soft btn-glass">
+            سجل المهام
+          </Link>
+        </div>
       </section>
 
       {/* Statistics */}

@@ -11,7 +11,6 @@ import {
   type CoupleMessagesAdminAction,
   type GuestBookBulkAction,
 } from "@/lib/guest-book";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -78,7 +77,6 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/${settings.invitationCode}/ad_3399`);
     const invitation = await getInvitationByCode(settings.invitationCode).catch(() => null);
     if (invitation?.customSlug) revalidatePath(`/${invitation.customSlug}`);
-    queueGitHubSync(`Couple messages settings updated: ${settings.invitationCode}.`, { createSnapshot: true });
     return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?saved=settings&invitation=${encodeURIComponent(settings.invitationCode)}`, request.headers, request.nextUrl.origin), 303);
   }
 
@@ -115,7 +113,6 @@ export async function POST(request: NextRequest) {
       newValues: { deletedCount: result.deletedCount, approvedCount: result.approvedCount, matchedCount: result.matchedCount },
       metadata: { invitationCodes: result.invitationCodes, messageIds: result.messageIds.slice(0, 100), source: "admin-guest-book-bulk" },
     });
-    queueGitHubSync(`Couple messages bulk ${action}: ${result.deletedCount || result.approvedCount} message(s).`, { createSnapshot: true });
 
     return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?saved=${savedValue(action)}&bulkCount=${result.deletedCount || result.approvedCount}`, request.headers, request.nextUrl.origin), 303);
   }
@@ -139,7 +136,6 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/${updated.invitationCode}/ad_3399`);
     const invitation = await getInvitationByCode(updated.invitationCode).catch(() => null);
     if (invitation?.customSlug) revalidatePath(`/${invitation.customSlug}`);
-    queueGitHubSync(`Couple message edited: ${updated.invitationCode}.`, { createSnapshot: true });
     return NextResponse.redirect(getRedirectUrl("/admin/guest-book?saved=edit", request.headers, request.nextUrl.origin), 303);
   }
 
@@ -154,7 +150,6 @@ export async function POST(request: NextRequest) {
   revalidatePath(`/${result.message.invitationCode}/ad_3399`);
   const invitation = await getInvitationByCode(result.message.invitationCode).catch(() => null);
   if (invitation?.customSlug) revalidatePath(`/${invitation.customSlug}`);
-  queueGitHubSync(`Couple message ${action}: ${result.message.invitationCode}.`, { createSnapshot: true });
 
   return NextResponse.redirect(getRedirectUrl(`/admin/guest-book?saved=${action}`, request.headers, request.nextUrl.origin), 303);
 }

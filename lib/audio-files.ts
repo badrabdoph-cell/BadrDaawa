@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { deleteProjectAssetFile, writeProjectAssetFile } from "./project-assets";
 import { deleteUploadFile, listUploadFiles, writeUploadFile } from "./storage-provider";
 
 const allowedAudioTypes: Record<string, string> = {
@@ -92,6 +93,10 @@ export async function deleteUploadedMusicFile(value?: string | null) {
   return deleteUploadFile(value || "");
 }
 
+export async function deleteProjectMusicFile(value?: string | null) {
+  return deleteProjectAssetFile(value);
+}
+
 function extensionFromBytes(bytes: Buffer) {
   if (bytes.length >= 12 && bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WAVE") return "wav";
   if (bytes.length >= 4 && bytes.subarray(0, 4).toString("ascii") === "OggS") return "ogg";
@@ -117,6 +122,23 @@ export async function saveUploadedAudioFile(file: File | null, previousUrl?: str
   if (file.size > maxAudioBytes) return "";
   const bytes = Buffer.from(await file.arrayBuffer());
   return saveAudioBytes(bytes, file.type, nameExtension, previousUrl);
+}
+
+export async function saveProjectAudioFile(file: File | null, previousUrl?: string | null) {
+  if (!file || !file.size) return "";
+  const nameExtension = file.name.split(".").pop()?.toLowerCase() || "";
+  if (file.size > maxAudioBytes) return "";
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const detectedExtension = extensionFromBytes(bytes);
+  const extension = normalizeAudioExtension(detectedExtension || allowedAudioTypes[file.type] || (allowedAudioExtensions.has(nameExtension) ? nameExtension : ""));
+  if (!extension || !allowedAudioExtensions.has(extension) || !bytes.length || bytes.length > maxAudioBytes) return "";
+
+  const fileName = `music-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
+  const saved = await writeProjectAssetFile(`music/${fileName}`, bytes);
+  if (previousUrl && previousUrl !== saved.url) {
+    await deleteProjectMusicFile(previousUrl);
+  }
+  return saved.url;
 }
 
 async function saveAudioBytes(bytes: Buffer, mimeType = "", nameExtension = "", previousUrl?: string | null) {

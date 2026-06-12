@@ -1,4 +1,4 @@
-import { Activity, CalendarClock, CheckCircle2, Clock3, DatabaseBackup, History, Play, ShieldCheck, ToggleLeft, ToggleRight, TriangleAlert } from "lucide-react";
+import { Activity, CalendarClock, CheckCircle2, Clock3, DatabaseBackup, History, Play, TriangleAlert } from "lucide-react";
 import { getTaskExecutionLog, listScheduledTasks, type ScheduledTaskRun, type ScheduledTaskStatus, type ScheduledTaskView } from "@/lib/task-scheduler";
 import { formatArabicNumber } from "@/lib/utils";
 
@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 type TasksPageParams = {
   task?: string;
   result?: "success" | "failed";
-  automatic?: "enabled" | "disabled";
   error?: string;
 };
 
@@ -72,7 +71,7 @@ function TaskCard({ task }: { task: ScheduledTaskView }) {
         </span>
         <span>
           <CalendarClock size={16} />
-          التالي: {task.automaticEnabled ? formatDateTime(task.nextRunAt) : "متوقف"}
+          التالي: {task.id === "backup" ? "Railway Cron" : "يدوي فقط"}
         </span>
         <span>
           <History size={16} />
@@ -94,15 +93,6 @@ function TaskCard({ task }: { task: ScheduledTaskView }) {
           <button className="btn btn-gold" type="submit" disabled={task.status === "running"}>
             <Play size={17} />
             تشغيل الآن
-          </button>
-        </form>
-        <form action="/api/admin/tasks" method="post">
-          <input name="action" type="hidden" value="toggle" />
-          <input name="taskId" type="hidden" value={task.id} />
-          <input name="enabled" type="hidden" value={task.automaticEnabled ? "0" : "1"} />
-          <button className="btn btn-soft" type="submit">
-            {task.automaticEnabled ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-            {task.automaticEnabled ? "إيقاف التلقائي" : "تفعيل التلقائي"}
           </button>
         </form>
       </div>
@@ -127,7 +117,6 @@ function RunRow({ run, tasks }: { run: ScheduledTaskRun; tasks: ScheduledTaskVie
 export default async function AdminTasksPage({ searchParams }: { searchParams: Promise<TasksPageParams> }) {
   const [params, tasks, runs] = await Promise.all([searchParams, listScheduledTasks(), getTaskExecutionLog(80)]);
   const selectedTask = taskById(tasks, params.task);
-  const automaticEnabled = tasks.filter((task) => task.automaticEnabled).length;
   const successfulRuns = runs.filter((run) => run.status === "success").length;
   const failedRuns = runs.filter((run) => run.status === "failed").length;
   const latestRun = runs[0];
@@ -138,7 +127,7 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
         <div>
           <span className="eyebrow">Task Scheduler</span>
           <h1>المهام المجدولة</h1>
-          <p>مركز داخلي لتشغيل مهام الصيانة يدوياً أو تلقائياً، مع سجل واضح لكل نتيجة تنفيذ.</p>
+          <p>تشغيل يدوي للمهام وسجل Backup. التشغيل التلقائي للنسخ الاحتياطي يتم من Railway Cron فقط.</p>
         </div>
       </div>
 
@@ -146,12 +135,6 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
         <div className={params.result === "success" ? "notice success" : "notice danger"}>
           {params.result === "success" ? <CheckCircle2 size={18} /> : <TriangleAlert size={18} />}
           {selectedTask ? `نتيجة تشغيل ${selectedTask.title}: ${params.result === "success" ? "نجحت" : "فشلت"}.` : "تم تنفيذ المهمة."}
-        </div>
-      ) : null}
-      {params.automatic ? (
-        <div className="notice success">
-          <ShieldCheck size={18} />
-          {selectedTask ? `${selectedTask.title}: ` : ""}تم {params.automatic === "enabled" ? "تفعيل" : "إيقاف"} التشغيل التلقائي.
         </div>
       ) : null}
       {params.error ? (
@@ -169,8 +152,8 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
         </article>
         <article className="admin-list-stat good">
           <CalendarClock size={19} />
-          <span>تلقائي مفعل</span>
-          <strong>{formatArabicNumber(automaticEnabled)}</strong>
+          <span>التشغيل التلقائي</span>
+          <strong>Railway Cron</strong>
         </article>
         <article className="admin-list-stat good">
           <CheckCircle2 size={19} />
@@ -224,7 +207,7 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
                   <td colSpan={6}>
                     <div className="admin-empty-state compact">
                       <strong>لا يوجد سجل تنفيذ بعد</strong>
-                      <p>شغّل أي مهمة يدوياً أو فعّل التشغيل التلقائي وسيظهر السجل هنا.</p>
+                      <p>شغّل Backup يدوياً أو انتظر Railway Cron وسيظهر السجل هنا.</p>
                     </div>
                   </td>
                 </tr>

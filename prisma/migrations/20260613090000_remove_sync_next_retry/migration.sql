@@ -1,0 +1,1 @@
+ALTER TABLE "SyncLog" DROP COLUMN IF EXISTS "nextRetryAt";

@@ -6,7 +6,7 @@ import { normalizeImageForDisplay } from "@/lib/display-images";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
-import { writeUploadFile } from "@/lib/storage-provider";
+import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -38,7 +38,7 @@ async function savePreviewMedia(file: File | null) {
   }
 
   const fileName = `home-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-  const saved = await writeUploadFile(`previews/${fileName}`, bytes, isImage ? `image/${extension}` : file.type || "application/octet-stream");
+  const saved = await writeProjectAssetFile(`home-preview/${fileName}`, bytes);
   return { url: saved.url, mode: isImage ? "image" : "video" };
 }
 

@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 
@@ -33,7 +31,6 @@ type ErrorTrackingInput = {
   digest?: string;
 };
 
-const storePath = path.join(process.cwd(), "data", "error-events.json");
 const storeKey = "error-events";
 const maxStoredEvents = 2500;
 const maxMessageLength = 700;
@@ -53,15 +50,7 @@ function cleanText(value: unknown, maxLength: number) {
 
 async function readStore(): Promise<ErrorTrackingStore> {
   noStore();
-  return readAppSettingOrSeed(storeKey, async () => {
-    try {
-    const raw = await readFile(storePath, "utf8");
-    const parsed = JSON.parse(raw) as Partial<ErrorTrackingStore>;
-    return { events: Array.isArray(parsed.events) ? parsed.events : [] };
-    } catch {
-    return { events: [] };
-    }
-  });
+  return readAppSettingOrSeed(storeKey, () => ({ events: [] }));
 }
 
 async function writeStore(store: ErrorTrackingStore) {

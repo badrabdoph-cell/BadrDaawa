@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getTaskExecutionLog, listScheduledTasks, runScheduledTask, setScheduledTaskAutomatic, setScheduledTaskInterval } from "@/lib/task-scheduler";
+import { getTaskExecutionLog, listScheduledTasks, runScheduledTask } from "@/lib/task-scheduler";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   const contentType = request.headers.get("content-type") || "";
   const body = contentType.includes("application/json")
-    ? ((await request.json().catch(() => null)) as { action?: string; taskId?: string; enabled?: boolean; intervalHours?: number; returnTo?: string } | null)
+    ? ((await request.json().catch(() => null)) as { action?: string; taskId?: string; returnTo?: string } | null)
     : null;
   const form = body ? null : await request.formData();
   const action = body?.action || String(form?.get("action") || "");
@@ -51,18 +51,6 @@ export async function POST(request: NextRequest) {
     if (action === "run") {
       const run = await runScheduledTask(taskId, "manual");
       return wantsJson(request) ? NextResponse.json({ run }) : redirectToTasks(request, { task: taskId, result: run.status }, returnTo);
-    }
-
-    if (action === "toggle") {
-      const enabled = body ? Boolean(body.enabled) : String(form?.get("enabled") || "") === "1";
-      await setScheduledTaskAutomatic(taskId, enabled);
-      return wantsJson(request) ? NextResponse.json({ ok: true, taskId, enabled }) : redirectToTasks(request, { task: taskId, automatic: enabled ? "enabled" : "disabled" }, returnTo);
-    }
-
-    if (action === "interval") {
-      const intervalHours = body ? Number(body.intervalHours) : Number(form?.get("intervalHours") || "");
-      await setScheduledTaskInterval(taskId, intervalHours);
-      return wantsJson(request) ? NextResponse.json({ ok: true, taskId, intervalHours }) : redirectToTasks(request, { task: taskId, interval: String(intervalHours) }, returnTo);
     }
 
     return wantsJson(request) ? NextResponse.json({ error: "Invalid action" }, { status: 400 }) : redirectToTasks(request, { error: "invalid-action" }, returnTo);

@@ -83,7 +83,7 @@ export default async function BackupsPage({
 
       <div className="backup-sync-note">
         <ShieldCheck size={18} />
-        <span>PostgreSQL هو مصدر الحقيقة. ملفات JSON داخل النسخة محفوظة كإعدادات أو طبقة legacy فقط، ويتم الاحتفاظ بآخر 20 نسخة على GitHub.</span>
+        <span>PostgreSQL هو مصدر الحقيقة. النسخة تحتوي PostgreSQL dump فقط، ويتم الاحتفاظ بآخر 20 نسخة على GitHub.</span>
       </div>
       </section>
 
@@ -115,7 +115,7 @@ export default async function BackupsPage({
                   <td>
                     <span className="backup-file-name">{backup.fileName}</span>
                   </td>
-                  <td>{backup.source === "database" ? "PostgreSQL + إعدادات" : "Legacy files"}</td>
+                  <td>PostgreSQL</td>
                   <td>{backup.items}</td>
                   <td>
                     <span className="status success">{backup.status}</span>

@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { createCheckIn, hasCheckIn } from "@/lib/check-ins";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
@@ -43,7 +42,6 @@ export async function POST(request: Request, context: RouteContext) {
   revalidatePath("/admin/check-ins");
   revalidatePath("/admin");
   if (!result.duplicate) {
-    queueGitHubSync(`Invitation check-in recorded: ${code}.`, { createSnapshot: true });
   }
   return NextResponse.json({ ok: true, duplicate: result.duplicate, checkIn: result.checkIn });
 }

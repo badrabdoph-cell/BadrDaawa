@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAdminInvitations } from "@/lib/admin-data";
-import { cleanNewDirectAudioUrl, deleteUploadedMusicFile, isBlockedMusicPageUrl, saveUploadedAudioFile } from "@/lib/audio-files";
+import { cleanNewDirectAudioUrl, deleteProjectMusicFile, deleteUploadedMusicFile, isBlockedMusicPageUrl, saveProjectAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteMusicSlot, getMusicLibrary, getMusicUsage, renameMusicSlot, saveMusicSlot, setMusicSlotEnabled } from "@/lib/music-library";
@@ -40,7 +40,7 @@ function revalidateTemplatesPreviewPages(templateSlugs: string[]) {
 async function convertInvitationsToDefaultMusic(trackUrl: string) {
   if (!trackUrl) return 0;
   if (!prisma) {
-    console.error("[Music] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Music] PostgreSQL is not configured. Refusing operational write.");
     return 0;
   }
   const result = await prisma.invitation.updateMany({
@@ -118,7 +118,10 @@ export async function POST(request: NextRequest) {
     const converted = await convertInvitationsToDefaultMusic(currentSlot.url);
     const deleted = await deleteMusicSlot(currentSlot.id);
     if (deleted) await clearTemplatesPreviewMusicIfTrackDeleted(deleted.id);
-    if (deleted) await deleteUploadedMusicFile(deleted.url);
+    if (deleted) {
+      await deleteProjectMusicFile(deleted.url);
+      await deleteUploadedMusicFile(deleted.url);
+    }
     await revalidateMusicPages(allTemplateSlugs);
     queueGitHubSync(`Music track deleted: ${deleted?.id || slotId}; converted ${converted} invitation(s).`, { uploadProjectFiles: true, changeType: "project" });
     return redirectWith(request, deleted ? { saved: "deleted", converted: String(converted) } : { error: "slot" });
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
     return redirectWith(request, { error: "audio" });
   }
 
-  const uploadedUrl = await saveUploadedAudioFile(hasUploadedFile ? uploadedFile : null, action === "replace" ? previousUrl : undefined);
+  const uploadedUrl = await saveProjectAudioFile(hasUploadedFile ? uploadedFile : null, action === "replace" ? previousUrl : undefined);
   const directUrl = cleanNewDirectAudioUrl(requestedAudioUrl);
   if ((hasUploadedFile && !uploadedUrl) || (requestedAudioUrl && !directUrl)) {
     return redirectWith(request, { error: "audio" });
@@ -148,7 +151,10 @@ export async function POST(request: NextRequest) {
   const audioUrl = uploadedUrl || directUrl || previousUrl;
   const source = uploadedUrl ? "upload" : directUrl ? "url" : currentSlot?.source;
   if (!audioUrl) return redirectWith(request, { error: "audio" });
-  if (directUrl && previousUrl && directUrl !== previousUrl) await deleteUploadedMusicFile(previousUrl);
+  if (directUrl && previousUrl && directUrl !== previousUrl) {
+    await deleteProjectMusicFile(previousUrl);
+    await deleteUploadedMusicFile(previousUrl);
+  }
 
   const enabled = formData.get("setDefault") === "on" || action === "replace-default";
   const savedSlot = await saveMusicSlot({

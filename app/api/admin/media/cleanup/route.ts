@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { deleteMediaFilesByAction, type StorageCleanupAction } from "@/lib/media-cleanup";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -34,7 +33,6 @@ export async function POST(request: NextRequest) {
 
   const result = await deleteMediaFilesByAction(action);
   const deletedDatabaseRecords = result.deletedDatabaseOrphans.reduce((sum, group) => sum + group.count, 0);
-  queueGitHubSync(`Storage cleanup (${action}) deleted ${result.deletedFiles.length} file(s), ${result.deletedBackups.length} backup(s), and ${deletedDatabaseRecords} database record(s). Backup: ${result.backupFileName}.`, { createSnapshot: true });
   if (result.deletedFiles.length || result.deletedBackups.length || deletedDatabaseRecords) {
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),

@@ -5,9 +5,8 @@ import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
-import { maxSafeJsonFileBytes, parseJsonFileIfSafe, readJsonFileIfSafe } from "./json-file-safety";
-import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir } from "./runtime-paths";
-import { listUploadFiles, readUploadFile } from "./storage-provider";
+import { parseJsonFileIfSafe } from "./json-file-safety";
+import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
 
 export type BackupSummary = {
   fileName: string;
@@ -15,22 +14,15 @@ export type BackupSummary = {
   status: "SUCCESS";
   sizeBytes: number;
   createdAt: string;
-  source: "database" | "files";
+  source: "database";
   items: number;
-};
-
-type BackupUploadFile = {
-  path: string;
-  sizeBytes: number;
-  modifiedAt: string;
-  base64: string;
 };
 
 type BackupPayload = {
   version?: number;
   type?: string;
   createdAt?: string;
-  source?: "database" | "files";
+  source?: "database";
   database?: unknown;
   metadata?: unknown;
   postgresDump?: {
@@ -42,18 +34,11 @@ type BackupPayload = {
     sha256: string;
     base64: string;
   };
-  dataFiles?: Record<string, unknown>;
-  uploads?: BackupUploadFile[];
 };
 
 const backupDir = runtimeBackupDir;
-const dataDir = runtimeDataDir;
-const maxUploadFileBytes = (Number(process.env.BACKUP_MAX_UPLOAD_FILE_MB) || (process.env.RAILWAY_ENVIRONMENT ? 2 : 5)) * 1024 * 1024;
-const maxUploadsTotalBytes = (Number(process.env.BACKUP_MAX_UPLOADS_TOTAL_MB) || (process.env.RAILWAY_ENVIRONMENT ? 8 : 40)) * 1024 * 1024;
-const maxDataFileSnapshotBytes = maxSafeJsonFileBytes();
 const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
 const maxBackupSummaryBytes = (Number(process.env.BACKUP_SUMMARY_MAX_MB) || 128) * 1024 * 1024;
-const includeLegacyFilesInBackup = process.env.BACKUP_INCLUDE_LEGACY_FILES === "true";
 
 function jsonReplacer(_key: string, value: unknown) {
   if (typeof value === "bigint") return value.toString();
@@ -113,59 +98,6 @@ async function exists(filePath: string) {
   } catch {
     return false;
   }
-}
-
-async function listJsonDataFiles() {
-  ensureRuntimeDirectories();
-  if (!(await exists(dataDir))) return [];
-  const entries = await readdir(dataDir, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".json") && !entry.name.startsWith("backup"))
-    .map((entry) => entry.name);
-}
-
-async function readDataFiles() {
-  const files = await listJsonDataFiles();
-  const output: Record<string, unknown> = {};
-
-  for (const file of files) {
-    const filePath = path.join(dataDir, file);
-    try {
-      const parsed = await parseJsonFileIfSafe(filePath, file, maxDataFileSnapshotBytes);
-      if (parsed.skipped) {
-        output[file] = { skipped: true, reason: "oversized-json", sizeBytes: parsed.sizeBytes };
-        continue;
-      }
-      output[file] = parsed.value ?? "";
-    } catch {
-      const raw = await readJsonFileIfSafe(filePath, file, maxDataFileSnapshotBytes);
-      output[file] = raw.skipped ? { skipped: true, reason: "oversized-json", sizeBytes: raw.sizeBytes } : raw.raw;
-    }
-  }
-
-  return output;
-}
-
-async function walkUploads(): Promise<BackupUploadFile[]> {
-  const entries = await listUploadFiles();
-  const files: BackupUploadFile[] = [];
-
-  for (const entry of entries) {
-    if (entry.size > maxUploadFileBytes) continue;
-    const currentTotal = files.reduce((sum, file) => sum + file.sizeBytes, 0);
-    if (currentTotal + entry.size > maxUploadsTotalBytes) continue;
-    const bytes = await readUploadFile(entry.key).catch(() => null);
-    if (!bytes) continue;
-
-    files.push({
-      path: entry.key,
-      sizeBytes: entry.size,
-      modifiedAt: entry.lastModified?.toISOString() || new Date().toISOString(),
-      base64: bytes.toString("base64"),
-    });
-  }
-
-  return files;
 }
 
 async function readDatabaseMetadata() {
@@ -352,11 +284,7 @@ export async function createBackupSnapshot(type = "manual") {
 
   try {
     const postgresDump = await createPostgresDump(type);
-    const [database, dataFiles, uploads] = await Promise.all([
-      readDatabaseMetadata(),
-      includeLegacyFilesInBackup ? readDataFiles() : Promise.resolve({} as Record<string, unknown>),
-      includeLegacyFilesInBackup ? walkUploads() : Promise.resolve([] as BackupUploadFile[]),
-    ]);
+    const database = await readDatabaseMetadata();
     const fileName = formatBackupName(type);
     const payload: BackupPayload & {
       app: "BadrDaawa";
@@ -370,20 +298,15 @@ export async function createBackupSnapshot(type = "manual") {
       retention: { keepLast: backupRetentionCount },
       metadata: {
         database,
-        settingsFiles: Object.keys(dataFiles),
-        uploadsCount: uploads.length,
         dump: {
           fileName: postgresDump.fileName,
           format: postgresDump.format,
           sizeBytes: postgresDump.sizeBytes,
           sha256: postgresDump.sha256,
         },
-        legacyFilesIncluded: includeLegacyFilesInBackup,
       },
       database,
       postgresDump,
-      dataFiles,
-      uploads,
     };
     const json = `${JSON.stringify(payload, jsonReplacer, 2)}\n`;
     const sizeBytes = Buffer.byteLength(json);
@@ -400,7 +323,7 @@ export async function createBackupSnapshot(type = "manual") {
       sizeBytes,
     });
 
-    return toBackupSummary(fileName, sizeBytes, createdAt.toISOString(), "database", Object.keys(dataFiles).length + uploads.length + 1);
+    return toBackupSummary(fileName, sizeBytes, createdAt.toISOString(), "database", 1);
   } catch (error) {
     const message = toErrorMessage(error);
     console.error(`[Backup] Backup Failed: ${message}`);
@@ -412,7 +335,7 @@ export async function createBackupSnapshot(type = "manual") {
   }
 }
 
-function toBackupSummary(fileName: string, sizeBytes: number, createdAt: string, source: "database" | "files", items: number): BackupSummary {
+function toBackupSummary(fileName: string, sizeBytes: number, createdAt: string, source: "database", items: number): BackupSummary {
   return {
     fileName,
     type: fileName.split("-")[0] || "manual",
@@ -436,20 +359,18 @@ export async function listBackupSnapshots() {
       .map(async (entry) => {
         const filePath = path.join(backupDir, entry.name);
         const fileStat = await stat(filePath);
-        let source: BackupSummary["source"] = "files";
+        let source: BackupSummary["source"] = "database";
         let items = 0;
         if (fileStat.size <= maxBackupSummaryBytes) {
           try {
             const safe = await parseJsonFileIfSafe<{
               source?: BackupSummary["source"];
-              dataFiles?: Record<string, unknown>;
-              uploads?: unknown[];
               postgresDump?: unknown;
             }>(filePath, entry.name, maxBackupSummaryBytes);
             const parsed = safe.value;
             if (!parsed) throw new Error(safe.skipped ? "oversized-backup" : "invalid-backup");
-            source = parsed.source === "database" ? "database" : "files";
-            items = Object.keys(parsed.dataFiles || {}).length + (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0) + (parsed.postgresDump ? 1 : 0);
+            source = "database";
+            items = parsed.postgresDump ? 1 : 0;
           } catch {
             items = 0;
           }

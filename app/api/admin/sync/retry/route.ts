@@ -26,11 +26,10 @@ export async function POST(request: NextRequest) {
 
   // Reset the log entry to processing state before retrying
   if (logId) {
-    await updateSyncLog(logId, { status: "processing", errorMessage: undefined as unknown as string, nextRetryAt: undefined as unknown as Date });
+    await updateSyncLog(logId, { status: "processing", errorMessage: null });
   }
 
   const result = await syncAdminStateToGitHub(reason, {
-    createSnapshot: false,
     logId,
     retryCount: 0,
   });

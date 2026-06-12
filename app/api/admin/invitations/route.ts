@@ -4,7 +4,6 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { fallbackInvitationGallery, getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { hashPassword } from "@/lib/password";
@@ -86,7 +85,7 @@ export async function POST(request: NextRequest) {
   const actor = await getAuditActorFromAdminRequest(request);
 
   if (!prisma) {
-    console.error("[Admin Invitation] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Admin Invitation] PostgreSQL is not configured. Refusing operational write.");
     return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=database", request.headers, request.nextUrl.origin), 303);
   }
 
@@ -189,7 +188,6 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/${code}/ad_3399`);
     revalidatePath(managePath);
     revalidatePath("/admin/invitations");
-    queueGitHubSync(`Client invitation created: ${code}.`, { createSnapshot: true });
     await recordAuditLog({
       actor,
       action: "invitation.create",

@@ -20,17 +20,11 @@ export async function GET(request: NextRequest) {
     getLastSuccessfulSync(),
   ]);
 
-  // Find the next scheduled retry from the queue
-  const pendingItems = queue.items.filter((item) => item.status === "pending" && item.nextRetryAt);
-  const nextRetry = pendingItems.length
-    ? Math.min(...pendingItems.map((item) => item.nextRetryAt as number))
-    : null;
-
   return NextResponse.json({
     readiness,
     queue,
     recentLogs,
     lastSync,
-    nextRetry,
+    nextRetry: null,
   });
 }

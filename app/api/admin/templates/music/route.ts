@@ -14,7 +14,8 @@ import {
   isSupportedImageFile,
   isSupportedImageUrl,
 } from "@/lib/image-formats";
-import { readPublicMediaFile, writeUploadFile } from "@/lib/storage-provider";
+import { writeProjectAssetFile } from "@/lib/project-assets";
+import { readPublicMediaFile } from "@/lib/storage-provider";
 import { getTemplateWithSettings, updateTemplateSettings } from "@/lib/template-settings";
 import { getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 
@@ -27,7 +28,7 @@ async function saveTemplateImage(image: string | File, request: NextRequest) {
     const normalized = await normalizeImageForDisplay(bytes, extension, sourceLabel);
     if (!normalized) return "";
     const fileName = `template-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${normalized.extension}`;
-    const saved = await writeUploadFile(`template-previews/${fileName}`, normalized.bytes, `image/${normalized.extension}`);
+    const saved = await writeProjectAssetFile(`template-previews/${fileName}`, normalized.bytes);
     return saved.url;
   }
 

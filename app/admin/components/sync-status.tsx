@@ -21,7 +21,6 @@ type QueueItem = {
   reason: string;
   status: string;
   retryCount: number;
-  nextRetryAt?: number;
 };
 
 type SyncStatusData = {
@@ -37,7 +36,6 @@ type SyncStatusData = {
   };
   recentLogs: SyncLogEntry[];
   lastSync: SyncLogEntry | null;
-  nextRetry: number | null;
 };
 
 function formatRelativeTime(dateStr: string) {
@@ -118,8 +116,6 @@ export function SyncStatus() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 15_000);
-    return () => clearInterval(interval);
   }, [fetchStatus]);
 
   const handleManualSync = async () => {
@@ -178,7 +174,7 @@ export function SyncStatus() {
     );
   }
 
-  const { readiness, queue, recentLogs, lastSync, nextRetry } = data;
+  const { readiness, queue, recentLogs, lastSync } = data;
   const isCurrentlySyncing = queue.isSyncing || syncing;
   const pendingCount = queue.items.filter((i) => i.status === "pending" || i.status === "processing").length;
   const latestLog = recentLogs[0];
@@ -205,13 +201,6 @@ export function SyncStatus() {
           <CheckCircle2 size={11} />
           آخر مزامنة: {formatRelativeTime(lastSync.createdAt)}
           {lastSync.filesCount ? ` (${lastSync.filesCount} ملف)` : ""}
-        </small>
-      )}
-
-      {nextRetry && (
-        <small className="sync-next-retry">
-          <Clock size={11} />
-          إعادة المحاولة: {formatRelativeTime(new Date(nextRetry).toISOString())}
         </small>
       )}
 
@@ -268,7 +257,7 @@ export function SyncStatus() {
           type="button"
         >
           {isCurrentlySyncing ? <Loader2 size={14} className="sync-spin" /> : <RefreshCw size={14} />}
-          {isCurrentlySyncing ? "جاري…" : "مزامنة الآن"}
+          {isCurrentlySyncing ? "جاري…" : "رفع Backup الآن"}
         </button>
         <a href="/admin/sync-history" className="btn btn-soft btn-glass">
           السجل

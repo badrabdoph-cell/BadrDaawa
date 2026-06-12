@@ -7,8 +7,8 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getHomeContent, updateHomeContent } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
+import { writeProjectAssetFile } from "@/lib/project-assets";
 import { updateSiteSettings } from "@/lib/site-settings";
-import { writeUploadFile } from "@/lib/storage-provider";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -32,7 +32,7 @@ async function saveLogo(file: File | null) {
 
   bytes = normalized.bytes;
   extension = normalized.extension;
-  const saved = await writeUploadFile(`previews/site-logo-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`, bytes, `image/${extension}`);
+  const saved = await writeProjectAssetFile(`branding/site-logo-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`, bytes);
   return saved.url;
 }
 

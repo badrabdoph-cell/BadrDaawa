@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { rsvpSchema } from "@/lib/validation";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -41,7 +40,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const action = String(formData.get("action") || "update");
 
   if (!prisma) {
-    console.error("[Admin RSVP] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[Admin RSVP] PostgreSQL is not configured. Refusing operational write.");
     return redirectAttendance(request, { error: "database" });
   }
 
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (existing) {
       await prisma.guestRsvp.delete({ where: { id } });
       revalidateRsvpPages(existing.invitation.code);
-      queueGitHubSync(`Admin RSVP deleted: ${existing.invitation.code}.`, { createSnapshot: true });
       return redirectAttendance(request, { saved: "deleted" });
     }
     return redirectAttendance(request, { error: "not-found" });
@@ -78,7 +76,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     });
     revalidateRsvpPages(existing.invitation.code);
-    queueGitHubSync(`Admin RSVP updated: ${existing.invitation.code}.`, { createSnapshot: true });
     return redirectAttendance(request, { saved: "updated" });
   }
 

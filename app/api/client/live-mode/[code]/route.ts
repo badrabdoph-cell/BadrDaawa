@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { setWeddingLiveModeEnabled } from "@/lib/wedding-live-mode";
 
 export const runtime = "nodejs";
@@ -21,6 +20,5 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);
-  queueGitHubSync(`Wedding live mode ${enabled ? "enabled" : "disabled"} by client: ${code}.`, { createSnapshot: true });
   return NextResponse.json({ ok: true, config });
 }

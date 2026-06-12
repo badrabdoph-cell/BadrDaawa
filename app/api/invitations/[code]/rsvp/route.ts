@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 import { rsvpSchema } from "@/lib/validation";
@@ -26,7 +25,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   if (!prisma) {
-    console.error("[RSVP API] PostgreSQL is not configured. Refusing runtime-store fallback write.");
+    console.error("[RSVP API] PostgreSQL is not configured. Refusing operational write.");
     return NextResponse.json({ error: "قاعدة البيانات غير متاحة حالياً. حاول مرة أخرى بعد قليل." }, { status: 503 });
   }
 
@@ -64,7 +63,6 @@ export async function POST(request: Request, context: RouteContext) {
         note: parsed.data.note,
       },
     });
-    queueGitHubSync(`RSVP saved for invitation: ${code}.`, { createSnapshot: true });
     revalidatePath(`/${code}/ad_3399`);
     revalidatePath("/admin/analytics");
     return NextResponse.json({ ok: true });
