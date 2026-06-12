@@ -3,6 +3,8 @@ import { Crown, Headphones, Send } from "lucide-react";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 const navLinks = [
   { href: "/templates", label: "التصاميم" },
   { href: "/client-invitations", label: "دعوات حقيقية" },

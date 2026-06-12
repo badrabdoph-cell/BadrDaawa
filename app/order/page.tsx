@@ -7,6 +7,8 @@ import { OrderForm } from "@/components/OrderForm";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "صمّم دعوتك الآن",
 };

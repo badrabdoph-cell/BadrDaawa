@@ -13,6 +13,8 @@ import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 type TemplatePreviewSearchParams = {
     silentPreview?: string;
     embed?: string;

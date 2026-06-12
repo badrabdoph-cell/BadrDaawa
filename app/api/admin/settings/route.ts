@@ -8,7 +8,7 @@ import { getHomeContent, updateHomeContent } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
-import { updateSiteSettings } from "@/lib/site-settings";
+import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -34,6 +34,20 @@ async function saveLogo(file: File | null) {
   extension = normalized.extension;
   const saved = await writeProjectAssetFile(`branding/site-logo-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`, bytes);
   return saved.url;
+}
+
+export async function GET(request: NextRequest) {
+  if (!(await isAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const settings = await getSiteSettings();
+    return NextResponse.json(settings);
+  } catch (error) {
+    console.error("Failed to get site settings", error);
+    return NextResponse.json({ error: "Failed to get site settings" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

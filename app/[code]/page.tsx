@@ -14,6 +14,8 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
 
+export const dynamic = "force-dynamic";
+
 type InvitationSearchParams = {
   silentPreview?: string;
   embed?: string;

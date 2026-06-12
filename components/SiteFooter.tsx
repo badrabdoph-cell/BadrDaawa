@@ -3,6 +3,8 @@ import { Crown } from "lucide-react";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function SiteFooter() {
   const settings = await getSiteSettings();
   const supportUrl = settings.whatsappUrl || getWhatsAppOrderUrl("محتاج دعم فني في دعوة الفرح");

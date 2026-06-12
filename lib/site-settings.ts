@@ -182,7 +182,10 @@ async function readSiteSettingsFile(): Promise<Partial<SiteSettings>> {
 
 export async function getSiteSettings() {
   noStore();
-  return normalizeSettings(await readSiteSettingsFile());
+  const settings = normalizeSettings(await readSiteSettingsFile());
+  console.log("[Site Settings] Loaded from:", settingsPath);
+  console.log("[Site Settings] Current updatedAt:", settings.updatedAt);
+  return settings;
 }
 
 export async function updateSiteSettings(input: Partial<SiteSettings>) {
@@ -199,6 +202,8 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
 
   await mkdir(path.dirname(settingsPath), { recursive: true });
   await writeFile(settingsPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  console.log("[Site Settings] Updated and saved to:", settingsPath);
+  console.log("[Site Settings] New updatedAt:", next.updatedAt);
   return next;
 }
 
