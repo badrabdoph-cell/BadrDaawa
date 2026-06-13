@@ -220,6 +220,7 @@ model BackupJob {
   status      BackupStatus @default(QUEUED)
   fileName    String?
   githubSha   String?
+  githubUrl   String?
   sizeBytes   BigInt?
   startedAt   DateTime?
   finishedAt  DateTime?

@@ -98,15 +98,25 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       if (currentAudio === audio && !currentAudio.paused) return;
       void play();
     }
+    function playAfterGesture() {
+      const currentAudio = audioRef.current;
+      if (!currentAudio || currentAudio !== audio || !currentAudio.paused) return;
+      void play();
+    }
     function stopOnLeave() {
       stopAudio(audio);
     }
 
     window.addEventListener(inviteOpenedEventName, playAfterOpening);
+    window.addEventListener("pointerdown", playAfterGesture, { passive: true });
+    window.addEventListener("keydown", playAfterGesture);
     window.addEventListener("pagehide", stopOnLeave);
+    void play();
 
     return () => {
       window.removeEventListener(inviteOpenedEventName, playAfterOpening);
+      window.removeEventListener("pointerdown", playAfterGesture);
+      window.removeEventListener("keydown", playAfterGesture);
       window.removeEventListener("pagehide", stopOnLeave);
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);

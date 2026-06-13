@@ -40,7 +40,7 @@ export default async function BackupsPage({
         <div>
           <span className="eyebrow">Backups</span>
           <h1>النسخ الاحتياطي</h1>
-          <p>نسخ Runtime Data وملفات العملاء محفوظة داخل `data/backups` ولا ترفع إلى GitHub.</p>
+          <p>نسخ Runtime Data وملفات العملاء تُحفظ محلياً ثم تُرفع إلى GitHub داخل `backups/YYYY/MM/` بعد التحقق من وجودها.</p>
         </div>
         <form action="/api/admin/backups" method="post">
           <button className="btn btn-gold btn-glow" type="submit">
@@ -113,6 +113,18 @@ export default async function BackupsPage({
             <strong>{runtimeStatus.githubBackup.status}</strong>
           </article>
           <article className="panel backup-status-card">
+            <span>الملف المحلي موجود</span>
+            <strong>{runtimeStatus.latestSuccessful?.localFileExists ? "نعم" : "لا"}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>GitHub Upload Success</span>
+            <strong>{runtimeStatus.latestSuccessful?.githubUploadSuccess ? "نعم" : "لا"}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>Commit SHA</span>
+            <strong>{runtimeStatus.latestSuccessful?.commitSha || "غير متاح"}</strong>
+          </article>
+          <article className="panel backup-status-card">
             <span>النسخة القادمة</span>
             <strong>{runtimeStatus.nextScheduledAt ? formatBackupDate(runtimeStatus.nextScheduledAt) : "غير متاح"}</strong>
           </article>
@@ -127,6 +139,14 @@ export default async function BackupsPage({
             GitHub: {runtimeStatus.githubBackup.detail}
           </span>
         </div>
+        {runtimeStatus.latestSuccessful?.githubFileUrl ? (
+          <div className="backup-sync-note" style={{ marginTop: 10 }}>
+            <FileJson size={18} />
+            <a href={runtimeStatus.latestSuccessful.githubFileUrl} target="_blank" rel="noreferrer">
+              {runtimeStatus.latestSuccessful.githubFileUrl}
+            </a>
+          </div>
+        ) : null}
         {runtimeStatus.lastError ? (
           <div className="notice danger" style={{ marginTop: 12 }}>
             آخر خطأ: {runtimeStatus.lastError.message} ({runtimeStatus.lastError.type || "unknown"} - {runtimeStatus.lastError.createdAt ? formatBackupDate(runtimeStatus.lastError.createdAt) : "وقت غير متاح"})
@@ -156,7 +176,7 @@ export default async function BackupsPage({
 
       <div className="backup-sync-note">
         <ShieldCheck size={18} />
-        <span>PostgreSQL هو مصدر الحقيقة للتشغيل. النسخة تحتوي Runtime Data وملفات العملاء فقط، ولا تدخل ضمن GitHub Sync.</span>
+        <span>PostgreSQL هو مصدر الحقيقة للتشغيل. النسخة تحتوي Runtime Data وملفات العملاء فقط، ثم تُرفع كملف backup منفصل إلى GitHub بدون تغيير مسار Project Content Sync.</span>
       </div>
       </section>
 
@@ -191,7 +211,7 @@ export default async function BackupsPage({
                   <td>PostgreSQL</td>
                   <td>{backup.items}</td>
                   <td>
-                    <span className="status success">{backup.status}</span>
+                    <span className={`status ${backup.status === "SUCCESS" ? "success" : "danger"}`}>{backup.status}</span>
                   </td>
                   <td>{formatBytes(backup.sizeBytes)}</td>
                   <td>{formatBackupDate(backup.createdAt)}</td>

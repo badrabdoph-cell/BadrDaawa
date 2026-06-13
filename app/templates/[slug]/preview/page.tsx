@@ -11,6 +11,7 @@ import { normalizeCoupleStory, normalizeGalleryStories } from "@/lib/invitation-
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
+import { normalizeInternalAssetUrl } from "@/lib/utils";
 import type { Invitation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -65,8 +66,8 @@ function cleanPreviewDate(value: string | undefined, fallback = "2026-10-26") {
 function cleanPreviewGallery(value: string | undefined) {
   return (value || "")
     .split(",")
-    .map((item) => item.trim())
-    .filter((item) => item.startsWith("/uploads/order-previews/") || item.startsWith("/uploads/order-requests/") || item.startsWith("/uploads/client-invitations/"))
+    .map((item) => normalizeInternalAssetUrl(item) || "")
+    .filter((item) => item.startsWith("/uploads/") || item.startsWith("/assets/"))
     .filter((item) => isBrowserDisplayImageUrl(item))
     .slice(0, 3);
 }

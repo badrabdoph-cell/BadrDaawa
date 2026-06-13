@@ -4,6 +4,7 @@ import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
+import { uploadRuntimeBackupToGitHub } from "./github-sync";
 import { parseJsonFileIfSafe } from "./json-file-safety";
 import { isProjectContentAppSettingKey } from "./project-content-store";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
@@ -12,11 +13,17 @@ import { listUploadFiles, readUploadFile } from "./storage-provider";
 export type BackupSummary = {
   fileName: string;
   type: string;
-  status: "SUCCESS";
+  status: "SUCCESS" | "FAILED";
   sizeBytes: number;
   createdAt: string;
   source: "database";
   items: number;
+  github: {
+    verified: boolean;
+    commitSha: string | null;
+    fileUrl: string | null;
+    repoPath: string | null;
+  };
 };
 
 export type BackupRuntimeStatus = {
@@ -27,6 +34,10 @@ export type BackupRuntimeStatus = {
     sizeBytes: number;
     durationMs: number | null;
     storagePath: string;
+    localFileExists: boolean;
+    commitSha: string | null;
+    githubFileUrl: string | null;
+    githubUploadSuccess: boolean;
   } | null;
   postgresDump: {
     status: "not_included" | "unknown";
@@ -39,8 +50,10 @@ export type BackupRuntimeStatus = {
     detail: string;
   };
   githubBackup: {
-    status: "not_configured" | "unknown";
+    status: "ok" | "failed" | "not_configured" | "unknown";
     detail: string;
+    commitSha: string | null;
+    githubFileUrl: string | null;
   };
   lastError: {
     message: string;
@@ -67,6 +80,8 @@ export type BackupVerificationResult = {
     startedAt: string | null;
     finishedAt: string | null;
     sizeBytes: string | null;
+    githubSha: string | null;
+    githubUrl: string | null;
     error: string | null;
     createdAt: string;
   } | null;
@@ -88,12 +103,16 @@ export type BackupDiagnostics = {
     createdAt: string;
     status: string;
     fileName: string | null;
+    githubSha: string | null;
+    githubUrl: string | null;
     error: string | null;
   } | null;
   lastScheduledSuccess: {
     createdAt: string;
     fileName: string | null;
     sizeBytes: string | null;
+    githubSha: string | null;
+    githubUrl: string | null;
   } | null;
   backupsCount: number;
 };
@@ -296,6 +315,8 @@ async function updateBackupJob(
     status: "SUCCESS" | "FAILED";
     fileName?: string;
     sizeBytes?: number;
+    githubSha?: string | null;
+    githubUrl?: string | null;
     error?: string;
   },
 ) {
@@ -307,6 +328,8 @@ async function updateBackupJob(
         status: data.status,
         fileName: data.fileName,
         sizeBytes: data.sizeBytes === undefined ? undefined : BigInt(data.sizeBytes),
+        githubSha: data.githubSha,
+        githubUrl: data.githubUrl,
         error: data.error,
         finishedAt: new Date(),
       },
@@ -348,13 +371,15 @@ export async function createBackupSnapshot(type = "manual") {
 
   const createdAt = new Date();
   const jobId = await createBackupJob(type, createdAt);
+  let fileName: string | undefined;
+  let sizeBytes: number | undefined;
   console.log(`[Backup] Backup Started: ${type}`);
 
   try {
     const runtimeData = await readRuntimeDataSnapshot();
     const uploads = await readRuntimeUploadSnapshot();
     const database = await readDatabaseMetadata();
-    const fileName = formatBackupName(type);
+    fileName = formatBackupName(type);
     const payload: BackupPayload & {
       app: "BadrDaawa";
       retention: { keepLast: number };
@@ -381,12 +406,22 @@ export async function createBackupSnapshot(type = "manual") {
       },
     };
     const json = `${JSON.stringify(payload, jsonReplacer, 2)}\n`;
-    const sizeBytes = Buffer.byteLength(json);
+    sizeBytes = Buffer.byteLength(json);
 
     const backupPath = path.join(backupDir, fileName);
     ensureParentDirectory(backupPath);
     await writeFile(backupPath, json, "utf8");
     await cleanupOldBackups();
+    const githubUpload = await uploadRuntimeBackupToGitHub({
+      fileName,
+      bytes: Buffer.from(json, "utf8"),
+      createdAt,
+      reason: `Runtime backup ${type}`,
+      keepLast: 30,
+    });
+    if (githubUpload.status !== "synced" || !githubUpload.verified) {
+      throw new Error(githubUpload.message || "GitHub backup upload failed.");
+    }
     const items = countRuntimeItems(runtimeData, uploads.length);
     console.log(`[Backup] Backup Completed: ${fileName} (${sizeBytes} bytes, ${items} runtime item(s)).`);
 
@@ -394,17 +429,32 @@ export async function createBackupSnapshot(type = "manual") {
       status: "SUCCESS",
       fileName,
       sizeBytes,
+      githubSha: githubUpload.commitSha,
+      githubUrl: githubUpload.fileUrl,
     });
 
-    return toBackupSummary(fileName, sizeBytes, createdAt.toISOString(), "database", items);
+    return toBackupSummary(fileName, sizeBytes, createdAt.toISOString(), "database", items, "SUCCESS", {
+      verified: githubUpload.verified,
+      commitSha: githubUpload.commitSha,
+      fileUrl: githubUpload.fileUrl,
+      repoPath: githubUpload.repoPath,
+    });
   } catch (error) {
     const message = toErrorMessage(error);
     console.error(`[Backup] Backup Failed: ${message}`);
     await updateBackupJob(jobId, {
       status: "FAILED",
+      fileName,
+      sizeBytes,
       error: message,
     });
-    throw error;
+    const failure = error instanceof Error ? error : new Error(message);
+    Object.assign(failure, {
+      backupFileName: fileName ?? null,
+      backupSizeBytes: sizeBytes ?? null,
+      backupStoragePath: fileName ? backupPathFor(fileName) : null,
+    });
+    throw failure;
   }
 }
 
@@ -424,15 +474,29 @@ export async function markBackupSnapshotPipelineFailed(fileName: string, error: 
   }
 }
 
-function toBackupSummary(fileName: string, sizeBytes: number, createdAt: string, source: "database", items: number): BackupSummary {
+function toBackupSummary(
+  fileName: string,
+  sizeBytes: number,
+  createdAt: string,
+  source: "database",
+  items: number,
+  status: BackupSummary["status"] = "SUCCESS",
+  github: BackupSummary["github"] = {
+    verified: false,
+    commitSha: null,
+    fileUrl: null,
+    repoPath: null,
+  },
+): BackupSummary {
   return {
     fileName,
     type: fileName.split("-")[0] || "manual",
-    status: "SUCCESS",
+    status,
     sizeBytes,
     createdAt,
     source,
     items,
+    github,
   };
 }
 
@@ -471,8 +535,38 @@ export async function listBackupSnapshots() {
         return toBackupSummary(entry.name, fileStat.size, fileStat.mtime.toISOString(), source, items);
       }),
   );
+  const sorted = summaries.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  if (!prisma || !sorted.length) return sorted;
 
-  return summaries.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const jobs = await prisma.backupJob.findMany({
+    where: {
+      fileName: {
+        in: sorted.map((summary) => summary.fileName),
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  }).catch(() => []);
+  const jobByFileName = new Map<string, (typeof jobs)[number]>();
+  for (const job of jobs) {
+    if (job.fileName && !jobByFileName.has(job.fileName)) {
+      jobByFileName.set(job.fileName, job);
+    }
+  }
+
+  return sorted.map((summary) => {
+    const job = jobByFileName.get(summary.fileName);
+    if (!job) return summary;
+    return {
+      ...summary,
+      status: (job.status === "FAILED" ? "FAILED" : "SUCCESS") as BackupSummary["status"],
+      github: {
+        verified: Boolean(job.githubSha && job.githubUrl && job.status === "SUCCESS"),
+        commitSha: job.githubSha,
+        fileUrl: job.githubUrl,
+        repoPath: null,
+      },
+    };
+  });
 }
 
 export async function getBackupFile(fileName: string) {
@@ -520,6 +614,8 @@ function serializeBackupJob(job: Awaited<ReturnType<typeof readBackupJobByFileNa
     startedAt: iso(job.startedAt),
     finishedAt: iso(job.finishedAt),
     sizeBytes: job.sizeBytes?.toString() ?? null,
+    githubSha: job.githubSha,
+    githubUrl: job.githubUrl,
     error: job.error,
     createdAt: job.createdAt.toISOString(),
   };
@@ -547,29 +643,36 @@ async function readBackupPayload(fileName: string) {
 export async function getBackupRuntimeStatus(): Promise<BackupRuntimeStatus> {
   noStore();
   const backups = await listBackupSnapshots();
-  const latest = backups[0] ?? null;
-  const latestJob = latest ? await readBackupJobByFileName(latest.fileName).catch(() => null) : null;
+  const latestSuccessfulJob = prisma
+    ? await prisma.backupJob.findFirst({ where: { status: "SUCCESS" }, orderBy: { createdAt: "desc" } }).catch(() => null)
+    : null;
   const failedJob = prisma
     ? await prisma.backupJob.findFirst({ where: { status: "FAILED" }, orderBy: { createdAt: "desc" } }).catch(() => null)
     : null;
   const lastScheduled = prisma
     ? await prisma.backupJob.findFirst({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" } }).catch(() => null)
     : null;
+  const latestSuccessfulFileName = latestSuccessfulJob?.fileName || null;
+  const latestSuccessfulFilePath = latestSuccessfulFileName ? backupPathFor(latestSuccessfulFileName) : null;
+  const latestSuccessfulFileExists = latestSuccessfulFilePath ? await exists(latestSuccessfulFilePath) : false;
+  const latestSuccessfulSummary = latestSuccessfulFileName
+    ? backups.find((backup) => backup.fileName === latestSuccessfulFileName) ?? null
+    : null;
 
   let uploadsBackup: BackupRuntimeStatus["uploadsBackup"] = {
-    status: latest ? "unknown" : "missing",
+    status: latestSuccessfulFileName ? "unknown" : "missing",
     files: null,
     bytes: null,
-    detail: latest ? "لم يتم فتح ملف آخر نسخة بعد." : "لا توجد نسخة احتياطية.",
+    detail: latestSuccessfulFileName ? "لم يتم فتح ملف آخر نسخة ناجحة بعد." : "لا توجد نسخة احتياطية.",
   };
   let postgresDump: BackupRuntimeStatus["postgresDump"] = {
     status: "unknown",
-    detail: latest ? "لم يتم فتح ملف آخر نسخة بعد." : "لا توجد نسخة احتياطية.",
+    detail: latestSuccessfulFileName ? "لم يتم فتح ملف آخر نسخة ناجحة بعد." : "لا توجد نسخة احتياطية.",
   };
 
-  if (latest) {
+  if (latestSuccessfulFileName) {
     try {
-      const payload = await readBackupPayload(latest.fileName);
+      const payload = await readBackupPayload(latestSuccessfulFileName);
       const uploads = Array.isArray(payload.uploads) ? payload.uploads : [];
       const uploadBytes = uploads.reduce((sum, upload) => sum + (typeof upload.sizeBytes === "number" ? upload.sizeBytes : 0), 0);
       uploadsBackup = {
@@ -592,29 +695,41 @@ export async function getBackupRuntimeStatus(): Promise<BackupRuntimeStatus> {
   }
 
   const durationMs =
-    latestJob?.startedAt && latestJob.finishedAt
-      ? Math.max(0, latestJob.finishedAt.getTime() - latestJob.startedAt.getTime())
+    latestSuccessfulJob?.startedAt && latestSuccessfulJob.finishedAt
+      ? Math.max(0, latestSuccessfulJob.finishedAt.getTime() - latestSuccessfulJob.startedAt.getTime())
       : null;
   const nextScheduledAt = lastScheduled?.finishedAt
     ? new Date(lastScheduled.finishedAt.getTime() + 6 * 60 * 60 * 1000).toISOString()
     : null;
+  const gitHubConfigured = Boolean(process.env.GITHUB_SYNC_ENABLED !== "false" && (process.env.GITHUB_SYNC_REPO || "").trim() && (process.env.GITHUB_SYNC_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN));
+  const latestGitHubSuccess = Boolean(latestSuccessfulJob?.githubSha && latestSuccessfulJob?.githubUrl);
 
   return {
-    latestSuccessful: latest
+    latestSuccessful: latestSuccessfulJob && latestSuccessfulFileName
       ? {
-          fileName: latest.fileName,
-          type: backupTypeLabel(latestJob?.type || latest.type),
-          createdAt: latestJob?.createdAt.toISOString() || latest.createdAt,
-          sizeBytes: latest.sizeBytes,
+          fileName: latestSuccessfulFileName,
+          type: backupTypeLabel(latestSuccessfulJob.type),
+          createdAt: latestSuccessfulJob.createdAt.toISOString(),
+          sizeBytes: latestSuccessfulSummary?.sizeBytes ?? (latestSuccessfulJob.sizeBytes ? Number(latestSuccessfulJob.sizeBytes) : 0),
           durationMs,
-          storagePath: backupPathFor(latest.fileName),
+          storagePath: latestSuccessfulFilePath || backupPathFor(latestSuccessfulFileName),
+          localFileExists: latestSuccessfulFileExists,
+          commitSha: latestSuccessfulJob.githubSha,
+          githubFileUrl: latestSuccessfulJob.githubUrl,
+          githubUploadSuccess: latestGitHubSuccess,
         }
       : null,
     postgresDump,
     uploadsBackup,
     githubBackup: {
-      status: "not_configured",
-      detail: "Runtime Backup لا يرفع إلى GitHub في النظام الحالي.",
+      status: latestGitHubSuccess ? "ok" : gitHubConfigured ? "failed" : "not_configured",
+      detail: latestGitHubSuccess
+        ? "تم رفع آخر نسخة ناجحة إلى GitHub والتحقق من وجودها."
+        : gitHubConfigured
+          ? "GitHub مهيأ لكن لا توجد نسخة ناجحة مرفوعة ومتحقق منها حالياً."
+          : "متغيرات GitHub Backup غير مكتملة.",
+      commitSha: latestSuccessfulJob?.githubSha ?? null,
+      githubFileUrl: latestSuccessfulJob?.githubUrl ?? null,
     },
     lastError: failedJob
       ? {
@@ -667,6 +782,15 @@ export async function verifyBackupNow(): Promise<BackupVerificationResult> {
 
     backupJob = serializeBackupJob(await readBackupJobByFileName(fileName));
     addStep("backup-job", Boolean(backupJob), backupJob ? `BackupJob ${backupJob.id} status=${backupJob.status}.` : "BackupJob was not found.");
+    const githubVerified = Boolean(backupJob?.githubSha && backupJob?.githubUrl);
+    addStep(
+      "github-upload",
+      githubVerified,
+      githubVerified
+        ? `GitHub upload verified: ${backupJob?.githubSha}`
+        : "GitHub upload verification details are missing from BackupJob.",
+    );
+    if (!githubVerified) throw new Error("BackupJob does not contain verified GitHub upload metadata.");
 
     const finishedAt = new Date();
     return {
@@ -682,6 +806,23 @@ export async function verifyBackupNow(): Promise<BackupVerificationResult> {
       error: steps.every((step) => step.ok) ? null : "One or more verification steps failed.",
     };
   } catch (error) {
+    const runtimeError = error as Error & {
+      backupFileName?: string | null;
+      backupSizeBytes?: number | null;
+      backupStoragePath?: string | null;
+    };
+    if (!fileName && runtimeError.backupFileName) fileName = runtimeError.backupFileName;
+    if (!storagePath && runtimeError.backupStoragePath) storagePath = runtimeError.backupStoragePath;
+    if (sizeBytes === null && typeof runtimeError.backupSizeBytes === "number") sizeBytes = runtimeError.backupSizeBytes;
+    if (storagePath && (await exists(storagePath))) {
+      const localStat = await stat(storagePath).catch(() => null);
+      addStep(
+        "local-file",
+        Boolean(localStat?.isFile()),
+        localStat ? `Local backup file exists: ${fileName || storagePath} (${localStat.size} bytes).` : "Local backup file could not be read.",
+      );
+      if (localStat) sizeBytes = localStat.size;
+    }
     addStep("failure", false, toErrorMessage(error));
     if (fileName && !backupJob) {
       backupJob = serializeBackupJob(await readBackupJobByFileName(fileName).catch(() => null));
@@ -731,6 +872,8 @@ export async function getBackupDiagnostics(): Promise<BackupDiagnostics> {
                 createdAt: job.createdAt.toISOString(),
                 status: job.status,
                 fileName: job.fileName,
+                githubSha: job.githubSha,
+                githubUrl: job.githubUrl,
                 error: job.error,
               }
             : null,
@@ -747,6 +890,8 @@ export async function getBackupDiagnostics(): Promise<BackupDiagnostics> {
                 createdAt: job.createdAt.toISOString(),
                 fileName: job.fileName,
                 sizeBytes: job.sizeBytes?.toString() ?? null,
+                githubSha: job.githubSha,
+                githubUrl: job.githubUrl,
               }
             : null,
         )

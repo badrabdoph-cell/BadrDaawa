@@ -1,0 +1,1 @@
+ALTER TABLE "BackupJob" ADD COLUMN IF NOT EXISTS "githubUrl" TEXT;

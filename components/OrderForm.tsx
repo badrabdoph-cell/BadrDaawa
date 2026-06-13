@@ -555,7 +555,6 @@ export function OrderForm({
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
-  const reviewHintPlayedRef = useRef(false);
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
@@ -695,19 +694,6 @@ export function OrderForm({
       formRef.current?.querySelector<HTMLElement>(".order-review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 40);
   }
-
-  useEffect(() => {
-    if (activeStep.id !== "review" || reviewHintPlayedRef.current || typeof window === "undefined") return;
-    reviewHintPlayedRef.current = true;
-    const startY = window.scrollY;
-    const downTimer = window.setTimeout(() => {
-      window.scrollTo({ top: startY + 44, behavior: "smooth" });
-      window.setTimeout(() => {
-        window.scrollTo({ top: startY, behavior: "smooth" });
-      }, 420);
-    }, 420);
-    return () => window.clearTimeout(downTimer);
-  }, [activeStep.id]);
 
   function getUrlDraft(): OrderDraft {
     if (typeof window === "undefined") return {};
@@ -1398,6 +1384,18 @@ export function OrderForm({
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const isFinalConfirmButton = submitter instanceof HTMLButtonElement && submitter.dataset.orderConfirm === "true";
+    if (activeStep.id !== "review") {
+      goNext();
+      return;
+    }
+    if (!isFinalConfirmButton) {
+      setState("error");
+      setMessage("لا يتم تأكيد الدعوة إلا بعد الضغط على زر الانتهاء وتأكيد الدعوة.");
+      formRef.current?.querySelector<HTMLElement>(".order-review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (state === "loading") return;
     if (hasMediaUploadInProgress) {
       setState("error");
@@ -1986,7 +1984,7 @@ export function OrderForm({
                   <Eye size={17} />
                   معاينة الدعوة
                 </button>
-                <button className="btn btn-gold btn-glow order-submit" type="submit" disabled={state === "loading" || hasMediaUploadInProgress} aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}>
+                <button className="btn btn-gold btn-glow order-submit" type="submit" data-order-confirm="true" disabled={state === "loading" || hasMediaUploadInProgress} aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}>
                   {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
                   الانتهاء وتأكيد الدعوة
                 </button>

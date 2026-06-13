@@ -19,6 +19,8 @@ type VerifyResult = {
     startedAt: string | null;
     finishedAt: string | null;
     sizeBytes: string | null;
+    githubSha: string | null;
+    githubUrl: string | null;
     error: string | null;
     createdAt: string;
   } | null;
@@ -100,6 +102,12 @@ export function VerifyBackupButton() {
             <span>المدة: {result.durationMs}ms</span>
             {result.storagePath ? <code>{result.storagePath}</code> : null}
             {result.backupJob ? <span>BackupJob: {result.backupJob.id} / {result.backupJob.status}</span> : <span>BackupJob: غير موجود</span>}
+            {result.backupJob?.githubSha ? <span>Commit SHA: {result.backupJob.githubSha}</span> : null}
+            {result.backupJob?.githubUrl ? (
+              <a href={result.backupJob.githubUrl} target="_blank" rel="noreferrer">
+                {result.backupJob.githubUrl}
+              </a>
+            ) : null}
             <div style={{ display: "grid", gap: 6 }}>
               {result.steps.map((step) => (
                 <div key={`${step.name}-${step.timestamp}`} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>

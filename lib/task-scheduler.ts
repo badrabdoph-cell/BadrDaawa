@@ -58,7 +58,7 @@ const taskDefinitions: ScheduledTaskDefinition[] = [
   {
     id: "backup",
     title: "PostgreSQL Backup",
-    description: "ينفذ Railway Cron نسخة Runtime Data كل 6 ساعات عبر /api/cron/backup بدون رفع بيانات التشغيل إلى GitHub.",
+    description: "ينفذ Railway Cron نسخة Runtime Data كل 6 ساعات عبر /api/cron/backup مع رفع ملف النسخة إلى GitHub والتحقق منه.",
     category: "Railway Cron",
     intervalMs: sixHoursMs,
     defaultAutomaticEnabled: false,

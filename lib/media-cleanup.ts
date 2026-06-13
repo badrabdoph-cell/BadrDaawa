@@ -312,6 +312,12 @@ async function listBackupFilesFast(): Promise<BackupSummary[]> {
           createdAt: fileStat.mtime.toISOString(),
           source: "database" as const,
           items: 0,
+          github: {
+            verified: false,
+            commitSha: null,
+            fileUrl: null,
+            repoPath: null,
+          },
         };
       }),
   );
