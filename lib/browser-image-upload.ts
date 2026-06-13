@@ -23,6 +23,7 @@ export type BrowserImageUploadStatus = {
 
 export type BrowserImageUploadOptions = {
   slot?: string | number;
+  endpoint?: string;
   onStatus?: (status: BrowserImageUploadStatus) => void;
 };
 
@@ -134,7 +135,7 @@ async function uploadWithFetch(file: File, options: BrowserImageUploadOptions, a
   if (options.slot !== undefined) formData.append("slot", String(options.slot));
   formData.append("attempt", String(attempt + 1));
 
-  const response = await fetch("/api/orders/preview-images", {
+  const response = await fetch(options.endpoint || "/api/orders/preview-images", {
     method: "POST",
     body: formData,
   });

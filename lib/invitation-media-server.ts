@@ -9,7 +9,7 @@ const videoExtensionByType: Record<string, string> = {
   "video/quicktime": "mov",
 };
 
-export async function saveInvitationHeroVideo(file: File) {
+export async function saveInvitationHeroVideo(file: File, folder = "client-invitations") {
   if (!file.size || file.size > maxHeroVideoBytes) return "";
   const extension = videoExtensionByType[file.type] || (file.name.match(/\.(mp4|webm|mov|m4v)$/i)?.[1] || "").toLowerCase();
   if (!extension) return "";
@@ -17,6 +17,6 @@ export async function saveInvitationHeroVideo(file: File) {
   const bytes = Buffer.from(await file.arrayBuffer());
   if (!bytes.length || bytes.length > maxHeroVideoBytes) return "";
   const fileName = `invitation-hero-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
-  const saved = await writeUploadFile(`client-invitations/${fileName}`, bytes, contentType);
+  const saved = await writeUploadFile(`${folder}/${fileName}`, bytes, contentType);
   return saved.url;
 }

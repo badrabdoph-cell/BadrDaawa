@@ -30,6 +30,7 @@ export type LiveInvitationPreviewPayload = {
   musicEnabled?: boolean;
   heroVideoUrl?: string;
   disableMusic?: boolean;
+  focusKey?: string;
   language?: Invitation["language"];
   texts?: Invitation["texts"];
   photographer?: PreviewPhotographer;
@@ -111,6 +112,27 @@ function applyPayload(invitation: Invitation, payload: LiveInvitationPreviewPayl
   };
 }
 
+function focusPreviewElement(key?: string) {
+  if (!key) return;
+  const selectors: Record<string, string> = {
+    hero: ".invite-hero, [class*='hero'], main > section:first-of-type",
+    date: "[class*='countdown'], [class*='date'], [class*='time'], .invite-details, main section:nth-of-type(2)",
+    map: "[class*='map'], iframe[src*='maps'], .invite-map",
+    gallery: "[class*='gallery'], [class*='photo']",
+    photographer: "[class*='photographer']",
+    rsvp: "[class*='rsvp'], form",
+    story: "[class*='story'], [class*='timeline']",
+    message: "[class*='message'], [class*='welcome'], .invite-story",
+  };
+  window.requestAnimationFrame(() => {
+    const target = document.querySelector<HTMLElement>(selectors[key] || selectors.hero);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.add("admin-preview-highlight");
+    window.setTimeout(() => target.classList.remove("admin-preview-highlight"), 1600);
+  });
+}
+
 export function LiveInvitationPreview({
   invitation,
   template,
@@ -145,6 +167,7 @@ export function LiveInvitationPreview({
       const payload = event.data.payload;
       setPreviewInvitation((current) => applyPayload(current, payload));
       if (typeof payload.disableMusic === "boolean") setPreviewDisableMusic(payload.disableMusic);
+      focusPreviewElement(payload.focusKey);
     }
 
     window.addEventListener("message", onMessage);

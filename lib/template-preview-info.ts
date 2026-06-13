@@ -24,7 +24,18 @@ export type TemplatePreviewInfo = {
     instagramUrl: string;
     facebookUrl: string;
   };
+  templateOverrides: Record<string, TemplatePreviewOverride>;
+  adminScope: {
+    mode: "all" | "allExcept";
+    excludedSlugs: string[];
+  };
   updatedAt: string;
+};
+
+export type TemplatePreviewEditableInfo = Omit<TemplatePreviewInfo, "templateOverrides" | "adminScope" | "updatedAt">;
+
+export type TemplatePreviewOverride = Partial<TemplatePreviewEditableInfo> & {
+  updatedAt?: string;
 };
 
 export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
@@ -78,6 +89,11 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
     logoUrl: "",
     instagramUrl: "https://www.instagram.com/",
     facebookUrl: "https://www.facebook.com/",
+  },
+  templateOverrides: {},
+  adminScope: {
+    mode: "all",
+    excludedSlugs: [],
   },
   updatedAt: "",
 };
@@ -151,6 +167,15 @@ function cleanStory(value: unknown, fallback: CoupleStoryItem[]) {
 function normalizeTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>): TemplatePreviewInfo {
   const fallback = defaultTemplatePreviewInfo;
   const language = input.language === "en" ? "en" : "ar";
+  const templateOverrides =
+    input.templateOverrides && typeof input.templateOverrides === "object" && !Array.isArray(input.templateOverrides)
+      ? Object.fromEntries(
+          Object.entries(input.templateOverrides)
+            .filter(([slug, value]) => Boolean(slug.trim()) && value && typeof value === "object" && !Array.isArray(value))
+            .map(([slug, value]) => [slug.trim(), normalizeTemplatePreviewOverride(value as Partial<TemplatePreviewEditableInfo> & { updatedAt?: string })]),
+        )
+      : {};
+  const rawExcludedSlugs = Array.isArray(input.adminScope?.excludedSlugs) ? input.adminScope.excludedSlugs : [];
   return {
     language,
     groomName: cleanText(input.groomName, fallback.groomName, 80),
@@ -180,6 +205,30 @@ function normalizeTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>): Temp
       instagramUrl: cleanUrl(input.photographer?.instagramUrl, fallback.photographer.instagramUrl),
       facebookUrl: cleanUrl(input.photographer?.facebookUrl, fallback.photographer.facebookUrl),
     },
+    templateOverrides,
+    adminScope: {
+      mode: input.adminScope?.mode === "allExcept" ? "allExcept" : "all",
+      excludedSlugs: rawExcludedSlugs.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean),
+    },
+    updatedAt: cleanOptionalText(input.updatedAt, 80),
+  };
+}
+
+function normalizeTemplatePreviewOverride(input: Partial<TemplatePreviewEditableInfo> & { updatedAt?: string }): TemplatePreviewOverride {
+  const normalized = normalizeTemplatePreviewInfo({ ...defaultTemplatePreviewInfo, ...input });
+  return {
+    language: normalized.language,
+    groomName: normalized.groomName,
+    brideName: normalized.brideName,
+    weddingDate: normalized.weddingDate,
+    weddingTime: normalized.weddingTime,
+    venue: normalized.venue,
+    city: normalized.city,
+    mapUrl: normalized.mapUrl,
+    heroVideoUrl: normalized.heroVideoUrl,
+    gallery: normalized.gallery,
+    texts: normalized.texts,
+    photographer: normalized.photographer,
     updatedAt: cleanOptionalText(input.updatedAt, 80),
   };
 }
@@ -207,4 +256,39 @@ export async function updateTemplatePreviewInfo(input: Partial<TemplatePreviewIn
 
   await writeProjectContentSetting("template-preview-info", next);
   return next;
+}
+
+export function getTemplatePreviewBaseInfo(info: TemplatePreviewInfo): TemplatePreviewEditableInfo {
+  return {
+    language: info.language,
+    groomName: info.groomName,
+    brideName: info.brideName,
+    weddingDate: info.weddingDate,
+    weddingTime: info.weddingTime,
+    venue: info.venue,
+    city: info.city,
+    mapUrl: info.mapUrl,
+    heroVideoUrl: info.heroVideoUrl,
+    gallery: info.gallery,
+    texts: info.texts,
+    photographer: info.photographer,
+  };
+}
+
+export function resolveTemplatePreviewInfo(info: TemplatePreviewInfo, slug?: string): TemplatePreviewEditableInfo {
+  const base = getTemplatePreviewBaseInfo(info);
+  const override = slug ? info.templateOverrides[slug] : undefined;
+  if (!override) return base;
+  return normalizeTemplatePreviewOverride({
+    ...base,
+    ...override,
+    texts: {
+      ...base.texts,
+      ...override.texts,
+    },
+    photographer: {
+      ...base.photographer,
+      ...override.photographer,
+    },
+  }) as TemplatePreviewEditableInfo;
 }

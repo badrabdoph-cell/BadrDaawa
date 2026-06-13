@@ -10,6 +10,7 @@ import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { parseJsonFileIfSafe, readJsonFileIfSafe } from "@/lib/json-file-safety";
 import { ensureRuntimeDirectories, runtimeBackupDir, runtimeDataDir } from "@/lib/runtime-paths";
 import { deleteUploadFile, listUploadFiles, readUploadFile, storageKeyFromUploadUrl, writeUploadFile } from "@/lib/storage-provider";
+import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { imageExtensionFromName } from "@/lib/image-formats";
 
@@ -240,6 +241,7 @@ async function collectFileStoreReferences(references: Map<string, MediaUsageDeta
 async function collectTemplateReferences(references: Map<string, MediaUsageDetail[]>) {
   const templates = await getTemplatesWithSettings();
   for (const template of templates) collectReferencesFromValue(references, template, "Template", `${template.arabicName} (${template.slug})`);
+  collectReferencesFromValue(references, await getTemplatePreviewInfo(), "Template", "محتوى ومعاينات القوالب الجاهزة");
 }
 
 async function collectMusicLibraryReferences(references: Map<string, MediaUsageDetail[]>) {
@@ -591,6 +593,17 @@ export async function deleteMediaFile(url: string) {
   if (!deleted) return { ok: false, reason: "missing", file: fresh, backupFileName: backup.fileName };
   revalidatePath("/admin/media");
   return { ok: true, reason: "", file: fresh, backupFileName: backup.fileName };
+}
+
+export async function deleteUploadUrlIfUnused(url: string) {
+  const file = await getMediaFile(url);
+  if (!file || file.sources.length) return { ok: false, reason: file?.sources.length ? "used" : "missing", file };
+  const key = storageKeyFromUploadUrl(file.url);
+  if (!key) return { ok: false, reason: "invalid", file };
+  const deleted = await deleteUploadFile(key);
+  if (!deleted) return { ok: false, reason: "missing", file };
+  revalidatePath("/admin/media");
+  return { ok: true, reason: "", file };
 }
 
 export async function replaceMediaFile(url: string, file: File | null) {
