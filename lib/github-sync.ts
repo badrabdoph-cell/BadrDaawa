@@ -15,6 +15,15 @@ export type GitHubSyncResult = {
   duration?: number;
 };
 
+export type GitHubBackupUploadResult = {
+  status: "synced" | "failed";
+  message: string;
+  commitSha: string | null;
+  fileUrl: string | null;
+  repoPath: string | null;
+  verified: boolean;
+};
+
 type GitHubRef = {
   object: {
     sha: string;
@@ -39,6 +48,32 @@ type GitHubTree = {
 type GitHubCreatedCommit = {
   sha: string;
   html_url?: string;
+};
+
+type GitHubTreeEntry = {
+  path: string;
+  mode?: string;
+  type: string;
+  sha?: string;
+  size?: number;
+};
+
+type GitHubRecursiveTree = {
+  sha: string;
+  tree: GitHubTreeEntry[];
+  truncated?: boolean;
+};
+
+type GitHubContentItem = {
+  path: string;
+  sha: string;
+  size: number;
+  html_url?: string;
+};
+
+type GitHubPutContentsResponse = {
+  content?: GitHubContentItem;
+  commit: GitHubCreatedCommit;
 };
 
 type SyncFile = {
@@ -340,6 +375,10 @@ function branchRefPath(branch: string) {
   return branch.split("/").map(encodeURIComponent).join("/");
 }
 
+function repoContentPath(repoPath: string) {
+  return repoPath.split("/").map(encodeURIComponent).join("/");
+}
+
 async function githubRequest<T>(pathName: string, init: RequestInit, token: string): Promise<T> {
   const response = await fetch(`https://api.github.com${pathName}`, {
     ...init,
@@ -358,6 +397,137 @@ async function githubRequest<T>(pathName: string, init: RequestInit, token: stri
   }
 
   return (await response.json()) as T;
+}
+
+function formatBackupRepoPath(fileName: string, createdAt: Date) {
+  const year = String(createdAt.getUTCFullYear());
+  const month = String(createdAt.getUTCMonth() + 1).padStart(2, "0");
+  return `backups/${year}/${month}/${fileName}`;
+}
+
+function buildGitHubBlobUrl(config: SyncConfig, repoPath: string) {
+  return `https://github.com/${config.repo.owner}/${config.repo.repo}/blob/${encodeURIComponent(config.branch).replace(/%2F/g, "/")}/${repoPath}`;
+}
+
+function backupTimestampFromPath(repoPath: string) {
+  const match = repoPath.match(/(\d{8}T\d{6}Z)\.json$/i);
+  if (!match) return 0;
+  const stamp = match[1];
+  const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
+  const time = Date.parse(iso);
+  return Number.isNaN(time) ? 0 : time;
+}
+
+async function pruneOldRuntimeBackups(config: SyncConfig, keepLast: number) {
+  const { owner, repo } = config.repo;
+  const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
+  const headCommit = await githubRequest<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, { method: "GET" }, config.token);
+  const tree = await githubRequest<GitHubRecursiveTree>(
+    `/repos/${owner}/${repo}/git/trees/${headCommit.tree.sha}?recursive=1`,
+    { method: "GET" },
+    config.token,
+  );
+
+  const backupFiles = tree.tree
+    .filter((entry) => entry.type === "blob" && entry.path.startsWith("backups/") && entry.path.endsWith(".json"))
+    .sort((a, b) => {
+      const timeDiff = backupTimestampFromPath(b.path) - backupTimestampFromPath(a.path);
+      return timeDiff !== 0 ? timeDiff : b.path.localeCompare(a.path);
+    });
+
+  for (const entry of backupFiles.slice(keepLast)) {
+    const encodedPath = repoContentPath(entry.path);
+    const current = await githubRequest<GitHubContentItem>(
+      `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(config.branch)}`,
+      { method: "GET" },
+      config.token,
+    );
+
+    await githubRequest<GitHubPutContentsResponse>(
+      `/repos/${owner}/${repo}/contents/${encodedPath}`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({
+          message: `chore(backup): prune runtime backup ${path.basename(entry.path)}`.slice(0, 500),
+          sha: current.sha,
+          branch: config.branch,
+        }),
+      },
+      config.token,
+    );
+  }
+}
+
+export async function uploadRuntimeBackupToGitHub(input: {
+  fileName: string;
+  bytes: Buffer;
+  createdAt: Date;
+  reason: string;
+  keepLast?: number;
+}): Promise<GitHubBackupUploadResult> {
+  const config = getSyncConfig();
+  if (!config) {
+    return {
+      status: "failed",
+      message: "GitHub backup variables are not configured.",
+      commitSha: null,
+      fileUrl: null,
+      repoPath: null,
+      verified: false,
+    };
+  }
+
+  const { owner, repo } = config.repo;
+  const repoPath = formatBackupRepoPath(input.fileName, input.createdAt);
+  const encodedPath = repoContentPath(repoPath);
+
+  try {
+    const upload = await githubRequest<GitHubPutContentsResponse>(
+      `/repos/${owner}/${repo}/contents/${encodedPath}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          message: `chore(backup): upload runtime backup ${input.fileName}\n\n${input.reason}`.slice(0, 500),
+          content: input.bytes.toString("base64"),
+          branch: config.branch,
+        }),
+      },
+      config.token,
+    );
+
+    const verified = await githubRequest<GitHubContentItem>(
+      `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(config.branch)}`,
+      { method: "GET" },
+      config.token,
+    );
+
+    const fileUrl = verified.html_url || buildGitHubBlobUrl(config, repoPath);
+    const verifiedOk = verified.path === repoPath && verified.size === input.bytes.length;
+    if (!verifiedOk) {
+      throw new Error(`GitHub upload verification failed for ${repoPath}.`);
+    }
+
+    await pruneOldRuntimeBackups(config, input.keepLast ?? 30);
+
+    return {
+      status: "synced",
+      message: "Runtime backup uploaded to GitHub and verified.",
+      commitSha: upload.commit.sha,
+      fileUrl,
+      repoPath,
+      verified: true,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown GitHub backup upload error.";
+    return {
+      status: "failed",
+      message,
+      commitSha: null,
+      fileUrl: null,
+      repoPath,
+      verified: false,
+    };
+  }
 }
 
 async function createBlob(owner: string, repo: string, token: string, file: SyncFile) {
