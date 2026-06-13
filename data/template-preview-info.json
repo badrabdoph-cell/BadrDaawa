@@ -1,0 +1,70 @@
+{
+  "city": "ايتاي اليارود_البحيرة",
+  "texts": {
+    "story": [
+      {
+        "id": "template-preview-story-1",
+        "date": "15 / 11 / 2024",
+        "title": "أول مرة شوفنا بعض ❤️",
+        "imageUrl": "",
+        "description": "كانت أول مقابلة بيننا في فرح صحبتي، ومن هنا بدأت الحكاية."
+      },
+      {
+        "id": "template-preview-story-2",
+        "date": "02 / 02 / 2025",
+        "title": "الخطوبة 💍",
+        "imageUrl": "",
+        "description": "اليوم الذي قررنا فيه أن نكمل رحلتنا معاً ونبدأ فصلًا جديداً من حياتنا."
+      },
+      {
+        "id": "template-preview-story-3",
+        "date": "26 / 10 / 2026",
+        "title": "يوم الزفاف 👰🤵",
+        "imageUrl": "",
+        "description": "اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً."
+      }
+    ],
+    "openingText": "",
+    "rsvpQuestion": "هل ستحضر؟",
+    "inviteMessage": "فرحتنا هذه الليلة لا تكتمل إلا بوجودكم ومشاركتكم لنا أجمل لحظات العمر.",
+    "galleryStories": [
+      {
+        "title": "لحظة من الحكاية",
+        "description": "تفاصيل صغيرة تصنع ذكرى كبيرة."
+      },
+      {
+        "title": "بداية جديدة",
+        "description": "كل صورة تحمل جزءًا من فرحتنا."
+      },
+      {
+        "title": "يوم العمر",
+        "description": "معكم تكتمل البهجة."
+      }
+    ],
+    "rsvpDeclinedMessage": "وجود محبتكم يكفينا، ونقدر ظروفكم.",
+    "inviteMessageSecondary": "هنفرح أكثر بوجودكم، وهتبقى الذكرى أحلى لما تكونوا جزء منها. 💖",
+    "rsvpDeclinedSuccessMessage": "وصل اعتذارك، وتقدر تسيب رسالة جميلة للعروسين.",
+    "rsvpConfirmedSuccessMessage": "سجلنا حضورك، مستنيينك تنورنا."
+  },
+  "venue": "قاعة Viora ✨",
+  "mapUrl": "https://maps.app.goo.gl/abVGiAgYBxd5ez9r6",
+  "gallery": [
+    "/assets/invite/badr-sarah-1.jpeg",
+    "/assets/invite/badr-sarah-2.jpeg",
+    "/assets/invite/badr-sarah-3.jpeg"
+  ],
+  "language": "ar",
+  "brideName": "Nada",
+  "groomName": "Mohamed",
+  "updatedAt": "2026-06-13T14:48:53.221Z",
+  "weddingDate": "2026-10-26",
+  "weddingTime": "07:00 مساءً",
+  "heroVideoUrl": "",
+  "photographer": {
+    "name": "badrabdoph",
+    "enabled": true,
+    "logoUrl": "",
+    "facebookUrl": "https://www.facebook.com/",
+    "instagramUrl": "https://www.instagram.com/"
+  }
+}
