@@ -1,0 +1,26 @@
+[
+  {
+    "id": "cmqa2a9ew000062ynjbxkvlw0",
+    "slug": "featured-1",
+    "name": "Featured 1",
+    "arabicName": "مميز 1",
+    "category": "كوكتيل مميز",
+    "style": "featured",
+    "concept": "قالب مميز يجمع واجهة سينمائية فاخرة، جدول تفاصيل هادئ، صور رومانسية، ومصور ناعم في تجربة واحدة.",
+    "opening": "Cinematic photo story",
+    "layout": "Hero بصورة كاملة وأسماء سينمائية، جدول اليوم والقاعة، عداد أفقي، صور رومانسية، خريطة، مصور، RSVP وQR.",
+    "typography": "أسماء كبيرة بتباين سينمائي مع تفاصيل عربية واضحة ومريحة للقراءة على الهاتف.",
+    "palette": {
+      "ink": "#f7efe1",
+      "accent": "#d4af37",
+      "primary": "#0a1110",
+      "surface": "#fffaf4",
+      "secondary": "#fdfbf7"
+    },
+    "previewUrl": "/assets/templates/featured-1.svg",
+    "enabled": true,
+    "sortOrder": 1,
+    "createdAt": "2026-06-11T22:20:50.600Z",
+    "updatedAt": "2026-06-13T00:02:24.890Z"
+  }
+]

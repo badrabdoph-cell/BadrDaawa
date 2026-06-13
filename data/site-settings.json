@@ -1,38 +1,38 @@
 {
-  "siteName": "Wedding Daawa",
-  "logoUrl": "/assets/admin/branding/site-logo-1781309150836-b99b5357.webp",
-  "siteDescription": "Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك.",
-  "contactPhones": [
-    "01038434472"
-  ],
-  "whatsappUrl": "https://wa.me/201038434472",
-  "email": "",
-  "socialLinks": {
-    "facebook": "",
-    "instagram": "",
-    "tiktok": "",
-    "youtube": "",
-    "telegram": ""
-  },
   "seo": {
-    "title": "BadrDaawa | دعوات زفاف رقمية فاخرة",
+    "title": "Wedding Daawa | دعوات زفاف رقمية فاخرة",
+    "ogTitle": "Wedding Daawa | دعوة تليق بأجمل يوم في حياتكم",
+    "keywords": "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, Wedding Daawa",
     "description": "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
-    "keywords": "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, BadrDaawa",
-    "ogTitle": "BadrDaawa | دعوة تليق بأجمل يوم في حياتكم",
     "ogDescription": "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة."
   },
+  "email": "",
+  "logoUrl": "/assets/admin/branding/site-logo-1781309150836-b99b5357.webp",
   "homepage": {
-    "showFeatures": true,
     "showPreview": true,
     "showPricing": true,
+    "showFeatures": true,
     "primaryCtaLabel": "ابدأ تصميم دعوتك",
     "secondaryCtaLabel": "استعرض التصاميم"
   },
-  "photographer": {
-    "showPhotographerCard": true,
-    "defaultName": "badrabdoph",
-    "defaultInstagramUrl": "https://www.instagram.com/",
-    "defaultFacebookUrl": "https://www.facebook.com/"
+  "siteName": "Wedding Daawa",
+  "updatedAt": "2026-06-13T11:57:02.426Z",
+  "socialLinks": {
+    "tiktok": "",
+    "youtube": "",
+    "facebook": "",
+    "telegram": "",
+    "instagram": ""
   },
-  "updatedAt": "2026-06-13T00:05:50.841Z"
+  "whatsappUrl": "https://wa.me/201038434472",
+  "photographer": {
+    "defaultName": "badrabdoph",
+    "defaultFacebookUrl": "https://www.facebook.com/",
+    "defaultInstagramUrl": "https://www.instagram.com/",
+    "showPhotographerCard": true
+  },
+  "contactPhones": [
+    "01038434472"
+  ],
+  "siteDescription": "Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك."
 }

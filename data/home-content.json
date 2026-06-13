@@ -2,10 +2,87 @@
   "hero": {
     "kicker": "هنا تبدأ الحكاية ❤️",
     "mainTitle": "دعوة تليق بأجمل يوم في حياتكم ✨",
+    "primaryCta": "ابدأ تصميم دعوتك",
     "accentTitle": "ودّع الورق والزحمه وصمّم دعوتك بطابعك الخاص",
     "description": "شاركوا لحظاتكم الجميلة مع أحبائكم بطريقه حديثه",
-    "primaryCta": "ابدأ تصميم دعوتك",
     "secondaryCta": "استعرض التصاميم"
+  },
+  "preview": {
+    "badge": "معاينة",
+    "title": "كل تصميم يحكي قصة مختلفة",
+    "eyebrow": "اختر التصميم الأقرب لذوقك ✨",
+    "orderCta": "استخدم هذا التصميم",
+    "fullInviteCta": "معاينة الدعوة كاملة"
+  },
+  "pricing": {
+    "rows": [
+      {
+        "id": "reminder",
+        "plus": true,
+        "feature": "إرسال تذكير تلقائي بموعد الزفاف",
+        "invitation": false
+      },
+      {
+        "id": "music",
+        "plus": true,
+        "feature": "أضف الموسيقى التي تحبها للدعوة",
+        "invitation": false
+      },
+      {
+        "id": "anytime-edit",
+        "plus": true,
+        "feature": "عدّل دعوتك وقتما تشاء",
+        "invitation": false
+      },
+      {
+        "id": "main-page",
+        "plus": true,
+        "feature": "صفحة الدعوة الأساسية",
+        "invitation": true
+      },
+      {
+        "id": "choose-design",
+        "plus": true,
+        "feature": "اختيار التصميم",
+        "invitation": true
+      },
+      {
+        "id": "comments",
+        "plus": true,
+        "feature": "كلمات وذكريات للعرسان ❤️",
+        "invitation": true
+      },
+      {
+        "id": "rsvp-open",
+        "plus": true,
+        "feature": "إدارة الحضور",
+        "invitation": true
+      },
+      {
+        "id": "client-admin",
+        "plus": true,
+        "feature": "لوحة تحكم خاصة بك",
+        "invitation": true
+      },
+      {
+        "id": "guest-records",
+        "plus": true,
+        "feature": "كشف كامل بأسماء وأرقام المسجلين للحضور",
+        "invitation": true
+      },
+      {
+        "id": "support",
+        "plus": true,
+        "feature": "الدعم الفني",
+        "invitation": true
+      }
+    ],
+    "title": "اختر ما يناسب احتياجك",
+    "eyebrow": "الأسعار والباقات",
+    "plusPrice": "300 ج",
+    "plusPlanName": "الباقة الكاملة",
+    "invitationPrice": "100 ج",
+    "invitationPlanName": "الباقة الأساسية"
   },
   "features": {
     "title": "كل ما تحتاجه دعوتك في مكان واحد",
@@ -61,83 +138,6 @@
       {
         "id": "tracking",
         "text": "اعرف من شاهد دعوتك ومتى"
-      }
-    ]
-  },
-  "preview": {
-    "eyebrow": "اختر التصميم الأقرب لذوقك ✨",
-    "title": "كل تصميم يحكي قصة مختلفة",
-    "badge": "معاينة",
-    "fullInviteCta": "معاينة الدعوة كاملة",
-    "orderCta": "استخدم هذا التصميم"
-  },
-  "pricing": {
-    "eyebrow": "الأسعار والباقات",
-    "title": "اختر ما يناسب احتياجك",
-    "invitationPlanName": "الباقة الأساسية",
-    "invitationPrice": "100 ج",
-    "plusPlanName": "الباقة الكاملة",
-    "plusPrice": "300 ج",
-    "rows": [
-      {
-        "id": "reminder",
-        "feature": "إرسال تذكير تلقائي بموعد الزفاف",
-        "invitation": false,
-        "plus": true
-      },
-      {
-        "id": "music",
-        "feature": "أضف الموسيقى التي تحبها للدعوة",
-        "invitation": false,
-        "plus": true
-      },
-      {
-        "id": "anytime-edit",
-        "feature": "عدّل دعوتك وقتما تشاء",
-        "invitation": false,
-        "plus": true
-      },
-      {
-        "id": "main-page",
-        "feature": "صفحة الدعوة الأساسية",
-        "invitation": true,
-        "plus": true
-      },
-      {
-        "id": "choose-design",
-        "feature": "اختيار التصميم",
-        "invitation": true,
-        "plus": true
-      },
-      {
-        "id": "comments",
-        "feature": "كلمات وذكريات للعرسان ❤️",
-        "invitation": true,
-        "plus": true
-      },
-      {
-        "id": "rsvp-open",
-        "feature": "إدارة الحضور",
-        "invitation": true,
-        "plus": true
-      },
-      {
-        "id": "client-admin",
-        "feature": "لوحة تحكم خاصة بك",
-        "invitation": true,
-        "plus": true
-      },
-      {
-        "id": "guest-records",
-        "feature": "كشف كامل بأسماء وأرقام المسجلين للحضور",
-        "invitation": true,
-        "plus": true
-      },
-      {
-        "id": "support",
-        "feature": "الدعم الفني",
-        "invitation": true,
-        "plus": true
       }
     ]
   }
