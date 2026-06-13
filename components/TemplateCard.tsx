@@ -5,7 +5,6 @@ import type { TemplateDefinition } from "@/lib/types";
 
 export function TemplateCard({ template }: { template: TemplateDefinition }) {
   const previewHref = `/templates/${template.slug}/preview?hidePreviewChrome=1&galleryPreview=1`;
-  const embeddedPreviewHref = `/templates/${template.slug}/preview?silentPreview=1&embed=1&hidePreviewChrome=1`;
   const orderHref = `/order?template=${template.slug}`;
 
   return (
@@ -23,7 +22,7 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
       <Link href={previewHref} className="template-card-hit" aria-label={`معاينة تصميم ${template.arabicName}`} />
       <div className="template-preview">
         <span className="template-preview-screen">
-          <iframe className="template-preview-frame" src={embeddedPreviewHref} title={`معاينة مصغرة لتصميم ${template.arabicName}`} loading="lazy" aria-hidden="true" />
+          <img src={template.previewImage} alt={`معاينة تصميم ${template.arabicName}`} loading="lazy" decoding="async" />
         </span>
         <span className="template-preview-peek" aria-hidden="true">
           <Eye size={28} />
