@@ -54,7 +54,7 @@ function runPrisma(args, options = {}) {
   const result = spawnSync(prismaBin, args, {
     cwd: root,
     stdio: "inherit",
-    env: { ...process.env, ...options.env },
+    env: { ...process.env, PRISMA_HIDE_UPDATE_MESSAGE: "true", ...options.env },
   });
 
   if (result.status !== 0) {

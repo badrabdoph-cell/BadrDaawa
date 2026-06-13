@@ -336,6 +336,22 @@ export async function createBackupSnapshot(type = "manual") {
   }
 }
 
+export async function markBackupSnapshotPipelineFailed(fileName: string, error: string) {
+  if (!prisma || !/^[a-z0-9-]+\.json$/i.test(fileName)) return;
+  try {
+    await prisma.backupJob.updateMany({
+      where: { fileName },
+      data: {
+        status: "FAILED",
+        error,
+        finishedAt: new Date(),
+      },
+    });
+  } catch (updateError) {
+    console.error("[Backup] Failed to mark backup pipeline failure", updateError);
+  }
+}
+
 function toBackupSummary(fileName: string, sizeBytes: number, createdAt: string, source: "database", items: number): BackupSummary {
   return {
     fileName,

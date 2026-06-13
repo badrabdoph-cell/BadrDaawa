@@ -47,12 +47,12 @@ pnpm db:migrate
 - نسخة كل ساعة داخل `backups/hourly`.
 - نسخة يومية كاملة داخل `backups/daily`.
 
-ولتشغيل Backup لوحة الإدارة نفسها كل 6 ساعات على Railway، أضف Scheduled Job مستقل:
+ولتشغيل Backup لوحة الإدارة نفسها كل 6 ساعات على Railway، أضف خدمة Cron مستقلة تستخدم `railway-cron.json`:
 
 - اضبط `BACKUP_CRON_SECRET` في خدمة الموقع الرئيسية وفي الـ Scheduled Job بنفس القيمة.
-- اضبط `BACKUP_CRON_URL=https://BadrDaawa.com/api/cron/backup`.
-- استخدم الأمر `pnpm backup:trigger`.
-- استخدم schedule مثل `0 */6 * * *`.
+- اضبط `BACKUP_CRON_URL=https://your-live-app-domain.example/api/cron/backup` على دومين التطبيق الحقيقي القابل للوصول.
+- اجعل Start Command لخدمة الـ Cron هو `pnpm backup:trigger` وليس `pnpm start`.
+- استخدم schedule `0 */6 * * *`.
 
 يعيد endpoint `/api/cron/backup` كود `200` عند نجاح إنشاء النسخة ورفعها، ويعيد `500` إذا فشل الرفع إلى GitHub حتى لا يظهر نجاح وهمي.
 
@@ -73,7 +73,7 @@ public/fonts/NotoNaskhArabic-Regular.ttf
 ## نشر الإنتاج
 
 - اربط المشروع بـ Railway أو Vercel.
-- اضبط `NEXT_PUBLIC_SITE_URL=https://BadrDaawa.com`.
+- اضبط `NEXT_PUBLIC_SITE_URL` على دومين التطبيق الحقيقي.
 - اضبط `DATABASE_URL`.
 - اضبط `WHATSAPP_ORDER_PHONE=01011511561`.
 - شغّل migrations قبل أول تشغيل.

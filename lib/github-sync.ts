@@ -681,6 +681,7 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
       startedAt,
       status: "unchanged",
       message: "GitHub already has the latest admin data.",
+      commitSha: ref.object.sha,
       files: treeItems.length,
       duration: Date.now() - startedAt,
     };
