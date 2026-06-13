@@ -49,14 +49,14 @@
   "venue": "قاعة Viora ✨",
   "mapUrl": "https://maps.app.goo.gl/abVGiAgYBxd5ez9r6",
   "gallery": [
-    "/assets/invite/badr-sarah-1.jpeg",
+    "/uploads/template-previews/order-preview-1781385203591-36b77df5.webp",
     "/assets/invite/badr-sarah-2.jpeg",
     "/assets/invite/badr-sarah-3.jpeg"
   ],
   "language": "ar",
   "brideName": "Nada",
   "groomName": "Mohamed",
-  "updatedAt": "2026-06-13T21:00:53.796Z",
+  "updatedAt": "2026-06-13T21:13:26.499Z",
   "adminScope": {
     "mode": "all",
     "excludedSlugs": []
