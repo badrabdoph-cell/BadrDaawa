@@ -56,9 +56,9 @@
   "language": "ar",
   "brideName": "Nada",
   "groomName": "Mohamed",
-  "updatedAt": "2026-06-13T21:00:44.577Z",
+  "updatedAt": "2026-06-13T21:00:53.796Z",
   "adminScope": {
-    "mode": "allExcept",
+    "mode": "all",
     "excludedSlugs": []
   },
   "weddingDate": "2026-10-26",
