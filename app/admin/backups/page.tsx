@@ -1,5 +1,6 @@
 import { Archive, CloudDownload, DatabaseBackup, FileJson, ShieldCheck } from "lucide-react";
-import { listBackupSnapshots } from "@/lib/backups";
+import { getBackupRuntimeStatus, listBackupSnapshots } from "@/lib/backups";
+import { VerifyBackupButton } from "./VerifyBackupButton";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,18 @@ function formatBackupDate(value: string) {
   }).format(date);
 }
 
+function formatDuration(value: number | null) {
+  if (value === null) return "غير متاح";
+  if (value < 1000) return `${value}ms`;
+  return `${(value / 1000).toFixed(1)}s`;
+}
+
 export default async function BackupsPage({
   searchParams,
 }: {
   searchParams: Promise<{ created?: string; error?: string }>;
 }) {
-  const [params, backups] = await Promise.all([searchParams, listBackupSnapshots()]);
+  const [params, backups, runtimeStatus] = await Promise.all([searchParams, listBackupSnapshots(), getBackupRuntimeStatus()]);
   const latest = backups[0];
   const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
 
@@ -59,10 +66,76 @@ export default async function BackupsPage({
         <a href="#backup-create">النسخ</a>
         <a href="#backup-restore">سياسة الاستعادة</a>
         <a href="#backup-log">السجل</a>
+        <a href="/admin/diagnostics">Diagnostics</a>
         <a href="/admin/sync-settings">الإعدادات</a>
       </nav>
 
       <section id="backup-create" className="admin-tab-section" aria-label="ملخص النسخ">
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <div className="admin-card-head">
+          <DatabaseBackup size={22} />
+          <div>
+            <span className="eyebrow">Backup Status</span>
+            <h2>حالة النسخ الحالية</h2>
+          </div>
+        </div>
+        <div className="backup-status-grid" style={{ marginTop: 16 }}>
+          <article className="panel backup-status-card">
+            <span>آخر Backup ناجح</span>
+            <strong>{runtimeStatus.latestSuccessful ? runtimeStatus.latestSuccessful.fileName : "لا يوجد"}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>النوع</span>
+            <strong>{runtimeStatus.latestSuccessful?.type || "غير متاح"}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>وقت الإنشاء</span>
+            <strong>{runtimeStatus.latestSuccessful ? formatBackupDate(runtimeStatus.latestSuccessful.createdAt) : "غير متاح"}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>حجم الملف</span>
+            <strong>{runtimeStatus.latestSuccessful ? formatBytes(runtimeStatus.latestSuccessful.sizeBytes) : "غير متاح"}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>مدة التنفيذ</span>
+            <strong>{formatDuration(runtimeStatus.latestSuccessful?.durationMs ?? null)}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>PostgreSQL Dump</span>
+            <strong>{runtimeStatus.postgresDump.status}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>Uploads Backup</span>
+            <strong>{runtimeStatus.uploadsBackup.status}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>GitHub Backup</span>
+            <strong>{runtimeStatus.githubBackup.status}</strong>
+          </article>
+          <article className="panel backup-status-card">
+            <span>النسخة القادمة</span>
+            <strong>{runtimeStatus.nextScheduledAt ? formatBackupDate(runtimeStatus.nextScheduledAt) : "غير متاح"}</strong>
+          </article>
+        </div>
+        <div className="backup-sync-note" style={{ marginTop: 14 }}>
+          <ShieldCheck size={18} />
+          <span>
+            Uploads: {runtimeStatus.uploadsBackup.detail}
+            {" | "}
+            PostgreSQL Dump: {runtimeStatus.postgresDump.detail}
+            {" | "}
+            GitHub: {runtimeStatus.githubBackup.detail}
+          </span>
+        </div>
+        {runtimeStatus.lastError ? (
+          <div className="notice danger" style={{ marginTop: 12 }}>
+            آخر خطأ: {runtimeStatus.lastError.message} ({runtimeStatus.lastError.type || "unknown"} - {runtimeStatus.lastError.createdAt ? formatBackupDate(runtimeStatus.lastError.createdAt) : "وقت غير متاح"})
+          </div>
+        ) : null}
+      </div>
+
+      <VerifyBackupButton />
+
       <div className="backup-status-grid">
         <article className="panel backup-status-card">
           <Archive size={24} />

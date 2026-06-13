@@ -3,6 +3,7 @@ import { readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
+import { getDatabaseUrl } from "./database-url";
 import { parseJsonFileIfSafe } from "./json-file-safety";
 import { isProjectContentAppSettingKey } from "./project-content-store";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
@@ -16,6 +17,85 @@ export type BackupSummary = {
   createdAt: string;
   source: "database";
   items: number;
+};
+
+export type BackupRuntimeStatus = {
+  latestSuccessful: {
+    fileName: string;
+    type: "Manual" | "Scheduled" | string;
+    createdAt: string;
+    sizeBytes: number;
+    durationMs: number | null;
+    storagePath: string;
+  } | null;
+  postgresDump: {
+    status: "not_included" | "unknown";
+    detail: string;
+  };
+  uploadsBackup: {
+    status: "ok" | "missing" | "unknown";
+    files: number | null;
+    bytes: number | null;
+    detail: string;
+  };
+  githubBackup: {
+    status: "not_configured" | "unknown";
+    detail: string;
+  };
+  lastError: {
+    message: string;
+    createdAt: string | null;
+    type: string | null;
+  } | null;
+  nextScheduledAt: string | null;
+  backupsCount: number;
+};
+
+export type BackupVerificationResult = {
+  ok: boolean;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  fileName: string | null;
+  storagePath: string | null;
+  sizeBytes: number | null;
+  backupJob: {
+    id: string;
+    type: string;
+    status: string;
+    fileName: string | null;
+    startedAt: string | null;
+    finishedAt: string | null;
+    sizeBytes: string | null;
+    error: string | null;
+    createdAt: string;
+  } | null;
+  steps: Array<{
+    name: string;
+    ok: boolean;
+    detail: string;
+    timestamp: string;
+  }>;
+  error: string | null;
+};
+
+export type BackupDiagnostics = {
+  databaseUrlPresent: boolean;
+  postgresqlConnected: boolean;
+  postgresqlError: string | null;
+  cronSecretPresent: boolean;
+  lastCronInvocation: {
+    createdAt: string;
+    status: string;
+    fileName: string | null;
+    error: string | null;
+  } | null;
+  lastScheduledSuccess: {
+    createdAt: string;
+    fileName: string | null;
+    sizeBytes: string | null;
+  } | null;
+  backupsCount: number;
 };
 
 type BackupPayload = {
@@ -404,5 +484,282 @@ export async function getBackupFile(fileName: string) {
   return {
     fileName,
     bytes: await readFile(filePath),
+  };
+}
+
+function backupTypeLabel(type: string | null | undefined): "Manual" | "Scheduled" | string {
+  const clean = (type || "").toLowerCase();
+  if (clean === "manual" || clean === "manual-verify") return "Manual";
+  if (clean === "scheduled") return "Scheduled";
+  return type || "Unknown";
+}
+
+function backupPathFor(fileName: string) {
+  return path.join(backupDir, fileName);
+}
+
+function iso(value: Date | null | undefined) {
+  return value ? value.toISOString() : null;
+}
+
+async function readBackupJobByFileName(fileName: string) {
+  if (!prisma) return null;
+  return prisma.backupJob.findFirst({
+    where: { fileName },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+function serializeBackupJob(job: Awaited<ReturnType<typeof readBackupJobByFileName>>) {
+  if (!job) return null;
+  return {
+    id: job.id,
+    type: job.type,
+    status: job.status,
+    fileName: job.fileName,
+    startedAt: iso(job.startedAt),
+    finishedAt: iso(job.finishedAt),
+    sizeBytes: job.sizeBytes?.toString() ?? null,
+    error: job.error,
+    createdAt: job.createdAt.toISOString(),
+  };
+}
+
+async function readBackupPayload(fileName: string) {
+  const filePath = backupPathFor(fileName);
+  const safe = await parseJsonFileIfSafe<{
+    runtimeData?: Record<string, unknown[]>;
+    uploads?: Array<{ sizeBytes?: number }>;
+    postgresDump?: unknown;
+    metadata?: {
+      uploads?: {
+        files?: number;
+        bytes?: number;
+      };
+    };
+  }>(filePath, fileName, maxBackupSummaryBytes);
+  if (!safe.value) {
+    throw new Error(safe.skipped ? "Backup file is too large to verify with the configured summary limit." : "Backup file is not valid JSON.");
+  }
+  return safe.value;
+}
+
+export async function getBackupRuntimeStatus(): Promise<BackupRuntimeStatus> {
+  noStore();
+  const backups = await listBackupSnapshots();
+  const latest = backups[0] ?? null;
+  const latestJob = latest ? await readBackupJobByFileName(latest.fileName).catch(() => null) : null;
+  const failedJob = prisma
+    ? await prisma.backupJob.findFirst({ where: { status: "FAILED" }, orderBy: { createdAt: "desc" } }).catch(() => null)
+    : null;
+  const lastScheduled = prisma
+    ? await prisma.backupJob.findFirst({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" } }).catch(() => null)
+    : null;
+
+  let uploadsBackup: BackupRuntimeStatus["uploadsBackup"] = {
+    status: latest ? "unknown" : "missing",
+    files: null,
+    bytes: null,
+    detail: latest ? "لم يتم فتح ملف آخر نسخة بعد." : "لا توجد نسخة احتياطية.",
+  };
+  let postgresDump: BackupRuntimeStatus["postgresDump"] = {
+    status: "unknown",
+    detail: latest ? "لم يتم فتح ملف آخر نسخة بعد." : "لا توجد نسخة احتياطية.",
+  };
+
+  if (latest) {
+    try {
+      const payload = await readBackupPayload(latest.fileName);
+      const uploads = Array.isArray(payload.uploads) ? payload.uploads : [];
+      const uploadBytes = uploads.reduce((sum, upload) => sum + (typeof upload.sizeBytes === "number" ? upload.sizeBytes : 0), 0);
+      uploadsBackup = {
+        status: "ok",
+        files: payload.metadata?.uploads?.files ?? uploads.length,
+        bytes: payload.metadata?.uploads?.bytes ?? uploadBytes,
+        detail: "تم فتح ملف آخر نسخة وقراءة uploads payload.",
+      };
+      postgresDump = payload.postgresDump
+        ? { status: "unknown", detail: "الملف يحتوي postgresDump legacy." }
+        : { status: "not_included", detail: "النظام الحالي يحفظ Runtime Data JSON ولا يستخدم pg_dump داخل هذه النسخة." };
+    } catch (error) {
+      uploadsBackup = {
+        status: "unknown",
+        files: null,
+        bytes: null,
+        detail: toErrorMessage(error),
+      };
+    }
+  }
+
+  const durationMs =
+    latestJob?.startedAt && latestJob.finishedAt
+      ? Math.max(0, latestJob.finishedAt.getTime() - latestJob.startedAt.getTime())
+      : null;
+  const nextScheduledAt = lastScheduled?.finishedAt
+    ? new Date(lastScheduled.finishedAt.getTime() + 6 * 60 * 60 * 1000).toISOString()
+    : null;
+
+  return {
+    latestSuccessful: latest
+      ? {
+          fileName: latest.fileName,
+          type: backupTypeLabel(latestJob?.type || latest.type),
+          createdAt: latestJob?.createdAt.toISOString() || latest.createdAt,
+          sizeBytes: latest.sizeBytes,
+          durationMs,
+          storagePath: backupPathFor(latest.fileName),
+        }
+      : null,
+    postgresDump,
+    uploadsBackup,
+    githubBackup: {
+      status: "not_configured",
+      detail: "Runtime Backup لا يرفع إلى GitHub في النظام الحالي.",
+    },
+    lastError: failedJob
+      ? {
+          message: failedJob.error || "Backup failed without stored error.",
+          createdAt: failedJob.createdAt.toISOString(),
+          type: failedJob.type,
+        }
+      : null,
+    nextScheduledAt,
+    backupsCount: backups.length,
+  };
+}
+
+export async function verifyBackupNow(): Promise<BackupVerificationResult> {
+  noStore();
+  const startedAt = new Date();
+  const steps: BackupVerificationResult["steps"] = [];
+  const addStep = (name: string, ok: boolean, detail: string) => {
+    steps.push({ name, ok, detail, timestamp: new Date().toISOString() });
+  };
+
+  let fileName: string | null = null;
+  let storagePath: string | null = null;
+  let sizeBytes: number | null = null;
+  let backupJob: BackupVerificationResult["backupJob"] = null;
+
+  try {
+    const summary = await createBackupSnapshot("manual-verify");
+    fileName = summary.fileName;
+    storagePath = backupPathFor(fileName);
+    addStep("create-backup", true, `Backup created: ${fileName}`);
+
+    const fileStat = await stat(storagePath);
+    if (!fileStat.isFile()) throw new Error("Backup path exists but is not a file.");
+    sizeBytes = fileStat.size;
+    addStep("file-exists", true, `File exists at ${storagePath}.`);
+    addStep("file-size", fileStat.size > 0, `File size: ${fileStat.size} bytes.`);
+    if (fileStat.size <= 0) throw new Error("Backup file is empty.");
+
+    const payload = await readBackupPayload(fileName);
+    addStep("open-json", true, "Backup file opened and parsed as JSON.");
+
+    const hasRuntimeData = payload.runtimeData && typeof payload.runtimeData === "object";
+    addStep("runtime-data", Boolean(hasRuntimeData), hasRuntimeData ? "runtimeData object exists." : "runtimeData object is missing.");
+    if (!hasRuntimeData) throw new Error("Backup file does not contain runtimeData.");
+
+    const uploads = Array.isArray(payload.uploads) ? payload.uploads : null;
+    addStep("uploads-backup", Boolean(uploads), uploads ? `uploads array exists with ${uploads.length} item(s).` : "uploads array is missing.");
+    if (!uploads) throw new Error("Backup file does not contain uploads array.");
+
+    backupJob = serializeBackupJob(await readBackupJobByFileName(fileName));
+    addStep("backup-job", Boolean(backupJob), backupJob ? `BackupJob ${backupJob.id} status=${backupJob.status}.` : "BackupJob was not found.");
+
+    const finishedAt = new Date();
+    return {
+      ok: steps.every((step) => step.ok),
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      fileName,
+      storagePath,
+      sizeBytes,
+      backupJob,
+      steps,
+      error: steps.every((step) => step.ok) ? null : "One or more verification steps failed.",
+    };
+  } catch (error) {
+    addStep("failure", false, toErrorMessage(error));
+    if (fileName && !backupJob) {
+      backupJob = serializeBackupJob(await readBackupJobByFileName(fileName).catch(() => null));
+    }
+    const finishedAt = new Date();
+    return {
+      ok: false,
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      fileName,
+      storagePath,
+      sizeBytes,
+      backupJob,
+      steps,
+      error: toErrorMessage(error),
+    };
+  }
+}
+
+export async function getBackupDiagnostics(): Promise<BackupDiagnostics> {
+  noStore();
+  const backups = await listBackupSnapshots().catch(() => []);
+  const databaseUrlPresent = Boolean(getDatabaseUrl());
+  let postgresqlConnected = false;
+  let postgresqlError: string | null = null;
+
+  if (prisma) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      postgresqlConnected = true;
+    } catch (error) {
+      postgresqlError = toErrorMessage(error);
+    }
+  } else if (databaseUrlPresent) {
+    postgresqlError = "Prisma client is not initialized.";
+  } else {
+    postgresqlError = "DATABASE_URL/POSTGRES_URL/DATABASE_PRIVATE_URL is missing.";
+  }
+
+  const lastCronInvocation = prisma
+    ? await prisma.backupJob
+        .findFirst({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" } })
+        .then((job) =>
+          job
+            ? {
+                createdAt: job.createdAt.toISOString(),
+                status: job.status,
+                fileName: job.fileName,
+                error: job.error,
+              }
+            : null,
+        )
+        .catch(() => null)
+    : null;
+
+  const lastScheduledSuccess = prisma
+    ? await prisma.backupJob
+        .findFirst({ where: { type: "scheduled", status: "SUCCESS" }, orderBy: { createdAt: "desc" } })
+        .then((job) =>
+          job
+            ? {
+                createdAt: job.createdAt.toISOString(),
+                fileName: job.fileName,
+                sizeBytes: job.sizeBytes?.toString() ?? null,
+              }
+            : null,
+        )
+        .catch(() => null)
+    : null;
+
+  return {
+    databaseUrlPresent,
+    postgresqlConnected,
+    postgresqlError,
+    cronSecretPresent: Boolean((process.env.BACKUP_CRON_SECRET || process.env.CRON_SECRET || "").trim()),
+    lastCronInvocation,
+    lastScheduledSuccess,
+    backupsCount: backups.length,
   };
 }
