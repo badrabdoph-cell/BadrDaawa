@@ -42,24 +42,19 @@ pnpm db:migrate
 
 ## النسخ الاحتياطي
 
-أضف Secret باسم `DATABASE_URL` داخل GitHub Actions. Workflow الموجود في `.github/workflows/postgres-backups.yml` ينشئ:
-
-- نسخة كل ساعة داخل `backups/hourly`.
-- نسخة يومية كاملة داخل `backups/daily`.
-
-ولتشغيل Backup لوحة الإدارة نفسها كل 6 ساعات على Railway، أضف خدمة Cron مستقلة تستخدم `railway-cron.json`:
+لتشغيل Backup لوحة الإدارة كل 6 ساعات على Railway، أضف خدمة Cron مستقلة تستخدم `railway-cron.json`:
 
 - اضبط `BACKUP_CRON_SECRET` في خدمة الموقع الرئيسية وفي الـ Scheduled Job بنفس القيمة.
 - اضبط `BACKUP_CRON_URL=https://your-live-app-domain.example/api/cron/backup` على دومين التطبيق الحقيقي القابل للوصول.
 - اجعل Start Command لخدمة الـ Cron هو `pnpm backup:trigger` وليس `pnpm start`.
 - استخدم schedule `0 */6 * * *`.
 
-يعيد endpoint `/api/cron/backup` كود `200` عند نجاح إنشاء النسخة ورفعها، ويعيد `500` إذا فشل الرفع إلى GitHub حتى لا يظهر نجاح وهمي.
+يعيد endpoint `/api/cron/backup` كود `200` عند نجاح إنشاء نسخة Runtime Data وملفات العملاء، ويعيد `500` إذا فشل إنشاء النسخة. Runtime Backups لا ترفع إلى GitHub.
 
-الاسترجاع يتم عبر:
+الاسترجاع Manual Only ولا يعمل تلقائياً من التطبيق أو من GitHub. راجع:
 
 ```bash
-pg_restore --clean --if-exists --dbname "$DATABASE_URL" backups/daily/file.dump
+BACKUP_RESTORE.md
 ```
 
 ## PDF عربي

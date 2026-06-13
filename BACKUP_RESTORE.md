@@ -1,12 +1,19 @@
-# BadrDaawa Backup And Restore
+# BadrDaawa Backup, Restore, And GitHub Sync
 
 ## Architecture
 
-- PostgreSQL is the only operational source of truth.
-- GitHub stores backup files only.
-- JSON files inside a backup are settings or legacy reference data, not the primary restore source for operational data.
-- Backups are written locally to `data/backups` and uploaded to the configured GitHub repository under `backups/`.
-- Retention keeps the latest 20 backup files. Older backup files are deleted from GitHub during a successful upload.
+- PostgreSQL is the only source of truth for Runtime Data.
+- GitHub is version control for code and Project Content exports only.
+- Runtime backups are never uploaded to GitHub.
+- Backups are written to `data/backups` and contain Runtime Data plus customer uploads.
+- Project Content is excluded from Runtime backups because it is stored in PostgreSQL and exported to GitHub as project version history.
+- Restore is manual-only. There is no GitHub-to-PostgreSQL restore and no automatic backup restore.
+
+## Data Classes
+
+Project Content includes site settings, homepage content, legal/static pages, template settings, preview settings, default music, imported custom templates, `DynamicPage`, `WeddingTemplate`, and admin project assets under `public/assets/admin`.
+
+Runtime Data includes customers, orders, invitations, RSVP rows, guest book messages, client messages, analytics, check-ins, live mode state, internal notes, audit logs, non-project app settings, backup jobs, sync logs, and customer uploads under `public/uploads`.
 
 ## Required Environment Variables
 
@@ -14,6 +21,14 @@ Set these in Railway or the target server:
 
 ```bash
 DATABASE_URL=postgresql://...
+BACKUP_CRON_SECRET=long-random-secret
+BACKUP_CRON_URL=https://your-live-app-domain.example/api/cron/backup
+```
+
+Project Content sync to GitHub additionally requires:
+
+```bash
+GITHUB_SYNC_ENABLED=true
 GITHUB_SYNC_TOKEN=github_pat_or_token_with_contents_write
 GITHUB_SYNC_REPO=owner/repository
 GITHUB_SYNC_BRANCH=main
@@ -23,91 +38,77 @@ Optional:
 
 ```bash
 BACKUP_RETENTION_COUNT=20
-GITHUB_BACKUP_REPO_PATH=backups
-BACKUP_GITHUB_MAX_FILE_MB=95
-BACKUP_GITHUB_MAX_TOTAL_MB=180
-```
-
-The runtime server must have PostgreSQL client tools available:
-
-```bash
-pg_dump
-pg_restore
+GITHUB_SYNC_MAX_FILE_MB=95
 ```
 
 ## Backup Contents
 
 Each backup JSON contains:
 
-- A compressed PostgreSQL custom-format dump created by `pg_dump`.
-- Database metadata and table counts.
-- Important JSON settings and legacy files from `data/*.json`.
-- Upload files, limited by the configured backup size limits.
+- Runtime PostgreSQL table exports only.
+- Customer upload files from `public/uploads`, encoded with base64 and SHA-256 hashes.
+- Metadata with table counts, upload counts, and excluded Project Content notes.
+
+Backups do not contain code, default templates, project images, project music, Project Content AppSettings, `DynamicPage`, or `WeddingTemplate`.
 
 ## Automatic Backups
 
-The internal scheduler creates a backup every 6 hours.
+Railway Cron is the only automatic scheduler. It uses `railway-cron.json`:
 
-When a backup runs:
+```json
+{
+  "deploy": {
+    "startCommand": "pnpm backup:trigger",
+    "cronSchedule": "0 */6 * * *"
+  }
+}
+```
 
-1. A `BackupJob` row is created with status `RUNNING`.
-2. `pg_dump` exports PostgreSQL.
-3. A backup JSON is written to `data/backups`.
-4. The backup is uploaded to GitHub.
-5. A `SyncLog` row records the upload result.
-6. GitHub retention removes backups older than the latest 20.
+When Railway Cron runs:
 
-Failures are logged and stored in `BackupJob` or `SyncLog`. A backup or GitHub failure must not delete PostgreSQL data.
+1. `pnpm backup:trigger` executes `scripts/trigger-backup-cron.mjs`.
+2. The script sends `POST /api/cron/backup` with `Authorization: Bearer $BACKUP_CRON_SECRET`.
+3. The API route verifies the secret.
+4. `runScheduledTask("backup", "automatic")` runs.
+5. `createBackupSnapshot("scheduled")` writes the Runtime Data backup.
+6. `BackupJob` is updated to `SUCCESS` or `FAILED`.
+
+No GitHub upload is part of this backup flow.
 
 ## Manual Backup
 
-From the admin dashboard, open the Backups page and click the manual backup button.
+From the admin dashboard, open the Backups page and click the manual backup button. This creates the same Runtime Data backup package and does not queue a GitHub upload.
 
-The manual backup creates the same PostgreSQL backup package and queues a GitHub upload.
+## Project Content Sync
 
-## Restore To A New Railway Project
+Admin changes to Project Content save to PostgreSQL first and then queue GitHub Sync. GitHub Sync exports Project Content files such as `data/site-settings.json`, `data/home-content.json`, `data/dynamic-pages.json`, `data/wedding-templates.json`, and project assets under `public/assets/admin`.
 
-1. Create the new Railway project and PostgreSQL database.
-2. Set `DATABASE_URL` for the BadrDaawa service.
-3. Download the latest backup JSON from the GitHub backup repository under `backups/`.
-4. Install PostgreSQL client tools in the restore environment.
-5. Run:
+Runtime Data and customer uploads are intentionally excluded from GitHub Sync.
 
-```bash
-DATABASE_URL="postgresql://..." node scripts/restore-postgres-backup.mjs ./latest-backup.json
-```
+## Restore Policy
 
-6. Deploy the app normally.
-7. Confirm that admin pages, invitations, RSVP, guest book, analytics, and client dashboards read from PostgreSQL.
+Automatic restore is disabled. The app route `app/api/admin/recent-edits/restore/route.ts` returns a manual-restore-only redirect.
 
-## Restore To A VPS Or Another Host
-
-1. Provision PostgreSQL.
-2. Create an empty database for BadrDaawa.
-3. Set `DATABASE_URL` to the new database.
-4. Download the latest backup JSON.
-5. Run:
+The restore script is guarded by explicit flags:
 
 ```bash
-DATABASE_URL="postgresql://..." node scripts/restore-postgres-backup.mjs ./latest-backup.json
+ALLOW_DESTRUCTIVE_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL \
+DATABASE_URL="postgresql://..." \
+node scripts/restore-postgres-backup.mjs ./backup.json --confirm-manual-restore
 ```
 
-6. Copy or configure upload storage as needed.
-7. Start the app.
+Runtime backup packages are not auto-restored by this script. Restoring Runtime Data requires a reviewed manual plan for the intended target database.
 
-## Rollback
-
-Before restoring over an existing database, create a fresh backup of the current database first:
+For production restore, an additional acknowledgement is required:
 
 ```bash
-node scripts/backup.mjs
+ALLOW_PRODUCTION_RESTORE=I_UNDERSTAND_THIS_IS_PRODUCTION
 ```
-
-Then run the restore command only after confirming the target `DATABASE_URL`.
 
 ## Safety Notes
 
-- Retention deletes only old backup files in GitHub under the backup folder.
-- Retention never deletes PostgreSQL data.
-- The restore script uses `pg_restore --clean --if-exists`; run it only against the intended target database.
-- Keep GitHub tokens private and rotate them if exposed.
+- Runtime backup creation never writes to GitHub.
+- GitHub Sync never writes to PostgreSQL.
+- Backup restore never runs automatically.
+- Backup retention deletes only local old backup files.
+- Project Content edits are versioned in GitHub, but PostgreSQL remains the live runtime source.

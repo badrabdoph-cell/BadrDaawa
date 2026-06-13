@@ -157,7 +157,7 @@ export function SyncStatus() {
         <span className="admin-health-pill">
           <Loader2 size={14} className="sync-spin" />
         </span>
-        <strong>مزامنة GitHub</strong>
+        <strong>مزامنة محتوى المشروع</strong>
         <small>جاري التحميل…</small>
       </div>
     );
@@ -168,7 +168,7 @@ export function SyncStatus() {
       <div className="admin-health-card sync-status-card">
         <Github size={19} />
         <span className="admin-health-pill danger">خطأ</span>
-        <strong>مزامنة GitHub</strong>
+        <strong>مزامنة محتوى المشروع</strong>
         <small>{error || "تعذّر تحميل الحالة"}</small>
       </div>
     );
@@ -193,7 +193,7 @@ export function SyncStatus() {
         {isCurrentlySyncing && <Loader2 size={12} className="sync-spin" />}
         {pillLabel}
       </span>
-      <strong>مزامنة GitHub</strong>
+      <strong>مزامنة محتوى المشروع</strong>
       <small>{readiness.detail}</small>
 
       {lastSync && (
@@ -257,7 +257,7 @@ export function SyncStatus() {
           type="button"
         >
           {isCurrentlySyncing ? <Loader2 size={14} className="sync-spin" /> : <RefreshCw size={14} />}
-          {isCurrentlySyncing ? "جاري…" : "رفع Backup الآن"}
+          {isCurrentlySyncing ? "جاري…" : "مزامنة المحتوى الآن"}
         </button>
         <a href="/admin/sync-history" className="btn btn-soft btn-glass">
           السجل

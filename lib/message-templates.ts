@@ -1,9 +1,6 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 import type { MessageTemplate, MessageTemplateKind } from "./types";
-
-const templatesPath = path.join(process.cwd(), "data", "message-templates.json");
 
 type MessageTemplateInput = {
   id?: unknown;
@@ -92,20 +89,15 @@ function sortTemplates(templates: MessageTemplate[]) {
 }
 
 async function readTemplatesRaw() {
-  try {
-    const raw = await readFile(templatesPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
+  return readProjectContentSetting("message-templates", seedTemplates(), (parsed) => {
     if (!Array.isArray(parsed)) return seedTemplates();
     const templates = parsed.map((item) => normalizeTemplate(item as MessageTemplateInput)).filter(Boolean) as MessageTemplate[];
     return templates.length ? sortTemplates(templates) : seedTemplates();
-  } catch {
-    return seedTemplates();
-  }
+  });
 }
 
 async function writeTemplates(templates: MessageTemplate[]) {
-  await mkdir(path.dirname(templatesPath), { recursive: true });
-  await writeFile(templatesPath, `${JSON.stringify(sortTemplates(templates), null, 2)}\n`, "utf8");
+  await writeProjectContentSetting("message-templates", sortTemplates(templates));
 }
 
 export async function getMessageTemplates() {

@@ -59,27 +59,25 @@ function trimTrackedJobs() {
 export function queueGitHubSync(
   reason: string,
   options: {
-    uploadExistingBackup?: boolean;
     uploadProjectFiles?: boolean;
     changeType?: string;
     affectedResource?: string;
   } = {},
 ) {
-  const shouldUploadExistingBackup = Boolean(options.uploadExistingBackup);
   const shouldUploadProjectFiles = Boolean(options.uploadProjectFiles);
 
-  if (!shouldUploadExistingBackup && !shouldUploadProjectFiles) {
-    console.log(`[GitHub Backup Queue] Ignoring non-backup sync request. PostgreSQL is the live source of truth: ${reason}`);
+  if (!shouldUploadProjectFiles) {
+    console.log(`[GitHub Sync Queue] Ignoring runtime sync request. PostgreSQL is the live source of truth: ${reason}`);
     return "";
   }
 
   const item: SyncQueueItem = {
     id: `sync-${++syncJobCounter}-${Date.now()}`,
-    reason: shouldUploadProjectFiles ? `Project files upload: ${reason}` : `Backup upload: ${reason}`,
+    reason: `Project content upload: ${reason}`,
     timestamp: Date.now(),
     status: "pending",
     retryCount: 0,
-    changeType: options.changeType || (shouldUploadProjectFiles ? "project" : "backup"),
+    changeType: options.changeType || "project",
     affectedResource: options.affectedResource,
   };
 

@@ -71,7 +71,7 @@ function logPostgresToolAvailability(command) {
 
   const output = `${result.stdout || result.stderr || ""}`.trim();
   if (result.error) {
-    console.warn(`[prepare] ${command} is not available in PATH. PostgreSQL backup/restore actions that need it will fail: ${result.error.message}`);
+    console.warn(`[prepare] ${command} is not available in PATH. Manual restore actions that need it will fail: ${result.error.message}`);
     return;
   }
 
@@ -88,7 +88,6 @@ for (const dir of dirs) {
 }
 console.log(`[prepare] Runtime directories are ready: ${dirs.length}`);
 
-logPostgresToolAvailability("pg_dump");
 logPostgresToolAvailability("pg_restore");
 
 runPrisma(["generate"]);

@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
-import { spawn } from "node:child_process";
 import { readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
-import { getDatabaseUrl } from "./database-url";
 import { parseJsonFileIfSafe } from "./json-file-safety";
+import { isProjectContentAppSettingKey } from "./project-content-store";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
+import { listUploadFiles, readUploadFile } from "./storage-provider";
 
 export type BackupSummary = {
   fileName: string;
@@ -23,17 +23,9 @@ type BackupPayload = {
   type?: string;
   createdAt?: string;
   source?: "database";
-  database?: unknown;
+  runtimeData?: unknown;
+  uploads?: unknown;
   metadata?: unknown;
-  postgresDump?: {
-    fileName: string;
-    format: "custom";
-    tool: "pg_dump";
-    encoding: "base64";
-    sizeBytes: number;
-    sha256: string;
-    base64: string;
-  };
 };
 
 const backupDir = runtimeBackupDir;
@@ -56,40 +48,8 @@ function formatBackupName(type: string) {
   return `${cleanType}-${formatStamp()}.json`;
 }
 
-function formatDumpName(type: string) {
-  const cleanType = type.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "manual";
-  return `${cleanType}-${formatStamp()}.dump`;
-}
-
 function toErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error || "Unknown error");
-}
-
-function safeDecode(value: string) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function postgresToolEnv(databaseUrl: string) {
-  const env = { ...process.env };
-  try {
-    const url = new URL(databaseUrl);
-    if (url.protocol !== "postgresql:" && url.protocol !== "postgres:") return env;
-    env.PGHOST = url.hostname;
-    env.PGPORT = url.port || "5432";
-    env.PGUSER = safeDecode(url.username);
-    env.PGPASSWORD = safeDecode(url.password);
-    env.PGDATABASE = safeDecode(url.pathname.replace(/^\/+/, ""));
-    const sslMode = url.searchParams.get("sslmode");
-    if (sslMode) env.PGSSLMODE = sslMode;
-    env.PGCONNECT_TIMEOUT = env.PGCONNECT_TIMEOUT || "20";
-    return env;
-  } catch {
-    return env;
-  }
 }
 
 async function exists(filePath: string) {
@@ -106,49 +66,58 @@ async function readDatabaseMetadata() {
 
   try {
     const [
+      adminUsers,
       customers,
-      templates,
       invitations,
       guests,
       orders,
       analyticsEvents,
+      nonProjectAppSettings,
       guestBookMessages,
+      coupleMessagesSettings,
       checkIns,
       liveModes,
       clientMessages,
       internalNotes,
       auditLogs,
       backupJobs,
+      syncLogs,
     ] = await Promise.all([
+      prisma.adminUser.count(),
       prisma.customer.count(),
-      prisma.weddingTemplate.count(),
       prisma.invitation.count(),
       prisma.guestRsvp.count(),
       prisma.orderRequest.count(),
       prisma.analyticsEvent.count(),
+      prisma.appSetting.count({ where: { key: { notIn: projectContentAppSettingKeys() } } }),
       prisma.guestBookMessage.count(),
+      prisma.coupleMessagesSetting.count(),
       prisma.invitationCheckIn.count(),
       prisma.weddingLiveMode.count(),
       prisma.clientMessage.count(),
       prisma.internalNote.count(),
       prisma.auditLog.count(),
       prisma.backupJob.count(),
+      prisma.syncLog.count(),
     ]);
     return {
       counts: {
+        adminUsers,
         customers,
-        templates,
         invitations,
         guestRsvp: guests,
         orders,
         analyticsEvents,
+        nonProjectAppSettings,
         guestBookMessages,
+        coupleMessagesSettings,
         checkIns,
         liveModes,
         clientMessages,
         internalNotes,
         auditLogs,
         backupJobs,
+        syncLogs,
       },
     };
   } catch (error) {
@@ -157,53 +126,71 @@ async function readDatabaseMetadata() {
   }
 }
 
-async function createPostgresDump(type: string) {
-  const databaseUrl = getDatabaseUrl();
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL is required to create a PostgreSQL backup.");
-  }
-
-  const args = [
-    "--format=custom",
-    "--compress=9",
-    "--no-owner",
-    "--no-privileges",
+function projectContentAppSettingKeys() {
+  return [
+    "project-content:site-settings",
+    "project-content:home-content",
+    "project-content:home-preview-settings",
+    "project-content:template-settings",
+    "project-content:template-preview-info",
+    "project-content:templates-preview-music",
+    "project-content:music-library",
+    "project-content:legal-pages",
+    "project-content:message-templates",
+    "project-content:content-presets",
+    "project-content:custom-templates",
   ];
+}
 
-  return await new Promise<NonNullable<BackupPayload["postgresDump"]>>((resolve, reject) => {
-    const child = spawn("pg_dump", args, { env: postgresToolEnv(databaseUrl), stdio: ["ignore", "pipe", "pipe"] });
-    const stdout: Buffer[] = [];
-    const stderr: Buffer[] = [];
+async function readRuntimeDataSnapshot() {
+  if (!prisma) throw new Error("DATABASE_URL is required to create a Runtime Data backup.");
 
-    child.stdout.on("data", (chunk: Buffer) => stdout.push(chunk));
-    child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
-    child.on("error", (error) => {
-      reject(new Error(`pg_dump failed to start: ${error.message}`));
+  const appSettings = await prisma.appSetting.findMany();
+  const nonProjectAppSettings = appSettings.filter((setting) => !isProjectContentAppSettingKey(setting.key));
+
+  return {
+    adminUsers: await prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } }),
+    customers: await prisma.customer.findMany({ orderBy: { createdAt: "asc" } }),
+    invitations: await prisma.invitation.findMany({ orderBy: { createdAt: "asc" } }),
+    guestRsvps: await prisma.guestRsvp.findMany({ orderBy: { createdAt: "asc" } }),
+    orderRequests: await prisma.orderRequest.findMany({ orderBy: { createdAt: "asc" } }),
+    analyticsEvents: await prisma.analyticsEvent.findMany({ orderBy: { createdAt: "asc" } }),
+    appSettings: nonProjectAppSettings,
+    guestBookMessages: await prisma.guestBookMessage.findMany({ orderBy: { createdAt: "asc" } }),
+    coupleMessagesSettings: await prisma.coupleMessagesSetting.findMany({ orderBy: { updatedAt: "asc" } }),
+    clientMessages: await prisma.clientMessage.findMany({ orderBy: { createdAt: "asc" } }),
+    invitationCheckIns: await prisma.invitationCheckIn.findMany({ orderBy: { createdAt: "asc" } }),
+    weddingLiveModes: await prisma.weddingLiveMode.findMany({ orderBy: { updatedAt: "asc" } }),
+    internalNotes: await prisma.internalNote.findMany({ orderBy: { createdAt: "asc" } }),
+    auditLogs: await prisma.auditLog.findMany({ orderBy: { createdAt: "asc" } }),
+    backupJobs: await prisma.backupJob.findMany({ orderBy: { createdAt: "asc" } }),
+    syncLogs: await prisma.syncLog.findMany({ orderBy: { createdAt: "asc" } }),
+  };
+}
+
+function countRuntimeItems(runtimeData: Record<string, unknown[]>, uploadsCount: number) {
+  return Object.values(runtimeData).reduce((sum, rows) => sum + rows.length, 0) + uploadsCount;
+}
+
+async function readRuntimeUploadSnapshot() {
+  const files = await listUploadFiles();
+  const uploads = [];
+  for (const file of files.sort((a, b) => a.key.localeCompare(b.key))) {
+    const bytes = await readUploadFile(file.key);
+    if (!bytes) continue;
+    uploads.push({
+      key: file.key,
+      url: file.url,
+      relativePath: file.relativePath,
+      contentType: file.contentType,
+      lastModified: file.lastModified,
+      sizeBytes: bytes.length,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      encoding: "base64",
+      base64: bytes.toString("base64"),
     });
-    child.on("close", (code) => {
-      const errorOutput = Buffer.concat(stderr).toString("utf8").trim();
-      if (code !== 0) {
-        reject(new Error(`pg_dump exited with code ${code}${errorOutput ? `: ${errorOutput}` : ""}`));
-        return;
-      }
-
-      const bytes = Buffer.concat(stdout);
-      if (!bytes.length) {
-        reject(new Error("pg_dump produced an empty backup."));
-        return;
-      }
-
-      resolve({
-        fileName: formatDumpName(type),
-        format: "custom",
-        tool: "pg_dump",
-        encoding: "base64",
-        sizeBytes: bytes.length,
-        sha256: createHash("sha256").update(bytes).digest("hex"),
-        base64: bytes.toString("base64"),
-      });
-    });
-  });
+  }
+  return uploads;
 }
 
 async function createBackupJob(type: string, startedAt: Date) {
@@ -284,7 +271,8 @@ export async function createBackupSnapshot(type = "manual") {
   console.log(`[Backup] Backup Started: ${type}`);
 
   try {
-    const postgresDump = await createPostgresDump(type);
+    const runtimeData = await readRuntimeDataSnapshot();
+    const uploads = await readRuntimeUploadSnapshot();
     const database = await readDatabaseMetadata();
     const fileName = formatBackupName(type);
     const payload: BackupPayload & {
@@ -297,17 +285,20 @@ export async function createBackupSnapshot(type = "manual") {
       source: "database",
       app: "BadrDaawa",
       retention: { keepLast: backupRetentionCount },
+      runtimeData,
+      uploads,
       metadata: {
         database,
-        dump: {
-          fileName: postgresDump.fileName,
-          format: postgresDump.format,
-          sizeBytes: postgresDump.sizeBytes,
-          sha256: postgresDump.sha256,
+        classification: {
+          included: "Runtime Data and customer uploads only",
+          excluded: "Project Content, code, templates, base site assets, and project music",
+        },
+        runtimeTables: Object.fromEntries(Object.entries(runtimeData).map(([table, rows]) => [table, rows.length])),
+        uploads: {
+          files: uploads.length,
+          bytes: uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0),
         },
       },
-      database,
-      postgresDump,
     };
     const json = `${JSON.stringify(payload, jsonReplacer, 2)}\n`;
     const sizeBytes = Buffer.byteLength(json);
@@ -316,7 +307,8 @@ export async function createBackupSnapshot(type = "manual") {
     ensureParentDirectory(backupPath);
     await writeFile(backupPath, json, "utf8");
     await cleanupOldBackups();
-    console.log(`[Backup] Backup Completed: ${fileName} (${sizeBytes} bytes, PostgreSQL dump: ${postgresDump.sizeBytes} bytes).`);
+    const items = countRuntimeItems(runtimeData, uploads.length);
+    console.log(`[Backup] Backup Completed: ${fileName} (${sizeBytes} bytes, ${items} runtime item(s)).`);
 
     await updateBackupJob(jobId, {
       status: "SUCCESS",
@@ -324,7 +316,7 @@ export async function createBackupSnapshot(type = "manual") {
       sizeBytes,
     });
 
-    return toBackupSummary(fileName, sizeBytes, createdAt.toISOString(), "database", 1);
+    return toBackupSummary(fileName, sizeBytes, createdAt.toISOString(), "database", items);
   } catch (error) {
     const message = toErrorMessage(error);
     console.error(`[Backup] Backup Failed: ${message}`);
@@ -382,12 +374,16 @@ export async function listBackupSnapshots() {
           try {
             const safe = await parseJsonFileIfSafe<{
               source?: BackupSummary["source"];
-              postgresDump?: unknown;
+              runtimeData?: Record<string, unknown[]>;
+              uploads?: unknown[];
             }>(filePath, entry.name, maxBackupSummaryBytes);
             const parsed = safe.value;
             if (!parsed) throw new Error(safe.skipped ? "oversized-backup" : "invalid-backup");
             source = "database";
-            items = parsed.postgresDump ? 1 : 0;
+            const runtimeItems = parsed.runtimeData
+              ? Object.values(parsed.runtimeData).reduce((sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0), 0)
+              : 0;
+            items = runtimeItems + (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0);
           } catch {
             items = 0;
           }

@@ -1,7 +1,6 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { imageExtensionFromName } from "./image-formats";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 import { getTemplateWithSettings } from "./template-settings";
 
 export type HomePreviewMode = "template" | "image" | "video";
@@ -12,8 +11,6 @@ export type HomePreviewSettings = {
   imageUrl: string;
   videoUrl: string;
 };
-
-const settingsPath = path.join(process.cwd(), "data", "home-preview-settings.json");
 
 export const defaultHomePreviewSettings: HomePreviewSettings = {
   mode: "template",
@@ -48,25 +45,10 @@ function isHomePreviewMode(value: string): value is HomePreviewMode {
   return value === "template" || value === "image" || value === "video";
 }
 
-async function readHomePreviewSettingsFile(): Promise<Partial<HomePreviewSettings>> {
-  try {
-    const raw = await readFile(settingsPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<HomePreviewSettings>) : {};
-  } catch {
-    return {};
-  }
-}
-
-async function writeHomePreviewSettingsFile(settings: HomePreviewSettings) {
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
-}
-
 export async function getHomePreviewSettings(): Promise<HomePreviewSettings> {
   noStore();
 
-  const saved = await readHomePreviewSettingsFile();
+  const saved = await readProjectContentSetting<Partial<HomePreviewSettings>>("home-preview-settings", defaultHomePreviewSettings, (value) => value as Partial<HomePreviewSettings>);
   const mode = saved.mode && isHomePreviewMode(saved.mode) ? saved.mode : defaultHomePreviewSettings.mode;
   const templateSlug = typeof saved.templateSlug === "string" && saved.templateSlug.trim() ? saved.templateSlug.trim() : defaultHomePreviewSettings.templateSlug;
   const template = await getTemplateWithSettings(templateSlug);
@@ -113,6 +95,6 @@ export async function updateHomePreviewSettings(input: {
     videoUrl,
   };
 
-  await writeHomePreviewSettingsFile(nextSettings);
+  await writeProjectContentSetting("home-preview-settings", nextSettings);
   return nextSettings;
 }

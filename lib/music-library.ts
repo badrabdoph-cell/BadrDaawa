@@ -1,7 +1,6 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { cleanNewDirectAudioUrl, cleanPlayableAudioUrl, isUploadedMusicUrl } from "./audio-files";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 import { statUploadFile } from "./storage-provider";
 import type { Invitation } from "./types";
 
@@ -34,7 +33,6 @@ export type ResolvedInvitationMusic = {
   track?: MusicSlot;
 };
 
-const libraryPath = path.join(process.cwd(), "data", "music-library.json");
 const defaultSlotId = "global-track";
 
 const defaultMusicSlot: MusicSlot = {
@@ -101,13 +99,9 @@ function sourceFromUrl(url: string): MusicSourceKind {
 }
 
 async function readMusicLibraryFile(): Promise<Partial<MusicLibrary>> {
-  try {
-    const raw = await readFile(libraryPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<MusicLibrary>) : {};
-  } catch {
-    return {};
-  }
+  return readProjectContentSetting<Partial<MusicLibrary>>("music-library", { slots: [{ ...defaultMusicSlot }] }, (value) =>
+    value && typeof value === "object" && !Array.isArray(value) ? (value as Partial<MusicLibrary>) : {},
+  );
 }
 
 function normalizeSlot(input: Partial<MusicSlot>, existingIds: string[], fallbackName = "مقطع موسيقى"): MusicSlot | null {
@@ -185,8 +179,7 @@ async function enrichMusicSlot(slot: MusicSlot): Promise<MusicSlot> {
 }
 
 async function writeMusicLibrary(library: MusicLibrary) {
-  await mkdir(path.dirname(libraryPath), { recursive: true });
-  await writeFile(libraryPath, `${JSON.stringify(normalizeMusicLibrary(library), null, 2)}\n`, "utf8");
+  await writeProjectContentSetting("music-library", normalizeMusicLibrary(library));
 }
 
 export async function getMusicLibrary() {

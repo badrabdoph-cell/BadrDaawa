@@ -5,14 +5,14 @@ const syncSections = [
   {
     href: "/admin/backups",
     title: "النسخ الاحتياطي",
-    description: "إنشاء ومراجعة نسخ PostgreSQL المحفوظة.",
+    description: "إنشاء ومراجعة نسخ Runtime Data وملفات العملاء.",
     icon: DatabaseBackup,
     primary: true,
   },
   {
     href: "/admin/sync-settings",
     title: "إعدادات GitHub",
-    description: "إدارة وجهة النسخ وجدولة الرفع إلى GitHub.",
+    description: "إدارة مزامنة Project Content إلى GitHub.",
     icon: Github,
   },
   {
@@ -36,7 +36,7 @@ export default function AdminSyncHubPage() {
         <div>
           <span className="eyebrow">System</span>
           <h1>النسخ والمزامنة</h1>
-          <p>مركز موحد للنسخ الاحتياطي وGitHub والمهام المجدولة.</p>
+          <p>مركز موحد للنسخ الاحتياطي التشغيلي ومزامنة محتوى المشروع والمهام المجدولة.</p>
         </div>
         <Link className="btn btn-soft" href="/admin">
           العودة للرئيسية
@@ -68,10 +68,10 @@ export default function AdminSyncHubPage() {
           </div>
         </div>
         <div className="admin-mini-links">
-          <Link href="/admin/backups">PostgreSQL Backup</Link>
-          <Link href="/admin/sync-settings">GitHub Backup Settings</Link>
-          <Link href="/admin/sync-history">GitHub Sync Logs</Link>
-          <Link href="/admin/tasks">Scheduled Jobs</Link>
+          <Link href="/admin/backups">Runtime Backup</Link>
+          <Link href="/admin/sync-settings">Project GitHub Sync</Link>
+          <Link href="/admin/sync-history">Project Sync Logs</Link>
+          <Link href="/admin/tasks">Railway Cron Jobs</Link>
         </div>
       </section>
     </section>

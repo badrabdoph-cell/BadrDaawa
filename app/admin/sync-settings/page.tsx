@@ -37,8 +37,8 @@ export default async function SyncSettingsPage({ searchParams }: { searchParams?
       : null;
 
   const envVars = [
-    { key: "GITHUB_SYNC_TOKEN", label: "GitHub Token", set: Boolean(process.env.GITHUB_SYNC_TOKEN || process.env.BACKUP_GITHUB_TOKEN) },
-    { key: "GITHUB_SYNC_REPO", label: "Repository", set: Boolean(process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO) },
+    { key: "GITHUB_SYNC_TOKEN", label: "Project Content Token", set: Boolean(process.env.GITHUB_SYNC_TOKEN) },
+    { key: "GITHUB_SYNC_REPO", label: "Project Repository", set: Boolean(process.env.GITHUB_SYNC_REPO) },
     { key: "GITHUB_SYNC_BRANCH", label: "Branch", set: Boolean(process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH) },
     { key: "GITHUB_SYNC_ENABLED", label: "Sync Enabled", set: process.env.GITHUB_SYNC_ENABLED !== "false" },
   ];
@@ -59,7 +59,7 @@ export default async function SyncSettingsPage({ searchParams }: { searchParams?
           <form action="/api/admin/sync-status" method="post">
             <button className="btn btn-gold btn-glow" type="submit">
               <RefreshCw size={16} />
-              رفع أحدث Backup
+              مزامنة محتوى المشروع
             </button>
           </form>
         </div>
@@ -124,11 +124,11 @@ export default async function SyncSettingsPage({ searchParams }: { searchParams?
           <CalendarClock size={22} />
           <div>
             <span className="eyebrow">Backup Schedule</span>
-            <h2>أوقات النسخ الاحتياطي إلى GitHub</h2>
+            <h2>Railway Cron للنسخ الاحتياطي</h2>
           </div>
         </div>
         <p style={{ margin: "10px 0 0", color: "rgba(245,234,214,0.62)", fontWeight: 850, lineHeight: 1.7 }}>
-          النسخ التلقائي لا يعمل من التطبيق. Railway Cron يستدعي <code>/api/cron/backup</code> كل 6 ساعات باستخدام <code>BACKUP_CRON_SECRET</code>. التطبيق لا يملك مؤقتات داخلية ولا يغير الجدول من لوحة الأدمن.
+          النسخ التلقائي لا يعمل من التطبيق. Railway Cron يستدعي <code>/api/cron/backup</code> كل 6 ساعات باستخدام <code>BACKUP_CRON_SECRET</code>. GitHub Sync هنا لمحتوى المشروع فقط ولا يرفع Runtime Data أو ملفات backup.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "16px" }}>
           <Link href="/admin/tasks" className="btn btn-soft btn-glass">

@@ -1,7 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { writeJsonFileAtomic } from "./atomic-file";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 
 export type LegalPageSlug = "privacy-policy" | "terms" | "refund-policy" | "usage-policy";
 
@@ -21,8 +19,6 @@ type LegalPageInput = {
 };
 
 export const legalPageSlugs: LegalPageSlug[] = ["privacy-policy", "terms", "refund-policy", "usage-policy"];
-
-const legalPagesPath = path.join(process.cwd(), "data", "legal-pages.json");
 
 const defaultLegalPages: Record<LegalPageSlug, LegalPageContent> = {
   "privacy-policy": {
@@ -76,18 +72,14 @@ function normalizePage(slug: LegalPageSlug, input: LegalPageInput | undefined): 
 }
 
 async function readLegalPagesFile() {
-  try {
-    const raw = await readFile(legalPagesPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
+  return readProjectContentSetting("legal-pages", defaultLegalPages, (parsed) => {
     const source = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<Record<LegalPageSlug, Partial<LegalPageContent>>>) : {};
     return Object.fromEntries(legalPageSlugs.map((slug) => [slug, normalizePage(slug, source[slug])])) as Record<LegalPageSlug, LegalPageContent>;
-  } catch {
-    return defaultLegalPages;
-  }
+  });
 }
 
 async function writeLegalPages(pages: Record<LegalPageSlug, LegalPageContent>) {
-  await writeJsonFileAtomic(legalPagesPath, pages);
+  await writeProjectContentSetting("legal-pages", pages);
 }
 
 export async function getLegalPages() {

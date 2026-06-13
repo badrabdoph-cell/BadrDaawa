@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createBackupSnapshot, listBackupSnapshots } from "@/lib/backups";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const backup = await createBackupSnapshot("manual");
-    queueGitHubSync(`Manual backup created: ${backup.fileName}`, { uploadExistingBackup: true });
     return NextResponse.redirect(getRedirectUrl(`/admin/backups?created=${encodeURIComponent(backup.fileName)}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("[Backup] Manual backup failed", error);

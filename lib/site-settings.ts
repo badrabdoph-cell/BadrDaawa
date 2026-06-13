@@ -1,6 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 import { normalizePhoneForWhatsApp } from "./utils";
 
 export type SiteSocialLinks = {
@@ -47,8 +46,6 @@ export type SiteSettings = {
   photographer: SitePhotographerSettings;
   updatedAt: string;
 };
-
-const settingsPath = path.join(process.cwd(), "data", "site-settings.json");
 
 export const defaultSiteSettings: SiteSettings = {
   siteName: "BadrDaawa",
@@ -170,20 +167,10 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
   };
 }
 
-async function readSiteSettingsFile(): Promise<Partial<SiteSettings>> {
-  try {
-    const raw = await readFile(settingsPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<SiteSettings>) : {};
-  } catch {
-    return {};
-  }
-}
-
 export async function getSiteSettings() {
   noStore();
-  const settings = normalizeSettings(await readSiteSettingsFile());
-  console.log("[Site Settings] Loaded from:", settingsPath);
+  const settings = await readProjectContentSetting("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
+  console.log("[Site Settings] Loaded from PostgreSQL project content.");
   console.log("[Site Settings] Current updatedAt:", settings.updatedAt);
   return settings;
 }
@@ -200,9 +187,8 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     updatedAt: new Date().toISOString(),
   });
 
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  console.log("[Site Settings] Updated and saved to:", settingsPath);
+  await writeProjectContentSetting("site-settings", next);
+  console.log("[Site Settings] Updated and saved to PostgreSQL project content.");
   console.log("[Site Settings] New updatedAt:", next.updatedAt);
   return next;
 }

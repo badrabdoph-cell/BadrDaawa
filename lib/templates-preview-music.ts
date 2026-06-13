@@ -1,7 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { getMusicLibrary, getMusicSlotByIdOrUrl, type MusicLibrary, type MusicSlot } from "./music-library";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 
 export type TemplatesPreviewMusicSettings = {
   enabled: boolean;
@@ -14,8 +13,6 @@ export type ResolvedTemplatesPreviewMusic = {
   track?: MusicSlot;
   musicUrl: string;
 };
-
-const settingsPath = path.join(process.cwd(), "data", "templates-preview-music.json");
 
 const defaultSettings: TemplatesPreviewMusicSettings = {
   enabled: false,
@@ -31,24 +28,13 @@ function normalizeSettings(value: Partial<TemplatesPreviewMusicSettings> | null 
   };
 }
 
-async function readSettingsFile() {
-  try {
-    const raw = await readFile(settingsPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? normalizeSettings(parsed as Partial<TemplatesPreviewMusicSettings>) : defaultSettings;
-  } catch {
-    return defaultSettings;
-  }
-}
-
 async function writeSettings(settings: TemplatesPreviewMusicSettings) {
-  await mkdir(path.dirname(settingsPath), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+  await writeProjectContentSetting("templates-preview-music", settings);
 }
 
 export async function getTemplatesPreviewMusicSettings() {
   noStore();
-  return readSettingsFile();
+  return readProjectContentSetting("templates-preview-music", defaultSettings, (value) => normalizeSettings(value as Partial<TemplatesPreviewMusicSettings>));
 }
 
 export async function updateTemplatesPreviewMusicSettings(input: { enabled: boolean; trackId?: string }) {

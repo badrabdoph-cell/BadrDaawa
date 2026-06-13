@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
+import { readProjectContentExportFiles } from "./project-content-store";
 
 type GitHubSyncStatus = "synced" | "skipped" | "unchanged" | "failed";
 
@@ -36,14 +36,6 @@ type GitHubTree = {
   sha: string;
 };
 
-type GitHubTreeResponse = {
-  tree: Array<{
-    path: string;
-    type: string;
-    sha: string;
-  }>;
-};
-
 type GitHubCreatedCommit = {
   sha: string;
   html_url?: string;
@@ -53,18 +45,7 @@ type SyncFile = {
   absolutePath: string;
   repoPath: string;
   size: number;
-};
-
-type BackupPayloadForSync = {
-  source?: string;
-  postgresDump?: {
-    tool?: string;
-    format?: string;
-    encoding?: string;
-    sizeBytes?: number;
-    sha256?: string;
-    base64?: string;
-  };
+  bytes?: Buffer;
 };
 
 type SyncConfig = {
@@ -93,32 +74,14 @@ export type SyncLogEntry = {
   updatedAt: Date;
 };
 
-const syncRoots = [
-  { absolutePath: runtimeBackupDir, repoPath: (process.env.GITHUB_BACKUP_REPO_PATH || "backups").replace(/^\/+|\/+$/g, "") || "backups" },
-];
 const projectAssetRoots = [
   { absolutePath: path.join(process.cwd(), "public", "assets", "admin"), repoPath: "public/assets/admin" },
-];
-const projectSyncFiles = [
-  "data/site-settings.json",
-  "data/home-content.json",
-  "data/home-preview-settings.json",
-  "data/template-settings.json",
-  "data/template-preview-info.json",
-  "data/templates-preview-music.json",
-  "data/music-library.json",
-  "data/legal-pages.json",
-  "data/message-templates.json",
-  "data/content-presets.json",
-  "data/custom-templates.json",
 ];
 
 // Project files are always synced to GitHub as part of the project configuration.
 // Operational data (customers, invitations, etc.) is NEVER synced to GitHub directly.
 // GitHub is NOT a database for operational data.
-const backupRetentionCount = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 20);
-const maxSyncFileBytes = (Number(process.env.BACKUP_GITHUB_MAX_FILE_MB || process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
-const maxSyncTotalBytes = (Number(process.env.BACKUP_GITHUB_MAX_TOTAL_MB || process.env.GITHUB_SYNC_MAX_TOTAL_MB) || 180) * 1024 * 1024;
+const maxSyncFileBytes = (Number(process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
 
 class GitHubSyncHttpError extends Error {
   status: number;
@@ -136,7 +99,7 @@ function normalizeGitHubToken(value: string | undefined) {
   if (!value) return "";
   let token = value.trim().replace(/[\u200B-\u200D\uFEFF\r\n\t ]+/g, "");
 
-  const assignmentMatch = token.match(/^(?:GITHUB_SYNC_TOKEN|BACKUP_GITHUB_TOKEN|GITHUB_TOKEN|GH_TOKEN)=(.+)$/);
+  const assignmentMatch = token.match(/^(?:GITHUB_SYNC_TOKEN|GITHUB_TOKEN|GH_TOKEN)=(.+)$/);
   if (assignmentMatch) token = assignmentMatch[1];
 
   if (
@@ -163,7 +126,6 @@ function getTokenDiagnostics(rawValue: string | undefined, token: string) {
 function getGitHubTokenConfig() {
   const candidates = [
     ["GITHUB_SYNC_TOKEN", process.env.GITHUB_SYNC_TOKEN],
-    ["BACKUP_GITHUB_TOKEN", process.env.BACKUP_GITHUB_TOKEN],
     ["GITHUB_TOKEN", process.env.GITHUB_TOKEN],
     ["GH_TOKEN", process.env.GH_TOKEN],
   ] as const;
@@ -217,8 +179,8 @@ function getSyncConfig() {
   if (process.env.GITHUB_SYNC_ENABLED === "false") return null;
 
   const { token, source: tokenSource } = getGitHubTokenConfig();
-  const rawRepo = process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "";
-  const repoSource = process.env.GITHUB_SYNC_REPO ? "GITHUB_SYNC_REPO" : process.env.BACKUP_GITHUB_REPO ? "BACKUP_GITHUB_REPO" : "none";
+  const rawRepo = process.env.GITHUB_SYNC_REPO || "";
+  const repoSource = process.env.GITHUB_SYNC_REPO ? "GITHUB_SYNC_REPO" : "none";
   const repo = parseRepo(rawRepo);
   const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
 
@@ -236,7 +198,7 @@ export function getGitHubSyncReadiness() {
   }
 
   const { token, source: tokenSource, diagnostics: tokenDiagnostics } = getGitHubTokenConfig();
-  const rawRepo = process.env.GITHUB_SYNC_REPO || process.env.BACKUP_GITHUB_REPO || "";
+  const rawRepo = process.env.GITHUB_SYNC_REPO || "";
   const repo = parseRepo(rawRepo);
   const branch = process.env.GITHUB_SYNC_BRANCH || process.env.RAILWAY_GIT_BRANCH || "main";
 
@@ -280,7 +242,6 @@ function toRepoPath(absolutePath: string, root: { absolutePath: string; repoPath
 }
 
 async function walkFiles(dir: string, root: { absolutePath: string; repoPath: string }): Promise<SyncFile[]> {
-  ensureRuntimeDirectories();
   if (!(await exists(dir))) return [];
   const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
     console.error(`[GitHub Sync] Failed to read sync directory: ${dir}`, error);
@@ -316,86 +277,59 @@ async function walkFiles(dir: string, root: { absolutePath: string; repoPath: st
 }
 
 async function collectSyncFiles() {
-  ensureRuntimeDirectories();
-  const groups = await Promise.all(syncRoots.map((root) => walkFiles(root.absolutePath, root)));
-  const files = groups
-    .flat()
-    .filter((file) => isTopLevelBackupJson(file.repoPath))
-    .sort((a, b) => backupTimeFromPath(b.repoPath) - backupTimeFromPath(a.repoPath) || b.repoPath.localeCompare(a.repoPath));
-  const selected: SyncFile[] = [];
-  let totalBytes = 0;
-  for (const file of files) {
-    const valid = await isValidDatabaseBackupFile(file);
-    if (!valid) continue;
-    if (totalBytes + file.size > maxSyncTotalBytes) {
-      console.warn(`[GitHub Sync] Skipping file because sync payload limit was reached: ${file.repoPath} (${file.size} bytes).`);
-      continue;
-    }
-    selected.push(file);
-    totalBytes += file.size;
-    break;
-  }
-  return selected;
+  console.warn("[GitHub Sync] Runtime backups are intentionally excluded from GitHub sync.");
+  return [];
 }
 
 async function collectProjectSyncFiles() {
-  const root = process.cwd();
-  const files: SyncFile[] = [];
-  for (const repoPath of projectSyncFiles) {
-    const absolutePath = path.join(root, repoPath);
-    const fileStat = await stat(absolutePath).catch(() => null);
-    if (!fileStat?.isFile() || !fileStat.size || fileStat.size > maxSyncFileBytes) continue;
-    files.push({ absolutePath, repoPath, size: fileStat.size });
-  }
+  const exported = await readProjectContentExportFiles();
+  const files: SyncFile[] = exported
+    .filter((file) => file.bytes.length > 0 && file.bytes.length <= maxSyncFileBytes)
+    .map((file) => ({
+      absolutePath: `[postgresql:${file.repoPath}]`,
+      repoPath: file.repoPath,
+      size: file.bytes.length,
+      bytes: file.bytes,
+    }));
+  files.push(...(await collectDatabaseProjectContentFiles()));
   const assetGroups = await Promise.all(projectAssetRoots.map((assetRoot) => walkFiles(assetRoot.absolutePath, assetRoot)));
   return [...files, ...assetGroups.flat()];
 }
 
-async function isValidDatabaseBackupFile(file: SyncFile) {
-  try {
-    const bytes = await readFile(file.absolutePath);
-    const payload = JSON.parse(bytes.toString("utf8")) as BackupPayloadForSync;
-    const dump = payload.postgresDump;
-    if (payload.source !== "database" || !dump) {
-      console.warn(`[GitHub Sync] Skipping non-database backup: ${file.repoPath}`);
-      return false;
-    }
-    if (dump.tool !== "pg_dump" || dump.format !== "custom" || dump.encoding !== "base64" || !dump.base64) {
-      console.warn(`[GitHub Sync] Skipping backup without a valid PostgreSQL dump: ${file.repoPath}`);
-      return false;
-    }
-    const dumpBytes = Buffer.from(dump.base64, "base64");
-    if (!dumpBytes.length) {
-      console.warn(`[GitHub Sync] Skipping backup with an empty PostgreSQL dump: ${file.repoPath}`);
-      return false;
-    }
-    if (Number(dump.sizeBytes) && Number(dump.sizeBytes) !== dumpBytes.length) {
-      console.warn(`[GitHub Sync] Skipping backup with dump size mismatch: ${file.repoPath}`);
-      return false;
-    }
-    if (dump.sha256) {
-      const sha256 = createHash("sha256").update(dumpBytes).digest("hex");
-      if (sha256 !== dump.sha256) {
-        console.warn(`[GitHub Sync] Skipping backup with dump hash mismatch: ${file.repoPath}`);
-        return false;
-      }
-    }
-    return true;
-  } catch (error) {
-    console.warn(`[GitHub Sync] Skipping invalid backup file: ${file.repoPath}`, error);
-    return false;
-  }
+async function collectDatabaseProjectContentFiles(): Promise<SyncFile[]> {
+  const prisma = await getPrisma();
+  if (!prisma) return [];
+
+  const [dynamicPages, weddingTemplates] = await Promise.all([
+    prisma.dynamicPage.findMany({ orderBy: [{ slug: "asc" }] }),
+    prisma.weddingTemplate.findMany({ orderBy: [{ sortOrder: "asc" }, { slug: "asc" }] }),
+  ]);
+
+  const exports = [
+    { repoPath: "data/dynamic-pages.json", value: dynamicPages },
+    { repoPath: "data/wedding-templates.json", value: weddingTemplates },
+  ];
+
+  return exports.map((file) => {
+    const bytes = Buffer.from(`${JSON.stringify(file.value, null, 2)}\n`, "utf8");
+    return {
+      absolutePath: `[postgresql:${file.repoPath}]`,
+      repoPath: file.repoPath,
+      size: bytes.length,
+      bytes,
+    };
+  }).filter((file) => file.size > 0 && file.size <= maxSyncFileBytes);
 }
 
 /**
  * Compute a hash of all file contents to detect changes before committing.
  */
-export async function hashSyncFiles(files: { absolutePath: string; repoPath: string }[]): Promise<string> {
+export async function hashSyncFiles(files: SyncFile[]): Promise<string> {
   const hash = createHash("sha256");
   for (const file of files) {
     hash.update(file.repoPath);
     hash.update(":");
-    const bytes = await readFile(file.absolutePath);
+    const bytes = file.bytes ?? (await readFile(file.absolutePath));
     hash.update(bytes);
     hash.update("\n");
   }
@@ -427,10 +361,10 @@ async function githubRequest<T>(pathName: string, init: RequestInit, token: stri
 }
 
 async function createBlob(owner: string, repo: string, token: string, file: SyncFile) {
-  const bytes = await readFile(file.absolutePath).catch((error: unknown) => {
+  const bytes = file.bytes ?? (await readFile(file.absolutePath).catch((error: unknown) => {
     console.warn(`[GitHub Sync] Skipping missing/unreadable file: ${file.repoPath}`, error);
     return null;
-  });
+  }));
   if (!bytes) return null;
 
   const blob = await githubRequest<GitHubBlob>(
@@ -450,52 +384,6 @@ async function createBlob(owner: string, repo: string, token: string, file: Sync
     type: "blob",
     sha: blob.sha,
   };
-}
-
-function backupTimeFromPath(repoPath: string) {
-  const match = repoPath.match(/(\d{8}T\d{6}Z)/);
-  if (!match) return 0;
-  const value = match[1];
-  const iso = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}Z`;
-  const time = Date.parse(iso);
-  return Number.isFinite(time) ? time : 0;
-}
-
-function isTopLevelBackupJson(repoPath: string) {
-  for (const root of syncRoots) {
-    const prefix = `${root.repoPath.replace(/^\/+|\/+$/g, "")}/`;
-    if (!repoPath.startsWith(prefix) || !repoPath.endsWith(".json")) continue;
-    const relativePath = repoPath.slice(prefix.length);
-    return Boolean(relativePath) && !relativePath.includes("/") && backupTimeFromPath(repoPath) > 0;
-  }
-  return false;
-}
-
-async function listRemoteBackupFiles(owner: string, repo: string, branch: string, token: string, treeSha: string) {
-  const response = await githubRequest<GitHubTreeResponse>(
-    `/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`,
-    { method: "GET" },
-    token,
-  );
-  const roots = syncRoots.map((root) => `${root.repoPath.replace(/^\/+|\/+$/g, "")}/`);
-  return response.tree.filter((item) => item.type === "blob" && roots.some((root) => item.path.startsWith(root)) && isTopLevelBackupJson(item.path));
-}
-
-function buildRetentionDeletes(remoteFiles: Awaited<ReturnType<typeof listRemoteBackupFiles>>, uploadedPaths: Set<string>) {
-  const allPaths = Array.from(new Set([...remoteFiles.map((file) => file.path), ...uploadedPaths]));
-  const sorted = allPaths.sort((a, b) => {
-    const byTime = backupTimeFromPath(b) - backupTimeFromPath(a);
-    return byTime || b.localeCompare(a);
-  });
-  const keep = new Set(sorted.slice(0, backupRetentionCount));
-  return remoteFiles
-    .filter((file) => !keep.has(file.path) && !uploadedPaths.has(file.path))
-    .map((file) => ({
-      path: file.path,
-      mode: "100644",
-      type: "blob",
-      sha: null,
-    }));
 }
 
 // ─── Database logging helpers ────────────────────────────────────────────────
@@ -597,25 +485,6 @@ export async function getLastSuccessfulSync(): Promise<SyncLogEntry | null> {
   }
 }
 
-async function markBackupJobsUploaded(files: SyncFile[], commitSha: string | undefined) {
-  if (!commitSha) return;
-  const fileNames = files
-    .map((file) => path.basename(file.repoPath))
-    .filter((fileName) => /^[a-z0-9-]+\.json$/i.test(fileName));
-  if (!fileNames.length) return;
-
-  try {
-    const prisma = await getPrisma();
-    if (!prisma) return;
-    await prisma.backupJob.updateMany({
-      where: { fileName: { in: fileNames } },
-      data: { githubSha: commitSha },
-    });
-  } catch (error) {
-    console.error("[BackupJob] Failed to mark GitHub upload commit.", error);
-  }
-}
-
 // ─── Core sync function ───────────────────────────────────────────────────────
 
 async function attemptSync(reason: string, options: { uploadProjectFiles?: boolean } = {}): Promise<GitHubSyncResult & { startedAt: number }> {
@@ -631,12 +500,21 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
     };
   }
 
+  if (!options.uploadProjectFiles) {
+    return {
+      startedAt,
+      status: "skipped",
+      message: "Runtime backups are intentionally not uploaded to GitHub.",
+      duration: Date.now() - startedAt,
+    };
+  }
+
   const files = options.uploadProjectFiles ? await collectProjectSyncFiles() : await collectSyncFiles();
   if (!files.length) {
     return {
       startedAt,
       status: "skipped",
-      message: "No data or uploaded files found to sync.",
+      message: "No project content files found to sync.",
       duration: Date.now() - startedAt,
     };
   }
@@ -644,7 +522,7 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
   const { owner, repo } = config.repo;
   const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
   const headCommit = await githubRequest<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, { method: "GET" }, config.token);
-  console.log("[GitHub Backup] GitHub Upload Started");
+  console.log("[GitHub Project Content] GitHub Upload Started");
   const treeItems: NonNullable<Awaited<ReturnType<typeof createBlob>>>[] = [];
   for (const file of files) {
     const item = await createBlob(owner, repo, config.token, file);
@@ -654,14 +532,9 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
     return {
       startedAt,
       status: "skipped",
-      message: "No readable data or uploaded files found to sync.",
+      message: "No readable project content files found to sync.",
       duration: Date.now() - startedAt,
     };
-  }
-  const remoteBackupFiles = options.uploadProjectFiles ? [] : await listRemoteBackupFiles(owner, repo, config.branch, config.token, headCommit.tree.sha);
-  const deleteItems = options.uploadProjectFiles ? [] : buildRetentionDeletes(remoteBackupFiles, new Set(treeItems.map((item) => item.path)));
-  if (deleteItems.length) {
-    console.log(`[GitHub Backup] Old Backups Deleted: ${deleteItems.length}`);
   }
   const tree = await githubRequest<GitHubTree>(
     `/repos/${owner}/${repo}/git/trees`,
@@ -669,18 +542,17 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
       method: "POST",
       body: JSON.stringify({
         base_tree: headCommit.tree.sha,
-        tree: [...treeItems, ...deleteItems],
+        tree: treeItems,
       }),
     },
     config.token,
   );
 
   if (tree.sha === headCommit.tree.sha) {
-    await markBackupJobsUploaded(files, ref.object.sha);
     return {
       startedAt,
       status: "unchanged",
-      message: "GitHub already has the latest admin data.",
+      message: "GitHub already has the latest project content.",
       commitSha: ref.object.sha,
       files: treeItems.length,
       duration: Date.now() - startedAt,
@@ -692,7 +564,7 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
     {
       method: "POST",
       body: JSON.stringify({
-        message: `chore(admin): sync admin changes\n\n${reason}`.slice(0, 500),
+        message: `chore(content): sync project content\n\n${reason}`.slice(0, 500),
         tree: tree.sha,
         parents: [ref.object.sha],
       }),
@@ -712,15 +584,13 @@ async function attemptSync(reason: string, options: { uploadProjectFiles?: boole
     config.token,
   );
 
-  await markBackupJobsUploaded(files, commit.sha);
-
   return {
     startedAt,
     status: "synced",
-    message: options.uploadProjectFiles ? "Project configuration files uploaded to GitHub." : `Database backup uploaded to GitHub. Retention keeps the latest ${backupRetentionCount} backup(s).`,
+    message: "Project content files uploaded to GitHub.",
     commitUrl: commit.html_url,
     commitSha: commit.sha,
-    files: treeItems.length + deleteItems.length,
+    files: treeItems.length,
     duration: Date.now() - startedAt,
   };
 }

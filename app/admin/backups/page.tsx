@@ -33,7 +33,7 @@ export default async function BackupsPage({
         <div>
           <span className="eyebrow">Backups</span>
           <h1>النسخ الاحتياطي</h1>
-          <p>نسخ PostgreSQL حقيقية محفوظة محليًا داخل `data/backups` وترفع تلقائيًا إلى مجلد `backups` في GitHub.</p>
+          <p>نسخ Runtime Data وملفات العملاء محفوظة داخل `data/backups` ولا ترفع إلى GitHub.</p>
         </div>
         <form action="/api/admin/backups" method="post">
           <button className="btn btn-gold btn-glow" type="submit">
@@ -52,7 +52,7 @@ export default async function BackupsPage({
       {params.error === "manual-restore-only" ? (
         <div className="notice danger">الاستعادة داخل التطبيق متوقفة. الاستعادة تتم يدوياً فقط عبر PostgreSQL بعد اختيار ملف backup مقصود.</div>
       ) : params.error === "create" ? (
-        <div className="notice danger">فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL و pg_dump.</div>
+        <div className="notice danger">فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL وإمكانية الوصول إلى Storage.</div>
       ) : null}
 
       <nav className="admin-page-tabs" aria-label="أقسام النسخ الاحتياطي">
@@ -83,7 +83,7 @@ export default async function BackupsPage({
 
       <div className="backup-sync-note">
         <ShieldCheck size={18} />
-        <span>PostgreSQL هو مصدر الحقيقة. النسخة تحتوي PostgreSQL dump فقط، ويتم الاحتفاظ بآخر 20 نسخة على GitHub.</span>
+        <span>PostgreSQL هو مصدر الحقيقة للتشغيل. النسخة تحتوي Runtime Data وملفات العملاء فقط، ولا تدخل ضمن GitHub Sync.</span>
       </div>
       </section>
 

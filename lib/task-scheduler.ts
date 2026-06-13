@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { unstable_noStore as noStore } from "next/cache";
-import { createBackupSnapshot, markBackupSnapshotPipelineFailed } from "./backups";
+import { createBackupSnapshot } from "./backups";
 import { prisma } from "./db";
-import { syncAdminStateToGitHub } from "./github-sync";
 import { getMediaCleanupReport } from "./media-cleanup";
 import { getSystemHealthSnapshot } from "./system-health";
 
@@ -59,7 +58,7 @@ const taskDefinitions: ScheduledTaskDefinition[] = [
   {
     id: "backup",
     title: "PostgreSQL Backup",
-    description: "ينفذ Railway Cron نسخة PostgreSQL كاملة كل 6 ساعات عبر /api/cron/backup، ثم يرفعها إلى GitHub backups.",
+    description: "ينفذ Railway Cron نسخة Runtime Data كل 6 ساعات عبر /api/cron/backup بدون رفع بيانات التشغيل إلى GitHub.",
     category: "Railway Cron",
     intervalMs: sixHoursMs,
     defaultAutomaticEnabled: false,
@@ -95,21 +94,13 @@ function assertTaskId(value: string): ScheduledTaskId {
 
 async function runBackupTask(): Promise<TaskExecutionResult> {
   const backup = await createBackupSnapshot("scheduled");
-  const sync = await syncAdminStateToGitHub(`Scheduled backup upload: ${backup.fileName}`);
-  if (sync.status !== "synced" && sync.status !== "unchanged") {
-    const message = `تم إنشاء Backup محلياً (${backup.fileName}) لكن رفع GitHub لم ينجح: ${sync.status} - ${sync.message}`;
-    await markBackupSnapshotPipelineFailed(backup.fileName, message);
-    throw new Error(message);
-  }
   return {
-    message: `تم إنشاء Backup: ${backup.fileName} (${sync.status})`,
+    message: `تم إنشاء Backup: ${backup.fileName}`,
     metadata: {
       fileName: backup.fileName,
       sizeBytes: backup.sizeBytes,
       items: backup.items,
       source: backup.source,
-      githubStatus: sync.status,
-      githubCommitSha: sync.commitSha || null,
     },
   };
 }
@@ -179,7 +170,6 @@ function backupJobToRun(job: {
     metadata: {
       fileName: job.fileName,
       sizeBytes: job.sizeBytes ? Number(job.sizeBytes) : null,
-      githubCommitSha: job.githubSha,
     },
   };
 }

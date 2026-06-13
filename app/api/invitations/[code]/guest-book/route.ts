@@ -90,11 +90,6 @@ export async function POST(request: Request, context: RouteContext) {
       console.error("[Guest Book] Message saved, but cache revalidation failed", error);
     }
 
-    try {
-    } catch (error) {
-      console.error("[Guest Book] Message saved, but GitHub backup queue failed", error);
-    }
-
     return NextResponse.json({ ok: true, status: saved.status, message: saved.status === "approved" ? saved : undefined });
   } catch (error) {
     console.error("[Guest Book] Unexpected message submit failure", error);

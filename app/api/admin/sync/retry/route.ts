@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   const result = await syncAdminStateToGitHub(reason, {
+    uploadProjectFiles: true,
     logId,
     retryCount: 0,
   });

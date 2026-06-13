@@ -1,6 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 
 export type HomeFeaturePoint = {
   id: string;
@@ -44,8 +43,6 @@ export type HomeContent = {
     rows: HomePricingRow[];
   };
 };
-
-const contentPath = path.join(process.cwd(), "data", "home-content.json");
 
 export const defaultHomeContent: HomeContent = {
   hero: {
@@ -200,24 +197,13 @@ function normalizeContent(input: Partial<HomeContent>): HomeContent {
   };
 }
 
-async function readContentFile() {
-  try {
-    const raw = await readFile(contentPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<HomeContent>) : {};
-  } catch {
-    return {};
-  }
-}
-
 export async function getHomeContent() {
   noStore();
-  return normalizeContent(await readContentFile());
+  return readProjectContentSetting("home-content", defaultHomeContent, (value) => normalizeContent(value as Partial<HomeContent>));
 }
 
 export async function updateHomeContent(input: Partial<HomeContent>) {
   const next = normalizeContent(input);
-  await mkdir(path.dirname(contentPath), { recursive: true });
-  await writeFile(contentPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  await writeProjectContentSetting("home-content", next);
   return next;
 }

@@ -4,7 +4,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 
 function usage() {
-  console.error("Usage: DATABASE_URL=postgresql://... node scripts/restore-postgres-backup.mjs /path/to/backup.json");
+  console.error("Usage: ALLOW_DESTRUCTIVE_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL DATABASE_URL=postgresql://... node scripts/restore-postgres-backup.mjs /path/to/backup.json --confirm-manual-restore");
 }
 
 function run(command, args, env = process.env) {
@@ -46,14 +46,27 @@ function postgresToolEnv(urlValue) {
 }
 
 const backupPath = process.argv[2];
+const confirmed = process.argv.includes("--confirm-manual-restore");
 const databaseUrl = process.env.DATABASE_URL;
 
-if (!backupPath || !databaseUrl) {
+if (!backupPath || !databaseUrl || !confirmed) {
   usage();
   process.exit(1);
 }
 
+if (process.env.ALLOW_DESTRUCTIVE_RESTORE !== "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL") {
+  throw new Error("Restore is manual-only. Set ALLOW_DESTRUCTIVE_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL to continue.");
+}
+
+if ((process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV) === "production" && process.env.ALLOW_PRODUCTION_RESTORE !== "I_UNDERSTAND_THIS_IS_PRODUCTION") {
+  throw new Error("Production restore is blocked without ALLOW_PRODUCTION_RESTORE=I_UNDERSTAND_THIS_IS_PRODUCTION.");
+}
+
 const payload = JSON.parse(await readFile(backupPath, "utf8"));
+if (payload?.runtimeData || payload?.uploads) {
+  throw new Error("This is a Runtime Data backup package. Automatic restore is disabled; restore must be performed manually with an explicit reviewed plan.");
+}
+
 if (!payload?.postgresDump?.base64 || payload.postgresDump.encoding !== "base64") {
   throw new Error("Backup file does not contain a PostgreSQL dump.");
 }
