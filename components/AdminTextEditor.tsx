@@ -39,10 +39,23 @@ const defaultTexts: EditableText[] = [
 
 export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText[] }) {
   const [items, setItems] = useState(texts);
+
+  // Sync state when props change
+  useMemo(() => {
+    setItems(texts);
+  }, [texts]);
+
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(texts[0]?.id || "");
   const selected = items.find((item) => item.id === selectedId) || items[0];
   const [draft, setDraft] = useState(selected?.value || "");
+
+  // Sync draft when selected item changes
+  useMemo(() => {
+    if (selected) {
+      setDraft(selected.value);
+    }
+  }, [selectedId, items]);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -72,7 +85,22 @@ export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText
       setMessage(data?.error || "تعذر حفظ النص.");
       return;
     }
-    setItems((current) => current.map((item) => (item.id === selected.id ? { ...item, value: draft } : item)));
+
+    // After a successful save, we update the local state with the value from the server response if available,
+    // otherwise we use the draft. This ensures the UI stays in sync with the database.
+    const previewInfo = (data as any).previewInfo;
+    if (previewInfo) {
+      setItems([
+        { id: "invite-line-1", label: "سطر الدعوة الأول", value: previewInfo.texts.inviteMessage },
+        { id: "invite-line-2", label: "سطر الدعوة الثاني", value: previewInfo.texts.inviteMessageSecondary },
+        { id: "photographer-title", label: "عنوان المصور", value: previewInfo.photographer.name },
+        { id: "photographer-copy", label: "وصف المصور", value: previewInfo.photographer.description },
+        { id: "poll-question", label: "سؤال الحضور", value: previewInfo.texts.rsvpQuestion },
+      ]);
+    } else {
+      setItems((current) => current.map((item) => (item.id === selected.id ? { ...item, value: draft } : item)));
+    }
+
     setStatus("saved");
     setMessage("تم حفظ النص وتحديث القوالب.");
     window.setTimeout(() => setStatus((current) => (current === "saved" ? "idle" : current)), 1800);
