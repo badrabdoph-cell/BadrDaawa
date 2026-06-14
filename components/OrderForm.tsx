@@ -555,6 +555,8 @@ export function OrderForm({
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
+  const finalConfirmIntentAtRef = useRef(0);
+  const reviewEnteredAtRef = useRef(0);
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
@@ -617,6 +619,8 @@ export function OrderForm({
     if (orderWizardSteps[nextIndex]?.id === "review") {
       setPhotographerFieldsOpen(false);
       setStoryFieldsOpen(false);
+      reviewEnteredAtRef.current = Date.now();
+      finalConfirmIntentAtRef.current = 0;
     }
     setActiveStepIndex(nextIndex);
     window.setTimeout(() => {
@@ -1385,12 +1389,14 @@ export function OrderForm({
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const now = Date.now();
     const isFinalConfirmButton = submitter instanceof HTMLButtonElement && submitter.dataset.orderConfirm === "true";
+    const hasFreshFinalIntent = isFinalConfirmButton && now - finalConfirmIntentAtRef.current < 2000;
     if (activeStep.id !== "review") {
       goNext();
       return;
     }
-    if (!isFinalConfirmButton) {
+    if (now - reviewEnteredAtRef.current < 700 || !hasFreshFinalIntent) {
       setState("error");
       setMessage("لا يتم تأكيد الدعوة إلا بعد الضغط على زر الانتهاء وتأكيد الدعوة.");
       formRef.current?.querySelector<HTMLElement>(".order-review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1480,6 +1486,7 @@ export function OrderForm({
         window.sessionStorage?.removeItem(orderDraftStorageKey);
       } catch {}
       orderSubmitKeyRef.current = "";
+      finalConfirmIntentAtRef.current = 0;
       const whatsappUrl = data?.whatsappUrl || "https://wa.me/";
       const successParams = new URLSearchParams();
       if (data?.orderNumber) successParams.set("orderNumber", data.orderNumber);
@@ -1980,26 +1987,42 @@ export function OrderForm({
           <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
               <>
-                <button className="btn btn-gold btn-glow order-preview-action" type="button" onClick={openOrderPreview} disabled={hasMediaUploadInProgress}>
+                <button key="review-preview" className="btn btn-gold btn-glow order-preview-action" type="button" onClick={openOrderPreview} disabled={hasMediaUploadInProgress}>
                   <Eye size={17} />
                   معاينة الدعوة
                 </button>
-                <button className="btn btn-gold btn-glow order-submit" type="submit" data-order-confirm="true" disabled={state === "loading" || hasMediaUploadInProgress} aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}>
+                <button
+                  key="review-submit"
+                  className="btn btn-gold btn-glow order-submit"
+                  type="submit"
+                  data-order-confirm="true"
+                  disabled={state === "loading" || hasMediaUploadInProgress}
+                  aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}
+                  onPointerDown={() => {
+                    finalConfirmIntentAtRef.current = Date.now();
+                  }}
+                  onClick={() => {
+                    finalConfirmIntentAtRef.current = Date.now();
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") finalConfirmIntentAtRef.current = Date.now();
+                  }}
+                >
                   {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
                   الانتهاء وتأكيد الدعوة
                 </button>
-                <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
+                <button key="review-back" className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
                   <ArrowRight size={17} />
                   رجوع
                 </button>
               </>
             ) : (
               <>
-                <button className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
+                <button key="wizard-back" className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
                   <ArrowRight size={17} />
                   رجوع
                 </button>
-                <button className="btn btn-gold btn-glow" type="button" onClick={goNext}>
+                <button key="wizard-next" className="btn btn-gold btn-glow" type="button" onClick={goNext}>
                   التالي
                   <ArrowLeft size={17} />
                 </button>
