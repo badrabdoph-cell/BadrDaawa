@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TemplateBrowser } from "@/components/TemplateBrowser";
-import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getPublicTemplatesWithPreviewMusic } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  const [templates, templatePreviewInfo] = await Promise.all([getPublicTemplatesWithPreviewMusic(), getTemplatePreviewInfo()]);
+  const templates = await getPublicTemplatesWithPreviewMusic();
 
   return (
     <div className="page-shell">
@@ -23,7 +22,7 @@ export default async function TemplatesPage() {
             <h1 className="section-title">اختار التصميم اللي يشبه فرحتكم 🤍</h1>
             <p className="section-lead">استعرض التصاميم المختلفة واختر الشكل الأقرب ليومكم المميز ✨</p>
           </div>
-          <TemplateBrowser templates={templates} templatePreviewInfo={templatePreviewInfo} />
+          <TemplateBrowser templates={templates} />
         </div>
       </main>
       <SiteFooter />
