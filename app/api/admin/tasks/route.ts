@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getTaskExecutionLog, listScheduledTasks, runScheduledTask } from "@/lib/task-scheduler";
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     if (action === "run") {
       const run = await runScheduledTask(taskId, "manual");
+      revalidatePath(getReturnPath(returnTo));
       return wantsJson(request) ? NextResponse.json({ run }) : redirectToTasks(request, { task: taskId, result: run.status }, returnTo);
     }
 

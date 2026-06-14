@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAdminNotifications, getAdminNotificationSnapshot, updateAdminNotificationState, type AdminNotificationAction } from "@/lib/admin-notifications";
@@ -36,5 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing notification id" }, { status: 400 });
   }
 
-  return NextResponse.json(await updateAdminNotificationState(body.action, body.id));
+  const result = await updateAdminNotificationState(body.action, body.id);
+  revalidatePath("/admin/notifications");
+  return NextResponse.json(result);
 }

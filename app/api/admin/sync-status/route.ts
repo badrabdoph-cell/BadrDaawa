@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getGitHubSyncReadiness, syncAdminStateToGitHub, getSyncHistory, getLastSuccessfulSync } from "@/lib/github-sync";
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   const result = await syncAdminStateToGitHub("Manual project content sync requested.", { uploadProjectFiles: true });
+  revalidatePath("/admin/sync-status");
   const wantsJson = request.headers.get("accept")?.includes("application/json") || request.headers.get("content-type")?.includes("application/json");
   if (wantsJson) {
     return NextResponse.json(

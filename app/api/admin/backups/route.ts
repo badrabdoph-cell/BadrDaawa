@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createBackupSnapshot, listBackupSnapshots } from "@/lib/backups";
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const backup = await createBackupSnapshot("manual");
+    revalidatePath("/admin/backups");
     return NextResponse.redirect(getRedirectUrl(`/admin/backups?created=${encodeURIComponent(backup.fileName)}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("[Backup] Manual backup failed", error);

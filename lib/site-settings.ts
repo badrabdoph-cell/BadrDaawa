@@ -170,8 +170,11 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
 export async function getSiteSettings() {
   noStore();
   const settings = await readProjectContentSetting("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
-  console.log("[Site Settings] Loaded from PostgreSQL project content.");
-  console.log("[Site Settings] Current updatedAt:", settings.updatedAt);
+  console.log("[Site Settings] Loaded successfully. Photographer:", {
+    name: settings.photographer.defaultName,
+    instagram: settings.photographer.defaultInstagramUrl,
+    facebook: settings.photographer.defaultFacebookUrl,
+  });
   return settings;
 }
 
@@ -187,9 +190,14 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     updatedAt: new Date().toISOString(),
   });
 
+  console.log("[Site Settings] Updating photographer to:", {
+    name: next.photographer.defaultName,
+    instagram: next.photographer.defaultInstagramUrl,
+    facebook: next.photographer.defaultFacebookUrl,
+  });
+
   await writeProjectContentSetting("site-settings", next);
-  console.log("[Site Settings] Updated and saved to PostgreSQL project content.");
-  console.log("[Site Settings] New updatedAt:", next.updatedAt);
+  console.log("[Site Settings] Successfully saved to database/storage");
   return next;
 }
 

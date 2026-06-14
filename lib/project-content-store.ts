@@ -74,25 +74,41 @@ export async function readProjectContentSetting<T>(
   normalize: (value: unknown) => T,
 ): Promise<T> {
   const definition = getDefinition(key);
-  const saved = await readAppSetting<T>(definition.appSettingKey).catch((error) => {
+  let saved: T | null = null;
+  try {
+    saved = await readAppSetting<T>(definition.appSettingKey);
+  } catch (error) {
     if (process.env.NODE_ENV === "production") throw error;
-    console.warn(`[Project Content] Falling back to legacy ${definition.repoPath}: ${error instanceof Error ? error.message : String(error)}`);
-    return null;
-  });
-  if (saved !== null) return normalize(saved);
+    console.warn(`[Project Content] Database error for ${key}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (saved !== null) {
+    console.log(`[Project Content] ${key} loaded from database`);
+    return normalize(saved);
+  }
+  console.log(`[Project Content] ${key} loading from legacy file: ${definition.repoPath}`);
   const legacy = await readLegacyJson<T>(definition.legacyPath, fallback);
   return normalize(legacy);
 }
 
 export async function writeProjectContentSetting<T>(key: ProjectContentKey, value: T): Promise<T> {
   const definition = getDefinition(key);
-  return writeAppSetting(definition.appSettingKey, value).catch(async (error) => {
-    if (process.env.NODE_ENV === "production") throw error;
-    console.warn(`[Project Content] Writing legacy ${definition.repoPath}: ${error instanceof Error ? error.message : String(error)}`);
-    await mkdir(path.dirname(definition.legacyPath), { recursive: true });
-    await writeFile(definition.legacyPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  try {
+    await writeAppSetting(definition.appSettingKey, value);
+    console.log(`[Project Content] ${key} saved to database`);
     return value;
-  });
+  } catch (dbError) {
+    if (process.env.NODE_ENV === "production") throw dbError;
+    console.warn(`[Project Content] Database write failed for ${key}: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+    try {
+      await mkdir(path.dirname(definition.legacyPath), { recursive: true });
+      await writeFile(definition.legacyPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+      console.log(`[Project Content] ${key} saved to legacy file as fallback: ${definition.repoPath}`);
+      return value;
+    } catch (fileError) {
+      console.error(`[Project Content] CRITICAL: Failed to save ${key} to both database and file: ${fileError instanceof Error ? fileError.message : String(fileError)}`);
+      throw new Error(`Failed to save ${key}: both database and file write failed`);
+    }
+  }
 }
 
 export async function readProjectContentExportFiles() {
