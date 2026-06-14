@@ -24,40 +24,46 @@ function cleanText(value: unknown, maxLength = 500) {
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) return NextResponse.json({ ok: false, error: "انتهت جلسة الأدمن." }, { status: 401 });
 
-  const payload = (await request.json().catch(() => null)) as TextPatchPayload | null;
-  const id = cleanText(payload?.id, 80);
-  const value = cleanText(payload?.value, 500);
-  if (!id) return NextResponse.json({ ok: false, error: "النص المحدد غير صالح." }, { status: 400 });
+  try {
+    const payload = (await request.json().catch(() => null)) as TextPatchPayload | null;
+    const id = cleanText(payload?.id, 80);
+    const value = cleanText(payload?.value, 500);
+    if (!id) return NextResponse.json({ ok: false, error: "النص المحدد غير صالح." }, { status: 400 });
 
-  const current = await getTemplatePreviewInfo();
-  const nextPatch = {
-    texts: { ...current.texts },
-    photographer: { ...current.photographer },
-  };
+    const current = await getTemplatePreviewInfo();
+    const nextPatch = {
+      texts: { ...current.texts },
+      photographer: { ...current.photographer },
+    };
 
-  if (id === "invite-line-1") nextPatch.texts.inviteMessage = value;
-  else if (id === "invite-line-2") nextPatch.texts.inviteMessageSecondary = value;
-  else if (id === "photographer-title") nextPatch.photographer.name = value;
-  else if (id === "photographer-copy") nextPatch.photographer.description = value;
-  else if (id === "poll-question") nextPatch.texts.rsvpQuestion = value;
-  else return NextResponse.json({ ok: false, error: "هذا النص غير قابل للحفظ من البحث." }, { status: 400 });
+    if (id === "invite-line-1") nextPatch.texts.inviteMessage = value;
+    else if (id === "invite-line-2") nextPatch.texts.inviteMessageSecondary = value;
+    else if (id === "photographer-title") nextPatch.photographer.name = value;
+    else if (id === "photographer-copy") nextPatch.photographer.description = value;
+    else if (id === "poll-question") nextPatch.texts.rsvpQuestion = value;
+    else return NextResponse.json({ ok: false, error: "هذا النص غير قابل للحفظ من البحث." }, { status: 400 });
 
-  const next = await updateTemplatePreviewInfo(nextPatch);
-  const templates = await getTemplatesWithSettings();
+    const next = await updateTemplatePreviewInfo(nextPatch);
+    const templates = await getTemplatesWithSettings();
 
-  revalidatePath("/admin/templates");
-  revalidatePath("/templates");
-  for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);
-  queueGitHubSync(`Template text updated: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
+    revalidatePath("/admin/templates");
+    revalidatePath("/templates");
+    for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);
+    queueGitHubSync(`Template text updated: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
 
-  await recordAuditLog({
-    actor: await getAuditActorFromAdminRequest(request),
-    action: "template.change",
-    entity: { type: "Template", id: "global-preview-info", label: "نصوص القوالب" },
-    oldValues: current,
-    newValues: next,
-    metadata: { source: "admin-template-text-search", fieldId: id },
-  });
+    await recordAuditLog({
+      actor: await getAuditActorFromAdminRequest(request),
+      action: "template.change",
+      entity: { type: "Template", id: "global-preview-info", label: "نصوص القوالب" },
+      oldValues: current,
+      newValues: next,
+      metadata: { source: "admin-template-text-search", fieldId: id },
+    });
 
-  return NextResponse.json({ ok: true, previewInfo: next });
+    console.log(`[Templates Text] Successfully updated: ${id}`);
+    return NextResponse.json({ ok: true, previewInfo: next });
+  } catch (error) {
+    console.error("[Templates Text] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "تعذر حفظ النص. حاول مرة أخرى." }, { status: 500 });
+  }
 }

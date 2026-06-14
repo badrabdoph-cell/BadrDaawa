@@ -109,75 +109,83 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) return NextResponse.json({ ok: false, error: "انتهت جلسة الأدمن. سجل الدخول مرة أخرى." }, { status: 401 });
 
-  const payload = (await request.json().catch(() => null)) as SavePayload | null;
-  if (!payload?.content) return NextResponse.json({ ok: false, error: "بيانات الحفظ غير صالحة." }, { status: 400 });
+  try {
+    const payload = (await request.json().catch(() => null)) as SavePayload | null;
+    if (!payload?.content) return NextResponse.json({ ok: false, error: "بيانات الحفظ غير صالحة." }, { status: 400 });
 
-  const [current, templates] = await Promise.all([getTemplatePreviewInfo(), getTemplatesWithSettings()]);
-  const allSlugs = new Set(templates.map((template) => template.slug));
-  const mode = payload.mode === "template" ? "template" : "global";
-  const beforeUrlsSnapshot = current;
-  let next: TemplatePreviewInfo | null = null;
+    const [current, templates] = await Promise.all([getTemplatePreviewInfo(), getTemplatesWithSettings()]);
+    const allSlugs = new Set(templates.map((template) => template.slug));
+    const mode = payload.mode === "template" ? "template" : "global";
+    const beforeUrlsSnapshot = current;
+    let next: TemplatePreviewInfo | null = null;
 
-  if (mode === "template") {
-    const slug = payload.templateSlug || "";
-    if (!allSlugs.has(slug)) return NextResponse.json({ ok: false, error: "القالب المحدد غير موجود." }, { status: 400 });
-    const base = resolveTemplatePreviewInfo(current, slug);
-    next = await updateTemplatePreviewInfo({
-      templateOverrides: {
-        ...current.templateOverrides,
-        [slug]: {
-          ...mergeContent(base, payload.content),
-          updatedAt: new Date().toISOString(),
+    if (mode === "template") {
+      const slug = payload.templateSlug || "";
+      if (!allSlugs.has(slug)) return NextResponse.json({ ok: false, error: "القالب المحدد غير موجود." }, { status: 400 });
+      const base = resolveTemplatePreviewInfo(current, slug);
+      next = await updateTemplatePreviewInfo({
+        templateOverrides: {
+          ...current.templateOverrides,
+          [slug]: {
+            ...mergeContent(base, payload.content),
+            updatedAt: new Date().toISOString(),
+          },
         },
-      },
-    });
-  } else {
-    const overrideSlugs = Object.keys(current.templateOverrides).filter((slug) => allSlugs.has(slug));
-    if (overrideSlugs.length && (payload.conflictResolution || "ask") === "ask") {
-      return NextResponse.json(
-        {
-          ok: false,
-          conflict: true,
-          message: "بعض القوالب تحتوي تعديلات مخصصة تختلف عن الإعدادات العامة.",
-          templates: templates.filter((template) => overrideSlugs.includes(template.slug)).map((template) => ({ slug: template.slug, arabicName: template.arabicName })),
-        },
-        { status: 409 },
-      );
-    }
-
-    const scopeMode = payload.scope?.mode === "allExcept" ? "allExcept" : "all";
-    const excludedSlugs = scopeMode === "allExcept" ? validSlugs(payload.scope?.excludedSlugs, allSlugs) : [];
-    const base = getTemplatePreviewBaseInfo(current);
-    const nextOverrides = { ...current.templateOverrides };
-    if (payload.conflictResolution === "applyGlobal") {
-      for (const slug of overrideSlugs) delete nextOverrides[slug];
-    }
-    if (scopeMode === "allExcept") {
-      for (const slug of excludedSlugs) {
-        nextOverrides[slug] = {
-          ...resolveTemplatePreviewInfo(current, slug),
-          updatedAt: new Date().toISOString(),
-        };
+      });
+    } else {
+      const overrideSlugs = Object.keys(current.templateOverrides).filter((slug) => allSlugs.has(slug));
+      if (overrideSlugs.length && (payload.conflictResolution || "ask") === "ask") {
+        return NextResponse.json(
+          {
+            ok: false,
+            conflict: true,
+            message: "بعض القوالب تحتوي تعديلات مخصصة تختلف عن الإعدادات العامة.",
+            templates: templates.filter((template) => overrideSlugs.includes(template.slug)).map((template) => ({ slug: template.slug, arabicName: template.arabicName })),
+          },
+          { status: 409 },
+        );
       }
+
+      const scopeMode = payload.scope?.mode === "allExcept" ? "allExcept" : "all";
+      const excludedSlugs = scopeMode === "allExcept" ? validSlugs(payload.scope?.excludedSlugs, allSlugs) : [];
+      const base = getTemplatePreviewBaseInfo(current);
+      const nextOverrides = { ...current.templateOverrides };
+      if (payload.conflictResolution === "applyGlobal") {
+        for (const slug of overrideSlugs) delete nextOverrides[slug];
+      }
+      if (scopeMode === "allExcept") {
+        for (const slug of excludedSlugs) {
+          nextOverrides[slug] = {
+            ...resolveTemplatePreviewInfo(current, slug),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+      }
+      next = await updateTemplatePreviewInfo({
+        ...mergeContent(base, payload.content),
+        templateOverrides: nextOverrides,
+        adminScope: { mode: scopeMode, excludedSlugs },
+      });
     }
-    next = await updateTemplatePreviewInfo({
-      ...mergeContent(base, payload.content),
-      templateOverrides: nextOverrides,
-      adminScope: { mode: scopeMode, excludedSlugs },
+
+    if (!next) throw new Error("Failed to update template preview info");
+
+    await revalidateTemplates(templates);
+    const deletedUploads = await cleanupReplacedUploads(beforeUrlsSnapshot, next);
+    queueGitHubSync("Templates content updated from redesigned admin editor.", { uploadProjectFiles: true, changeType: "project" });
+    await recordAuditLog({
+      actor: await getAuditActorFromAdminRequest(request),
+      action: "template.change",
+      entity: { type: "Template", id: mode === "template" ? payload.templateSlug || "unknown" : "global-preview-info", label: mode === "template" ? payload.templateSlug || "قالب منفرد" : "معلومات القوالب" },
+      oldValues: current,
+      newValues: next,
+      metadata: { source: "templates-content-editor", mode, deletedUploads },
     });
+
+    console.log("[Templates Content] Successfully updated and saved");
+    return NextResponse.json(responsePayload(next, templates));
+  } catch (error) {
+    console.error("[Templates Content] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "تعذر حفظ التعديلات. حاول مرة أخرى." }, { status: 500 });
   }
-
-  await revalidateTemplates(templates);
-  const deletedUploads = await cleanupReplacedUploads(beforeUrlsSnapshot, next);
-  queueGitHubSync("Templates content updated from redesigned admin editor.", { uploadProjectFiles: true, changeType: "project" });
-  await recordAuditLog({
-    actor: await getAuditActorFromAdminRequest(request),
-    action: "template.change",
-    entity: { type: "Template", id: mode === "template" ? payload.templateSlug || "unknown" : "global-preview-info", label: mode === "template" ? payload.templateSlug || "قالب منفرد" : "معلومات القوالب" },
-    oldValues: current,
-    newValues: next,
-    metadata: { source: "templates-content-editor", mode, deletedUploads },
-  });
-
-  return NextResponse.json(responsePayload(next, templates));
 }

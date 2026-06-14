@@ -120,9 +120,10 @@ export async function POST(request: NextRequest) {
     ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
     queueGitHubSync("Site settings updated from admin.", { uploadProjectFiles: true, changeType: "project" });
 
+    console.log("[Admin Settings] Successfully saved");
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);
   } catch (error) {
-    console.error("Failed to update site settings", error);
+    console.error("[Admin Settings] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));
     return NextResponse.redirect(getRedirectUrl("/admin/settings?error=1", request.headers, request.nextUrl.origin), 303);
   }
 }
