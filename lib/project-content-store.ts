@@ -86,7 +86,13 @@ export async function readProjectContentSetting<T>(
 
 export async function writeProjectContentSetting<T>(key: ProjectContentKey, value: T): Promise<T> {
   const definition = getDefinition(key);
-  return writeAppSetting(definition.appSettingKey, value);
+  return writeAppSetting(definition.appSettingKey, value).catch(async (error) => {
+    if (process.env.NODE_ENV === "production") throw error;
+    console.warn(`[Project Content] Writing legacy ${definition.repoPath}: ${error instanceof Error ? error.message : String(error)}`);
+    await mkdir(path.dirname(definition.legacyPath), { recursive: true });
+    await writeFile(definition.legacyPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+    return value;
+  });
 }
 
 export async function readProjectContentExportFiles() {
