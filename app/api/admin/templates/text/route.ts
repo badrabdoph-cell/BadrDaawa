@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     const next = await updateTemplatePreviewInfo(nextPatch);
     const templates = await getTemplatesWithSettings();
 
+    // Revalidate all affected paths to ensure the UI shows the new data
     revalidatePath("/admin/templates");
     revalidatePath("/templates");
     for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);

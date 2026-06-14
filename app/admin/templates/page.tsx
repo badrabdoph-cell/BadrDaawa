@@ -93,7 +93,35 @@ export default async function AdminTemplatesPage({ searchParams }: { searchParam
           </div>
           <Settings2 size={24} />
         </div>
-        <AdminTextEditor />
+        <AdminTextEditor
+          texts={[
+            {
+              id: "invite-line-1",
+              label: "سطر الدعوة الأول",
+              value: templatePreviewInfo.texts.inviteMessage,
+            },
+            {
+              id: "invite-line-2",
+              label: "سطر الدعوة الثاني",
+              value: templatePreviewInfo.texts.inviteMessageSecondary,
+            },
+            {
+              id: "photographer-title",
+              label: "عنوان المصور",
+              value: templatePreviewInfo.photographer.name,
+            },
+            {
+              id: "photographer-copy",
+              label: "وصف المصور",
+              value: templatePreviewInfo.photographer.description,
+            },
+            {
+              id: "poll-question",
+              label: "سؤال الحضور",
+              value: templatePreviewInfo.texts.rsvpQuestion,
+            },
+          ]}
+        />
       </section>
 
       {params.saved ? (
