@@ -251,15 +251,21 @@ type PhotographerConfig = {
 
 function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation, settings?: InvitationExperienceSettings): PhotographerConfig {
   const invitationPhotographer = invitation?.photographer;
-  const enabled =
-    (settings?.showTemplatePhotographer === true && template.photographer?.enabled !== false) ||
-    (settings?.showPhotographerCard !== false && invitationPhotographer?.enabled === true);
+  const useInvitationPhotographer = Boolean(invitationPhotographer);
+  const useTemplatePhotographer = !useInvitationPhotographer && settings?.showTemplatePhotographer === true && template.photographer?.enabled !== false;
+  const enabled = useInvitationPhotographer
+    ? settings?.showPhotographerCard !== false && invitationPhotographer?.enabled === true
+    : useTemplatePhotographer
+      ? true
+      : settings?.showPhotographerCard !== false && Boolean(settings?.photographerName || settings?.photographerInstagramUrl || settings?.photographerFacebookUrl);
+
+  const source = useInvitationPhotographer ? invitationPhotographer : useTemplatePhotographer ? template.photographer : undefined;
   return {
     enabled,
-    name: invitationPhotographer?.name || template.photographer?.name || settings?.photographerName || "badrabdoph",
-    logoUrl: invitationPhotographer?.logoUrl || template.photographer?.logoUrl,
-    instagramUrl: invitationPhotographer?.instagramUrl || template.photographer?.instagramUrl || settings?.photographerInstagramUrl || "https://www.instagram.com/",
-    facebookUrl: invitationPhotographer?.facebookUrl || template.photographer?.facebookUrl || settings?.photographerFacebookUrl || "https://www.facebook.com/",
+    name: source?.name || settings?.photographerName || "badrabdoph",
+    logoUrl: source?.logoUrl,
+    instagramUrl: source?.instagramUrl || settings?.photographerInstagramUrl || "https://www.instagram.com/",
+    facebookUrl: source?.facebookUrl || settings?.photographerFacebookUrl || "https://www.facebook.com/",
   };
 }
 
