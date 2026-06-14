@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
     photographer: {
       enabled: formData.get("photographerEnabled") === "on",
       name: text(formData, "photographerName"),
+      description: text(formData, "photographerDescription"),
       logoUrl: text(formData, "photographerLogoUrl"),
       instagramUrl: text(formData, "photographerInstagramUrl"),
       facebookUrl: text(formData, "photographerFacebookUrl"),
