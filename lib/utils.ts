@@ -151,9 +151,26 @@ export function normalizePhoneForWhatsApp(phone: string) {
   return digits;
 }
 
-export function getWhatsAppOrderUrl(message: string) {
-  const phone = process.env.WHATSAPP_ORDER_PHONE || "01011511561";
-  return `https://wa.me/${normalizePhoneForWhatsApp(phone)}?text=${encodeURIComponent(message)}`;
+const fallbackWhatsAppPhone = "01038434472";
+
+function isWhatsAppHost(hostname: string) {
+  return hostname === "wa.me" || hostname === "api.whatsapp.com" || hostname === "web.whatsapp.com" || hostname.endsWith(".whatsapp.com");
+}
+
+export function getWhatsAppOrderUrl(message: string, recipient?: string | null) {
+  const configuredRecipient = recipient?.trim() || process.env.WHATSAPP_ORDER_PHONE?.trim() || fallbackWhatsAppPhone;
+
+  if (/^https?:\/\//i.test(configuredRecipient)) {
+    try {
+      const url = new URL(configuredRecipient);
+      if (url.protocol === "https:" && isWhatsAppHost(url.hostname)) {
+        url.searchParams.set("text", message);
+        return url.toString();
+      }
+    } catch {}
+  }
+
+  return `https://wa.me/${normalizePhoneForWhatsApp(configuredRecipient)}?text=${encodeURIComponent(message)}`;
 }
 
 export function calculateAttendance(guests: { attendees: number; status: string }[]) {

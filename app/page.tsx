@@ -125,34 +125,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </section>
 
-        <section className="home-platform-stats home-platform-stats-compact" aria-label="إحصائيات المنصة">
-          <div className="container">
-            <div className="home-platform-stats-head">
-              <span className="eyebrow">
-                <Sparkles size={16} />
-                آلاف الدعوات بدأت من هنا
-              </span>
-            </div>
-            <div className="home-platform-stats-grid">
-              {stats.map((stat) => {
-                const Icon = stat.icon;
-                return (
-                  <article className="home-platform-stat-card" key={stat.label}>
-                    <span className="home-platform-stat-icon">
-                      <Icon size={22} />
-                    </span>
-                    <strong>
-                      <CountUpNumber value={stat.value} />
-                    </strong>
-                    <small>{stat.label}</small>
-                  </article>
-                );
-              })}
-            </div>
-            <LiveVisitorsCounter />
-          </div>
-        </section>
-
         {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
 
         {showHomePanels ? (
@@ -224,6 +196,35 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 </Link>
               </div>
                   </>
+                ) : null}
+                {(siteSettings.homepage.showPreview || siteSettings.homepage.showPricing) ? (
+                  <section className="home-platform-stats home-platform-stats-compact home-platform-stats-after-preview" aria-label="إحصائيات المنصة">
+                    <div className="home-platform-stats-inner">
+                      <div className="home-platform-stats-head">
+                        <span className="eyebrow">
+                          <Sparkles size={16} />
+                          آلاف الدعوات بدأت من هنا
+                        </span>
+                      </div>
+                      <div className="home-platform-stats-grid">
+                        {stats.map((stat) => {
+                          const Icon = stat.icon;
+                          return (
+                            <article className="home-platform-stat-card" key={stat.label}>
+                              <span className="home-platform-stat-icon">
+                                <Icon size={22} />
+                              </span>
+                              <strong>
+                                <CountUpNumber value={stat.value} />
+                              </strong>
+                              <small>{stat.label}</small>
+                            </article>
+                          );
+                        })}
+                      </div>
+                      <LiveVisitorsCounter />
+                    </div>
+                  </section>
                 ) : null}
                 {siteSettings.homepage.showPreview && siteSettings.homepage.showPricing ? <HomeSectionDivider variant="arc" /> : null}
                 {siteSettings.homepage.showPricing ? (

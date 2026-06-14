@@ -29583,6 +29583,17 @@ html.scroll-animations-disabled [data-scroll-reveal="true"] {
   padding: clamp(10px, 2.5vw, 18px) 0 clamp(18px, 3vw, 30px);
 }
 
+.home-platform-stats-after-preview {
+  width: min(100%, 980px);
+  padding-block: clamp(16px, 2.8vw, 28px) clamp(12px, 2.2vw, 22px);
+}
+
+.home-platform-stats-after-preview .home-platform-stats-inner {
+  display: grid;
+  gap: clamp(10px, 1.8vw, 18px);
+  width: 100%;
+}
+
 .home-platform-stats-compact::before {
   inset: 0 50% auto auto;
   width: min(74vw, 720px);
@@ -29682,6 +29693,10 @@ html.scroll-animations-disabled [data-scroll-reveal="true"] {
 
   .home-platform-stats-compact {
     padding: 8px 0 20px;
+  }
+
+  .home-platform-stats-after-preview {
+    padding-block: 10px 8px;
   }
 
   .home-platform-stats-compact .home-platform-stats-head {

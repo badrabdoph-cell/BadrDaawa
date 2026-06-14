@@ -5,6 +5,7 @@ import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
@@ -133,6 +134,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "القالب المختار غير متاح حاليًا" }, { status: 400 });
   }
 
+  const siteSettings = await getSiteSettings();
+  const orderWhatsAppRecipient = siteSettings.whatsappUrl || siteSettings.contactPhones[0] || "";
   const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
   const music = await resolveOrderMusic({
     musicEnabled: parsed.data.musicEnabled,
@@ -253,7 +256,7 @@ export async function POST(request: NextRequest) {
           invitationCode: duplicateInvitationCode,
           imageUrls,
           musicUrl: music.musicUrl,
-          whatsappUrl: getWhatsAppOrderUrl(message),
+          whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient),
           ...links,
         });
       }
@@ -329,5 +332,5 @@ export async function POST(request: NextRequest) {
     },
     metadata: { source: "public-order-form" },
   });
-  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, invitationCode: effectiveInvitationCode, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message), ...links });
+  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, invitationCode: effectiveInvitationCode, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient), ...links });
 }

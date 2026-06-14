@@ -51,8 +51,8 @@ export const defaultSiteSettings: SiteSettings = {
   siteName: "BadrDaawa",
   logoUrl: "",
   siteDescription: "Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك.",
-  contactPhones: ["01011511561"],
-  whatsappUrl: "https://wa.me/201011511561",
+  contactPhones: ["01038434472"],
+  whatsappUrl: "https://wa.me/201038434472",
   email: "",
   socialLinks: {
     facebook: "",
