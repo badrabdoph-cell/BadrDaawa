@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { Eye, Sparkles } from "lucide-react";
 import type { CSSProperties } from "react";
+import type { TemplatePreviewInfo } from "@/lib/template-preview-info";
 import type { TemplateDefinition } from "@/lib/types";
 
-export function TemplateCard({ template }: { template: TemplateDefinition }) {
+export function TemplateCard({ template, templatePreviewInfo }: { template: TemplateDefinition; templatePreviewInfo: TemplatePreviewInfo }) {
   const previewHref = `/templates/${template.slug}/preview?hidePreviewChrome=1&galleryPreview=1`;
   const orderHref = `/order?template=${template.slug}`;
+  const coupleNames = `${templatePreviewInfo.groomName} و ${templatePreviewInfo.brideName}`;
+  const dateLine = [templatePreviewInfo.weddingDate, templatePreviewInfo.weddingTime].filter(Boolean).join(" - ");
+  const venueLine = [templatePreviewInfo.venue, templatePreviewInfo.city].filter(Boolean).join(" - ");
 
   return (
     <article
@@ -23,6 +27,11 @@ export function TemplateCard({ template }: { template: TemplateDefinition }) {
       <div className="template-preview">
         <span className="template-preview-screen">
           <img src={template.previewImage} alt={`معاينة تصميم ${template.arabicName}`} loading="lazy" decoding="async" />
+          <span className="template-preview-live-copy" aria-label={`محتوى المعاينة: ${coupleNames}`}>
+            <strong>{coupleNames}</strong>
+            {dateLine ? <small>{dateLine}</small> : null}
+            {venueLine ? <em>{venueLine}</em> : null}
+          </span>
         </span>
         <span className="template-preview-peek" aria-hidden="true">
           <Eye size={28} />

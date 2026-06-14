@@ -3,6 +3,7 @@
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TemplateCard } from "@/components/TemplateCard";
+import type { TemplatePreviewInfo } from "@/lib/template-preview-info";
 import type { TemplateDefinition } from "@/lib/types";
 
 const styleLabels: Record<string, string> = {
@@ -29,7 +30,7 @@ function normalize(value: string) {
   return value.toLowerCase().trim();
 }
 
-export function TemplateBrowser({ templates }: { templates: TemplateDefinition[] }) {
+export function TemplateBrowser({ templates, templatePreviewInfo }: { templates: TemplateDefinition[]; templatePreviewInfo: TemplatePreviewInfo }) {
   const [query, setQuery] = useState("");
   const [activeStyle, setActiveStyle] = useState("all");
 
@@ -77,7 +78,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
       {filteredTemplates.length ? (
         <div className="template-grid">
           {filteredTemplates.map((template) => (
-            <TemplateCard template={template} key={template.slug} />
+            <TemplateCard template={template} templatePreviewInfo={templatePreviewInfo} key={template.slug} />
           ))}
         </div>
       ) : (

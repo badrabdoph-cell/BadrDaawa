@@ -156,7 +156,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
 
         {showHomePanels ? (
-          <section className="section compact live-template-section">
+          <section className="section compact live-template-section" data-no-scroll-animation>
             <div className="container live-template-wrap">
               <div className="live-preview-stack">
                 {siteSettings.homepage.showFeatures ? (
