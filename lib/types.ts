@@ -26,6 +26,7 @@ export type TemplateDefinition = {
   photographer?: {
     enabled: boolean;
     name: string;
+    description?: string;
     logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;
@@ -64,6 +65,7 @@ export type Invitation = {
   photographer?: {
     enabled: boolean;
     name: string;
+    description?: string;
     logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;

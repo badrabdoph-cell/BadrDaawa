@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FilePenLine, Search } from "lucide-react";
+import { CheckCircle2, FilePenLine, Loader2, Search } from "lucide-react";
 
 type EditableText = {
   id: string;
@@ -43,6 +43,8 @@ export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText
   const [selectedId, setSelectedId] = useState(texts[0]?.id || "");
   const selected = items.find((item) => item.id === selectedId) || items[0];
   const [draft, setDraft] = useState(selected?.value || "");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [message, setMessage] = useState("");
 
   const matches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -55,8 +57,25 @@ export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText
     setDraft(item.value);
   }
 
-  function saveDraft() {
-    setItems((current) => current.map((item) => (item.id === selected?.id ? { ...item, value: draft } : item)));
+  async function saveDraft() {
+    if (!selected || status === "saving") return;
+    setStatus("saving");
+    setMessage("");
+    const response = await fetch("/api/admin/templates/text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: selected.id, value: draft }),
+    });
+    const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!response.ok || !data?.ok) {
+      setStatus("error");
+      setMessage(data?.error || "تعذر حفظ النص.");
+      return;
+    }
+    setItems((current) => current.map((item) => (item.id === selected.id ? { ...item, value: draft } : item)));
+    setStatus("saved");
+    setMessage("تم حفظ النص وتحديث القوالب.");
+    window.setTimeout(() => setStatus((current) => (current === "saved" ? "idle" : current)), 1800);
   }
 
   return (
@@ -79,9 +98,11 @@ export function AdminTextEditor({ texts = defaultTexts }: { texts?: EditableText
           <h3>{selected?.label}</h3>
           <p>اختيار النص ثابت أثناء التعديل، والبحث يقرأ آخر نسخة محفوظة داخل الواجهة.</p>
           <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={5} />
-          <button className="btn btn-gold btn-glow" type="button" onClick={saveDraft}>
+          <button className="btn btn-gold btn-glow" type="button" onClick={() => void saveDraft()} disabled={status === "saving"}>
+            {status === "saving" ? <Loader2 size={17} /> : status === "saved" ? <CheckCircle2 size={17} /> : null}
             حفظ النص
           </button>
+          {message ? <small className={status === "error" ? "field-error" : "template-upload-status is-saved"}>{message}</small> : null}
         </div>
       </div>
     </section>

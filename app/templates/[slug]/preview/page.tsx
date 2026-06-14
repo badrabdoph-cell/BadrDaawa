@@ -127,6 +127,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const templatePhotographer = template.photographer || {
     enabled: true,
     name: "badrabdoph",
+    description: "لقطات فرحتنا بعدسة خاصة.",
     facebookUrl: "https://www.facebook.com/",
     instagramUrl: "https://www.instagram.com/",
   };
@@ -135,6 +136,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
       ? {
           enabled: true,
           name: cleanPreviewText(query.photographerName, "المصور الفوتوغرافي"),
+          description: effectiveTemplatePreviewInfo.photographer.description,
           logoUrl: query.photographerLogoUrl?.trim() || undefined,
           facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
           instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
@@ -143,6 +145,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
         ? {
             enabled: effectiveTemplatePreviewInfo.photographer.enabled,
             name: effectiveTemplatePreviewInfo.photographer.name,
+            description: effectiveTemplatePreviewInfo.photographer.description,
             logoUrl: effectiveTemplatePreviewInfo.photographer.logoUrl || undefined,
             facebookUrl: effectiveTemplatePreviewInfo.photographer.facebookUrl,
             instagramUrl: effectiveTemplatePreviewInfo.photographer.instagramUrl,
@@ -151,6 +154,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
         ? {
             enabled: templatePhotographer.enabled !== false,
             name: templatePhotographer.name || "badrabdoph",
+            description: templatePhotographer.description || effectiveTemplatePreviewInfo.photographer.description,
             logoUrl: templatePhotographer.logoUrl,
             facebookUrl: templatePhotographer.facebookUrl || "https://www.facebook.com/",
             instagramUrl: templatePhotographer.instagramUrl || "https://www.instagram.com/",

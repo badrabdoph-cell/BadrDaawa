@@ -557,6 +557,9 @@ export function AdminTemplatePreviewInfoEditor({ templates, templatePreviewInfo 
               <Field label="اسم المصور" focusKey="photographer" onFocusField={focusPreview}>
                 <input value={state.photographer.name} onChange={(event) => patchPhotographer({ name: event.target.value })} />
               </Field>
+              <Field label="وصف المصور" focusKey="photographer" full onFocusField={focusPreview}>
+                <textarea rows={3} value={state.photographer.description} onChange={(event) => patchPhotographer({ description: event.target.value })} />
+              </Field>
               <Field label="Facebook" focusKey="photographer" onFocusField={focusPreview}>
                 <input dir="ltr" value={state.photographer.facebookUrl} onChange={(event) => patchPhotographer({ facebookUrl: event.target.value })} />
               </Field>

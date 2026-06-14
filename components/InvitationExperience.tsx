@@ -244,6 +244,7 @@ function SocialShareButtons({ invitationUrl }: { invitationUrl: string }) {
 type PhotographerConfig = {
   enabled: boolean;
   name: string;
+  description?: string;
   logoUrl?: string;
   instagramUrl: string;
   facebookUrl: string;
@@ -263,10 +264,15 @@ function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invi
   return {
     enabled,
     name: source?.name || settings?.photographerName || "badrabdoph",
+    description: source?.description,
     logoUrl: source?.logoUrl,
     instagramUrl: source?.instagramUrl || settings?.photographerInstagramUrl || "https://www.instagram.com/",
     facebookUrl: source?.facebookUrl || settings?.photographerFacebookUrl || "https://www.facebook.com/",
   };
+}
+
+function photographerDescription(invitation: Pick<Invitation, "language">, photographer: PhotographerConfig) {
+  return photographer.description || invitationT(invitation, "invitation.photographerMoments");
 }
 
 function PhotographerLogoMark({ photographer, fallback = "BA" }: { photographer: PhotographerConfig; fallback?: string }) {
@@ -466,7 +472,7 @@ export function InvitationExperience({
             <div>
               <span className="invite-kicker">Photographer</span>
               <h2>{photographer.name}</h2>
-              <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
+              <p>{photographerDescription(invitation, photographer)}</p>
             </div>
             <div className="photographer-socials" aria-label={invitationT(invitation, "invitation.photographerLinks")}>
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
@@ -676,7 +682,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
                   Photographer
                 </span>
                 <h2>{photographer.name}</h2>
-                <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
+                <p>{photographerDescription(invitation, photographer)}</p>
               </div>
             </div>
             <div className="noir-socials">
@@ -776,7 +782,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
             </div>
             <span>Photography</span>
             <h2>{photographer.name}</h2>
-            <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
+            <p>{photographerDescription(invitation, photographer)}</p>
             <div className="ivory-socials">
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={22} strokeWidth={1.5} />
@@ -1253,7 +1259,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
             </div>
             <span>Photography</span>
             <h2>{photographer.name}</h2>
-            <p>{invitationT(invitation, "invitation.photographerMoments")}</p>
+            <p>{photographerDescription(invitation, photographer)}</p>
             <div className="featured-socials">
               <a href={photographer.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer">
                 <Facebook size={22} strokeWidth={1.5} />

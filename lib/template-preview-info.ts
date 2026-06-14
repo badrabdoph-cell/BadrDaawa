@@ -20,6 +20,7 @@ export type TemplatePreviewInfo = {
   photographer: {
     enabled: boolean;
     name: string;
+    description: string;
     logoUrl: string;
     instagramUrl: string;
     facebookUrl: string;
@@ -86,6 +87,7 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
   photographer: {
     enabled: true,
     name: "badrabdoph",
+    description: "لقطات فرحتنا بعدسة خاصة.",
     logoUrl: "",
     instagramUrl: "https://www.instagram.com/",
     facebookUrl: "https://www.facebook.com/",
@@ -201,6 +203,7 @@ function normalizeTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>): Temp
     photographer: {
       enabled: input.photographer?.enabled !== false,
       name: cleanText(input.photographer?.name, fallback.photographer.name, 90),
+      description: cleanText(input.photographer?.description, fallback.photographer.description, 180),
       logoUrl: cleanUrl(input.photographer?.logoUrl, ""),
       instagramUrl: cleanUrl(input.photographer?.instagramUrl, fallback.photographer.instagramUrl),
       facebookUrl: cleanUrl(input.photographer?.facebookUrl, fallback.photographer.facebookUrl),
