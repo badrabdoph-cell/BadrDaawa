@@ -58,7 +58,7 @@ function getGoogleSearchUrl(destination: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
 }
 
-function getGoogleCoordinatesUrl(coordinates: Coordinates, zoom = 19) {
+function getGoogleCoordinatesUrl(coordinates: Coordinates, zoom = 13) {
   return `https://www.google.com/maps/@${coordinates.lat},${coordinates.lng},${zoom}z/data=!3m1!1e3`;
 }
 
@@ -66,7 +66,7 @@ function getDirectionsDestination(destination: string, coordinates: Coordinates 
   return coordinates ? `${coordinates.lat},${coordinates.lng}` : destination;
 }
 
-function withSatelliteMapType(url: string, zoom = "19") {
+function withSatelliteMapType(url: string, zoom = "13") {
   try {
     const parsed = new URL(url);
     if (!parsed.hostname.includes("google.") && !parsed.hostname.includes("maps.google.")) return url;
@@ -85,15 +85,15 @@ function withSatelliteMapType(url: string, zoom = "19") {
 
 function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null, hasVenueLink: boolean) {
   if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
-    return withSatelliteMapType(mapUrl, "19");
+    return withSatelliteMapType(mapUrl, "13");
   }
   if (!hasVenueLink && userCoordinates) {
-    return withSatelliteMapType(`https://maps.google.com/maps?q=${userCoordinates.lat},${userCoordinates.lng}&z=19&output=embed`, "19");
+    return withSatelliteMapType(`https://maps.google.com/maps?q=${userCoordinates.lat},${userCoordinates.lng}&z=13&output=embed`, "13");
   }
   if (coordinates) {
-    return withSatelliteMapType(`https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=19&output=embed`, "19");
+    return withSatelliteMapType(`https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=13&output=embed`, "13");
   }
-  return withSatelliteMapType(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=18&output=embed`, "18");
+  return withSatelliteMapType(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=13&output=embed`, "13");
 }
 
 function getLocationUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null, hasVenueLink: boolean) {

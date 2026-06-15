@@ -172,6 +172,13 @@ async function createCroppedImageFile(draft: CropDraft) {
 type TemplatePreviewDefaults = {
   language?: "ar" | "en";
   weddingTime?: string;
+  groomName?: string;
+  brideName?: string;
+  weddingDate?: string;
+  venue?: string;
+  city?: string;
+  mapUrl?: string;
+  heroVideoUrl?: string;
   photographerEnabled?: boolean;
   photographerName?: string;
   photographerDescription?: string;
@@ -186,18 +193,18 @@ function createInitialDraft(templates: WizardTemplate[], defaults?: TemplatePrev
   return {
     language: defaults?.language || "ar",
     templateSlug: templates[0]?.slug || "",
-    groomName: "",
-    brideName: "",
+    groomName: defaults?.groomName || "",
+    brideName: defaults?.brideName || "",
     groomNameEn: "",
     brideNameEn: "",
-    weddingDate: todayDate(),
+    weddingDate: defaults?.weddingDate || todayDate(),
     weddingTime: defaults?.weddingTime || "07:00 مساءً",
-    venue: "",
-    city: "",
-    mapUrl: "",
+    venue: defaults?.venue || "",
+    city: defaults?.city || "",
+    mapUrl: defaults?.mapUrl || "",
     customSlug: "",
     images: emptyAdminToolImages,
-    heroVideoUrl: "",
+    heroVideoUrl: defaults?.heroVideoUrl || "",
     heroVideoName: "",
     musicEnabled: false,
     musicChoice: "default",
@@ -272,6 +279,13 @@ export function AdminNewInvitationWizard({
     return {
       language: templatePreviewInfo.language,
       weddingTime: templatePreviewInfo.weddingTime,
+      groomName: templatePreviewInfo.groomName,
+      brideName: templatePreviewInfo.brideName,
+      weddingDate: templatePreviewInfo.weddingDate,
+      venue: templatePreviewInfo.venue,
+      city: templatePreviewInfo.city,
+      mapUrl: templatePreviewInfo.mapUrl,
+      heroVideoUrl: templatePreviewInfo.heroVideoUrl,
       photographerEnabled: templatePreviewInfo.photographer.enabled,
       photographerName: templatePreviewInfo.photographer.name,
       photographerDescription: templatePreviewInfo.photographer.description,
@@ -287,6 +301,8 @@ export function AdminNewInvitationWizard({
         rsvpDeclinedMessage: templatePreviewInfo.texts.rsvpDeclinedMessage,
         rsvpConfirmedSuccessMessage: templatePreviewInfo.texts.rsvpConfirmedSuccessMessage,
         rsvpDeclinedSuccessMessage: templatePreviewInfo.texts.rsvpDeclinedSuccessMessage,
+        galleryStories: templatePreviewInfo.texts.galleryStories,
+        story: templatePreviewInfo.texts.story,
       },
     };
   }, [templatePreviewInfo]);

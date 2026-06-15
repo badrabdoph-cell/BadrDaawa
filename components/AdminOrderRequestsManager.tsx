@@ -32,6 +32,13 @@ type MusicFile = AdminToolMusicFile;
 type TemplatePreviewDefaults = {
   language?: "ar" | "en";
   weddingTime?: string;
+  groomName?: string;
+  brideName?: string;
+  weddingDate?: string;
+  venue?: string;
+  city?: string;
+  mapUrl?: string;
+  heroVideoUrl?: string;
   photographerEnabled?: boolean;
   photographerName?: string;
   photographerDescription?: string;
@@ -118,17 +125,17 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles
   const musicFile = musicFiles.find((file) => file.id === order.musicLibraryTrackId || file.url === order.musicUrl);
   const musicChoice = normalizeOrderMusicChoice(order, musicFiles);
   return {
-    groomName: order.groomName || "",
-    brideName: order.brideName || "",
+    groomName: order.groomName || defaults?.groomName || "",
+    brideName: order.brideName || defaults?.brideName || "",
     phone: order.phone || "",
-    weddingDate: formatDateInput(order.weddingDate),
-    venue: order.venue || "",
-    mapUrl: order.mapUrl || "",
+    weddingDate: formatDateInput(order.weddingDate) || defaults?.weddingDate || "",
+    venue: order.venue || defaults?.venue || "",
+    mapUrl: order.mapUrl || defaults?.mapUrl || "",
     notes: order.notes || "",
     templateSlug: order.templateSlug || fallbackTemplate,
     imageUrls: emptyImages.map((slot, index) => ({ ...slot, url: imageUrls[index] || "", name: imageUrls[index]?.split("/").pop() || "" })),
-    heroVideoUrl,
-    heroVideoName: heroVideoUrl.split("/").pop() || "",
+    heroVideoUrl: heroVideoUrl || defaults?.heroVideoUrl || "",
+    heroVideoName: (heroVideoUrl || defaults?.heroVideoUrl || "").split("/").pop() || "",
     heroVideoBusy: false,
     musicEnabled: Boolean(order.musicEnabled),
     musicChoice,
@@ -238,6 +245,13 @@ export function AdminOrderRequestsManager({
     return {
       language: templatePreviewInfo.language,
       weddingTime: templatePreviewInfo.weddingTime,
+      groomName: templatePreviewInfo.groomName,
+      brideName: templatePreviewInfo.brideName,
+      weddingDate: templatePreviewInfo.weddingDate,
+      venue: templatePreviewInfo.venue,
+      city: templatePreviewInfo.city,
+      mapUrl: templatePreviewInfo.mapUrl,
+      heroVideoUrl: templatePreviewInfo.heroVideoUrl,
       photographerEnabled: templatePreviewInfo.photographer.enabled,
       photographerName: templatePreviewInfo.photographer.name,
       photographerDescription: templatePreviewInfo.photographer.description,
@@ -253,6 +267,8 @@ export function AdminOrderRequestsManager({
         rsvpDeclinedMessage: templatePreviewInfo.texts.rsvpDeclinedMessage,
         rsvpConfirmedSuccessMessage: templatePreviewInfo.texts.rsvpConfirmedSuccessMessage,
         rsvpDeclinedSuccessMessage: templatePreviewInfo.texts.rsvpDeclinedSuccessMessage,
+        galleryStories: templatePreviewInfo.texts.galleryStories,
+        story: templatePreviewInfo.texts.story,
       },
     };
   }, [templatePreviewInfo]);
