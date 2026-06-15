@@ -17,20 +17,21 @@ function isPostgresUrl(value: string) {
 }
 
 function fromUrlEnv() {
-  const candidates = [
-    process.env.DATABASE_URL,
-    process.env.POSTGRES_PRISMA_URL,
-    process.env.POSTGRES_URL,
-    process.env.DATABASE_PRIVATE_URL,
-    process.env.DATABASE_PUBLIC_URL,
+  const names = [
+    "DATABASE_URL",
+    "POSTGRES_PRISMA_URL",
+    "POSTGRES_URL",
+    "DATABASE_PRIVATE_URL",
+    "DATABASE_PUBLIC_URL",
   ];
 
-  for (const candidate of candidates) {
-    const clean = cleanEnvValue(candidate);
-    if (clean && isPostgresUrl(clean)) return clean;
+  for (const name of names) {
+    const raw = process.env[name];
+    const clean = cleanEnvValue(raw);
+    if (clean && isPostgresUrl(clean)) return { url: clean, source: name };
   }
 
-  return "";
+  return { url: "", source: null };
 }
 
 function fromPgParts() {
@@ -39,17 +40,37 @@ function fromPgParts() {
   const user = cleanEnvValue(process.env.PGUSER);
   const password = cleanEnvValue(process.env.PGPASSWORD);
   const database = cleanEnvValue(process.env.PGDATABASE);
-  if (!host || !user || !password || !database) return "";
+  if (!host || !user || !password || !database) return { url: "", source: null };
 
   const url = new URL(`postgresql://${host}:${port}/${database}`);
   url.username = user;
   url.password = password;
   url.searchParams.set("schema", "public");
-  return url.toString();
+  return { url: url.toString(), source: "PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE" };
+}
+
+function maskUrl(urlStr: string): string {
+  try {
+    const u = new URL(urlStr);
+    return `${u.protocol}//${u.username}:****@${u.host}${u.pathname}${u.search}`;
+  } catch {
+    return "(unparseable)";
+  }
 }
 
 export function getDatabaseUrl() {
-  return fromUrlEnv() || fromPgParts();
+  const urlResult = fromUrlEnv();
+  const partsResult = fromPgParts();
+  const result = urlResult.url || partsResult.url;
+  const source = urlResult.source || partsResult.source;
+
+  if (result) {
+    console.log(`[DB] DATABASE_URL source: ${source} -> ${maskUrl(result)}`);
+  } else {
+    console.warn("[DB] No DATABASE_URL found via any source.");
+  }
+
+  return result;
 }
 
 export function hasDatabaseConfig() {
