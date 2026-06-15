@@ -11758,6 +11758,17 @@ img {
   font-weight: 900;
 }
 
+.customer-guest-book-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.customer-guest-book-actions .btn {
+  font-size: 0.8rem;
+  padding: 4px 12px;
+}
+
 .invitation-qr-tools {
   grid-column: 1 / -1;
   display: grid;

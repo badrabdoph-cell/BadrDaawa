@@ -146,6 +146,13 @@ export async function updateCoupleMessagesSettings(invitationCode: unknown, mode
   }
 }
 
+export async function getGuestBookMessage(id: string) {
+  const cleanId = id.trim();
+  if (!cleanId || !prisma) return null;
+  const row = await prisma.guestBookMessage.findUnique({ where: { id: cleanId } }).catch(() => null);
+  return row ? toGuestBookMessage(row) : null;
+}
+
 export async function getCoupleMessagesStats(invitationCode?: string) {
   const cleanCode = invitationCode ? invitationCode.trim().toLowerCase() : "";
   const messages = cleanCode ? await getGuestBookMessages(cleanCode, "all") : await getAllGuestBookMessages();

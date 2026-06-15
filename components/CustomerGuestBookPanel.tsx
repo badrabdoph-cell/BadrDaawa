@@ -1,6 +1,7 @@
-import { MessageCircleHeart } from "lucide-react";
+import { CheckCircle2, MessageCircleHeart, XCircle } from "lucide-react";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
 import { formatArabicNumber } from "@/lib/utils";
+import { useState } from "react";
 
 const statusLabels: Record<GuestBookStatus, string> = {
   pending: "بانتظار الموافقة",
@@ -20,12 +21,35 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+type ModerateAction = "approve" | "reject";
+
 export function CustomerGuestBookPanel({ invitationCode, messages, settings }: { invitationCode: string; messages: GuestBookMessage[]; settings: CoupleMessagesSettings }) {
+  const [items, setItems] = useState(messages);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
   const stats = {
-    total: messages.length,
-    pending: messages.filter((message) => message.status === "pending").length,
-    published: messages.filter((message) => message.status === "approved").length,
+    total: items.length,
+    pending: items.filter((message) => message.status === "pending").length,
+    published: items.filter((message) => message.status === "approved").length,
   };
+
+  async function moderate(messageId: string, action: ModerateAction) {
+    setBusyId(messageId);
+    try {
+      const res = await fetch("/api/client/guest-book/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId, action }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success) {
+        setItems((prev) => prev.map((m) => (m.id === messageId ? { ...m, status: data.status } : m)));
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <section className="panel customer-guest-book-panel" aria-label="كلمات وذكريات للعرسان">
@@ -57,9 +81,9 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
         <button className="btn btn-soft" type="submit">حفظ الإعداد</button>
       </form>
 
-      {messages.length ? (
+      {items.length ? (
         <div className="customer-guest-book-list">
-          {messages.map((message) => (
+          {items.map((message) => (
             <article className="customer-guest-book-card" key={message.id}>
               <header>
                 <strong>{message.name || "ضيف عزيز"}</strong>
@@ -67,6 +91,16 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
               </header>
               <p>{message.message}</p>
               <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
+              {message.status === "pending" ? (
+                <div className="customer-guest-book-actions">
+                  <button className="btn btn-soft btn-sm" type="button" onClick={() => moderate(message.id, "approve")} disabled={busyId === message.id}>
+                    <CheckCircle2 size={15} /> نشر
+                  </button>
+                  <button className="btn btn-soft btn-sm" type="button" onClick={() => moderate(message.id, "reject")} disabled={busyId === message.id}>
+                    <XCircle size={15} /> رفض
+                  </button>
+                </div>
+              ) : null}
             </article>
           ))}
         </div>
