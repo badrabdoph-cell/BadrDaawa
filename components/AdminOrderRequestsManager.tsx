@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, XCircle } from "lucide-react";
+import { CheckCircle2, CheckSquare, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, XCircle } from "lucide-react";
 import {
   AdminInvitationTools,
   emptyAdminToolImages,
@@ -19,6 +19,7 @@ import {
   type AdminToolTemplate,
   type AdminToolUploadSlot,
 } from "@/components/AdminInvitationTools";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
@@ -286,6 +287,115 @@ export function AdminOrderRequestsManager({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
 
+  const [tab, setTab] = useState<"pending" | "published" | "rejected">("pending");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState<{ type: "single" | "selected" | "all-pending" | "all-published" | "all-rejected"; ids?: string[] } | null>(null);
+
+  const tabItems = useMemo(() => {
+    if (tab === "pending") return items.filter((order) => !["published", "converted", "rejected"].includes(order.status));
+    if (tab === "published") return items.filter((order) => ["published", "converted"].includes(order.status));
+    return items.filter((order) => order.status === "rejected");
+  }, [items, tab]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === tabItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(tabItems.map((item) => item.id)));
+    }
+  }
+
+  async function hardDeleteOrder(orderId: string) {
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ action: "hard-delete" }),
+      });
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!response.ok || !data?.ok) throw new Error(data?.error || "تعذر الحذف.");
+      setItems((current) => current.filter((item) => item.id !== orderId));
+      if (selectedId === orderId) {
+        const remaining = items.filter((item) => item.id !== orderId);
+        setSelectedId(remaining[0]?.id || "");
+      }
+      setNotice({ kind: "success", text: "تم الحذف نهائياً." });
+      window.dispatchEvent(new Event("admin-orders-count-refresh"));
+    } catch (error) {
+      setNotice({ kind: "error", text: error instanceof Error ? error.message : "تعذر حذف الطلب." });
+    }
+  }
+
+  async function hardDeleteSelected() {
+    const ids = Array.from(selectedIds);
+    let success = 0;
+    for (const id of ids) {
+      try {
+        const response = await fetch(`/api/admin/orders/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ action: "hard-delete" }),
+        });
+        const data = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+        if (response.ok && data?.ok) {
+          success++;
+          setItems((current) => current.filter((item) => item.id !== id));
+        }
+      } catch {
+        // continue
+      }
+    }
+    setSelectedIds(new Set());
+    if (selectedIds.has(selectedId)) {
+      const remaining = items.filter((item) => !selectedIds.has(item.id));
+      setSelectedId(remaining[0]?.id || "");
+    }
+    setNotice({ kind: "success", text: `تم حذف ${success} طلب/طلبات بنجاح.` });
+    window.dispatchEvent(new Event("admin-orders-count-refresh"));
+  }
+
+  async function hardDeleteAllByTab(tabType: "pending" | "published" | "rejected") {
+    const targetItems = items.filter((order) => {
+      if (tabType === "pending") return !["published", "converted", "rejected"].includes(order.status);
+      if (tabType === "published") return ["published", "converted"].includes(order.status);
+      return order.status === "rejected";
+    });
+    let success = 0;
+    for (const item of targetItems) {
+      try {
+        const response = await fetch(`/api/admin/orders/${item.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ action: "hard-delete" }),
+        });
+        const data = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+        if (response.ok && data?.ok) {
+          success++;
+          setItems((current) => current.filter((i) => i.id !== item.id));
+        }
+      } catch {
+        // continue
+      }
+    }
+    setSelectedIds(new Set());
+    if (targetItems.some((item) => item.id === selectedId)) {
+      const remaining = items.filter((item) => !targetItems.some((t) => t.id === item.id));
+      setSelectedId(remaining[0]?.id || "");
+    }
+    const label = tabType === "pending" ? "المعلقة" : tabType === "published" ? "المنشورة" : "المرفوضة";
+    setNotice({ kind: "success", text: `تم حذف ${success} ${label} بنجاح.` });
+    window.dispatchEvent(new Event("admin-orders-count-refresh"));
+  }
+
   useEffect(() => {
     if (!selectedOrder) return;
     setForm(formFromOrder(selectedOrder, fallbackTemplate, musicFiles, defaults));
@@ -354,6 +464,9 @@ export function AdminOrderRequestsManager({
   }, [postPreviewUpdate]);
 
   const openCount = items.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
+  const publishedCount = items.filter((order) => ["published", "converted"].includes(order.status)).length;
+  const rejectedCount = items.filter((order) => order.status === "rejected").length;
+  const tabLabels: Record<string, string> = { pending: "المعلقة", published: "المنشورة", rejected: "المرفوضة" };
   const selectedInternalNotes = useMemo(() => (selectedOrder ? internalNotes.filter((note) => note.entityType === "order" && note.entityId === selectedOrder.id) : []), [internalNotes, selectedOrder]);
   const selectedIsFavorite = useMemo(() => (selectedOrder ? favorites.some((favorite) => favorite.entityType === "order" && favorite.entityId === selectedOrder.id) : false), [favorites, selectedOrder]);
 
@@ -581,6 +694,30 @@ export function AdminOrderRequestsManager({
     );
   }
 
+  async function handleConfirmDelete() {
+    if (!confirmDelete) return;
+    if (confirmDelete.type === "single" && confirmDelete.ids?.[0]) {
+      await hardDeleteOrder(confirmDelete.ids[0]);
+    } else if (confirmDelete.type === "selected") {
+      await hardDeleteSelected();
+    } else {
+      await hardDeleteAllByTab(confirmDelete.type === "all-pending" ? "pending" : confirmDelete.type === "all-published" ? "published" : "rejected");
+    }
+    setConfirmDelete(null);
+  }
+
+  function deleteConfirmMessage(ids?: string[]) {
+    const count = ids?.length || 0;
+    if (confirmDelete?.type === "single") return `هل أنت متأكد من حذف هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`;
+    if (confirmDelete?.type === "selected") return `هل أنت متأكد من حذف ${count} طلب/طلبات محددة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`;
+    const label = confirmDelete?.type === "all-pending" ? "المعلقة" : confirmDelete?.type === "all-published" ? "المنشورة" : "المرفوضة";
+    return `هل أنت متأكد من حذف جميع الطلبات ${label} نهائياً؟ (${count || items.filter((o) => {
+      if (confirmDelete?.type === "all-pending") return !["published", "converted", "rejected"].includes(o.status);
+      if (confirmDelete?.type === "all-published") return ["published", "converted"].includes(o.status);
+      return o.status === "rejected";
+    }).length} طلب) لا يمكن التراجع عن هذا الإجراء.`;
+  }
+
   const selectedStatus = statusMap[selectedOrder?.status || "new"];
 
   return (
@@ -591,37 +728,101 @@ export function AdminOrderRequestsManager({
             <span className="eyebrow">طلبات الدعوات</span>
             <h2>الطلبات المقدمة</h2>
           </div>
-          <strong>{openCount}</strong>
         </div>
+
+        <div className="orders-queue-tabs">
+          <button className={`orders-queue-tab ${tab === "pending" ? "active" : ""}`} type="button" onClick={() => { setTab("pending"); setSelectedIds(new Set()); }}>
+            المعلقة <span className="orders-queue-tab-count">{openCount}</span>
+          </button>
+          <button className={`orders-queue-tab ${tab === "published" ? "active" : ""}`} type="button" onClick={() => { setTab("published"); setSelectedIds(new Set()); }}>
+            المنشورة <span className="orders-queue-tab-count">{publishedCount}</span>
+          </button>
+          <button className={`orders-queue-tab ${tab === "rejected" ? "active" : ""}`} type="button" onClick={() => { setTab("rejected"); setSelectedIds(new Set()); }}>
+            المرفوضة <span className="orders-queue-tab-count">{rejectedCount}</span>
+          </button>
+        </div>
+
+        {tabItems.length > 0 && (
+          <div className="orders-queue-bulk-bar">
+            <label className="orders-queue-bulk-check">
+              <input type="checkbox" checked={selectedIds.size === tabItems.length && tabItems.length > 0} onChange={toggleSelectAll} />
+              <CheckSquare size={15} />
+            </label>
+            <span className="orders-queue-bulk-label">{selectedIds.size} من {tabItems.length} مختار</span>
+            {selectedIds.size > 0 && (
+              <button className="orders-queue-bulk-delete" type="button" onClick={() => {
+                setConfirmDelete({ type: "selected", ids: Array.from(selectedIds) });
+              }}>
+                <Trash2 size={14} /> حذف المحدد
+              </button>
+            )}
+            <button className="orders-queue-bulk-delete-all" type="button" onClick={() => setConfirmDelete({
+              type: tab === "pending" ? "all-pending" : tab === "published" ? "all-published" : "all-rejected"
+            })}>
+              <Trash2 size={14} /> حذف جميع {tabLabels[tab]}
+            </button>
+          </div>
+        )}
+
         <div className="orders-queue-list">
-          {items.map((order, index) => {
-            const meta = statusMap[order.status] || statusMap.new;
-            const active = selectedOrder?.id === order.id;
-            const isFinal = ["published", "converted", "rejected"].includes(order.status);
-            const isPublishingThisOrder = busy === "publish" && busyOrderId === order.id;
-            const feedback = actionFeedback[order.id];
-            return (
-              <article className={active ? "orders-queue-item active" : "orders-queue-item"} key={order.id}>
-                <button className="orders-queue-select" type="button" onClick={() => selectOrder(order)} aria-label={`فتح ${orderTitle(order, index)}`}>
-                  <span className={`order-status-chip ${meta.className}`}>{meta.label}</span>
-                  <strong>{orderTitle(order, index)}</strong>
-                  <small>{formatDateTime(order.submittedAt || order.createdAt)}</small>
-                </button>
-                <button className="orders-queue-publish" type="button" disabled={busy !== "idle" || isFinal} onClick={() => quickPublish(order)}>
-                  {isPublishingThisOrder ? <Loader2 size={15} /> : <Send size={15} />}
-                  موافقة ونشر
-                </button>
-                {feedback ? (
-                  <div className={`orders-queue-feedback ${feedback.kind}`} role="status" aria-live="polite">
-                    {feedback.kind === "success" ? <CheckCircle2 size={15} /> : feedback.kind === "error" ? <XCircle size={15} /> : <Loader2 size={15} />}
-                    <span>{feedback.text}</span>
+          {tabItems.length === 0 ? (
+            <div className="admin-empty-state compact">
+              <strong>لا توجد طلبات {tabLabels[tab]}</strong>
+            </div>
+          ) : (
+            tabItems.map((order, index) => {
+              const meta = statusMap[order.status] || statusMap.new;
+              const active = selectedOrder?.id === order.id;
+              const isFinal = ["published", "converted", "rejected"].includes(order.status);
+              const isPublishingThisOrder = busy === "publish" && busyOrderId === order.id;
+              const feedback = actionFeedback[order.id];
+              return (
+                <article className={active ? "orders-queue-item active" : "orders-queue-item"} key={order.id}>
+                  <div className="orders-queue-item-row">
+                    <label className="orders-queue-checkbox" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)} />
+                    </label>
+                    <button className="orders-queue-select" type="button" onClick={() => selectOrder(order)} aria-label={`فتح ${orderTitle(order, index)}`}>
+                      <span className={`order-status-chip ${meta.className}`}>{meta.label}</span>
+                      <strong>{orderTitle(order, index)}</strong>
+                      <small>{formatDateTime(order.submittedAt || order.createdAt)}</small>
+                    </button>
                   </div>
-                ) : null}
-              </article>
-            );
-          })}
+                  <div className="orders-queue-item-actions">
+                    {!isFinal && (
+                      <button className="orders-queue-publish" type="button" disabled={busy !== "idle"} onClick={() => quickPublish(order)}>
+                        {isPublishingThisOrder ? <Loader2 size={15} /> : <Send size={15} />}
+                        موافقة ونشر
+                      </button>
+                    )}
+                    <button className="orders-queue-delete" type="button" disabled={busy !== "idle"} onClick={() => setConfirmDelete({ type: "single", ids: [order.id] })}>
+                      <Trash2 size={14} /> حذف
+                    </button>
+                  </div>
+                  {feedback ? (
+                    <div className={`orders-queue-feedback ${feedback.kind}`} role="status" aria-live="polite">
+                      {feedback.kind === "success" ? <CheckCircle2 size={15} /> : feedback.kind === "error" ? <XCircle size={15} /> : <Loader2 size={15} />}
+                      <span>{feedback.text}</span>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })
+          )}
         </div>
       </aside>
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        title="تأكيد الحذف"
+        message={confirmDelete ? deleteConfirmMessage(confirmDelete.ids) : ""}
+        confirmText="حذف"
+        cancelText="إلغاء"
+        isDangerous
+        isLoading={false}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       <div className="orders-editor-panel">
         <div className="orders-editor-head">

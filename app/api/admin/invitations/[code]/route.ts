@@ -4,6 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
+import { hardDeleteInvitationCompletely } from "@/lib/invitation-deletion";
 import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -75,22 +76,64 @@ async function getInvitationAuditSnapshot(code: string) {
   return null;
 }
 
+function wantsJson(request: NextRequest) {
+  const contentType = request.headers.get("content-type") || "";
+  const accept = request.headers.get("accept") || "";
+  return contentType.includes("application/json") || accept.includes("application/json");
+}
+
+function jsonError(message: string, status = 400) {
+  return NextResponse.json({ ok: false, error: message }, { status });
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   const { code } = await params;
-  const formData = await request.formData();
-  const action = String(formData.get("action") || "").trim();
-  if (!code || !["pause", "resume", "archive", "delete", "custom-slug"].includes(action)) {
+  const jsonMode = wantsJson(request);
+  
+  let action: string;
+  let customSlug = "";
+  
+  if (jsonMode) {
+    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string } | null;
+    if (!body) return jsonMode ? jsonError("بيانات غير صالحة.") : redirectBack(request, "invalid");
+    action = (body.action || "").trim();
+    customSlug = body.customSlug || "";
+  } else {
+    const formData = await request.formData();
+    action = String(formData.get("action") || "").trim();
+    customSlug = String(formData.get("customSlug") || "").trim();
+  }
+
+  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete"].includes(action)) {
     return redirectBack(request, "invalid");
   }
 
+  // Handle hard-delete with JSON response for AJAX calls
+  if (action === "hard-delete") {
+    if (!prisma) {
+      return jsonMode ? jsonError("قاعدة البيانات غير متاحة.", 503) : redirectBack(request, "database");
+    }
+    try {
+      const result = await hardDeleteInvitationCompletely(code);
+      if (!result.ok) throw new Error("لم يتم العثور على الدعوة.");
+      safeRevalidatePath("/admin/invitations");
+      safeRevalidatePath("/admin");
+      safeRevalidatePath("/admin/trash");
+      if (jsonMode) return NextResponse.json({ ok: true, hardDeleted: true });
+      return redirectBack(request, "hard-deleted");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "تعذر حذف الدعوة.";
+      return jsonMode ? jsonError(message, 500) : redirectBack(request, `error:${encodeURIComponent(message)}`);
+    }
+  }
+
   const oldValues = await getInvitationAuditSnapshot(code);
-  let customSlug = "";
   if (action === "custom-slug") {
-    const result = await resolveCustomInvitationSlug(formData.get("customSlug"), code);
+    const result = await resolveCustomInvitationSlug(customSlug, code);
     if (result.error) {
       const url = getRedirectUrl("/admin/invitations", request.headers, request.nextUrl.origin);
       url.searchParams.set("status", "custom-url-error");

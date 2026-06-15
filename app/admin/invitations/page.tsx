@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { Archive, CalendarDays, Eye, Filter, Search, Settings2, Sparkles, UserCheck } from "lucide-react";
+import { Archive, CalendarDays, Eye, Filter, Search, Settings2, Sparkles, Trash2, UserCheck } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
+import { AdminInvitationSingleDelete } from "@/components/AdminInvitationActions";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
@@ -257,6 +258,7 @@ export default async function InvitationsPage({
                     إدارة الدعوة
                   </Link>
                   <CopyButton className="btn btn-soft" value={invitationUrl} label="نسخ الرابط" title="نسخ رابط الدعوة" />
+                  <AdminInvitationSingleDelete code={invitation.code} />
                 </div>
               </article>
             );

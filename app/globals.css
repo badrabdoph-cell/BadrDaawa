@@ -9380,8 +9380,9 @@ img {
 }
 
 .orders-queue-panel {
-  display: grid;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   max-height: calc(100vh - 130px);
   padding: 14px;
   overflow: hidden;
@@ -9416,9 +9417,11 @@ img {
 .orders-queue-list {
   display: grid;
   gap: 8px;
+  flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
   padding-inline-end: 3px;
+  align-content: start;
 }
 
 .orders-queue-item {
@@ -9543,6 +9546,166 @@ img {
   border-color: rgba(255, 182, 174, 0.24);
   background: rgba(135, 56, 56, 0.16);
   color: #ffc0bd;
+}
+
+.orders-queue-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.orders-queue-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 234, 214, 0.68);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 850;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.orders-queue-tab:hover {
+  border-color: rgba(243, 207, 115, 0.24);
+  color: #f5ead6;
+}
+
+.orders-queue-tab.active {
+  border-color: rgba(243, 207, 115, 0.36);
+  background: rgba(243, 207, 115, 0.12);
+  color: #ffe29b;
+}
+
+.orders-queue-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.7rem;
+  font-weight: 950;
+}
+
+.orders-queue-tab.active .orders-queue-tab-count {
+  background: rgba(243, 207, 115, 0.2);
+}
+
+.orders-queue-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 234, 214, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.78rem;
+}
+
+.orders-queue-bulk-check {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.orders-queue-bulk-check input[type="checkbox"] {
+  accent-color: #f3cf73;
+  width: 16px;
+  height: 16px;
+}
+
+.orders-queue-bulk-label {
+  color: rgba(245, 234, 214, 0.56);
+  font-weight: 850;
+}
+
+.orders-queue-bulk-delete,
+.orders-queue-bulk-delete-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid rgba(221, 87, 87, 0.2);
+  border-radius: 6px;
+  background: rgba(221, 87, 87, 0.08);
+  color: #ffc0bd;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 900;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.orders-queue-bulk-delete:hover,
+.orders-queue-bulk-delete-all:hover {
+  border-color: rgba(221, 87, 87, 0.4);
+  background: rgba(221, 87, 87, 0.15);
+}
+
+.orders-queue-bulk-delete-all {
+  margin-inline-start: auto;
+}
+
+.orders-queue-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.orders-queue-checkbox {
+  display: flex;
+  align-items: center;
+  padding-top: 4px;
+  cursor: pointer;
+}
+
+.orders-queue-checkbox input[type="checkbox"] {
+  accent-color: #f3cf73;
+  width: 15px;
+  height: 15px;
+}
+
+.orders-queue-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.orders-queue-item-actions .orders-queue-publish {
+  width: auto;
+  flex: 1;
+}
+
+.orders-queue-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid rgba(221, 87, 87, 0.18);
+  border-radius: 6px;
+  background: rgba(221, 87, 87, 0.06);
+  color: #ffc0bd;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 900;
+  transition: border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.orders-queue-delete:hover:not(:disabled) {
+  border-color: rgba(221, 87, 87, 0.4);
+  background: rgba(221, 87, 87, 0.14);
+}
+
+.orders-queue-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 @keyframes orders-quick-publish-shine {

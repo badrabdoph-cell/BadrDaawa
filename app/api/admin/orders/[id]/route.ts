@@ -23,7 +23,7 @@ type RouteContext = {
 };
 
 type AdminOrderPayload = {
-  action?: "review" | "update" | "publish" | "reject" | "delete";
+  action?: "review" | "update" | "publish" | "reject" | "delete" | "hard-delete";
   groomName?: string;
   brideName?: string;
   phone?: string;
@@ -568,6 +568,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
       revalidatePath("/admin/orders");
       revalidatePath("/admin/trash");
       return jsonMode ? NextResponse.json({ ok: true, deleted: true }) : redirectBack(request, "deleted");
+    }
+
+    if (action === "hard-delete") {
+      await prisma.internalNote.deleteMany({ where: { entityType: "order", entityId: id } });
+      const result = await prisma.orderRequest.deleteMany({ where: { id } });
+      if (!result.count) throw new Error("لم يتم العثور على الطلب.");
+      revalidatePath("/admin/orders");
+      revalidatePath("/admin/trash");
+      return jsonMode ? NextResponse.json({ ok: true, hardDeleted: true }) : redirectBack(request, "hard-deleted");
     }
 
     if (action === "review") {
