@@ -587,8 +587,8 @@ export function OrderForm({
     params.set("weddingDate", form.weddingDate);
     params.set("venue", form.venue);
     if (form.mapUrl.trim()) params.set("mapUrl", form.mapUrl.trim());
+    params.set("photographerEnabled", form.photographerEnabled ? "1" : "0");
     if (form.photographerEnabled) {
-      params.set("photographerEnabled", "1");
       if (form.photographerName.trim()) params.set("photographerName", form.photographerName.trim());
       if (form.photographerFacebookUrl.trim()) params.set("photographerFacebookUrl", form.photographerFacebookUrl.trim());
       if (form.photographerInstagramUrl.trim()) params.set("photographerInstagramUrl", form.photographerInstagramUrl.trim());
