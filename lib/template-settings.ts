@@ -287,6 +287,7 @@ export async function updateTemplateSettings(
 
   const photographerName = cleanText(input.photographer?.name || "", 90);
   next.photographer = {
+    ...(next.photographer || { enabled: true }),
     enabled: input.photographer?.enabled !== false,
     ...(photographerName ? { name: photographerName } : {}),
     ...(instagramUrl ? { instagramUrl } : {}),

@@ -222,8 +222,8 @@ function createInitialDraft(templates: WizardTemplate[], defaults?: TemplatePrev
   };
 }
 
-function normalizeDraft(value: unknown, templates: WizardTemplate[]): DraftState {
-  const fallback = createInitialDraft(templates);
+function normalizeDraft(value: unknown, templates: WizardTemplate[], defaults?: TemplatePreviewDefaults): DraftState {
+  const fallback = createInitialDraft(templates, defaults);
   if (!value || typeof value !== "object") return fallback;
   const input = value as Partial<DraftState>;
   const templateSlug = templates.some((template) => template.slug === input.templateSlug) ? input.templateSlug || fallback.templateSlug : fallback.templateSlug;
@@ -319,6 +319,8 @@ export function AdminNewInvitationWizard({
   const imageInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const hydratedRef = useRef(false);
+  const templatePreviewInfoRef = useRef(templatePreviewInfo);
+  templatePreviewInfoRef.current = templatePreviewInfo;
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
   const stepIndex = steps.findIndex((step) => step.id === currentStep);
   const selectedTemplate = templates.find((template) => template.slug === draft.templateSlug) || templates[0];
@@ -382,11 +384,17 @@ export function AdminNewInvitationWizard({
   }, [previewPayload]);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(draftStorageKey);
+    const stored = window.sessionStorage.getItem(draftStorageKey);
     if (stored) {
       try {
-        setDraft(normalizeDraft(JSON.parse(stored), templates));
-        setAutosaveState("تم استرجاع آخر مسودة");
+        const parsed = JSON.parse(stored);
+        const currentHash = JSON.stringify(templatePreviewInfoRef.current) || "";
+        if (parsed._tpiHash === currentHash) {
+          setDraft(normalizeDraft(parsed.draft, templates, defaults));
+          setAutosaveState("تم استرجاع آخر مسودة");
+        } else {
+          setAutosaveState("تم تحميل الإعدادات الافتراضية الجديدة");
+        }
       } catch {
         setAutosaveState("تعذر استرجاع المسودة القديمة");
       }
@@ -398,7 +406,10 @@ export function AdminNewInvitationWizard({
     if (!hydratedRef.current) return;
     setAutosaveState("جاري الحفظ...");
     const timer = window.setTimeout(() => {
-      window.localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+      window.sessionStorage.setItem(draftStorageKey, JSON.stringify({
+        draft,
+        _tpiHash: JSON.stringify(templatePreviewInfoRef.current) || "",
+      }));
       setAutosaveState("تم الحفظ تلقائياً");
     }, 350);
     return () => window.clearTimeout(timer);
