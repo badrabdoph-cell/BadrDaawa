@@ -20,6 +20,8 @@ export const orderRequestSchema = z.object({
   orderImages: z.array(z.string()).max(3).optional().default([]),
   photographerEnabled: z.boolean().optional().default(false),
   photographerName: z.string().trim().max(120).optional().default(""),
+  photographerDescription: z.string().trim().max(500).optional().default(""),
+  photographerLogoUrl: z.string().trim().max(500).optional().default(""),
   photographerFacebookUrl: z.string().trim().max(500).optional().default(""),
   photographerInstagramUrl: z.string().trim().max(500).optional().default(""),
   openingText: z.string().trim().max(180).optional().default(""),

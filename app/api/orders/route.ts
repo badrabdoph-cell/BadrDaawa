@@ -170,6 +170,8 @@ export async function POST(request: NextRequest) {
   const photographer = {
     enabled: parsed.data.photographerEnabled,
     name: parsed.data.photographerName,
+    description: parsed.data.photographerDescription,
+    logoUrl: cleanExternalUrl(parsed.data.photographerLogoUrl),
     facebookUrl: cleanExternalUrl(parsed.data.photographerFacebookUrl),
     instagramUrl: cleanExternalUrl(parsed.data.photographerInstagramUrl),
   };

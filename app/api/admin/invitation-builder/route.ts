@@ -42,6 +42,7 @@ type BuilderPayload = {
   photographer?: {
     enabled?: boolean;
     name?: string;
+    description?: string;
     logoUrl?: string;
     logoDataUrl?: string;
     facebookUrl?: string;
@@ -84,11 +85,12 @@ async function resolveMusic(payload: BuilderPayload) {
 
 async function resolvePhotographer(payload: BuilderPayload) {
   const input = payload.photographer;
-  if (!input?.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "" };
+  if (!input?.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "", description: "", whatsappUrl: "" };
   const logoGallery = input.logoDataUrl ? await saveInvitationGalleryImages([input.logoDataUrl]) : [];
   return {
     enabled: true,
     name: cleanText(input.name, "المصور الفوتوغرافي"),
+    description: cleanText(input.description) || "",
     logoUrl: logoGallery[0] || cleanText(input.logoUrl),
     facebookUrl: cleanUrl(input.facebookUrl) || "https://www.facebook.com/",
     instagramUrl: cleanUrl(input.instagramUrl) || "https://www.instagram.com/",

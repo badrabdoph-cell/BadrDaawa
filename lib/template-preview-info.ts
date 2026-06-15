@@ -24,6 +24,7 @@ export type TemplatePreviewInfo = {
     logoUrl: string;
     instagramUrl: string;
     facebookUrl: string;
+    whatsappUrl: string;
   };
   templateOverrides: Record<string, TemplatePreviewOverride>;
   adminScope: {
@@ -91,6 +92,7 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
     logoUrl: "",
     instagramUrl: "https://www.instagram.com/",
     facebookUrl: "https://www.facebook.com/",
+    whatsappUrl: "",
   },
   templateOverrides: {},
   adminScope: {
@@ -207,6 +209,7 @@ function normalizeTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>): Temp
       logoUrl: cleanUrl(input.photographer?.logoUrl, ""),
       instagramUrl: cleanUrl(input.photographer?.instagramUrl, fallback.photographer.instagramUrl),
       facebookUrl: cleanUrl(input.photographer?.facebookUrl, fallback.photographer.facebookUrl),
+      whatsappUrl: cleanUrl(input.photographer?.whatsappUrl, ""),
     },
     templateOverrides,
     adminScope: {

@@ -23,10 +23,24 @@ import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import type { TemplatePreviewEditableInfo } from "@/lib/template-preview-info";
 import type { AdminFavorite, ContentPreset, InternalNote, InvitationTexts, OrderRequest } from "@/lib/types";
 
 type BuilderTemplate = AdminToolTemplate;
 type MusicFile = AdminToolMusicFile;
+
+type TemplatePreviewDefaults = {
+  language?: "ar" | "en";
+  weddingTime?: string;
+  photographerEnabled?: boolean;
+  photographerName?: string;
+  photographerDescription?: string;
+  photographerLogoUrl?: string;
+  photographerInstagramUrl?: string;
+  photographerFacebookUrl?: string;
+  photographerWhatsappUrl?: string;
+  invitationTexts?: Partial<InvitationTexts>;
+};
 type StatusKind = OrderRequest["status"];
 type OrderRequestWithLinks = OrderRequest & {
   publicUrl?: string;
@@ -55,9 +69,11 @@ type OrderFormState = {
   invitationTexts: Required<InvitationTexts>;
   photographerEnabled: boolean;
   photographerName: string;
+  photographerDescription: string;
   photographerLogo: AdminToolUploadSlot;
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
+  photographerWhatsappUrl: string;
   rejectionReason: string;
 };
 
@@ -93,10 +109,10 @@ function normalizeOrderMusicChoice(order: OrderRequest, musicFiles: MusicFile[])
   return order.musicUrl ? "url" : "default";
 }
 
-function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles: MusicFile[] = []): OrderFormState {
+function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles: MusicFile[] = [], defaults?: TemplatePreviewDefaults): OrderFormState {
   const photographer = order.photographer;
   const imageUrls = [...(order.imageUrls || [])].slice(0, 3);
-  const photographerLogoUrl = photographer?.logoUrl || "";
+  const photographerLogoUrl = photographer?.logoUrl || defaults?.photographerLogoUrl || "";
   const rawTexts = order.texts && typeof order.texts === "object" ? (order.texts as Record<string, unknown>) : {};
   const heroVideoUrl = typeof rawTexts.heroVideoUrl === "string" ? rawTexts.heroVideoUrl : "";
   const musicFile = musicFiles.find((file) => file.id === order.musicLibraryTrackId || file.url === order.musicUrl);
@@ -120,12 +136,14 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles
     musicLibraryTrackId: musicChoice === "library" ? musicFile?.id || order.musicLibraryTrackId || "" : "",
     musicBusy: false,
     musicFileName: order.musicUrl?.split("/").pop() || "",
-    invitationTexts: normalizeInvitationTexts(order.texts),
-    photographerEnabled: Boolean(photographer?.enabled),
-    photographerName: photographer?.name || "",
+    invitationTexts: normalizeInvitationTexts({ ...defaults?.invitationTexts, ...order.texts }),
+    photographerEnabled: photographer?.enabled ?? defaults?.photographerEnabled ?? false,
+    photographerName: photographer?.name || defaults?.photographerName || "",
+    photographerDescription: photographer?.description || defaults?.photographerDescription || "",
     photographerLogo: { ...emptyAdminToolUpload, url: photographerLogoUrl, name: photographerLogoUrl.split("/").pop() || "" },
-    photographerFacebookUrl: photographer?.facebookUrl || "",
-    photographerInstagramUrl: photographer?.instagramUrl || "",
+    photographerFacebookUrl: photographer?.facebookUrl || defaults?.photographerFacebookUrl || "",
+    photographerInstagramUrl: photographer?.instagramUrl || defaults?.photographerInstagramUrl || "",
+    photographerWhatsappUrl: photographer?.whatsappUrl || defaults?.photographerWhatsappUrl || "",
     rejectionReason: order.rejectionReason || "",
   };
 }
@@ -149,9 +167,11 @@ function toolValuesFromForm(form: OrderFormState): AdminInvitationToolValues {
     heroVideoBusy: form.heroVideoBusy,
     photographerEnabled: form.photographerEnabled,
     photographerName: form.photographerName,
+    photographerDescription: form.photographerDescription,
     photographerLogo: form.photographerLogo,
     photographerFacebookUrl: form.photographerFacebookUrl,
     photographerInstagramUrl: form.photographerInstagramUrl,
+    photographerWhatsappUrl: form.photographerWhatsappUrl,
     musicEnabled: form.musicEnabled,
     musicChoice: form.musicChoice,
     musicUrl: form.musicUrl,
@@ -184,9 +204,11 @@ function payloadFromFormState(form: OrderFormState, action: "review" | "update" 
     photographer: {
       enabled: form.photographerEnabled,
       name: form.photographerName,
+      description: form.photographerDescription,
       logoUrl: form.photographerLogo.url,
       facebookUrl: form.photographerFacebookUrl,
       instagramUrl: form.photographerInstagramUrl,
+      whatsappUrl: form.photographerWhatsappUrl,
     },
     rejectionReason: form.rejectionReason,
   };
@@ -200,6 +222,7 @@ export function AdminOrderRequestsManager({
   internalNotes,
   favorites,
   siteUrl,
+  templatePreviewInfo,
 }: {
   orders: OrderRequestWithLinks[];
   templates: BuilderTemplate[];
@@ -208,12 +231,36 @@ export function AdminOrderRequestsManager({
   internalNotes: InternalNote[];
   favorites: AdminFavorite[];
   siteUrl: string;
+  templatePreviewInfo?: TemplatePreviewEditableInfo;
 }) {
+  const defaults = useMemo<TemplatePreviewDefaults | undefined>(() => {
+    if (!templatePreviewInfo) return undefined;
+    return {
+      language: templatePreviewInfo.language,
+      weddingTime: templatePreviewInfo.weddingTime,
+      photographerEnabled: templatePreviewInfo.photographer.enabled,
+      photographerName: templatePreviewInfo.photographer.name,
+      photographerDescription: templatePreviewInfo.photographer.description,
+      photographerLogoUrl: templatePreviewInfo.photographer.logoUrl,
+      photographerInstagramUrl: templatePreviewInfo.photographer.instagramUrl,
+      photographerFacebookUrl: templatePreviewInfo.photographer.facebookUrl,
+      photographerWhatsappUrl: templatePreviewInfo.photographer.whatsappUrl,
+      invitationTexts: {
+        openingText: templatePreviewInfo.texts.openingText,
+        inviteMessage: templatePreviewInfo.texts.inviteMessage,
+        inviteMessageSecondary: templatePreviewInfo.texts.inviteMessageSecondary,
+        rsvpQuestion: templatePreviewInfo.texts.rsvpQuestion,
+        rsvpDeclinedMessage: templatePreviewInfo.texts.rsvpDeclinedMessage,
+        rsvpConfirmedSuccessMessage: templatePreviewInfo.texts.rsvpConfirmedSuccessMessage,
+        rsvpDeclinedSuccessMessage: templatePreviewInfo.texts.rsvpDeclinedSuccessMessage,
+      },
+    };
+  }, [templatePreviewInfo]);
   const fallbackTemplate = templates[0]?.slug || "featured-1";
   const [items, setItems] = useState<OrderRequestWithLinks[]>(orders);
   const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
   const selectedOrder = useMemo(() => items.find((order) => order.id === selectedId) || items[0] || null, [items, selectedId]);
-  const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles)));
+  const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles, defaults) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles, defaults)));
   const [busy, setBusy] = useState<"idle" | "review" | "update" | "publish" | "reject">("idle");
   const [busyOrderId, setBusyOrderId] = useState("");
   const [actionFeedback, setActionFeedback] = useState<Record<string, { kind: "pending" | "success" | "error"; text: string }>>({});
@@ -225,7 +272,7 @@ export function AdminOrderRequestsManager({
 
   useEffect(() => {
     if (!selectedOrder) return;
-    setForm(formFromOrder(selectedOrder, fallbackTemplate, musicFiles));
+    setForm(formFromOrder(selectedOrder, fallbackTemplate, musicFiles, defaults));
     setLinks(
       selectedOrder.publishedInvitationCode
         ? {
@@ -234,7 +281,7 @@ export function AdminOrderRequestsManager({
           }
         : null,
     );
-  }, [cleanSiteUrl, fallbackTemplate, musicFiles, selectedOrder]);
+  }, [cleanSiteUrl, fallbackTemplate, musicFiles, selectedOrder, defaults]);
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams({ builderPreview: "1", silentPreview: "1" });
@@ -260,9 +307,11 @@ export function AdminOrderRequestsManager({
       photographer: {
         enabled: form.photographerEnabled,
         name: form.photographerName,
+        description: form.photographerDescription,
         logoUrl: form.photographerLogo.url,
         facebookUrl: form.photographerFacebookUrl,
         instagramUrl: form.photographerInstagramUrl,
+        whatsappUrl: form.photographerWhatsappUrl,
       },
     }),
     [effectivePreviewMusic, form],

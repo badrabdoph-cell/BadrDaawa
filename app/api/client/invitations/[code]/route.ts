@@ -34,6 +34,7 @@ type ClientInvitationPayload = {
   photographer?: {
     enabled?: boolean;
     name?: string;
+    description?: string;
     logoUrl?: string;
     logoDataUrl?: string;
     facebookUrl?: string;
@@ -115,12 +116,13 @@ async function resolveJsonMusic(code: string, payload: ClientInvitationPayload) 
 async function resolveJsonPhotographer(payload: ClientInvitationPayload) {
   const photographer = payload.photographer;
   if (!photographer) return undefined;
-  if (!photographer.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "" };
+  if (!photographer.enabled) return { enabled: false, name: "", description: "", logoUrl: "", facebookUrl: "", instagramUrl: "" };
 
   const logoGallery = photographer.logoDataUrl ? await saveInvitationGalleryImages([photographer.logoDataUrl]) : [];
   return {
     enabled: true,
     name: cleanText(photographer.name, 100) || "المصور الفوتوغرافي",
+    description: cleanText(photographer.description, 500) || "",
     logoUrl: logoGallery[0] || cleanText(photographer.logoUrl, 300),
     facebookUrl: cleanUrl(photographer.facebookUrl) || "https://www.facebook.com/",
     instagramUrl: cleanUrl(photographer.instagramUrl) || "https://www.instagram.com/",

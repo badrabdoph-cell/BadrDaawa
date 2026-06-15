@@ -140,12 +140,13 @@ function cleanImageList(value: unknown) {
 }
 
 function cleanPhotographer(value: unknown): Invitation["photographer"] | undefined {
-  if (!value || typeof value !== "object") return { enabled: false, name: "", facebookUrl: "", instagramUrl: "" };
+  if (!value || typeof value !== "object") return { enabled: false, name: "", description: "", facebookUrl: "", instagramUrl: "", whatsappUrl: "" };
   const input = value as Record<string, unknown>;
   const enabled = input.enabled === true;
   return {
     enabled,
     name: enabled ? cleanText(input.name, "المصور الفوتوغرافي", 120) : "",
+    description: enabled ? cleanText(input.description, "", 500) : "",
     logoUrl: enabled ? cleanOptionalUrl(input.logoUrl) || undefined : undefined,
     facebookUrl: enabled ? cleanOptionalUrl(input.facebookUrl) || "https://www.facebook.com/" : "",
     instagramUrl: enabled ? cleanOptionalUrl(input.instagramUrl) || "https://www.instagram.com/" : "",

@@ -228,6 +228,7 @@ export type OrderRequest = {
   photographer?: {
     enabled: boolean;
     name: string;
+    description?: string;
     logoUrl?: string;
     instagramUrl: string;
     facebookUrl: string;

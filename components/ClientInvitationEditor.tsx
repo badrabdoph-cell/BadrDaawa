@@ -400,14 +400,14 @@ export function ClientInvitationEditor({
         musicUrl,
         musicDataUrl,
         texts: invitationTexts,
-        photographer: {
-          enabled: photographerEnabled,
-          name: photographerName,
-          logoUrl: photographerLogo.previewUrl,
-          logoDataUrl: "",
-          facebookUrl: photographerFacebookUrl,
-          instagramUrl: photographerInstagramUrl,
-        },
+      photographer: {
+        enabled: photographerEnabled,
+        name: photographerName,
+        logoUrl: photographerLogo.previewUrl,
+        logoDataUrl: "",
+        facebookUrl: photographerFacebookUrl,
+        instagramUrl: photographerInstagramUrl,
+      },
       }),
     });
     const data = (await response.json().catch(() => null)) as { error?: string } | null;

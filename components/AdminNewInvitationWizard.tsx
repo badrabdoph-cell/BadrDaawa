@@ -24,6 +24,7 @@ import { acceptedImageFormats } from "@/lib/image-formats";
 import { defaultInvitationTexts, normalizeGalleryStories } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import { getPrePublishValidationReport, prePublishStatusLabel, prePublishStatusSymbol } from "@/lib/pre-publish-validation";
+import type { TemplatePreviewEditableInfo } from "@/lib/template-preview-info";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts } from "@/lib/types";
 
 type WizardTemplate = {
@@ -66,6 +67,7 @@ type DraftState = {
   musicFileName: string;
   photographerEnabled: boolean;
   photographerName: string;
+  photographerDescription: string;
   photographerInstagramUrl: string;
   photographerFacebookUrl: string;
   photographerWhatsappUrl: string;
@@ -167,16 +169,29 @@ async function createCroppedImageFile(draft: CropDraft) {
   });
 }
 
-function createInitialDraft(templates: WizardTemplate[]): DraftState {
+type TemplatePreviewDefaults = {
+  language?: "ar" | "en";
+  weddingTime?: string;
+  photographerEnabled?: boolean;
+  photographerName?: string;
+  photographerDescription?: string;
+  photographerLogoUrl?: string;
+  photographerInstagramUrl?: string;
+  photographerFacebookUrl?: string;
+  photographerWhatsappUrl?: string;
+  invitationTexts?: Partial<InvitationTexts>;
+};
+
+function createInitialDraft(templates: WizardTemplate[], defaults?: TemplatePreviewDefaults): DraftState {
   return {
-    language: "ar",
+    language: defaults?.language || "ar",
     templateSlug: templates[0]?.slug || "",
     groomName: "",
     brideName: "",
     groomNameEn: "",
     brideNameEn: "",
     weddingDate: todayDate(),
-    weddingTime: "07:00 مساءً",
+    weddingTime: defaults?.weddingTime || "07:00 مساءً",
     venue: "",
     city: "",
     mapUrl: "",
@@ -189,13 +204,14 @@ function createInitialDraft(templates: WizardTemplate[]): DraftState {
     musicUrl: "",
     musicLibraryTrackId: "",
     musicFileName: "",
-    photographerEnabled: false,
-    photographerName: "",
-    photographerInstagramUrl: "",
-    photographerFacebookUrl: "",
-    photographerWhatsappUrl: "",
-    photographerLogo: emptyAdminToolUpload,
-    invitationTexts: defaultInvitationTexts,
+    photographerEnabled: defaults?.photographerEnabled ?? false,
+    photographerName: defaults?.photographerName || "",
+    photographerDescription: defaults?.photographerDescription || "",
+    photographerInstagramUrl: defaults?.photographerInstagramUrl || "",
+    photographerFacebookUrl: defaults?.photographerFacebookUrl || "",
+    photographerWhatsappUrl: defaults?.photographerWhatsappUrl || "",
+    photographerLogo: defaults?.photographerLogoUrl ? { url: defaults.photographerLogoUrl, name: defaults.photographerLogoUrl.split("/").pop() || "", loading: false } : emptyAdminToolUpload,
+    invitationTexts: { ...defaultInvitationTexts, ...(defaults?.invitationTexts || {}) },
   };
 }
 
@@ -242,14 +258,39 @@ export function AdminNewInvitationWizard({
   imageFiles,
   contentPresets,
   siteUrl,
+  templatePreviewInfo,
 }: {
   templates: WizardTemplate[];
   musicFiles: AdminToolMusicFile[];
   imageFiles: ImageLibraryFile[];
   contentPresets: ContentPreset[];
   siteUrl: string;
+  templatePreviewInfo?: TemplatePreviewEditableInfo;
 }) {
-  const [draft, setDraft] = useState<DraftState>(() => createInitialDraft(templates));
+  const defaults = useMemo<TemplatePreviewDefaults | undefined>(() => {
+    if (!templatePreviewInfo) return undefined;
+    return {
+      language: templatePreviewInfo.language,
+      weddingTime: templatePreviewInfo.weddingTime,
+      photographerEnabled: templatePreviewInfo.photographer.enabled,
+      photographerName: templatePreviewInfo.photographer.name,
+      photographerDescription: templatePreviewInfo.photographer.description,
+      photographerLogoUrl: templatePreviewInfo.photographer.logoUrl,
+      photographerInstagramUrl: templatePreviewInfo.photographer.instagramUrl,
+      photographerFacebookUrl: templatePreviewInfo.photographer.facebookUrl,
+      photographerWhatsappUrl: templatePreviewInfo.photographer.whatsappUrl,
+      invitationTexts: {
+        openingText: templatePreviewInfo.texts.openingText,
+        inviteMessage: templatePreviewInfo.texts.inviteMessage,
+        inviteMessageSecondary: templatePreviewInfo.texts.inviteMessageSecondary,
+        rsvpQuestion: templatePreviewInfo.texts.rsvpQuestion,
+        rsvpDeclinedMessage: templatePreviewInfo.texts.rsvpDeclinedMessage,
+        rsvpConfirmedSuccessMessage: templatePreviewInfo.texts.rsvpConfirmedSuccessMessage,
+        rsvpDeclinedSuccessMessage: templatePreviewInfo.texts.rsvpDeclinedSuccessMessage,
+      },
+    };
+  }, [templatePreviewInfo]);
+  const [draft, setDraft] = useState<DraftState>(() => createInitialDraft(templates, defaults));
   const [currentStep, setCurrentStep] = useState<StepId>("template");
   const [savedCode, setSavedCode] = useState("");
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
@@ -310,6 +351,7 @@ export function AdminNewInvitationWizard({
       photographer: {
         enabled: draft.photographerEnabled,
         name: draft.photographerName,
+        description: draft.photographerDescription,
         logoUrl: draft.photographerLogo.url,
         facebookUrl: draft.photographerFacebookUrl,
         instagramUrl: draft.photographerInstagramUrl,
@@ -625,9 +667,11 @@ export function AdminNewInvitationWizard({
       heroVideoBusy: busy === "heroVideo",
       photographerEnabled: draft.photographerEnabled,
       photographerName: draft.photographerName,
+      photographerDescription: draft.photographerDescription,
       photographerLogo: draft.photographerLogo,
       photographerFacebookUrl: draft.photographerFacebookUrl,
       photographerInstagramUrl: draft.photographerInstagramUrl,
+      photographerWhatsappUrl: draft.photographerWhatsappUrl,
       musicEnabled: effectiveMusic.musicEnabled,
       musicChoice: effectiveMusic.musicChoice,
       musicUrl: effectiveMusic.musicUrl,
@@ -672,6 +716,7 @@ export function AdminNewInvitationWizard({
         photographer: {
           enabled: draft.photographerEnabled,
           name: draft.photographerName,
+          description: draft.photographerDescription,
           logoUrl: draft.photographerLogo.url,
           facebookUrl: draft.photographerFacebookUrl,
           instagramUrl: draft.photographerInstagramUrl,

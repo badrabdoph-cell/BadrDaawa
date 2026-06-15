@@ -11,6 +11,7 @@ import { InvitationExperience } from "./InvitationExperience";
 type PreviewPhotographer = {
   enabled?: boolean;
   name?: string;
+  description?: string;
   logoUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;

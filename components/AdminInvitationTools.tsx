@@ -29,9 +29,11 @@ export type AdminInvitationToolValues = {
   heroVideoBusy?: boolean;
   photographerEnabled: boolean;
   photographerName: string;
+  photographerDescription: string;
   photographerLogo: AdminToolUploadSlot;
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
+  photographerWhatsappUrl: string;
   musicEnabled: boolean;
   musicChoice: AdminToolMusicChoice;
   musicUrl: string;

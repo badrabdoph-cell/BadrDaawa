@@ -6,6 +6,7 @@ import { getContentPresets } from "@/lib/content-presets";
 import { getInternalNotes } from "@/lib/internal-notes";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { getMusicLibrary } from "@/lib/music-library";
+import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
 
@@ -38,7 +39,7 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<OrdersPageParams>;
 }) {
-  const [params, orders, templates, musicLibrary, contentPresets, requestHeaders, internalNotes, favorites] = await Promise.all([searchParams, getAdminOrders(), getTemplatesWithSettings(), getMusicLibrary(), getContentPresets(), headers(), getInternalNotes({ entityType: "order" }), getAdminFavorites({ entityType: "order" })]);
+  const [params, orders, templates, musicLibrary, contentPresets, requestHeaders, internalNotes, favorites, previewInfo] = await Promise.all([searchParams, getAdminOrders(), getTemplatesWithSettings(), getMusicLibrary(), getContentPresets(), headers(), getInternalNotes({ entityType: "order" }), getAdminFavorites({ entityType: "order" }), getTemplatePreviewInfo()]);
   const siteUrl = getPublicSiteUrl(requestHeaders);
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
   const ordersWithLinks = await Promise.all(
@@ -76,7 +77,7 @@ export default async function OrdersPage({
       </div>
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
       {favoriteMessage ? <div className={params.favoriteStatus === "added" || params.favoriteStatus === "removed" ? "notice success" : "notice danger"}>{favoriteMessage}</div> : null}
-      <AdminOrderRequestsManager orders={ordersWithLinks} templates={templateOptions} musicFiles={musicLibrary.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0, sizeBytes: slot.sizeBytes, extension: slot.extension }))} contentPresets={contentPresets} internalNotes={internalNotes} favorites={favorites} siteUrl={siteUrl} />
+      <AdminOrderRequestsManager orders={ordersWithLinks} templates={templateOptions} musicFiles={musicLibrary.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0, sizeBytes: slot.sizeBytes, extension: slot.extension }))} contentPresets={contentPresets} internalNotes={internalNotes} favorites={favorites} siteUrl={siteUrl} templatePreviewInfo={previewInfo} />
     </>
   );
 }
