@@ -85,6 +85,10 @@ export async function readProjectContentSetting<T>(
     console.log(`[Project Content] ${key} loaded from database`);
     return normalize(saved);
   }
+  if (process.env.NODE_ENV === "production") {
+    console.log(`[Project Content] ${key} not in database, using defaults`);
+    return normalize(fallback);
+  }
   console.log(`[Project Content] ${key} loading from legacy file: ${definition.repoPath}`);
   const legacy = await readLegacyJson<T>(definition.legacyPath, fallback);
   return normalize(legacy);
@@ -113,17 +117,16 @@ export async function writeProjectContentSetting<T>(key: ProjectContentKey, valu
 
 export async function readProjectContentExportFiles() {
   const files: Array<{ repoPath: string; bytes: Buffer }> = [];
-  for (const definition of definitions) {
+  for ( const definition of definitions) {
     const saved = await readAppSetting<unknown>(definition.appSettingKey).catch((error) => {
       if (process.env.NODE_ENV === "production") throw error;
       console.warn(`[Project Content] Export fallback for ${definition.repoPath}: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     });
-    const value = saved ?? (await readLegacyJson<unknown>(definition.legacyPath, null));
-    if (value === null || value === undefined) continue;
+    if (saved === null || saved === undefined) continue;
     files.push({
       repoPath: definition.repoPath,
-      bytes: Buffer.from(`${JSON.stringify(value, null, 2)}\n`, "utf8"),
+      bytes: Buffer.from(`${JSON.stringify(saved, null, 2)}\n`, "utf8"),
     });
   }
   return files;
