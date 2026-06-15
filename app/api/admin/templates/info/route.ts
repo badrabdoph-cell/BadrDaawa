@@ -34,6 +34,14 @@ function galleryStoryItem(formData: FormData, index: number) {
   };
 }
 
+export async function GET(request: NextRequest) {
+  if (!(await isAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const info = await getTemplatePreviewInfo();
+  return NextResponse.json(info);
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);

@@ -241,38 +241,65 @@ export function AdminOrderRequestsManager({
   siteUrl: string;
   templatePreviewInfo?: TemplatePreviewEditableInfo;
 }) {
+  const [livePreviewInfo, setLivePreviewInfo] = useState(templatePreviewInfo);
+
+  useEffect(() => {
+    setLivePreviewInfo(templatePreviewInfo);
+  }, [templatePreviewInfo]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchLatest() {
+      try {
+        const res = await fetch("/api/admin/templates/info");
+        if (res.ok && !cancelled) {
+          setLivePreviewInfo(await res.json());
+        }
+      } catch {}
+    }
+    fetchLatest();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchLatest();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   const defaults = useMemo<TemplatePreviewDefaults | undefined>(() => {
-    if (!templatePreviewInfo) return undefined;
+    if (!livePreviewInfo) return undefined;
     return {
-      language: templatePreviewInfo.language,
-      weddingTime: templatePreviewInfo.weddingTime,
-      groomName: templatePreviewInfo.groomName,
-      brideName: templatePreviewInfo.brideName,
-      weddingDate: templatePreviewInfo.weddingDate,
-      venue: templatePreviewInfo.venue,
-      city: templatePreviewInfo.city,
-      mapUrl: templatePreviewInfo.mapUrl,
-      heroVideoUrl: templatePreviewInfo.heroVideoUrl,
-      photographerEnabled: templatePreviewInfo.photographer.enabled,
-      photographerName: templatePreviewInfo.photographer.name,
-      photographerDescription: templatePreviewInfo.photographer.description,
-      photographerLogoUrl: templatePreviewInfo.photographer.logoUrl,
-      photographerInstagramUrl: templatePreviewInfo.photographer.instagramUrl,
-      photographerFacebookUrl: templatePreviewInfo.photographer.facebookUrl,
-      photographerWhatsappUrl: templatePreviewInfo.photographer.whatsappUrl,
+      language: livePreviewInfo.language,
+      weddingTime: livePreviewInfo.weddingTime,
+      groomName: livePreviewInfo.groomName,
+      brideName: livePreviewInfo.brideName,
+      weddingDate: livePreviewInfo.weddingDate,
+      venue: livePreviewInfo.venue,
+      city: livePreviewInfo.city,
+      mapUrl: livePreviewInfo.mapUrl,
+      heroVideoUrl: livePreviewInfo.heroVideoUrl,
+      photographerEnabled: livePreviewInfo.photographer.enabled,
+      photographerName: livePreviewInfo.photographer.name,
+      photographerDescription: livePreviewInfo.photographer.description,
+      photographerLogoUrl: livePreviewInfo.photographer.logoUrl,
+      photographerInstagramUrl: livePreviewInfo.photographer.instagramUrl,
+      photographerFacebookUrl: livePreviewInfo.photographer.facebookUrl,
+      photographerWhatsappUrl: livePreviewInfo.photographer.whatsappUrl,
       invitationTexts: {
-        openingText: templatePreviewInfo.texts.openingText,
-        inviteMessage: templatePreviewInfo.texts.inviteMessage,
-        inviteMessageSecondary: templatePreviewInfo.texts.inviteMessageSecondary,
-        rsvpQuestion: templatePreviewInfo.texts.rsvpQuestion,
-        rsvpDeclinedMessage: templatePreviewInfo.texts.rsvpDeclinedMessage,
-        rsvpConfirmedSuccessMessage: templatePreviewInfo.texts.rsvpConfirmedSuccessMessage,
-        rsvpDeclinedSuccessMessage: templatePreviewInfo.texts.rsvpDeclinedSuccessMessage,
-        galleryStories: templatePreviewInfo.texts.galleryStories,
-        story: templatePreviewInfo.texts.story,
+        openingText: livePreviewInfo.texts.openingText,
+        inviteMessage: livePreviewInfo.texts.inviteMessage,
+        inviteMessageSecondary: livePreviewInfo.texts.inviteMessageSecondary,
+        rsvpQuestion: livePreviewInfo.texts.rsvpQuestion,
+        rsvpDeclinedMessage: livePreviewInfo.texts.rsvpDeclinedMessage,
+        rsvpConfirmedSuccessMessage: livePreviewInfo.texts.rsvpConfirmedSuccessMessage,
+        rsvpDeclinedSuccessMessage: livePreviewInfo.texts.rsvpDeclinedSuccessMessage,
+        galleryStories: livePreviewInfo.texts.galleryStories,
+        story: livePreviewInfo.texts.story,
       },
     };
-  }, [templatePreviewInfo]);
+  }, [livePreviewInfo]);
   const fallbackTemplate = templates[0]?.slug || "featured-1";
   const [items, setItems] = useState<OrderRequestWithLinks[]>(orders);
   const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
