@@ -1,7 +1,6 @@
-import { mkdir, stat, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { deleteUploadFile, writeUploadFile } from "./storage-provider";
 
-const projectAssetRoot = path.join(process.cwd(), "public", "assets", "admin");
+const assetStoragePrefix = "assets/admin";
 const publicPrefix = "/assets/admin";
 
 function cleanSegment(value: string) {
@@ -26,16 +25,12 @@ export function isProjectAssetUrl(value?: string | null) {
 export async function writeProjectAssetFile(key: string, bytes: Buffer | Uint8Array) {
   const normalizedKey = normalizeProjectAssetKey(key);
   if (!normalizedKey) throw new Error("Invalid project asset key.");
-  const target = path.resolve(projectAssetRoot, normalizedKey);
-  if (!target.startsWith(`${projectAssetRoot}${path.sep}`)) throw new Error("Invalid project asset path.");
-  await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, bytes);
-  const fileStat = await stat(target);
+  const saved = await writeUploadFile(`${assetStoragePrefix}/${normalizedKey}`, bytes);
   return {
     key: normalizedKey,
     url: `${publicPrefix}/${normalizedKey}`,
-    size: fileStat.size,
-    lastModified: fileStat.mtime,
+    size: saved.size,
+    lastModified: saved.lastModified,
   };
 }
 
@@ -43,12 +38,5 @@ export async function deleteProjectAssetFile(value?: string | null) {
   if (!isProjectAssetUrl(value)) return false;
   const key = normalizeProjectAssetKey((value || "").slice(`${publicPrefix}/`.length));
   if (!key) return false;
-  const target = path.resolve(projectAssetRoot, key);
-  if (!target.startsWith(`${projectAssetRoot}${path.sep}`)) return false;
-  try {
-    await unlink(target);
-    return true;
-  } catch {
-    return false;
-  }
+  return deleteUploadFile(`${assetStoragePrefix}/${key}`);
 }

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { readProjectContentExportFiles } from "./project-content-store";
+import { runtimeUploadsDir } from "./runtime-paths";
 
 type GitHubSyncStatus = "synced" | "skipped" | "unchanged" | "failed";
 
@@ -109,14 +110,16 @@ export type SyncLogEntry = {
   updatedAt: Date;
 };
 
-const projectAssetRoots = [
-  { absolutePath: path.join(process.cwd(), "public", "assets", "admin"), repoPath: "public/assets/admin" },
-];
-
 // Project files are always synced to GitHub as part of the project configuration.
 // Operational data (customers, invitations, etc.) is NEVER synced to GitHub directly.
 // GitHub is NOT a database for operational data.
 const maxSyncFileBytes = (Number(process.env.GITHUB_SYNC_MAX_FILE_MB) || 95) * 1024 * 1024;
+
+function getProjectAssetRoots() {
+  return [
+    { absolutePath: path.join(runtimeUploadsDir, "assets", "admin"), repoPath: "public/assets/admin" },
+  ];
+}
 
 class GitHubSyncHttpError extends Error {
   status: number;
@@ -327,7 +330,7 @@ async function collectProjectSyncFiles() {
       bytes: file.bytes,
     }));
   files.push(...(await collectDatabaseProjectContentFiles()));
-  const assetGroups = await Promise.all(projectAssetRoots.map((assetRoot) => walkFiles(assetRoot.absolutePath, assetRoot)));
+  const assetGroups = await Promise.all(getProjectAssetRoots().map((assetRoot) => walkFiles(assetRoot.absolutePath, assetRoot)));
   return [...files, ...assetGroups.flat()];
 }
 

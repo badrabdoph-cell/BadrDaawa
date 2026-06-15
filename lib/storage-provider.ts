@@ -304,6 +304,19 @@ export async function readUploadFile(keyOrUrl: string) {
 export async function readPublicMediaFile(value: string) {
   const uploadKey = storageKeyFromUploadUrl(value);
   if (uploadKey) return getUploadStorageProvider().read(uploadKey);
+
+  if (value.startsWith("/assets/admin/")) {
+    const assetKey = normalizeStorageKey(`assets/admin/${value.slice("/assets/admin/".length)}`);
+    if (assetKey) {
+      const provider = getUploadStorageProvider();
+      try {
+        return await provider.read(assetKey);
+      } catch {
+        /* fall through to legacy path */
+      }
+    }
+  }
+
   const normalizedAsset = value.trim().startsWith("/assets/") ? value.trim().replace(/^\/+/, "") : "";
   if (!normalizedAsset || normalizedAsset.includes("..")) return null;
   return readFile(path.join(process.cwd(), "public", normalizedAsset));
