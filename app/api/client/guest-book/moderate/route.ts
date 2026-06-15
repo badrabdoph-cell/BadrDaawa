@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const messageId = String(body.messageId || "").trim();
   const action = String(body.action || "").trim();
 
-  if (!messageId || !["approve", "reject"].includes(action)) {
+  if (!messageId || (action !== "approve" && action !== "reject")) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
