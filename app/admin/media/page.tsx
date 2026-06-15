@@ -272,9 +272,6 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
         <article className="admin-list-stat danger"><ImageOff size={19} /><span>يتيم</span><strong>{formatArabicNumber(report.orphanFiles.length)} · {formatBytes(report.unusedSizeBytes)}</strong></article>
         <article className="admin-list-stat danger"><DatabaseBackup size={19} /><span>سجلات يتيمة</span><strong>{formatArabicNumber(report.databaseOrphanRecords)}</strong></article>
         <article className="admin-list-stat danger"><HardDrive size={19} /><span>قابل للاسترداد</span><strong>{formatBytes(report.recoverableSizeBytes)}</strong></article>
-      </section>
-
-      <section className="media-stats-grid">
         <article className="admin-list-stat good"><FileImage size={19} /><span>الصور</span><strong>{formatArabicNumber(report.imageFiles)}</strong></article>
         <article className="admin-list-stat good"><FileAudio size={19} /><span>الصوت</span><strong>{formatArabicNumber(report.audioFiles)}</strong></article>
         <article className="admin-list-stat good"><FileAudio size={19} /><span>الفيديو</span><strong>{formatArabicNumber(report.videoFiles)}</strong></article>
@@ -298,38 +295,6 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
 
       <section className="panel media-cleanup-panel">
         <div className="admin-card-head">
-          <DatabaseBackup size={22} />
-          <div>
-            <span className="eyebrow">Storage Maintenance</span>
-            <h2>تقرير الصيانة والتنظيف</h2>
-          </div>
-        </div>
-        <div className="media-cleanup-summary">
-          <span>آخر فحص: {new Date(report.generatedAt).toLocaleString("ar-EG-u-nu-latn")}</span>
-          <span>المكرر: {formatArabicNumber(report.duplicateGroups.length)} مجموعة</span>
-          <span>المؤقت القديم: {formatArabicNumber(report.oldTemporaryFiles.length)} ملف</span>
-          <span>النسخ الاحتياطية: {formatArabicNumber(report.backupFiles.length)} نسخة</span>
-          <span>سجلات PostgreSQL اليتيمة: {formatArabicNumber(report.databaseOrphanRecords)} سجل</span>
-        </div>
-        {report.databaseOrphans.length ? (
-          <div className="media-cleanup-summary database-orphans">
-            {report.databaseOrphans.map((group) => (
-              <span key={group.kind}>{group.label}: {formatArabicNumber(group.count)}</span>
-            ))}
-          </div>
-        ) : null}
-        <p className="media-cleanup-warning">
-          قبل أي حذف يتم إنشاء Backup تلقائي ثم إعادة الفحص. اكتب كلمة <strong>تنظيف</strong> داخل الإجراء المطلوب لتأكيد التنفيذ.
-        </p>
-        <div className="media-cleanup-actions-grid">
-          {cleanupActions.map((actionConfig) => (
-            <CleanupActionCard report={report} actionConfig={actionConfig} key={actionConfig.action} />
-          ))}
-        </div>
-      </section>
-
-      <section className="panel media-cleanup-panel">
-        <div className="admin-card-head">
           <FileImage size={22} />
           <div>
             <span className="eyebrow">Files</span>
@@ -338,6 +303,38 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
         </div>
         <MediaRows files={filteredFiles} />
       </section>
+
+      <details className="media-cleanup-accordion">
+        <summary className="media-cleanup-summary-head">
+          <DatabaseBackup size={20} />
+          <span>تقرير الصيانة والتنظيف</span>
+          <span className="media-cleanup-badge">{formatArabicNumber(report.orphanFiles.length + report.duplicateFiles.length + report.oldTemporaryFiles.length + report.oldBackupFiles.length + report.databaseOrphanRecords)}</span>
+        </summary>
+        <div className="media-cleanup-accordion-body">
+          <div className="media-cleanup-summary">
+            <span>آخر فحص: {new Date(report.generatedAt).toLocaleString("ar-EG-u-nu-latn")}</span>
+            <span>المكرر: {formatArabicNumber(report.duplicateGroups.length)} مجموعة</span>
+            <span>المؤقت القديم: {formatArabicNumber(report.oldTemporaryFiles.length)} ملف</span>
+            <span>النسخ الاحتياطية: {formatArabicNumber(report.backupFiles.length)} نسخة</span>
+            <span>سجلات PostgreSQL اليتيمة: {formatArabicNumber(report.databaseOrphanRecords)} سجل</span>
+          </div>
+          {report.databaseOrphans.length ? (
+            <div className="media-cleanup-summary database-orphans">
+              {report.databaseOrphans.map((group) => (
+                <span key={group.kind}>{group.label}: {formatArabicNumber(group.count)}</span>
+              ))}
+            </div>
+          ) : null}
+          <p className="media-cleanup-warning">
+            قبل أي حذف يتم إنشاء Backup تلقائي ثم إعادة الفحص. اكتب كلمة <strong>تنظيف</strong> داخل الإجراء المطلوب لتأكيد التنفيذ.
+          </p>
+          <div className="media-cleanup-actions-grid">
+            {cleanupActions.map((actionConfig) => (
+              <CleanupActionCard report={report} actionConfig={actionConfig} key={actionConfig.action} />
+            ))}
+          </div>
+        </div>
+      </details>
     </>
   );
 }
