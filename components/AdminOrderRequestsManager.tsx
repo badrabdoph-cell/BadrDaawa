@@ -579,6 +579,8 @@ export function AdminOrderRequestsManager({
       setSelectedId(data.order.id);
       window.dispatchEvent(new Event("admin-orders-count-refresh"));
       if (data.publicUrl && data.adminUrl) setLinks({ publicUrl: data.publicUrl, adminUrl: data.adminUrl });
+      if (action === "publish") setTab("published");
+      else if (action === "reject") setTab("rejected");
       const successText = action === "publish" ? "تم النشر بنجاح" : action === "reject" ? "تم الرفض" : "تم الحفظ";
       setActionFeedback((current) => ({ ...current, [order.id]: { kind: "success", text: successText } }));
       setNotice({
