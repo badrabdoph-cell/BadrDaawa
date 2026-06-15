@@ -1,3 +1,5 @@
+"use client";
+
 import { CheckCircle2, MessageCircleHeart, XCircle } from "lucide-react";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
 import { formatArabicNumber } from "@/lib/utils";
