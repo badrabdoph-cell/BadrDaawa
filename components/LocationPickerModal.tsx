@@ -113,23 +113,35 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
 
 function loadGoogleMapsScript(key: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    /* already loaded and ready */
+    if (window.google?.maps?.Map) {
+      resolve();
+      return;
+    }
+
+    const callbackName = `__gmaps_init_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const w = window as unknown as Record<string, unknown>;
+    w[callbackName] = () => {
+      delete w[callbackName];
+      resolve();
+    };
+
     const existing = document.querySelector<HTMLScriptElement>(
       'script[src*="maps.googleapis.com/maps/api/js"]',
     );
     if (existing) {
-      if (window.google?.maps) {
-        resolve();
-        return;
-      }
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("gmaps-load-failed")));
+      /* script tag exists but not ready yet — wait for callback */
       return;
     }
+
     const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&loading=async`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=${callbackName}`;
     s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("gmaps-load-failed"));
+    s.onerror = () => {
+      delete w[callbackName];
+      reject(new Error("gmaps-load-failed"));
+    };
     document.head.appendChild(s);
   });
 }
@@ -336,7 +348,7 @@ export function LocationPickerModal({
     if (loadStatus !== "ready" || !open || !containerRef.current || mapRef.current || initCalledRef.current) return;
 
     const maps = window.google?.maps;
-    if (!maps) return;
+    if (!maps || typeof maps.Map !== "function") return;
 
     initCalledRef.current = true;
     const startCenter = pendingGeoRef.current || FALLBACK_CENTER;

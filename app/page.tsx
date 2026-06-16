@@ -108,66 +108,67 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   );
                 })}
               </div>
-              <div className="button-row home-cta-row">
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-                  <WandSparkles size={19} />
-                  <span data-broadcast-key="hero.primaryCta" data-broadcast-label="زر الطلب" data-broadcast-kind="text" data-broadcast-value={content.hero.primaryCta}>
-                    {siteSettings.homepage.primaryCtaLabel || content.hero.primaryCta}
-                  </span>
-                </Link>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-                  <Palette size={19} />
-                  <span data-broadcast-key="hero.secondaryCta" data-broadcast-label="زر الأشكال" data-broadcast-kind="text" data-broadcast-value={content.hero.secondaryCta}>
-                    {siteSettings.homepage.secondaryCtaLabel || content.hero.secondaryCta}
-                  </span>
-                </Link>
-              </div>
+
             </div>
           </div>
         </section>
 
         {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
 
+        {siteSettings.homepage.showFeatures ? (
+          <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
+            <div className="home-features-head">
+              <span>
+                <Sparkles size={16} />
+              </span>
+              <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value={content.features.title}>
+                {content.features.title}
+              </h2>
+            </div>
+            <div className="home-feature-points">
+              {content.features.points.map((item, index) => {
+                const Icon = (item.icon && FEATURE_ICONS[item.icon]) || featureIcons[index] || Sparkles;
+                return (
+                  <div className="home-feature-point" key={item.id}>
+                    <span>
+                      <Icon size={17} />
+                    </span>
+                    <strong data-broadcast-key={`features.points.${item.id}.text`} data-broadcast-label={`ميزة: ${item.text}`} data-broadcast-kind="text" data-broadcast-value={item.text}>
+                      {item.text}
+                    </strong>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="home-cta-section">
+          <div className="button-row home-cta-row">
+            <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+              <WandSparkles size={19} />
+              <span>أنشئ دعوتك الآن</span>
+            </Link>
+            <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+              <Palette size={19} />
+              <span>استعراض التصاميم</span>
+            </Link>
+          </div>
+        </div>
+
         {showHomePanels ? (
           <section className="section compact live-template-section" data-no-scroll-animation>
             <div className="container live-template-wrap">
               <div className="live-preview-stack">
-                {siteSettings.homepage.showFeatures ? (
-                  <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
-                <div className="home-features-head">
-                  <span>
-                    <Sparkles size={16} />
-                  </span>
-                  <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value={content.features.title}>
-                    {content.features.title}
-                  </h2>
-                </div>
-                <div className="home-feature-points">
-                  {content.features.points.map((item, index) => {
-                    const Icon = (item.icon && FEATURE_ICONS[item.icon]) || featureIcons[index] || Sparkles;
-                    return (
-                      <div className="home-feature-point" key={item.id}>
-                        <span>
-                          <Icon size={17} />
-                        </span>
-                        <strong data-broadcast-key={`features.points.${item.id}.text`} data-broadcast-label={`ميزة: ${item.text}`} data-broadcast-kind="text" data-broadcast-value={item.text}>
-                          {item.text}
-                        </strong>
-                      </div>
-                    );
-                  })}
-                </div>
-                  </div>
-                ) : null}
-                {siteSettings.homepage.showFeatures && (siteSettings.homepage.showPreview || siteSettings.homepage.showPricing) ? <HomeSectionDivider variant="lace" /> : null}
+
                 {siteSettings.homepage.showPreview ? (
                   <>
                     <div className="live-preview-title">
                 <span data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content.preview.eyebrow}>
                   {content.preview.eyebrow}
                 </span>
-                <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value={content.preview.title}>
-                  {content.preview.title}
+                <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value="شاهد كيف تعمل الدعوة">
+                  شاهد كيف تعمل الدعوة
                 </h2>
               </div>
               <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara" data-broadcast-key="preview.media" data-broadcast-label="ميديا المعاينة" data-broadcast-kind="media" data-broadcast-value={previewSettings.mode === "video" ? previewSettings.videoUrl : previewSettings.mode === "image" ? previewSettings.imageUrl : previewSettings.templateSlug}>

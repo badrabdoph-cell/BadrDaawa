@@ -699,6 +699,10 @@ img {
   margin-top: 4px;
 }
 
+.home-cta-section {
+  padding-block: 32px;
+}
+
 .home-cta {
   position: relative;
   isolation: isolate;
