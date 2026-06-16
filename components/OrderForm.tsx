@@ -560,6 +560,7 @@ export function OrderForm({
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
   const lastDraftUrlRef = useRef("");
+  const activeStepIndexRef = useRef(activeStepIndex);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
   const imageUploadRequestsRef = useRef<Array<XMLHttpRequest | null>>(orderImageSlots.map(() => null));
 
@@ -611,7 +612,28 @@ export function OrderForm({
     });
   }, [skipTemplateStep]);
 
-  function goToStep(index: number) {
+  useEffect(() => {
+    activeStepIndexRef.current = activeStepIndex;
+  }, [activeStepIndex]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && typeof event.state.stepIndex === "number") {
+        goToStep(event.state.stepIndex, { pushHistory: false });
+      } else {
+        const currentStep = activeStepIndexRef.current;
+        const firstStep = skipTemplateStep ? 1 : 0;
+        if (currentStep !== firstStep) {
+          goToStep(firstStep, { pushHistory: false });
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [skipTemplateStep]);
+
+  function goToStep(index: number, { pushHistory = true }: { pushHistory?: boolean } = {}) {
     if (formRef.current) {
       const currentValues = getCurrentFormFromDom();
       setForm((current) => ({ ...current, ...currentValues }));
@@ -624,6 +646,10 @@ export function OrderForm({
       finalConfirmIntentAtRef.current = 0;
     }
     setActiveStepIndex(nextIndex);
+    if (pushHistory) {
+      persistDraft();
+      window.history.pushState({ stepIndex: nextIndex }, "", window.location.href);
+    }
     window.setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 40);
