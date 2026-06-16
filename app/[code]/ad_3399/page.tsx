@@ -87,6 +87,181 @@ export default async function CustomerAdminPage({
 
   return (
     <main className="customer-admin customer-admin-refresh">
+      <style>{`
+        .customer-admin-refresh {
+          --client-ivory: #fffdf8;
+          --client-cream: #fbf4e9;
+          --client-gold: #b98738;
+          --client-gold-deep: #7d551f;
+          --client-ink: #221a13;
+          --client-muted: #796b5f;
+          --client-line: rgba(126, 88, 35, 0.17);
+          background: linear-gradient(180deg, #fffaf1 0%, #fbf4e9 48%, #fffdf8 100%);
+        }
+        .customer-admin-refresh .customer-premium-hero,
+        .customer-admin-refresh .customer-mobile-stats {
+          width: min(1120px, calc(100% - 28px));
+          margin-inline: auto;
+        }
+        .customer-admin-refresh .customer-premium-hero {
+          margin-top: 28px;
+          margin-bottom: 18px;
+        }
+        .customer-admin-refresh .customer-premium-card {
+          position: relative;
+          overflow: hidden;
+          border: 1px solid var(--client-line);
+          border-radius: 30px;
+          padding: clamp(22px, 5vw, 40px);
+          background: linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(246, 229, 198, 0.86));
+          box-shadow: 0 24px 70px rgba(46, 33, 19, 0.12);
+        }
+        .customer-admin-refresh .customer-premium-card::before {
+          content: "";
+          position: absolute;
+          inset: 16px;
+          border: 1px solid rgba(185, 135, 56, 0.16);
+          border-radius: 24px;
+          pointer-events: none;
+        }
+        .customer-admin-refresh .customer-premium-card-head,
+        .customer-admin-refresh .customer-invitation-status,
+        .customer-admin-refresh .customer-premium-link-card,
+        .customer-admin-refresh .customer-premium-card-actions {
+          position: relative;
+          z-index: 1;
+        }
+        .customer-admin-refresh .customer-premium-card-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          margin-bottom: 22px;
+        }
+        .customer-admin-refresh .customer-premium-card h1 {
+          position: relative;
+          z-index: 1;
+          margin: 0;
+          color: var(--client-ink);
+          font-size: clamp(2.1rem, 8vw, 4.6rem);
+          line-height: 1.12;
+          letter-spacing: -0.03em;
+        }
+        .customer-admin-refresh .customer-premium-card-lead {
+          position: relative;
+          z-index: 1;
+          max-width: 700px;
+          margin: 12px 0 22px;
+          color: var(--client-muted);
+          font-size: clamp(1rem, 2.5vw, 1.18rem);
+          line-height: 1.9;
+        }
+        .customer-admin-refresh .customer-invitation-status,
+        .customer-admin-refresh .customer-premium-link-card {
+          border: 1px solid rgba(185, 135, 56, 0.2);
+          background: rgba(255, 253, 248, 0.76);
+        }
+        .customer-admin-refresh .customer-invitation-status {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 36px;
+          margin-bottom: 14px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          color: var(--client-gold-deep);
+          font-weight: 900;
+        }
+        .customer-admin-refresh .customer-premium-link-card {
+          display: grid;
+          gap: 7px;
+          margin-bottom: 20px;
+          padding: 15px 17px;
+          border-radius: 20px;
+        }
+        .customer-admin-refresh .customer-premium-link-card span,
+        .customer-admin-refresh .customer-mobile-stats article span {
+          color: var(--client-muted);
+          font-weight: 800;
+        }
+        .customer-admin-refresh .customer-premium-link-card strong {
+          overflow-wrap: anywhere;
+          color: var(--client-ink);
+          font-size: clamp(0.98rem, 2.5vw, 1.14rem);
+        }
+        .customer-admin-refresh .customer-premium-card-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .customer-admin-refresh .customer-premium-card-actions .btn {
+          min-height: 48px;
+          border-radius: 999px;
+          padding-inline: 18px;
+          font-weight: 900;
+        }
+        .customer-admin-refresh .customer-premium-card-actions .btn-gold {
+          background: linear-gradient(135deg, #825922, #b98738 58%, #d7b86a);
+          box-shadow: 0 16px 34px rgba(130, 89, 34, 0.24);
+        }
+        .customer-admin-refresh .customer-mobile-stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          margin-bottom: 18px;
+        }
+        .customer-admin-refresh .customer-mobile-stats article {
+          min-height: 118px;
+          border: 1px solid var(--client-line);
+          border-radius: 22px;
+          background: rgba(255, 253, 248, 0.82);
+          box-shadow: 0 12px 34px rgba(46, 33, 19, 0.08);
+        }
+        .customer-admin-refresh .customer-mobile-stats article svg {
+          color: var(--client-gold-deep);
+        }
+        .customer-admin-refresh .customer-mobile-stats article strong {
+          color: var(--client-ink);
+          font-size: clamp(1.65rem, 5vw, 2.4rem);
+        }
+        .customer-admin-refresh .customer-mobile-section-head .eyebrow,
+        .customer-admin-refresh .customer-premium-card .eyebrow {
+          color: #8a6429;
+        }
+        .customer-admin-refresh .customer-admin-accordion,
+        .customer-admin-refresh .customer-priority-panel,
+        .customer-admin-refresh .customer-guest-book-panel {
+          border-color: rgba(126, 88, 35, 0.14);
+          background: rgba(255, 253, 248, 0.8);
+        }
+        @media (max-width: 720px) {
+          .customer-admin-refresh .customer-premium-hero,
+          .customer-admin-refresh .customer-mobile-stats {
+            width: min(100% - 18px, 1120px);
+          }
+          .customer-admin-refresh .customer-premium-card {
+            border-radius: 24px;
+            padding: 20px;
+          }
+          .customer-admin-refresh .customer-premium-card::before {
+            inset: 10px;
+            border-radius: 19px;
+          }
+          .customer-admin-refresh .customer-premium-card-actions,
+          .customer-admin-refresh .customer-mobile-stats {
+            grid-template-columns: 1fr;
+          }
+          .customer-admin-refresh .customer-premium-card-actions {
+            display: grid;
+          }
+          .customer-admin-refresh .customer-premium-card-actions .btn {
+            width: 100%;
+            justify-content: center;
+            min-height: 52px;
+          }
+          .customer-admin-refresh .customer-mobile-stats article {
+            min-height: 96px;
+          }
+        }
+      `}</style>
       <section className="customer-premium-hero" aria-label="بطاقة الدعوة">
         <article className="customer-premium-card">
           <div className="customer-premium-card-head">
