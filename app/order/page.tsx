@@ -111,30 +111,21 @@ export default async function OrderPage({ searchParams }: PageProps) {
         .order-studio-hero {
           width: min(1120px, calc(100% - 28px));
           margin: 0 auto 22px;
-          display: grid;
-          grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
-          gap: 18px;
-          align-items: stretch;
         }
 
-        .order-studio-hero-card,
-        .order-studio-template-card {
+        .order-studio-hero-card {
           position: relative;
           overflow: hidden;
           border: 1px solid var(--studio-line);
           border-radius: 30px;
+          padding: clamp(22px, 4vw, 38px);
           background:
             radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.88), transparent 18rem),
             linear-gradient(145deg, rgba(255, 253, 248, 0.98), rgba(246, 234, 213, 0.82));
           box-shadow: var(--studio-shadow);
         }
 
-        .order-studio-hero-card {
-          padding: clamp(22px, 4vw, 38px);
-        }
-
-        .order-studio-hero-card::before,
-        .order-studio-template-card::before {
+        .order-studio-hero-card::before {
           content: "";
           position: absolute;
           inset: 14px;
@@ -158,91 +149,20 @@ export default async function OrderPage({ searchParams }: PageProps) {
         }
 
         .order-studio-hero h1 {
-          max-width: 780px;
+          max-width: 850px;
           margin: 16px 0 12px;
           color: var(--studio-ink);
-          font-size: clamp(2.15rem, 6vw, 4.7rem);
-          line-height: 1.05;
+          font-size: clamp(2.05rem, 5.6vw, 4.25rem);
+          line-height: 1.08;
           letter-spacing: -0.04em;
         }
 
         .order-studio-hero p {
-          max-width: 700px;
+          max-width: 760px;
           margin: 0;
           color: var(--studio-muted);
           font-size: clamp(1rem, 2.3vw, 1.16rem);
           line-height: 1.9;
-        }
-
-        .order-studio-points {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 9px;
-          margin-top: 20px;
-        }
-
-        .order-studio-points span {
-          display: inline-flex;
-          align-items: center;
-          min-height: 38px;
-          padding: 8px 12px;
-          border: 1px solid rgba(116, 82, 38, 0.13);
-          border-radius: 999px;
-          background: rgba(255, 253, 248, 0.72);
-          color: #5f4935;
-          font-size: 0.9rem;
-          font-weight: 850;
-          box-shadow: 0 8px 20px rgba(46, 33, 21, 0.06);
-        }
-
-        .order-studio-template-card {
-          min-height: 280px;
-          display: grid;
-          padding: 14px;
-        }
-
-        .order-studio-template-media {
-          position: relative;
-          min-height: 220px;
-          overflow: hidden;
-          border-radius: 22px;
-          background: linear-gradient(135deg, #3a271b, #8e6428);
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22);
-        }
-
-        .order-studio-template-media img {
-          width: 100%;
-          height: 100%;
-          min-height: 220px;
-          object-fit: cover;
-          display: block;
-        }
-
-        .order-studio-template-media::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(180deg, transparent 42%, rgba(33,25,19,0.72));
-        }
-
-        .order-studio-template-title {
-          position: absolute;
-          inset-inline: 14px;
-          bottom: 14px;
-          z-index: 2;
-          color: #fffdf8;
-          display: grid;
-          gap: 4px;
-        }
-
-        .order-studio-template-title small {
-          opacity: 0.78;
-          font-weight: 800;
-        }
-
-        .order-studio-template-title strong {
-          font-size: 1.25rem;
-          font-weight: 950;
         }
 
         .order-studio-page .order-shell {
@@ -380,21 +300,6 @@ export default async function OrderPage({ searchParams }: PageProps) {
           line-height: 1.6;
         }
 
-        @media (max-width: 860px) {
-          .order-studio-hero {
-            grid-template-columns: 1fr;
-          }
-
-          .order-studio-template-card {
-            min-height: 220px;
-          }
-
-          .order-studio-template-media,
-          .order-studio-template-media img {
-            min-height: 210px;
-          }
-        }
-
         @media (max-width: 720px) {
           .order-studio-page .order-builder-main {
             padding-block: 16px 56px;
@@ -406,7 +311,6 @@ export default async function OrderPage({ searchParams }: PageProps) {
           }
 
           .order-studio-hero-card,
-          .order-studio-template-card,
           .order-studio-page .order-wizard-card {
             border-radius: 22px;
           }
@@ -416,16 +320,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
           }
 
           .order-studio-hero h1 {
-            font-size: clamp(2rem, 11vw, 3.2rem);
-          }
-
-          .order-studio-points {
-            gap: 7px;
-          }
-
-          .order-studio-points span {
-            width: 100%;
-            justify-content: center;
+            font-size: clamp(1.85rem, 10vw, 3rem);
           }
 
           .order-studio-page .order-step-tabs {
@@ -452,23 +347,9 @@ export default async function OrderPage({ searchParams }: PageProps) {
         <section className="order-studio-hero" aria-label="مقدمة تصميم الدعوة">
           <article className="order-studio-hero-card">
             <span className="order-studio-kicker">تجربة تصميم دعوة زفاف</span>
-            <h1>صمّم دعوتك خطوة بخطوة وشوفها جاهزة قبل التأكيد</h1>
-            <p>اختار القالب، اكتب بيانات المناسبة، أضف الصور والموسيقى، ثم راجع الدعوة قبل إرسال الطلب. كل شيء محفوظ تلقائيًا أثناء الكتابة.</p>
-            <div className="order-studio-points" aria-label="مميزات الطلب">
-              <span>حفظ تلقائي</span>
-              <span>معاينة قبل التأكيد</span>
-              <span>صور وموسيقى اختيارية</span>
-            </div>
+            <h1>صمّم دعوتك خطوة بخطوة وراجعها في آخر مرحلة قبل التأكيد</h1>
+            <p>اختار القالب، اكتب بيانات المناسبة، وأضف التفاصيل المطلوبة. المعاينة متاحة فقط من زر المعاينة في مرحلة المراجعة النهائية.</p>
           </article>
-          <aside className="order-studio-template-card" aria-label="القالب المختار">
-            <div className="order-studio-template-media">
-              {selected.previewImage ? <img src={selected.previewImage} alt="" /> : null}
-              <div className="order-studio-template-title">
-                <small>القالب المختار</small>
-                <strong>{selected.arabicName || selected.name}</strong>
-              </div>
-            </div>
-          </aside>
         </section>
         <div className="container order-shell">
           <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} />
