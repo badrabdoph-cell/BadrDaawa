@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight, Crown } from "lucide-react";
 import type { OrderInitialDraft } from "@/components/OrderForm";
 import { OrderForm } from "@/components/OrderForm";
+import { OrderRequestUxPatches } from "@/components/OrderRequestUxPatches";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
@@ -384,6 +385,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
           <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} />
         </div>
       </main>
+      <OrderRequestUxPatches />
     </div>
   );
 }
