@@ -78,13 +78,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           width: min(1120px, calc(100% - 22px));
           margin: clamp(22px, 6vw, 56px) auto clamp(18px, 5vw, 42px);
           padding: clamp(18px, 5vw, 34px) clamp(14px, 4vw, 28px) clamp(18px, 5vw, 30px);
-          border: 1px solid rgba(126, 88, 35, 0.16);
+          border: 1px solid rgba(126, 88, 35, 0.2);
           border-radius: clamp(22px, 6vw, 34px);
           background:
-            radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.9), transparent 18rem),
-            radial-gradient(circle at 90% 0%, rgba(185, 137, 61, 0.13), transparent 24rem),
-            linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(250, 241, 227, 0.9));
-          box-shadow: 0 24px 70px rgba(46, 33, 21, 0.11);
+            radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.72), transparent 18rem),
+            radial-gradient(circle at 90% 0%, rgba(185, 137, 61, 0.16), transparent 24rem),
+            linear-gradient(180deg, rgba(246, 234, 213, 0.96), rgba(238, 222, 197, 0.9));
+          box-shadow: 0 24px 70px rgba(46, 33, 21, 0.13);
         }
 
         .home-features-title-block {
@@ -123,7 +123,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           align-items: center;
           justify-content: center;
           gap: 10px;
-          color: #b9893d;
+          color: #9c6b25;
         }
 
         .home-features-title-divider::before,
@@ -131,34 +131,50 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           content: "";
           height: 1px;
           flex: 1;
-          background: linear-gradient(90deg, transparent, rgba(185, 137, 61, 0.46));
+          background: linear-gradient(90deg, transparent, rgba(126, 88, 35, 0.58));
         }
 
         .home-features-title-divider::after {
-          background: linear-gradient(90deg, rgba(185, 137, 61, 0.46), transparent);
+          background: linear-gradient(90deg, rgba(126, 88, 35, 0.58), transparent);
         }
 
         .home-features-panel-upgraded .home-feature-points {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 12px;
+          gap: 14px;
         }
 
         .home-features-panel-upgraded .home-feature-point {
           position: relative;
+          isolation: isolate;
           display: grid;
-          grid-template-columns: 46px minmax(0, 1fr);
+          grid-template-columns: 48px minmax(0, 1fr);
           align-items: center;
-          gap: 12px;
-          min-height: 76px;
-          padding: 14px 14px;
+          gap: 13px;
+          min-height: 82px;
+          padding: 15px 16px;
           overflow: hidden;
-          border: 1px solid rgba(126, 88, 35, 0.14);
-          border-radius: 20px;
+          border: 1.5px solid rgba(100, 65, 26, 0.24);
+          border-radius: 22px;
           background:
-            linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 248, 238, 0.9));
-          box-shadow: 0 12px 26px rgba(46, 33, 21, 0.075);
+            radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.9), transparent 12rem),
+            linear-gradient(180deg, #fffefb 0%, #fffaf1 100%);
+          box-shadow:
+            0 18px 38px rgba(46, 33, 21, 0.13),
+            0 0 0 1px rgba(255, 255, 255, 0.82) inset;
           transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .home-features-panel-upgraded .home-feature-point::before {
+          content: "";
+          position: absolute;
+          inset-block: 12px;
+          inset-inline-start: 0;
+          width: 5px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #7f581f, #bd8f3f, #e4c174);
+          box-shadow: 0 0 20px rgba(189, 143, 63, 0.32);
+          z-index: 1;
         }
 
         .home-features-panel-upgraded .home-feature-point::after {
@@ -167,16 +183,19 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           inset: -80% auto -80% -35%;
           width: 26%;
           transform: rotate(18deg);
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.48), transparent);
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.58), transparent);
           opacity: 0;
           pointer-events: none;
           transition: opacity 180ms ease, transform 320ms ease;
+          z-index: 0;
         }
 
         .home-features-panel-upgraded .home-feature-point:hover {
           transform: translateY(-2px);
-          border-color: rgba(185, 137, 61, 0.34);
-          box-shadow: 0 18px 38px rgba(46, 33, 21, 0.11);
+          border-color: rgba(126, 88, 35, 0.42);
+          box-shadow:
+            0 24px 48px rgba(46, 33, 21, 0.17),
+            0 0 0 1px rgba(255, 255, 255, 0.88) inset;
         }
 
         .home-features-panel-upgraded .home-feature-point:hover::after {
@@ -185,21 +204,25 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         }
 
         .home-features-panel-upgraded .home-feature-point > span {
+          position: relative;
+          z-index: 2;
           display: grid;
-          width: 46px;
-          height: 46px;
+          width: 48px;
+          height: 48px;
           place-items: center;
-          border: 1px solid rgba(185, 137, 61, 0.23);
-          border-radius: 16px;
-          background: linear-gradient(135deg, #fffdf8, #f2dfbd);
-          color: #8e6428;
-          box-shadow: 0 10px 22px rgba(142, 100, 40, 0.12);
+          border: 1px solid rgba(255, 242, 212, 0.5);
+          border-radius: 17px;
+          background: linear-gradient(135deg, #7f581f, #bd8f3f 62%, #e4c174);
+          color: #fffdf8;
+          box-shadow: 0 12px 26px rgba(126, 88, 35, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.24);
         }
 
         .home-features-panel-upgraded .home-feature-point strong {
-          color: #2c2118;
-          font-size: clamp(0.98rem, 4.2vw, 1.1rem);
-          font-weight: 900;
+          position: relative;
+          z-index: 2;
+          color: #241a12;
+          font-size: clamp(1rem, 4.4vw, 1.13rem);
+          font-weight: 950;
           line-height: 1.65;
         }
 
@@ -213,16 +236,23 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         @media (min-width: 980px) {
           .home-features-panel-upgraded .home-feature-points {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
+            gap: 17px;
           }
 
           .home-features-panel-upgraded .home-feature-point {
-            min-height: 104px;
+            min-height: 112px;
             grid-template-columns: 1fr;
             justify-items: center;
             align-content: center;
             text-align: center;
-            padding: 20px 16px;
+            padding: 22px 17px;
+          }
+
+          .home-features-panel-upgraded .home-feature-point::before {
+            inset-block-start: 0;
+            inset-inline: 18px;
+            width: auto;
+            height: 5px;
           }
         }
       `}</style>
