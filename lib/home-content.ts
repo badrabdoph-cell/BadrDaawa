@@ -110,24 +110,25 @@ function cleanText(value: unknown, fallback: string) {
 function normalizeFeaturePoints(value: unknown, fallback: HomeFeaturePoint[]) {
   if (!Array.isArray(value)) return fallback;
   const seen = new Set<string>();
-  const normalized = fallback.map((item, index) => {
-    const incoming = value.find((entry) => entry && typeof entry === "object" && "id" in entry && entry.id === item.id) || value[index];
-    seen.add(item.id);
-    return {
-      id: item.id,
-      text: cleanText((incoming as Partial<HomeFeaturePoint> | undefined)?.text, item.text),
-      icon: (incoming as Partial<HomeFeaturePoint> | undefined)?.icon || item.icon,
-    };
-  });
+  const normalized: HomeFeaturePoint[] = [];
 
   for (const entry of value) {
     if (!entry || typeof entry !== "object") continue;
     const point = entry as Partial<HomeFeaturePoint>;
     if (typeof point.id !== "string" || !point.id.trim() || seen.has(point.id)) continue;
-    const text = cleanText(point.text, "");
-    if (!text) continue;
     seen.add(point.id);
-    normalized.push({ id: point.id.trim(), text, icon: point.icon || undefined });
+    const match = fallback.find((item) => item.id === point.id);
+    normalized.push({
+      id: point.id.trim(),
+      text: cleanText(point.text, match?.text || ""),
+      icon: point.icon || match?.icon,
+    });
+  }
+
+  for (const item of fallback) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    normalized.push({ ...item });
   }
 
   return normalized;
