@@ -9060,7 +9060,8 @@ img {
   grid-template-columns: 32px 32px 32px minmax(0, 1fr) 32px;
 }
 
-.broadcast-feature-row > .broadcast-row-icon {
+.broadcast-feature-row > .broadcast-row-icon,
+.broadcast-inline-form.feature > .broadcast-row-icon {
   width: 100%;
   height: 32px;
 }
@@ -9124,16 +9125,7 @@ img {
   color: #fecaca;
 }
 
-.broadcast-icon-select-trigger {
-  position: relative;
-  display: inline-flex;
-}
-
 .broadcast-icon-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 100;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
@@ -9142,7 +9134,6 @@ img {
   border-radius: 14px;
   background: #141820;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  margin-top: 6px;
   min-width: 190px;
 }
 

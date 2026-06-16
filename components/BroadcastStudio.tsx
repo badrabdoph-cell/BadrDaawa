@@ -87,11 +87,11 @@ export function BroadcastStudio({
   const [templateSlug, setTemplateSlug] = useState(previewTemplateSlug);
   const [newFeature, setNewFeature] = useState("");
   const [newFeatureIcon, setNewFeatureIcon] = useState("Sparkles");
-  const [openIconDropdown, setOpenIconDropdown] = useState<string | null>(null);
-  const iconDropdownRef = useRef<HTMLDivElement>(null);
   const [newPricingFeature, setNewPricingFeature] = useState("");
   const [newPricingInvitation, setNewPricingInvitation] = useState(true);
   const [newPricingPlus, setNewPricingPlus] = useState(true);
+  const [iconDropdown, setIconDropdown] = useState<{ id: string; currentIcon: string; top: number; left: number } | null>(null);
+  const iconDropdownRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
@@ -147,15 +147,15 @@ export function BroadcastStudio({
   }, []);
 
   useEffect(() => {
-    if (!openIconDropdown) return;
+    if (!iconDropdown) return;
     function handleClickOutside(event: MouseEvent) {
       if (iconDropdownRef.current && !iconDropdownRef.current.contains(event.target as Node)) {
-        setOpenIconDropdown(null);
+        setIconDropdown(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [openIconDropdown]);
+  }, [iconDropdown]);
 
   const filteredGroups = useMemo(() => {
     const matches = fields.filter((field) => fieldMatchesQuery(field, query));
@@ -301,37 +301,18 @@ export function BroadcastStudio({
                       >
                         <ChevronDown size={16} />
                       </button>
-                      <div className="broadcast-icon-select-trigger">
-                        <button
-                          className="broadcast-row-icon"
-                          type="button"
-                          title="تغيير الشعار"
-                          disabled={isSaving}
-                          onClick={() => setOpenIconDropdown(openIconDropdown === point.id ? null : point.id)}
-                        >
-                          <CurrentIcon size={16} />
-                        </button>
-                        {openIconDropdown === point.id ? (
-                          <div className="broadcast-icon-dropdown" ref={iconDropdownRef}>
-                            {FEATURE_ICON_NAMES.map((name) => {
-                              const Icon = FEATURE_ICONS[name];
-                              return (
-                                <button
-                                  key={name}
-                                  type="button"
-                                  className={point.icon === name ? "active" : ""}
-                                  onClick={() => {
-                                    runMutation({ action: "setFeatureIcon", id: point.id, icon: name }, "تم تغيير الشعار.");
-                                    setOpenIconDropdown(null);
-                                  }}
-                                >
-                                  <Icon size={18} />
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : null}
-                      </div>
+                      <button
+                        className="broadcast-row-icon"
+                        type="button"
+                        title="تغيير الشعار"
+                        disabled={isSaving}
+                        onClick={(e) => {
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          setIconDropdown(iconDropdown?.id === point.id ? null : { id: point.id, currentIcon: point.icon || "", top: rect.bottom + 4, left: rect.left });
+                        }}
+                      >
+                        <CurrentIcon size={16} />
+                      </button>
                       <button type="button" onClick={() => selectField(`features.points.${point.id}.text`)}>
                         {point.text}
                       </button>
@@ -349,38 +330,46 @@ export function BroadcastStudio({
                 })}
               </div>
               <form className="broadcast-inline-form feature" onSubmit={addFeature}>
-                <div className="broadcast-icon-select-trigger">
-                  <button
-                    className="broadcast-row-icon"
-                    type="button"
-                    title="اختيار شعار"
-                    onClick={() => setOpenIconDropdown(openIconDropdown === "new" ? null : "new")}
-                  >
-                    {(() => { const Icon = FEATURE_ICONS[newFeatureIcon] || FEATURE_ICONS.Sparkles; return <Icon size={16} />; })()}
-                  </button>
-                  {openIconDropdown === "new" ? (
-                    <div className="broadcast-icon-dropdown" ref={iconDropdownRef}>
-                      {FEATURE_ICON_NAMES.map((name) => {
-                        const Icon = FEATURE_ICONS[name];
-                        return (
-                          <button
-                            key={name}
-                            type="button"
-                            className={newFeatureIcon === name ? "active" : ""}
-                            onClick={() => { setNewFeatureIcon(name); setOpenIconDropdown(null); }}
-                          >
-                            <Icon size={18} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
+                <button
+                  className="broadcast-row-icon"
+                  type="button"
+                  title="اختيار شعار"
+                  onClick={(e) => {
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    setIconDropdown(iconDropdown?.id === "new" ? null : { id: "new", currentIcon: newFeatureIcon, top: rect.bottom + 4, left: rect.left });
+                  }}
+                >
+                  {(() => { const Icon = FEATURE_ICONS[newFeatureIcon] || FEATURE_ICONS.Sparkles; return <Icon size={16} />; })()}
+                </button>
                 <input value={newFeature} onChange={(event) => setNewFeature(event.target.value)} placeholder="أضف ميزة جديدة" />
                 <button className="btn btn-soft btn-icon" type="submit" title="إضافة ميزة" disabled={isSaving || !newFeature.trim()}>
                   <Plus size={17} />
                 </button>
               </form>
+              {iconDropdown ? (
+                <div className="broadcast-icon-dropdown" ref={iconDropdownRef} style={{ position: "fixed", top: iconDropdown.top, left: iconDropdown.left, zIndex: 1000 }}>
+                  {FEATURE_ICON_NAMES.map((name) => {
+                    const Icon = FEATURE_ICONS[name];
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        className={iconDropdown.currentIcon === name ? "active" : ""}
+                        onClick={() => {
+                          if (iconDropdown.id === "new") {
+                            setNewFeatureIcon(name);
+                          } else {
+                            runMutation({ action: "setFeatureIcon", id: iconDropdown.id, icon: name }, "تم تغيير الشعار.");
+                          }
+                          setIconDropdown(null);
+                        }}
+                      >
+                        <Icon size={18} />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
             </section>
 
             <section className="broadcast-table-panel">
