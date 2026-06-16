@@ -1676,6 +1676,7 @@ export function OrderForm({
             <div>
               <span>خطوة {activeStepIndex + 1} من {orderWizardSteps.length}</span>
               <h2>{activeStep.title}</h2>
+              <p className="order-wizard-trust-note">يتم حفظ بياناتك تلقائياً أثناء الكتابة، ويمكنك مراجعة كل شيء قبل تأكيد الدعوة.</p>
             </div>
             <strong>{progressPercent}%</strong>
           </header>
@@ -1700,7 +1701,8 @@ export function OrderForm({
                   disabled={skipTemplateStep && index === 0}
                 >
                   <span>{done ? <Check size={13} /> : index + 1}</span>
-                  {step.title}
+                  <strong>{step.title}</strong>
+                  <small>{active ? "الحالية" : done ? "تمت" : index === activeStepIndex + 1 ? "التالية" : ""}</small>
                 </button>
               );
             })}
@@ -1810,10 +1812,10 @@ export function OrderForm({
               <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
                 <label htmlFor="mapUrl">
                   <Link2 size={16} />
-                  رابط اللوكيشن
+                  رابط اللوكيشن <span className="field-optional-badge">اختياري</span>
                 </label>
                 <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
-                <small className="field-preview" id="mapUrl-hint">أفضل رابط يكون من Google Maps مباشرة.</small>
+                <small className="field-preview" id="mapUrl-hint">إضافة موقع القاعة تساعد الضيوف على الوصول بسهولة، ويمكنك إضافته لاحقاً أثناء تجهيز الدعوة.</small>
                 {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
               </div>
             </div>
@@ -1823,7 +1825,7 @@ export function OrderForm({
               window.history.pushState({ modal: "map-picker", stepIndex: activeStepIndex }, "");
             }}>
               <MapPin size={16} />
-              أو حدد المكان مباشرة من الخريطة
+              اختياري: حدد المكان من الخريطة بدل نسخ الرابط
             </button>
 
             <div className="order-location-preview">
@@ -1849,7 +1851,7 @@ export function OrderForm({
             <section className="order-compact-images" aria-labelledby="order-images-title">
               <div className="order-compact-section-head">
                 <h2 id="order-images-title">رفع الصور</h2>
-                <p>3 صور فقط، وكل صورة تظهر معاينتها قبل المعاينة أو التأكيد.</p>
+                <p>ارفع حتى 3 صور للدعوة. يتم ضغط الصور تلقائياً للحفاظ على الجودة وسرعة التحميل.</p>
               </div>
               <div className="compact-image-grid">
                 {orderImageSlots.map((slot, index) => (
@@ -1864,7 +1866,7 @@ export function OrderForm({
                   </div>
                 ))}
               </div>
-              <p className="field-preview">سيتم ضغط الصور وحفظها تلقائياً للمعاينة والطلب.</p>
+              <p className="field-preview">انتظر علامة تم الحفظ قبل تأكيد الطلب، ويمكنك استبدال أي صورة بسهولة.</p>
             </section>
           </section>
 
@@ -1983,7 +1985,21 @@ export function OrderForm({
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
             <div className="order-review-final-note" role="note">
-              هذه هي المرحلة الأخيرة. يرجى مراجعة جميع البيانات والتأكد من صحتها قبل تأكيد الدعوة.
+              وصلت للمرحلة الأخيرة. راجع البيانات الأساسية ثم اضغط تأكيد الدعوة بثقة.
+            </div>
+            <div className="order-review-confidence" role="note">
+              <span>
+                <Check size={15} />
+                البيانات المطلوبة ظاهرة أمامك
+              </span>
+              <span>
+                <Check size={15} />
+                يمكنك تعديل أي بند بالضغط عليه
+              </span>
+              <span>
+                <Check size={15} />
+                الطلب لن يتوقف إذا لم تضف رابط الموقع الآن
+              </span>
             </div>
             <div className="order-review-grid">
               {[
@@ -1992,12 +2008,14 @@ export function OrderForm({
                 ["التاريخ", readableDate || "لم يحدد بعد", 2],
                 ["الهاتف", fieldValue(form.phone), 2],
                 ["مكان الحفل", form.venue.trim() ? "تمت إضافته" : "غير مضاف", 3],
+                ["موقع القاعة", form.mapUrl.trim() ? "تمت إضافته" : "⚠️ لم يتم إضافة موقع القاعة بعد", 3],
                 ["الصور", `${previewImageUrls.length} من 3`, 4],
                 ["الموسيقى", !form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : form.musicChoice === "upload" ? "ملف MP3" : form.musicChoice === "video" ? "صوت من فيديو" : "رابط أغنية", 5],
               ].map(([label, value, step]) => (
-                <button className="order-review-item" key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
+                <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
                   <span>✓ {label}</span>
                   <strong>{value}</strong>
+                  {label === "موقع القاعة" && !form.mapUrl.trim() ? <small>إضافة الموقع تساعد الضيوف، ويمكن إضافته لاحقاً.</small> : null}
                 </button>
               ))}
 
@@ -2051,7 +2069,7 @@ export function OrderForm({
           <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
               <>
-                <button key="review-preview" className="btn btn-gold btn-glow order-preview-action" type="button" onClick={openOrderPreview} disabled={hasMediaUploadInProgress}>
+                <button key="review-preview" className="btn btn-glass order-preview-action" type="button" onClick={openOrderPreview} disabled={hasMediaUploadInProgress}>
                   <Eye size={17} />
                   معاينة الدعوة
                 </button>
