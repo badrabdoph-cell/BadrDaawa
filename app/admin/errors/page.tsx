@@ -2,6 +2,7 @@ import { AlertTriangle, Bug, Clock3, Route, Search, UserRound } from "lucide-rea
 import Link from "next/link";
 import { getErrorEvents } from "@/lib/error-tracking";
 import { formatArabicNumber } from "@/lib/utils";
+import { AdminErrorCopyButtons, AdminErrorEventCopyButton } from "@/components/AdminErrorCopyButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -89,10 +90,13 @@ export default async function AdminErrorsPage({
         {q || route || user ? <Link className="btn btn-soft" href="/admin/errors">مسح</Link> : null}
       </form>
 
+      <AdminErrorCopyButtons events={events} />
+
       <div className="table-shell">
         <table className="data-table errors-table">
           <thead>
             <tr>
+              <th>نسخ</th>
               <th>Route</th>
               <th>Message</th>
               <th>User</th>
@@ -104,6 +108,7 @@ export default async function AdminErrorsPage({
           <tbody>
             {events.map((event) => (
               <tr key={event.id}>
+                <td><AdminErrorEventCopyButton event={event} /></td>
                 <td className="admin-long-link">{shortRoute(event.route)}</td>
                 <td>
                   <strong className="errors-message">{event.message}</strong>
@@ -126,7 +131,7 @@ export default async function AdminErrorsPage({
             ))}
             {!events.length ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <div className="admin-empty-state compact">
                     <AlertTriangle size={22} />
                     <strong>لا توجد أخطاء مطابقة</strong>

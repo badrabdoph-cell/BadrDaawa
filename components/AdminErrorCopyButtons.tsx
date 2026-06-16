@@ -33,7 +33,10 @@ function formatAll(events: ErrorEvent[]) {
 
 export function AdminErrorCopyButtons({ events }: { events: ErrorEvent[] }) {
   const [copiedAll, setCopiedAll] = useState(false);
-  const allTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const [copiedCount, setCopiedCount] = useState(false);
+  const [count, setCount] = useState(5);
+  const allTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const copyAll = useCallback(async () => {
     await navigator.clipboard.writeText(formatAll(events));
@@ -42,6 +45,15 @@ export function AdminErrorCopyButtons({ events }: { events: ErrorEvent[] }) {
     allTimerRef.current = setTimeout(() => setCopiedAll(false), 2000);
   }, [events]);
 
+  const copyCount = useCallback(async () => {
+    const n = Math.min(Math.max(1, count), events.length);
+    const selected = events.slice(0, n);
+    await navigator.clipboard.writeText(formatAll(selected));
+    setCopiedCount(true);
+    if (countTimerRef.current) clearTimeout(countTimerRef.current);
+    countTimerRef.current = setTimeout(() => setCopiedCount(false), 2000);
+  }, [events, count]);
+
   if (!events.length) return null;
 
   return (
@@ -49,6 +61,33 @@ export function AdminErrorCopyButtons({ events }: { events: ErrorEvent[] }) {
       <button className="btn btn-glass" type="button" onClick={copyAll} style={{ fontSize: 13 }}>
         {copiedAll ? <Check size={15} /> : <Copy size={15} />}
         {copiedAll ? "تم نسخ الكل" : "نسخ الكل"}
+      </button>
+
+      <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800 }}>
+        <input
+          type="number"
+          min={1}
+          max={20}
+          value={count}
+          onChange={(e) => setCount(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
+          style={{
+            width: 52,
+            minHeight: 34,
+            padding: "4px 8px",
+            border: "1px solid rgba(180, 139, 57, 0.18)",
+            borderRadius: 6,
+            background: "#fff",
+            color: "#2f261e",
+            fontWeight: 800,
+            fontSize: 13,
+            textAlign: "center",
+          }}
+        />
+      </label>
+
+      <button className="btn btn-glass" type="button" onClick={copyCount} style={{ fontSize: 13 }}>
+        {copiedCount ? <Check size={15} /> : <Copy size={15} />}
+        {copiedCount ? `تم نسخ ${count}` : "نسخ العدد"}
       </button>
     </div>
   );
