@@ -96,10 +96,16 @@ export default async function CustomerAdminPage({
           --client-ink: #221a13;
           --client-muted: #796b5f;
           --client-line: rgba(126, 88, 35, 0.17);
-          background: linear-gradient(180deg, #fffaf1 0%, #fbf4e9 48%, #fffdf8 100%);
+          --client-soft-shadow: 0 16px 42px rgba(46, 33, 19, 0.09);
+          background:
+            radial-gradient(circle at 88% 3%, rgba(185, 135, 56, 0.13), transparent 24rem),
+            linear-gradient(180deg, #fffaf1 0%, #fbf4e9 48%, #fffdf8 100%);
         }
         .customer-admin-refresh .customer-premium-hero,
-        .customer-admin-refresh .customer-mobile-stats {
+        .customer-admin-refresh .customer-mobile-stats,
+        .customer-admin-refresh .customer-priority-panel,
+        .customer-admin-refresh .customer-mobile-section,
+        .customer-admin-refresh .customer-editor-accordions {
           width: min(1120px, calc(100% - 28px));
           margin-inline: auto;
         }
@@ -113,7 +119,9 @@ export default async function CustomerAdminPage({
           border: 1px solid var(--client-line);
           border-radius: 30px;
           padding: clamp(22px, 5vw, 40px);
-          background: linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(246, 229, 198, 0.86));
+          background:
+            radial-gradient(circle at 10% 8%, rgba(255, 255, 255, 0.82), transparent 18rem),
+            linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(246, 229, 198, 0.86));
           box-shadow: 0 24px 70px rgba(46, 33, 19, 0.12);
         }
         .customer-admin-refresh .customer-premium-card::before {
@@ -178,6 +186,7 @@ export default async function CustomerAdminPage({
           margin-bottom: 20px;
           padding: 15px 17px;
           border-radius: 20px;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
         }
         .customer-admin-refresh .customer-premium-link-card span,
         .customer-admin-refresh .customer-mobile-stats article span {
@@ -213,7 +222,7 @@ export default async function CustomerAdminPage({
           border: 1px solid var(--client-line);
           border-radius: 22px;
           background: rgba(255, 253, 248, 0.82);
-          box-shadow: 0 12px 34px rgba(46, 33, 19, 0.08);
+          box-shadow: var(--client-soft-shadow);
         }
         .customer-admin-refresh .customer-mobile-stats article svg {
           color: var(--client-gold-deep);
@@ -226,15 +235,61 @@ export default async function CustomerAdminPage({
         .customer-admin-refresh .customer-premium-card .eyebrow {
           color: #8a6429;
         }
+        .customer-admin-refresh .customer-mobile-section-head h2,
+        .customer-admin-refresh .customer-admin-accordion summary {
+          color: var(--client-ink);
+        }
         .customer-admin-refresh .customer-admin-accordion,
         .customer-admin-refresh .customer-priority-panel,
-        .customer-admin-refresh .customer-guest-book-panel {
+        .customer-admin-refresh .customer-guest-book-panel,
+        .customer-admin-refresh .customer-response-row,
+        .customer-admin-refresh .guest-mobile-row {
           border-color: rgba(126, 88, 35, 0.14);
-          background: rgba(255, 253, 248, 0.8);
+          background: rgba(255, 253, 248, 0.82);
+          box-shadow: 0 10px 28px rgba(46, 33, 19, 0.07);
+        }
+        .customer-admin-refresh .customer-admin-accordion {
+          border-radius: 22px;
+        }
+        .customer-admin-refresh .customer-admin-accordion summary {
+          font-weight: 900;
+        }
+        .customer-admin-refresh .customer-preview-accordion {
+          border-color: rgba(185, 135, 56, 0.24);
+          background: linear-gradient(180deg, rgba(255, 253, 248, 0.92), rgba(246, 229, 198, 0.62));
+          box-shadow: 0 18px 46px rgba(46, 33, 19, 0.1);
+        }
+        .customer-admin-refresh .customer-preview-accordion:not([open]) > :not(summary) {
+          display: block;
+        }
+        .customer-admin-refresh .customer-preview-accordion summary {
+          color: var(--client-gold-deep);
+        }
+        .customer-admin-refresh .builder-preview-panel {
+          border-top: 1px solid rgba(126, 88, 35, 0.12);
+          padding-top: 16px;
+        }
+        .customer-admin-refresh .builder-phone-frame {
+          border-color: rgba(126, 88, 35, 0.18);
+          box-shadow: 0 18px 44px rgba(46, 33, 19, 0.13);
+        }
+        .customer-admin-refresh .builder-editor-panel,
+        .customer-admin-refresh .builder-section,
+        .customer-admin-refresh .customer-export-card {
+          border-color: rgba(126, 88, 35, 0.13);
+          background: rgba(255, 253, 248, 0.78);
+        }
+        .customer-admin-refresh .status.success,
+        .customer-admin-refresh .status.danger,
+        .customer-admin-refresh .guest-book-status-pill {
+          filter: saturate(0.78);
         }
         @media (max-width: 720px) {
           .customer-admin-refresh .customer-premium-hero,
-          .customer-admin-refresh .customer-mobile-stats {
+          .customer-admin-refresh .customer-mobile-stats,
+          .customer-admin-refresh .customer-priority-panel,
+          .customer-admin-refresh .customer-mobile-section,
+          .customer-admin-refresh .customer-editor-accordions {
             width: min(100% - 18px, 1120px);
           }
           .customer-admin-refresh .customer-premium-card {
@@ -259,6 +314,10 @@ export default async function CustomerAdminPage({
           }
           .customer-admin-refresh .customer-mobile-stats article {
             min-height: 96px;
+          }
+          .customer-admin-refresh .customer-preview-accordion .builder-phone-frame {
+            max-width: 330px;
+            margin-inline: auto;
           }
         }
       `}</style>
