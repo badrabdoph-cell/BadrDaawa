@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, Loader2, MapPin, Navigation, X } from "lucide-react";
 
-const FALLBACK_CENTER = { lat: 30.0444, lng: 31.2357 };
+const FALLBACK_LAT = 30.0444;
+const FALLBACK_LNG = 31.2357;
 const GEO_OK_ZOOM = 16;
 const FLY_ZOOM = 17;
-const GEOCODE_DEBOUNCE_MS = 500;
+const GEOCODE_DEBOUNCE_MS = 800;
 
 type GeocodeResult = {
   lat: number;
@@ -18,216 +19,81 @@ type GeocodeResult = {
 };
 
 type GeoStatus = "idle" | "locating" | "ready" | "error";
-type LoadStatus = "idle" | "fetching-key" | "loading-maps" | "ready" | "error";
+type LoadStatus = "idle" | "loading" | "ready" | "error";
 
-type MapsApi = typeof google.maps;
-
-/* ───── priority-ordered venue types for reverse geocode ───── */
-const VENUE_TYPES = new Set([
-  "establishment",
-  "premise",
-  "point_of_interest",
-  "subpremise",
-  "shopping_mall",
-  "stadium",
-  "museum",
-  "university",
-  "school",
-  "airport",
-  "bus_station",
-  "train_station",
-  "subway_station",
-  "transit_station",
-  "park",
-  "restaurant",
-  "lodging",
-  "mosque",
-  "church",
-  "synagogue",
-  "hospital",
-  "police",
-  "post_office",
-  "bank",
-  "supermarket",
-  "department_store",
-  "store",
-  "car_dealer",
-  "car_rental",
-  "car_repair",
-  "gas_station",
-  "pharmacy",
-  "doctor",
-  "dentist",
-  "beauty_salon",
-  "hair_care",
-  "gym",
-  "spa",
-  "night_club",
-  "movie_theater",
-  "casino",
-  "bowling_alley",
-  "art_gallery",
-  "library",
-  "book_store",
-  "florist",
-  "bakery",
-  "food",
-  "meal_delivery",
-  "meal_takeaway",
-  "convenience_store",
-  "electronics_store",
-  "hardware_store",
-  "home_goods_store",
-  "furniture_store",
-  "shoe_store",
-  "clothing_store",
-  "jewelry_store",
-  "pet_store",
-  "bicycle_store",
-  "laundry",
-  "parking",
-  "taxi_stand",
-  "ferry_terminal",
-  "light_rail_station",
-  "campground",
-  "natural_feature",
-  "tourist_attraction",
-  "amusement_park",
-  "aquarium",
-  "zoo",
-]);
-
-function getCurrentPosition(): Promise<GeolocationPosition> {
+/* ───── Leaflet loader ───── */
+function loadLeaflet(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (!("geolocation" in navigator)) {
-      reject(new Error("no-geolocation"));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 9000,
-      maximumAge: 90000,
-    });
-  });
-}
-
-function loadGoogleMapsScript(key: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    /* already loaded and ready */
-    if (window.google?.maps?.Map) {
+    if (typeof (window as any).L !== "undefined") {
       resolve();
       return;
     }
 
-    const callbackName = `__gmaps_init_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-    const w = window as unknown as Record<string, unknown>;
-    w[callbackName] = () => {
-      delete w[callbackName];
-      resolve();
-    };
-
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[src*="maps.googleapis.com/maps/api/js"]',
-    );
-    if (existing) {
-      /* script tag exists but not ready yet — wait for callback */
-      return;
-    }
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    link.onerror = () => reject(new Error("leaflet-css-failed"));
+    document.head.appendChild(link);
 
     const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=${callbackName}`;
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
     s.async = true;
-    s.onerror = () => {
-      delete w[callbackName];
-      reject(new Error("gmaps-load-failed"));
+    s.onload = () => {
+      const check = (n = 0) => {
+        if (n > 20) { reject(new Error("leaflet-timeout")); return; }
+        if (typeof (window as any).L !== "undefined") resolve();
+        else setTimeout(() => check(n + 1), 50);
+      };
+      check();
     };
+    s.onerror = () => reject(new Error("leaflet-js-failed"));
     document.head.appendChild(s);
   });
 }
 
-async function fetchApiKey(): Promise<string> {
-  const res = await fetch("/api/config/google-maps-key");
-  if (!res.ok) return "";
-  const data = await res.json();
-  return typeof data.key === "string" ? data.key : "";
-}
+/* ───── Nominatim reverse geocode ───── */
+type OSMAddr = {
+  road?: string; house_number?: string; city?: string; town?: string;
+  village?: string; county?: string; state?: string; country?: string;
+  suburb?: string; neighbourhood?: string; amenity?: string; shop?: string;
+  tourism?: string; leisure?: string; office?: string; man_made?: string;
+  craft?: string; building?: string;
+};
 
-function geocodeLatLng(
-  maps: MapsApi,
-  lat: number,
-  lng: number,
-): Promise<google.maps.GeocoderResult[]> {
-  const geocoder = new maps.Geocoder();
-  return new Promise((resolve, reject) => {
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === "OK" && results?.length) {
-        resolve(results);
-      } else {
-        reject(new Error(`geocode-failed:${status}`));
-      }
-    });
-  });
-}
+type NominatimResult = {
+  lat: string; lon: string; display_name: string; name?: string;
+  category?: string; type?: string; address: OSMAddr;
+};
 
-function extractPlaceInfo(
-  results: google.maps.GeocoderResult[],
-  lat: number,
-  lng: number,
-): GeocodeResult {
-  const allComponents: google.maps.GeocoderAddressComponent[] = [];
-  const resultTypes = new Set(results[0]?.types || []);
+let _lastNominatim = 0;
 
-  for (const r of results) {
-    if (r.address_components) {
-      allComponents.push(...r.address_components);
-    }
-  }
+async function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult> {
+  const now = Date.now();
+  const wait = 1000 - (now - _lastNominatim);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  _lastNominatim = Date.now();
 
-  /* ── placeName: venue POI first, then route, then formatted_address ── */
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&addressdetails=1&accept-language=ar`;
+  const res = await fetch(url, { headers: { "User-Agent": "BadrDaawa/1.0" } });
+  if (!res.ok) throw new Error(`nominatim-${res.status}`);
+
+  const d: NominatimResult = await res.json();
+  const a = d.address || ({} as OSMAddr);
+
+  const isPOI = ["amenity","shop","tourism","leisure","office","man_made","craft"].includes(d.category || "");
   let placeName = "";
-  let streetName = "";
-
-  for (const comp of allComponents) {
-    const typeSet = new Set(comp.types);
-    const isVenue = [...typeSet].some((t) => VENUE_TYPES.has(t));
-    if (isVenue && !placeName) {
-      placeName = comp.long_name;
-    }
-    if (typeSet.has("route") && !streetName) {
-      streetName = comp.long_name;
-    }
-  }
-
+  if (isPOI && d.name) placeName = d.name;
+  if (!placeName && a.amenity) placeName = a.amenity;
+  if (!placeName && a.shop) placeName = a.shop;
   if (!placeName) {
-    placeName =
-      streetName ||
-      results[0]?.formatted_address ||
-      `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    const parts = [a.road, a.house_number].filter(Boolean);
+    if (parts.length) placeName = parts.join(" ");
   }
+  if (!placeName) placeName = d.display_name?.split(",")[0]?.trim() || "";
+  if (!placeName) placeName = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
-  /* ── city: locality > sublocality > admin_level_2 > postal_town ── */
-  const cityPriority = [
-    "locality",
-    "sublocality",
-    "administrative_area_level_2",
-    "postal_town",
-    "neighborhood",
-  ];
-  let city = "";
-  for (const ct of cityPriority) {
-    const comp = allComponents.find((c) => c.types.includes(ct));
-    if (comp) {
-      city = comp.long_name;
-      break;
-    }
-  }
-
-  /* ── governorate: admin_level_1 ── */
-  const govComp = allComponents.find((c) =>
-    c.types.includes("administrative_area_level_1"),
-  );
-  const governorate = govComp?.long_name || "";
+  const city = a.city || a.town || a.village || a.county || a.suburb || "";
+  const governorate = a.state || "";
 
   return {
     lat: Number(lat.toFixed(6)),
@@ -235,8 +101,18 @@ function extractPlaceInfo(
     placeName,
     city,
     governorate,
-    googleMapsUrl: `https://maps.google.com/?q=${lat.toFixed(6)},${lng.toFixed(6)}`,
+    googleMapsUrl: `https://www.openstreetmap.org/?mlat=${lat.toFixed(6)}&mlon=${lng.toFixed(6)}`,
   };
+}
+
+/* ───── geolocation ───── */
+function getCurrentPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) { reject(new Error("no-geolocation")); return; }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true, timeout: 9000, maximumAge: 90000,
+    });
+  });
 }
 
 export function LocationPickerModal({
@@ -249,18 +125,17 @@ export function LocationPickerModal({
   onCancel: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<any>(null);
   const geoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(false);
-  const pendingGeoRef = useRef<{ lat: number; lng: number } | null>(null);
+  const initStartedRef = useRef(false);
   const geoAttemptedRef = useRef(false);
-  const initCalledRef = useRef(false);
+  const pendingCenterRef = useRef<[number, number] | null>(null);
 
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const [location, setLocation] = useState<GeocodeResult | null>(null);
   const [locating, setLocating] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   /* ========== reset on close ========== */
   useEffect(() => {
@@ -269,52 +144,37 @@ export function LocationPickerModal({
       setGeoStatus("idle");
       setLocation(null);
       setLocating(false);
-      setErrorMessage("");
-      initCalledRef.current = false;
+      initStartedRef.current = false;
       geoAttemptedRef.current = false;
-      pendingGeoRef.current = null;
+      pendingCenterRef.current = null;
       if (geoTimeoutRef.current) {
         clearTimeout(geoTimeoutRef.current);
         geoTimeoutRef.current = null;
       }
       if (mapRef.current) {
-        const el = (mapRef.current as unknown as { getDiv(): HTMLElement }).getDiv();
+        mapRef.current.remove();
         mapRef.current = null;
       }
     }
   }, [open]);
 
-  /* ========== load Google Maps ========== */
+  /* ========== load Leaflet ========== */
   useEffect(() => {
     if (!open) return;
     mountedRef.current = true;
     let cancelled = false;
 
     (async () => {
-      setLoadStatus("fetching-key");
-      const key = await fetchApiKey();
-      if (cancelled) return;
-      if (!key) {
-        setLoadStatus("error");
-        setErrorMessage("مفتاح Google Maps غير مضبوط. تواصل مع مدير الموقع.");
-        return;
-      }
-      setLoadStatus("loading-maps");
+      setLoadStatus("loading");
       try {
-        await loadGoogleMapsScript(key);
+        await loadLeaflet();
         if (!cancelled) setLoadStatus("ready");
       } catch {
-        if (!cancelled) {
-          setLoadStatus("error");
-          setErrorMessage("تعذر تحميل الخريطة. تحقق من صحة مفتاح Google Maps.");
-        }
+        if (!cancelled) setLoadStatus("error");
       }
     })();
 
-    return () => {
-      cancelled = true;
-      mountedRef.current = false;
-    };
+    return () => { cancelled = true; mountedRef.current = false; };
   }, [open]);
 
   /* ========== geolocation on mount ========== */
@@ -325,138 +185,108 @@ export function LocationPickerModal({
     getCurrentPosition()
       .then((pos) => {
         if (!mountedRef.current) return;
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        pendingGeoRef.current = { lat, lng };
-
-        console.log("[LocationPicker] Geolocation on mount:", { lat, lng });
-
+        const { latitude: lat, longitude: lng } = pos.coords;
+        pendingCenterRef.current = [lat, lng];
         const map = mapRef.current;
-        if (map) {
-          map.setCenter({ lat, lng });
-          map.setZoom(GEO_OK_ZOOM);
-        }
+        if (map) map.setView([lat, lng], GEO_OK_ZOOM);
       })
-      .catch((err) => {
-        if (!mountedRef.current) return;
-        console.log("[LocationPicker] Geolocation on mount failed:", err.message);
-      });
+      .catch(() => {});
   }, [open]);
 
   /* ========== init map ========== */
   useEffect(() => {
-    if (loadStatus !== "ready" || !open || !containerRef.current || mapRef.current || initCalledRef.current) return;
+    if (loadStatus !== "ready" || !open || !containerRef.current || initStartedRef.current) return;
+    initStartedRef.current = true;
 
-    const maps = window.google?.maps;
-    if (!maps || typeof maps.Map !== "function") return;
+    const L = (window as any).L;
+    if (!L) return;
 
-    initCalledRef.current = true;
-    const startCenter = pendingGeoRef.current || FALLBACK_CENTER;
+    const startCenter = pendingCenterRef.current || [FALLBACK_LAT, FALLBACK_LNG];
+    pendingCenterRef.current = null;
 
-    const map = new maps.Map(containerRef.current, {
+    const map = L.map(containerRef.current, {
       center: startCenter,
       zoom: GEO_OK_ZOOM,
-      mapTypeId: "hybrid",
-      tilt: 45,
-      gestureHandling: "greedy",
       zoomControl: true,
-      mapTypeControl: false,
-      fullscreenControl: false,
-      streetViewControl: false,
+      attributionControl: true,
     });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
 
     mapRef.current = map;
 
-    maps.event.addListener(map, "dragend", () => {
-      handleMoveEnd(maps);
-    });
+    function startGeocode() {
+      if (geoTimeoutRef.current) clearTimeout(geoTimeoutRef.current);
+      const c = map.getCenter();
+      geoTimeoutRef.current = setTimeout(async () => {
+        if (!mountedRef.current) return;
+        setGeoStatus("locating");
+        try {
+          const info = await reverseGeocode(c.lat, c.lng);
+          if (!mountedRef.current) return;
+          setLocation(info);
+          setGeoStatus("ready");
+        } catch {
+          if (mountedRef.current) setGeoStatus("error");
+        }
+      }, GEOCODE_DEBOUNCE_MS);
+    }
 
-    maps.event.addListener(map, "zoom_changed", () => {
-      handleMoveEnd(maps);
-    });
+    map.on("moveend", startGeocode);
+    map.on("zoomend", startGeocode);
 
-    doGeocode(maps, startCenter.lat, startCenter.lng);
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    /* initial geocode */
+    setGeoStatus("locating");
+    reverseGeocode(startCenter[0], startCenter[1])
+      .then((info) => {
+        if (!mountedRef.current) return;
+        setLocation(info);
+        setGeoStatus("ready");
+      })
+      .catch(() => {
+        if (mountedRef.current) setGeoStatus("error");
+      });
   }, [loadStatus, open]);
 
-  /* ========== handle moveend ========== */
-  function handleMoveEnd(maps: MapsApi) {
-    if (geoTimeoutRef.current) clearTimeout(geoTimeoutRef.current);
-    const map = mapRef.current;
-    if (!map) return;
-    const center = map.getCenter();
-    const lat = center.lat();
-    const lng = center.lng();
-    geoTimeoutRef.current = setTimeout(() => {
-      doGeocode(maps, lat, lng);
-    }, GEOCODE_DEBOUNCE_MS);
-  }
-
-  /* ========== reverse geocode ========== */
-  async function doGeocode(maps: MapsApi, lat: number, lng: number) {
-    setGeoStatus("locating");
-    try {
-      const results = await geocodeLatLng(maps, lat, lng);
-      if (!mountedRef.current) return;
-      const info = extractPlaceInfo(results, lat, lng);
-      setLocation(info);
-      setGeoStatus("ready");
-    } catch {
-      if (mountedRef.current) {
-        setGeoStatus("error");
-      }
-    }
-  }
-
-  /* ========== B: use my location ========== */
+  /* ========== use my location ========== */
   function handleLocate() {
     if (!("geolocation" in navigator)) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         if (!mountedRef.current) return;
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        console.log("[LocationPicker] Use My Location success:", { lat, lng });
+        const { latitude: lat, longitude: lng } = pos.coords;
         const map = mapRef.current;
-        if (!map) {
-          setLocating(false);
-          return;
-        }
-        map.setCenter({ lat, lng });
-        map.setZoom(FLY_ZOOM);
+        if (map) map.setView([lat, lng], FLY_ZOOM);
         setLocating(false);
       },
-      () => {
-        if (!mountedRef.current) return;
-        console.log("[LocationPicker] Use My Location denied");
-        setLocating(false);
-      },
+      () => { if (mountedRef.current) setLocating(false); },
       { enableHighAccuracy: true, timeout: 9000, maximumAge: 90000 },
     );
   }
 
-  /* ========== confirm ========== */
+  /* ========== confirm / cancel ========== */
   function handleConfirm() {
     if (!location) return;
-    console.log("[LocationPicker] Confirm:", location);
     onConfirm(location);
   }
 
-  /* ========== cancel ========== */
   function handleCancel() {
     if (geoTimeoutRef.current) clearTimeout(geoTimeoutRef.current);
     if (mapRef.current) {
+      mapRef.current.remove();
       mapRef.current = null;
     }
     setLoadStatus("idle");
     setGeoStatus("idle");
     setLocation(null);
     setLocating(false);
-    setErrorMessage("");
-    initCalledRef.current = false;
+    initStartedRef.current = false;
     geoAttemptedRef.current = false;
-    pendingGeoRef.current = null;
+    pendingCenterRef.current = null;
     onCancel();
   }
 
@@ -478,17 +308,13 @@ export function LocationPickerModal({
           {loadStatus === "error" ? (
             <div className="location-picker-state">
               <p className="location-picker-state-icon">⚠️</p>
-              <p>{errorMessage || "تعذر تحميل الخريطة. تأكد من اتصالك بالإنترنت أو الصق الرابط يدوياً."}</p>
+              <p>تعذر تحميل الخريطة. تأكد من اتصالك بالإنترنت أو الصق الرابط يدوياً.</p>
               <button className="btn btn-soft" type="button" onClick={handleCancel}>إغلاق</button>
             </div>
           ) : loadStatus !== "ready" ? (
             <div className="location-picker-state">
               <Loader2 size={28} className="animate-float" />
-              <p>
-                {loadStatus === "fetching-key"
-                  ? "جار تجهيز الخريطة..."
-                  : "جار تحميل الخريطة..."}
-              </p>
+              <p>جار تحميل الخريطة...</p>
             </div>
           ) : (
             <>
@@ -526,16 +352,12 @@ export function LocationPickerModal({
                   <>
                     <div className="location-picker-details-row">
                       <MapPin size={16} />
-                      <span className="location-picker-details-place">
-                        {location.placeName}
-                      </span>
+                      <span className="location-picker-details-place">{location.placeName}</span>
                     </div>
                     {(location.city || location.governorate) ? (
                       <div className="location-picker-details-row location-picker-details-secondary">
                         <Navigation size={14} />
-                        <span>
-                          {[location.city, location.governorate].filter(Boolean).join("، ")}
-                        </span>
+                        <span>{[location.city, location.governorate].filter(Boolean).join("، ")}</span>
                       </div>
                     ) : null}
                     <div className="location-picker-details-coords">
@@ -551,27 +373,16 @@ export function LocationPickerModal({
         {/* actions */}
         {loadStatus === "ready" ? (
           <div className="location-picker-actions">
-            <button
-              className="btn btn-glass"
-              type="button"
-              onClick={handleLocate}
-              disabled={locating}
-            >
+            <button className="btn btn-glass" type="button" onClick={handleLocate} disabled={locating}>
               <Crosshair size={17} />
               {locating ? "جلب الموقع..." : "استخدام موقعي الحالي"}
             </button>
             <div className="location-picker-actions-right">
-              <button
-                className="btn btn-gold btn-glow"
-                type="button"
-                onClick={handleConfirm}
-                disabled={geoStatus !== "ready" || !location}
-              >
+              <button className="btn btn-gold btn-glow" type="button" onClick={handleConfirm}
+                disabled={geoStatus !== "ready" || !location}>
                 تأكيد الموقع
               </button>
-              <button className="btn btn-soft" type="button" onClick={handleCancel}>
-                إلغاء
-              </button>
+              <button className="btn btn-soft" type="button" onClick={handleCancel}>إلغاء</button>
             </div>
           </div>
         ) : null}

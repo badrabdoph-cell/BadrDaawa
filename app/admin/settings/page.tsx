@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { Camera, ExternalLink, Home, Image, Mail, Map, Phone, Save, Search, Settings } from "lucide-react";
+import { Camera, ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
-import { getGoogleMapsSettings } from "@/lib/google-maps-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +18,7 @@ export default async function AdminSiteSettingsPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const [params, settings, previewSettings, templates, googleMapsSettings] = await Promise.all([searchParams, getSiteSettings(), getHomePreviewSettings(), getTemplatesWithSettings(), getGoogleMapsSettings()]);
+  const [params, settings, previewSettings, templates] = await Promise.all([searchParams, getSiteSettings(), getHomePreviewSettings(), getTemplatesWithSettings()]);
   const message = notice(params.saved, params.error);
 
   return (
@@ -237,22 +236,6 @@ export default async function AdminSiteSettingsPage({
           <p className="site-settings-note">هذا الإعداد لا يضيف المصور تلقائياً لأي دعوة؛ هو يتحكم فقط في السماح بظهور بيانات المصور عندما تكون مفعلة داخل الدعوة نفسها.</p>
         </article>
 
-        <article className="panel site-settings-card">
-          <div className="admin-card-head">
-            <Map size={22} />
-            <div>
-              <span className="eyebrow">Google Maps</span>
-              <h2>مفتاح Google Maps API</h2>
-            </div>
-          </div>
-          <div className="admin-form-grid">
-            <label className="field full">
-              <span>مفتاح API</span>
-              <input name="googleMapsApiKey" defaultValue={googleMapsSettings.apiKey} placeholder="AIzaSy..." dir="ltr" />
-              <small>مطلوب لاستخدام خرائط Google في اختيار الموقع. يمكنك الحصول على مفتاح من <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>. يجب تفعيل <strong>Maps JavaScript API</strong> و <strong>Geocoding API</strong>.</small>
-            </label>
-          </div>
-        </article>
 
         <div className="site-settings-sticky-actions">
           <span>

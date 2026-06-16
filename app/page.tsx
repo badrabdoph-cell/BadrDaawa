@@ -121,8 +121,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               <span>
                 <Sparkles size={16} />
               </span>
-              <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value={content.features.title}>
-                {content.features.title}
+              <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value="المميزات ال هتاخدها في دعوت فرحك ✨">
+                المميزات ال هتاخدها في دعوت فرحك ✨
               </h2>
             </div>
             <div className="home-feature-points">
