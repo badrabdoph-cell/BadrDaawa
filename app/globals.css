@@ -5230,9 +5230,7 @@ img {
 .admin-dark-shell .dashboard-layout {
   grid-template-columns: 292px minmax(0, 1fr);
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(201, 155, 71, 0.12), transparent 28rem),
-    linear-gradient(135deg, #080a0f 0%, #11141b 54%, #15100a 100%);
+  background: linear-gradient(135deg, #080a0f 0%, #11141b 54%, #15100a 100%);
 }
 
 .admin-dark-shell .dashboard-sidebar {
@@ -5241,10 +5239,8 @@ img {
   justify-content: space-between;
   gap: 20px;
   padding: 18px;
-  border-inline-end: 1px solid rgba(245, 234, 214, 0.1);
-  background:
-    linear-gradient(180deg, rgba(15, 17, 23, 0.96), rgba(10, 12, 17, 0.98)),
-    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.12), transparent 18rem);
+  border-inline-end: 1px solid rgba(245, 234, 214, 0.12);
+  background: linear-gradient(180deg, rgba(15, 17, 23, 0.96), rgba(10, 12, 17, 0.98));
 }
 
 .admin-brand {
@@ -5270,7 +5266,7 @@ img {
 }
 
 .admin-brand small {
-  color: rgba(245, 234, 214, 0.54);
+  color: rgba(245, 234, 214, 0.68);
   font-size: 0.76rem;
   font-weight: 900;
   letter-spacing: 0;
@@ -5340,7 +5336,7 @@ img {
   padding: 11px 12px;
   border: 1px solid transparent;
   border-radius: 12px;
-  color: rgba(255, 248, 234, 0.68);
+  color: rgba(255, 248, 234, 0.78);
 }
 
 .admin-dark-shell .dashboard-nav a::before {
@@ -5915,7 +5911,7 @@ img {
   min-height: 68px;
   margin: 0;
   padding: 16px;
-  border: 1px solid rgba(245, 234, 214, 0.1);
+  border: 1px solid rgba(245, 234, 214, 0.12);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.04);
 }
@@ -5927,9 +5923,7 @@ img {
 .admin-dark-shell .admin-hero-panel {
   margin: 0;
   border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(28, 31, 40, 0.96), rgba(12, 14, 19, 0.92)),
-    radial-gradient(circle at 8% 0%, rgba(243, 207, 115, 0.14), transparent 24rem);
+  background: linear-gradient(135deg, rgba(28, 31, 40, 0.96), rgba(12, 14, 19, 0.92));
 }
 
 .admin-dark-shell .admin-hero-panel h1 {
@@ -5966,7 +5960,7 @@ img {
 
 .admin-dark-shell .stat-card p {
   margin: 10px 0 0;
-  color: rgba(245, 234, 214, 0.54);
+  color: rgba(245, 234, 214, 0.72);
   font-size: 0.84rem;
   font-weight: 850;
 }
@@ -10004,7 +9998,7 @@ img {
   top: 0;
   z-index: 1;
   background: rgba(14, 16, 22, 0.96);
-  color: rgba(245, 234, 214, 0.64);
+  color: rgba(245, 234, 214, 0.78);
 }
 
 .admin-dark-shell .data-table td {
@@ -10012,7 +10006,7 @@ img {
 }
 
 .admin-dark-shell .data-table tbody tr:hover {
-  background: rgba(243, 207, 115, 0.045);
+  background: rgba(243, 207, 115, 0.07);
 }
 
 .login-page {
@@ -10251,9 +10245,7 @@ img {
 
 .admin-dark-shell .admin-hero-panel {
   border-color: rgba(243, 207, 115, 0.16);
-  background:
-    radial-gradient(circle at 8% 0%, rgba(243, 207, 115, 0.15), transparent 24rem),
-    linear-gradient(135deg, rgba(24, 27, 34, 0.96), rgba(13, 15, 20, 0.9));
+  background: linear-gradient(135deg, rgba(24, 27, 34, 0.96), rgba(13, 15, 20, 0.9));
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
 }
 
@@ -10277,7 +10269,7 @@ img {
 }
 
 .admin-dark-shell .field small {
-  color: rgba(245, 234, 214, 0.68);
+  color: rgba(245, 234, 214, 0.72);
 }
 
 .admin-dark-shell .field input,
@@ -10362,7 +10354,7 @@ img {
 }
 
 .admin-dark-shell .data-table th {
-  color: rgba(245, 234, 214, 0.64);
+  color: rgba(245, 234, 214, 0.78);
 }
 
 .admin-dark-shell .status {
@@ -10377,16 +10369,16 @@ img {
 
 .admin-dark-shell .template-edit-panel,
 .admin-dark-shell .template-edit-details {
-  border-top-color: rgba(245, 234, 214, 0.1);
+  border-top-color: rgba(245, 234, 214, 0.12);
 }
 
 .admin-dark-shell .admin-text-search {
-  border-color: rgba(245, 234, 214, 0.1);
+  border-color: rgba(245, 234, 214, 0.12);
   background: rgba(8, 10, 14, 0.46);
 }
 
 .admin-dark-shell .text-match-list button {
-  border-color: rgba(245, 234, 214, 0.1);
+  border-color: rgba(245, 234, 214, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: #f5ead6;
 }

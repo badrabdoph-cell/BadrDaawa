@@ -116,11 +116,13 @@ function normalizeFeaturePoints(value: unknown, fallback: HomeFeaturePoint[]) {
     if (!entry || typeof entry !== "object") continue;
     const point = entry as Partial<HomeFeaturePoint>;
     if (typeof point.id !== "string" || !point.id.trim() || seen.has(point.id)) continue;
-    seen.add(point.id);
     const match = fallback.find((item) => item.id === point.id);
+    const text = cleanText(point.text, match?.text || "");
+    if (!text) continue;
+    seen.add(point.id);
     normalized.push({
       id: point.id.trim(),
-      text: cleanText(point.text, match?.text || ""),
+      text,
       icon: point.icon || match?.icon,
     });
   }
@@ -137,30 +139,28 @@ function normalizeFeaturePoints(value: unknown, fallback: HomeFeaturePoint[]) {
 function normalizePricingRows(value: unknown, fallback: HomePricingRow[]) {
   if (!Array.isArray(value)) return fallback;
   const seen = new Set<string>();
-  const normalized = fallback.map((item, index) => {
-    const incoming = value.find((entry) => entry && typeof entry === "object" && "id" in entry && entry.id === item.id) || value[index];
-    seen.add(item.id);
-    return {
-      id: item.id,
-      feature: cleanText((incoming as Partial<HomePricingRow> | undefined)?.feature, item.feature),
-      invitation: typeof (incoming as Partial<HomePricingRow> | undefined)?.invitation === "boolean" ? Boolean((incoming as Partial<HomePricingRow>).invitation) : item.invitation,
-      plus: typeof (incoming as Partial<HomePricingRow> | undefined)?.plus === "boolean" ? Boolean((incoming as Partial<HomePricingRow>).plus) : item.plus,
-    };
-  });
+  const normalized: HomePricingRow[] = [];
 
   for (const entry of value) {
     if (!entry || typeof entry !== "object") continue;
     const row = entry as Partial<HomePricingRow>;
     if (typeof row.id !== "string" || !row.id.trim() || seen.has(row.id)) continue;
-    const feature = cleanText(row.feature, "");
+    const match = fallback.find((item) => item.id === row.id);
+    const feature = cleanText(row.feature, match?.feature || "");
     if (!feature) continue;
     seen.add(row.id);
     normalized.push({
       id: row.id.trim(),
       feature,
-      invitation: typeof row.invitation === "boolean" ? row.invitation : true,
-      plus: typeof row.plus === "boolean" ? row.plus : true,
+      invitation: typeof row.invitation === "boolean" ? row.invitation : (match?.invitation ?? true),
+      plus: typeof row.plus === "boolean" ? row.plus : (match?.plus ?? true),
     });
+  }
+
+  for (const item of fallback) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    normalized.push({ ...item });
   }
 
   return normalized;
