@@ -9,6 +9,7 @@ import { getHomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
 import { getSiteSettings } from "@/lib/site-settings";
+import { FEATURE_ICONS } from "@/lib/feature-icons";
 
 const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
@@ -143,7 +144,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 </div>
                 <div className="home-feature-points">
                   {content.features.points.map((item, index) => {
-                    const Icon = featureIcons[index] || Sparkles;
+                    const Icon = (item.icon && FEATURE_ICONS[item.icon]) || featureIcons[index] || Sparkles;
                     return (
                       <div className="home-feature-point" key={item.id}>
                         <span>

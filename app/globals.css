@@ -9057,7 +9057,12 @@ img {
 }
 
 .broadcast-feature-row {
-  grid-template-columns: minmax(0, 1fr) 38px;
+  grid-template-columns: 32px 32px 32px minmax(0, 1fr) 32px;
+}
+
+.broadcast-feature-row > .broadcast-row-icon {
+  width: 100%;
+  height: 32px;
 }
 
 .broadcast-pricing-row {
@@ -9119,10 +9124,61 @@ img {
   color: #fecaca;
 }
 
+.broadcast-icon-select-trigger {
+  position: relative;
+  display: inline-flex;
+}
+
+.broadcast-icon-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid rgba(245, 234, 214, 0.15);
+  border-radius: 14px;
+  background: #141820;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  margin-top: 6px;
+  min-width: 190px;
+}
+
+.broadcast-icon-dropdown > button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(245, 234, 214, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 234, 214, 0.7);
+  cursor: pointer;
+  font: inherit;
+}
+
+.broadcast-icon-dropdown > button:hover {
+  border-color: rgba(96, 165, 250, 0.32);
+  background: rgba(96, 165, 250, 0.11);
+  color: #fff7e8;
+}
+
+.broadcast-icon-dropdown > button.active {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(52, 211, 153, 0.12);
+  color: #a7f3d0;
+}
+
 .broadcast-inline-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 42px;
   gap: 8px;
+}
+
+.broadcast-inline-form.feature {
+  grid-template-columns: 32px minmax(0, 1fr) 42px;
 }
 
 .broadcast-inline-form.pricing {

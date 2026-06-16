@@ -89,55 +89,68 @@
     "points": [
       {
         "id": "rsvp-open",
-        "text": "إدارة الحضور"
+        "text": "إدارة الحضور",
+        "icon": "UserCheck"
       },
       {
         "id": "guest-records",
-        "text": "كشف كامل بأسماء وأرقام المسجلين للحضور"
+        "text": "كشف كامل بأسماء وأرقام المسجلين للحضور",
+        "icon": "UsersRound"
       },
       {
         "id": "client-admin",
-        "text": "لوحة تحكم خاصة بك"
+        "text": "لوحة تحكم خاصة بك",
+        "icon": "SlidersHorizontal"
       },
       {
         "id": "reminder",
-        "text": "إرسال تذكير تلقائي بموعد الزفاف"
+        "text": "إرسال تذكير تلقائي بموعد الزفاف",
+        "icon": "BellRing"
       },
       {
         "id": "music",
-        "text": "أضف الموسيقى التي تحبها للدعوة"
+        "text": "أضف الموسيقى التي تحبها للدعوة",
+        "icon": "Headphones"
       },
       {
         "id": "anytime-edit",
-        "text": "عدّل دعوتك وقتما تشاء"
+        "text": "عدّل دعوتك وقتما تشاء",
+        "icon": "Sparkles"
       },
       {
         "id": "self-create",
-        "text": "تحكم كامل في تفاصيل دعوتك"
+        "text": "تحكم كامل في تفاصيل دعوتك",
+        "icon": "Sparkles"
       },
       {
         "id": "support",
-        "text": "دعم ومساعدة عند الحاجة"
+        "text": "دعم ومساعدة عند الحاجة",
+        "icon": "Headphones"
       },
       {
         "id": "send-message",
-        "text": "إرسال رسائل للضيوف بضغطة واحدة"
+        "text": "إرسال رسائل للضيوف بضغطة واحدة",
+        "icon": "Send"
       },
       {
         "id": "free-edit",
-        "text": "عدّل دعوتك وقتما تشاء"
+        "text": "عدّل دعوتك وقتما تشاء",
+        "icon": "SlidersHorizontal"
       },
       {
         "id": "poll",
-        "text": "معرفة عدد الحضور المتوقع بدقة"
+        "text": "معرفة عدد الحضور المتوقع بدقة",
+        "icon": "Vote"
       },
       {
         "id": "private-link",
-        "text": "رابط خاص لمشاركة دعوتك بسهولة"
+        "text": "رابط خاص لمشاركة دعوتك بسهولة",
+        "icon": "Link2"
       },
       {
         "id": "tracking",
-        "text": "اعرف من شاهد دعوتك ومتى"
+        "text": "اعرف من شاهد دعوتك ومتى",
+        "icon": "Eye"
       }
     ]
   }

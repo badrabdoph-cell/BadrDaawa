@@ -4,6 +4,7 @@ import { readProjectContentSetting, writeProjectContentSetting } from "./project
 export type HomeFeaturePoint = {
   id: string;
   text: string;
+  icon?: string;
 };
 
 export type HomePricingRow = {
@@ -56,19 +57,19 @@ export const defaultHomeContent: HomeContent = {
   features: {
     title: "كل ما تحتاجه دعوتك في مكان واحد",
     points: [
-      { id: "rsvp-open", text: "إدارة الحضور" },
-      { id: "guest-records", text: "كشف كامل بأسماء وأرقام المسجلين للحضور" },
-      { id: "client-admin", text: "لوحة تحكم خاصة بك" },
-      { id: "reminder", text: "إرسال تذكير تلقائي بموعد الزفاف" },
-      { id: "music", text: "أضف الموسيقى التي تحبها للدعوة" },
-      { id: "anytime-edit", text: "عدّل دعوتك وقتما تشاء" },
-      { id: "self-create", text: "تحكم كامل في تفاصيل دعوتك" },
-      { id: "support", text: "دعم ومساعدة عند الحاجة" },
-      { id: "send-message", text: "إرسال رسائل للضيوف بضغطة واحدة" },
-      { id: "free-edit", text: "عدّل دعوتك وقتما تشاء" },
-      { id: "poll", text: "معرفة عدد الحضور المتوقع بدقة" },
-      { id: "private-link", text: "رابط خاص لمشاركة دعوتك بسهولة" },
-      { id: "tracking", text: "اعرف من شاهد دعوتك ومتى" },
+      { id: "rsvp-open", text: "إدارة الحضور", icon: "UserCheck" },
+      { id: "guest-records", text: "كشف كامل بأسماء وأرقام المسجلين للحضور", icon: "UsersRound" },
+      { id: "client-admin", text: "لوحة تحكم خاصة بك", icon: "SlidersHorizontal" },
+      { id: "reminder", text: "إرسال تذكير تلقائي بموعد الزفاف", icon: "BellRing" },
+      { id: "music", text: "أضف الموسيقى التي تحبها للدعوة", icon: "Headphones" },
+      { id: "anytime-edit", text: "عدّل دعوتك وقتما تشاء", icon: "Sparkles" },
+      { id: "self-create", text: "تحكم كامل في تفاصيل دعوتك", icon: "Sparkles" },
+      { id: "support", text: "دعم ومساعدة عند الحاجة", icon: "Headphones" },
+      { id: "send-message", text: "إرسال رسائل للضيوف بضغطة واحدة", icon: "Send" },
+      { id: "free-edit", text: "عدّل دعوتك وقتما تشاء", icon: "SlidersHorizontal" },
+      { id: "poll", text: "معرفة عدد الحضور المتوقع بدقة", icon: "Vote" },
+      { id: "private-link", text: "رابط خاص لمشاركة دعوتك بسهولة", icon: "Link2" },
+      { id: "tracking", text: "اعرف من شاهد دعوتك ومتى", icon: "Eye" },
     ],
   },
   preview: {
@@ -115,6 +116,7 @@ function normalizeFeaturePoints(value: unknown, fallback: HomeFeaturePoint[]) {
     return {
       id: item.id,
       text: cleanText((incoming as Partial<HomeFeaturePoint> | undefined)?.text, item.text),
+      icon: (incoming as Partial<HomeFeaturePoint> | undefined)?.icon || item.icon,
     };
   });
 
@@ -125,7 +127,7 @@ function normalizeFeaturePoints(value: unknown, fallback: HomeFeaturePoint[]) {
     const text = cleanText(point.text, "");
     if (!text) continue;
     seen.add(point.id);
-    normalized.push({ id: point.id.trim(), text });
+    normalized.push({ id: point.id.trim(), text, icon: point.icon || undefined });
   }
 
   return normalized;

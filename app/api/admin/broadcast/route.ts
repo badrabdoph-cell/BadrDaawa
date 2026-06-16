@@ -98,11 +98,12 @@ function inferPreviewMode(value: string) {
 }
 
 type BroadcastMutation = {
-  action?: "text" | "media" | "addFeature" | "deleteFeature" | "addPricingRow" | "deletePricingRow" | "setPricingAvailability";
+  action?: "text" | "media" | "addFeature" | "deleteFeature" | "moveFeatureUp" | "moveFeatureDown" | "setFeatureIcon" | "addPricingRow" | "deletePricingRow" | "setPricingAvailability";
   key?: string;
   kind?: string;
   value?: string | boolean;
   text?: string;
+  icon?: string;
   id?: string;
   feature?: string;
   invitation?: boolean;
@@ -133,17 +134,42 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
     });
   } else if (action === "addFeature") {
     const text = cleanText(payload.text || "");
+    const icon = typeof payload.icon === "string" ? payload.icon.trim() || undefined : undefined;
     if (!text) throw new Error("missing_feature_text");
     const next = structuredClone(content);
     next.features.points.push({
       id: makeItemId("feature", text, next.features.points.map((item) => item.id)),
       text,
+      icon,
     });
     content = await updateHomeContent(next);
   } else if (action === "deleteFeature") {
     const id = cleanText(payload.id || "");
     const next = structuredClone(content);
     next.features.points = next.features.points.filter((item) => item.id !== id);
+    content = await updateHomeContent(next);
+  } else if (action === "moveFeatureUp") {
+    const id = cleanText(payload.id || "");
+    const next = structuredClone(content);
+    const idx = next.features.points.findIndex((item) => item.id === id);
+    if (idx <= 0) throw new Error("cannot_move_up");
+    [next.features.points[idx - 1], next.features.points[idx]] = [next.features.points[idx], next.features.points[idx - 1]];
+    content = await updateHomeContent(next);
+  } else if (action === "moveFeatureDown") {
+    const id = cleanText(payload.id || "");
+    const next = structuredClone(content);
+    const idx = next.features.points.findIndex((item) => item.id === id);
+    if (idx === -1 || idx >= next.features.points.length - 1) throw new Error("cannot_move_down");
+    [next.features.points[idx], next.features.points[idx + 1]] = [next.features.points[idx + 1], next.features.points[idx]];
+    content = await updateHomeContent(next);
+  } else if (action === "setFeatureIcon") {
+    const id = cleanText(payload.id || "");
+    const icon = typeof payload.icon === "string" ? payload.icon.trim() || undefined : undefined;
+    const next = structuredClone(content);
+    const point = next.features.points.find((item) => item.id === id);
+    if (!point) throw new Error("missing_feature_point");
+    if (icon) point.icon = icon;
+    else delete point.icon;
     content = await updateHomeContent(next);
   } else if (action === "addPricingRow") {
     const feature = cleanText(payload.feature || "");
