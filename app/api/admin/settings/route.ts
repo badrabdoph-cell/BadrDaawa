@@ -9,6 +9,7 @@ import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile 
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
+import { updateGoogleMapsSettings } from "@/lib/google-maps-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -116,6 +117,11 @@ export async function POST(request: NextRequest) {
       imageUrl: currentPreview.imageUrl,
       videoUrl: currentPreview.videoUrl,
     });
+
+    const googleMapsKey = text(formData, "googleMapsApiKey");
+    if (googleMapsKey) {
+      await updateGoogleMapsSettings({ apiKey: googleMapsKey });
+    }
 
     ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
     queueGitHubSync("Site settings updated from admin.", { uploadProjectFiles: true, changeType: "project" });

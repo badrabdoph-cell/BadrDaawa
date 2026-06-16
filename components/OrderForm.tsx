@@ -554,7 +554,7 @@ export function OrderForm({
   const [storyFieldsOpen, setStoryFieldsOpen] = useState(false);
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; placeName: string; city: string; governorate: string; googleMapsUrl: string } | null>(null);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
@@ -1839,7 +1839,7 @@ export function OrderForm({
                 <MapPin size={19} />
                 <div>
                   <strong>📍 الموقع المختار:</strong>
-                  <span>{selectedLocation.address}</span>
+                  <span>{selectedLocation.placeName}{selectedLocation.city ? ` — ${selectedLocation.city}` : ""}</span>
                 </div>
               </div>
             ) : null}
