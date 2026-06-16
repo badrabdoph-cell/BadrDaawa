@@ -21,6 +21,54 @@
     "enabled": true,
     "sortOrder": 1,
     "createdAt": "2026-06-11T22:20:50.600Z",
-    "updatedAt": "2026-06-15T23:16:06.147Z"
+    "updatedAt": "2026-06-16T17:35:11.100Z"
+  },
+  {
+    "id": "cmqgtkenh000013o6kgq4r4rc",
+    "slug": "botanical-theme",
+    "name": "Botanical Theme",
+    "arabicName": "نباتي هادئ",
+    "category": "قالب نباتي هادئ",
+    "style": "garden",
+    "concept": "دعوة خضراء ناعمة بكارت أسماء مقوس، عداد داكن، صورة كبيرة، خريطة واضحة، ولمسة تصوير طبيعية.",
+    "opening": "Soft botanical card",
+    "layout": "كارت أسماء نباتي، عداد، صورة غلاف، خريطة، مصور، RSVP وQR.",
+    "typography": "أسماء كبيرة رقيقة مع ألوان خضراء مطفية وتفاصيل عربية بسيطة ومريحة على الهاتف.",
+    "palette": {
+      "ink": "#2c4c3b",
+      "accent": "#8fbc8f",
+      "primary": "#f0f4f0",
+      "surface": "#ffffff",
+      "secondary": "#e2e8e2"
+    },
+    "previewUrl": "/assets/templates/botanical-theme.svg",
+    "enabled": true,
+    "sortOrder": 4,
+    "createdAt": "2026-06-16T15:51:10.638Z",
+    "updatedAt": "2026-06-16T16:11:44.972Z"
+  },
+  {
+    "id": "cmqh2l32w0000roe9seq70shl",
+    "slug": "boho-chic",
+    "name": "Boho Trendy",
+    "arabicName": "بوهو ترندي",
+    "category": "قالب Boho Sage",
+    "style": "boho",
+    "concept": "دعوة ترابية ناعمة بصورة غلاف كبيرة، كروت بيضاء، معرض أفقي، وخريطة خضراء هادئة.",
+    "opening": "Cinematic photo cover",
+    "layout": "غلاف بصورة كاملة، بطاقة تاريخ وعد تنازلي، معرض صور أفقي، خريطة، مصور، RSVP وQR.",
+    "typography": "خطوط كلاسيكية ناعمة مع ألوان Sage وSand ومظهر هادئ مناسب للموبايل.",
+    "palette": {
+      "ink": "#3e453c",
+      "accent": "#9cafa4",
+      "primary": "#f7f5f0",
+      "surface": "#ffffff",
+      "secondary": "#e2d8c8"
+    },
+    "previewUrl": "/assets/templates/boho-chic.svg",
+    "enabled": true,
+    "sortOrder": 6,
+    "createdAt": "2026-06-16T20:03:38.840Z",
+    "updatedAt": "2026-06-16T20:23:23.526Z"
   }
 ]
