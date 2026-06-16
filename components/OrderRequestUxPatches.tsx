@@ -62,23 +62,13 @@ function patchStableMapTiles() {
 
   const originalTileLayer = leaflet.tileLayer.bind(leaflet);
   leaflet.tileLayer = (url: string, options: Record<string, unknown> = {}) => {
-    if (url.includes("server.arcgisonline.com")) {
-      return originalTileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    if (url.includes("server.arcgisonline.com") || url.includes("light_only_labels")) {
+      return originalTileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         ...options,
         maxZoom: 20,
-        maxNativeZoom: 18,
-        attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
-      });
-    }
-
-    if (url.includes("light_only_labels")) {
-      return originalTileLayer("https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png", {
-        ...options,
-        maxZoom: 20,
-        maxNativeZoom: 18,
-        opacity: 0.94,
+        maxNativeZoom: 19,
         subdomains: "abcd",
-        attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       });
     }
 
