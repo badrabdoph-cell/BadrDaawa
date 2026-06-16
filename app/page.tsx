@@ -73,6 +73,159 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   return (
     <div className="page-shell">
+      <style>{`
+        .home-features-panel.home-features-panel-upgraded {
+          width: min(1120px, calc(100% - 22px));
+          margin: clamp(22px, 6vw, 56px) auto clamp(18px, 5vw, 42px);
+          padding: clamp(18px, 5vw, 34px) clamp(14px, 4vw, 28px) clamp(18px, 5vw, 30px);
+          border: 1px solid rgba(126, 88, 35, 0.16);
+          border-radius: clamp(22px, 6vw, 34px);
+          background:
+            radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.9), transparent 18rem),
+            radial-gradient(circle at 90% 0%, rgba(185, 137, 61, 0.13), transparent 24rem),
+            linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(250, 241, 227, 0.9));
+          box-shadow: 0 24px 70px rgba(46, 33, 21, 0.11);
+        }
+
+        .home-features-title-block {
+          display: grid;
+          justify-items: center;
+          gap: 10px;
+          margin: 0 auto clamp(20px, 5vw, 34px);
+          text-align: center;
+        }
+
+        .home-features-title-icon {
+          display: grid;
+          width: 44px;
+          height: 44px;
+          place-items: center;
+          border: 1px solid rgba(185, 137, 61, 0.28);
+          border-radius: 999px;
+          background: linear-gradient(135deg, #fffdf8, #f2dfbd);
+          color: #8e6428;
+          box-shadow: 0 12px 26px rgba(142, 100, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.74);
+        }
+
+        .home-features-title-block h2 {
+          max-width: 780px;
+          margin: 0;
+          color: #241b13;
+          font-size: clamp(1.65rem, 7vw, 3.35rem);
+          font-weight: 950;
+          line-height: 1.16;
+          letter-spacing: -0.035em;
+        }
+
+        .home-features-title-divider {
+          display: flex;
+          width: min(240px, 62vw);
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          color: #b9893d;
+        }
+
+        .home-features-title-divider::before,
+        .home-features-title-divider::after {
+          content: "";
+          height: 1px;
+          flex: 1;
+          background: linear-gradient(90deg, transparent, rgba(185, 137, 61, 0.46));
+        }
+
+        .home-features-title-divider::after {
+          background: linear-gradient(90deg, rgba(185, 137, 61, 0.46), transparent);
+        }
+
+        .home-features-panel-upgraded .home-feature-points {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .home-features-panel-upgraded .home-feature-point {
+          position: relative;
+          display: grid;
+          grid-template-columns: 46px minmax(0, 1fr);
+          align-items: center;
+          gap: 12px;
+          min-height: 76px;
+          padding: 14px 14px;
+          overflow: hidden;
+          border: 1px solid rgba(126, 88, 35, 0.14);
+          border-radius: 20px;
+          background:
+            linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 248, 238, 0.9));
+          box-shadow: 0 12px 26px rgba(46, 33, 21, 0.075);
+          transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .home-features-panel-upgraded .home-feature-point::after {
+          content: "";
+          position: absolute;
+          inset: -80% auto -80% -35%;
+          width: 26%;
+          transform: rotate(18deg);
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.48), transparent);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 180ms ease, transform 320ms ease;
+        }
+
+        .home-features-panel-upgraded .home-feature-point:hover {
+          transform: translateY(-2px);
+          border-color: rgba(185, 137, 61, 0.34);
+          box-shadow: 0 18px 38px rgba(46, 33, 21, 0.11);
+        }
+
+        .home-features-panel-upgraded .home-feature-point:hover::after {
+          opacity: 1;
+          transform: translateX(260%) rotate(18deg);
+        }
+
+        .home-features-panel-upgraded .home-feature-point > span {
+          display: grid;
+          width: 46px;
+          height: 46px;
+          place-items: center;
+          border: 1px solid rgba(185, 137, 61, 0.23);
+          border-radius: 16px;
+          background: linear-gradient(135deg, #fffdf8, #f2dfbd);
+          color: #8e6428;
+          box-shadow: 0 10px 22px rgba(142, 100, 40, 0.12);
+        }
+
+        .home-features-panel-upgraded .home-feature-point strong {
+          color: #2c2118;
+          font-size: clamp(0.98rem, 4.2vw, 1.1rem);
+          font-weight: 900;
+          line-height: 1.65;
+        }
+
+        @media (min-width: 640px) {
+          .home-features-panel-upgraded .home-feature-points {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+          }
+        }
+
+        @media (min-width: 980px) {
+          .home-features-panel-upgraded .home-feature-points {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+          }
+
+          .home-features-panel-upgraded .home-feature-point {
+            min-height: 104px;
+            grid-template-columns: 1fr;
+            justify-items: center;
+            align-content: center;
+            text-align: center;
+            padding: 20px 16px;
+          }
+        }
+      `}</style>
       <SiteHeader />
       <main>
         <section className="hero clean-hero">
@@ -101,31 +254,34 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
 
         {siteSettings.homepage.showFeatures ? (
-          <div className="home-features-panel" aria-label="مميزات الدعوة الرقمية">
-            <div className="home-features-head">
-              <span>
-                <Sparkles size={16} />
+          <section className="home-features-panel home-features-panel-upgraded" aria-label="مميزات الدعوة الرقمية">
+            <div className="home-features-title-block">
+              <span className="home-features-title-icon" aria-hidden="true">
+                <Sparkles size={18} />
               </span>
               <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value="المميزات ال هتاخدها في دعوت فرحك ✨">
                 المميزات ال هتاخدها في دعوت فرحك ✨
               </h2>
+              <span className="home-features-title-divider" aria-hidden="true">
+                <Sparkles size={15} />
+              </span>
             </div>
             <div className="home-feature-points">
               {content.features.points.map((item, index) => {
                 const Icon = (item.icon && FEATURE_ICONS[item.icon]) || featureIcons[index] || Sparkles;
                 return (
-                  <div className="home-feature-point" key={item.id}>
+                  <article className="home-feature-point" key={item.id}>
                     <span>
-                      <Icon size={17} />
+                      <Icon size={18} />
                     </span>
                     <strong data-broadcast-key={`features.points.${item.id}.text`} data-broadcast-label={`ميزة: ${item.text}`} data-broadcast-kind="text" data-broadcast-value={item.text}>
                       {item.text}
                     </strong>
-                  </div>
+                  </article>
                 );
               })}
             </div>
-          </div>
+          </section>
         ) : null}
 
         <div className="home-cta-section">
