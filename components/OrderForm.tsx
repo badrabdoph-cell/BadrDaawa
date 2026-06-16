@@ -559,6 +559,7 @@ export function OrderForm({
   const reviewEnteredAtRef = useRef(0);
   const uploadedImageUrlsRef = useRef<string[]>(cleanOrderDraftImageUrls(initialDraft?.imageUrls));
   const selectedImageKeysRef = useRef<string[]>([]);
+  const lastDraftUrlRef = useRef("");
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
   const imageUploadRequestsRef = useRef<Array<XMLHttpRequest | null>>(orderImageSlots.map(() => null));
 
@@ -757,7 +758,10 @@ export function OrderForm({
       if (nextForm.musicEnabled) params.set("musicChoice", nextForm.musicChoice || "default");
     }
     if (nextImageUrls.length) params.set("gallery", nextImageUrls.join(","));
-    window.history.replaceState(window.history.state, "", `/order?${params.toString()}`);
+    const url = `/order?${params.toString()}`;
+    if (url === lastDraftUrlRef.current) return;
+    lastDraftUrlRef.current = url;
+    window.history.replaceState(null, "", url);
   }
 
   function persistDraft(nextForm: Partial<FormState> = form, nextImageUrls = draftImageUrls) {
@@ -1626,7 +1630,7 @@ export function OrderForm({
       ) : null}
 
       <div className="order-wizard-layout">
-        <form className="form-panel details-form order-simple-form order-wizard-card" onSubmit={submitOrder} onInput={persistCurrentDomDraft} onChange={persistCurrentDomDraft} ref={formRef} noValidate>
+        <form className="form-panel details-form order-simple-form order-wizard-card" onSubmit={submitOrder} onInput={persistCurrentDomDraft} ref={formRef} noValidate>
           <header className="order-wizard-header">
             <div>
               <span>خطوة {activeStepIndex + 1} من {orderWizardSteps.length}</span>
