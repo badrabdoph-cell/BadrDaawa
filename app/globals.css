@@ -10421,6 +10421,143 @@ img {
   color: #f8fafc;
 }
 
+/* ───── Template Content Editor — Dark Surface System ───── */
+
+/* Primary Surface — matches .panel / .form-panel / .text-edit-panel */
+.admin-dark-shell .template-command-head,
+.admin-dark-shell .template-editor-block,
+.admin-dark-shell .template-single-grid-section,
+.admin-dark-shell .template-preview-pane-toolbar,
+.admin-dark-shell .template-media-control {
+  border-color: rgba(245, 234, 214, 0.12);
+  background: rgba(21, 24, 34, 0.78);
+  color: #f5ead6;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+/* Secondary Surface — nested / supporting panels */
+.admin-dark-shell .template-editor-block.muted-block {
+  border-color: rgba(245, 234, 214, 0.1);
+  background: rgba(32, 35, 46, 0.62);
+  color: #f5ead6;
+}
+
+.admin-dark-shell .template-preview-fieldset {
+  border-color: rgba(245, 234, 214, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-dark-shell .template-preview-fieldset.compact {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* Tertiary Surface — small interactive / card elements */
+.admin-dark-shell .template-scope-switch button,
+.admin-dark-shell .template-exception-list label,
+.admin-dark-shell .template-admin-mini-card,
+.admin-dark-shell .template-found-card,
+.admin-dark-shell .template-empty-soft,
+.admin-dark-shell .template-inline-toggle {
+  border-color: rgba(245, 234, 214, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5ead6;
+}
+
+/* Elevated Surface — sticky bar, modal dialog */
+.admin-dark-shell .template-save-strip {
+  border-color: rgba(189, 143, 63, 0.2);
+  background: rgba(18, 21, 28, 0.96);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+}
+
+.admin-dark-shell .template-conflict-dialog {
+  border-color: rgba(243, 207, 115, 0.18);
+  background: rgba(21, 24, 34, 0.96);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.4);
+}
+
+/* Media preview / upload area */
+.admin-dark-shell .template-media-preview {
+  border-color: rgba(245, 234, 214, 0.1);
+  background: rgba(8, 10, 14, 0.56);
+  color: rgba(245, 234, 214, 0.68);
+}
+
+/* ───── Typography Overrides ───── */
+
+/* Headings / strong text */
+.admin-dark-shell .template-editor-block-head,
+.admin-dark-shell .template-save-strip strong,
+.admin-dark-shell .template-command-head h2,
+.admin-dark-shell .template-command-head h3,
+.admin-dark-shell .template-editor-block h3,
+.admin-dark-shell .template-single-grid-section h3,
+.admin-dark-shell .template-media-control-body strong,
+.admin-dark-shell .template-admin-mini-card strong {
+  color: #fff7e8;
+}
+
+/* Secondary / muted text — unified to --muted opacity */
+.admin-dark-shell .template-command-head p,
+.admin-dark-shell .template-editor-block-head + p,
+.admin-dark-shell .template-editor-block p,
+.admin-dark-shell .template-editor-block.muted-block p,
+.admin-dark-shell .template-save-strip span,
+.admin-dark-shell .template-preview-pane-toolbar label,
+.admin-dark-shell .template-media-control-body p,
+.admin-dark-shell .template-field-explained small,
+.admin-dark-shell .template-admin-mini-card small,
+.admin-dark-shell .template-conflict-dialog p,
+.admin-dark-shell .template-found-card p,
+.admin-dark-shell .template-found-card small,
+.admin-dark-shell .template-upload-status {
+  color: rgba(245, 234, 214, 0.78);
+}
+
+/* ───── Accent (Gold) — Active states & primary actions only ───── */
+
+.admin-dark-shell .template-scope-switch button.active {
+  border-color: color-mix(in srgb, #f3cf73 68%, transparent);
+  background: linear-gradient(135deg, #f3cf73, color-mix(in srgb, #f3cf73 72%, #ffffff));
+  color: #17120a;
+}
+
+.admin-dark-shell .template-preview-pane-toolbar span,
+.admin-dark-shell .template-preview-fieldset legend {
+  color: #f3cf73;
+}
+
+.admin-dark-shell .template-media-preview span {
+  background: rgba(243, 207, 115, 0.15);
+  color: #f3cf73;
+}
+
+.admin-dark-shell .template-conflict-list span {
+  background: rgba(243, 207, 115, 0.12);
+  color: #f3cf73;
+}
+
+.admin-dark-shell .template-admin-mini-card.active {
+  border-color: rgba(243, 207, 115, 0.5);
+  box-shadow: 0 18px 48px rgba(243, 207, 115, 0.15);
+}
+
+/* ───── Upload status colors ───── */
+.admin-dark-shell .template-upload-status.is-error {
+  color: #ffc0bd;
+}
+
+.admin-dark-shell .template-upload-status.is-saved {
+  color: #bfe8d6;
+}
+
+/* ───── Danger soft ───── */
+.admin-dark-shell .danger-soft {
+  border-color: rgba(248, 113, 113, 0.2) !important;
+  color: #fca5a5 !important;
+}
+
 .admin-dark-shell .admin-error-page,
 .admin-dark-shell .admin-loading {
   background: transparent;
