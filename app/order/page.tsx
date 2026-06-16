@@ -79,18 +79,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
     <div className="page-shell order-builder-page order-studio-page">
       <style>{`
         .order-studio-page {
-          --studio-ink: #211913;
-          --studio-muted: #74685d;
-          --studio-cream: #fbf4e9;
-          --studio-surface: #fffdf8;
-          --studio-soft: #fff8ef;
           --studio-line: rgba(116, 82, 38, 0.18);
-          --studio-line-strong: rgba(164, 114, 44, 0.32);
-          --studio-gold: #b9893d;
-          --studio-gold-deep: #7f581f;
-          --studio-mocha: #342318;
-          --studio-rose: #a8435a;
-          --studio-shadow: 0 26px 74px rgba(46, 33, 21, 0.14);
           background:
             radial-gradient(circle at 12% 8%, rgba(185, 137, 61, 0.14), transparent 25rem),
             radial-gradient(circle at 88% 4%, rgba(168, 67, 90, 0.08), transparent 24rem),
@@ -105,64 +94,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
         }
 
         .order-studio-page .order-builder-main {
-          padding-block: 24px 80px;
-        }
-
-        .order-studio-hero {
-          width: min(1120px, calc(100% - 28px));
-          margin: 0 auto 22px;
-        }
-
-        .order-studio-hero-card {
-          position: relative;
-          overflow: hidden;
-          border: 1px solid var(--studio-line);
-          border-radius: 30px;
-          padding: clamp(22px, 4vw, 38px);
-          background:
-            radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.88), transparent 18rem),
-            linear-gradient(145deg, rgba(255, 253, 248, 0.98), rgba(246, 234, 213, 0.82));
-          box-shadow: var(--studio-shadow);
-        }
-
-        .order-studio-hero-card::before {
-          content: "";
-          position: absolute;
-          inset: 14px;
-          border: 1px solid rgba(185, 137, 61, 0.16);
-          border-radius: 24px;
-          pointer-events: none;
-        }
-
-        .order-studio-kicker {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          min-height: 34px;
-          padding: 6px 12px;
-          border: 1px solid rgba(185, 137, 61, 0.24);
-          border-radius: 999px;
-          background: rgba(255, 253, 248, 0.78);
-          color: var(--studio-gold-deep);
-          font-size: 0.86rem;
-          font-weight: 900;
-        }
-
-        .order-studio-hero h1 {
-          max-width: 850px;
-          margin: 16px 0 12px;
-          color: var(--studio-ink);
-          font-size: clamp(2.05rem, 5.6vw, 4.25rem);
-          line-height: 1.08;
-          letter-spacing: -0.04em;
-        }
-
-        .order-studio-hero p {
-          max-width: 760px;
-          margin: 0;
-          color: var(--studio-muted);
-          font-size: clamp(1rem, 2.3vw, 1.16rem);
-          line-height: 1.9;
+          padding-block: 18px 80px;
         }
 
         .order-studio-page .order-shell {
@@ -302,25 +234,15 @@ export default async function OrderPage({ searchParams }: PageProps) {
 
         @media (max-width: 720px) {
           .order-studio-page .order-builder-main {
-            padding-block: 16px 56px;
+            padding-block: 8px 56px;
           }
 
-          .order-studio-hero,
           .order-studio-page .order-shell {
             width: min(100% - 18px, 1120px);
           }
 
-          .order-studio-hero-card,
           .order-studio-page .order-wizard-card {
             border-radius: 22px;
-          }
-
-          .order-studio-hero-card {
-            padding: 20px;
-          }
-
-          .order-studio-hero h1 {
-            font-size: clamp(1.85rem, 10vw, 3rem);
           }
 
           .order-studio-page .order-step-tabs {
@@ -344,13 +266,6 @@ export default async function OrderPage({ searchParams }: PageProps) {
         </div>
       </header>
       <main className="order-builder-main">
-        <section className="order-studio-hero" aria-label="مقدمة تصميم الدعوة">
-          <article className="order-studio-hero-card">
-            <span className="order-studio-kicker">تجربة تصميم دعوة زفاف</span>
-            <h1>صمّم دعوتك خطوة بخطوة وراجعها في آخر مرحلة قبل التأكيد</h1>
-            <p>اختار القالب، اكتب بيانات المناسبة، وأضف التفاصيل المطلوبة. المعاينة متاحة فقط من زر المعاينة في مرحلة المراجعة النهائية.</p>
-          </article>
-        </section>
         <div className="container order-shell">
           <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} />
         </div>
