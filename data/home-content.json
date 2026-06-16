@@ -88,24 +88,24 @@
     "title": "كل ما تحتاجه دعوتك في مكان واحد",
     "points": [
       {
-        "id": "rsvp-open",
-        "icon": "UserCheck",
-        "text": "هتقدر تعرف مين زار الدعوه بتعتك"
-      },
-      {
         "id": "self-create",
         "icon": "UsersRound",
         "text": "هتعرف عدد الزوار و عدد الحضور وعدد ال مش هيحضرو فرحك"
       },
       {
-        "id": "guest-records",
-        "icon": "UsersRound",
-        "text": "هيكون عندك استفتاء وهتعرف مين هيحضر فرحك ومين لا"
-      },
-      {
         "id": "client-admin",
         "icon": "SlidersHorizontal",
         "text": "اغنيه من اختيارك بتشتغل تلقائي اول ماحد يفتح الدعوه"
+      },
+      {
+        "id": "rsvp-open",
+        "icon": "UserCheck",
+        "text": "هتقدر تعرف مين زار الدعوه بتعتك"
+      },
+      {
+        "id": "guest-records",
+        "icon": "UsersRound",
+        "text": "هيكون عندك استفتاء وهتعرف مين هيحضر فرحك ومين لا"
       },
       {
         "id": "reminder",
