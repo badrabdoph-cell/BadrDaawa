@@ -88,14 +88,14 @@
     "title": "كل ما تحتاجه دعوتك في مكان واحد",
     "points": [
       {
-        "id": "self-create",
-        "icon": "UsersRound",
-        "text": "هتعرف عدد الزوار و عدد الحضور وعدد ال مش هيحضرو فرحك"
-      },
-      {
         "id": "client-admin",
         "icon": "SlidersHorizontal",
         "text": "اغنيه من اختيارك بتشتغل تلقائي اول ماحد يفتح الدعوه"
+      },
+      {
+        "id": "self-create",
+        "icon": "UsersRound",
+        "text": "هتعرف عدد الزوار و عدد الحضور وعدد ال مش هيحضرو فرحك"
       },
       {
         "id": "reminder",
