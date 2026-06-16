@@ -31743,3 +31743,263 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
     font-size: 0.82rem;
   }
 }
+
+/* ===== Location Picker Trigger Button (in OrderForm venue step) ===== */
+.location-picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0 14px;
+  padding: 12px 16px;
+  border: 1px dashed rgba(180, 139, 57, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 244, 214, 0.35);
+  color: #9f742b;
+  font-size: 0.88rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.location-picker-trigger:hover {
+  background: rgba(255, 244, 214, 0.65);
+  border-color: rgba(180, 139, 57, 0.55);
+}
+
+.location-picker-trigger:focus-visible {
+  outline: 2px solid #b48b39;
+  outline-offset: 2px;
+}
+
+.location-picker-trigger svg {
+  flex-shrink: 0;
+}
+
+/* ===== Location Picker Modal ===== */
+.location-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: locationPickerFadeIn 0.2s ease;
+}
+
+@keyframes locationPickerFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.location-picker-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+  height: 80dvh;
+  max-height: 700px;
+  margin-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  animation: locationPickerSlideUp 0.25s ease;
+}
+
+@keyframes locationPickerSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.location-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.location-picker-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 950;
+  color: #35281a;
+}
+
+.location-picker-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  color: #555;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.location-picker-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.location-picker-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.location-picker-loading,
+.location-picker-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  padding: 20px;
+  color: #888;
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
+.location-picker-error p {
+  margin: 0;
+  color: #b91c1c;
+  text-align: center;
+}
+
+.location-picker-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.location-picker-map {
+  width: 100%;
+  height: 100%;
+}
+
+.location-picker-map .leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12) !important;
+}
+
+.location-picker-map .leaflet-control-zoom a {
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
+  color: #555 !important;
+  border: none !important;
+}
+
+.location-picker-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  transform: translate(-50%, -100%);
+  color: #e74c3c;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+}
+
+.location-picker-pin svg {
+  display: block;
+}
+
+.location-picker-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  z-index: 10;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.location-picker-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fafafa;
+}
+
+.location-picker-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: auto;
+}
+
+.location-picker-actions .btn {
+  min-height: 44px;
+  font-size: 0.88rem;
+}
+
+/* ===== Selected Location Preview in Order Form ===== */
+.order-location-selected {
+  margin-top: 8px;
+  border-color: rgba(46, 125, 50, 0.3) !important;
+  background: linear-gradient(135deg, rgba(232, 245, 233, 0.92), rgba(200, 230, 201, 0.55)) !important;
+}
+
+/* ===== Leaflet control overrides for RTL ===== */
+.location-picker-map .leaflet-control-zoom {
+  margin-inline: 12px !important;
+}
+
+@media (max-width: 600px) {
+  .location-picker-container {
+    height: 85dvh;
+    max-height: none;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .location-picker-actions {
+    flex-wrap: wrap;
+  }
+
+  .location-picker-actions .btn {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 0.82rem;
+  }
+
+  .location-picker-hint {
+    font-size: 0.72rem;
+    white-space: normal;
+    max-width: 80%;
+  }
+}
+
+@media (min-width: 768px) {
+  .location-picker-overlay {
+    align-items: center;
+  }
+
+  .location-picker-container {
+    height: 70dvh;
+    max-height: 600px;
+    border-radius: 16px;
+    margin: 0 20px;
+  }
+}

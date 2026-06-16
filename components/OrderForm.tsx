@@ -25,6 +25,7 @@ import {
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
+import { LocationPickerModal } from "./LocationPickerModal";
 
 type FormState = {
   groomName: string;
@@ -552,6 +553,8 @@ export function OrderForm({
   const [photographerFieldsOpen, setPhotographerFieldsOpen] = useState(false);
   const [storyFieldsOpen, setStoryFieldsOpen] = useState(false);
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [draftReady, setDraftReady] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
@@ -561,6 +564,7 @@ export function OrderForm({
   const selectedImageKeysRef = useRef<string[]>([]);
   const lastDraftUrlRef = useRef("");
   const activeStepIndexRef = useRef(activeStepIndex);
+  const mapPickerOpenRef = useRef(false);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
   const imageUploadRequestsRef = useRef<Array<XMLHttpRequest | null>>(orderImageSlots.map(() => null));
 
@@ -617,14 +621,22 @@ export function OrderForm({
   }, [activeStepIndex]);
 
   useEffect(() => {
+    mapPickerOpenRef.current = mapPickerOpen;
+  }, [mapPickerOpen]);
+
+  useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
+      if (mapPickerOpenRef.current) {
+        setMapPickerOpen(false);
+        return;
+      }
       if (event.state && typeof event.state.stepIndex === "number") {
         goToStep(event.state.stepIndex, { pushHistory: false });
       } else {
         const currentStep = activeStepIndexRef.current;
         const firstStep = skipTemplateStep ? 1 : 0;
         if (currentStep !== firstStep) {
-          goToStep(firstStep, { pushHistory: false });
+          goToStep(currentStep - 1, { pushHistory: false });
         }
       }
     };
@@ -648,7 +660,10 @@ export function OrderForm({
     setActiveStepIndex(nextIndex);
     if (pushHistory) {
       persistDraft();
-      window.history.pushState({ stepIndex: nextIndex }, "", window.location.href);
+      const firstStep = skipTemplateStep ? 1 : 0;
+      if (nextIndex !== firstStep) {
+        window.history.pushState({ stepIndex: nextIndex }, "", window.location.href);
+      }
     }
     window.setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1802,6 +1817,15 @@ export function OrderForm({
                 {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
               </div>
             </div>
+
+            <button className="location-picker-trigger" type="button" onClick={() => {
+              setMapPickerOpen(true);
+              window.history.pushState({ modal: "map-picker", stepIndex: activeStepIndex }, "");
+            }}>
+              <MapPin size={16} />
+              أو حدد المكان مباشرة من الخريطة
+            </button>
+
             <div className="order-location-preview">
               <MapPin size={19} />
               <div>
@@ -1809,6 +1833,16 @@ export function OrderForm({
                 <span>{form.mapUrl ? "تم إضافة رابط اللوكيشن وسيظهر داخل الدعوة." : "يمكنك ترك الرابط فارغاً وإضافته لاحقاً."}</span>
               </div>
             </div>
+
+            {selectedLocation ? (
+              <div className="order-location-preview order-location-selected">
+                <MapPin size={19} />
+                <div>
+                  <strong>📍 الموقع المختار:</strong>
+                  <span>{selectedLocation.address}</span>
+                </div>
+              </div>
+            ) : null}
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "photos" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photos"}>
@@ -2072,6 +2106,19 @@ export function OrderForm({
           </div>
         </div>
       ) : null}
+
+      <LocationPickerModal
+        open={mapPickerOpen}
+        onConfirm={(result) => {
+          const googleMapsUrl = `https://maps.google.com/?q=${result.lat},${result.lng}`;
+          updateField("mapUrl", googleMapsUrl);
+          setSelectedLocation(result);
+          setMapPickerOpen(false);
+        }}
+        onCancel={() => {
+          setMapPickerOpen(false);
+        }}
+      />
 
     </div>
   );
