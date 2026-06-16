@@ -32144,16 +32144,16 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   background: rgba(49, 95, 86, 0.08);
 }
 
-.field label {
+.order-wizard-flow .field label {
   gap: 8px;
   color: var(--order-premium-ink);
   font-size: clamp(1rem, 2.5vw, 1.08rem);
   font-weight: 900;
 }
 
-.field input,
-.field textarea,
-.field select {
+.order-wizard-flow .field input,
+.order-wizard-flow .field textarea,
+.order-wizard-flow .field select {
   min-height: 54px;
   border-color: rgba(88, 67, 39, 0.18);
   background: #fffefa;
@@ -32161,30 +32161,30 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   font-size: 1rem;
 }
 
-.field textarea {
+.order-wizard-flow .field textarea {
   min-height: 118px;
 }
 
-.field input::placeholder,
-.field textarea::placeholder {
+.order-wizard-flow .field input::placeholder,
+.order-wizard-flow .field textarea::placeholder {
   color: rgba(111, 98, 87, 0.72);
   opacity: 1;
 }
 
-.field input:focus,
-.field textarea:focus,
-.field select:focus {
+.order-wizard-flow .field input:focus,
+.order-wizard-flow .field textarea:focus,
+.order-wizard-flow .field select:focus {
   border-color: rgba(169, 120, 47, 0.58);
   box-shadow: 0 0 0 4px rgba(189, 143, 63, 0.13);
 }
 
-.field-error {
+.order-wizard-flow .field-error {
   color: #9f1f2f;
   font-size: 0.95rem;
   font-weight: 900;
 }
 
-.field-preview {
+.order-wizard-flow .field-preview {
   color: var(--order-premium-muted);
   font-size: 0.95rem;
   line-height: 1.75;
@@ -32329,9 +32329,9 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
     font-size: 0.82rem;
   }
 
-  .field input,
-  .field textarea,
-  .field select,
+  .order-wizard-flow .field input,
+  .order-wizard-flow .field textarea,
+  .order-wizard-flow .field select,
   .location-picker-trigger,
   .order-wizard-actions .btn {
     min-height: 58px;
@@ -32340,6 +32340,22 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
   .order-review-grid {
     gap: 10px;
+  }
+
+  .order-review-confidence {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 8px 0 12px;
+  }
+
+  .order-review-confidence span {
+    min-height: auto;
+    padding: 7px 9px;
+    font-size: 0.88rem;
+  }
+
+  .order-review-confidence span:first-child {
+    grid-column: 1 / -1;
   }
 
   .order-wizard-actions {
