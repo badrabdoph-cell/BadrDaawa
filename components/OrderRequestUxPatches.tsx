@@ -2,6 +2,11 @@
 
 import { useEffect } from "react";
 
+type LeafletLike = {
+  tileLayer?: (url: string, options?: Record<string, unknown>) => unknown;
+  __badrStableTilesPatched?: boolean;
+};
+
 function getText(element: Element | null) {
   return (element?.textContent || "").replace(/\s+/g, " ").trim();
 }
@@ -51,6 +56,25 @@ function clickMusicFileInput(kind: "audio" | "video") {
   }, 130);
 }
 
+function patchStableMapTiles() {
+  const leaflet = (window as unknown as { L?: LeafletLike }).L;
+  if (!leaflet?.tileLayer || leaflet.__badrStableTilesPatched) return;
+
+  const originalTileLayer = leaflet.tileLayer.bind(leaflet);
+  leaflet.tileLayer = (url: string, options: Record<string, unknown> = {}) => {
+    if (url.includes("server.arcgisonline.com") || url.includes("light_only_labels")) {
+      return originalTileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        ...options,
+        maxZoom: 20,
+        subdomains: "abcd",
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      });
+    }
+    return originalTileLayer(url, options);
+  };
+  leaflet.__badrStableTilesPatched = true;
+}
+
 export function OrderRequestUxPatches() {
   useEffect(() => {
     function handleClick(event: MouseEvent) {
@@ -76,14 +100,21 @@ export function OrderRequestUxPatches() {
     }
 
     syncUploadReviewState();
-    const observer = new MutationObserver(syncUploadReviewState);
+    patchStableMapTiles();
+    const observer = new MutationObserver(() => {
+      syncUploadReviewState();
+      patchStableMapTiles();
+    });
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: ["disabled", "class"],
     });
-    const interval = window.setInterval(syncUploadReviewState, 700);
+    const interval = window.setInterval(() => {
+      syncUploadReviewState();
+      patchStableMapTiles();
+    }, 250);
     document.addEventListener("click", handleClick, true);
 
     return () => {
