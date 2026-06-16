@@ -94,21 +94,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   <span>{content.hero.accentTitle}</span>
                 </span>
               </h1>
-              <p className="hero-shine-copy" data-broadcast-key="hero.description" data-broadcast-label="وصف البداية" data-broadcast-kind="text" data-broadcast-value={content.hero.description}>
-                {content.hero.description}
-              </p>
-              <div className="home-quick-benefits" aria-label="مزايا سريعة">
-                {quickBenefits.map((benefit) => {
-                  const Icon = benefit.icon;
-                  return (
-                    <span key={benefit.label}>
-                      <Icon size={16} />
-                      {benefit.label}
-                    </span>
-                  );
-                })}
-              </div>
-
             </div>
           </div>
         </section>
