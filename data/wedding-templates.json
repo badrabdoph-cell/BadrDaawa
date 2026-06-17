@@ -21,7 +21,31 @@
     "enabled": true,
     "sortOrder": 1,
     "createdAt": "2026-06-11T22:20:50.600Z",
-    "updatedAt": "2026-06-17T00:05:56.767Z"
+    "updatedAt": "2026-06-17T11:38:57.190Z"
+  },
+  {
+    "id": "cmqhpt03u000313qfrjzvp6x4",
+    "slug": "ethereal-glass",
+    "name": "Ethereal Glass",
+    "arabicName": "زجاجي حالم",
+    "category": "قالب زجاجي رومانسي",
+    "style": "glass",
+    "concept": "خلفية صورة ثابتة مع بطاقات زجاجية شفافة، معرض صور متداخل، وتفاصيل ناعمة كأنها عائمة فوق الصورة.",
+    "opening": "Fixed glass photo story",
+    "layout": "خلفية ثابتة، أسماء كبيرة، بطاقة تفاصيل زجاجية، معرض متداخل، خريطة، مصور، RSVP وQR.",
+    "typography": "أسماء رومانسية كبيرة مع نصوص بيضاء شفافة وتباين زجاجي واضح على الهاتف.",
+    "palette": {
+      "ink": "#ffffff",
+      "accent": "#ffffff",
+      "primary": "#111111",
+      "surface": "#ffffff",
+      "secondary": "#ffffff"
+    },
+    "previewUrl": "/assets/templates/ethereal-glass.svg",
+    "enabled": true,
+    "sortOrder": 3,
+    "createdAt": "2026-06-17T06:53:39.402Z",
+    "updatedAt": "2026-06-17T10:10:08.936Z"
   },
   {
     "id": "cmqgtkenh000013o6kgq4r4rc",
