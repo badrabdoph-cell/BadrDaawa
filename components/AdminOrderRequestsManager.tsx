@@ -488,7 +488,7 @@ export function AdminOrderRequestsManager({
         _logoSource: form.photographerLogo.url ? "custom" : "global",
       },
     }),
-    [effectivePreviewMusic, form],
+    [effectivePreviewMusic, form, previewMuted],
   );
 
   const toolValues = useMemo<AdminInvitationToolValues>(() => toolValuesFromForm(form), [form]);
