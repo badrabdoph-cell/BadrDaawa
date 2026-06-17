@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays, ExternalLink, MapPin, Sparkles } from "lucide-react";
+import { headers } from "next/headers";
+import { Search, Sparkles } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { getPublicSiteUrl, formatArabicNumber } from "@/lib/utils";
+import { PublishedInvitationRow } from "@/components/PublishedInvitationActions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +16,66 @@ export const metadata: Metadata = {
   description: "مجموعة من الدعوات المنشورة لعملائنا من BadrDaawa.",
 };
 
-export default async function ClientInvitationsPublicPage() {
-  const [invitations, templates] = await Promise.all([getAdminInvitations(), getTemplatesWithSettings()]);
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Africa/Cairo",
+  }).format(date);
+}
+
+function getState(invitation: { isActive: boolean; disabledAt?: string | null }) {
+  if (invitation.disabledAt) return "disabled";
+  if (!invitation.isActive) return "paused";
+  return "active";
+}
+
+function stateLabel(state: string) {
+  if (state === "active") return "نشطة";
+  if (state === "paused") return "متوقفة";
+  if (state === "disabled") return "معطلة";
+  return "";
+}
+
+function stateClass(state: string) {
+  if (state === "active") return "status success";
+  if (state === "paused") return "status warning";
+  return "status danger";
+}
+
+export default async function ClientInvitationsPublicPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const [params, invitations, templates, requestHeaders] = await Promise.all([
+    searchParams,
+    getAdminInvitations(),
+    getTemplatesWithSettings(),
+    headers(),
+  ]);
+  const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
+  const query = (params.q || "").trim().toLowerCase();
+
   const activeInvitations = invitations.filter((invitation) => invitation.isActive);
+
+  const filtered = query
+    ? activeInvitations.filter((invitation) => {
+        const template = templates.find((t) => t.slug === invitation.templateSlug);
+        const searchable = [
+          invitation.code,
+          invitation.customSlug,
+          invitation.groomName,
+          invitation.brideName,
+          invitation.venue,
+          template?.arabicName || invitation.templateSlug,
+        ].join(" ").toLowerCase();
+        return searchable.includes(query);
+      })
+    : activeInvitations;
 
   return (
     <div className="page-shell">
@@ -31,45 +91,66 @@ export default async function ClientInvitationsPublicPage() {
             <p className="section-lead">مجموعة من الدعوات المنشورة لعملائنا.</p>
           </div>
 
-          {activeInvitations.length ? (
-            <div className="client-invitations-grid">
-              {activeInvitations.map((invitation) => {
-                const template = templates.find((item) => item.slug === invitation.templateSlug);
-                const publicPath = `/${invitation.customSlug || invitation.code}`;
-                return (
-                  <article className="client-invitation-card" key={invitation.id}>
-                    <Link className="client-invitation-photo" href={publicPath} aria-label={`فتح دعوة ${invitation.groomName} و ${invitation.brideName}`}>
-                      <img src={invitation.heroPhoto || template?.accentImage || template?.previewImage || "/assets/templates/featured-1.svg"} alt="" loading="lazy" />
-                    </Link>
-                    <div className="client-invitation-body">
-                      <span>{template?.arabicName || "دعوة عميل"}</span>
-                      <h2>
-                        {invitation.groomName} و {invitation.brideName}
-                      </h2>
-                      <p>
-                        <CalendarDays size={15} />
-                        {new Date(invitation.weddingDate).toLocaleDateString("ar-EG-u-nu-latn")}
-                      </p>
-                      <p>
-                        <MapPin size={15} />
-                        {invitation.venue}
-                      </p>
-                      <Link className="btn btn-gold btn-glow" href={publicPath}>
-                        <ExternalLink size={17} />
-                        فتح الدعوة
-                      </Link>
-                    </div>
-                  </article>
-                );
-              })}
+          <form className="admin-table-toolbar" action="/client-invitations" method="get">
+            <label className="admin-search-field">
+              <Search size={17} />
+              <input name="q" placeholder="ابحث بالاسم، الكود، القالب أو المكان" defaultValue={params.q || ""} />
+            </label>
+            <button className="btn btn-soft" type="submit">بحث</button>
+            {query ? (
+              <Link className="btn btn-soft" href="/client-invitations">مسح</Link>
+            ) : null}
+          </form>
+
+          {filtered.length ? (
+            <div className="published-rows-wrapper">
+              <table className="published-rows-table">
+                <thead>
+                  <tr>
+                    <th>الدعوة</th>
+                    <th>تاريخ الحفل</th>
+                    <th>الزيارات</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((invitation) => {
+                    const template = templates.find((t) => t.slug === invitation.templateSlug);
+                    const publicSlug = invitation.customSlug || invitation.code;
+                    const state = getState(invitation);
+                    return (
+                      <PublishedInvitationRow
+                        key={invitation.id}
+                        code={invitation.code}
+                        groomName={invitation.groomName}
+                        brideName={invitation.brideName}
+                        templateName={template?.arabicName}
+                        weddingDate={formatDate(invitation.weddingDate)}
+                        views={formatArabicNumber(invitation.views)}
+                        status={state}
+                        statusLabel={stateLabel(state)}
+                        statusClass={stateClass(state)}
+                        publicPath={`/${publicSlug}`}
+                        adminPath={`/admin/invitations/${encodeURIComponent(invitation.code)}`}
+                        invitationUrl={`${siteUrl}/${publicSlug}`}
+                        adminUrl={`${siteUrl}/admin/invitations/${encodeURIComponent(invitation.code)}`}
+                        disabledAt={invitation.disabledAt}
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ) : (
             <div className="empty-state">
-              <h2>لا توجد دعوات منشورة حالياً</h2>
-              <p>ستظهر الدعوات المنشورة هنا تلقائياً.</p>
-              <Link className="btn btn-gold" href="/templates">
-                مشاهدة التصاميم
-              </Link>
+              <h2>{query ? "لا توجد نتائج مطابقة" : "لا توجد دعوات منشورة حالياً"}</h2>
+              <p>{query ? "جرّب تغيير كلمة البحث." : "ستظهر الدعوات المنشورة هنا تلقائياً."}</p>
+              {query ? null : (
+                <Link className="btn btn-gold" href="/templates">
+                  مشاهدة التصاميم
+                </Link>
+              )}
             </div>
           )}
         </div>

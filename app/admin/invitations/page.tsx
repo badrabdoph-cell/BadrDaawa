@@ -234,6 +234,7 @@ export default async function InvitationsPage({
             const invitationUrl = `${siteUrl}/${publicSlug}`;
             const guestStats = guestStatsByCode.get(invitation.code) || { responses: 0, confirmed: 0, attendees: 0 };
             const invitationState = getInvitationState(invitation);
+            const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" ? "\uD83D\uDD34" : "";
             return (
               <article className="invitation-card" key={invitation.id}>
                 <div className="invitation-card-head">
@@ -241,7 +242,7 @@ export default async function InvitationsPage({
                     <span className="invitation-card-code">{invitation.code}</span>
                     <h2>{invitation.groomName} و {invitation.brideName}</h2>
                   </div>
-                  <span className={stateClassName(invitationState)}>{stateLabel(invitationState)}</span>
+                  <span className={stateClassName(invitationState)}>{stateEmoji} {stateLabel(invitationState)}</span>
                 </div>
 
                 <dl className="invitation-card-metrics">

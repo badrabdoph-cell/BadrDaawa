@@ -5,10 +5,19 @@ import { setWeddingLiveModeEnabled } from "@/lib/wedding-live-mode";
 
 export const runtime = "nodejs";
 
+import { prisma } from "@/lib/db";
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   if (!(await verifyClientSessionCookie(request.cookies.get(CLIENT_SESSION_COOKIE)?.value, code))) {
     return NextResponse.json({ error: "افتح لوحة الدعوة من رابط الإدارة السري أولاً." }, { status: 401 });
+  }
+
+  if (prisma) {
+    const disabledCheck = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { disabledAt: true } });
+    if (disabledCheck?.disabledAt) {
+      return NextResponse.json({ error: "الدعوة معطلة من الإدارة." }, { status: 403 });
+    }
   }
 
   const body = (await request.json().catch(() => null)) as { enabled?: unknown } | null;

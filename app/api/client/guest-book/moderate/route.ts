@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invitation-not-found" }, { status: 404 });
   }
 
+  if (invitation.disabledAt) {
+    return NextResponse.json({ error: "disabled" }, { status: 403 });
+  }
+
   const session = request.cookies.get(CLIENT_SESSION_COOKIE)?.value;
   if (!(await verifyClientSessionCookie(session, invitation.code))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -29,6 +29,7 @@ type DatabaseInvitation = {
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
   disabledAt: Date | null;
   disabledReason: string | null;
+  disabledBy: string | null;
   viewCount: number;
   customerId: string;
   template: {
@@ -126,6 +127,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     isActive: invitation.status === "ACTIVE" && !invitation.disabledAt,
     disabledAt: invitation.disabledAt?.toISOString(),
     disabledReason: invitation.disabledReason || undefined,
+    disabledBy: invitation.disabledBy || undefined,
     views: invitation.viewCount,
     customerId: invitation.customerId,
   };
@@ -213,5 +215,24 @@ export async function recordInvitationView(code: string, tracking?: InvitationVi
     });
   } catch (error) {
     console.error("Failed to record invitation view", error);
+  }
+}
+
+export async function getInvitationDisabledStatus(code: string): Promise<{ disabled: boolean; reason?: string; disabledBy?: string; disabledAt?: string }> {
+  if (!prisma) return { disabled: false };
+  try {
+    const invitation = await prisma.invitation.findFirst({
+      where: { code, deletedAt: null },
+      select: { disabledAt: true, disabledReason: true, disabledBy: true },
+    });
+    if (!invitation?.disabledAt) return { disabled: false };
+    return {
+      disabled: true,
+      reason: invitation.disabledReason || undefined,
+      disabledBy: invitation.disabledBy || undefined,
+      disabledAt: invitation.disabledAt.toISOString(),
+    };
+  } catch {
+    return { disabled: false };
   }
 }

@@ -28,7 +28,10 @@ export async function GET(_request: Request, context: RouteContext) {
     console.error("[Guest Book] Failed to resolve invitation for messages", error);
     return null;
   });
-  const invitationCode = invitation?.code || code;
+  if (!invitation || invitation.disabledAt) {
+    return NextResponse.json({ messages: [], settings: { mode: "disabled" } });
+  }
+  const invitationCode = invitation.code;
   const settings = await getCoupleMessagesSettings(invitationCode);
   if (settings.mode === "disabled") {
     return NextResponse.json({ messages: [], settings });

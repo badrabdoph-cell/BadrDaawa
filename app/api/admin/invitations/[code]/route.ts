@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, getAdminSessionUser, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
@@ -25,7 +25,7 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-async function updateDatabaseInvitation(code: string, action: string, customSlug?: string, disabledReason?: string) {
+async function updateDatabaseInvitation(code: string, action: string, customSlug?: string, disabledReason?: string, disabledBy?: string) {
   if (!prisma) return false;
 
   try {
@@ -50,7 +50,7 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     if (action === "disable") {
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
-        data: { disabledAt: new Date(), disabledReason: disabledReason || null },
+        data: { disabledAt: new Date(), disabledReason: disabledReason || null, disabledBy: disabledBy || null },
       });
       return result.count > 0;
     }
@@ -58,7 +58,7 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     if (action === "enable") {
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
-        data: { disabledAt: null, disabledReason: null },
+        data: { disabledAt: null, disabledReason: null, disabledBy: null },
       });
       return result.count > 0;
     }
@@ -167,7 +167,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return redirectBack(request, "database");
   }
 
-  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug, action === "disable" ? disabledReason : undefined);
+  const disabledBy = action === "disable" ? await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || undefined : undefined;
+  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug, action === "disable" ? disabledReason : undefined, disabledBy);
   const changed = updatedDatabase;
 
   if (changed) {

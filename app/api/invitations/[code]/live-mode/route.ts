@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCheckInsByInvitation } from "@/lib/check-ins";
 import { getApprovedGuestBookMessages } from "@/lib/guest-book";
+import { getInvitationByCode } from "@/lib/invitation-data";
 import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
 
 export const runtime = "nodejs";
@@ -11,6 +12,10 @@ type RouteContext = {
 
 export async function GET(_request: Request, context: RouteContext) {
   const { code } = await context.params;
+  const invitation = await getInvitationByCode(code);
+  if (!invitation || invitation.disabledAt) {
+    return NextResponse.json({ enabled: false, config: null, checkInCount: 0, messages: [] });
+  }
   const config = await getWeddingLiveMode(code);
   if (!config?.enabled) {
     return NextResponse.json({ enabled: false, config: null, checkInCount: 0, messages: [] });

@@ -33,7 +33,8 @@ function isExpiredInvitation(weddingDate: string) {
   return date.getTime() < Date.now();
 }
 
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string }) {
+function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string }) {
+  if (invitation.disabledAt) return "disabled";
   if (invitation.status === "archived") return "archived";
   if (invitation.status === "paused" || !invitation.isActive) return "paused";
   if (isExpiredInvitation(invitation.weddingDate)) return "expired";
@@ -41,10 +42,11 @@ function getInvitationState(invitation: { isActive: boolean; weddingDate: string
 }
 
 function stateLabel(state: string) {
-  if (state === "active") return "نشطة";
-  if (state === "paused") return "متوقفة";
+  if (state === "active") return "🟢 نشطة";
+  if (state === "paused") return "🟡 متوقفة";
   if (state === "expired") return "منتهية";
   if (state === "archived") return "مؤرشفة";
+  if (state === "disabled") return "🔴 معطلة";
   return "غير محددة";
 }
 
@@ -88,6 +90,19 @@ export default async function AdminInvitationDetailsPage({
 
   return (
     <>
+      {invitation.disabledAt ? (
+        <div className="disabled-invitation-alert">
+          <ShieldAlert size={22} />
+          <div>
+            <strong>الدعوة معطلة</strong>
+            {invitation.disabledReason ? <p>سبب التعطيل: {invitation.disabledReason}</p> : null}
+            <p className="disabled-meta">
+              {invitation.disabledBy ? <span>بواسطة: {invitation.disabledBy}</span> : null}
+              <span>بتاريخ: {formatAdminDateTime(invitation.disabledAt)}</span>
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="dashboard-head invitation-detail-head">
         <div>
           <Link className="admin-back-link" href="/admin/invitations">العودة للدعوات</Link>
@@ -263,6 +278,10 @@ export default async function AdminInvitationDetailsPage({
             <div className="disabled-info-box">
               <span className="status danger">معطلة</span>
               {invitation.disabledReason ? <p>{invitation.disabledReason}</p> : null}
+              <div className="disabled-info-meta">
+                {invitation.disabledBy ? <span>بواسطة: {invitation.disabledBy}</span> : null}
+                <span>بتاريخ: {formatAdminDateTime(invitation.disabledAt)}</span>
+              </div>
               <form action={`/api/admin/invitations/${invitation.code}`} method="post">
                 <button className="btn btn-soft" name="action" value="enable" type="submit">
                   <Play size={17} />

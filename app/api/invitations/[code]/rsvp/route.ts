@@ -34,7 +34,7 @@ export async function POST(request: Request, context: RouteContext) {
     if (!invitation) {
       return NextResponse.json({ error: "الدعوة غير موجودة في قاعدة البيانات" }, { status: 404 });
     }
-    if (invitation.status !== "ACTIVE") {
+    if (invitation.status !== "ACTIVE" || invitation.disabledAt) {
       return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
     }
 

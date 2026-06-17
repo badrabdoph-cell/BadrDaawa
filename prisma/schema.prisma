@@ -120,6 +120,7 @@ model Invitation {
   events      AnalyticsEvent[]
   disabledAt  DateTime?
   disabledReason String?
+  disabledBy  String?
   deletedAt   DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

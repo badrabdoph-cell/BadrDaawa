@@ -13,6 +13,10 @@ type RouteContext = {
 
 export async function GET(request: Request, context: RouteContext) {
   const { code } = await context.params;
+  const invitation = await getInvitationByCode(code);
+  if (!invitation || invitation.disabledAt) {
+    return NextResponse.json({ checkedIn: false, disabled: true });
+  }
   const url = new URL(request.url);
   const visitorKey = url.searchParams.get("visitorKey") || "";
   return NextResponse.json({ checkedIn: visitorKey ? await hasCheckIn(code, visitorKey) : false });

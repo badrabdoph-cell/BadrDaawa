@@ -265,6 +265,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.redirect(new URL("/manage/invitation/invalid?reason=session", request.url), 303);
   }
 
+  if (prisma) {
+    const disabledCheck = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { disabledAt: true } });
+    if (disabledCheck?.disabledAt) {
+      if (request.headers.get("content-type")?.includes("application/json")) {
+        return NextResponse.json({ error: "الدعوة معطلة من الإدارة ولا يمكن تعديلها." }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=disabled`, request.url), 303);
+    }
+  }
+
   if (request.headers.get("content-type")?.includes("application/json")) {
     return handleJsonUpdate(request, code);
   }

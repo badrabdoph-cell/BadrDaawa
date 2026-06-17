@@ -15,6 +15,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/manage/invitation/invalid?reason=missing", request.headers, request.nextUrl.origin), 303);
   }
 
+  if (invitation.disabledAt) {
+    return NextResponse.redirect(getRedirectUrl(`/${invitation.code}/ad_3399?saved=disabled`, request.headers, request.nextUrl.origin), 303);
+  }
+
   const session = request.cookies.get(CLIENT_SESSION_COOKIE)?.value;
   if (!(await verifyClientSessionCookie(session, invitation.code))) {
     return NextResponse.redirect(getRedirectUrl("/manage/invitation/invalid?reason=session", request.headers, request.nextUrl.origin), 303);

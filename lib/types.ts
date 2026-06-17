@@ -75,6 +75,7 @@ export type Invitation = {
   isActive: boolean;
   disabledAt?: string;
   disabledReason?: string;
+  disabledBy?: string;
   views: number;
   customerId: string;
   deletedAt?: string;

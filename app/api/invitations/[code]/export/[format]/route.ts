@@ -42,6 +42,7 @@ async function getExportRows(code: string): Promise<ExportData | null> {
         include: { guests: { orderBy: { createdAt: "desc" } } },
       });
       if (invitation) {
+        if (invitation.disabledAt) return null;
         return {
           title: `${invitation.groomName} & ${invitation.brideName}`,
           rows: invitation.guests.map((guest: DatabaseGuestRow) => ({
@@ -60,7 +61,7 @@ async function getExportRows(code: string): Promise<ExportData | null> {
   }
 
   const invitation = await getInvitationByCode(code);
-  if (!invitation) return null;
+  if (!invitation || invitation.disabledAt) return null;
   return {
     title: `${invitation.groomName} & ${invitation.brideName}`,
     rows: (await getGuestsByInvitation(code)).map((guest) => ({

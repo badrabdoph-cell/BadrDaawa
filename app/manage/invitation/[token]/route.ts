@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CLIENT_SESSION_COOKIE, CLIENT_SESSION_MAX_AGE, createClientSessionCookie } from "@/lib/client-session";
+import { prisma } from "@/lib/db";
 import { resolveInvitationManageToken } from "@/lib/invitation-manage-token";
 import { getPendingOrderByManageToken } from "@/lib/order-request-links";
 import { getRedirectUrl } from "@/lib/utils";
@@ -19,6 +20,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const url = getRedirectUrl("/manage/invitation/invalid", request.headers, request.nextUrl.origin);
     url.searchParams.set("reason", result.reason);
     return NextResponse.redirect(url, 303);
+  }
+
+  if (prisma) {
+    const disabledCheck = await prisma.invitation.findFirst({ where: { code: result.code, deletedAt: null }, select: { disabledAt: true } });
+    if (disabledCheck?.disabledAt) {
+      const url = getRedirectUrl("/manage/invitation/invalid", request.headers, request.nextUrl.origin);
+      url.searchParams.set("reason", "disabled");
+      return NextResponse.redirect(url, 303);
+    }
   }
 
   const response = NextResponse.redirect(getRedirectUrl(`/${result.code}/ad_3399`, request.headers, request.nextUrl.origin), 303);

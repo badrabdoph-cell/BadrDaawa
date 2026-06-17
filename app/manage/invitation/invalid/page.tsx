@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 function errorMessage(reason?: string) {
+  if (reason === "disabled") return "تم تعطيل الدعوة من الإدارة ولا يمكن الوصول إلى لوحة التحكم.";
   if (reason === "pending") return "تم تجهيز رابط إدارة الدعوة، لكنه سيعمل تلقائياً بعد موافقة الأدمن ونشر الدعوة.";
   if (reason === "session") return "لوحة إدارة الدعوة لا تفتح إلا من رابط الإدارة السري الخاص بها.";
   if (reason === "expired") return "رابط إدارة الدعوة منتهي الصلاحية. اطلب رابطاً جديداً من فريق الإدارة.";
