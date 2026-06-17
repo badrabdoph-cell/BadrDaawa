@@ -114,6 +114,7 @@ export type BackupDiagnostics = {
     githubUrl: string | null;
   } | null;
   backupsCount: number;
+  cronSecretSha256: string | null;
 };
 
 type BackupPayload = {
@@ -1267,11 +1268,15 @@ export async function getBackupDiagnostics(): Promise<BackupDiagnostics> {
         .catch(() => null)
     : null;
 
+  const rawSecret = (process.env.BACKUP_CRON_SECRET || process.env.CRON_SECRET || "").trim();
+  const cronSecretSha256 = rawSecret ? createHash("sha256").update(rawSecret).digest("hex").slice(0, 8) : null;
+
   return {
     databaseUrlPresent,
     postgresqlConnected,
     postgresqlError,
-    cronSecretPresent: Boolean((process.env.BACKUP_CRON_SECRET || process.env.CRON_SECRET || "").trim()),
+    cronSecretPresent: Boolean(rawSecret),
+    cronSecretSha256,
     lastCronInvocation,
     lastScheduledSuccess,
     backupsCount: backups.length,

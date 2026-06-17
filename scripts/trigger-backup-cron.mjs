@@ -1,5 +1,9 @@
+import { createHash } from "node:crypto";
+
 const startedAt = Date.now();
 const secret = (process.env.BACKUP_CRON_SECRET || process.env.CRON_SECRET || "").trim();
+const secretHash = secret ? createHash("sha256").update(secret).digest("hex").slice(0, 8) : "empty";
+console.log(`[Backup Cron Trigger] BACKUP_CRON_SECRET SHA256 (first 8): ${secretHash}`);
 const configuredUrl = (process.env.BACKUP_CRON_URL || "").trim();
 const railwayDomain = (process.env.RAILWAY_PUBLIC_DOMAIN || process.env.RAILWAY_STATIC_URL || "").trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "").trim().replace(/\/$/, "");

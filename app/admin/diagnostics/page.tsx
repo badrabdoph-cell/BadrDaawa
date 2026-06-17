@@ -51,6 +51,11 @@ export default async function DiagnosticsPage() {
           <strong>{statusLabel(diagnostics.cronSecretPresent)}</strong>
         </article>
         <article className="panel backup-status-card">
+          <KeyRound size={24} />
+          <span>SHA256 (أول 8)</span>
+          <strong style={{ fontSize: 11, fontFamily: "monospace" }}>{diagnostics.cronSecretSha256 ?? "غير متاح"}</strong>
+        </article>
+        <article className="panel backup-status-card">
           <FileJson size={24} />
           <span>عدد النسخ الحالية</span>
           <strong>{diagnostics.backupsCount}</strong>
