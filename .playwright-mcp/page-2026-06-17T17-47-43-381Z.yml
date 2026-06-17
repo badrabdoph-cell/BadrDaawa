@@ -1,0 +1,300 @@
+- generic [ref=e16]:
+  - banner [ref=e18]:
+    - generic [ref=e19]:
+      - link "Railway Logo" [ref=e20] [cursor=pointer]:
+        - /url: /dashboard
+        - img "Railway Logo" [ref=e22]
+      - generic [ref=e25]:
+        - button "surprising-analysis" [ref=e28] [cursor=pointer]:
+          - generic "Badr 2's Projects" [ref=e29]
+          - generic [ref=e31]: surprising-analysis
+          - img [ref=e33]
+        - button "production" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: production
+          - img [ref=e40]
+    - navigation [ref=e42]:
+      - generic [ref=e44]:
+        - button "Toggle activity" [ref=e46] [cursor=pointer]:
+          - img [ref=e48]
+        - button [ref=e50] [cursor=pointer]:
+          - img [ref=e53]
+        - button "Agent" [ref=e56] [cursor=pointer]:
+          - img [ref=e58]
+          - text: Agent
+  - generic [ref=e60]:
+    - navigation "Project navigation" [ref=e61]:
+      - generic [ref=e62]:
+        - link "Architecture" [ref=e65] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e67]
+        - link "Observability" [ref=e73] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/observability?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e75]
+        - link "Logs" [ref=e78] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/logs?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e80]
+        - link "Settings" [ref=e84] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e86]
+      - button [ref=e89] [cursor=pointer]:
+        - generic "Badr 2" [ref=e91]
+    - region [ref=e97]:
+      - generic [ref=e98]:
+        - generic [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e106]:
+              - generic:
+                - img
+                - generic:
+                  - button "easygoing-education Last run failed 50 minutes ago Next in 12 minutes" [ref=e529]:
+                    - generic [ref=e108]:
+                      - link "easygoing-education Last run failed 50 minutes ago" [ref=e530] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e111]:
+                          - img [ref=e113]
+                          - paragraph [ref=e116]: easygoing-education
+                        - generic [ref=e117]:
+                          - img [ref=e532]
+                          - paragraph [ref=e534]:
+                            - text: Last run failed
+                            - time [ref=e535]: 50 minutes ago
+                      - link "Next in 12 minutes" [ref=e536] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e124]:
+                          - img [ref=e126]
+                          - paragraph [ref=e129]:
+                            - text: Next
+                            - time [ref=e131]: in 12 minutes
+                  - button "BadrDaawa daawa.up.railway.app Online badrdaawa-volume-4W1g" [ref=e132]:
+                    - generic [ref=e133]:
+                      - link "BadrDaawa daawa.up.railway.app Online" [ref=e135] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e136]:
+                          - img [ref=e138]
+                          - generic [ref=e140]:
+                            - paragraph [ref=e141]: BadrDaawa
+                            - paragraph [ref=e142]: daawa.up.railway.app
+                        - generic [ref=e144]:
+                          - img [ref=e145]
+                          - paragraph [ref=e148]: Online
+                      - link "badrdaawa-volume-4W1g" [ref=e150] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/8ab00a39-f024-4769-b934-3cc1d30a427f/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e152]:
+                          - img [ref=e154]
+                          - paragraph [ref=e156]: badrdaawa-volume-4W1g
+                  - button "Postgres Online postgres-volume" [ref=e157]:
+                    - generic [ref=e158]:
+                      - link "Postgres Online" [ref=e160] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/1b8a489a-5807-4122-9e3b-f440a527568a/database?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - paragraph [ref=e164]: Postgres
+                        - generic [ref=e166]:
+                          - img [ref=e167]
+                          - paragraph [ref=e170]: Online
+                      - link "postgres-volume" [ref=e172] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/ab077c7f-96ba-4347-8192-dd2c10ba428c/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e174]:
+                          - img [ref=e176]
+                          - paragraph [ref=e178]: postgres-volume
+            - toolbar "Canvas options" [ref=e180]:
+              - button "Canvas settings" [ref=e181] [cursor=pointer]:
+                - img [ref=e183]
+              - group "canvas action" [ref=e193]:
+                - button "Zoom in" [ref=e194] [cursor=pointer]:
+                  - img [ref=e196]
+                - button "Zoom out" [ref=e198] [cursor=pointer]:
+                  - img [ref=e200]
+                - button "Center canvas" [ref=e201] [cursor=pointer]:
+                  - img [ref=e203]
+              - group "canvas action" [ref=e208]:
+                - button "Undo" [ref=e209] [cursor=pointer]:
+                  - img [ref=e211]
+                - button "Redo" [ref=e214] [cursor=pointer]:
+                  - img [ref=e216]
+              - button "Visibility layers" [ref=e219] [cursor=pointer]:
+                - img [ref=e221]
+            - img [ref=e223]
+        - generic [ref=e228]:
+          - generic [ref=e229]:
+            - generic [ref=e230]:
+              - generic [ref=e232]:
+                - button [ref=e233] [cursor=pointer]:
+                  - img [ref=e235]
+                - heading "easygoing-education" [level=1] [ref=e237]:
+                  - button "easygoing-education" [ref=e238] [cursor=pointer]
+              - link [ref=e240] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - img [ref=e242]
+            - generic [ref=e244]:
+              - link "Cron Runs" [ref=e245] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e246]: Cron Runs
+              - link "Deployments" [ref=e247] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e248]: Deployments
+              - link "Variables" [ref=e250] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/variables?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e251]: Variables
+              - link "Metrics" [ref=e252] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e253]: Metrics
+              - link "Console" [ref=e254] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/console?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e255]: Console
+              - link "Settings" [ref=e256] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e257]: Settings
+          - generic [ref=e260]:
+            - generic [ref=e261]:
+              - generic [ref=e262]:
+                - img [ref=e264]
+                - link "Unexposed service" [ref=e266] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#networking-public
+              - generic [ref=e267]:
+                - generic [ref=e268]:
+                  - img [ref=e270]
+                  - link "US West" [ref=e273] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-region-config
+                - generic [ref=e274]:
+                  - img [ref=e276]
+                  - link "1 Replica" [ref=e278] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-region-config
+            - generic [ref=e319]:
+              - link "Active bbb 1 minute ago via GitHub View logs" [ref=e537] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=692bc7d4-406f-40b0-a1b5-5ab2899115b0#deploy
+                - generic [ref=e322]:
+                  - generic [ref=e324]: Active
+                  - generic [ref=e326]:
+                    - generic "badrabdoph-cell" [ref=e327]
+                    - img [ref=e330]
+                  - generic [ref=e333]:
+                    - paragraph [ref=e334]: bbb
+                    - paragraph [ref=e335]:
+                      - time [ref=e336]: 1 minute ago
+                      - text: via GitHub
+                  - generic [ref=e337]:
+                    - button "Deployment actions" [ref=e338]:
+                      - img [ref=e340]
+                    - link "View logs" [ref=e344]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=692bc7d4-406f-40b0-a1b5-5ab2899115b0#deploy
+                      - generic [ref=e345]: View logs
+              - button "Deployment successful" [ref=e538] [cursor=pointer]:
+                - generic [ref=e539]:
+                  - img [ref=e541]
+                  - paragraph [ref=e544]: Deployment successful
+                - img [ref=e369]
+            - generic [ref=e373]:
+              - generic [ref=e374]:
+                - button "History" [expanded] [ref=e375] [cursor=pointer]:
+                  - img [ref=e377]
+                  - paragraph [ref=e379]: History
+                - button "Hide Skipped" [ref=e380] [cursor=pointer]
+              - region "History" [ref=e381]:
+                - link "Removed bbb 41 minutes ago via GitHub View logs" [ref=e545] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=bcb2b3db-cf91-4a70-beb7-5e985db1fc7f
+                  - generic [ref=e548]:
+                    - generic [ref=e550]: Removed
+                    - generic [ref=e552]:
+                      - generic "badrabdoph-cell" [ref=e553]
+                      - img [ref=e556]
+                    - generic [ref=e559]:
+                      - paragraph [ref=e560]: bbb
+                      - paragraph [ref=e561]:
+                        - time [ref=e562]: 41 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e563]:
+                      - button "Deployment actions" [ref=e564]:
+                        - img [ref=e566]
+                      - link "View logs" [ref=e571]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=bcb2b3db-cf91-4a70-beb7-5e985db1fc7f#deploy
+                        - generic [ref=e572]: View logs
+                - link "Removed bbb 55 minutes ago via GitHub View logs" [ref=e573] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=6768b75c-aa1f-4cfd-bcfa-1a78caad6939
+                  - generic [ref=e385]:
+                    - generic [ref=e387]: Removed
+                    - generic [ref=e389]:
+                      - generic "badrabdoph-cell" [ref=e390]
+                      - img [ref=e393]
+                    - generic [ref=e396]:
+                      - paragraph [ref=e397]: bbb
+                      - paragraph [ref=e398]:
+                        - time [ref=e399]: 55 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e400]:
+                      - button "Deployment actions" [ref=e401]:
+                        - img [ref=e403]
+                      - link "View logs" [ref=e408]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=6768b75c-aa1f-4cfd-bcfa-1a78caad6939#deploy
+                        - generic [ref=e409]: View logs
+                - link "Removed bbb 56 minutes ago via GitHub View logs" [ref=e574] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=b46ee2b6-0c22-4191-bc59-16a2d5b19f12
+                  - generic [ref=e413]:
+                    - generic [ref=e415]: Removed
+                    - generic [ref=e417]:
+                      - generic "badrabdoph-cell" [ref=e418]
+                      - img [ref=e421]
+                    - generic [ref=e424]:
+                      - paragraph [ref=e425]: bbb
+                      - paragraph [ref=e426]:
+                        - time [ref=e427]: 56 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e428]:
+                      - button "Deployment actions" [ref=e429]:
+                        - img [ref=e431]
+                      - link "View logs" [ref=e436]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=b46ee2b6-0c22-4191-bc59-16a2d5b19f12#deploy
+                        - generic [ref=e437]: View logs
+                - link "Removed bbb 1 hour ago via GitHub View logs" [ref=e438] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=baa4d382-946b-4f45-bf1c-b347fdf50bff
+                  - generic [ref=e441]:
+                    - generic [ref=e443]: Removed
+                    - generic [ref=e445]:
+                      - generic "badrabdoph-cell" [ref=e446]
+                      - img [ref=e449]
+                    - generic [ref=e452]:
+                      - paragraph [ref=e453]: bbb
+                      - paragraph [ref=e454]:
+                        - time [ref=e455]: 1 hour ago
+                        - text: via GitHub
+                    - generic [ref=e456]:
+                      - button "Deployment actions" [ref=e457]:
+                        - img [ref=e459]
+                      - link "View logs" [ref=e464]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=baa4d382-946b-4f45-bf1c-b347fdf50bff#deploy
+                        - generic [ref=e465]: View logs
+                - link "Removed bbb 1 hour ago via GitHub View logs" [ref=e466] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=2f93970c-c74f-40f5-8e48-0d13f9638704
+                  - generic [ref=e469]:
+                    - generic [ref=e471]: Removed
+                    - generic [ref=e473]:
+                      - generic "badrabdoph-cell" [ref=e474]
+                      - img [ref=e477]
+                    - generic [ref=e480]:
+                      - paragraph [ref=e481]: bbb
+                      - paragraph [ref=e482]:
+                        - time [ref=e483]: 1 hour ago
+                        - text: via GitHub
+                    - generic [ref=e484]:
+                      - button "Deployment actions" [ref=e485]:
+                        - img [ref=e487]
+                      - link "View logs" [ref=e492]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=2f93970c-c74f-40f5-8e48-0d13f9638704#deploy
+                        - generic [ref=e493]: View logs
+                - link "Removed bbb 1 hour ago via GitHub View logs" [ref=e494] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=91563553-d391-41eb-942d-81f9681c7a9e
+                  - generic [ref=e497]:
+                    - generic [ref=e499]: Removed
+                    - generic [ref=e501]:
+                      - generic "badrabdoph-cell" [ref=e502]
+                      - img [ref=e505]
+                    - generic [ref=e508]:
+                      - paragraph [ref=e509]: bbb
+                      - paragraph [ref=e510]:
+                        - time [ref=e511]: 1 hour ago
+                        - text: via GitHub
+                    - generic [ref=e512]:
+                      - button "Deployment actions" [ref=e513]:
+                        - img [ref=e515]
+                      - link "View logs" [ref=e520]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=91563553-d391-41eb-942d-81f9681c7a9e#deploy
+                        - generic [ref=e521]: View logs
