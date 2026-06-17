@@ -234,6 +234,19 @@ model BackupJob {
   @@index([status])
 }
 
+model SafeBackup {
+  id             String    @id @default(cuid())
+  backupFileName String
+  label          String?
+  notes          String?
+  markedAt       DateTime
+  markedBy       String?
+  createdAt      DateTime  @default(now())
+
+  @@index([backupFileName])
+  @@index([markedAt])
+}
+
 model SyncLog {
   id           String    @id @default(cuid())
   timestamp    DateTime  @default(now())
