@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { Archive, CalendarDays, Eye, Filter, Search, Settings2, ShieldAlert, Sparkles, Trash2, UserCheck } from "lucide-react";
-import { CopyButton } from "@/components/CopyButton";
-import { AdminInvitationSingleDelete } from "@/components/AdminInvitationActions";
+import { Archive, CalendarDays, Eye, Filter, Search, Settings2, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { getInvitationManagePath } from "@/lib/invitation-manage-token";
+import { AdminInvitationRow } from "@/components/AdminInvitationRow";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -75,8 +75,7 @@ export default async function InvitationsPage({
   const selectedSort = params.sort || "newest";
   const guestStatsByCode = guests.reduce(
     (map, guest) => {
-      const current = map.get(guest.invitationCode) || { responses: 0, confirmed: 0, attendees: 0 };
-      current.responses += 1;
+      const current = map.get(guest.invitationCode) || { confirmed: 0, attendees: 0 };
       if (guest.status === "confirmed") {
         current.confirmed += 1;
         current.attendees += Math.max(1, guest.attendees || 1);
@@ -84,7 +83,7 @@ export default async function InvitationsPage({
       map.set(guest.invitationCode, current);
       return map;
     },
-    new Map<string, { responses: number; confirmed: number; attendees: number }>(),
+    new Map<string, { confirmed: number; attendees: number }>(),
   );
   const filteredInvitations = invitations
     .filter((invitation) => {
@@ -99,6 +98,8 @@ export default async function InvitationsPage({
       if (selectedSort === "attendees") return (guestStatsByCode.get(b.code)?.attendees || 0) - (guestStatsByCode.get(a.code)?.attendees || 0);
       return 0;
     });
+  const adminPaths = await Promise.all(filteredInvitations.map((inv) => getInvitationManagePath(inv.code).then((path) => ({ code: inv.code, path }))));
+  const adminPathByCode = new Map(adminPaths.map((item) => [item.code, item.path]));
   const activeCount = invitations.filter((invitation) => getInvitationState(invitation) === "active").length;
   const pausedCount = invitations.filter((invitation) => getInvitationState(invitation) === "paused").length;
   const disabledCount = invitations.filter((invitation) => getInvitationState(invitation) === "disabled").length;
@@ -229,54 +230,48 @@ export default async function InvitationsPage({
       </form>
 
       {filteredInvitations.length ? (
-        <section className="invitation-card-grid" aria-label="قائمة الدعوات">
-          {filteredInvitations.map((invitation) => {
-            const publicSlug = invitation.customSlug || invitation.code;
-            const invitationUrl = `${siteUrl}/${publicSlug}`;
-            const guestStats = guestStatsByCode.get(invitation.code) || { responses: 0, confirmed: 0, attendees: 0 };
-            const invitationState = getInvitationState(invitation);
-            const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" ? "\uD83D\uDD34" : "";
-            return (
-              <article className="invitation-card" key={invitation.id}>
-                <div className="invitation-card-head">
-                  <div>
-                    <span className="invitation-card-code">{invitation.code}</span>
-                    <h2>{invitation.groomName} و {invitation.brideName}</h2>
-                  </div>
-                  <span className={stateClassName(invitationState)}>{stateEmoji} {stateLabel(invitationState)}</span>
-                </div>
-
-                <dl className="invitation-card-metrics">
-                  <div>
-                    <dt>الزيارات</dt>
-                    <dd>{formatArabicNumber(invitation.views)}</dd>
-                  </div>
-                  <div>
-                    <dt>الردود</dt>
-                    <dd>{formatArabicNumber(guestStats.responses)}</dd>
-                  </div>
-                  <div>
-                    <dt>تاريخ الحفل</dt>
-                    <dd>{formatAdminDate(invitation.weddingDate)}</dd>
-                  </div>
-                </dl>
-
-                <div className="invitation-card-actions">
-                  <Link className="btn btn-soft" href={`/${publicSlug}`}>
-                    <Eye size={17} />
-                    عرض الدعوة
-                  </Link>
-                  <Link className="btn btn-soft" href={`/admin/invitations/${encodeURIComponent(invitation.code)}`}>
-                    <Settings2 size={17} />
-                    إدارة الدعوة
-                  </Link>
-                  <CopyButton className="btn btn-soft" value={invitationUrl} label="نسخ الرابط" title="نسخ رابط الدعوة" />
-                  <AdminInvitationSingleDelete code={invitation.code} />
-                </div>
-              </article>
-            );
-          })}
-        </section>
+        <div className="admin-invitation-table-wrapper">
+          <table className="admin-invitation-table">
+            <thead>
+              <tr>
+                <th className="col-state"></th>
+                <th className="col-name">اسم الدعوة</th>
+                <th className="col-date">تاريخ الحفل</th>
+                <th className="col-views">الزيارات</th>
+                <th className="col-status">الحالة</th>
+                <th className="col-actions">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInvitations.map((invitation) => {
+                const publicSlug = invitation.customSlug || invitation.code;
+                const invitationUrl = `${siteUrl}/${publicSlug}`;
+                const invitationState = getInvitationState(invitation);
+                const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" ? "\uD83D\uDD34" : "";
+                const adminPath = adminPathByCode.get(invitation.code);
+                const adminUrl = adminPath ? `${siteUrl}${adminPath}` : "";
+                return (
+                  <AdminInvitationRow
+                    key={invitation.id}
+                    code={invitation.code}
+                    groomName={invitation.groomName}
+                    brideName={invitation.brideName}
+                    weddingDate={formatAdminDate(invitation.weddingDate)}
+                    views={formatArabicNumber(invitation.views)}
+                    stateEmoji={stateEmoji}
+                    stateLabel={stateLabel(invitationState)}
+                    stateClass={stateClassName(invitationState)}
+                    publicPath={`/${publicSlug}`}
+                    adminPath={`/admin/invitations/${encodeURIComponent(invitation.code)}`}
+                    invitationUrl={invitationUrl}
+                    adminUrl={adminUrl}
+                    isDisabled={invitationState === "disabled"}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="admin-empty-state compact">
           <strong>لا توجد دعوات مطابقة</strong>

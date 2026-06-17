@@ -10,10 +10,17 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
+type ScheduledJob = {
+  createdAt: string;
+  status: string;
+  fileName: string | null;
+};
+
 type Props = {
   lastScheduledAt: string | null;
   lastScheduledSuccessAt: string | null;
   nextScheduledAt: string | null;
+  recentScheduled: ScheduledJob[];
 };
 
 function formatArabicDate(iso: string) {
@@ -93,6 +100,7 @@ export default function AutoBackupDashboard({
   lastScheduledAt,
   lastScheduledSuccessAt,
   nextScheduledAt,
+  recentScheduled,
 }: Props) {
   const [now, setNow] = useState(Date.now());
 
@@ -121,23 +129,19 @@ export default function AutoBackupDashboard({
             {lastScheduledSuccessAt ? (
               <>
                 <strong>
-                  ⚠️ النسخ التلقائي لم يعمل منذ أكثر من{" "}
-                  {formatAlertDuration(
-                    now - new Date(lastScheduledSuccessAt).getTime(),
-                  )}
+                  النسخ التلقائي لم يعمل منذ أكثر من{" "}
+                  {formatAlertDuration(now - new Date(lastScheduledSuccessAt).getTime())}
                 </strong>
                 <br />
                 آخر نسخة ناجحة: {formatArabicDate(lastScheduledSuccessAt)}
               </>
             ) : lastScheduledAt ? (
               <strong>
-                ⚠️ لا توجد نسخة تلقائية ناجحة — آخر نسخة تلقائية:{" "}
+                لا توجد نسخة تلقائية ناجحة — آخر نسخة تلقائية:{" "}
                 {formatArabicDate(lastScheduledAt)}
               </strong>
             ) : (
-              <strong>
-                ⚠️ لم يتم إنشاء أي نسخة تلقائية بعد
-              </strong>
+              <strong>لم يتم إنشاء أي نسخة تلقائية بعد</strong>
             )}
             <br />
             تحقق من:
@@ -160,7 +164,6 @@ export default function AutoBackupDashboard({
         </div>
 
         <div className="auto-backup-grid">
-          {/* Status */}
           <div className={`auto-backup-card auto-backup-card--${status.level}`}>
             <ShieldCheck size={22} />
             <span className="auto-backup-card-label">حالة النسخ التلقائي</span>
@@ -172,7 +175,6 @@ export default function AutoBackupDashboard({
             </span>
           </div>
 
-          {/* Last backup */}
           <div className="auto-backup-card">
             <Clock size={22} />
             <span className="auto-backup-card-label">آخر نسخة تلقائية</span>
@@ -188,7 +190,6 @@ export default function AutoBackupDashboard({
             ) : null}
           </div>
 
-          {/* Next backup */}
           <div className="auto-backup-card">
             <CalendarClock size={22} />
             <span className="auto-backup-card-label">النسخة القادمة</span>
@@ -204,7 +205,6 @@ export default function AutoBackupDashboard({
             ) : null}
           </div>
 
-          {/* Countdown */}
           <div className="auto-backup-card auto-backup-card--countdown">
             <Timer size={22} />
             <span className="auto-backup-card-label">
@@ -217,6 +217,42 @@ export default function AutoBackupDashboard({
             </strong>
           </div>
         </div>
+
+        {recentScheduled.length > 0 ? (
+          <div className="backup-scheduled-log">
+            <div className="backup-scheduled-log-header">
+              <h4>آخر {recentScheduled.length} نسخ تلقائية</h4>
+            </div>
+            <table className="backup-scheduled-table">
+              <thead>
+                <tr>
+                  <th>التاريخ</th>
+                  <th>النوع</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentScheduled.map((job, i) => (
+                  <tr key={job.createdAt + String(i)}>
+                    <td>{formatArabicDate(job.createdAt)}</td>
+                    <td>Scheduled</td>
+                    <td>
+                      <span
+                        className={`status ${job.status === "SUCCESS" ? "success" : job.status === "FAILED" ? "danger" : "info"}`}
+                      >
+                        {job.status === "SUCCESS"
+                          ? "Success"
+                          : job.status === "FAILED"
+                            ? "Failed"
+                            : job.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </div>
     </>
   );

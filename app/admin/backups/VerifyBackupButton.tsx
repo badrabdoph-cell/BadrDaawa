@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck, XCircle, X } from "lucide-react";
 
 type VerifyResult = {
   ok: boolean;
@@ -96,85 +96,76 @@ export function VerifyBackupButton() {
       </button>
 
       {result ? (
-        <div
-          className={`backup-verify-result ${result.ok ? "ok" : "fail"}`}
-          style={{ gridColumn: "1 / -1" }}
-        >
-          <div className="backup-verify-head">
-            {result.ok ? (
-              <CheckCircle2 size={18} style={{ color: "#4caf87", flexShrink: 0 }} />
-            ) : (
-              <XCircle size={18} style={{ color: "#d9534f", flexShrink: 0 }} />
-            )}
-            {result.ok ? "تم التحقق من النسخة فعلياً" : "فشل التحقق من النسخة"}
-          </div>
-
-          <div style={{ fontSize: "0.85rem", fontWeight: 800, lineHeight: 1.7 }}>
-            {result.error || (
-              <>
-                الملف: {result.fileName || "غير متاح"} · الحجم:{" "}
-                {formatBytes(result.sizeBytes)} · المدة: {result.durationMs}ms
-              </>
-            )}
-          </div>
-
-          {result.storagePath ? (
-            <code
-              style={{
-                direction: "ltr",
-                display: "block",
-                fontSize: "0.78rem",
-                overflowWrap: "anywhere",
-                background: "rgba(0,0,0,0.2)",
-                padding: "6px 10px",
-                borderRadius: 8,
-              }}
-            >
-              {result.storagePath}
-            </code>
-          ) : null}
-
-          <div className="backup-verify-steps">
-            {result.steps.map((step) => (
-              <div key={`${step.name}-${step.timestamp}`} className="backup-verify-step">
-                {step.ok ? (
-                  <CheckCircle2 size={14} style={{ color: "#4caf87", flexShrink: 0 }} />
-                ) : (
-                  <XCircle size={14} style={{ color: "#d9534f", flexShrink: 0 }} />
-                )}
-                <strong>{step.name}</strong>
-                <span>{step.detail}</span>
-              </div>
-            ))}
-          </div>
-
-          {result.backupJob ? (
-            <div
-              style={{
-                fontSize: "0.8rem",
-                fontWeight: 800,
-                color: "rgba(245, 234, 214, 0.6)",
-              }}
-            >
-              BackupJob: {result.backupJob.id} / {result.backupJob.status}
-              {result.backupJob.githubSha
-                ? ` · SHA: ${result.backupJob.githubSha}`
-                : null}
-              {result.backupJob.githubUrl ? (
-                <>
-                  {" · "}
-                  <a
-                    href={result.backupJob.githubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: "#f3cf73", textDecoration: "underline" }}
-                  >
-                    GitHub
-                  </a>
-                </>
-              ) : null}
+        <div className="backup-verify-overlay" onClick={() => setResult(null)} role="dialog" aria-modal="true">
+          <div className="backup-verify-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="verify-header">
+              {result.ok ? (
+                <CheckCircle2 size={24} style={{ color: "#4caf87", flexShrink: 0 }} />
+              ) : (
+                <XCircle size={24} style={{ color: "#d9534f", flexShrink: 0 }} />
+              )}
+              <h3>{result.ok ? "تم التحقق من النسخة" : "فشل التحقق من النسخة"}</h3>
+              <button className="verify-close" type="button" onClick={() => setResult(null)} aria-label="إغلاق">
+                <X size={20} />
+              </button>
             </div>
-          ) : null}
+
+            <div className="verify-status">
+              {result.ok ? (
+                <span style={{ color: "#4caf87" }}>نسخة سليمة ومعتمدة</span>
+              ) : (
+                <span style={{ color: "#d9534f" }}>{result.error || "فشل غير متوقع"}</span>
+              )}
+            </div>
+
+            <div className="verify-meta">
+              {result.fileName ? `الملف: ${result.fileName}` : ""}
+              {result.sizeBytes ? ` · الحجم: ${formatBytes(result.sizeBytes)}` : ""}
+              {result.durationMs ? ` · المدة: ${(result.durationMs / 1000).toFixed(1)}s` : ""}
+            </div>
+
+            {result.storagePath ? (
+              <code className="verify-path">{result.storagePath}</code>
+            ) : null}
+
+            <div className="verify-steps">
+              {result.steps.map((step) => (
+                <div key={`${step.name}-${step.timestamp}`} className="verify-step">
+                  {step.ok ? (
+                    <CheckCircle2 size={14} style={{ color: "#4caf87", flexShrink: 0 }} />
+                  ) : (
+                    <XCircle size={14} style={{ color: "#d9534f", flexShrink: 0 }} />
+                  )}
+                  <strong>{step.name}</strong>
+                  <span>{step.detail}</span>
+                </div>
+              ))}
+            </div>
+
+            {result.backupJob ? (
+              <div className="verify-job-info">
+                BackupJob: {result.backupJob.id.slice(0, 8)}… / {result.backupJob.status}
+                {result.backupJob.githubSha ? ` · SHA: ${result.backupJob.githubSha.slice(0, 12)}…` : ""}
+                {result.backupJob.githubUrl ? (
+                  <>
+                    {" · "}
+                    <a
+                      href={result.backupJob.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#f3cf73", textDecoration: "underline" }}
+                    >
+                      GitHub
+                    </a>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+
+            <button className="btn btn-soft" type="button" onClick={() => setResult(null)}>
+              إغلاق
+            </button>
+          </div>
         </div>
       ) : null}
     </>
