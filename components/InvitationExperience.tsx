@@ -704,6 +704,9 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
         <section className="noir-qr-card">
           <p>{invitationT(invitation, "invitation.shareInvitation")}</p>
           <QrCodeBlock value={invitationUrl} locale={invitation.language} />
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -804,6 +807,9 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
         <section className="ivory-qr-card">
           <h2>لمشاركة هذه اللحظة</h2>
           <QrCodeBlock value={invitationUrl} locale={invitation.language} />
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -911,6 +917,9 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
           <div className="mobile-gold-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="mobile-gold-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1014,6 +1023,10 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
           <div className="boho-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
 
           <div className="boho-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
@@ -1152,6 +1165,10 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
 
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
+
           <div className="garden-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1283,6 +1300,9 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
           <div className="featured-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="featured-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1393,6 +1413,9 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
           <div className="cinema-rose-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="cinema-rose-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1499,6 +1522,9 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
           <h4>احفظ التذكرة أو شاركها مع من تحب</h4>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="modern-cinema-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1604,6 +1630,9 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
           <div className="ethereal-glass-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="ethereal-glass-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1679,6 +1708,9 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
           <div className="botanical-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="botanical-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1741,6 +1773,9 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
           <div className="royal-gold-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="royal-gold-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1800,6 +1835,9 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
           <div className="boho-sand-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="boho-sand-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1860,6 +1898,9 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
           <div className="pure-white-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="pure-white-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1917,6 +1958,9 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
           <div className="neon-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="neon-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -1976,6 +2020,9 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
           <div className="vintage-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="vintage-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -2035,6 +2082,9 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
           <div className="fairytale-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="fairytale-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -2099,6 +2149,9 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
           <div className="ocean-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="ocean-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -2160,6 +2213,9 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
           <div className="artdeco-qr-box">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
           </div>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="artdeco-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
@@ -2218,6 +2274,9 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
           <section className="magazine-qr-card">
             <QrCodeBlock value={invitationUrl} locale={invitation.language} />
             <p>Scan for access</p>
+            <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+              <span>صمم دعوت فرحك</span>
+            </a>
             <div className="magazine-share-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
               <SocialShareButtons invitationUrl={invitationUrl} />
             </div>
@@ -2324,6 +2383,9 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
           </div>
 
           <p>{invitationT(invitation, "invitation.shareInvitation")}</p>
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="cinematic-share-row">
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
