@@ -1898,51 +1898,35 @@ export function OrderForm({
 
               {musicSettingsOpen ? (
                 <div className="order-music-fields">
-                  <div className="order-music-choice-grid" role="radiogroup" aria-label="اختيار موسيقى الدعوة">
-                    <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
-                      <Music2 size={16} />
-                      الموسيقى الأساسية
-                    </button>
-                    <button className={form.musicEnabled && form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
-                      <UploadCloud size={16} />
-                      رفع MP3
-                    </button>
-                    <button className={form.musicEnabled && form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
-                      <FileVideo size={16} />
-                      صوت من فيديو
-                    </button>
-                    <button className={form.musicEnabled && form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
-                      <Link2 size={16} />
-                      رابط أغنية
-                    </button>
-                    <button className={!form.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!form.musicEnabled} onClick={() => selectMusicChoice("none")}>
-                      <Music2 size={16} />
-                      إيقاف الموسيقى
-                    </button>
-                  </div>
-
-                  {form.musicEnabled ? (
-                    <>
-                      {form.musicChoice === "upload" ? (
+                  <div className="order-music-choice-grid">
+                    <div className="order-music-choice-item">
+                      <button className={form.musicEnabled && form.musicChoice === "default" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "default"} onClick={() => selectMusicChoice("default")}>
+                        <Music2 size={16} />
+                        الموسيقى الأساسية
+                      </button>
+                    </div>
+                    <div className="order-music-choice-item">
+                      <button className={form.musicEnabled && form.musicChoice === "upload" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "upload"} onClick={() => selectMusicChoice("upload")}>
+                        <UploadCloud size={16} />
+                        رفع MP3
+                      </button>
+                      {form.musicEnabled && form.musicChoice === "upload" ? (
                         <label className="order-music-upload">
                           {musicUploadBusy ? <Loader2 size={17} className="animate-float" /> : <UploadCloud size={17} />}
                           <span>
                             <strong>{musicUploadBusy ? "جاري حفظ ملف الموسيقى..." : "ارفع ملف MP3"}</strong>
                             <small>{musicFileName || form.musicUrl || "mp3"}</small>
                           </span>
-                          <input
-                            name="orderMusicFile"
-                            type="file"
-                            accept={acceptedAudioFormats}
-                            disabled={musicUploadBusy}
-                            onChange={(event) => {
-                              void handleOrderMusicFile(event.target.files?.[0]);
-                            }}
-                          />
+                          <input name="orderMusicFile" type="file" accept={acceptedAudioFormats} disabled={musicUploadBusy} onChange={(event) => { void handleOrderMusicFile(event.target.files?.[0]); }} />
                         </label>
                       ) : null}
-
-                      {form.musicChoice === "video" ? (
+                    </div>
+                    <div className="order-music-choice-item">
+                      <button className={form.musicEnabled && form.musicChoice === "video" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "video"} onClick={() => selectMusicChoice("video")}>
+                        <FileVideo size={16} />
+                        صوت من فيديو
+                      </button>
+                      {form.musicEnabled && form.musicChoice === "video" ? (
                         <label className="order-music-upload">
                           {musicVideoBusy ? <Loader2 size={17} /> : <FileVideo size={17} />}
                           <span>
@@ -1953,19 +1937,30 @@ export function OrderForm({
                           <input type="file" accept={acceptedVideoFormats} disabled={musicVideoBusy} onChange={(event) => handleOrderMusicVideoFile(event.target.files?.[0])} />
                         </label>
                       ) : null}
-
-                      {form.musicChoice === "url" ? (
+                    </div>
+                    <div className="order-music-choice-item">
+                      <button className={form.musicEnabled && form.musicChoice === "url" ? "active" : ""} type="button" role="radio" aria-checked={form.musicEnabled && form.musicChoice === "url"} onClick={() => selectMusicChoice("url")}>
+                        <Link2 size={16} />
+                        رابط أغنية
+                      </button>
+                      {form.musicEnabled && form.musicChoice === "url" ? (
                         <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
                           <label htmlFor="musicUrl">رابط أغنية مباشر</label>
                           <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
                           {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="order-music-url-hint">ليس رابط فيديو بل موسيقى فقط</small>}
                         </div>
                       ) : null}
+                    </div>
+                    <div className="order-music-choice-item">
+                      <button className={!form.musicEnabled ? "active" : ""} type="button" role="radio" aria-checked={!form.musicEnabled} onClick={() => selectMusicChoice("none")}>
+                        <Music2 size={16} />
+                        إيقاف الموسيقى
+                      </button>
+                    </div>
+                  </div>
 
-                      {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
-                        <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
-                      ) : null}
-                    </>
+                  {(form.musicChoice === "upload" || form.musicChoice === "video") && form.musicUrl ? (
+                    <audio className="order-music-audio-preview" controls preload="metadata" src={form.musicUrl} />
                   ) : null}
                 </div>
               ) : null}
@@ -2015,22 +2010,32 @@ export function OrderForm({
               </span>
             </div>
             <div className="order-review-grid">
-              {[
-                ["القالب", selectedTemplate.arabicName, 0],
-                ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
-                ["التاريخ", readableDate || "لم يحدد بعد", 2],
-                ["الهاتف", fieldValue(form.phone), 2],
-                ["مكان الحفل", form.venue.trim() ? "تمت إضافته" : "غير مضاف", 3],
-                ["موقع القاعة", form.mapUrl.trim() ? "تمت إضافته" : "⚠️ لم يتم إضافة موقع القاعة بعد", 3],
-                ["الصور", `${previewImageUrls.length} من 3`, 4],
-                ["الموسيقى", !form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : form.musicChoice === "upload" ? "ملف MP3" : form.musicChoice === "video" ? "صوت من فيديو" : "رابط أغنية", 5],
-              ].map(([label, value, step]) => (
-                <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
-                  <span>✓ {label}</span>
-                  <strong>{value}</strong>
-                  {label === "موقع القاعة" && !form.mapUrl.trim() ? <small>إضافة الموقع تساعد الضيوف، ويمكن إضافته لاحقاً.</small> : null}
-                </button>
-              ))}
+              {(() => {
+                const musicLabel = !form.musicEnabled ? "بدون موسيقى"
+                  : form.musicChoice === "default" || !form.musicUrl ? "الموسيقى الأساسية"
+                  : form.musicChoice === "upload" ? "ملف MP3"
+                  : form.musicChoice === "video" ? "صوت من فيديو"
+                  : "رابط أغنية";
+                const imagesIncomplete = previewImageUrls.length < 3;
+                const imageLabel = imagesIncomplete ? `⚠️ ${previewImageUrls.length} من 3` : `${previewImageUrls.length} من 3`;
+                return [
+                  ["القالب", selectedTemplate.arabicName, 0],
+                  ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
+                  ["التاريخ", readableDate || "لم يحدد بعد", 2],
+                  ["الهاتف", fieldValue(form.phone), 2],
+                  ["مكان الحفل", form.venue.trim() ? "تمت إضافته" : "غير مضاف", 3],
+                  ["موقع القاعة", form.mapUrl.trim() ? "تمت إضافته" : "⚠️ لم يتم إضافة موقع القاعة بعد", 3],
+                  ["الصور", imageLabel, 4],
+                  ["الموسيقى", musicLabel, 5],
+                ].map(([label, value, step]) => (
+                  <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && imagesIncomplete ? "order-review-location-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
+                    <span>✓ {label}</span>
+                    <strong>{value}</strong>
+                    {label === "موقع القاعة" && !form.mapUrl.trim() ? <small>إضافة الموقع تساعد الضيوف، ويمكن إضافته لاحقاً.</small> : null}
+                    {label === "الصور" && imagesIncomplete ? <small>يمكن إضافة المزيد من الصورة من مرحلة الصور.</small> : null}
+                  </button>
+                ));
+              })()}
 
               <button className="order-review-item order-review-item-optional" type="button" onClick={() => setOpeningTextOpen((current) => !current)}>
                 <span>♡ نص الافتتاح</span>

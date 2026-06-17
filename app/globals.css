@@ -3785,6 +3785,12 @@ img {
   box-shadow: 0 10px 22px rgba(180, 139, 57, 0.12);
 }
 
+.order-music-choice-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .order-music-upload {
   position: relative;
   display: flex;
