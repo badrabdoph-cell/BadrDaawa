@@ -12,7 +12,8 @@ if (!secret) {
   throw new Error("BACKUP_CRON_SECRET or CRON_SECRET is required.");
 }
 
-const url = configuredUrl || (railwayDomain ? `https://${railwayDomain}/api/cron/backup` : siteUrl ? `${siteUrl}/api/cron/backup` : "");
+const baseUrl = configuredUrl || (railwayDomain ? `https://${railwayDomain}` : siteUrl ? siteUrl : "");
+const url = baseUrl ? `${baseUrl.replace(/\/+$/, "")}/api/cron/backup` : "";
 if (!url) {
   throw new Error("BACKUP_CRON_URL, RAILWAY_PUBLIC_DOMAIN, or NEXT_PUBLIC_SITE_URL is required.");
 }
