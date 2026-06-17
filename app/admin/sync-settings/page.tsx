@@ -128,7 +128,7 @@ export default async function SyncSettingsPage({ searchParams }: { searchParams?
           </div>
         </div>
         <p style={{ margin: "10px 0 0", color: "rgba(245,234,214,0.62)", fontWeight: 850, lineHeight: 1.7 }}>
-          النسخ التلقائي لا يعمل من التطبيق. Railway Cron يستدعي <code>/api/cron/backup</code> كل 6 ساعات باستخدام <code>BACKUP_CRON_SECRET</code>. GitHub Sync هنا لمحتوى المشروع فقط ولا يرفع Runtime Data أو ملفات backup.
+          النسخ التلقائي لا يعمل من التطبيق. Railway Cron يستدعي <code>/api/cron/backup</code> كل 3 ساعات باستخدام <code>BACKUP_CRON_SECRET</code>. GitHub Sync هنا لمحتوى المشروع فقط ولا يرفع Runtime Data أو ملفات backup.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "16px" }}>
           <Link href="/admin/tasks" className="btn btn-soft btn-glass">

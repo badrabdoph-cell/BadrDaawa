@@ -510,7 +510,7 @@ export async function uploadRuntimeBackupToGitHub(input: {
       throw new Error(`GitHub upload verification failed for ${repoPath}.`);
     }
 
-    await pruneOldRuntimeBackups(config, input.keepLast ?? 30);
+    await pruneOldRuntimeBackups(config, input.keepLast ?? 60);
 
     return {
       status: "synced",

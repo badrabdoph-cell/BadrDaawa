@@ -51,16 +51,16 @@ type TaskExecutionResult = {
   metadata?: Record<string, string | number | boolean | null>;
 };
 
-const sixHoursMs = 6 * 60 * 60 * 1000;
+const threeHoursMs = 3 * 60 * 60 * 1000;
 const runningTasks = new Set<ScheduledTaskId>();
 
 const taskDefinitions: ScheduledTaskDefinition[] = [
   {
     id: "backup",
     title: "PostgreSQL Backup",
-    description: "ينفذ Railway Cron نسخة Runtime Data كل 6 ساعات عبر /api/cron/backup مع رفع ملف النسخة إلى GitHub والتحقق منه.",
+    description: "ينفذ Railway Cron نسخة Runtime Data كل 3 ساعات عبر /api/cron/backup مع رفع ملف النسخة إلى GitHub والتحقق منه.",
     category: "Railway Cron",
-    intervalMs: sixHoursMs,
+    intervalMs: threeHoursMs,
     defaultAutomaticEnabled: false,
   },
   {
@@ -197,7 +197,7 @@ export async function listScheduledTasks() {
     const lastRun = taskRuns[0];
     const nextRunAt =
       definition.id === "backup" && lastRun
-        ? new Date(Date.parse(lastRun.finishedAt) + sixHoursMs).toISOString()
+        ? new Date(Date.parse(lastRun.finishedAt) + threeHoursMs).toISOString()
         : definition.id === "backup"
           ? "Managed by Railway Cron"
           : undefined;

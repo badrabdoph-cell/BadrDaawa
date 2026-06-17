@@ -127,8 +127,8 @@ type BackupPayload = {
 };
 
 const backupDir = runtimeBackupDir;
-// We keep exactly the last 20 backups to save storage and maintain history.
-const backupRetentionCount = 20;
+// We keep the last 60 backups for extended recovery window before migration.
+const backupRetentionCount = 60;
 const maxBackupSummaryBytes = (Number(process.env.BACKUP_SUMMARY_MAX_MB) || 128) * 1024 * 1024;
 
 function jsonReplacer(_key: string, value: unknown) {
@@ -426,7 +426,7 @@ export async function createBackupSnapshot(type = "manual") {
       bytes: Buffer.from(json, "utf8"),
       createdAt,
       reason: `Runtime backup ${type}`,
-      keepLast: 30,
+      keepLast: 60,
     });
     if (githubUpload.status !== "synced" || !githubUpload.verified) {
       throw new Error(githubUpload.message || "GitHub backup upload failed.");
@@ -708,7 +708,7 @@ export async function getBackupRuntimeStatus(): Promise<BackupRuntimeStatus> {
       ? Math.max(0, latestSuccessfulJob.finishedAt.getTime() - latestSuccessfulJob.startedAt.getTime())
       : null;
   const nextScheduledAt = lastScheduled?.finishedAt
-    ? new Date(lastScheduled.finishedAt.getTime() + 6 * 60 * 60 * 1000).toISOString()
+    ? new Date(lastScheduled.finishedAt.getTime() + 3 * 60 * 60 * 1000).toISOString()
     : null;
   const gitHubConfigured = Boolean(process.env.GITHUB_SYNC_ENABLED !== "false" && (process.env.GITHUB_SYNC_REPO || "").trim() && (process.env.GITHUB_SYNC_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN));
   const latestGitHubSuccess = Boolean(latestSuccessfulJob?.githubSha && latestSuccessfulJob?.githubUrl);
