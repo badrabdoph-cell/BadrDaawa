@@ -44,6 +44,8 @@ type AdminInvitationRow = {
   disabledAt?: Date | string | null;
   disabledReason?: string | null;
   disabledBy?: string | null;
+  trialDays?: number | null;
+  trialEndsAt?: Date | string | null;
   viewCount?: number;
   views?: number;
   customerId: string;
@@ -207,6 +209,8 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     disabledAt: row.disabledAt instanceof Date ? row.disabledAt.toISOString() : row.disabledAt || undefined,
     disabledReason: row.disabledReason || undefined,
     disabledBy: row.disabledBy || undefined,
+    trialDays: row.trialDays || undefined,
+    trialEndsAt: row.trialEndsAt instanceof Date ? row.trialEndsAt.toISOString() : row.trialEndsAt || undefined,
     views: row.viewCount ?? row.views ?? 0,
     customerId: row.customerId,
   };

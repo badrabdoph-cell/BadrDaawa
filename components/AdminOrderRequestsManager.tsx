@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, CheckSquare, Clock, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, XCircle } from "lucide-react";
+import { Check, CheckCircle2, CheckSquare, Clock, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, Volume2, VolumeX, XCircle } from "lucide-react";
 import {
   AdminInvitationTools,
   emptyAdminToolImages,
@@ -21,7 +21,7 @@ import {
 } from "@/components/AdminInvitationTools";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
-import { CopySuccessButton } from "@/components/CopySuccessButton";
+import { CopySuccessButton, buildSuccessMessage } from "@/components/CopySuccessButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
@@ -85,6 +85,7 @@ type OrderFormState = {
   photographerInstagramUrl: string;
   photographerWhatsappUrl: string;
   rejectionReason: string;
+  trialDays: number;
 };
 
 const emptyImages: AdminToolImageSlot[] = emptyAdminToolImages;
@@ -156,6 +157,7 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles
     photographerInstagramUrl: photographer?.instagramUrl || defaults?.photographerInstagramUrl || "",
     photographerWhatsappUrl: photographer?.whatsappUrl || defaults?.photographerWhatsappUrl || "",
     rejectionReason: order.rejectionReason || "",
+    trialDays: 3,
   };
 }
 
@@ -193,10 +195,12 @@ function toolValuesFromForm(form: OrderFormState): AdminInvitationToolValues {
   };
 }
 
-function payloadFromFormState(form: OrderFormState, action: "review" | "update" | "publish" | "reject") {
+function payloadFromFormState(form: OrderFormState, action: "review" | "update" | "publish" | "trial-publish" | "reject") {
   const effectiveMusic = getEffectiveAdminToolMusic(form);
+  const trialDays = action === "trial-publish" ? form.trialDays : undefined;
   return {
     action,
+    trialDays,
     groomName: form.groomName,
     brideName: form.brideName,
     phone: form.phone,
@@ -312,16 +316,25 @@ export function AdminOrderRequestsManager({
   const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
   const selectedOrder = useMemo(() => items.find((order) => order.id === selectedId) || items[0] || null, [items, selectedId]);
   const [form, setForm] = useState<OrderFormState>(() => (selectedOrder ? formFromOrder(selectedOrder, fallbackTemplate, musicFiles, defaults) : formFromOrder({ id: "", groomName: "", brideName: "", phone: "", weddingDate: "", venue: "", templateSlug: fallbackTemplate, language: "ar", status: "new", createdAt: "" }, fallbackTemplate, musicFiles, defaults)));
-  const [busy, setBusy] = useState<"idle" | "review" | "update" | "publish" | "reject">("idle");
+  const [busy, setBusy] = useState<"idle" | "review" | "update" | "publish" | "trial-publish" | "reject">("idle");
   const [busyOrderId, setBusyOrderId] = useState("");
   const [actionFeedback, setActionFeedback] = useState<Record<string, { kind: "pending" | "success" | "error"; text: string }>>({});
   const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [bulkSent, setBulkSent] = useState(false);
   const [links, setLinks] = useState<{ publicUrl: string; adminUrl: string } | null>(null);
   const imageInputs = useRef<Array<HTMLInputElement | null>>([]);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
 
   const [tab, setTab] = useState<"pending" | "published" | "rejected">(initialTab || "pending");
+  const [previewMuted, setPreviewMuted] = useState(true);
+  useEffect(() => {
+    try { const v = localStorage.getItem("badrdaawa-admin-preview-muted"); if (v !== null) setPreviewMuted(v === "true"); } catch {}
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem("badrdaawa-admin-preview-muted", String(previewMuted)); } catch {}
+  }, [previewMuted]);
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ type: "single" | "selected" | "all-pending" | "all-published" | "all-rejected"; ids?: string[] } | null>(null);
 
@@ -462,7 +475,7 @@ export function AdminOrderRequestsManager({
       heroVideoUrl: form.heroVideoUrl,
       musicEnabled: effectivePreviewMusic.musicEnabled,
       musicUrl: effectivePreviewMusic.musicUrl,
-      disableMusic: !effectivePreviewMusic.musicEnabled,
+      disableMusic: previewMuted || !effectivePreviewMusic.musicEnabled,
       texts: form.invitationTexts,
       photographer: {
         enabled: form.photographerEnabled,
@@ -576,7 +589,7 @@ export function AdminOrderRequestsManager({
     }
   }
 
-  async function runOrderAction(order: OrderRequestWithLinks, action: "update" | "publish" | "reject", state: OrderFormState) {
+  async function runOrderAction(order: OrderRequestWithLinks, action: "update" | "publish" | "trial-publish" | "reject", state: OrderFormState) {
     const effectiveMusic = getEffectiveAdminToolMusic(state);
     const validationError = validateAdminInvitationTools({ ...toolValuesFromForm(state), ...effectiveMusic });
     if (validationError) {
@@ -594,9 +607,9 @@ export function AdminOrderRequestsManager({
     setSelectedId(order.id);
     setBusy(action);
     setBusyOrderId(order.id);
-    const pendingText = action === "publish" ? "جاري الموافقة والنشر..." : action === "reject" ? "جاري رفض الطلب..." : "جاري الحفظ...";
+    const pendingText = action === "publish" || action === "trial-publish" ? "جاري الموافقة والنشر..." : action === "reject" ? "جاري رفض الطلب..." : "جاري الحفظ...";
     setActionFeedback((current) => ({ ...current, [order.id]: { kind: "pending", text: pendingText } }));
-    setNotice({ kind: "success", text: action === "publish" ? "جاري الموافقة ونشر الدعوة..." : action === "reject" ? "جاري رفض الطلب..." : "جاري حفظ التعديلات..." });
+    setNotice({ kind: "success", text: action === "publish" || action === "trial-publish" ? "جاري الموافقة ونشر الدعوة..." : action === "reject" ? "جاري رفض الطلب..." : "جاري حفظ التعديلات..." });
     try {
       const response = await fetch(`/api/admin/orders/${order.id}`, {
         method: "POST",
@@ -614,13 +627,13 @@ export function AdminOrderRequestsManager({
       setSelectedId(data.order.id);
       window.dispatchEvent(new Event("admin-orders-count-refresh"));
       if (data.publicUrl && data.adminUrl) setLinks({ publicUrl: data.publicUrl, adminUrl: data.adminUrl });
-      if (action === "publish") setTab("published");
+      if (action === "publish" || action === "trial-publish") setTab("published");
       else if (action === "reject") setTab("rejected");
-      const successText = action === "publish" ? "تم النشر بنجاح" : action === "reject" ? "تم الرفض" : "تم الحفظ";
+      const successText = action === "publish" || action === "trial-publish" ? "تم النشر بنجاح" : action === "reject" ? "تم الرفض" : "تم الحفظ";
       setActionFeedback((current) => ({ ...current, [order.id]: { kind: "success", text: successText } }));
       setNotice({
         kind: "success",
-        text: action === "publish" ? "تمت الموافقة ونشر الدعوة وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
+        text: action === "publish" || action === "trial-publish" ? "تمت الموافقة ونشر الدعوة وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
       });
     } catch {
       const text = "تعذر الاتصال بالخادم. تحقق من الاتصال أو سجل الدخول مرة أخرى ثم حاول.";
@@ -632,7 +645,7 @@ export function AdminOrderRequestsManager({
     }
   }
 
-  async function runAction(action: "update" | "publish" | "reject") {
+  async function runAction(action: "update" | "publish" | "trial-publish" | "reject") {
     if (!selectedOrder) return;
     await runOrderAction(selectedOrder, action, form);
   }
@@ -721,6 +734,19 @@ export function AdminOrderRequestsManager({
     setNotice({ kind: "success", text: "تم نسخ الرابط." });
   }
 
+  async function sendToAll() {
+    const published = items.filter((order) => ["published", "converted"].includes(order.status) && order.publicUrl && order.adminUrl);
+    if (!published.length) {
+      setNotice({ kind: "error", text: "لا توجد دعوات منشورة." });
+      return;
+    }
+    const messages = published.map((order) => `━━━━━━━━━━━━━━\n${order.groomName} & ${order.brideName}\n━━━━━━━━━━━━━━\n${buildSuccessMessage(order.publicUrl!, order.adminUrl!)}`);
+    await navigator.clipboard.writeText(messages.join("\n\n"));
+    setBulkSent(true);
+    window.setTimeout(() => setBulkSent(false), 2000);
+    setNotice({ kind: "success", text: `تم نسخ رسائل ${published.length} دعوة منشورة.` });
+  }
+
   if (!items.length) {
     return (
       <div className="admin-empty-state orders-empty-state">
@@ -778,6 +804,15 @@ export function AdminOrderRequestsManager({
             المرفوضة <span className="orders-queue-tab-count">{rejectedCount}</span>
           </button>
         </div>
+
+        {tab === "published" && publishedCount > 0 ? (
+          <div className="orders-queue-bulk-bar">
+            <button className="orders-queue-publish" type="button" onClick={sendToAll}>
+              {bulkSent ? <Check size={15} /> : <Send size={15} />}
+              {bulkSent ? "تم النسخ" : `إرسال لكل الدعوات (${publishedCount})`}
+            </button>
+          </div>
+        ) : null}
 
         {tabItems.length > 0 && (
           <div className="orders-queue-bulk-bar">
@@ -955,6 +990,22 @@ export function AdminOrderRequestsManager({
             {busy === "publish" ? <Loader2 size={17} /> : <Send size={17} />}
             نشر الدعوة
           </button>
+          <div className="trial-publish-group">
+            <button className="btn btn-gold" type="button" disabled={busy !== "idle"} onClick={() => runAction("trial-publish")}>
+              {busy === "trial-publish" ? <Loader2 size={17} /> : <Send size={17} />}
+              مده تجريبيه
+            </button>
+            <select
+              className="trial-days-select"
+              value={form.trialDays}
+              onChange={(e) => patchForm({ trialDays: Number(e.target.value) })}
+              disabled={busy !== "idle"}
+            >
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((day) => (
+                <option key={day} value={day}>{day} يوم</option>
+              ))}
+            </select>
+          </div>
           <button className="btn btn-soft danger-button" type="button" disabled={busy !== "idle"} onClick={() => runAction("reject")}>
             {busy === "reject" ? <Loader2 size={17} /> : <XCircle size={17} />}
             رفض الطلب
@@ -982,6 +1033,9 @@ export function AdminOrderRequestsManager({
       </div>
 
       <aside className="orders-live-preview builder-preview-panel">
+        <button className={previewMuted ? "preview-mute-btn muted" : "preview-mute-btn"} type="button" onClick={() => setPreviewMuted((v) => !v)} title={previewMuted ? "تشغيل الصوت" : "كتم الصوت"}>
+          {previewMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+        </button>
         <div className="builder-phone-frame">
           <div className="builder-phone-speaker" />
           <iframe ref={iframeRef} src={previewUrl} title="معاينة الطلب الحية" onLoad={postPreviewUpdate} />

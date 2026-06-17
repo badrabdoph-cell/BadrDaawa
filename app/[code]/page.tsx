@@ -9,7 +9,7 @@ import { InvitationExperience } from "@/components/InvitationExperience";
 import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
 import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-pages";
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
-import { recordInvitationView } from "@/lib/invitation-data";
+import { autoDisableExpiredTrial, recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
 import { getMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
@@ -67,6 +67,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function InvitationPage({ params, searchParams }: PageProps) {
   const [{ code }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
+  await autoDisableExpiredTrial(code);
   const invitation = await getCachedInvitationByCode(code);
   if (!invitation) {
     const pendingOrder = await getPendingOrderByInvitationCode(code);
@@ -116,6 +117,30 @@ export default async function InvitationPage({ params, searchParams }: PageProps
       redirect(`/${invitation.customSlug}`);
     }
     const siteSettings = await getSiteSettings();
+    if (invitation.disabledBy === "system" && invitation.trialEndsAt) {
+      return (
+        <main className="pending-invitation-page" dir="rtl">
+          <section className="pending-invitation-card">
+            <XCircle size={38} aria-hidden="true" />
+            <span className="eyebrow">انتهت الفترة التجريبية</span>
+            <h1>تم انتهاء الفتره التجريبيه للدعوه</h1>
+            <p>برجاء شراء الدعوه بالنظام الاساسي بشكل رسمي.</p>
+            <div className="status-actions">
+              <Link className="btn btn-gold" href={`/${invitation.customSlug || invitation.code}/ad_3399`}>
+                <Home size={16} />
+                لوحة التحكم
+              </Link>
+              {siteSettings.whatsappUrl ? (
+                <a className="btn btn-soft" href={siteSettings.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle size={16} />
+                  خدمة العملاء
+                </a>
+              ) : null}
+            </div>
+          </section>
+        </main>
+      );
+    }
     return <DisabledInvitationNotice reason={invitation.disabledReason} whatsappUrl={siteSettings.whatsappUrl} />;
   }
   if (!invitation.isActive) {

@@ -35,8 +35,12 @@ function isExpiredInvitation(weddingDate: string) {
   return date.getTime() < Date.now();
 }
 
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string }) {
-  if (invitation.disabledAt) return "disabled";
+function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string; trialEndsAt?: string; disabledBy?: string }) {
+  if (invitation.disabledAt) {
+    if (invitation.disabledBy === "system" && invitation.trialEndsAt) return "trial-ended";
+    return "disabled";
+  }
+  if (invitation.trialEndsAt && new Date(invitation.trialEndsAt).getTime() > Date.now()) return "trial";
   if (invitation.status === "archived") return "archived";
   if (invitation.status === "paused" || !invitation.isActive) return "paused";
   if (isExpiredInvitation(invitation.weddingDate)) return "expired";
@@ -49,12 +53,16 @@ function stateLabel(state: string) {
   if (state === "expired") return "منتهية";
   if (state === "archived") return "مؤرشفة";
   if (state === "disabled") return "معطلة";
+  if (state === "trial") return "تجريبي";
+  if (state === "trial-ended") return "منتهي تجريبي";
   return "كل الحالات";
 }
 
 function stateClassName(state: string) {
   if (state === "active") return "status success";
   if (state === "paused" || state === "expired") return "status warning";
+  if (state === "trial") return "status info trial-badge";
+  if (state === "trial-ended") return "status danger";
   return "status danger";
 }
 
@@ -104,6 +112,8 @@ export default async function InvitationsPage({
   const activeCount = invitations.filter((invitation) => getInvitationState(invitation) === "active").length;
   const pausedCount = invitations.filter((invitation) => getInvitationState(invitation) === "paused").length;
   const disabledCount = invitations.filter((invitation) => getInvitationState(invitation) === "disabled").length;
+  const trialCount = invitations.filter((invitation) => getInvitationState(invitation) === "trial").length;
+  const trialEndedCount = invitations.filter((invitation) => getInvitationState(invitation) === "trial-ended").length;
   const expiredCount = invitations.filter((invitation) => getInvitationState(invitation) === "expired").length;
   const archivedCount = invitations.filter((invitation) => getInvitationState(invitation) === "archived").length;
   const totalViews = invitations.reduce((sum, invitation) => sum + invitation.views, 0);
@@ -182,6 +192,16 @@ export default async function InvitationsPage({
           <span>معطلة</span>
           <strong>{formatArabicNumber(disabledCount)}</strong>
         </div>
+        <div className="admin-list-stat info">
+          <Sparkles size={19} />
+          <span>تجريبي</span>
+          <strong>{formatArabicNumber(trialCount)}</strong>
+        </div>
+        <div className="admin-list-stat">
+          <CalendarDays size={19} />
+          <span>منتهية تجريبي</span>
+          <strong>{formatArabicNumber(trialEndedCount)}</strong>
+        </div>
         <div className="admin-list-stat">
           <CalendarDays size={19} />
           <span>منتهية</span>
@@ -219,7 +239,7 @@ export default async function InvitationsPage({
                 const publicSlug = invitation.customSlug || invitation.code;
                 const invitationUrl = `${siteUrl}/${publicSlug}`;
                 const invitationState = getInvitationState(invitation);
-                const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" ? "\uD83D\uDD34" : "";
+                const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" || invitationState === "trial-ended" ? "\uD83D\uDD34" : invitationState === "trial" ? "\uD83D\uDFE0" : "";
                 const adminPath = adminPathByCode.get(invitation.code);
                 const adminUrl = adminPath ? `${siteUrl}${adminPath}` : "";
                 return (
@@ -237,9 +257,11 @@ export default async function InvitationsPage({
                     adminPath={`/admin/invitations/${encodeURIComponent(invitation.code)}`}
                     invitationUrl={invitationUrl}
                     adminUrl={adminUrl}
-                    isDisabled={invitationState === "disabled"}
+                    isDisabled={invitationState === "disabled" || invitationState === "trial-ended"}
                     disabledReason={invitation.disabledReason}
                     disabledBy={invitation.disabledBy}
+                    trialDays={invitation.trialDays}
+                    trialRemaining={invitation.trialEndsAt ? Math.max(0, Math.ceil((new Date(invitation.trialEndsAt).getTime() - Date.now()) / 86400000)) : undefined}
                   />
                 );
               })}

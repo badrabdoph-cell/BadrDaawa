@@ -17,7 +17,7 @@ import { getClientMessages } from "@/lib/client-messages";
 import { getContentPresets } from "@/lib/content-presets";
 import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { getCoupleMessagesSettings, getGuestBookMessages } from "@/lib/guest-book";
-import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
+import { autoDisableExpiredTrial, getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
@@ -46,6 +46,7 @@ export default async function CustomerAdminPage({
 }) {
   const { code } = await params;
   const [query, requestHeaders, cookieStore] = await Promise.all([searchParams, headers(), cookies()]);
+  await autoDisableExpiredTrial(code);
   const invitation = await getInvitationByCode(code);
   if (!invitation) {
     const rejectedOrder = await getRejectedOrderByInvitationCode(code);
@@ -139,6 +140,22 @@ export default async function CustomerAdminPage({
   return (
     <main className="customer-admin customer-admin-refresh">
       <style>{`
+        .trial-notification-bar {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 18px;
+          margin-bottom: 16px;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 12px;
+          color: #991b1b;
+          font-size: 14px;
+          font-weight: 600;
+        }
+        .trial-notification-icon {
+          font-size: 20px;
+        }
         .customer-admin-refresh {
           --client-ivory: #fffdf8;
           --client-cream: #fbf4e9;
@@ -343,6 +360,16 @@ export default async function CustomerAdminPage({
           }
         }
       `}</style>
+
+      {invitation.trialEndsAt && !invitation.disabledAt ? (
+        <div className="trial-notification-bar">
+          <span className="trial-notification-icon">⏳</span>
+          <span>
+            دعوه مده تجريبيه لمده {invitation.trialDays} ايام
+            {" "}(باقي {Math.max(0, Math.ceil((new Date(invitation.trialEndsAt).getTime() - Date.now()) / 86400000))} ايام)
+          </span>
+        </div>
+      ) : null}
 
       <AdminMessagesBanner invitationCode={invitation.code} messages={clientMessages} />
 

@@ -27,6 +27,8 @@ type DatabaseInvitation = {
   texts?: unknown;
   photographer?: unknown;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
+  trialDays: number | null;
+  trialEndsAt: Date | null;
   disabledAt: Date | null;
   disabledReason: string | null;
   disabledBy: string | null;
@@ -128,6 +130,8 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     disabledAt: invitation.disabledAt?.toISOString(),
     disabledReason: invitation.disabledReason || undefined,
     disabledBy: invitation.disabledBy || undefined,
+    trialDays: invitation.trialDays || undefined,
+    trialEndsAt: invitation.trialEndsAt?.toISOString() || undefined,
     views: invitation.viewCount,
     customerId: invitation.customerId,
   };
@@ -159,7 +163,7 @@ export async function getInvitationByCode(code: string): Promise<Invitation | un
       include: { template: { select: { slug: true } } },
     });
 
-    return invitation ? toPublicInvitation(invitation as DatabaseInvitation) : undefined;
+    return invitation ? toPublicInvitation(invitation as unknown as DatabaseInvitation) : undefined;
   } catch (error) {
     console.error("Failed to load invitation", error);
     return undefined;
@@ -216,6 +220,27 @@ export async function recordInvitationView(code: string, tracking?: InvitationVi
   } catch (error) {
     console.error("Failed to record invitation view", error);
   }
+}
+
+export async function autoDisableExpiredTrial(code: string): Promise<void> {
+  if (!prisma) return;
+  try {
+    const invitation = await prisma.invitation.findFirst({
+      where: { code, deletedAt: null, disabledAt: null, trialEndsAt: { lte: new Date() } },
+      select: { id: true, trialDays: true, trialEndsAt: true },
+    });
+    if (!invitation) return;
+    await prisma.invitation.update({
+      where: { id: invitation.id },
+      data: {
+        disabledAt: new Date(),
+        disabledReason: invitation.trialEndsAt
+          ? `انتهت الفترة التجريبية (${invitation.trialDays || 0} أيام)`
+          : "انتهت الفترة التجريبية",
+        disabledBy: "system",
+      },
+    });
+  } catch { /* silent */ }
 }
 
 export async function getInvitationDisabledStatus(code: string): Promise<{ disabled: boolean; reason?: string; disabledBy?: string; disabledAt?: string }> {

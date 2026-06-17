@@ -6453,6 +6453,14 @@ img {
   background: rgba(135, 56, 56, 0.16);
 }
 
+.admin-list-stat.info {
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.admin-list-stat.info svg {
+  color: #f59e0b;
+}
+
 .admin-list-stat.danger svg {
   color: #ffb6ae;
 }
@@ -6662,6 +6670,24 @@ img {
   text-align: center;
   font-variant-numeric: tabular-nums;
   color: rgba(255, 247, 232, 0.85);
+}
+
+.cell-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trial-remaining-badge {
+  font-size: 11px;
+  color: #b98738;
+  font-weight: 600;
+}
+
+.status.info.trial-badge {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
 }
 
 .admin-invitation-table .cell-actions {
@@ -11282,6 +11308,27 @@ img {
   min-height: 44px;
 }
 
+.trial-publish-group {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.trial-publish-group .btn {
+  min-height: 44px;
+}
+
+.trial-days-select {
+  min-width: 70px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border, #d9c6a8);
+  background: var(--card-bg, #fffdf8);
+  color: var(--text, #221a13);
+  padding: 0 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .orders-links h2 {
   display: inline-flex;
   align-items: center;
@@ -11290,6 +11337,34 @@ img {
 
 .orders-live-preview {
   padding: 16px;
+  position: relative;
+}
+
+.preview-mute-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(245, 234, 214, 0.15);
+  border-radius: 6px;
+  background: rgba(12, 14, 19, 0.75);
+  color: rgba(245, 234, 214, 0.5);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.preview-mute-btn:hover {
+  color: #f5ead6;
+  border-color: rgba(245, 234, 214, 0.4);
+  background: rgba(12, 14, 19, 0.9);
+}
+.preview-mute-btn.muted {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .orders-empty-state {

@@ -33,6 +33,14 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "تسجيل الوصول غير متاح لهذه الدعوة." }, { status: 404 });
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weddingDate = new Date(invitation.weddingDate);
+  weddingDate.setHours(0, 0, 0, 0);
+  if (today < weddingDate) {
+    return NextResponse.json({ error: "ماينفعش تسجل وصول لسه الفرح مجاش 😅❤️" }, { status: 400 });
+  }
+
   const body = (await request.json().catch(() => null)) as { visitorKey?: unknown } | null;
   const result = await createCheckIn({
     invitationCode: code,

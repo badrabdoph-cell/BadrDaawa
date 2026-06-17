@@ -25,6 +25,8 @@ type Props = {
   isDisabled: boolean;
   disabledReason?: string;
   disabledBy?: string;
+  trialDays?: number;
+  trialRemaining?: number;
 };
 
 function CopyButton({ value, label, onDone }: { value: string; label: string; onDone: () => void }) {
@@ -53,6 +55,7 @@ export function AdminInvitationRow({
   stateEmoji, stateLabel, stateClass,
   publicPath, adminPath, invitationUrl, adminUrl,
   isDisabled, disabledReason, disabledBy,
+  trialDays, trialRemaining,
 }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -170,6 +173,11 @@ export function AdminInvitationRow({
         <td className="cell-views" data-label="الزيارات">{views}</td>
         <td className="cell-status" data-label="الحالة">
           <span className={stateClass}>{stateLabel}</span>
+          {trialDays && trialRemaining != null ? (
+            <small className="trial-remaining-badge">
+              متبقي {trialRemaining} / {trialDays} يوم
+            </small>
+          ) : null}
         </td>
         <td className="cell-actions" data-label="الإجراءات">
           <div className="admin-row-actions">

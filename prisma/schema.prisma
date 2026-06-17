@@ -112,6 +112,8 @@ model Invitation {
   photographer Json?
   qrCodeUrl   String?
   viewCount   Int               @default(0)
+  trialDays   Int?
+  trialEndsAt DateTime?
   customerId  String
   customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   templateId  String

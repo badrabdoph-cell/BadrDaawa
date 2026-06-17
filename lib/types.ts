@@ -76,6 +76,8 @@ export type Invitation = {
   disabledAt?: string;
   disabledReason?: string;
   disabledBy?: string;
+  trialDays?: number;
+  trialEndsAt?: string;
   views: number;
   customerId: string;
   deletedAt?: string;

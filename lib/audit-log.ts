@@ -16,6 +16,7 @@ export type AuditAction =
   | "invitation.enable"
   | "order.create"
   | "order.publish"
+  | "order.trial-publish"
   | "template.change"
   | "media.image.upload"
   | "media.image.delete"
@@ -255,6 +256,7 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "invitation.enable": "إعادة تفعيل دعوة",
   "order.create": "إنشاء طلب",
   "order.publish": "نشر طلب",
+  "order.trial-publish": "نشر تجريبي",
   "template.change": "تغيير قالب",
   "media.image.upload": "رفع صورة",
   "media.image.delete": "حذف صورة",

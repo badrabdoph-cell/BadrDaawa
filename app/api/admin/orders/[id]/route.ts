@@ -23,7 +23,7 @@ type RouteContext = {
 };
 
 type AdminOrderPayload = {
-  action?: "review" | "update" | "publish" | "reject" | "delete" | "hard-delete";
+  action?: "review" | "update" | "publish" | "trial-publish" | "reject" | "delete" | "hard-delete";
   groomName?: string;
   brideName?: string;
   phone?: string;
@@ -43,6 +43,7 @@ type AdminOrderPayload = {
   texts?: Invitation["texts"];
   photographer?: Invitation["photographer"];
   rejectionReason?: string;
+  trialDays?: number;
 };
 
 type AdminOrderSnapshot = OrderRequest & {
@@ -414,6 +415,9 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     },
   });
 
+  const trialDays = payload.trialDays && payload.trialDays >= 1 && payload.trialDays <= 10 ? payload.trialDays : null;
+  const trialEndsAt = trialDays ? new Date(Date.now() + trialDays * 86400000) : null;
+
   const invitationData = {
     status: "ACTIVE" as never,
     language: order.language,
@@ -434,6 +438,8 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     photographer: draft.photographer,
     customerId: customer.id,
     templateId: template.dbTemplate.id,
+    trialDays,
+    trialEndsAt,
   };
 
   if (existingPublishedInvitation) {
@@ -600,7 +606,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return jsonMode ? NextResponse.json({ ok: true, order }) : redirectBack(request, "rejected");
     }
 
-    if (action === "publish") {
+    if (action === "publish" || action === "trial-publish") {
       const oldValues = await getSnapshot(id, request);
       const code = await publishPrismaOrder(id, payload);
       if (!code) throw new Error("لم يتم العثور على الطلب.");
@@ -620,13 +626,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
           publicUrl: links.publicUrl,
           adminUrl: links.adminUrl,
         } as AdminOrderSnapshot);
+      const auditAction = action === "trial-publish" ? "order.trial-publish" : "order.publish";
       await recordAuditLog({
         actor: await getAuditActorFromAdminRequest(request),
-        action: "order.publish",
+        action: auditAction,
         entity: { type: "Order", id, label: oldValues?.orderNumber || id },
         oldValues,
-        newValues: { ...order, publishedInvitationCode: code, links },
-        metadata: { invitationCode: code },
+        newValues: { ...order, publishedInvitationCode: code, links, trialDays: payload.trialDays },
+        metadata: { invitationCode: code, trialDays: payload.trialDays },
       });
       return jsonMode ? NextResponse.json({ ok: true, code, ...links, order }) : redirectBack(request, `converted-${code}`);
     }
