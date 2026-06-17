@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Camera, ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings, UploadCloud } from "lucide-react";
+import { ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -206,52 +206,6 @@ export default async function AdminSiteSettingsPage({
             </label>
           </div>
         </article>
-
-        <article className="panel site-settings-card">
-          <div className="admin-card-head">
-            <Camera size={22} />
-            <div>
-              <span className="eyebrow">Photographer</span>
-              <h2>ظهور بيانات المصور والشعار</h2>
-              <p>هذا هو الشعار الافتراضي لجميع الدعوات الجديدة. يمكن تغييره لكل دعوة على حدة وقت النشر.</p>
-            </div>
-          </div>
-          <label className="admin-toggle-row template-inline-toggle site-settings-main-toggle">
-            <input name="showPhotographerCard" type="checkbox" defaultChecked={settings.photographer.showPhotographerCard} />
-            إظهار بيانات المصور داخل الدعوات عند تفعيلها في الدعوة
-          </label>
-          <div className="admin-form-grid">
-            <label className="field">
-              <span>اسم المصور الافتراضي</span>
-              <input name="photographerName" defaultValue={settings.photographer.defaultName} />
-            </label>
-            <label className="field">
-              <span>إنستجرام المصور الافتراضي</span>
-              <input name="photographerInstagramUrl" defaultValue={settings.photographer.defaultInstagramUrl} />
-            </label>
-            <label className="field">
-              <span>فيسبوك المصور الافتراضي</span>
-              <input name="photographerFacebookUrl" defaultValue={settings.photographer.defaultFacebookUrl} />
-            </label>
-            <label className="field">
-              <span>شعار المصور الافتراضي</span>
-              <input name="photographerLogoFile" type="file" accept={acceptedImageFormats} />
-              <small>أفضل قياس: 200×200 بكسل. صيغ مدعومة: JPG, PNG, WebP</small>
-            </label>
-          </div>
-          {settings.photographer.defaultLogoUrl ? (
-            <div className="site-settings-logo-preview">
-              <UploadCloud size={18} />
-              <img src={settings.photographer.defaultLogoUrl} alt="شعار المصور الافتراضي" />
-              <span>{settings.photographer.defaultLogoUrl}</span>
-            </div>
-          ) : null}
-          <p className="site-settings-note">
-            هذا الشعار هو الأساس لجميع الدعوات الجديدة. عند تغييره، يمكنك تحديث الدعوات الحالية دفعة واحدة من صفحة
-            {" "}<Link href="/admin/photographer-logo">إدارة شعار المصور</Link>.
-          </p>
-        </article>
-
 
         <div className="site-settings-sticky-actions">
           <span>

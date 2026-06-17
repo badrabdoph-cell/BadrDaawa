@@ -1,23 +1,25 @@
-import Link from "next/link";
-import { Camera, CheckCircle2, Image, RefreshCw, Settings, UploadCloud, UsersRound, XCircle } from "lucide-react";
+import { Camera, CheckCircle2, Image, RefreshCw, Save, UploadCloud, UsersRound, XCircle } from "lucide-react";
+import { acceptedImageFormats } from "@/lib/image-formats";
 import { getSiteSettings } from "@/lib/site-settings";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 type PhotographerLogoPageParams = {
+  settings_saved?: string;
   success?: string;
   error?: string;
   updated?: string;
   skipped?: string;
 };
 
-function notice(saved?: string, error?: string, updated?: string, skipped?: string) {
+function notice(settingsSaved?: string, success?: string, error?: string, updated?: string, skipped?: string) {
   if (error === "invalid") return { kind: "danger", text: "الرجاء تحديد وضع التحديث." };
-  if (error === "nologo") return { kind: "danger", text: "لا يوجد شعار افتراضي للمصور. قم برفع شعار أولاً من إعدادات الموقع." };
+  if (error === "nologo") return { kind: "danger", text: "لا يوجد شعار افتراضي للمصور. قم برفع شعار أولاً." };
   if (error === "database") return { kind: "danger", text: "قاعدة البيانات غير متاحة." };
-  if (error === "failed") return { kind: "danger", text: "فشلت عملية التحديث. حاول مرة أخرى." };
-  if (saved) {
+  if (error === "failed") return { kind: "danger", text: "فشلت العملية. حاول مرة أخرى." };
+  if (settingsSaved) return { kind: "success", text: "تم حفظ بيانات المصور الأساسية بنجاح." };
+  if (success) {
     const updatedCount = Number(updated) || 0;
     const skippedCount = Number(skipped) || 0;
     let text = `تم تحديث ${updatedCount} دعوة بنجاح.`;
@@ -33,7 +35,7 @@ export default async function AdminPhotographerLogoPage({
   searchParams: Promise<PhotographerLogoPageParams>;
 }) {
   const [params, settings] = await Promise.all([searchParams, getSiteSettings()]);
-  const message = notice(params.success, params.error, params.updated, params.skipped);
+  const message = notice(params.settings_saved, params.success, params.error, params.updated, params.skipped);
 
   const globalLogoUrl = settings.photographer.defaultLogoUrl;
 
@@ -94,40 +96,66 @@ export default async function AdminPhotographerLogoPage({
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Photographer Logo</span>
-          <h1>إدارة شعار المصور</h1>
-          <p>تحكم بالشعار الافتراضي للمصور في جميع الدعوات. يمكنك تحديث الكل دفعة واحدة أو فقط الدعوات التي لم يتم تخصيص شعار لها.</p>
+          <h1>إدارة المصور الفوتوغرافي</h1>
+          <p>تحكم ببيانات وشعار المصور الافتراضي لكل الدعوات. غيّر الشعار والبيانات ثم حدّث الدعوات الحالية دفعة واحدة.</p>
         </div>
-        <Link className="btn btn-soft" href="/admin/settings">
-          <Settings size={17} />
-          إعدادات الموقع
-        </Link>
       </div>
 
       {message ? <div className={message.kind === "danger" ? "notice danger" : "notice success"}>{message.text}</div> : null}
 
-      <article className="panel" style={{ marginBottom: 16 }}>
-        <div className="admin-card-head">
-          <Camera size={22} />
-          <div>
-            <span className="eyebrow">{globalLogoUrl ? "Current Global Logo" : "No Logo Set"}</span>
-            <h2>{globalLogoUrl ? "الشعار الافتراضي الحالي" : "لا يوجد شعار افتراضي"}</h2>
-          </div>
-        </div>
-        {globalLogoUrl ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
-            <img src={globalLogoUrl} alt="شعار المصور الافتراضي" style={{ width: 80, height: 80, borderRadius: 12, objectFit: "contain", background: "rgba(255,255,255,0.08)" }} />
+      <form className="site-settings-form" action="/api/admin/photographer-logo" method="post" encType="multipart/form-data">
+        <input type="hidden" name="mode" value="save" />
+        <article className="panel" style={{ marginBottom: 16 }}>
+          <div className="admin-card-head">
+            <Camera size={22} />
             <div>
-              <strong style={{ color: "#fff7e8", display: "block" }}>{settings.photographer.defaultName}</strong>
-              <small style={{ color: "rgba(245,234,214,0.58)", wordBreak: "break-all" }}>{globalLogoUrl}</small>
+              <span className="eyebrow">Photographer Settings</span>
+              <h2>بيانات المصور الأساسية</h2>
+              <p>هذه البيانات والشعار هي الافتراضية لكل الدعوات الجديدة والحالية عند تحديثها.</p>
             </div>
           </div>
-        ) : (
-          <p style={{ color: "rgba(245,234,214,0.58)", marginTop: 12 }}>
-            لم تقم برفع شعار افتراضي للمصور بعد. يمكنك رفعه من{" "}
-            <Link href="/admin/settings">إعدادات الموقع</Link> ثم العودة لتحديث الدعوات الحالية.
-          </p>
-        )}
-      </article>
+
+          <label className="admin-toggle-row template-inline-toggle" style={{ marginBottom: 16 }}>
+            <input name="showPhotographerCard" type="checkbox" defaultChecked={settings.photographer.showPhotographerCard} />
+            إظهار بيانات المصور داخل الدعوات
+          </label>
+
+          <div className="admin-form-grid">
+            <label className="field">
+              <span>اسم المصور</span>
+              <input name="photographerName" defaultValue={settings.photographer.defaultName} />
+            </label>
+            <label className="field">
+              <span>رابط إنستجرام</span>
+              <input name="photographerInstagramUrl" defaultValue={settings.photographer.defaultInstagramUrl} placeholder="https://instagram.com/..." />
+            </label>
+            <label className="field">
+              <span>رابط فيسبوك</span>
+              <input name="photographerFacebookUrl" defaultValue={settings.photographer.defaultFacebookUrl} placeholder="https://facebook.com/..." />
+            </label>
+            <label className="field">
+              <span>شعار المصور</span>
+              <input name="photographerLogoFile" type="file" accept={acceptedImageFormats} />
+              <small>أفضل قياس: 200×200 بكسل. صيغ مدعومة: JPG, PNG, WebP</small>
+            </label>
+          </div>
+
+          {globalLogoUrl ? (
+            <div className="site-settings-logo-preview" style={{ marginTop: 16 }}>
+              <UploadCloud size={18} />
+              <img src={globalLogoUrl} alt="شعار المصور الافتراضي" />
+              <span>{globalLogoUrl}</span>
+            </div>
+          ) : null}
+
+          <div className="button-row" style={{ marginTop: 16 }}>
+            <button className="btn btn-gold btn-glow" type="submit">
+              <Save size={18} />
+              حفظ بيانات المصور
+            </button>
+          </div>
+        </article>
+      </form>
 
       {invitations.length > 0 ? (
         <>

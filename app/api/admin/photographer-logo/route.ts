@@ -1,15 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { normalizeImageForDisplay } from "@/lib/display-images";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/db";
-import { getSiteSettings } from "@/lib/site-settings";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
+import { writeProjectAssetFile } from "@/lib/project-assets";
+import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+}
+
+function text(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function saveLogo(file: File | null) {
+  if (!file || !file.size || !isSupportedImageFile(file) || file.size > 8 * 1024 * 1024) return "";
+
+  let bytes: Buffer = Buffer.from(await file.arrayBuffer());
+  let extension = imageExtensionForUpload(file.type, file.name, imageExtensionFromBytes(bytes) || "webp");
+  const normalized = await normalizeImageForDisplay(bytes, extension, `photographer-logo:${file.name || file.type}`);
+  if (!normalized) return "";
+
+  bytes = normalized.bytes;
+  extension = normalized.extension;
+  const saved = await writeProjectAssetFile(`branding/photographer-logo-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`, bytes);
+  return saved.url;
 }
 
 export async function GET(request: NextRequest) {
@@ -80,29 +104,46 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    let mode: "all" | "defaults-only" | undefined;
-    let explicitLogoUrl: string | undefined;
+    const formData = await request.formData();
+    const rawMode = formData.get("mode");
+    const mode = typeof rawMode === "string" ? rawMode : "";
 
-    const contentType = request.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const body = (await request.json().catch(() => null)) as {
-        mode?: "all" | "defaults-only";
-        logoUrl?: string;
-      } | null;
-      mode = body?.mode;
-      explicitLogoUrl = body?.logoUrl;
-    } else {
-      const formData = await request.formData();
-      const rawMode = formData.get("mode");
-      mode = rawMode === "all" || rawMode === "defaults-only" ? rawMode : undefined;
+    if (mode === "save") {
+      const showPhotographerCard = formData.has("showPhotographerCard");
+      const photographerName = text(formData, "photographerName");
+      const photographerInstagramUrl = text(formData, "photographerInstagramUrl");
+      const photographerFacebookUrl = text(formData, "photographerFacebookUrl");
+
+      const logoFile = formData.get("photographerLogoFile");
+      let uploadedLogoUrl = "";
+      if (logoFile instanceof File && logoFile.size > 0) {
+        uploadedLogoUrl = await saveLogo(logoFile);
+      }
+
+      await updateSiteSettings({
+        photographer: {
+          showPhotographerCard,
+          defaultName: photographerName,
+          defaultInstagramUrl: photographerInstagramUrl,
+          defaultFacebookUrl: photographerFacebookUrl,
+          defaultLogoUrl: uploadedLogoUrl || text(formData, "photographerLogoUrl"),
+        },
+      });
+
+      revalidatePath("/admin/photographer-logo");
+      revalidatePath("/");
+      revalidatePath("/templates");
+      queueGitHubSync("Photographer settings updated from photographer-logo admin.", { uploadProjectFiles: true, changeType: "project" });
+
+      return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?settings_saved=1", request.headers, request.nextUrl.origin), 303);
     }
 
-    if (!mode) {
+    if (mode !== "all" && mode !== "defaults-only") {
       return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=invalid", request.headers, request.nextUrl.origin), 303);
     }
 
     const settings = await getSiteSettings();
-    const newLogoUrl = explicitLogoUrl || settings.photographer.defaultLogoUrl;
+    const newLogoUrl = settings.photographer.defaultLogoUrl;
 
     if (!newLogoUrl) {
       return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=nologo", request.headers, request.nextUrl.origin), 303);
@@ -164,10 +205,9 @@ export async function POST(request: NextRequest) {
     revalidatePath("/admin/invitations");
     revalidatePath("/admin/photographer-logo");
 
-    const message = `تم تحديث ${updatedCount} دعوة${skippedCustomCount ? `، وتخطي ${skippedCustomCount} دعوة بشعار مخصص` : ""}.`;
     return NextResponse.redirect(getRedirectUrl(`/admin/photographer-logo?success=1&updated=${updatedCount}&skipped=${skippedCustomCount}`, request.headers, request.nextUrl.origin), 303);
   } catch (error) {
-    console.error("[Photographer Logo] Bulk update failed", error);
+    console.error("[Photographer Logo] POST failed", error);
     return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=failed", request.headers, request.nextUrl.origin), 303);
   }
 }
