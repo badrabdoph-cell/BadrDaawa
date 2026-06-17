@@ -21,7 +21,31 @@
     "enabled": true,
     "sortOrder": 1,
     "createdAt": "2026-06-11T22:20:50.600Z",
-    "updatedAt": "2026-06-17T11:38:57.190Z"
+    "updatedAt": "2026-06-17T22:23:25.700Z"
+  },
+  {
+    "id": "cmqi85cax000oc8j85as7120j",
+    "slug": "vintage-theme",
+    "name": "Vintage Classic",
+    "arabicName": "ڤينتاج كلاسيكي",
+    "category": "قالب ڤينتاج ورقي",
+    "style": "vintage",
+    "concept": "دعوة بطابع ورقي قديم، حدود مزدوجة، صورة سيبيا، كروت كلاسيكية، وخريطة وQR بأسلوب تذكاري.",
+    "opening": "Vintage paper keepsake",
+    "layout": "بطاقة أسماء ورقية، صورة سيبيا، عداد، خريطة، RSVP وQR.",
+    "typography": "خطوط كلاسيكية دافئة مع ملمس ورقي وتفاصيل بنية هادئة تناسب الهاتف.",
+    "palette": {
+      "ink": "#3e2723",
+      "accent": "#5d4037",
+      "primary": "#efe9d9",
+      "surface": "#f5f0e1",
+      "secondary": "#f5f0e1"
+    },
+    "previewUrl": "/assets/templates/vintage-theme.svg",
+    "enabled": true,
+    "sortOrder": 2,
+    "createdAt": "2026-06-17T15:27:08.169Z",
+    "updatedAt": "2026-06-17T17:42:22.843Z"
   },
   {
     "id": "cmqhpt03u000313qfrjzvp6x4",
@@ -69,7 +93,7 @@
     "enabled": true,
     "sortOrder": 4,
     "createdAt": "2026-06-16T15:51:10.638Z",
-    "updatedAt": "2026-06-16T16:11:44.972Z"
+    "updatedAt": "2026-06-17T16:57:46.729Z"
   },
   {
     "id": "cmqh2l32w0000roe9seq70shl",
@@ -93,6 +117,30 @@
     "enabled": true,
     "sortOrder": 6,
     "createdAt": "2026-06-16T20:03:38.840Z",
-    "updatedAt": "2026-06-16T20:45:58.915Z"
+    "updatedAt": "2026-06-17T19:09:35.995Z"
+  },
+  {
+    "id": "cmqiiqhqo00041yj34z8rb9of",
+    "slug": "garden-elegance",
+    "name": "Garden Elegance",
+    "arabicName": "حدائق أنيقة",
+    "category": "قالب حديقة أنيق",
+    "style": "garden",
+    "concept": "دعوة طبيعية هادئة بدوائر أسماء متداخلة، صورة مقوسة، تفاصيل Timeline، وخريطة وQR بتصميم تذكرة.",
+    "opening": "Organic reveal",
+    "layout": "غلاف طبيعي، صورة مقوسة، تفاصيل الزمان والمكان، عداد، خريطة، معرض صور، مصور، RSVP وQR.",
+    "typography": "خطوط رقيقة وواضحة مع أخضر Sage ولمسة وردية ترابية تناسب الهاتف.",
+    "palette": {
+      "ink": "#2c3b2e",
+      "accent": "#ca7d60",
+      "primary": "#f4f6f0",
+      "surface": "#ffffff",
+      "secondary": "#e2e6d8"
+    },
+    "previewUrl": "/assets/templates/garden-elegance.svg",
+    "enabled": true,
+    "sortOrder": 7,
+    "createdAt": "2026-06-17T20:23:31.152Z",
+    "updatedAt": "2026-06-17T22:47:54.456Z"
   }
 ]
