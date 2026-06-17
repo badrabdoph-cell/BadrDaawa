@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
@@ -422,9 +423,13 @@ export async function createBackupSnapshot(type = "manual") {
     ensureParentDirectory(backupPath);
     await writeFile(backupPath, json, "utf8");
     await cleanupOldBackups();
+    const rawBytes = Buffer.from(json, "utf8");
+    const compressed = gzipSync(rawBytes, { level: 9 });
+    const compressedFileName = `${fileName}.gz`;
+    console.log(`[Backup] Compressed ${rawBytes.length} → ${compressed.length} bytes (${(compressed.length / rawBytes.length * 100).toFixed(1)}%)`);
     const githubUpload = await uploadRuntimeBackupToGitHub({
-      fileName,
-      bytes: Buffer.from(json, "utf8"),
+      fileName: compressedFileName,
+      bytes: compressed,
       createdAt,
       reason: `Runtime backup ${type}`,
       keepLast: 60,

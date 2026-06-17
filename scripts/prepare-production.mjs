@@ -94,11 +94,27 @@ runPrisma(["generate"]);
 
 const databaseUrl = getDatabaseUrl();
 if (!databaseUrl) {
-  console.warn("[prepare] No DATABASE_URL/Postgres variables found. Skipping prisma migrate deploy.");
+  console.warn("[prepare] No DATABASE_URL/Postgres variables found. Warning: schema changes without migrations will cause errors at runtime.");
   process.exit(0);
 }
 
 console.log("[prepare] Running prisma migrate deploy.");
 runPrisma(["migrate", "deploy"], { env: { DATABASE_URL: databaseUrl } });
+
+try {
+  const diffResult = spawnSync(prismaBin, ["migrate", "diff", "--from-local-migrations", "--to-schema-datasource", "prisma/schema.prisma"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, DATABASE_URL: databaseUrl, PRISMA_HIDE_UPDATE_MESSAGE: "true" },
+    timeout: 15000,
+  });
+  if (diffResult.status !== 0 && diffResult.stderr?.includes("P3014")) {
+    console.warn("[prepare] ⚠️ SCHEMA DRIFT: Schema has changes not yet migrated. Create migration:\n  pnpm dlx prisma migrate dev --create-only --name <description>");
+  } else if (diffResult.stdout?.trim() && diffResult.stdout.trim() !== "-- This is an empty migration") {
+    console.warn(`[prepare] ⚠️ SCHEMA DRIFT: ${diffResult.stdout.trim().length} bytes of unapplied changes. Create migration: pnpm dlx prisma migrate dev --create-only --name <description>`);
+  }
+} catch {
+  // diff check is best-effort
+}
 
 console.log("[prepare] Startup restore and legacy JSON backfills are disabled permanently.");

@@ -413,7 +413,7 @@ function buildGitHubBlobUrl(config: SyncConfig, repoPath: string) {
 }
 
 function backupTimestampFromPath(repoPath: string) {
-  const match = repoPath.match(/(\d{8}T\d{6}Z)\.json$/i);
+  const match = repoPath.match(/(\d{8}T\d{6}Z)\.json(?:\.gz)?$/i);
   if (!match) return 0;
   const stamp = match[1];
   const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
@@ -432,7 +432,7 @@ async function pruneOldRuntimeBackups(config: SyncConfig, keepLast: number) {
   );
 
   const backupFiles = tree.tree
-    .filter((entry) => entry.type === "blob" && entry.path.startsWith("backups/") && entry.path.endsWith(".json"))
+    .filter((entry) => entry.type === "blob" && entry.path.startsWith("backups/") && (entry.path.endsWith(".json") || entry.path.endsWith(".json.gz")))
     .sort((a, b) => {
       const timeDiff = backupTimestampFromPath(b.path) - backupTimestampFromPath(a.path);
       return timeDiff !== 0 ? timeDiff : b.path.localeCompare(a.path);
