@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-type PhotographerLogoPageParams = {
+type Params = {
   settings_saved?: string;
   success?: string;
   error?: string;
@@ -15,15 +15,16 @@ type PhotographerLogoPageParams = {
 
 function notice(settingsSaved?: string, success?: string, error?: string, updated?: string, skipped?: string) {
   if (error === "invalid") return { kind: "danger", text: "الرجاء تحديد وضع التحديث." };
-  if (error === "nologo") return { kind: "danger", text: "لا يوجد شعار افتراضي للمصور. قم برفع شعار أولاً." };
+  if (error === "noselection") return { kind: "danger", text: "لم تختر أي دعوات. اختر دعوة واحدة على الأقل." };
+  if (error === "nologo") return { kind: "danger", text: "لا يوجد شعار افتراضي للمصور. ارفع شعاراً أولاً من بيانات المصور الأساسية." };
   if (error === "database") return { kind: "danger", text: "قاعدة البيانات غير متاحة." };
   if (error === "failed") return { kind: "danger", text: "فشلت العملية. حاول مرة أخرى." };
-  if (settingsSaved) return { kind: "success", text: "تم حفظ بيانات المصور الأساسية بنجاح." };
+  if (settingsSaved) return { kind: "success", text: "تم حفظ بيانات المصور الأساسية وتحديث القوالب الجاهزة." };
   if (success) {
     const updatedCount = Number(updated) || 0;
     const skippedCount = Number(skipped) || 0;
     let text = `تم تحديث ${updatedCount} دعوة بنجاح.`;
-    if (skippedCount) text += ` تخطي ${skippedCount} دعوة بشعار مخصص.`;
+    if (skippedCount) text += ` لم نجد ${skippedCount} دعوة مطابقة.`;
     return { kind: "success", text };
   }
   return null;
@@ -32,7 +33,7 @@ function notice(settingsSaved?: string, success?: string, error?: string, update
 export default async function AdminPhotographerLogoPage({
   searchParams,
 }: {
-  searchParams: Promise<PhotographerLogoPageParams>;
+  searchParams: Promise<Params>;
 }) {
   const [params, settings] = await Promise.all([searchParams, getSiteSettings()]);
   const message = notice(params.settings_saved, params.success, params.error, params.updated, params.skipped);
@@ -88,16 +89,19 @@ export default async function AdminPhotographerLogoPage({
     console.error("[Photographer Logo Page] Failed to load invitations", error);
   }
 
+  const hasInvitations = invitations.length > 0;
   const customCount = invitations.filter((inv) => inv.hasCustomLogo).length;
   const defaultCount = invitations.filter((inv) => !inv.hasCustomLogo).length;
 
   return (
     <>
+      <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('DOMContentLoaded',function(){var sa=document.getElementById('select-all');sa&&sa.addEventListener('change',function(){document.querySelectorAll('.inv-select').forEach(function(i){i.checked=sa.checked})})})" }} />
+
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Photographer Logo</span>
           <h1>إدارة المصور الفوتوغرافي</h1>
-          <p>تحكم ببيانات وشعار المصور الافتراضي لكل الدعوات. غيّر الشعار والبيانات ثم حدّث الدعوات الحالية دفعة واحدة.</p>
+          <p>تحكم ببيانات وشعار المصور الافتراضي لكل الدعوات. غيّر الإعدادات ثم حدّث الدعوات التي تريدها دفعة واحدة.</p>
         </div>
       </div>
 
@@ -109,9 +113,9 @@ export default async function AdminPhotographerLogoPage({
           <div className="admin-card-head">
             <Camera size={22} />
             <div>
-              <span className="eyebrow">Photographer Settings</span>
+              <span className="eyebrow">Global Defaults</span>
               <h2>بيانات المصور الأساسية</h2>
-              <p>هذه البيانات والشعار هي الافتراضية لكل الدعوات الجديدة والحالية عند تحديثها.</p>
+              <p>هذه البيانات هي الافتراضية لجميع الدعوات الجديدة. عند تغييرها يُحدّث معاين القوالب الجاهزة تلقائياً.</p>
             </div>
           </div>
 
@@ -157,7 +161,7 @@ export default async function AdminPhotographerLogoPage({
         </article>
       </form>
 
-      {invitations.length > 0 ? (
+      {hasInvitations ? (
         <>
           <div className="admin-metrics-grid" style={{ marginBottom: 16 }}>
             <div className="admin-metric-card">
@@ -167,62 +171,74 @@ export default async function AdminPhotographerLogoPage({
             </div>
             <div className="admin-metric-card">
               <CheckCircle2 size={20} />
-              <span>شعار افتراضي (لم يتغير)</span>
+              <span>شعار افتراضي</span>
               <strong>{defaultCount}</strong>
             </div>
             <div className="admin-metric-card">
               <XCircle size={20} />
-              <span>شعار مخصص (تم تغييره)</span>
+              <span>شعار مخصص</span>
               <strong>{customCount}</strong>
             </div>
           </div>
 
-          <form action="/api/admin/photographer-logo" method="post" style={{ marginBottom: 16 }}>
-            <div className="button-row">
-              <button className="btn btn-gold btn-glow" type="submit" name="mode" value="defaults-only">
-                <RefreshCw size={18} />
-                تحديث الدعوات التي لم يتغير شعارها فقط ({defaultCount})
-              </button>
-              <button className="btn btn-soft" type="submit" name="mode" value="all">
-                <RefreshCw size={18} />
-                تحديث الكل ({invitations.length})
-              </button>
-            </div>
-          </form>
-
-          <article className="panel">
-            <div className="admin-card-head" style={{ marginBottom: 14 }}>
-              <Image size={22} />
-              <div>
-                <span className="eyebrow">Invitation List</span>
-                <h2>قائمة الدعوات</h2>
-              </div>
-            </div>
-            <div className="admin-order-list">
-              {invitations.map((inv) => (
-                <div className="admin-order-item" key={inv.code}>
-                  <span>
-                    <strong>{inv.groomName} و {inv.brideName}</strong>
-                    <small>كود: {inv.code} | {inv.logoUrl ? "يوجد شعار" : "لا يوجد شعار"}</small>
-                  </span>
-                  {inv.logoUrl ? (
-                    <img src={inv.logoUrl} alt="شعار" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.08)", flex: "0 0 auto" }} />
-                  ) : (
-                    <Camera size={20} style={{ opacity: 0.3, flex: "0 0 auto" }} />
-                  )}
-                  <em className={`status ${inv.hasCustomLogo ? "warning" : "success"}`}>
-                    {inv.hasCustomLogo ? "شعار مخصص" : "شعار افتراضي"}
-                  </em>
+          <form action="/api/admin/photographer-logo" method="post">
+            <input type="hidden" name="mode" value="update-selected" />
+            <article className="panel" style={{ marginBottom: 16 }}>
+              <div className="admin-card-head" style={{ marginBottom: 14 }}>
+                <Image size={22} />
+                <div>
+                  <span className="eyebrow">Bulk Update</span>
+                  <h2>تحديث الدعوات الحالية</h2>
+                  <p>اختر الدعوات التي تريد تحديثها بالشعار والبيانات الافتراضية الجديدة.</p>
                 </div>
-              ))}
-            </div>
-          </article>
+              </div>
+              <div className="admin-order-list">
+                <div className="admin-order-item" style={{ fontWeight: 600, background: "rgba(245,234,214,0.04)", borderBottom: "1px solid rgba(245,234,214,0.1)" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flex: "0 0 auto" }}>
+                    <input id="select-all" type="checkbox" />
+                    <small>الكل</small>
+                  </label>
+                  <span style={{ flex: 1 }}><strong>اسم العروسين</strong></span>
+                  <small style={{ flex: "0 0 90px", textAlign: "center" }}>الحالة</small>
+                  <small style={{ flex: "0 0 70px", textAlign: "center" }}>الشعار</small>
+                </div>
+                {invitations.map((inv) => (
+                  <div className="admin-order-item" key={inv.code}>
+                    <label style={{ display: "flex", alignItems: "center", flex: "0 0 auto", cursor: "pointer" }}>
+                      <input type="checkbox" name="codes" value={inv.code} className="inv-select" defaultChecked />
+                    </label>
+                    <span>
+                      <strong>{inv.groomName} و {inv.brideName}</strong>
+                      <small>كود: {inv.code}</small>
+                    </span>
+                    <em className={`status ${inv.status === "ACTIVE" ? "success" : "neutral"}`} style={{ flex: "0 0 90px", textAlign: "center" }}>
+                      {inv.status === "ACTIVE" ? "منشورة" : "مسودة"}
+                    </em>
+                    {inv.logoUrl ? (
+                      <img src={inv.logoUrl} alt="شعار" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.08)", flex: "0 0 36px" }} />
+                    ) : (
+                      <Camera size={18} style={{ opacity: 0.3, flex: "0 0 36px" }} />
+                    )}
+                    <em className={`status ${inv.hasCustomLogo ? "warning" : "success"}`} style={{ flex: "0 0 70px", textAlign: "center" }}>
+                      {inv.hasCustomLogo ? "مخصص" : "افتراضي"}
+                    </em>
+                  </div>
+                ))}
+              </div>
+              <div className="button-row" style={{ marginTop: 16 }}>
+                <button className="btn btn-gold btn-glow" type="submit">
+                  <RefreshCw size={18} />
+                  تحديث المحدد
+                </button>
+              </div>
+            </article>
+          </form>
         </>
       ) : (
         <div className="admin-empty-state compact">
           <Camera size={32} />
           <strong>لا توجد دعوات مع مصور</strong>
-          <p>ليس هناك أي دعوات تم تفعيل المصور فيها بعد.</p>
+          <p>ليس هناك أي دعوات تم تفعيل المصور فيها بعد. بعد إنشاء دعوة وتفعيل المصور فيها ستظهر هنا لتتمكن من تحديث شعارها دفعة واحدة.</p>
         </div>
       )}
     </>

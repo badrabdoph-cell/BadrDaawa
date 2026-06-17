@@ -9,6 +9,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
+import { getTemplatePreviewInfo, updateTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -120,17 +121,35 @@ export async function POST(request: NextRequest) {
         uploadedLogoUrl = await saveLogo(logoFile);
       }
 
+      const resolvedLogoUrl = uploadedLogoUrl || text(formData, "photographerLogoUrl");
+
       await updateSiteSettings({
         photographer: {
           showPhotographerCard,
           defaultName: photographerName,
           defaultInstagramUrl: photographerInstagramUrl,
           defaultFacebookUrl: photographerFacebookUrl,
-          defaultLogoUrl: uploadedLogoUrl || text(formData, "photographerLogoUrl"),
+          defaultLogoUrl: resolvedLogoUrl,
         },
       });
 
+      const currentPreview = await getTemplatePreviewInfo();
+      await updateTemplatePreviewInfo({
+        ...currentPreview,
+        photographer: {
+          ...currentPreview.photographer,
+          enabled: showPhotographerCard,
+          name: photographerName || currentPreview.photographer.name,
+          instagramUrl: photographerInstagramUrl || currentPreview.photographer.instagramUrl,
+          facebookUrl: photographerFacebookUrl || currentPreview.photographer.facebookUrl,
+          logoUrl: resolvedLogoUrl || currentPreview.photographer.logoUrl,
+        },
+        templateOverrides: currentPreview.templateOverrides,
+        adminScope: currentPreview.adminScope,
+      });
+
       revalidatePath("/admin/photographer-logo");
+      revalidatePath("/admin/templates");
       revalidatePath("/");
       revalidatePath("/templates");
       queueGitHubSync("Photographer settings updated from photographer-logo admin.", { uploadProjectFiles: true, changeType: "project" });
@@ -138,74 +157,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?settings_saved=1", request.headers, request.nextUrl.origin), 303);
     }
 
-    if (mode !== "all" && mode !== "defaults-only") {
-      return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=invalid", request.headers, request.nextUrl.origin), 303);
-    }
-
-    const settings = await getSiteSettings();
-    const newLogoUrl = settings.photographer.defaultLogoUrl;
-
-    if (!newLogoUrl) {
-      return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=nologo", request.headers, request.nextUrl.origin), 303);
-    }
-
-    if (!prisma) {
-      return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=database", request.headers, request.nextUrl.origin), 303);
-    }
-
-    const invitations = await prisma.invitation.findMany({
-      where: { deletedAt: null },
-      select: {
-        id: true,
-        code: true,
-        groomName: true,
-        brideName: true,
-        photographer: true,
-      },
-    });
-
-    let updatedCount = 0;
-    let skippedCustomCount = 0;
-
-    for (const invitation of invitations) {
-      if (!invitation.photographer || typeof invitation.photographer !== "object") continue;
-      const raw = invitation.photographer as Record<string, unknown>;
-      if (raw.enabled === false) continue;
-
-      const logoSource = raw._logoSource === "custom" ? "custom" : "global";
-      if (mode === "defaults-only" && logoSource === "custom") {
-        skippedCustomCount += 1;
-        continue;
+    if (mode === "update-selected") {
+      const rawCodes = formData.getAll("codes");
+      const codes: string[] = [];
+      for (const c of rawCodes) {
+        if (typeof c === "string" && c.trim()) codes.push(c.trim());
       }
 
-      const updatedPhotographer = {
-        ...raw,
-        logoUrl: newLogoUrl,
-        _logoSource: "global",
-      };
+      if (codes.length === 0) {
+        return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=noselection", request.headers, request.nextUrl.origin), 303);
+      }
 
-      await prisma.invitation.update({
-        where: { id: invitation.id },
-        data: { photographer: updatedPhotographer },
+      const settings = await getSiteSettings();
+      const globalLogoUrl = settings.photographer.defaultLogoUrl;
+
+      if (!globalLogoUrl) {
+        return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=nologo", request.headers, request.nextUrl.origin), 303);
+      }
+
+      if (!prisma) {
+        return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=database", request.headers, request.nextUrl.origin), 303);
+      }
+
+      const invitations = await prisma.invitation.findMany({
+        where: { code: { in: codes }, deletedAt: null },
+        select: {
+          id: true,
+          code: true,
+          photographer: true,
+        },
       });
 
-      revalidatePath(`/${invitation.code}`);
-      updatedCount += 1;
+      let updatedCount = 0;
+
+      for (const invitation of invitations) {
+        if (!invitation.photographer || typeof invitation.photographer !== "object") continue;
+        const raw = invitation.photographer as Record<string, unknown>;
+        if (raw.enabled === false) continue;
+
+        const updatedPhotographer = {
+          enabled: true,
+          name: settings.photographer.defaultName || (typeof raw.name === "string" ? raw.name : ""),
+          description: typeof raw.description === "string" ? raw.description : "",
+          logoUrl: globalLogoUrl,
+          instagramUrl: settings.photographer.defaultInstagramUrl || (typeof raw.instagramUrl === "string" ? raw.instagramUrl : ""),
+          facebookUrl: settings.photographer.defaultFacebookUrl || (typeof raw.facebookUrl === "string" ? raw.facebookUrl : ""),
+          whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : "",
+          _logoSource: "global",
+        };
+
+        await prisma.invitation.update({
+          where: { id: invitation.id },
+          data: { photographer: updatedPhotographer as any },
+        });
+
+        revalidatePath(`/${invitation.code}`);
+        updatedCount += 1;
+      }
+
+      const actor = await getAuditActorFromAdminRequest(request);
+      await recordAuditLog({
+        actor,
+        action: "photographer-logo.bulk-update",
+        entity: { type: "Invitation", id: "bulk", label: `${updatedCount} دعوة` },
+        newValues: { mode: "update-selected", logoUrl: globalLogoUrl, updatedCount, requestedCodes: codes.length },
+        metadata: { source: "photographer-logo-admin" },
+      });
+
+      revalidatePath("/admin/invitations");
+      revalidatePath("/admin/photographer-logo");
+
+      return NextResponse.redirect(getRedirectUrl(`/admin/photographer-logo?success=1&updated=${updatedCount}&skipped=${codes.length - updatedCount}`, request.headers, request.nextUrl.origin), 303);
     }
 
-    const actor = await getAuditActorFromAdminRequest(request);
-    await recordAuditLog({
-      actor,
-      action: "photographer-logo.bulk-update",
-      entity: { type: "Invitation", id: "bulk", label: `${updatedCount} دعوة` },
-      newValues: { mode, logoUrl: newLogoUrl, updatedCount, skippedCustomCount },
-      metadata: { source: "photographer-logo-admin", mode },
-    });
-
-    revalidatePath("/admin/invitations");
-    revalidatePath("/admin/photographer-logo");
-
-    return NextResponse.redirect(getRedirectUrl(`/admin/photographer-logo?success=1&updated=${updatedCount}&skipped=${skippedCustomCount}`, request.headers, request.nextUrl.origin), 303);
+    return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=invalid", request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("[Photographer Logo] POST failed", error);
     return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=failed", request.headers, request.nextUrl.origin), 303);

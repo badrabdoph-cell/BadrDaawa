@@ -15,6 +15,7 @@ import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSl
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation } from "@/lib/types";
 import { getPublicSiteUrl } from "@/lib/utils";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const runtime = "nodejs";
 
@@ -88,6 +89,9 @@ async function resolvePhotographer(payload: BuilderPayload) {
   const input = payload.photographer;
   if (!input?.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "", description: "", whatsappUrl: "" };
 
+  const siteSettings = await getSiteSettings();
+  const photoDefaults = siteSettings.photographer;
+
   const logoGallery = input.logoDataUrl ? await saveInvitationGalleryImages([input.logoDataUrl]) : [];
 
   let resolvedLogoUrl: string;
@@ -97,23 +101,23 @@ async function resolvePhotographer(payload: BuilderPayload) {
     resolvedLogoUrl = logoGallery[0];
     logoSource = "custom";
   } else if (input._logoSource === "global") {
-    resolvedLogoUrl = cleanText(input.logoUrl) || "";
+    resolvedLogoUrl = cleanText(input.logoUrl) || photoDefaults.defaultLogoUrl || "";
     logoSource = "global";
   } else if (cleanText(input.logoUrl)) {
     resolvedLogoUrl = cleanText(input.logoUrl);
     logoSource = "custom";
   } else {
-    resolvedLogoUrl = "";
+    resolvedLogoUrl = photoDefaults.defaultLogoUrl || "";
     logoSource = "global";
   }
 
   return {
     enabled: true,
-    name: cleanText(input.name, "المصور الفوتوغرافي"),
+    name: cleanText(input.name) || photoDefaults.defaultName || "المصور الفوتوغرافي",
     description: cleanText(input.description) || "",
     logoUrl: resolvedLogoUrl,
-    facebookUrl: cleanUrl(input.facebookUrl) || "https://www.facebook.com/",
-    instagramUrl: cleanUrl(input.instagramUrl) || "https://www.instagram.com/",
+    facebookUrl: cleanUrl(input.facebookUrl) || cleanUrl(photoDefaults.defaultFacebookUrl) || "https://www.facebook.com/",
+    instagramUrl: cleanUrl(input.instagramUrl) || cleanUrl(photoDefaults.defaultInstagramUrl) || "https://www.instagram.com/",
     whatsappUrl: cleanUrl(input.whatsappUrl) || "",
     _logoSource: logoSource,
   };

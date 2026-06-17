@@ -403,10 +403,12 @@ export function ClientInvitationEditor({
       photographer: {
         enabled: photographerEnabled,
         name: photographerName,
+        description: invitation.photographer?.description || "",
         logoUrl: photographerLogo.previewUrl,
         logoDataUrl: "",
         facebookUrl: photographerFacebookUrl,
         instagramUrl: photographerInstagramUrl,
+        whatsappUrl: invitation.photographer?.whatsappUrl || "",
         _logoSource: photographerLogo.previewUrl ? "custom" : "global",
       },
       }),
