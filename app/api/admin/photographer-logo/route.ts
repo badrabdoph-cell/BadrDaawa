@@ -114,14 +114,29 @@ export async function POST(request: NextRequest) {
       const photographerName = text(formData, "photographerName");
       const photographerInstagramUrl = text(formData, "photographerInstagramUrl");
       const photographerFacebookUrl = text(formData, "photographerFacebookUrl");
+      const removeLogo = formData.has("removeLogo");
 
-      const logoFile = formData.get("photographerLogoFile");
-      let uploadedLogoUrl = "";
-      if (logoFile instanceof File && logoFile.size > 0) {
-        uploadedLogoUrl = await saveLogo(logoFile);
+      let resolvedLogoUrl: string;
+
+      if (removeLogo) {
+        resolvedLogoUrl = "";
+      } else {
+        const logoDataUrl = text(formData, "photographerLogoDataUrl");
+        if (logoDataUrl) {
+          const matches = logoDataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+          if (matches) {
+            const ext = matches[1] === "png" ? "png" : "webp";
+            const bytes = Buffer.from(matches[2], "base64");
+            const saved = await writeProjectAssetFile(`branding/photographer-logo-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${ext}`, bytes);
+            resolvedLogoUrl = saved.url;
+          } else {
+            resolvedLogoUrl = "";
+          }
+        } else {
+          const logoFile = formData.get("photographerLogoFile");
+          resolvedLogoUrl = logoFile instanceof File && logoFile.size > 0 ? await saveLogo(logoFile) : text(formData, "photographerLogoUrl");
+        }
       }
-
-      const resolvedLogoUrl = uploadedLogoUrl || text(formData, "photographerLogoUrl");
 
       await updateSiteSettings({
         photographer: {

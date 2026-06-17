@@ -1,5 +1,5 @@
-import { Camera, CheckCircle2, Image, RefreshCw, Save, UploadCloud, UsersRound, XCircle } from "lucide-react";
-import { acceptedImageFormats } from "@/lib/image-formats";
+import { Camera, CheckCircle2, Image, RefreshCw, Save, UsersRound, XCircle } from "lucide-react";
+import { PhotographerLogoUploader } from "@/components/PhotographerLogoUploader";
 import { getSiteSettings } from "@/lib/site-settings";
 import { prisma } from "@/lib/db";
 
@@ -137,20 +137,9 @@ export default async function AdminPhotographerLogoPage({
               <span>رابط فيسبوك</span>
               <input name="photographerFacebookUrl" defaultValue={settings.photographer.defaultFacebookUrl} placeholder="https://facebook.com/..." />
             </label>
-            <label className="field">
-              <span>شعار المصور</span>
-              <input name="photographerLogoFile" type="file" accept={acceptedImageFormats} />
-              <small>أفضل قياس: 200×200 بكسل. صيغ مدعومة: JPG, PNG, WebP</small>
-            </label>
           </div>
 
-          {globalLogoUrl ? (
-            <div className="site-settings-logo-preview" style={{ marginTop: 16 }}>
-              <UploadCloud size={18} />
-              <img src={globalLogoUrl} alt="شعار المصور الافتراضي" />
-              <span>{globalLogoUrl}</span>
-            </div>
-          ) : null}
+          <PhotographerLogoUploader currentLogoUrl={globalLogoUrl || ""} />
 
           <div className="button-row" style={{ marginTop: 16 }}>
             <button className="btn btn-gold btn-glow" type="submit">
