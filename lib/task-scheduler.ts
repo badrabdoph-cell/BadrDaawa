@@ -92,8 +92,9 @@ function assertTaskId(value: string): ScheduledTaskId {
   throw new Error("Unknown scheduled task");
 }
 
-async function runBackupTask(): Promise<TaskExecutionResult> {
-  const backup = await createBackupSnapshot("scheduled");
+async function runBackupTask(trigger: ScheduledTaskTrigger): Promise<TaskExecutionResult> {
+  const backupType = trigger === "manual" ? "manual" : "scheduled";
+  const backup = await createBackupSnapshot(backupType);
   return {
     message: `تم إنشاء Backup: ${backup.fileName}`,
     metadata: {
@@ -138,8 +139,8 @@ async function runDataHealthTask(): Promise<TaskExecutionResult> {
   };
 }
 
-async function executeTask(taskId: ScheduledTaskId): Promise<TaskExecutionResult> {
-  if (taskId === "backup") return runBackupTask();
+async function executeTask(taskId: ScheduledTaskId, trigger: ScheduledTaskTrigger): Promise<TaskExecutionResult> {
+  if (taskId === "backup") return runBackupTask(trigger);
   if (taskId === "media-cleanup") return runMediaCleanupTask();
   return runDataHealthTask();
 }
@@ -222,7 +223,7 @@ export async function runScheduledTask(taskIdInput: string, trigger: ScheduledTa
   runningTasks.add(taskId);
   const startedAt = new Date();
   try {
-    const result = await executeTask(taskId);
+    const result = await executeTask(taskId, trigger);
     const finishedAt = new Date();
     return {
       id: `task-run-${randomUUID()}`,

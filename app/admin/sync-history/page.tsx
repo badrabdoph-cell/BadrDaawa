@@ -16,6 +16,7 @@ function formatDate(value: string | Date) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Africa/Cairo",
   }).format(date);
 }
 

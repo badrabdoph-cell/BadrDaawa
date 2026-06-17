@@ -17,7 +17,7 @@ type LiveModePageParams = {
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value || "-";
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(date);
 }
 
 export default async function AdminLiveModePage({ searchParams }: { searchParams: Promise<LiveModePageParams> }) {

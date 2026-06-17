@@ -5,7 +5,7 @@ import { getDynamicPages, type DynamicPage } from "@/lib/dynamic-pages";
 export const dynamic = "force-dynamic";
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(new Date(value));
 }
 
 function notice(saved?: string, error?: string, message?: string) {

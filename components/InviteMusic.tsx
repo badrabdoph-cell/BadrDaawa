@@ -29,6 +29,7 @@ function stopAudio(audio: HTMLAudioElement | null) {
 export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
   const pathname = usePathname();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const userStoppedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [needsGesture, setNeedsGesture] = useState(false);
   const cleanMusicUrl = typeof musicUrl === "string" ? musicUrl.trim() : "";
@@ -102,11 +103,12 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     }
     function playAfterGesture() {
       const currentAudio = audioRef.current;
-      if (!currentAudio || currentAudio !== audio || !currentAudio.paused) return;
+      if (!currentAudio || currentAudio !== audio || !currentAudio.paused || userStoppedRef.current) return;
       void play();
     }
     function stopOnLeave() {
       stopAudio(audio);
+      userStoppedRef.current = false;
     }
     function onVisibilityChange() {
       if (document.hidden) {
@@ -148,9 +150,11 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
         onClick={() => {
           const audio = audioRef.current;
           if (!audio || audio.paused || needsGesture) {
+            userStoppedRef.current = false;
             void play();
             return;
           }
+          userStoppedRef.current = true;
           pause();
         }}
         title={!isPlaying ? "تشغيل الموسيقى" : "إيقاف الموسيقى"}

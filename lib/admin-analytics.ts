@@ -102,13 +102,13 @@ function formatDayKey(value: string) {
 function dayLabel(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short" }).format(date);
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", timeZone: "Africa/Cairo" }).format(date);
 }
 
 function hourLabel(hour: number) {
   const date = new Date();
   date.setHours(hour, 0, 0, 0);
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { hour: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { hour: "numeric", timeZone: "Africa/Cairo" }).format(date);
 }
 
 function countByDate(events: AnalyticsEventRow[], period: AnalyticsPeriod, from: Date | null) {

@@ -51,6 +51,7 @@ export function formatAdminDate(date: Date | string): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Africa/Cairo",
   }).format(d);
 }
 
