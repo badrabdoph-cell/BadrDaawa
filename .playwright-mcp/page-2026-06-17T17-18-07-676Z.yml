@@ -1,0 +1,97 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - link "BadrDaawa Control Center" [ref=e6] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e8]
+          - generic [ref=e10]:
+            - strong [ref=e11]: BadrDaawa
+            - generic [ref=e12]: Control Center
+        - generic [ref=e13]:
+          - img [ref=e14]
+          - generic [ref=e17]:
+            - strong [ref=e18]: Super Admin
+            - generic [ref=e19]: جلسة آمنة ومفعلة
+        - navigation "لوحة الإدارة" [ref=e20]:
+          - generic "الأقسام الرئيسية" [ref=e21]:
+            - button "الدعوات إنشاء ومتابعة الدعوات والطلبات" [pressed] [ref=e22] [cursor=pointer]:
+              - img [ref=e24]
+              - strong [ref=e27]: الدعوات
+              - generic [ref=e28]: إنشاء ومتابعة الدعوات والطلبات
+            - button "العملاء حسابات العملاء والتواصل والملاحظات" [ref=e29] [cursor=pointer]:
+              - img [ref=e31]
+              - strong [ref=e35]: العملاء
+              - generic [ref=e36]: حسابات العملاء والتواصل والملاحظات
+            - button "الفعاليات الحضور والتحليلات وتشغيل يوم الفرح" [ref=e37] [cursor=pointer]:
+              - img [ref=e39]
+              - strong [ref=e42]: الفعاليات
+              - generic [ref=e43]: الحضور والتحليلات وتشغيل يوم الفرح
+            - button "المحتوى القوالب والوسائط والصفحات العامة" [ref=e44] [cursor=pointer]:
+              - img [ref=e46]
+              - strong [ref=e52]: المحتوى
+              - generic [ref=e53]: القوالب والوسائط والصفحات العامة
+            - button "النسخ والمزامنة النسخ الاحتياطي وGitHub والمهام" [ref=e54] [cursor=pointer]:
+              - img [ref=e56]
+              - strong [ref=e62]: النسخ والمزامنة
+              - generic [ref=e63]: النسخ الاحتياطي وGitHub والمهام
+            - button "الإعدادات والنظام الإشعارات والمراقبة والسجلات" [ref=e64] [cursor=pointer]:
+              - img [ref=e66]
+              - strong [ref=e69]: الإعدادات والنظام
+              - generic [ref=e70]: الإشعارات والمراقبة والسجلات
+            - button "مساحة العمل بحث ومفضلة وروابط يومية" [ref=e71] [cursor=pointer]:
+              - img [ref=e73]
+              - strong [ref=e76]: مساحة العمل
+              - generic [ref=e77]: بحث ومفضلة وروابط يومية
+          - region "الدعوات" [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: القسم الفرعي
+              - heading "الدعوات" [level=2] [ref=e81]
+              - paragraph [ref=e82]: إنشاء ومتابعة الدعوات والطلبات
+            - generic [ref=e83]:
+              - link "الرئيسية" [ref=e84] [cursor=pointer]:
+                - /url: /admin
+                - img [ref=e85]
+                - generic [ref=e90]: الرئيسية
+              - link "الدعوات المنشورة" [ref=e91] [cursor=pointer]:
+                - /url: /admin/invitations
+                - img [ref=e92]
+                - generic [ref=e95]: الدعوات المنشورة
+              - link "الدعوات المعلقة" [ref=e96] [cursor=pointer]:
+                - /url: /admin/orders
+                - img [ref=e97]
+                - generic [ref=e100]: الدعوات المعلقة
+              - link "إنشاء دعوة" [ref=e101] [cursor=pointer]:
+                - /url: /admin/new-invitation
+                - img [ref=e102]
+                - generic [ref=e104]: إنشاء دعوة
+      - generic [ref=e105]:
+        - link "فتح الموقع" [ref=e106] [cursor=pointer]:
+          - /url: /
+          - img [ref=e107]
+          - text: فتح الموقع
+        - button "تسجيل خروج" [ref=e111] [cursor=pointer]:
+          - img [ref=e112]
+          - text: تسجيل خروج
+    - main [ref=e115]:
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - navigation "مسار التنقل" [ref=e118]:
+            - link "الرئيسية" [ref=e119] [cursor=pointer]:
+              - /url: /admin
+          - heading "الرئيسية" [level=1] [ref=e120]
+        - generic [ref=e121]:
+          - img [ref=e122]
+          - textbox "بحث عام..." [ref=e125]
+          - button "بحث" [ref=e126] [cursor=pointer]
+        - generic [ref=e127]:
+          - link "القوالب" [ref=e128] [cursor=pointer]:
+            - /url: /admin/templates
+            - img [ref=e129]
+          - link "المفضلة" [ref=e135] [cursor=pointer]:
+            - /url: /admin/favorites
+            - img [ref=e136]
+          - link "التنبيهات" [ref=e138] [cursor=pointer]:
+            - /url: /admin/notifications
+            - img [ref=e139]
+  - alert [ref=e150]

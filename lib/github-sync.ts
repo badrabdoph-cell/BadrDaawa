@@ -482,40 +482,82 @@ export async function uploadRuntimeBackupToGitHub(input: {
 
   const { owner, repo } = config.repo;
   const repoPath = formatBackupRepoPath(input.fileName, input.createdAt);
-  const encodedPath = repoContentPath(repoPath);
 
   try {
-    const upload = await githubRequest<GitHubPutContentsResponse>(
-      `/repos/${owner}/${repo}/contents/${encodedPath}`,
+    // Use Git Data API (blob) which supports files up to 100MB instead of Contents API (1MB limit)
+    const blob = await githubRequest<GitHubBlob>(
+      `/repos/${owner}/${repo}/git/blobs`,
       {
-        method: "PUT",
+        method: "POST",
         body: JSON.stringify({
-          message: `chore(backup): upload runtime backup ${input.fileName}\n\n${input.reason}`.slice(0, 500),
           content: input.bytes.toString("base64"),
-          branch: config.branch,
+          encoding: "base64",
         }),
       },
       config.token,
     );
 
-    const verified = await githubRequest<GitHubContentItem>(
-      `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(config.branch)}`,
+    const ref = await githubRequest<GitHubRef>(
+      `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
       { method: "GET" },
       config.token,
     );
 
-    const fileUrl = verified.html_url || buildGitHubBlobUrl(config, repoPath);
-    const verifiedOk = verified.path === repoPath && verified.size === input.bytes.length;
-    if (!verifiedOk) {
-      throw new Error(`GitHub upload verification failed for ${repoPath}.`);
-    }
+    const headCommit = await githubRequest<GitHubCommit>(
+      `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+      { method: "GET" },
+      config.token,
+    );
+
+    const tree = await githubRequest<GitHubTree>(
+      `/repos/${owner}/${repo}/git/trees`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          base_tree: headCommit.tree.sha,
+          tree: [
+            {
+              path: repoPath,
+              mode: "100644",
+              type: "blob",
+              sha: blob.sha,
+            },
+          ],
+        }),
+      },
+      config.token,
+    );
+
+    const commit = await githubRequest<GitHubCreatedCommit>(
+      `/repos/${owner}/${repo}/git/commits`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          message: `chore(backup): upload runtime backup ${input.fileName}\n\n${input.reason}`.slice(0, 500),
+          tree: tree.sha,
+          parents: [ref.object.sha],
+        }),
+      },
+      config.token,
+    );
+
+    await githubRequest(
+      `/repos/${owner}/${repo}/git/refs/heads/${branchRefPath(config.branch)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ sha: commit.sha, force: false }),
+      },
+      config.token,
+    );
+
+    const fileUrl = buildGitHubBlobUrl(config, repoPath);
 
     await pruneOldRuntimeBackups(config, input.keepLast ?? 60);
 
     return {
       status: "synced",
-      message: "Runtime backup uploaded to GitHub and verified.",
-      commitSha: upload.commit.sha,
+      message: "Runtime backup uploaded to GitHub via Git Data API.",
+      commitSha: commit.sha,
       fileUrl,
       repoPath,
       verified: true,

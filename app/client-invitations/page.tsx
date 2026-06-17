@@ -60,7 +60,7 @@ export default async function ClientInvitationsPublicPage({
   const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
   const query = (params.q || "").trim().toLowerCase();
 
-  const activeInvitations = invitations.filter((invitation) => invitation.isActive);
+  const activeInvitations = invitations.filter((invitation) => invitation.isActive && !invitation.disabledAt);
 
   const filtered = query
     ? activeInvitations.filter((invitation) => {

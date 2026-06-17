@@ -423,15 +423,32 @@ export async function createBackupSnapshot(type = "manual") {
     ensureParentDirectory(backupPath);
     await writeFile(backupPath, json, "utf8");
     await cleanupOldBackups();
-    const rawBytes = Buffer.from(json, "utf8");
-    const compressed = gzipSync(rawBytes, { level: 9 });
-    const compressedFileName = `${fileName}.gz`;
-    console.log(`[Backup] Compressed ${rawBytes.length} → ${compressed.length} bytes (${(compressed.length / rawBytes.length * 100).toFixed(1)}%)`);
+
+    const githubOnlyPayload = {
+      ...payload,
+      uploads: [],
+      metadata: {
+        ...payload.metadata,
+        classification: {
+          included: "Runtime tables only (no uploads to stay under GitHub size limit)",
+          excluded: "File uploads — stored locally on Railway volume",
+        },
+        uploads: {
+          ...payload.metadata.uploads,
+          note: "Uploads excluded from GitHub backup. Stored locally on Railway volume.",
+        },
+      },
+    };
+    const githubJson = `${JSON.stringify(githubOnlyPayload, jsonReplacer, 2)}\n`;
+    const githubRawBytes = Buffer.from(githubJson, "utf8");
+    const githubCompressed = gzipSync(githubRawBytes, { level: 9 });
+    const githubFileName = `${fileName}.gz`;
+    console.log(`[Backup] GitHub payload: ${githubRawBytes.length} → ${githubCompressed.length} bytes (${(githubCompressed.length / githubRawBytes.length * 100).toFixed(1)}%)`);
     const githubUpload = await uploadRuntimeBackupToGitHub({
-      fileName: compressedFileName,
-      bytes: compressed,
+      fileName: githubFileName,
+      bytes: githubCompressed,
       createdAt,
-      reason: `Runtime backup ${type}`,
+      reason: `Runtime backup ${type} (no uploads)`,
       keepLast: 60,
     });
     if (githubUpload.status !== "synced" || !githubUpload.verified) {

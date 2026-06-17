@@ -117,6 +117,7 @@ export default async function InvitationsPage({
     "custom-url-error": params.message || "تعذر حفظ الرابط المخصص.",
     disable: "تم تعطيل الدعوة.",
     enable: "تم إعادة تفعيل الدعوة.",
+    "disable-reason-required": "سبب التعطيل مطلوب. اكتب سبباً قبل التعطيل.",
   };
   const noteMessages: Record<string, string> = {
     created: "تمت إضافة الملاحظة الداخلية.",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import { CheckCircle2, Download, MessageCircle, UserCheck, UsersRound } from "lucide-react";
+import { CheckCircle2, Download, MessageCircle, ShieldAlert, UserCheck, UsersRound } from "lucide-react";
+import Link from "next/link";
 import { AdminMessagesBanner } from "@/components/AdminMessagesBanner";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
@@ -51,6 +52,25 @@ export default async function CustomerAdminPage({
       return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
     }
     notFound();
+  }
+
+  if (invitation.disabledAt) {
+    return (
+      <main className="page-shell">
+        <section className="section compact">
+          <div className="container">
+            <article className="panel" style={{ textAlign: "center" }}>
+              <ShieldAlert size={44} style={{ margin: "0 auto 12px", color: "#dc2626" }} />
+              <h1>الدعوة معطلة</h1>
+              <p>{invitation.disabledReason || "تم تعطيل الدعوة من الإدارة."}</p>
+              <Link className="btn btn-gold" href="/" style={{ marginTop: 16 }}>
+                العودة للموقع
+              </Link>
+            </article>
+          </div>
+        </section>
+      </main>
+    );
   }
 
   const session = cookieStore.get(CLIENT_SESSION_COOKIE)?.value;

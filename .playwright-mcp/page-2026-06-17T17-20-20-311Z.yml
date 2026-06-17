@@ -1,0 +1,6 @@
+- generic [ref=e4]:
+  - generic [ref=e5]: 🧭
+  - heading "404" [level=1] [ref=e6]
+  - paragraph [ref=e7]: Looks like you are lost
+  - link "Go home" [ref=e8] [cursor=pointer]:
+    - /url: /

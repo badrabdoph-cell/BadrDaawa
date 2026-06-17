@@ -1,0 +1,315 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - link "BadrDaawa Control Center" [ref=e6] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e8]
+          - generic [ref=e10]:
+            - strong [ref=e11]: BadrDaawa
+            - generic [ref=e12]: Control Center
+        - generic [ref=e13]:
+          - img [ref=e14]
+          - generic [ref=e17]:
+            - strong [ref=e18]: Super Admin
+            - generic [ref=e19]: جلسة آمنة ومفعلة
+        - navigation "لوحة الإدارة" [ref=e20]:
+          - generic "الأقسام الرئيسية" [ref=e21]:
+            - button "الدعوات إنشاء ومتابعة الدعوات والطلبات" [ref=e22] [cursor=pointer]:
+              - img [ref=e24]
+              - strong [ref=e27]: الدعوات
+              - generic [ref=e28]: إنشاء ومتابعة الدعوات والطلبات
+            - button "العملاء حسابات العملاء والتواصل والملاحظات" [ref=e29] [cursor=pointer]:
+              - img [ref=e31]
+              - strong [ref=e35]: العملاء
+              - generic [ref=e36]: حسابات العملاء والتواصل والملاحظات
+            - button "الفعاليات الحضور والتحليلات وتشغيل يوم الفرح" [ref=e37] [cursor=pointer]:
+              - img [ref=e39]
+              - strong [ref=e42]: الفعاليات
+              - generic [ref=e43]: الحضور والتحليلات وتشغيل يوم الفرح
+            - button "المحتوى القوالب والوسائط والصفحات العامة" [ref=e44] [cursor=pointer]:
+              - img [ref=e46]
+              - strong [ref=e52]: المحتوى
+              - generic [ref=e53]: القوالب والوسائط والصفحات العامة
+            - button "النسخ والمزامنة النسخ الاحتياطي وGitHub والمهام" [pressed] [ref=e54] [cursor=pointer]:
+              - img [ref=e56]
+              - strong [ref=e62]: النسخ والمزامنة
+              - generic [ref=e63]: النسخ الاحتياطي وGitHub والمهام
+            - button "الإعدادات والنظام الإشعارات والمراقبة والسجلات" [ref=e64] [cursor=pointer]:
+              - img [ref=e66]
+              - strong [ref=e69]: الإعدادات والنظام
+              - generic [ref=e70]: الإشعارات والمراقبة والسجلات
+            - button "مساحة العمل بحث ومفضلة وروابط يومية" [ref=e71] [cursor=pointer]:
+              - img [ref=e73]
+              - strong [ref=e76]: مساحة العمل
+              - generic [ref=e77]: بحث ومفضلة وروابط يومية
+          - region "النسخ والمزامنة" [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: القسم الفرعي
+              - heading "النسخ والمزامنة" [level=2] [ref=e81]
+              - paragraph [ref=e82]: النسخ الاحتياطي وGitHub والمهام
+            - generic [ref=e83]:
+              - link "مركز النسخ والمزامنة" [ref=e84] [cursor=pointer]:
+                - /url: /admin/sync
+                - img [ref=e85]
+                - generic [ref=e91]: مركز النسخ والمزامنة
+              - link "النسخ الاحتياطي" [ref=e92] [cursor=pointer]:
+                - /url: /admin/backups
+                - img [ref=e93]
+                - generic [ref=e99]: النسخ الاحتياطي
+              - link "سجل GitHub" [ref=e100] [cursor=pointer]:
+                - /url: /admin/sync-history
+                - img [ref=e101]
+                - generic [ref=e105]: سجل GitHub
+              - link "GitHub" [ref=e106] [cursor=pointer]:
+                - /url: /admin/sync-settings
+                - img [ref=e107]
+                - generic [ref=e110]: GitHub
+              - link "المهام المجدولة" [ref=e111] [cursor=pointer]:
+                - /url: /admin/tasks
+                - img [ref=e112]
+                - generic [ref=e116]: المهام المجدولة
+      - generic [ref=e117]:
+        - link "فتح الموقع" [ref=e118] [cursor=pointer]:
+          - /url: /
+          - img [ref=e119]
+          - text: فتح الموقع
+        - button "تسجيل خروج" [ref=e123] [cursor=pointer]:
+          - img [ref=e124]
+          - text: تسجيل خروج
+    - main [ref=e127]:
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - navigation "مسار التنقل" [ref=e130]:
+            - link "الرئيسية" [ref=e131] [cursor=pointer]:
+              - /url: /admin
+            - generic [ref=e132]: /
+            - button "النسخ والمزامنة" [ref=e133] [cursor=pointer]
+            - generic [ref=e134]: /
+            - link "النسخ الاحتياطي" [ref=e135] [cursor=pointer]:
+              - /url: /admin/backups
+          - heading "النسخ الاحتياطي" [level=1] [ref=e136]
+        - generic [ref=e137]:
+          - img [ref=e138]
+          - textbox "بحث عام..." [ref=e141]
+          - button "بحث" [ref=e142] [cursor=pointer]
+        - generic [ref=e143]:
+          - link "القوالب" [ref=e144] [cursor=pointer]:
+            - /url: /admin/templates
+            - img [ref=e145]
+          - link "المفضلة" [ref=e151] [cursor=pointer]:
+            - /url: /admin/favorites
+            - img [ref=e152]
+          - link "5" [ref=e154] [cursor=pointer]:
+            - /url: /admin/notifications
+            - img [ref=e155]
+            - strong [ref=e158]: "5"
+      - generic [ref=e159]:
+        - generic [ref=e160]:
+          - generic [ref=e161]:
+            - generic [ref=e162]: Backup & Disaster Recovery
+            - heading "النسخ الاحتياطي" [level=1] [ref=e163]
+            - paragraph [ref=e164]: لوحة تحكم النسخ الاحتياطي والتعافي من الكوارث — Runtime Data, PostgreSQL, Uploads, GitHub.
+          - generic [ref=e165]:
+            - img [ref=e166]
+            - text: توجد أخطاء
+        - generic [ref=e168]:
+          - img [ref=e169]
+          - generic [ref=e171]:
+            - strong [ref=e172]: ⚠️ النسخ التلقائي لم يعمل منذ أكثر من 5 ساعة و48 دقيقة
+            - text: "آخر نسخة ناجحة: 17‏/06‏/2026، 2:30 م"
+            - text: "تحقق من:"
+            - list [ref=e173]:
+              - listitem [ref=e174]: Railway Cron
+              - listitem [ref=e175]: BACKUP_CRON_SECRET
+              - listitem [ref=e176]: /api/cron/backup
+        - generic [ref=e177]:
+          - generic [ref=e178]:
+            - img [ref=e179]
+            - generic [ref=e181]:
+              - generic [ref=e182]: Automatic Backup
+              - heading "النسخ التلقائي" [level=2] [ref=e183]
+          - generic [ref=e184]:
+            - generic [ref=e185]:
+              - img [ref=e186]
+              - generic [ref=e189]: حالة النسخ التلقائي
+              - strong [ref=e190]: متأخر عن الموعد
+              - generic [ref=e191]: "آخر نسخة: 17‏/06‏/2026، 2:30 م"
+            - generic [ref=e192]:
+              - img [ref=e193]
+              - generic [ref=e196]: آخر نسخة تلقائية
+              - strong [ref=e197]: 17‏/06‏/2026، 2:30 م
+              - generic [ref=e198]: منذ 5 ساعة و48 دقيقة
+            - generic [ref=e199]:
+              - img [ref=e200]
+              - generic [ref=e204]: النسخة القادمة
+              - strong [ref=e205]: غير مجدول
+            - generic [ref=e206]:
+              - img [ref=e207]
+              - generic [ref=e210]: الوقت المتبقي للنسخة القادمة
+              - strong [ref=e211]: "--:--:--"
+        - generic [ref=e212]:
+          - heading "آخر 5 نسخ تلقائية" [level=3] [ref=e214]
+          - table [ref=e216]:
+            - rowgroup [ref=e217]:
+              - row "التاريخ النوع الحالة" [ref=e218]:
+                - columnheader "التاريخ" [ref=e219]
+                - columnheader "النوع" [ref=e220]
+                - columnheader "الحالة" [ref=e221]
+            - rowgroup [ref=e222]:
+              - row "17‏/06‏/2026، 2:30 م Scheduled Success" [ref=e223]:
+                - cell "17‏/06‏/2026، 2:30 م" [ref=e224]
+                - cell "Scheduled" [ref=e225]
+                - cell "Success" [ref=e226]:
+                  - generic [ref=e227]: Success
+              - row "17‏/06‏/2026، 2:29 م Scheduled Failed" [ref=e228]:
+                - cell "17‏/06‏/2026، 2:29 م" [ref=e229]
+                - cell "Scheduled" [ref=e230]
+                - cell "Failed" [ref=e231]:
+                  - generic [ref=e232]: Failed
+              - row "17‏/06‏/2026، 2:04 م Scheduled Success" [ref=e233]:
+                - cell "17‏/06‏/2026، 2:04 م" [ref=e234]
+                - cell "Scheduled" [ref=e235]
+                - cell "Success" [ref=e236]:
+                  - generic [ref=e237]: Success
+              - row "17‏/06‏/2026، 2:04 م Scheduled RUNNING" [ref=e238]:
+                - cell "17‏/06‏/2026، 2:04 م" [ref=e239]
+                - cell "Scheduled" [ref=e240]
+                - cell "RUNNING" [ref=e241]:
+                  - generic [ref=e242]: RUNNING
+              - row "17‏/06‏/2026، 4:11 ص Scheduled Success" [ref=e243]:
+                - cell "17‏/06‏/2026، 4:11 ص" [ref=e244]
+                - cell "Scheduled" [ref=e245]
+                - cell "Success" [ref=e246]:
+                  - generic [ref=e247]: Success
+        - generic [ref=e248]:
+          - article [ref=e249]:
+            - generic [ref=e250]:
+              - img [ref=e251]
+              - generic [ref=e255]: خطأ
+            - heading "PostgreSQL Dump" [level=2] [ref=e256]
+            - strong [ref=e257]: unknown
+            - paragraph [ref=e258]: لم يتم فتح ملف آخر نسخة ناجحة بعد.
+          - article [ref=e259]:
+            - generic [ref=e260]:
+              - img [ref=e261]
+              - generic [ref=e263]: تحذير
+            - heading "Uploads Backup" [level=2] [ref=e264]
+            - strong [ref=e265]: unknown
+            - paragraph [ref=e266]: Backup file is not valid JSON.
+          - article [ref=e267]:
+            - generic [ref=e268]:
+              - img [ref=e269]
+              - generic [ref=e272]: سليم
+            - heading "GitHub Backup" [level=2] [ref=e273]
+            - strong [ref=e274]: ok
+            - paragraph [ref=e275]: تم رفع آخر نسخة ناجحة إلى GitHub والتحقق من وجودها.
+            - paragraph [ref=e276]: "SHA: dafbd2cfdaa8c0a29efecf61a19118d79ef65d4d"
+        - generic [ref=e277]:
+          - generic [ref=e278]:
+            - article [ref=e279]:
+              - img [ref=e280]
+              - generic [ref=e283]: عدد النسخ
+              - strong [ref=e284]: "1"
+            - article [ref=e285]:
+              - img [ref=e286]
+              - generic [ref=e291]: إجمالي الحجم
+              - strong [ref=e292]: 67.8 MB
+            - article [ref=e293]:
+              - img [ref=e294]
+              - generic [ref=e300]: آخر نسخة
+              - strong [ref=e301]: 17‏/06‏/2026، 8:12 م
+            - article [ref=e302]:
+              - img [ref=e303]
+              - generic [ref=e306]: النسخة القادمة
+              - strong [ref=e307]: 17‏/06‏/2026، 5:30 م
+          - generic [ref=e308]:
+            - generic [ref=e309]:
+              - img [ref=e310]
+              - generic [ref=e314]:
+                - generic [ref=e315]: Latest Backup
+                - heading "آخر نسخة ناجحة" [level=2] [ref=e316]
+            - generic [ref=e317]:
+              - generic [ref=e318]:
+                - generic [ref=e319]: الملف
+                - generic [ref=e320]: scheduled-20260617T113004Z.json
+              - generic [ref=e321]:
+                - generic [ref=e322]: النوع
+                - generic [ref=e323]: Scheduled
+              - generic [ref=e324]:
+                - generic [ref=e325]: تاريخ الإنشاء
+                - generic [ref=e326]: 17‏/06‏/2026، 2:30 م
+              - generic [ref=e327]:
+                - generic [ref=e328]: الحجم
+                - generic [ref=e329]: 38.6 MB
+              - generic [ref=e330]:
+                - generic [ref=e331]: المدة
+                - generic [ref=e332]: 11.6s
+              - generic [ref=e333]:
+                - generic [ref=e334]: الملف المحلي
+                - generic [ref=e335]: غير موجود
+              - generic [ref=e336]:
+                - generic [ref=e337]: Commit SHA
+                - generic [ref=e338]: dafbd2cfdaa8c0a29efecf61a19118d79ef65d4d
+              - generic [ref=e339]:
+                - generic [ref=e340]: GitHub URL
+                - link "https://github.com/badrabdoph-cell/BadrDaawa/blob/main/backups/2026/06/scheduled-20260617T113004Z.json" [ref=e342] [cursor=pointer]:
+                  - /url: https://github.com/badrabdoph-cell/BadrDaawa/blob/main/backups/2026/06/scheduled-20260617T113004Z.json
+        - generic [ref=e343]:
+          - button "إنشاء نسخة يدوية" [ref=e345] [cursor=pointer]:
+            - img [ref=e346]
+            - text: إنشاء نسخة يدوية
+          - button "Verify Backup" [ref=e352] [cursor=pointer]:
+            - img [ref=e353]
+            - text: Verify Backup
+          - link "Diagnostics" [ref=e356] [cursor=pointer]:
+            - /url: /admin/diagnostics
+          - link "الإعدادات" [ref=e357] [cursor=pointer]:
+            - /url: /admin/sync-settings
+          - generic [ref=e358]: 1 نسخة · 67.8 MB
+        - generic [ref=e359]:
+          - img [ref=e360]
+          - generic [ref=e362]: "آخر خطأ: GitHub sync failed 422: {\"message\":\"Sorry, the file is too large to be processed. Consider creating/updating the file in a local clone and pushing it to GitHub.\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#create-or-update-file-contents\",\"status\":\"422\"} (manual) —17‏/06‏/2026، 8:12 م"
+        - generic [ref=e363]:
+          - generic [ref=e364]:
+            - heading "سجل النسخ" [level=3] [ref=e365]
+            - generic [ref=e366]: إجمالي 1 نسخة
+          - table [ref=e368]:
+            - rowgroup [ref=e369]:
+              - row "الملف الحالة الحجم تاريخ الإنشاء إجراءات" [ref=e370]:
+                - columnheader "الملف" [ref=e371]
+                - columnheader "الحالة" [ref=e372]
+                - columnheader "الحجم" [ref=e373]
+                - columnheader "تاريخ الإنشاء" [ref=e374]
+                - columnheader "إجراءات" [ref=e375]
+            - rowgroup [ref=e376]:
+              - row "manual-20260617T171237Z.json FAILED 67.8 MB 17‏/06‏/2026، 8:12 م" [ref=e377]:
+                - cell "manual-20260617T171237Z.json" [ref=e378]:
+                  - generic [ref=e379]: manual-20260617T171237Z.json
+                - cell "FAILED" [ref=e380]:
+                  - generic [ref=e381]: FAILED
+                - cell "67.8 MB" [ref=e382]
+                - cell "17‏/06‏/2026، 8:12 م" [ref=e383]
+                - cell [ref=e384]:
+                  - generic [ref=e385]:
+                    - link "تحميل" [ref=e386] [cursor=pointer]:
+                      - /url: /api/admin/backups/manual-20260617T171237Z.json
+                      - img [ref=e387]
+                    - button "استعادة النسخة" [ref=e391] [cursor=pointer]:
+                      - img [ref=e392]
+        - generic [ref=e396]:
+          - generic [ref=e397]:
+            - img [ref=e398]
+            - generic [ref=e402]:
+              - generic [ref=e403]: Restore Center
+              - heading "مركز الاستعادة" [level=2] [ref=e404]
+          - generic [ref=e405]:
+            - img [ref=e406]
+            - generic [ref=e408]: اختر نسخة من الجدول أعلاه واضغط على زر الاستعادة. سيتم حذف جميع البيانات الحالية واستبدالها ببيانات النسخة.
+          - generic [ref=e409]:
+            - img [ref=e410]
+            - text: متغير البيئة ALLOW_DESTRUCTIVE_RESTORE مُهيأ — الاستعادة مفعلة
+          - paragraph [ref=e413]:
+            - text: لتفعيل الاستعادة، يجب تعيين المتغير البيئي
+            - code [ref=e414]: ALLOW_DESTRUCTIVE_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL
+  - alert [ref=e415]

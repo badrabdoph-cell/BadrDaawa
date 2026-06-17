@@ -1,0 +1,53 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Wedding Daawa" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: Wedding Daawa
+        - navigation "روابط الموقع" [ref=e8]:
+          - link "التصاميم" [ref=e9] [cursor=pointer]:
+            - /url: /templates
+          - link "دعوات حقيقية" [ref=e10] [cursor=pointer]:
+            - /url: /client-invitations
+        - generic [ref=e11]:
+          - link "دعم واتساب" [ref=e12] [cursor=pointer]:
+            - /url: https://wa.me/201038434472
+            - img [ref=e13]
+            - img [ref=e15]
+          - link "صمّم دعوتك الآن" [ref=e17] [cursor=pointer]:
+            - /url: /templates
+            - img [ref=e18]
+            - text: صمّم دعوتك الآن
+    - main [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Legal
+          - heading "سياسة الخصوصية" [level=1] [ref=e25]
+          - paragraph [ref=e26]: كيف يتم التعامل مع بيانات العملاء وضيوف الدعوات داخل BadrDaawa.
+        - article [ref=e27]:
+          - paragraph [ref=e28]: نحترم خصوصيتك ونستخدم البيانات التي تقدمها فقط لتجهيز الدعوة الرقمية وتشغيل خدماتها.
+          - paragraph [ref=e29]: قد تشمل البيانات أسماء العروسين، بيانات المناسبة، الصور، أرقام التواصل، وردود الحضور.
+          - paragraph [ref=e30]: لا نبيع بياناتك لأي طرف ثالث. قد نستخدم مزودي خدمة موثوقين لتشغيل الاستضافة أو التخزين أو التحليلات اللازمة لتقديم الخدمة.
+          - paragraph [ref=e31]: يمكنك طلب تعديل أو حذف بياناتك من خلال التواصل معنا.
+    - contentinfo [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - link "Wedding Daawa" [ref=e35] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e37]: Wedding Daawa
+          - paragraph [ref=e38]: اصنع دعوتك بنفسك بشكل حديث وكريتف . اعرف عدد ال هيجضرو فرحك والمهتمين ليومك❤️
+        - generic [ref=e39]:
+          - link "سياسة الخصوصية" [ref=e40] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "الشروط والأحكام" [ref=e41] [cursor=pointer]:
+            - /url: /terms
+          - link "سياسة الاسترجاع" [ref=e42] [cursor=pointer]:
+            - /url: /refund-policy
+          - link "سياسة الاستخدام" [ref=e43] [cursor=pointer]:
+            - /url: /usage-policy
+          - link "الدعم الفني عبر واتساب" [ref=e44] [cursor=pointer]:
+            - /url: https://wa.me/201038434472
+            - img [ref=e45]
+            - generic [ref=e47]: الدعم الفني
+  - alert [ref=e48]
