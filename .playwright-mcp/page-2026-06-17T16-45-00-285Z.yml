@@ -1,0 +1,171 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - link "BadrDaawa Control Center" [ref=e6] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e8]
+          - generic [ref=e10]:
+            - strong [ref=e11]: BadrDaawa
+            - generic [ref=e12]: Control Center
+        - generic [ref=e13]:
+          - img [ref=e14]
+          - generic [ref=e17]:
+            - strong [ref=e18]: Super Admin
+            - generic [ref=e19]: جلسة آمنة ومفعلة
+        - navigation "لوحة الإدارة" [ref=e20]:
+          - generic "الأقسام الرئيسية" [ref=e21]:
+            - button "الدعوات إنشاء ومتابعة الدعوات والطلبات" [pressed] [ref=e22] [cursor=pointer]:
+              - img [ref=e24]
+              - strong [ref=e27]: الدعوات
+              - generic [ref=e28]: إنشاء ومتابعة الدعوات والطلبات
+            - button "العملاء حسابات العملاء والتواصل والملاحظات" [ref=e29] [cursor=pointer]:
+              - img [ref=e31]
+              - strong [ref=e35]: العملاء
+              - generic [ref=e36]: حسابات العملاء والتواصل والملاحظات
+            - button "الفعاليات الحضور والتحليلات وتشغيل يوم الفرح" [ref=e37] [cursor=pointer]:
+              - img [ref=e39]
+              - strong [ref=e42]: الفعاليات
+              - generic [ref=e43]: الحضور والتحليلات وتشغيل يوم الفرح
+            - button "المحتوى القوالب والوسائط والصفحات العامة" [ref=e44] [cursor=pointer]:
+              - img [ref=e46]
+              - strong [ref=e52]: المحتوى
+              - generic [ref=e53]: القوالب والوسائط والصفحات العامة
+            - button "النسخ والمزامنة النسخ الاحتياطي وGitHub والمهام" [ref=e54] [cursor=pointer]:
+              - img [ref=e56]
+              - strong [ref=e62]: النسخ والمزامنة
+              - generic [ref=e63]: النسخ الاحتياطي وGitHub والمهام
+            - button "الإعدادات والنظام الإشعارات والمراقبة والسجلات" [ref=e64] [cursor=pointer]:
+              - img [ref=e66]
+              - strong [ref=e69]: الإعدادات والنظام
+              - generic [ref=e70]: الإشعارات والمراقبة والسجلات
+            - button "مساحة العمل بحث ومفضلة وروابط يومية" [ref=e71] [cursor=pointer]:
+              - img [ref=e73]
+              - strong [ref=e76]: مساحة العمل
+              - generic [ref=e77]: بحث ومفضلة وروابط يومية
+          - region "الدعوات" [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: القسم الفرعي
+              - heading "الدعوات" [level=2] [ref=e81]
+              - paragraph [ref=e82]: إنشاء ومتابعة الدعوات والطلبات
+            - generic [ref=e83]:
+              - link "الرئيسية" [ref=e84] [cursor=pointer]:
+                - /url: /admin
+                - img [ref=e85]
+                - generic [ref=e90]: الرئيسية
+              - link "الدعوات المنشورة" [ref=e91] [cursor=pointer]:
+                - /url: /admin/invitations
+                - img [ref=e92]
+                - generic [ref=e95]: الدعوات المنشورة
+              - link "الدعوات المعلقة 5" [ref=e96] [cursor=pointer]:
+                - /url: /admin/orders
+                - img [ref=e97]
+                - generic [ref=e100]: الدعوات المعلقة
+                - strong [ref=e101]: "5"
+              - link "إنشاء دعوة" [ref=e102] [cursor=pointer]:
+                - /url: /admin/new-invitation
+                - img [ref=e103]
+                - generic [ref=e105]: إنشاء دعوة
+      - generic [ref=e106]:
+        - link "فتح الموقع" [ref=e107] [cursor=pointer]:
+          - /url: /
+          - img [ref=e108]
+          - text: فتح الموقع
+        - button "تسجيل خروج" [ref=e112] [cursor=pointer]:
+          - img [ref=e113]
+          - text: تسجيل خروج
+    - main [ref=e116]:
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - navigation "مسار التنقل" [ref=e119]:
+            - link "الرئيسية" [ref=e120] [cursor=pointer]:
+              - /url: /admin
+            - generic [ref=e121]: /
+            - button "الدعوات" [ref=e122] [cursor=pointer]
+            - generic [ref=e123]: /
+            - link "الدعوات المنشورة" [ref=e124] [cursor=pointer]:
+              - /url: /admin/invitations
+          - heading "الدعوات المنشورة" [level=1] [ref=e125]
+        - generic [ref=e126]:
+          - img [ref=e127]
+          - textbox "بحث عام..." [ref=e130]
+          - button "بحث" [ref=e131] [cursor=pointer]
+        - generic [ref=e132]:
+          - link "القوالب" [ref=e133] [cursor=pointer]:
+            - /url: /admin/templates
+            - img [ref=e134]
+          - link "المفضلة" [ref=e140] [cursor=pointer]:
+            - /url: /admin/favorites
+            - img [ref=e141]
+          - link "التنبيهات" [ref=e143] [cursor=pointer]:
+            - /url: /admin/notifications
+            - img [ref=e144]
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - generic [ref=e150]: Invitations
+            - heading "إدارة الدعوات" [level=1] [ref=e151]
+            - paragraph [ref=e152]: "كل دعوات العملاء في قسم واحد: إنشاء، تعديل، نسخ روابط، متابعة الزيارات والحضور، وتشغيل أو إيقاف الدعوة."
+          - link "دعوة جديدة" [ref=e154] [cursor=pointer]:
+            - /url: /admin/new-invitation
+            - img [ref=e155]
+            - text: دعوة جديدة
+        - region "ملخص الدعوات" [ref=e157]:
+          - generic [ref=e158]:
+            - img [ref=e159]
+            - generic [ref=e162]: كل الدعوات
+            - strong [ref=e163]: "0"
+          - generic [ref=e164]:
+            - img [ref=e165]
+            - generic [ref=e168]: إجمالي الزيارات
+            - strong [ref=e169]: "0"
+          - generic [ref=e170]:
+            - img [ref=e171]
+            - generic [ref=e175]: ضيوف مؤكدون
+            - strong [ref=e176]: "9"
+          - generic [ref=e177]:
+            - img [ref=e178]
+            - generic [ref=e180]: نشطة الآن
+            - strong [ref=e181]: "0"
+          - generic [ref=e182]:
+            - img [ref=e183]
+            - generic [ref=e186]: متوقفة
+            - strong [ref=e187]: "0"
+          - generic [ref=e188]:
+            - img [ref=e189]
+            - generic [ref=e191]: معطلة
+            - strong [ref=e192]: "0"
+          - generic [ref=e193]:
+            - img [ref=e194]
+            - generic [ref=e196]: منتهية
+            - strong [ref=e197]: "0"
+          - generic [ref=e198]:
+            - img [ref=e199]
+            - generic [ref=e202]: مؤرشفة
+            - strong [ref=e203]: "0"
+        - generic [ref=e204]:
+          - generic [ref=e205]:
+            - img [ref=e206]
+            - textbox [ref=e209]:
+              - /placeholder: ابحث بالاسم، الكود، القالب أو المكان
+          - generic [ref=e210]:
+            - img [ref=e211]
+            - combobox "فلترة حالة الدعوة" [ref=e213]:
+              - option "كل الحالات" [selected]
+              - option "نشطة"
+              - option "متوقفة"
+              - option "معطلة"
+              - option "منتهية"
+              - option "مؤرشفة"
+          - generic [ref=e214]:
+            - img [ref=e215]
+            - combobox "ترتيب الدعوات" [ref=e217]:
+              - option "الأحدث إنشاء" [selected]
+              - option "حسب تاريخ الفرح"
+              - option "الأكثر زيارة"
+              - option "الأكثر حضوراً"
+          - button "تطبيق" [ref=e218] [cursor=pointer]
+        - generic [ref=e219]:
+          - strong [ref=e220]: لا توجد دعوات مطابقة
+          - paragraph [ref=e221]: جرّب تغيير البحث أو حالة الفلترة.
+  - alert [ref=e222]

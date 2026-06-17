@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Wedding Daawa" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: Wedding Daawa
+        - navigation "روابط الموقع" [ref=e8]:
+          - link "التصاميم" [ref=e9] [cursor=pointer]:
+            - /url: /templates
+          - link "دعوات حقيقية" [ref=e10] [cursor=pointer]:
+            - /url: /client-invitations
+        - generic [ref=e11]:
+          - link "دعم واتساب" [ref=e12] [cursor=pointer]:
+            - /url: https://wa.me/201038434472
+            - img [ref=e13]
+            - img [ref=e15]
+          - link "صمّم دعوتك الآن" [ref=e17] [cursor=pointer]:
+            - /url: /templates
+            - img [ref=e18]
+            - text: صمّم دعوتك الآن
+    - main [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - img [ref=e25]
+            - text: Client Invitations
+          - heading "دعوات حقيقية" [level=1] [ref=e27]
+          - paragraph [ref=e28]: مجموعة من الدعوات المنشورة لعملائنا.
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - img [ref=e31]
+            - textbox [ref=e34]:
+              - /placeholder: ابحث بالاسم، الكود، القالب أو المكان
+          - button "بحث" [ref=e35] [cursor=pointer]
+        - generic [ref=e36]:
+          - heading "لا توجد دعوات منشورة حالياً" [level=2] [ref=e37]
+          - paragraph [ref=e38]: ستظهر الدعوات المنشورة هنا تلقائياً.
+          - link "مشاهدة التصاميم" [ref=e39] [cursor=pointer]:
+            - /url: /templates
+    - contentinfo [ref=e40]:
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - link "Wedding Daawa" [ref=e43] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e45]: Wedding Daawa
+          - paragraph [ref=e46]: اصنع دعوتك بنفسك بشكل حديث وكريتف . اعرف عدد ال هيجضرو فرحك والمهتمين ليومك❤️
+        - generic [ref=e47]:
+          - link "سياسة الخصوصية" [ref=e48] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "الشروط والأحكام" [ref=e49] [cursor=pointer]:
+            - /url: /terms
+          - link "سياسة الاسترجاع" [ref=e50] [cursor=pointer]:
+            - /url: /refund-policy
+          - link "سياسة الاستخدام" [ref=e51] [cursor=pointer]:
+            - /url: /usage-policy
+          - link "الدعم الفني عبر واتساب" [ref=e52] [cursor=pointer]:
+            - /url: https://wa.me/201038434472
+            - img [ref=e53]
+            - generic [ref=e55]: الدعم الفني
+  - alert [ref=e56]

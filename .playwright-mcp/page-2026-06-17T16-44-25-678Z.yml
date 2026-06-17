@@ -1,0 +1,30 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - region "تسجيل الدخول" [ref=e4]:
+      - generic [ref=e5]:
+        - img [ref=e7]
+        - generic [ref=e10]:
+          - generic [ref=e11]: Secure Access
+          - heading "لوحة تحكم محمية" [level=2] [ref=e12]
+          - paragraph [ref=e13]: دخول محدود لإدارة الدعوات، الطلبات، القوالب، وروابط العملاء.
+        - generic "مزايا الأمان" [ref=e14]:
+          - generic [ref=e15]:
+            - img [ref=e16]
+            - text: جلسة خاصة
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - text: تحقق من الصلاحيات
+      - generic [ref=e23]:
+        - img [ref=e25]
+        - generic [ref=e29]:
+          - generic [ref=e30]: Admin Login
+          - heading "دخول الادمن الرئيسي" [level=1] [ref=e31]
+          - paragraph [ref=e32]: التحكم الكامل في الدعوات، العملاء، الطلبات، القوالب، والروابط.
+        - generic [ref=e33]:
+          - generic [ref=e34]: اسم المستخدم
+          - textbox "اسم المستخدم" [ref=e35]
+        - generic [ref=e36]:
+          - generic [ref=e37]: كلمة المرور
+          - textbox "كلمة المرور" [ref=e38]
+        - button "دخول" [ref=e39] [cursor=pointer]
+  - alert [ref=e40]
