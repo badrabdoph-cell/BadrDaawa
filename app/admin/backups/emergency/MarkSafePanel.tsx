@@ -8,12 +8,30 @@ type BackupData = {
   fileName: string;
   status: string;
   createdAt: string;
+  type?: string;
+  sizeBytes?: number;
 };
 
 type Props = {
   backups: BackupData[];
   safeFileNames: Set<string>;
 };
+
+function formatBackupDate(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Africa/Cairo",
+  }).format(d);
+}
+
+function typeLabel(type?: string) {
+  if (type === "scheduled") return "تلقائي";
+  if (type === "manual") return "يدوي";
+  return type || "—";
+}
 
 export function MarkSafePanel({ backups, safeFileNames }: Props) {
   const router = useRouter();
@@ -70,7 +88,7 @@ export function MarkSafePanel({ backups, safeFileNames }: Props) {
             <option value="">-- اختر نسخة --</option>
             {eligibleBackups.map((b) => (
               <option key={b.fileName} value={b.fileName}>
-                {b.fileName}
+                {b.fileName} — {formatBackupDate(b.createdAt)} — {typeLabel(b.type)}
               </option>
             ))}
           </select>

@@ -400,6 +400,7 @@ export default async function BackupsPage({
             <thead>
               <tr>
                 <th>الملف</th>
+                <th>النوع</th>
                 <th>الحالة</th>
                 <th>الحجم</th>
                 <th>تاريخ الإنشاء</th>
@@ -412,6 +413,9 @@ export default async function BackupsPage({
                   <tr key={backup.fileName}>
                     <td>
                       <span className="backup-file-name">{backup.fileName}</span>
+                    </td>
+                    <td>
+                      {backup.type === "scheduled" ? "تلقائي" : backup.type === "manual" ? "يدوي" : backup.type}
                     </td>
                     <td>
                       <span className={`status ${backup.status === "SUCCESS" ? "success" : "danger"}`}>
@@ -442,7 +446,7 @@ export default async function BackupsPage({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="admin-empty-state">
                       <strong>لا توجد نسخ احتياطية حتى الآن</strong>
                       <p>اضغط "إنشاء نسخة يدوية" وسيظهر الملف هنا مباشرة.</p>

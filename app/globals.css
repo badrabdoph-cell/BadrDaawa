@@ -13029,68 +13029,97 @@ img {
   place-items: center;
   padding: clamp(24px, 6vw, 72px);
   background:
-    radial-gradient(circle at 50% 0%, rgba(198, 167, 92, 0.18), transparent 34%),
-    linear-gradient(145deg, #fffaf0, #f7efe2 52%, #fffdf8);
-  color: #3a2d22;
+    radial-gradient(ellipse at 50% 0%, rgba(198, 167, 92, 0.15), transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(198, 167, 92, 0.08), transparent 50%),
+    linear-gradient(165deg, #1a1511 0%, #2a221a 35%, #1f1813 65%, #15100c 100%);
+  color: #e8ddd0;
 }
 
 .pending-invitation-card {
-  width: min(100%, 520px);
+  width: min(100%, 480px);
   display: grid;
   justify-items: center;
-  gap: 14px;
-  padding: clamp(24px, 7vw, 44px);
-  border: 1px solid rgba(138, 104, 44, 0.24);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 26px 70px rgba(87, 63, 31, 0.16);
+  gap: 16px;
+  padding: clamp(28px, 7vw, 48px);
+  border: 1px solid rgba(198, 167, 92, 0.2);
+  border-radius: 20px;
+  background: linear-gradient(165deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
   text-align: center;
 }
 
 .pending-invitation-card svg {
-  color: #a67825;
+  color: var(--gold, #c6a75c);
+}
+
+.pending-invitation-card .eyebrow {
+  color: rgba(198, 167, 92, 0.7);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
 }
 
 .pending-invitation-card h1 {
   margin: 0;
-  font-size: clamp(1.65rem, 6vw, 2.4rem);
-  line-height: 1.25;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  line-height: 1.3;
+  color: #f5ede2;
+  font-weight: 800;
 }
 
 .pending-invitation-card p {
   margin: 0;
-  color: rgba(58, 45, 34, 0.75);
+  color: rgba(220, 210, 195, 0.8);
   line-height: 1.9;
+  font-weight: 450;
 }
 
 .pending-invitation-card strong {
   font-size: 1.08rem;
+  color: #e8ddd0;
 }
 
 .pending-invitation-card small {
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(166, 120, 37, 0.1);
-  color: #7c561b;
+  background: rgba(198, 167, 92, 0.1);
+  color: #c6a75c;
   font-weight: 700;
+  font-size: 0.82rem;
+  direction: ltr;
 }
 
-.pending-invitation-card .disabled-reason {
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: rgba(198, 58, 58, 0.07);
-  color: #7a2020;
-  font-weight: 600;
-  line-height: 1.7;
+.pending-invitation-card .rejection-reason {
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: #f5a5a5;
+  font-weight: 500;
+  line-height: 1.8;
   width: 100%;
 }
 
-.pending-invitation-card .disabled-actions {
+.pending-invitation-card .rejection-reason strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #f87171;
+  font-size: 0.82rem;
+  letter-spacing: 1px;
+}
+
+.pending-invitation-card .rejection-reason p {
+  margin: 0;
+  color: rgba(245, 165, 165, 0.9);
+}
+
+.pending-invitation-card .status-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
-  margin-top: 6px;
+  margin-top: 8px;
   width: 100%;
 }
 

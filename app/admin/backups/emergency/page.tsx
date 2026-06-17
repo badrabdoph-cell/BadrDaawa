@@ -68,7 +68,9 @@ export default async function EmergencyPage() {
                 <tr>
                   <th>الاسم / التصنيف</th>
                   <th>الملف</th>
+                  <th>تاريخ النسخة</th>
                   <th>تاريخ التحديد</th>
+                  <th>النوع</th>
                   <th>الحجم</th>
                   <th>الإجراءات</th>
                 </tr>

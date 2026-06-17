@@ -10,6 +10,7 @@ type BackupData = {
   status: string;
   sizeBytes: number;
   createdAt: string;
+  type?: string;
 };
 
 type SafeEntry = {
@@ -25,6 +26,12 @@ function formatBytes(value: number) {
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function typeLabel(type?: string) {
+  if (type === "scheduled") return "تلقائي";
+  if (type === "manual") return "يدوي";
+  return type || "—";
 }
 
 export function SafeBackupRow({
@@ -59,7 +66,9 @@ export function SafeBackupRow({
       <td>
         <span className="backup-file-name">{backup.fileName}</span>
       </td>
+      <td>{formatDate(backup.createdAt)}</td>
       <td>{formatDate(safeEntry.markedAt)}</td>
+      <td>{typeLabel(backup.type)}</td>
       <td style={{ direction: "ltr", textAlign: "right" }}>{formatBytes(backup.sizeBytes)}</td>
       <td>
         <div className="button-row">
