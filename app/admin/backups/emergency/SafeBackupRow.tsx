@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldX } from "lucide-react";
+import { ShieldX, FileWarning } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { RestoreBackupButton } from "../RestoreBackupButton";
@@ -22,7 +22,8 @@ type SafeEntry = {
   markedBy: string | null;
 };
 
-function formatBytes(value: number) {
+function formatBytes(value: number | null) {
+  if (value === null) return "—";
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
@@ -37,10 +38,12 @@ function typeLabel(type?: string) {
 export function SafeBackupRow({
   backup,
   safeEntry,
+  fileExists,
   formatDate,
 }: {
-  backup: BackupData;
+  backup: BackupData | null;
   safeEntry: SafeEntry;
+  fileExists: boolean;
   formatDate: (iso: string) => string;
 }) {
   const router = useRouter();
@@ -49,7 +52,7 @@ export function SafeBackupRow({
   async function handleUnmark() {
     setRemoving(true);
     try {
-      await fetch(`/api/admin/backups/${encodeURIComponent(backup.fileName)}/safe`, {
+      await fetch(`/api/admin/backups/${encodeURIComponent(safeEntry.backupFileName)}/safe`, {
         method: "DELETE",
       });
       router.refresh();
@@ -59,20 +62,49 @@ export function SafeBackupRow({
   }
 
   return (
-    <tr>
+    <tr className={!fileExists ? "emergency-row-missing" : ""}>
       <td>
         <span className="safe-backup-label">{safeEntry.label || "بدون تصنيف"}</span>
+        {!fileExists ? (
+          <span className="emergency-file-missing-badge">
+            <FileWarning size={13} />
+            الملف مفقود
+          </span>
+        ) : null}
       </td>
       <td>
-        <span className="backup-file-name">{backup.fileName}</span>
+        <span className="backup-file-name">{safeEntry.backupFileName}</span>
       </td>
-      <td>{formatDate(backup.createdAt)}</td>
+      <td>{backup ? formatDate(backup.createdAt) : "—"}</td>
       <td>{formatDate(safeEntry.markedAt)}</td>
-      <td>{typeLabel(backup.type)}</td>
-      <td style={{ direction: "ltr", textAlign: "right" }}>{formatBytes(backup.sizeBytes)}</td>
+      <td>
+        {fileExists ? (
+          <span className="safe-backup-label" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>
+            موجود
+          </span>
+        ) : (
+          <span className="safe-backup-label" style={{ background: "rgba(255,68,68,0.12)", color: "#ff4444" }}>
+            مفقود
+          </span>
+        )}
+      </td>
+      <td style={{ direction: "ltr", textAlign: "right" }}>
+        {backup ? formatBytes(backup.sizeBytes) : "—"}
+      </td>
       <td>
         <div className="button-row">
-          <RestoreBackupButton fileName={backup.fileName} />
+          {fileExists ? (
+            <RestoreBackupButton fileName={backup!.fileName} />
+          ) : (
+            <button
+              className="btn btn-icon"
+              disabled
+              title="الملف غير موجود"
+              style={{ opacity: 0.4, cursor: "not-allowed" }}
+            >
+              <ShieldX size={17} />
+            </button>
+          )}
           <button
             className="btn btn-soft btn-icon"
             type="button"

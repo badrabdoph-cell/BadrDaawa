@@ -9323,6 +9323,129 @@ img {
   border: 1px solid rgba(255, 68, 68, 0.2);
 }
 
+/* ── Emergency step-by-step guide ── */
+.emergency-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+.emergency-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(245,234,214,0.06);
+  transition: background 0.2s;
+}
+.emergency-step.step-done {
+  background: rgba(34,197,94,0.05);
+  border-color: rgba(34,197,94,0.15);
+}
+.step-number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(245,234,214,0.08);
+  color: rgba(245,234,214,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+.emergency-step.step-done .step-number {
+  background: rgba(34,197,94,0.2);
+  color: #22c55e;
+}
+.step-body strong {
+  display: block;
+  color: #fff7e8;
+  font-size: 0.92rem;
+  margin-bottom: 3px;
+}
+.step-body p {
+  margin: 0;
+  color: rgba(245,234,214,0.55);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+/* ── Emergency quick actions ── */
+.emergency-quick-actions {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(245,234,214,0.06);
+}
+.emergency-quick-actions .eyebrow {
+  display: block;
+  margin-bottom: 10px;
+}
+.emergency-quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ── Emergency status grid ── */
+.emergency-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+.emergency-stat-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(245,234,214,0.06);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.emergency-stat-card .stat-value {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #fff7e8;
+}
+.emergency-stat-card .stat-value.text-green {
+  color: #22c55e;
+}
+.emergency-stat-card .stat-value.text-red {
+  color: #ff4444;
+}
+.emergency-stat-card .stat-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: rgba(245,234,214,0.5);
+  font-weight: 600;
+}
+
+/* ── Emergency missing file badge ── */
+.emergency-row-missing {
+  opacity: 0.55;
+}
+.emergency-file-missing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(255,68,68,0.12);
+  color: #ff4444;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.admin-health-pill.success {
+  background: rgba(34,197,94,0.12);
+  color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.25);
+}
+
 .recent-edit-warning {
   display: flex;
   align-items: flex-start;
