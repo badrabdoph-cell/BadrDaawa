@@ -695,6 +695,14 @@ export function OrderForm({
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
     if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
+    if (stepId === "photos") {
+      const savedImages = draftImageUrls.some((url) => url);
+      if (!savedImages) {
+        setState("error");
+        setMessage("ارفع صورة واحدة على الأقل للمتابعة.");
+        return false;
+      }
+    }
     setForm((current) => ({ ...current, ...currentValues }));
     return true;
   }
@@ -1482,6 +1490,11 @@ export function OrderForm({
 
     try {
       const orderImages = await getOrderImageDataUrls(formData);
+      if (orderImages.length === 0) {
+        setState("error");
+        setMessage("ارفع صورة واحدة على الأقل للدعوة.");
+        return;
+      }
       if (selectedRawImageCount(formData) > orderImages.length) {
         setState("error");
         setMessage("في صورة لم يتم حفظها. ارفعها مرة أخرى أو اختار صورة أصغر قبل تأكيد الدعوة.");

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
-import { BellRing, Check, Clock3, Eye, Headphones, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Sparkles, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
+import { BellRing, Check, Clock3, Eye, Gem, Headphones, Heart, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Sparkles, Star, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
 import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -124,26 +124,158 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         .home-features-title-divider::after {
           background: linear-gradient(90deg, rgba(185, 137, 61, 0.46), transparent);
         }
+
+        .hero-title-style::before {
+          background: linear-gradient(180deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.85) 50%, rgba(251, 247, 239, 0.5) 100%) !important;
+        }
+
+        .hero-title-block {
+          display: grid;
+          justify-items: center;
+          gap: 8px;
+          margin: 0 auto;
+          position: relative;
+          text-align: center;
+        }
+
+        .hero-title-icon {
+          display: grid;
+          width: 56px;
+          height: 56px;
+          margin-bottom: 6px;
+          place-items: center;
+          border: 1px solid rgba(185, 137, 61, 0.32);
+          border-radius: 999px;
+          background: linear-gradient(135deg, #fffdf8, #f2dfbd);
+          color: #8e6428;
+          box-shadow: 0 14px 28px rgba(142, 100, 40, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .hero-title-kicker {
+          color: #b9893d;
+          font-size: clamp(0.78rem, 1.4vw, 0.95rem);
+          font-weight: 900;
+          letter-spacing: 0.34em;
+          text-transform: uppercase;
+        }
+
+        .hero-title-main {
+          max-width: 820px;
+          margin: 0;
+          color: #241b13;
+          font-size: clamp(2.4rem, 10vw, 5.4rem);
+          font-weight: 1000;
+          line-height: 1.04;
+          letter-spacing: -0.04em;
+          text-wrap: balance;
+        }
+
+        .hero-title-accent {
+          max-width: 680px;
+          color: #766b60;
+          font-size: clamp(1.05rem, 2.6vw, 1.5rem);
+          font-weight: 700;
+          line-height: 1.45;
+          text-wrap: balance;
+        }
+
+        .hero-title-divider {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: min(200px, 46vw);
+          margin: 2px 0 4px;
+          color: #b9893d;
+        }
+
+        .hero-title-divider::before,
+        .hero-title-divider::after {
+          content: "";
+          height: 1px;
+          flex: 1;
+          background: linear-gradient(90deg, transparent, rgba(185, 137, 61, 0.5));
+        }
+
+        .hero-title-divider::after {
+          background: linear-gradient(90deg, rgba(185, 137, 61, 0.5), transparent);
+        }
+
+        .hero-sticker {
+          position: absolute;
+          opacity: 0.35;
+          animation: heroStickerFloat 3.6s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .hero-sticker-tl {
+          top: -14px;
+          inset-inline-start: -18px;
+          color: #bd8f3f;
+        }
+
+        .hero-sticker-tr {
+          top: -6px;
+          inset-inline-end: -16px;
+          color: #a8435a;
+          animation-delay: 0.5s;
+        }
+
+        .hero-sticker-bl {
+          bottom: 4px;
+          inset-inline-start: -26px;
+          color: #315f56;
+          animation-delay: 1s;
+        }
+
+        .hero-sticker-br {
+          bottom: 10px;
+          inset-inline-end: -22px;
+          color: #bd8f3f;
+          animation-delay: 1.5s;
+        }
+
+        @keyframes heroStickerFloat {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(6deg); }
+        }
+
+        @media (max-width: 640px) {
+          .hero-sticker {
+            display: none;
+          }
+        }
       `}</style>
       <SiteHeader />
       <main>
-        <section className="hero clean-hero">
+        <section className="hero clean-hero hero-title-style">
           <div className="container hero-grid hero-grid-single">
             <div className="hero-copy">
-              <h1 className="home-hero-title">
-                <span className="home-hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content.hero.kicker}>
+              <h1 className="hero-title-block">
+                <span className="hero-sticker hero-sticker-tl" aria-hidden="true">
+                  <Sparkles size={15} />
+                </span>
+                <span className="hero-sticker hero-sticker-tr" aria-hidden="true">
+                  <Heart size={13} />
+                </span>
+                <span className="hero-sticker hero-sticker-bl" aria-hidden="true">
+                  <Gem size={14} />
+                </span>
+                <span className="hero-sticker hero-sticker-br" aria-hidden="true">
+                  <Star size={12} />
+                </span>
+                <span className="hero-title-icon" aria-hidden="true">
+                  <Sparkles size={22} />
+                </span>
+                <span className="hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content.hero.kicker}>
                   {content.hero.kicker}
                 </span>
-                <span className="home-hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={content.hero.mainTitle}>
+                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={content.hero.mainTitle}>
                   {content.hero.mainTitle}
                 </span>
-                <span className="home-hero-title-divider" aria-hidden="true">
-                  <span />
-                  <Sparkles size={18} />
-                  <span />
-                </span>
-                <span className="home-hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="العنوان الملون" data-broadcast-kind="text" data-broadcast-value={content.hero.accentTitle}>
-                  <span>{content.hero.accentTitle}</span>
+                <span className="hero-title-divider" aria-hidden="true" />
+                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="العنوان الملون" data-broadcast-kind="text" data-broadcast-value={content.hero.accentTitle}>
+                  {content.hero.accentTitle}
                 </span>
               </h1>
             </div>
