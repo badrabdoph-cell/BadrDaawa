@@ -1388,6 +1388,7 @@ export async function markBackupAsSafe(
       backupFileName,
       label: options?.label ?? null,
       notes: options?.notes ?? null,
+      markedAt: new Date(),
       markedBy: options?.markedBy ?? null,
     },
   });
