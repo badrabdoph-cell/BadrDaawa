@@ -90,7 +90,7 @@ export default async function AdminPhotographerLogoPage({
   const defaultCount = invitations.filter((inv) => !inv.hasCustomLogo).length;
 
   return (
-    <section className="admin-command-center photographer-logo-admin">
+    <>
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Photographer Logo</span>
@@ -105,108 +105,86 @@ export default async function AdminPhotographerLogoPage({
 
       {message ? <div className={message.kind === "danger" ? "notice danger" : "notice success"}>{message.text}</div> : null}
 
-      {globalLogoUrl ? (
-        <article className="panel photographer-logo-current">
-          <div className="admin-card-head">
-            <Camera size={22} />
+      <article className="panel" style={{ marginBottom: 16 }}>
+        <div className="admin-card-head">
+          <Camera size={22} />
+          <div>
+            <span className="eyebrow">{globalLogoUrl ? "Current Global Logo" : "No Logo Set"}</span>
+            <h2>{globalLogoUrl ? "الشعار الافتراضي الحالي" : "لا يوجد شعار افتراضي"}</h2>
+          </div>
+        </div>
+        {globalLogoUrl ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
+            <img src={globalLogoUrl} alt="شعار المصور الافتراضي" style={{ width: 80, height: 80, borderRadius: 12, objectFit: "contain", background: "rgba(255,255,255,0.08)" }} />
             <div>
-              <span className="eyebrow">Current Global Logo</span>
-              <h2>الشعار الافتراضي الحالي</h2>
+              <strong style={{ color: "#fff7e8", display: "block" }}>{settings.photographer.defaultName}</strong>
+              <small style={{ color: "rgba(245,234,214,0.58)", wordBreak: "break-all" }}>{globalLogoUrl}</small>
             </div>
           </div>
-          <div className="photographer-logo-preview-box">
-            <img src={globalLogoUrl} alt="شعار المصور الافتراضي" />
-            <div>
-              <strong>{settings.photographer.defaultName}</strong>
-              <span className="photographer-logo-path">{globalLogoUrl}</span>
-            </div>
-          </div>
-        </article>
-      ) : (
-        <article className="panel photographer-logo-current">
-          <div className="admin-card-head">
-            <UploadCloud size={22} />
-            <div>
-              <span className="eyebrow">No Logo Set</span>
-              <h2>لا يوجد شعار افتراضي</h2>
-            </div>
-          </div>
-          <p className="admin-muted-paragraph">
+        ) : (
+          <p style={{ color: "rgba(245,234,214,0.58)", marginTop: 12 }}>
             لم تقم برفع شعار افتراضي للمصور بعد. يمكنك رفعه من{" "}
             <Link href="/admin/settings">إعدادات الموقع</Link> ثم العودة لتحديث الدعوات الحالية.
           </p>
-        </article>
-      )}
+        )}
+      </article>
 
       {invitations.length > 0 ? (
         <>
-          <article className="panel photographer-logo-stats-panel">
-            <div className="admin-card-head">
-              <UsersRound size={22} />
-              <div>
-                <span className="eyebrow">Invitations Overview</span>
-                <h2>إحصائيات الدعوات</h2>
-              </div>
+          <div className="admin-metrics-grid" style={{ marginBottom: 16 }}>
+            <div className="admin-metric-card">
+              <UsersRound size={20} />
+              <span>إجمالي الدعوات مع المصور</span>
+              <strong>{invitations.length}</strong>
             </div>
-            <div className="photographer-logo-stats">
-              <div className="photographer-logo-stat">
-                <UsersRound size={20} />
-                <span>إجمالي الدعوات مع المصور</span>
-                <strong>{invitations.length}</strong>
-              </div>
-              <div className="photographer-logo-stat good">
-                <CheckCircle2 size={20} />
-                <span>شعار افتراضي (لم يتغير)</span>
-                <strong>{defaultCount}</strong>
-              </div>
-              <div className="photographer-logo-stat warning">
-                <XCircle size={20} />
-                <span>شعار مخصص (تم تغييره)</span>
-                <strong>{customCount}</strong>
-              </div>
+            <div className="admin-metric-card">
+              <CheckCircle2 size={20} />
+              <span>شعار افتراضي (لم يتغير)</span>
+              <strong>{defaultCount}</strong>
             </div>
-          </article>
+            <div className="admin-metric-card">
+              <XCircle size={20} />
+              <span>شعار مخصص (تم تغييره)</span>
+              <strong>{customCount}</strong>
+            </div>
+          </div>
 
-          <div className="photographer-logo-bulk-actions">
-            <form action="/api/admin/photographer-logo" method="post">
-              <input type="hidden" name="action" value="update" />
+          <form action="/api/admin/photographer-logo" method="post" style={{ marginBottom: 16 }}>
+            <div className="button-row">
               <button className="btn btn-gold btn-glow" type="submit" name="mode" value="defaults-only">
                 <RefreshCw size={18} />
                 تحديث الدعوات التي لم يتغير شعارها فقط ({defaultCount})
               </button>
               <button className="btn btn-soft" type="submit" name="mode" value="all">
                 <RefreshCw size={18} />
-                تحديث الكل (بما فيهم المخصص) ({invitations.length})
+                تحديث الكل ({invitations.length})
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
 
           <article className="panel">
-            <div className="admin-card-head">
+            <div className="admin-card-head" style={{ marginBottom: 14 }}>
               <Image size={22} />
               <div>
                 <span className="eyebrow">Invitation List</span>
                 <h2>قائمة الدعوات</h2>
-                <p>الدعوات التي تم تفعيل المصور فيها. الدعوات ذات الشعار المخصص لن تتأثر عند تحديث الشعار الافتراضي إلا إذا اخترت "تحديث الكل".</p>
               </div>
             </div>
-            <div className="photographer-logo-list">
+            <div className="admin-order-list">
               {invitations.map((inv) => (
-                <div className={`photographer-logo-item ${inv.hasCustomLogo ? "custom" : "default"}`} key={inv.code}>
-                  <div className="photographer-logo-item-info">
+                <div className="admin-order-item" key={inv.code}>
+                  <span>
                     <strong>{inv.groomName} و {inv.brideName}</strong>
-                    <span>كود: {inv.code}</span>
-                  </div>
-                  <div className="photographer-logo-item-logo">
-                    {inv.logoUrl ? (
-                      <img src={inv.logoUrl} alt="شعار" />
-                    ) : (
-                      <span className="photographer-logo-empty">—</span>
-                    )}
-                  </div>
-                  <span className={`photographer-logo-source-badge ${inv.hasCustomLogo ? "custom" : "global"}`}>
-                    {inv.hasCustomLogo ? "شعار مخصص" : "شعار افتراضي"}
+                    <small>كود: {inv.code} | {inv.logoUrl ? "يوجد شعار" : "لا يوجد شعار"}</small>
                   </span>
+                  {inv.logoUrl ? (
+                    <img src={inv.logoUrl} alt="شعار" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.08)", flex: "0 0 auto" }} />
+                  ) : (
+                    <Camera size={20} style={{ opacity: 0.3, flex: "0 0 auto" }} />
+                  )}
+                  <em className={`status ${inv.hasCustomLogo ? "warning" : "success"}`}>
+                    {inv.hasCustomLogo ? "شعار مخصص" : "شعار افتراضي"}
+                  </em>
                 </div>
               ))}
             </div>
@@ -219,6 +197,6 @@ export default async function AdminPhotographerLogoPage({
           <p>ليس هناك أي دعوات تم تفعيل المصور فيها بعد.</p>
         </div>
       )}
-    </section>
+    </>
   );
 }
