@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { Search, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl, formatArabicNumber } from "@/lib/utils";
 import { PublishedInvitationRow } from "@/components/PublishedInvitationActions";
+import { ClientInvitationsSearch } from "@/components/ClientInvitationsSearch";
 
 export const dynamic = "force-dynamic";
 
@@ -91,16 +92,7 @@ export default async function ClientInvitationsPublicPage({
             <p className="section-lead">مجموعة من الدعوات المنشورة لعملائنا.</p>
           </div>
 
-          <form className="admin-table-toolbar" action="/client-invitations" method="get">
-            <label className="admin-search-field">
-              <Search size={17} />
-              <input name="q" placeholder="ابحث بالاسم، الكود، القالب أو المكان" defaultValue={params.q || ""} />
-            </label>
-            <button className="btn btn-soft" type="submit">بحث</button>
-            {query ? (
-              <Link className="btn btn-soft" href="/client-invitations">مسح</Link>
-            ) : null}
-          </form>
+          <ClientInvitationsSearch query={query} />
 
           {filtered.length ? (
             <div className="published-rows-wrapper">

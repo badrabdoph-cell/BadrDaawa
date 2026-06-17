@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { CLIENT_SESSION_COOKIE, CLIENT_SESSION_MAX_AGE, createClientSessionCookie } from "@/lib/client-session";
 import { prisma } from "@/lib/db";
 import { resolveInvitationManageToken } from "@/lib/invitation-manage-token";
-import { getPendingOrderByManageToken } from "@/lib/order-request-links";
+import { getPendingOrderByManageToken, getRejectedOrderByManageToken } from "@/lib/order-request-links";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -11,6 +11,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { token } = await params;
   const result = await resolveInvitationManageToken(token || "");
   if (!result.ok) {
+    const rejectedOrder = await getRejectedOrderByManageToken(token || "");
+    if (rejectedOrder) {
+      const url = getRedirectUrl("/manage/invitation/invalid", request.headers, request.nextUrl.origin);
+      url.searchParams.set("reason", "rejected");
+      url.searchParams.set("rejectionReason", rejectedOrder.rejectionReason);
+      return NextResponse.redirect(url, 303);
+    }
     const pendingOrder = await getPendingOrderByManageToken(token || "");
     if (pendingOrder) {
       const url = getRedirectUrl("/manage/invitation/invalid", request.headers, request.nextUrl.origin);

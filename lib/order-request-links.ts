@@ -11,6 +11,10 @@ type PendingOrderSummary = {
   status: OrderRequest["status"];
 };
 
+type RejectedOrderSummary = PendingOrderSummary & {
+  rejectionReason: string;
+};
+
 function normalizeOrderStatus(status: string): OrderRequest["status"] {
   const clean = status.toLowerCase();
   if (clean === "accepted") return "reviewing";
@@ -95,6 +99,9 @@ export async function createReservedInvitationCode(groomName: string, brideName:
   return makeNumberedInvitationSlug(baseSlug, existingCodes);
 }
 
+import { OrderStatus } from "@prisma/client";
+const pendingExclude: OrderStatus[] = ["PUBLISHED", "CONVERTED", "REJECTED"];
+
 export async function getPendingOrderByManageToken(token: string): Promise<PendingOrderSummary | null> {
   const cleanToken = token.trim();
   if (!cleanToken) return null;
@@ -105,7 +112,7 @@ export async function getPendingOrderByManageToken(token: string): Promise<Pendi
         where: {
           manageToken: cleanToken,
           deletedAt: null,
-          status: { notIn: ["PUBLISHED", "CONVERTED"] },
+          status: { notIn: pendingExclude },
         },
         select: {
           id: true,
@@ -142,7 +149,7 @@ export async function getPendingOrderByInvitationCode(code: string): Promise<Pen
         where: {
           publishedInvitationCode: cleanCode,
           deletedAt: null,
-          status: { notIn: ["PUBLISHED", "CONVERTED"] },
+          status: { notIn: pendingExclude },
         },
         select: {
           id: true,
@@ -163,6 +170,84 @@ export async function getPendingOrderByInvitationCode(code: string): Promise<Pen
       }
     } catch (error) {
       console.error("Failed to load pending order by invitation code", error);
+    }
+  }
+
+  return null;
+}
+
+export async function getRejectedOrderByManageToken(token: string): Promise<RejectedOrderSummary | null> {
+  const cleanToken = token.trim();
+  if (!cleanToken) return null;
+
+  if (prisma) {
+    try {
+      const order = await prisma.orderRequest.findFirst({
+        where: {
+          manageToken: cleanToken,
+          deletedAt: null,
+          status: "REJECTED",
+        },
+        select: {
+          id: true,
+          groomName: true,
+          brideName: true,
+          status: true,
+          publishedInvitationCode: true,
+          rejectionReason: true,
+        },
+      });
+      if (order?.publishedInvitationCode) {
+        return {
+          id: order.id,
+          code: order.publishedInvitationCode,
+          groomName: order.groomName,
+          brideName: order.brideName,
+          status: "rejected",
+          rejectionReason: order.rejectionReason || "تم رفض الطلب.",
+        };
+      }
+    } catch (error) {
+      console.error("Failed to load rejected order by manage token", error);
+    }
+  }
+
+  return null;
+}
+
+export async function getRejectedOrderByInvitationCode(code: string): Promise<RejectedOrderSummary | null> {
+  const cleanCode = code.trim();
+  if (!cleanCode) return null;
+
+  if (prisma) {
+    try {
+      const order = await prisma.orderRequest.findFirst({
+        where: {
+          publishedInvitationCode: cleanCode,
+          deletedAt: null,
+          status: "REJECTED",
+        },
+        select: {
+          id: true,
+          groomName: true,
+          brideName: true,
+          status: true,
+          publishedInvitationCode: true,
+          rejectionReason: true,
+        },
+      });
+      if (order?.publishedInvitationCode) {
+        return {
+          id: order.id,
+          code: order.publishedInvitationCode,
+          groomName: order.groomName,
+          brideName: order.brideName,
+          status: "rejected",
+          rejectionReason: order.rejectionReason || "تم رفض الطلب.",
+        };
+      }
+    } catch (error) {
+      console.error("Failed to load rejected order by invitation code", error);
     }
   }
 
