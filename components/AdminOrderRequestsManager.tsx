@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, CheckSquare, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, CheckSquare, Clock, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, XCircle } from "lucide-react";
 import {
   AdminInvitationTools,
   emptyAdminToolImages,
@@ -60,6 +60,7 @@ type OrderFormState = {
   brideName: string;
   phone: string;
   weddingDate: string;
+  weddingTime: string;
   venue: string;
   mapUrl: string;
   notes: string;
@@ -130,6 +131,7 @@ function formFromOrder(order: OrderRequest, fallbackTemplate: string, musicFiles
     brideName: order.brideName || defaults?.brideName || "",
     phone: order.phone || "",
     weddingDate: formatDateInput(order.weddingDate) || defaults?.weddingDate || "",
+    weddingTime: order.weddingTime || defaults?.weddingTime || "07:00 مساءً",
     venue: order.venue || defaults?.venue || "",
     mapUrl: order.mapUrl || defaults?.mapUrl || "",
     notes: order.notes || "",
@@ -198,6 +200,7 @@ function payloadFromFormState(form: OrderFormState, action: "review" | "update" 
     brideName: form.brideName,
     phone: form.phone,
     weddingDate: form.weddingDate,
+    weddingTime: form.weddingTime,
     venue: form.venue,
     mapUrl: form.mapUrl,
     notes: form.notes,
@@ -448,7 +451,7 @@ export function AdminOrderRequestsManager({
       groomName: form.groomName,
       brideName: form.brideName,
       weddingDate: form.weddingDate,
-      weddingTime: "07:00 مساءً",
+      weddingTime: form.weddingTime || "07:00 مساءً",
       venue: form.venue,
       city: "",
       mapUrl: form.mapUrl,
@@ -910,6 +913,26 @@ export function AdminOrderRequestsManager({
         />
 
         <div className="orders-edit-section">
+          <div className="admin-form-grid compact-controls">
+            <label className="field">
+              <span><Clock size={15} /> وقت الحفل</span>
+              <select value={form.weddingTime} onChange={(event) => patchForm({ weddingTime: event.target.value })}>
+                <option value="" disabled>اختر وقت الحفل</option>
+                <option value="12:00 مساءً">12:00 مساءً</option>
+                <option value="01:00 مساءً">01:00 مساءً</option>
+                <option value="02:00 مساءً">02:00 مساءً</option>
+                <option value="03:00 مساءً">03:00 مساءً</option>
+                <option value="04:00 مساءً">04:00 مساءً</option>
+                <option value="05:00 مساءً">05:00 مساءً</option>
+                <option value="06:00 مساءً">06:00 مساءً</option>
+                <option value="07:00 مساءً">07:00 مساءً</option>
+                <option value="08:00 مساءً">08:00 مساءً</option>
+                <option value="09:00 مساءً">09:00 مساءً</option>
+                <option value="10:00 مساءً">10:00 مساءً</option>
+                <option value="11:00 مساءً">11:00 مساءً</option>
+              </select>
+            </label>
+          </div>
           <label className="field">
             <span>ملاحظات الطلب</span>
             <textarea value={form.notes} onChange={(event) => patchForm({ notes: event.target.value })} rows={4} />

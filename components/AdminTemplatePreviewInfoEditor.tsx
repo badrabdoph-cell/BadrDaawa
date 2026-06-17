@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Camera,
   CheckCircle2,
+  Clock,
   Eye,
   ImagePlus,
   Layers3,
@@ -456,7 +457,21 @@ export function AdminTemplatePreviewInfoEditor({ templates, templatePreviewInfo 
                 <input type="date" value={state.weddingDate} onChange={(event) => patch({ weddingDate: event.target.value })} />
               </Field>
               <Field label="الوقت" focusKey="date" onFocusField={focusPreview}>
-                <input value={state.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })} />
+                <select value={state.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })}>
+                  <option value="" disabled>اختر وقت الحفل</option>
+                  <option value="12:00 مساءً">12:00 مساءً</option>
+                  <option value="01:00 مساءً">01:00 مساءً</option>
+                  <option value="02:00 مساءً">02:00 مساءً</option>
+                  <option value="03:00 مساءً">03:00 مساءً</option>
+                  <option value="04:00 مساءً">04:00 مساءً</option>
+                  <option value="05:00 مساءً">05:00 مساءً</option>
+                  <option value="06:00 مساءً">06:00 مساءً</option>
+                  <option value="07:00 مساءً">07:00 مساءً</option>
+                  <option value="08:00 مساءً">08:00 مساءً</option>
+                  <option value="09:00 مساءً">09:00 مساءً</option>
+                  <option value="10:00 مساءً">10:00 مساءً</option>
+                  <option value="11:00 مساءً">11:00 مساءً</option>
+                </select>
               </Field>
               <Field label="الموقع" focusKey="map" onFocusField={focusPreview}>
                 <input value={state.venue} onChange={(event) => patch({ venue: event.target.value })} />

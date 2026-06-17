@@ -21,6 +21,7 @@ type PageProps = {
     brideName?: string;
     phone?: string;
     weddingDate?: string;
+    weddingTime?: string;
     mapUrl?: string;
     venue?: string;
     notes?: string;
@@ -59,6 +60,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
     brideName: params.brideName || "",
     phone: params.phone || "",
     weddingDate: params.weddingDate || "",
+    weddingTime: params.weddingTime || "07:00 مساءً",
     mapUrl: params.mapUrl || "",
     venue: params.venue || "",
     notes: params.notes || "",

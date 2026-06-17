@@ -219,6 +219,7 @@ export type OrderRequest = {
   brideName: string;
   phone: string;
   weddingDate: string;
+  weddingTime?: string;
   venue: string;
   mapUrl?: string;
   notes?: string;

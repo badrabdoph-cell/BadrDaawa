@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Camera,
   Check,
+  Clock,
   Eye,
   FileVideo,
   Heart,
@@ -32,6 +33,7 @@ type FormState = {
   brideName: string;
   phone: string;
   weddingDate: string;
+  weddingTime: string;
   mapUrl: string;
   venue: string;
   notes: string;
@@ -61,6 +63,7 @@ type OrderFormValues = Pick<
   | "brideName"
   | "phone"
   | "weddingDate"
+  | "weddingTime"
   | "mapUrl"
   | "venue"
   | "notes"
@@ -86,6 +89,7 @@ export type OrderInitialDraft = Pick<
   | "brideName"
   | "phone"
   | "weddingDate"
+  | "weddingTime"
   | "mapUrl"
   | "venue"
   | "notes"
@@ -520,6 +524,7 @@ export function OrderForm({
     brideName: initialDraft?.brideName || "",
     phone: initialDraft?.phone || "",
     weddingDate: initialDraft?.weddingDate || "",
+    weddingTime: initialDraft?.weddingTime || "07:00 مساءً",
     mapUrl: initialDraft?.mapUrl || "",
     venue: initialDraft?.venue || "",
     notes: initialDraft?.notes || "",
@@ -591,6 +596,7 @@ export function OrderForm({
     params.set("groomName", form.groomName);
     params.set("brideName", form.brideName);
     params.set("weddingDate", form.weddingDate);
+    params.set("weddingTime", form.weddingTime);
     params.set("venue", form.venue);
     if (form.mapUrl.trim()) params.set("mapUrl", form.mapUrl.trim());
     params.set("photographerEnabled", form.photographerEnabled ? "1" : "0");
@@ -870,6 +876,7 @@ export function OrderForm({
         brideName: typeof draft.brideName === "string" ? draft.brideName : current.brideName,
         phone: typeof draft.phone === "string" ? draft.phone : current.phone,
         weddingDate: typeof draft.weddingDate === "string" ? draft.weddingDate : current.weddingDate,
+        weddingTime: typeof draft.weddingTime === "string" ? draft.weddingTime : current.weddingTime,
         mapUrl: typeof draft.mapUrl === "string" ? draft.mapUrl : current.mapUrl,
         venue: typeof draft.venue === "string" ? draft.venue : current.venue,
         notes: typeof draft.notes === "string" ? draft.notes : current.notes,
@@ -1215,6 +1222,7 @@ export function OrderForm({
       brideName: String(formData.get("brideName") || "").trim(),
       phone: String(formData.get("phone") || "").trim(),
       weddingDate: String(formData.get("weddingDate") || "").trim(),
+      weddingTime: String(formData.get("weddingTime") || "07:00 مساءً").trim(),
       venue: String(formData.get("venue") || "").trim(),
       mapUrl: String(formData.get("mapUrl") || "").trim(),
       notes: "",
@@ -1474,6 +1482,7 @@ export function OrderForm({
       brideName: String(formData.get("brideName") || "").trim(),
       phone: String(formData.get("phone") || "").trim(),
       weddingDate: normalizeWeddingDate(rawWeddingDate) || rawWeddingDate,
+      weddingTime: String(formData.get("weddingTime") || "07:00 مساءً").trim(),
       mapUrl: String(formData.get("mapUrl") || "").trim(),
       venue: String(formData.get("venue") || "").trim(),
       notes: "",
@@ -1798,6 +1807,33 @@ export function OrderForm({
                 <input id="weddingDate" name="weddingDate" type="date" value={normalizedDate || form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
                 {readableDate ? <small className="field-preview" id="weddingDate-hint">هيظهر في الدعوة: {readableDate}</small> : null}
                 {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
+              </div>
+
+              <div className={`field`}>
+                <label htmlFor="weddingTime">
+                  <Clock size={16} />
+                  وقت المناسبة
+                </label>
+                <select
+                  id="weddingTime"
+                  name="weddingTime"
+                  value={form.weddingTime}
+                  onChange={(event) => updateField("weddingTime", event.target.value)}
+                >
+                  <option value="" disabled>اختر وقت الحفل</option>
+                  <option value="12:00 مساءً">12:00 مساءً</option>
+                  <option value="01:00 مساءً">01:00 مساءً</option>
+                  <option value="02:00 مساءً">02:00 مساءً</option>
+                  <option value="03:00 مساءً">03:00 مساءً</option>
+                  <option value="04:00 مساءً">04:00 مساءً</option>
+                  <option value="05:00 مساءً">05:00 مساءً</option>
+                  <option value="06:00 مساءً">06:00 مساءً</option>
+                  <option value="07:00 مساءً">07:00 مساءً</option>
+                  <option value="08:00 مساءً">08:00 مساءً</option>
+                  <option value="09:00 مساءً">09:00 مساءً</option>
+                  <option value="10:00 مساءً">10:00 مساءً</option>
+                  <option value="11:00 مساءً">11:00 مساءً</option>
+                </select>
               </div>
 
               <div className="field">

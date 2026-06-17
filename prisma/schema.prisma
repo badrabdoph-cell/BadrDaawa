@@ -159,6 +159,7 @@ model OrderRequest {
   brideName   String
   phone       String
   weddingDate DateTime
+  weddingTime String  @default("07:00 مساءً")
   venue       String
   mapUrl      String?
   notes       String?
@@ -236,14 +237,12 @@ model BackupJob {
 
 model SafeBackup {
   id             String    @id @default(cuid())
-  backupFileName String
+  backupFileName String    @unique
   label          String?
   notes          String?
-  markedAt       DateTime
+  markedAt       DateTime  @default(now())
   markedBy       String?
-  createdAt      DateTime  @default(now())
 
-  @@index([backupFileName])
   @@index([markedAt])
 }
 

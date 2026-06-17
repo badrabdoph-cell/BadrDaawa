@@ -271,6 +271,7 @@ export async function POST(request: NextRequest) {
           brideName: parsed.data.brideName,
           phone: parsed.data.phone || "",
           weddingDate: new Date(parsed.data.weddingDate),
+          weddingTime: parsed.data.weddingTime || "07:00 مساءً",
           venue: parsed.data.venue || "",
           mapUrl,
           notes,

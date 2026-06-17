@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Copy, Disc3, ExternalLink, FileVideo, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Camera, CheckCircle2, Clock, Copy, Disc3, ExternalLink, FileVideo, GripVertical, Heart, ImagePlus, Link2, Loader2, MapPin, Music2, Pencil, Plus, RotateCcw, Save, Send, Sparkles, Trash2, UploadCloud, UserRound, X } from "lucide-react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import {
@@ -1050,6 +1050,28 @@ export function AdminNewInvitationWizard({
           </div>
 
           <div className="field">
+            <label htmlFor="adminWeddingTime">
+              <Clock size={16} />
+              وقت المناسبة
+            </label>
+            <select id="adminWeddingTime" value={draft.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })}>
+              <option value="" disabled>اختر وقت الحفل</option>
+              <option value="12:00 مساءً">12:00 مساءً</option>
+              <option value="01:00 مساءً">01:00 مساءً</option>
+              <option value="02:00 مساءً">02:00 مساءً</option>
+              <option value="03:00 مساءً">03:00 مساءً</option>
+              <option value="04:00 مساءً">04:00 مساءً</option>
+              <option value="05:00 مساءً">05:00 مساءً</option>
+              <option value="06:00 مساءً">06:00 مساءً</option>
+              <option value="07:00 مساءً">07:00 مساءً</option>
+              <option value="08:00 مساءً">08:00 مساءً</option>
+              <option value="09:00 مساءً">09:00 مساءً</option>
+              <option value="10:00 مساءً">10:00 مساءً</option>
+              <option value="11:00 مساءً">11:00 مساءً</option>
+            </select>
+          </div>
+
+          <div className="field">
             <label htmlFor="adminVenue">مكان الحفل</label>
             <input id="adminVenue" placeholder="مثال: قاعة رويال - البحيرة" value={draft.venue} onChange={(event) => patch({ venue: event.target.value })} required />
           </div>
@@ -1187,7 +1209,23 @@ export function AdminNewInvitationWizard({
     return (
       <div className="new-invite-field-grid">
         <label className="field"><span>التاريخ</span><input type="date" value={draft.weddingDate} onChange={(event) => patch({ weddingDate: event.target.value })} /></label>
-        <label className="field"><span>الوقت</span><input value={draft.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })} placeholder="07:00 مساءً" /></label>
+        <label className="field"><span>الوقت</span>
+          <select value={draft.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })}>
+            <option value="" disabled>اختر وقت الحفل</option>
+            <option value="12:00 مساءً">12:00 مساءً</option>
+            <option value="01:00 مساءً">01:00 مساءً</option>
+            <option value="02:00 مساءً">02:00 مساءً</option>
+            <option value="03:00 مساءً">03:00 مساءً</option>
+            <option value="04:00 مساءً">04:00 مساءً</option>
+            <option value="05:00 مساءً">05:00 مساءً</option>
+            <option value="06:00 مساءً">06:00 مساءً</option>
+            <option value="07:00 مساءً">07:00 مساءً</option>
+            <option value="08:00 مساءً">08:00 مساءً</option>
+            <option value="09:00 مساءً">09:00 مساءً</option>
+            <option value="10:00 مساءً">10:00 مساءً</option>
+            <option value="11:00 مساءً">11:00 مساءً</option>
+          </select>
+        </label>
         <label className="field"><span>القاعة</span><input value={draft.venue} onChange={(event) => patch({ venue: event.target.value })} /></label>
         <label className="field"><span>المدينة</span><input value={draft.city} onChange={(event) => patch({ city: event.target.value })} /></label>
         <label className="field full">

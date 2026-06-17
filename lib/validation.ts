@@ -14,6 +14,7 @@ export const orderRequestSchema = z.object({
   brideName: z.string().trim().min(2),
   phone: z.string().trim().optional().default(""),
   weddingDate: z.string().trim().min(8).refine(validDateString, "اكتب تاريخ صحيح"),
+  weddingTime: z.string().trim().optional().default("07:00 مساءً"),
   venue: z.string().trim().optional().default(""),
   mapUrl: z.string().trim().max(500).optional().default(""),
   notes: z.string().trim().max(1000).optional(),

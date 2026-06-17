@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Disc3, Eye, FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { Clock, Copy, Disc3, Eye, FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
 import { uploadAdminHeroVideo } from "@/components/AdminInvitationTools";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
@@ -451,8 +451,22 @@ export function ClientInvitationEditor({
             <input ref={fieldRefs.weddingDate} type="date" value={weddingDate} onChange={(event) => { setWeddingDate(event.target.value); markDirty(); }} />
           </label>
           <label className="field">
-            <span>وقت الفرح</span>
-            <input value={weddingTime} onChange={(event) => { setWeddingTime(event.target.value); markDirty(); }} />
+            <span><Clock size={15} /> وقت الفرح</span>
+            <select value={weddingTime} onChange={(event) => { setWeddingTime(event.target.value); markDirty(); }}>
+              <option value="" disabled>اختر وقت الحفل</option>
+              <option value="12:00 مساءً">12:00 مساءً</option>
+              <option value="01:00 مساءً">01:00 مساءً</option>
+              <option value="02:00 مساءً">02:00 مساءً</option>
+              <option value="03:00 مساءً">03:00 مساءً</option>
+              <option value="04:00 مساءً">04:00 مساءً</option>
+              <option value="05:00 مساءً">05:00 مساءً</option>
+              <option value="06:00 مساءً">06:00 مساءً</option>
+              <option value="07:00 مساءً">07:00 مساءً</option>
+              <option value="08:00 مساءً">08:00 مساءً</option>
+              <option value="09:00 مساءً">09:00 مساءً</option>
+              <option value="10:00 مساءً">10:00 مساءً</option>
+              <option value="11:00 مساءً">11:00 مساءً</option>
+            </select>
           </label>
           <label className="field">
             <span>العنوان</span>

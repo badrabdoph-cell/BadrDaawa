@@ -28,6 +28,7 @@ type AdminOrderPayload = {
   brideName?: string;
   phone?: string;
   weddingDate?: string;
+  weddingTime?: string;
   venue?: string;
   mapUrl?: string;
   notes?: string;
@@ -184,6 +185,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
   const phone = cleanText(payload.phone, existing?.phone || "", 60);
   const weddingDateText = cleanText(payload.weddingDate, existing?.weddingDate || "", 60);
   const weddingDate = cleanDate(weddingDateText);
+  const weddingTime = cleanText(payload.weddingTime, existing?.weddingTime || "07:00 مساءً", 80);
   const venue = cleanText(payload.venue, existing?.venue || "يحدد لاحقًا", 240);
   const mapUrl = cleanOptionalUrl(payload.mapUrl ?? existing?.mapUrl ?? "");
   const notes = cleanText(payload.notes, existing?.notes || "", 1500);
@@ -199,6 +201,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
     phone,
     weddingDateText,
     weddingDate,
+    weddingTime,
     venue,
     mapUrl,
     notes,
@@ -233,7 +236,7 @@ function validateDraft(draft: ReturnType<typeof getOrderDraft>, requirePublishRe
       groomName: draft.groomName,
       brideName: draft.brideName,
       weddingDate: draft.weddingDateText,
-      weddingTime: "07:00 مساءً",
+      weddingTime: draft.weddingTime,
       venue: draft.venue,
       mapUrl: draft.mapUrl,
       templateSlug: draft.templateSlug,
@@ -268,6 +271,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     brideName: order.brideName,
     phone: order.phone,
     weddingDate: dateToString(order.weddingDate),
+    weddingTime: order.weddingTime,
     venue: order.venue,
     mapUrl: order.mapUrl || undefined,
     notes: order.notes || undefined,
@@ -416,7 +420,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     groomName: draft.groomName,
     brideName: draft.brideName,
     weddingDate,
-    weddingTime: "07:00 مساءً",
+    weddingTime: draft.weddingTime || "07:00 مساءً",
     venue: draft.venue,
     city: "",
     mapUrl: draft.mapUrl,
@@ -445,6 +449,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
       brideName: draft.brideName,
       phone: draft.phone,
       weddingDate,
+      weddingTime: draft.weddingTime || "07:00 مساءً",
       venue: draft.venue,
       mapUrl: draft.mapUrl,
       notes: draft.notes,
@@ -505,6 +510,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         brideName: draft.brideName,
         phone: draft.phone,
         weddingDate: draft.weddingDate || new Date(),
+        weddingTime: draft.weddingTime || "07:00 مساءً",
         venue: draft.venue,
         mapUrl: draft.mapUrl,
         notes: draft.notes,
@@ -539,6 +545,7 @@ function payloadFromForm(formData: FormData): AdminOrderPayload {
     brideName: String(formData.get("brideName") || ""),
     phone: String(formData.get("phone") || ""),
     weddingDate: String(formData.get("weddingDate") || ""),
+    weddingTime: String(formData.get("weddingTime") || ""),
     venue: String(formData.get("venue") || ""),
     mapUrl: String(formData.get("mapUrl") || ""),
     notes: String(formData.get("notes") || ""),
