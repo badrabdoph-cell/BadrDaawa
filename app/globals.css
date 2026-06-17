@@ -18567,6 +18567,45 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   color: #7b5b23;
 }
 
+.design-invite-btn {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(180, 139, 57, 0.25);
+  background: rgba(255, 250, 241, 0.6);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  text-decoration: none;
+  animation: design-btn-pulse 2.4s ease-in-out infinite;
+}
+
+.design-invite-btn span {
+  background: linear-gradient(135deg, #b8822a, #e8b94a, #f5d77b, #e8b94a, #b8822a);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gold-text-glow 2.8s ease-in-out infinite;
+}
+
+.design-invite-btn:hover {
+  border-color: rgba(180, 139, 57, 0.6);
+  box-shadow: 0 0 20px rgba(243, 207, 115, 0.25);
+  transform: scale(1.04);
+}
+
+@keyframes design-btn-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(243, 207, 115, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(243, 207, 115, 0.35);
+  }
+}
+
 .noir-invite {
   position: relative;
   min-height: 100vh;

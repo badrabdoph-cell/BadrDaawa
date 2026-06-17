@@ -489,6 +489,9 @@ export function InvitationExperience({
 
         <section className="invite-card qr-share-card">
           <QrCodeBlock value={invitationUrl} locale={invitation.language} />
+          <a href="/" className="design-invite-btn" aria-label="صمم دعوت فرحك">
+            <span>صمم دعوت فرحك</span>
+          </a>
           <div className="social-row" aria-label={invitationT(invitation, "invitation.socialLinks")}>
             <SocialShareButtons invitationUrl={invitationUrl} />
           </div>
