@@ -196,5 +196,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
   }
 
+  if (jsonMode) {
+    return NextResponse.json({ ok: changed, action });
+  }
   return redirectBack(request, changed ? action : "missing");
 }
