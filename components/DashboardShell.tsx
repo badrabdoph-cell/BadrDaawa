@@ -71,6 +71,7 @@ const adminSections = [
     links: [
       { href: "/admin/sync", label: "مركز النسخ والمزامنة", icon: DatabaseBackup },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
+      { href: "/admin/backups/emergency", label: "طوارئ", icon: TriangleAlert },
       { href: "/admin/sync-history", label: "سجل GitHub", icon: History },
       { href: "/admin/sync-settings", label: "GitHub", icon: Github },
       { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
