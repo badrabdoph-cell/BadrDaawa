@@ -301,15 +301,34 @@ export function AdminInvitationTools({
               <input value={values.photographerInstagramUrl} onChange={(event) => onPatch({ photographerInstagramUrl: event.target.value })} />
             </label>
             <label className="builder-logo-upload">
-              {values.photographerLogo.loading ? <Loader2 size={17} /> : <UploadCloud size={17} />}
+              {values.photographerLogo.loading ? (
+                <Loader2 size={17} />
+              ) : values.photographerLogo.url ? (
+                <img src={values.photographerLogo.url} alt="شعار المصور" />
+              ) : (
+                <UploadCloud size={17} />
+              )}
               <span>{values.photographerLogo.name || "رفع شعار المصور أو صورته"}</span>
               <input ref={refs?.photographerLogoInputRef} type="file" accept={acceptedImageFormats} onChange={(event) => onPhotographerLogoFile(event.target.files?.[0])} />
             </label>
             {values.photographerLogo.url ? (
-              <label className="field wide">
-                <span>رابط شعار المصور</span>
-                <input value={values.photographerLogo.url} onChange={(event) => onPatch({ photographerLogo: { ...values.photographerLogo, url: event.target.value } })} />
-              </label>
+              <div className="wide builder-logo-actions">
+                <label className="field">
+                  <span>رابط شعار المصور</span>
+                  <input value={values.photographerLogo.url} onChange={(event) => onPatch({ photographerLogo: { ...values.photographerLogo, url: event.target.value } })} />
+                </label>
+                <button className="btn btn-soft" type="button" onClick={() => onPatch({ photographerLogo: { url: "", name: "", loading: false } })}>
+                  <Trash2 size={16} /> حذف الشعار
+                </button>
+              </div>
+            ) : null}
+            {values.photographerLogo.name && !values.photographerLogo.url && !values.photographerLogo.loading ? (
+              <div className="wide builder-logo-status">
+                <span>تم اختيار: {values.photographerLogo.name}</span>
+                <button className="btn btn-soft" type="button" onClick={() => onPatch({ photographerLogo: { url: "", name: "", loading: false } })}>
+                  إلغاء
+                </button>
+              </div>
             ) : null}
           </div>
         ) : null}
