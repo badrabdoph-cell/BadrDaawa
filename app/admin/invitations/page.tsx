@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { Archive, CalendarDays, Eye, Filter, Search, Settings2, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
+import { Archive, CalendarDays, Eye, Settings2, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { AdminInvitationRow } from "@/components/AdminInvitationRow";
+import { AdminInvitationFilters } from "@/components/AdminInvitationFilters";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -198,36 +199,7 @@ export default async function InvitationsPage({
       {params.status ? <div className={params.status === "missing" || params.status === "invalid" ? "notice danger" : "notice success"}>{statusMessages[params.status] || "تم تنفيذ الإجراء."}</div> : null}
       {params.noteStatus ? <div className={params.noteStatus === "invalid" || params.noteStatus === "missing" ? "notice danger" : "notice success"}>{noteMessages[params.noteStatus] || "تم تحديث الملاحظات الداخلية."}</div> : null}
       {params.favoriteStatus ? <div className={params.favoriteStatus === "invalid" || params.favoriteStatus === "missing" ? "notice danger" : "notice success"}>{favoriteMessages[params.favoriteStatus] || "تم تحديث المفضلة."}</div> : null}
-      <form className="admin-table-toolbar" action="/admin/invitations" method="get">
-        <label className="admin-search-field">
-          <Search size={17} />
-          <input name="q" placeholder="ابحث بالاسم، الكود، القالب أو المكان" defaultValue={params.q || ""} />
-        </label>
-        <label className="admin-select-field">
-          <Filter size={17} />
-          <select name="state" defaultValue={selectedState} aria-label="فلترة حالة الدعوة">
-            <option value="all">كل الحالات</option>
-            <option value="active">نشطة</option>
-            <option value="paused">متوقفة</option>
-            <option value="disabled">معطلة</option>
-            <option value="expired">منتهية</option>
-            <option value="archived">مؤرشفة</option>
-          </select>
-        </label>
-        <label className="admin-select-field">
-          <CalendarDays size={17} />
-          <select name="sort" defaultValue={selectedSort} aria-label="ترتيب الدعوات">
-            <option value="newest">الأحدث إنشاء</option>
-            <option value="weddingDate">حسب تاريخ الفرح</option>
-            <option value="views">الأكثر زيارة</option>
-            <option value="attendees">الأكثر حضوراً</option>
-          </select>
-        </label>
-        <button className="btn btn-soft" type="submit">تطبيق</button>
-        {query || selectedState !== "all" || selectedSort !== "newest" ? (
-          <Link className="btn btn-soft" href="/admin/invitations">مسح</Link>
-        ) : null}
-      </form>
+      <AdminInvitationFilters query={query} selectedState={selectedState} selectedSort={selectedSort} />
 
       {filteredInvitations.length ? (
         <div className="admin-invitation-table-wrapper">
