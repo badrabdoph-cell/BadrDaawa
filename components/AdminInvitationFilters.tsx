@@ -17,9 +17,14 @@ export function AdminInvitationFilters({ query, selectedState, selectedSort }: P
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const state = (formData.get("state") as string) || "all";
+    if (state === "rejected") {
+      router.push("/admin/orders?tab=rejected");
+      return;
+    }
     const params = new URLSearchParams();
     params.set("q", (formData.get("q") as string) || "");
-    params.set("state", (formData.get("state") as string) || "all");
+    params.set("state", state);
     params.set("sort", (formData.get("sort") as string) || "newest");
     router.push(`${pathname}?${params.toString()}`);
   }
@@ -41,6 +46,7 @@ export function AdminInvitationFilters({ query, selectedState, selectedSort }: P
           <option value="disabled">معطلة</option>
           <option value="expired">منتهية</option>
           <option value="archived">مؤرشفة</option>
+          <option value="rejected">مرفوضة</option>
         </select>
       </label>
       <label className="admin-select-field">

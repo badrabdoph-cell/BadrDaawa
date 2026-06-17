@@ -236,6 +236,7 @@ export function AdminOrderRequestsManager({
   favorites,
   siteUrl,
   templatePreviewInfo,
+  initialTab,
 }: {
   orders: OrderRequestWithLinks[];
   templates: BuilderTemplate[];
@@ -245,6 +246,7 @@ export function AdminOrderRequestsManager({
   favorites: AdminFavorite[];
   siteUrl: string;
   templatePreviewInfo?: TemplatePreviewEditableInfo;
+  initialTab?: "pending" | "published" | "rejected";
 }) {
   const [livePreviewInfo, setLivePreviewInfo] = useState(templatePreviewInfo);
 
@@ -319,7 +321,7 @@ export function AdminOrderRequestsManager({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
 
-  const [tab, setTab] = useState<"pending" | "published" | "rejected">("pending");
+  const [tab, setTab] = useState<"pending" | "published" | "rejected">(initialTab || "pending");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ type: "single" | "selected" | "all-pending" | "all-published" | "all-rejected"; ids?: string[] } | null>(null);
 

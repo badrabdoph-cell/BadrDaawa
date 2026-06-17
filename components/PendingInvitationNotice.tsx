@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { Clock3 } from "lucide-react";
+import { Clock3, Home, MessageCircle } from "lucide-react";
 
 type PendingInvitationNoticeProps = {
   groomName?: string;
   brideName?: string;
   code?: string;
   variant?: "public" | "admin";
+  whatsappUrl?: string;
 };
 
-export function PendingInvitationNotice({ groomName, brideName, code, variant = "public" }: PendingInvitationNoticeProps) {
+export function PendingInvitationNotice({ groomName, brideName, code, variant = "public", whatsappUrl }: PendingInvitationNoticeProps) {
   const coupleName = [groomName, brideName].filter(Boolean).join(" / ");
 
   return (
     <main className="pending-invitation-page" dir="rtl">
       <section className="pending-invitation-card">
-        <Clock3 size={34} aria-hidden="true" />
+        <Clock3 size={38} aria-hidden="true" />
         <span className="eyebrow">قيد المراجعة</span>
         <h1>الدعوة ما زالت قيد المراجعة</h1>
         <p>
@@ -24,9 +25,18 @@ export function PendingInvitationNotice({ groomName, brideName, code, variant = 
         </p>
         {coupleName ? <strong>{coupleName}</strong> : null}
         {code ? <small dir="ltr">{code}</small> : null}
-        <Link className="btn btn-gold" href="/">
-          العودة للرئيسية
-        </Link>
+        <div className="status-actions">
+          <Link className="btn btn-soft" href="/">
+            <Home size={16} />
+            العودة للرئيسية
+          </Link>
+          {whatsappUrl ? (
+            <a className="btn btn-gold" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle size={16} />
+              خدمة العملاء
+            </a>
+          ) : null}
+        </div>
       </section>
     </main>
   );

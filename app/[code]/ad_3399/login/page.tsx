@@ -1,13 +1,9 @@
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
 import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
+import { getSiteSettings } from "@/lib/site-settings";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "دخول لوحة العميل",
-};
-
-export default async function CustomerLoginPage({
+export default async function CustomerAdminLoginPage({
   params,
   searchParams,
 }: {
@@ -17,7 +13,8 @@ export default async function CustomerLoginPage({
   const [{ code }] = await Promise.all([params, searchParams]);
   const pendingOrder = await getPendingOrderByInvitationCode(code);
   if (pendingOrder) {
-    return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
+    const siteSettings = await getSiteSettings();
+    return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
   }
 
   redirect("/manage/invitation/invalid?reason=session");

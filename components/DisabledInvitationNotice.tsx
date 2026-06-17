@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldAlert } from "lucide-react";
+import { Home, MessageCircle, ShieldAlert } from "lucide-react";
 
 type DisabledInvitationNoticeProps = {
   reason?: string;
@@ -10,19 +10,21 @@ export function DisabledInvitationNotice({ reason, whatsappUrl }: DisabledInvita
   return (
     <main className="pending-invitation-page" dir="rtl">
       <section className="pending-invitation-card">
-        <ShieldAlert size={34} aria-hidden="true" />
+        <ShieldAlert size={38} aria-hidden="true" />
         <span className="eyebrow">معطلة</span>
         <h1>تم تعطيل الدعوة من الإدارة</h1>
-        {reason ? <p className="disabled-reason">{reason}</p> : null}
-        <div className="disabled-actions">
+        {reason ? <p className="rejection-reason">{reason}</p> : null}
+        <div className="status-actions">
+          <Link className="btn btn-soft" href="/">
+            <Home size={16} />
+            الصفحة الرئيسية
+          </Link>
           {whatsappUrl ? (
             <a className="btn btn-gold" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle size={16} />
               خدمة العملاء
             </a>
           ) : null}
-          <Link className="btn btn-soft" href="/">
-            الصفحة الرئيسية
-          </Link>
         </div>
       </section>
     </main>

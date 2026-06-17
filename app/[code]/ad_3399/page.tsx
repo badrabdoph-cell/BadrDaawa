@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import { CheckCircle2, Download, MessageCircle, ShieldAlert, UserCheck, UsersRound, XCircle } from "lucide-react";
+import { CheckCircle2, Download, Home, MessageCircle, ShieldAlert, UserCheck, UsersRound, XCircle } from "lucide-react";
 import Link from "next/link";
 import { AdminMessagesBanner } from "@/components/AdminMessagesBanner";
 import { notFound, redirect } from "next/navigation";
@@ -21,6 +21,7 @@ import { getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-dat
 import { getMessageTemplates } from "@/lib/message-templates";
 import { getMusicLibrary } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
@@ -49,25 +50,31 @@ export default async function CustomerAdminPage({
   if (!invitation) {
     const rejectedOrder = await getRejectedOrderByInvitationCode(code);
     if (rejectedOrder) {
+      const siteSettings = await getSiteSettings();
       return (
-        <main className="page-shell">
-          <section className="section compact">
-            <div className="container">
-              <article className="panel invalid-manage-link" style={{ textAlign: "center" }}>
-                <XCircle size={44} style={{ margin: "0 auto 12px", color: "#dc2626" }} />
-                <span className="eyebrow">تم الرفض</span>
-                <h1>تم رفض طلب الدعوة</h1>
-                <p>للأسف، تم رفض طلب الدعوة من الإدارة. للاستفسار، تواصل مع فريق الدعم.</p>
-                {rejectedOrder.rejectionReason ? (
-                  <div className="rejection-reason-box" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: 12, padding: "12px 18px", margin: "8px auto", maxWidth: 420, fontSize: "0.92rem", textAlign: "center" }}>
-                    <strong>سبب الرفض:</strong>
-                    <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.8)" }}>{rejectedOrder.rejectionReason}</p>
-                  </div>
-                ) : null}
-                <Link className="btn btn-gold" href="/" style={{ marginTop: 16 }}>
-                  العودة للموقع
-                </Link>
-              </article>
+        <main className="pending-invitation-page" dir="rtl">
+          <section className="pending-invitation-card">
+            <XCircle size={38} aria-hidden="true" />
+            <span className="eyebrow">تم الرفض</span>
+            <h1>تم رفض طلب الدعوة</h1>
+            <p>للأسف، تم رفض طلب الدعوة من الإدارة. للاستفسار، تواصل مع فريق الدعم.</p>
+            {rejectedOrder.rejectionReason ? (
+              <div className="rejection-reason">
+                <strong>سبب الرفض</strong>
+                <p>{rejectedOrder.rejectionReason}</p>
+              </div>
+            ) : null}
+            <div className="status-actions">
+              <Link className="btn btn-soft" href="/">
+                <Home size={16} />
+                العودة للرئيسية
+              </Link>
+              {siteSettings.whatsappUrl ? (
+                <a className="btn btn-gold" href={siteSettings.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle size={16} />
+                  خدمة العملاء
+                </a>
+              ) : null}
             </div>
           </section>
         </main>
@@ -75,7 +82,8 @@ export default async function CustomerAdminPage({
     }
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
-      return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
+      const siteSettings = await getSiteSettings();
+      return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
     }
     notFound();
   }

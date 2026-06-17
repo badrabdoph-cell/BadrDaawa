@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ShieldAlert, XCircle } from "lucide-react";
+import { Home, MessageCircle, ShieldAlert, XCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "رابط إدارة غير صالح",
@@ -20,29 +20,34 @@ function errorMessage(reason?: string) {
 export default async function InvalidInvitationManageLinkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reason?: string; rejectionReason?: string }>;
+  searchParams: Promise<{ reason?: string; rejectionReason?: string; whatsappUrl?: string }>;
 }) {
   const params = await searchParams;
   const isRejected = params.reason === "rejected";
   return (
-    <main className="page-shell">
-      <section className="section compact">
-        <div className="container">
-          <article className="panel invalid-manage-link">
-            {isRejected ? <XCircle size={34} style={{ color: "#dc2626" }} /> : <ShieldAlert size={34} />}
-            <span className="eyebrow">{isRejected ? "تم الرفض" : "Secure Link"}</span>
-            <h1>{isRejected ? "تم رفض طلب الدعوة" : params.reason === "pending" ? "الدعوة قيد المراجعة" : "رابط إدارة الدعوة غير متاح"}</h1>
-            <p>{errorMessage(params.reason)}</p>
-            {isRejected && params.rejectionReason ? (
-              <div className="rejection-reason-box" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: 12, padding: "12px 18px", marginTop: 8, fontSize: "0.92rem" }}>
-                <strong>سبب الرفض:</strong>
-                <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.8)" }}>{params.rejectionReason}</p>
-              </div>
-            ) : null}
-            <Link className="btn btn-gold" href="/">
-              العودة للموقع
-            </Link>
-          </article>
+    <main className="pending-invitation-page" dir="rtl">
+      <section className="pending-invitation-card">
+        {isRejected ? <XCircle size={38} aria-hidden="true" /> : <ShieldAlert size={38} aria-hidden="true" />}
+        <span className="eyebrow">{isRejected ? "تم الرفض" : "Secure Link"}</span>
+        <h1>{isRejected ? "تم رفض طلب الدعوة" : params.reason === "pending" ? "الدعوة قيد المراجعة" : "رابط إدارة الدعوة غير متاح"}</h1>
+        <p>{errorMessage(params.reason)}</p>
+        {isRejected && params.rejectionReason ? (
+          <div className="rejection-reason">
+            <strong>سبب الرفض</strong>
+            <p>{params.rejectionReason}</p>
+          </div>
+        ) : null}
+        <div className="status-actions">
+          <Link className="btn btn-soft" href="/">
+            <Home size={16} />
+            العودة للرئيسية
+          </Link>
+          {params.whatsappUrl ? (
+            <a className="btn btn-gold" href={params.whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle size={16} />
+              خدمة العملاء
+            </a>
+          ) : null}
         </div>
       </section>
     </main>
