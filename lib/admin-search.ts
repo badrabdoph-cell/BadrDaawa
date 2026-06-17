@@ -64,6 +64,7 @@ function limitResults<T>(items: T[], limit: number) {
 }
 
 function invitationStatusLabel(invitation: Invitation) {
+  if (invitation.disabledAt) return "🔴 معطلة";
   if (invitation.status === "archived") return "مؤرشفة";
   if (invitation.status === "paused" || !invitation.isActive) return "متوقفة";
   return "نشطة";

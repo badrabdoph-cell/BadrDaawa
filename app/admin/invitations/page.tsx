@@ -266,6 +266,8 @@ export default async function InvitationsPage({
                     invitationUrl={invitationUrl}
                     adminUrl={adminUrl}
                     isDisabled={invitationState === "disabled"}
+                    disabledReason={invitation.disabledReason}
+                    disabledBy={invitation.disabledBy}
                   />
                 );
               })}

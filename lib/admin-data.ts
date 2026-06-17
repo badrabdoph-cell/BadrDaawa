@@ -181,7 +181,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
   const gallery = toStringArray(row.gallery);
   const heroPhoto = normalizeInternalAssetUrl(row.heroPhoto);
   const rawTexts = row.texts && typeof row.texts === "object" ? (row.texts as Record<string, unknown>) : {};
-  const status = String(row.status || (row.isActive ? "ACTIVE" : "PAUSED")).toLowerCase() as Invitation["status"];
+  const status = String(row.status || (row.isActive && !row.disabledAt ? "ACTIVE" : "PAUSED")).toLowerCase() as Invitation["status"];
   return {
     id: row.id,
     code: row.code,
@@ -203,7 +203,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     musicEnabled: row.musicEnabled === true || (row.musicEnabled == null && Boolean(row.musicUrl)),
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer),
-    isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
+    isActive: row.status ? (row.status === "ACTIVE" && !row.disabledAt) : Boolean(row.isActive && !row.disabledAt),
     disabledAt: row.disabledAt instanceof Date ? row.disabledAt.toISOString() : row.disabledAt || undefined,
     disabledReason: row.disabledReason || undefined,
     disabledBy: row.disabledBy || undefined,

@@ -13,7 +13,7 @@ type RouteContext = {
 export async function GET(_request: Request, context: RouteContext) {
   const { code } = await context.params;
   const invitation = await getInvitationByCode(code);
-  if (!invitation || !invitation.isActive) {
+  if (!invitation || !invitation.isActive || invitation.disabledAt) {
     notFound();
   }
 

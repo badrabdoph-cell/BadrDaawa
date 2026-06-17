@@ -6641,6 +6641,18 @@ img {
   line-height: 1.35;
 }
 
+.admin-invitation-table .cell-name .disabled-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: #f87171;
+  font-weight: 500;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
 .admin-invitation-table .cell-date {
   white-space: nowrap;
   color: rgba(255, 247, 232, 0.75);
@@ -9172,6 +9184,111 @@ img {
   color: rgba(245, 234, 214, 0.4);
   font-size: 0.78rem;
   font-weight: 900;
+}
+
+/* ── Emergency / Safe Backups ── */
+.emergency-head .admin-health-pill.danger {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff4444;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+.emergency-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.emergency-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #ff4444;
+}
+.emergency-warning strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ff4444;
+}
+.emergency-warning p {
+  margin: 0;
+  color: rgba(245, 234, 214, 0.7);
+  line-height: 1.7;
+  font-size: 0.85rem;
+}
+
+.emergency-mark-panel {
+  margin-bottom: 20px;
+}
+.emergency-mark-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 14px;
+}
+.emergency-mark-field {
+  flex: 1;
+  min-width: 220px;
+}
+.emergency-mark-field label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(245, 234, 214, 0.7);
+  margin-bottom: 4px;
+}
+.emergency-mark-field select,
+.emergency-mark-field input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 234, 214, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(245, 234, 214, 0.9);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.emergency-mark-field select:focus,
+.emergency-mark-field input:focus {
+  border-color: rgba(168, 130, 72, 0.5);
+}
+
+.emergency-table th:first-child,
+.emergency-table td:first-child {
+  padding-left: 16px;
+  padding-right: 0;
+}
+
+.safe-backup-label {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.emergency-mark-message {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.emergency-mark-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+.emergency-mark-message.error {
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff4444;
+  border: 1px solid rgba(255, 68, 68, 0.2);
 }
 
 .recent-edit-warning {

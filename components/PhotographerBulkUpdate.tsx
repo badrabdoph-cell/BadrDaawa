@@ -10,6 +10,7 @@ type InvitationRow = {
   status: string;
   logoUrl: string;
   hasCustomLogo: boolean;
+  disabledAt?: Date | string | null;
 };
 
 export function PhotographerBulkUpdate({ invitations }: { invitations: InvitationRow[] }) {
@@ -82,8 +83,8 @@ export function PhotographerBulkUpdate({ invitations }: { invitations: Invitatio
                   <strong>{inv.groomName} و {inv.brideName}</strong>
                   <small>كود: {inv.code}</small>
                 </span>
-                <em className={`status ${inv.status === "ACTIVE" ? "success" : "neutral"}`} style={{ flex: "0 0 90px", textAlign: "center" }}>
-                  {inv.status === "ACTIVE" ? "منشورة" : "مسودة"}
+                <em className={`status ${inv.disabledAt ? "danger" : inv.status === "ACTIVE" ? "success" : "neutral"}`} style={{ flex: "0 0 90px", textAlign: "center" }}>
+                  {inv.disabledAt ? "معطلة" : inv.status === "ACTIVE" ? "منشورة" : "مسودة"}
                 </em>
                 {inv.logoUrl ? (
                   <img src={inv.logoUrl} alt="شعار" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.08)", flex: "0 0 36px" }} />

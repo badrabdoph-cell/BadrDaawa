@@ -49,6 +49,7 @@ export default async function AdminPhotographerLogoPage({
     logoUrl: string;
     logoSource: string;
     hasCustomLogo: boolean;
+    disabledAt: Date | null;
   }> = [];
 
   try {
@@ -61,6 +62,7 @@ export default async function AdminPhotographerLogoPage({
           brideName: true,
           photographer: true,
           status: true,
+          disabledAt: true,
         },
         orderBy: { createdAt: "desc" },
       });
@@ -83,6 +85,7 @@ export default async function AdminPhotographerLogoPage({
             logoUrl,
             logoSource,
             hasCustomLogo: logoSource === "custom" && Boolean(logoUrl),
+            disabledAt: inv.disabledAt,
           };
         });
     }

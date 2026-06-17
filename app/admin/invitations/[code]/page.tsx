@@ -312,12 +312,14 @@ export default async function AdminInvitationDetailsPage({
               returnTo={returnTo}
               active={isAdminFavorite(favorites, "invitation", invitation.code)}
             />
-            <form action={`/api/admin/invitations/${invitation.code}`} method="post">
-              <button className="btn btn-soft" name="action" value={invitation.isActive ? "pause" : "resume"} type="submit">
-                {invitation.isActive ? <Pause size={17} /> : <Play size={17} />}
-                {invitation.isActive ? "إيقاف الدعوة" : "تشغيل الدعوة"}
-              </button>
-            </form>
+            {!invitation.disabledAt ? (
+              <form action={`/api/admin/invitations/${invitation.code}`} method="post">
+                <button className="btn btn-soft" name="action" value={invitation.isActive ? "pause" : "resume"} type="submit">
+                  {invitation.isActive ? <Pause size={17} /> : <Play size={17} />}
+                  {invitation.isActive ? "إيقاف الدعوة" : "تشغيل الدعوة"}
+                </button>
+              </form>
+            ) : null}
             {invitationState !== "archived" ? (
               <form action={`/api/admin/invitations/${invitation.code}`} method="post">
                 <button className="btn btn-soft" name="action" value="archive" type="submit">

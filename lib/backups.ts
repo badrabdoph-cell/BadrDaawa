@@ -1368,3 +1368,65 @@ export async function getBackupDiagnostics(): Promise<BackupDiagnostics> {
     backupsCount: backups.length,
   };
 }
+
+export type SafeBackupEntry = {
+  id: string;
+  backupFileName: string;
+  label: string | null;
+  notes: string | null;
+  markedAt: string;
+  markedBy: string | null;
+};
+
+export async function markBackupAsSafe(
+  backupFileName: string,
+  options?: { label?: string; notes?: string; markedBy?: string }
+): Promise<SafeBackupEntry> {
+  if (!prisma) throw new Error("Database not configured");
+  const record = await prisma.safeBackup.create({
+    data: {
+      backupFileName,
+      label: options?.label ?? null,
+      notes: options?.notes ?? null,
+      markedBy: options?.markedBy ?? null,
+    },
+  });
+  return {
+    id: record.id,
+    backupFileName: record.backupFileName,
+    label: record.label,
+    notes: record.notes,
+    markedAt: record.markedAt.toISOString(),
+    markedBy: record.markedBy,
+  };
+}
+
+export async function unmarkBackupAsSafe(backupFileName: string): Promise<void> {
+  if (!prisma) throw new Error("Database not configured");
+  await prisma.safeBackup.deleteMany({
+    where: { backupFileName },
+  });
+}
+
+export async function getSafeBackups(): Promise<SafeBackupEntry[]> {
+  if (!prisma) throw new Error("Database not configured");
+  const records = await prisma.safeBackup.findMany({
+    orderBy: { markedAt: "desc" },
+  });
+  return records.map((r) => ({
+    id: r.id,
+    backupFileName: r.backupFileName,
+    label: r.label,
+    notes: r.notes,
+    markedAt: r.markedAt.toISOString(),
+    markedBy: r.markedBy,
+  }));
+}
+
+export async function isBackupSafe(backupFileName: string): Promise<boolean> {
+  if (!prisma) throw new Error("Database not configured");
+  const count = await prisma.safeBackup.count({
+    where: { backupFileName },
+  });
+  return count > 0;
+}

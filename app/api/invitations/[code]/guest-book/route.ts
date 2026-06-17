@@ -53,7 +53,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const invitation = await getInvitationByCode(code);
-    if (!invitation || !invitation.isActive) {
+    if (!invitation || !invitation.isActive || invitation.disabledAt) {
       return NextResponse.json({ error: "الدعوة غير متاحة حاليًا" }, { status: 404 });
     }
 

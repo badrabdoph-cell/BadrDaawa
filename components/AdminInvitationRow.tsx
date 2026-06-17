@@ -23,6 +23,8 @@ type Props = {
   invitationUrl: string;
   adminUrl: string;
   isDisabled: boolean;
+  disabledReason?: string;
+  disabledBy?: string;
 };
 
 function CopyButton({ value, label, onDone }: { value: string; label: string; onDone: () => void }) {
@@ -50,7 +52,7 @@ export function AdminInvitationRow({
   code, groomName, brideName, weddingDate, views,
   stateEmoji, stateLabel, stateClass,
   publicPath, adminPath, invitationUrl, adminUrl,
-  isDisabled,
+  isDisabled, disabledReason, disabledBy,
 }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -157,6 +159,11 @@ export function AdminInvitationRow({
           <div className="admin-name-content">
             <span className="inv-code">{code}</span>
             <strong>{groomName} و {brideName}</strong>
+            {isDisabled && (disabledReason || disabledBy) ? (
+              <small className="disabled-hint" title={disabledBy ? `بواسطة: ${disabledBy}` : undefined}>
+                {disabledReason ? `🔴 ${disabledReason}` : disabledBy ? `معطلة بواسطة ${disabledBy}` : null}
+              </small>
+            ) : null}
           </div>
         </td>
         <td className="cell-date" data-label="تاريخ الحفل">{weddingDate}</td>

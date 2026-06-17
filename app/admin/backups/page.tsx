@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   TriangleAlert,
 } from "lucide-react";
-import { getBackupRuntimeStatus, getScheduledBackupInfo, listBackupSnapshots } from "@/lib/backups";
+import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBackupSnapshots } from "@/lib/backups";
+import { MarkSafeButton } from "./MarkSafeButton";
 import { VerifyBackupButton } from "./VerifyBackupButton";
 import { RestoreBackupButton } from "./RestoreBackupButton";
 import AutoBackupDashboard from "./AutoBackupDashboard";
@@ -63,6 +64,8 @@ export default async function BackupsPage({
     getBackupRuntimeStatus(),
     getScheduledBackupInfo(),
   ]);
+  const safeBackups = await getSafeBackups();
+  const safeFileNames = new Map(safeBackups.map((s) => [s.backupFileName, s]));
   const latest = backups[0];
   const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
   const overall = healthLevel(
@@ -419,6 +422,11 @@ export default async function BackupsPage({
                     <td>{formatBackupDate(backup.createdAt)}</td>
                     <td>
                       <div className="button-row">
+                        <MarkSafeButton
+                          fileName={backup.fileName}
+                          isSafe={safeFileNames.has(backup.fileName)}
+                          label={safeFileNames.get(backup.fileName)?.label ?? null}
+                        />
                         <a
                           className="btn btn-soft btn-icon"
                           href={`/api/admin/backups/${backup.fileName}`}

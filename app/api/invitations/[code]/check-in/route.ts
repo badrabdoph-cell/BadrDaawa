@@ -29,7 +29,7 @@ export async function POST(request: Request, context: RouteContext) {
   if (!limit.allowed) return rateLimitResponse(limit.resetAt);
 
   const invitation = await getInvitationByCode(code);
-  if (!invitation || !invitation.isActive || invitation.checkInEnabled === false) {
+  if (!invitation || !invitation.isActive || invitation.disabledAt || invitation.checkInEnabled === false) {
     return NextResponse.json({ error: "تسجيل الوصول غير متاح لهذه الدعوة." }, { status: 404 });
   }
 

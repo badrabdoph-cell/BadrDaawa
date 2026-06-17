@@ -63,7 +63,7 @@ export function getInvitationSeoMetadata(invitation: Invitation): Metadata {
     title,
     description,
     alternates: { canonical: url },
-    robots: invitation.isActive ? { index: true, follow: true } : { index: false, follow: false },
+    robots: invitation.isActive && !invitation.disabledAt ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: {
       title,
       description,

@@ -107,7 +107,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <Archive size={20} />
             <span>عدد الدعوات</span>
             <strong>{formatAdminNumber(invitations.length)}</strong>
-            <small>كل الدعوات المنشورة والمسجلة</small>
+            <small>{formatAdminNumber(invitations.filter((i) => i.disabledAt).length)} معطلة · {formatAdminNumber(invitations.filter((i) => !i.disabledAt && i.isActive).length)} نشطة</small>
           </Link>
           <Link className="admin-metric-card" href="/admin/customers">
             <UsersRound size={20} />
@@ -224,7 +224,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                     <strong>{invitation.groomName} و {invitation.brideName}</strong>
                     <small>{formatOrderDate(invitation.weddingDate)}</small>
                   </span>
-                  <em className={invitation.isActive ? "status success" : "status danger"}>{invitation.isActive ? "نشطة" : "متوقفة"}</em>
+                  <em className={invitation.disabledAt ? "status danger" : invitation.isActive ? "status success" : "status danger"}>{invitation.disabledAt ? "🔴 معطلة" : invitation.isActive ? "نشطة" : "متوقفة"}</em>
                 </Link>
               ))}
             </div>
