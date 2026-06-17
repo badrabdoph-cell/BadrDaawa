@@ -1,0 +1,553 @@
+- generic [ref=e16]:
+  - banner [ref=e18]:
+    - generic [ref=e19]:
+      - link "Railway Logo" [ref=e20] [cursor=pointer]:
+        - /url: /dashboard
+        - img "Railway Logo" [ref=e22]
+      - generic [ref=e25]:
+        - button "surprising-analysis" [ref=e28] [cursor=pointer]:
+          - generic "Badr 2's Projects" [ref=e29]
+          - generic [ref=e31]: surprising-analysis
+          - img [ref=e33]
+        - button "production" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: production
+          - img [ref=e40]
+    - navigation [ref=e42]:
+      - generic [ref=e44]:
+        - button "Toggle activity" [ref=e46] [cursor=pointer]:
+          - img [ref=e48]
+        - button [ref=e50] [cursor=pointer]:
+          - img [ref=e53]
+        - button "Agent" [ref=e56] [cursor=pointer]:
+          - img [ref=e58]
+          - text: Agent
+  - generic [ref=e60]:
+    - navigation "Project navigation" [ref=e61]:
+      - generic [ref=e62]:
+        - link "Architecture" [ref=e65] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e67]
+        - link "Observability" [ref=e73] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/observability?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e75]
+        - link "Logs" [ref=e78] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/logs?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e80]
+        - link "Settings" [ref=e84] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e86]
+      - button [ref=e89] [cursor=pointer]:
+        - generic "Badr 2" [ref=e91]
+    - region [ref=e97]:
+      - generic [ref=e98]:
+        - generic [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e106]:
+              - generic:
+                - img
+                - generic:
+                  - button "easygoing-education Last run failed 43 minutes ago Next in 20 minutes" [ref=e877]:
+                    - generic [ref=e108]:
+                      - link "easygoing-education Last run failed 43 minutes ago" [ref=e878] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e111]:
+                          - img [ref=e113]
+                          - paragraph [ref=e116]: easygoing-education
+                        - generic [ref=e117]:
+                          - img [ref=e474]
+                          - paragraph [ref=e121]:
+                            - text: Last run failed
+                            - time [ref=e476]: 43 minutes ago
+                      - link "Next in 20 minutes" [ref=e547] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e123]:
+                          - img [ref=e125]
+                          - paragraph [ref=e128]:
+                            - text: Next
+                            - time [ref=e130]: in 20 minutes
+                  - button "BadrDaawa daawa.up.railway.app Online badrdaawa-volume-4W1g" [ref=e131]:
+                    - generic [ref=e132]:
+                      - link "BadrDaawa daawa.up.railway.app Online" [ref=e134] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e135]:
+                          - img [ref=e137]
+                          - generic [ref=e139]:
+                            - paragraph [ref=e140]: BadrDaawa
+                            - paragraph [ref=e141]: daawa.up.railway.app
+                        - generic [ref=e143]:
+                          - img [ref=e144]
+                          - paragraph [ref=e147]: Online
+                      - link "badrdaawa-volume-4W1g" [ref=e149] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/8ab00a39-f024-4769-b934-3cc1d30a427f/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e151]:
+                          - img [ref=e153]
+                          - paragraph [ref=e155]: badrdaawa-volume-4W1g
+                  - button "Postgres Online postgres-volume" [ref=e156]:
+                    - generic [ref=e157]:
+                      - link "Postgres Online" [ref=e159] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/1b8a489a-5807-4122-9e3b-f440a527568a/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - paragraph [ref=e163]: Postgres
+                        - generic [ref=e165]:
+                          - img [ref=e166]
+                          - paragraph [ref=e169]: Online
+                      - link "postgres-volume" [ref=e171] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/ab077c7f-96ba-4347-8192-dd2c10ba428c/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e173]:
+                          - img [ref=e175]
+                          - paragraph [ref=e177]: postgres-volume
+            - toolbar "Canvas options" [ref=e179]:
+              - button "Canvas settings" [ref=e180] [cursor=pointer]:
+                - img [ref=e182]
+              - group "canvas action" [ref=e192]:
+                - button "Zoom in" [ref=e193] [cursor=pointer]:
+                  - img [ref=e195]
+                - button "Zoom out" [ref=e197] [cursor=pointer]:
+                  - img [ref=e199]
+                - button "Center canvas" [ref=e200] [cursor=pointer]:
+                  - img [ref=e202]
+              - group "canvas action" [ref=e207]:
+                - button "Undo" [ref=e208] [cursor=pointer]:
+                  - img [ref=e210]
+                - button "Redo" [ref=e213] [cursor=pointer]:
+                  - img [ref=e215]
+              - button "Visibility layers" [ref=e218] [cursor=pointer]:
+                - img [ref=e220]
+            - img [ref=e222]
+        - generic [ref=e227]:
+          - generic [ref=e228]:
+            - generic [ref=e229]:
+              - generic [ref=e231]:
+                - button [ref=e232] [cursor=pointer]:
+                  - img [ref=e234]
+                - heading "easygoing-education" [level=1] [ref=e236]:
+                  - button "easygoing-education" [ref=e237] [cursor=pointer]
+              - link [ref=e239] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - img [ref=e241]
+            - generic [ref=e243]:
+              - link "Cron Runs" [ref=e244] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e245]: Cron Runs
+              - link "Deployments" [ref=e246] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e247]: Deployments
+              - link "Variables" [ref=e249] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/variables?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e250]: Variables
+              - link "Metrics" [ref=e251] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e252]: Metrics
+              - link "Console" [ref=e253] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/console?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e254]: Console
+              - link "Settings" [active] [ref=e255] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e256]: Settings
+          - generic [ref=e882]:
+            - generic [ref=e884]:
+              - generic [ref=e885]:
+                - generic [ref=e886]: Filter settings
+                - textbox "Filter settings" [ref=e888]:
+                  - /placeholder: Filter Settings...
+              - button / [ref=e889] [cursor=pointer]:
+                - generic [ref=e890]: /
+            - generic [ref=e891]:
+              - generic [ref=e892]:
+                - generic [ref=e893]:
+                  - img [ref=e895]
+                  - heading "Source" [level=1] [ref=e897]
+                  - generic [ref=e898]:
+                    - generic [ref=e899]:
+                      - generic [ref=e900]:
+                        - link "Connect Source" [ref=e901] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#source-empty
+                        - heading "Connect your service to a GitHub repo or Docker image" [level=2] [ref=e902]
+                      - generic [ref=e903]:
+                        - button "Connect Repo" [ref=e904] [cursor=pointer]:
+                          - img [ref=e906]
+                          - generic [ref=e908]: Connect Repo
+                        - button "Connect Image" [ref=e909] [cursor=pointer]:
+                          - img [ref=e911]
+                          - generic [ref=e914]: Connect Image
+                    - generic [ref=e915]:
+                      - generic [ref=e916]:
+                        - link "Root Directory" [ref=e917] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#source-cli-root-directory
+                        - heading "The subdirectory that is deployed when you deploy from the CLI. Docs" [level=2] [ref=e918]:
+                          - text: The subdirectory that is deployed when you deploy from the CLI.
+                          - link "Docs" [ref=e919] [cursor=pointer]:
+                            - /url: https://docs.railway.com/deploy/builds#build-command
+                            - text: Docs↗
+                      - generic [ref=e921]:
+                        - generic [ref=e922]: Root directory
+                        - textbox "Root directory" [ref=e924]:
+                          - /placeholder: /
+                - generic [ref=e925]:
+                  - img [ref=e927]
+                  - heading "Networking" [level=1] [ref=e933]
+                  - generic [ref=e934]:
+                    - generic [ref=e935]:
+                      - generic [ref=e936]:
+                        - link "Public Networking" [ref=e937] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#networking-public
+                        - heading "Access to this service publicly through HTTP or TCP" [level=2] [ref=e938]
+                      - generic [ref=e940]:
+                        - generic [ref=e942]:
+                          - button "Generate Domain" [ref=e943] [cursor=pointer]:
+                            - img [ref=e945]
+                            - generic [ref=e947]: Generate Domain
+                          - button "Custom Domain" [ref=e948] [cursor=pointer]:
+                            - img [ref=e950]
+                            - generic [ref=e952]: Custom Domain
+                        - button "TCP Proxy" [ref=e953] [cursor=pointer]:
+                          - img [ref=e955]
+                          - generic [ref=e957]: TCP Proxy
+                    - generic [ref=e958]:
+                      - generic [ref=e959]:
+                        - link "Private Networking" [ref=e960] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#networking-private
+                        - heading "Communicate with this service from within the Railway network." [level=2] [ref=e961]
+                      - generic [ref=e963]:
+                        - generic [ref=e964]:
+                          - img [ref=e967]
+                          - generic [ref=e970]:
+                            - generic [ref=e971]:
+                              - generic [ref=e972]:
+                                - generic "easygoing-education.railway.internal" [ref=e973]
+                                - generic [ref=e974]:
+                                  - img [ref=e976]
+                                  - text: IPv4 & IPv6
+                              - generic:
+                                - button "Copy":
+                                  - generic:
+                                    - img
+                                - button "Edit":
+                                  - generic:
+                                    - img
+                            - paragraph [ref=e979]:
+                              - generic [ref=e980]:
+                                - generic [ref=e981]: Ready to talk privately ·
+                                - generic [ref=e982]:
+                                  - generic [ref=e983]: You can also simply call me
+                                  - generic [ref=e984]: easygoing-education
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: DNS
+                                  - generic:
+                                    - textbox "DNS": easygoing-education
+                                - paragraph: .railway.internal
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - img
+                                  - paragraph: Endpoint name available!
+                                - generic:
+                                  - button "Cancel":
+                                    - generic: Cancel
+                                  - button "Update":
+                                    - generic: Update
+                    - generic [ref=e985]:
+                      - generic [ref=e986]:
+                        - link "Outbound IPv6" [ref=e987] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#ipv6-egress
+                        - heading "Enable your service to make outbound connections to IPv6 destinations." [level=2] [ref=e988]
+                      - generic [ref=e990]:
+                        - switch [ref=e991] [cursor=pointer]
+                        - generic [ref=e993] [cursor=pointer]: Enable Outbound IPv6
+                - generic [ref=e994]:
+                  - img [ref=e996]
+                  - heading "Scale" [level=1] [ref=e999]
+                  - generic [ref=e1000]:
+                    - generic [ref=e1001]:
+                      - generic [ref=e1002]:
+                        - link "Regions & Replicas" [ref=e1003] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-region-config
+                        - heading "Deploy replicas per region for horizontal scaling." [level=2] [ref=e1004]
+                      - generic [ref=e1007]:
+                        - generic [ref=e1011]:
+                          - log [ref=e1013]
+                          - generic [ref=e1014]:
+                            - generic [ref=e1015] [cursor=pointer]:
+                              - generic [ref=e1017]:
+                                - img [ref=e1018]
+                                - paragraph [ref=e1025]: US West (California, USA)
+                              - combobox [ref=e1026]
+                            - generic [ref=e1029]:
+                              - generic:
+                                - img
+                        - generic [ref=e1031]:
+                          - generic [ref=e1032]: Replicas
+                          - generic [ref=e1033]:
+                            - spinbutton "Replicas" [disabled] [ref=e1034]: "1"
+                            - generic: Replica
+                      - generic [ref=e1037]:
+                        - paragraph [ref=e1038]: Replicas are not available for cron schedules.
+                        - link "Learn More" [ref=e1039] [cursor=pointer]:
+                          - /url: https://docs.railway.com/reference/scaling
+                          - text: Learn More↗
+                    - generic [ref=e1040]:
+                      - generic [ref=e1041]:
+                        - link "Replica Limits" [ref=e1042] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-resource-limits
+                        - heading "Allocate a maximum vCPU and Memory for each replica." [level=2] [ref=e1043]
+                      - generic [ref=e1044]:
+                        - generic [ref=e1045]:
+                          - generic [ref=e1046]:
+                            - generic [ref=e1047]:
+                              - paragraph [ref=e1048]:
+                                - text: "CPU:"
+                                - generic [ref=e1049]: 8 vCPU
+                              - paragraph [ref=e1050]: "Plan limit: 8 vCPU"
+                            - group "value" [ref=e1051]:
+                              - slider "value" [ref=e1057]: "8"
+                          - separator [ref=e1058]
+                          - generic [ref=e1059]:
+                            - generic [ref=e1060]:
+                              - paragraph [ref=e1061]:
+                                - text: "Memory:"
+                                - generic [ref=e1062]: 8 GB
+                              - paragraph [ref=e1063]: "Plan limit: 8 GB"
+                            - group "value" [ref=e1064]:
+                              - slider "value" [ref=e1070]: "8"
+                        - generic [ref=e1071]:
+                          - img [ref=e1073]
+                          - link "Upgrade for higher limits" [ref=e1076] [cursor=pointer]:
+                            - /url: /workspace/plans?workspaceId=0c82a532-4bb4-4d4f-9de8-5fb3433999a7
+                - generic [ref=e1077]:
+                  - img [ref=e1079]
+                  - heading "Build" [level=1] [ref=e1082]
+                  - generic [ref=e1083]:
+                    - generic [ref=e1084]:
+                      - link "Builder" [ref=e1086] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#build-builder
+                      - button "Dockerfile Automatically Detected Build with a Dockerfile using BuildKit. Docs" [disabled] [ref=e1087]:
+                        - generic [ref=e1089]:
+                          - generic [ref=e1090]:
+                            - paragraph [ref=e1091]: Dockerfile
+                            - paragraph [ref=e1092]: Automatically Detected
+                          - paragraph [ref=e1093]:
+                            - text: Build with a Dockerfile using BuildKit.
+                            - link "Docs" [ref=e1094] [cursor=pointer]:
+                              - /url: https://docs.docker.com/engine/reference/builder/
+                              - text: Docs↗
+                    - generic [ref=e1095]:
+                      - generic [ref=e1096]:
+                        - link "Dockerfile Path" [ref=e1097] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#build-dockerfile-path
+                        - heading "The absolute path to your Dockerfile in the repository." [level=2] [ref=e1098]
+                      - generic [ref=e1100]:
+                        - generic [ref=e1101]: Dockerfile path
+                        - combobox "Dockerfile path" [ref=e1103]
+                    - generic [ref=e1104]:
+                      - generic [ref=e1105]:
+                        - link "Custom Build Command" [ref=e1106] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#build-command
+                        - heading "Override the default build command that is run when building your app. Docs" [level=2] [ref=e1107]:
+                          - text: Override the default build command that is run when building your app.
+                          - link "Docs" [ref=e1108] [cursor=pointer]:
+                            - /url: https://docs.railway.com/deploy/builds#build-command
+                            - text: Docs↗
+                      - generic [ref=e1110]:
+                        - generic [ref=e1111]: Build command
+                        - textbox "Build command" [ref=e1113]:
+                          - /placeholder: npm run build
+                          - text: Online • Building (00:14)
+                    - generic [ref=e1114]:
+                      - generic [ref=e1115]:
+                        - link "Watch Paths" [ref=e1116] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#build-watch-paths
+                        - heading "Gitignore-style rules to trigger a new deployment based on what file paths have changed. Docs" [level=2] [ref=e1117]:
+                          - text: Gitignore-style rules to trigger a new deployment based on what file paths have changed.
+                          - link "Docs" [ref=e1118] [cursor=pointer]:
+                            - /url: https://docs.railway.com/deploy/build-configuration#configure-watch-paths
+                            - text: Docs↗
+                      - generic [ref=e1120]:
+                        - generic [ref=e1121]:
+                          - generic [ref=e1122]: Add pattern
+                          - combobox "Add pattern" [ref=e1124]
+                        - button "Add" [disabled] [ref=e1126]:
+                          - img [ref=e1128]
+                - generic [ref=e1130]:
+                  - img [ref=e1132]
+                  - heading "Deploy" [level=1] [ref=e1134]
+                  - generic [ref=e1135]:
+                    - generic [ref=e1137]:
+                      - generic [ref=e1138]:
+                        - link "Custom Start Command" [ref=e1139] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-start-command
+                        - heading "Command that will be run to start new deployments. Docs" [level=2] [ref=e1140]:
+                          - text: Command that will be run to start new deployments.
+                          - link "Docs" [ref=e1141] [cursor=pointer]:
+                            - /url: https://docs.railway.com/guides/start-command
+                            - text: Docs↗
+                      - generic [ref=e1143]:
+                        - generic [ref=e1144]: Start command
+                        - textbox "Start command" [ref=e1146]:
+                          - /placeholder: npm run start
+                          - text: "curl -X POST \"$BACKUP_CRON_URL\" -H \"Authorization: Bearer $BACKUP_CRON_SECRET\" -H \"Content-Type: application/json\""
+                    - generic [ref=e1147]:
+                      - generic [ref=e1148]:
+                        - link "Teardown" [ref=e1149] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-teardown
+                        - heading "Configure old deployment termination when a new one is started. Docs" [level=2] [ref=e1150]:
+                          - text: Configure old deployment termination when a new one is started.
+                          - link "Docs" [ref=e1151] [cursor=pointer]:
+                            - /url: https://docs.railway.com/guides/deployment-teardown
+                            - text: Docs↗
+                      - generic [ref=e1154]:
+                        - switch "Enable Teardown" [ref=e1155] [cursor=pointer]
+                        - generic [ref=e1157] [cursor=pointer]: Enable Teardown
+                    - generic [ref=e1158]:
+                      - generic [ref=e1159]:
+                        - link "Cron Schedule" [ref=e1160] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-cron-schedule
+                        - heading "Run the service according to the specified cron schedule." [level=2] [ref=e1161]
+                      - generic [ref=e1162]:
+                        - generic [ref=e1163]:
+                          - generic [ref=e1164]: Cron schedule
+                          - generic [ref=e1165]:
+                            - combobox "Cron schedule" [ref=e1166] [cursor=pointer]:
+                              - option "No schedule"
+                              - option "Hourly"
+                              - option "Daily"
+                              - option "Weekly"
+                              - option "Monthly"
+                              - option "Every 15 minutes"
+                              - option "Every 30 minutes"
+                              - option "Every Monday"
+                              - option "Every Friday"
+                              - option "Every Sunday"
+                              - option "Hourly M-F"
+                              - option "Custom" [selected]
+                            - generic:
+                              - generic:
+                                - img
+                        - generic [ref=e1168]:
+                          - generic [ref=e1169]: Custom cron schedule
+                          - textbox "Custom cron schedule" [ref=e1171]:
+                            - /placeholder: 0 1 * * *
+                            - text: 0 */3 * * *
+                        - paragraph [ref=e1172]: At 0 minutes past the hour, every 3 hours (UTC)
+                    - generic [ref=e1173]:
+                      - generic [ref=e1174]:
+                        - link "Healthcheck Path" [ref=e1175] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-healthcheck
+                        - heading "Endpoint to be called before a deploy completes to ensure the new deployment is live. Docs" [level=2] [ref=e1176]:
+                          - text: Endpoint to be called before a deploy completes to ensure the new deployment is live.
+                          - link "Docs" [ref=e1177] [cursor=pointer]:
+                            - /url: https://docs.railway.com/deploy/healthchecks
+                            - text: Docs↗
+                      - button "Healthcheck Path" [ref=e1178] [cursor=pointer]:
+                        - img [ref=e1180]
+                        - generic [ref=e1182]: Healthcheck Path
+                    - generic [ref=e1183]:
+                      - generic [ref=e1184]:
+                        - link "Serverless" [ref=e1185] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-app-sleeping
+                        - heading "Containers will scale down to zero and then scale up based on traffic. Requests while the container is sleeping will be queued and served when the container wakes up. Docs" [level=2] [ref=e1186]:
+                          - text: Containers will scale down to zero and then scale up based on traffic. Requests while the container is sleeping will be queued and served when the container wakes up.
+                          - link "Docs" [ref=e1187] [cursor=pointer]:
+                            - /url: https://docs.railway.com/reference/app-sleeping
+                            - text: Docs↗
+                      - generic [ref=e1189]:
+                        - switch "Enable Serverless" [disabled] [ref=e1190]
+                        - generic [ref=e1192]: Enable Serverless
+                      - generic [ref=e1193]:
+                        - img [ref=e1195]
+                        - text: Serverless is not available for services that have a cron schedule.
+                    - generic [ref=e1197]:
+                      - generic [ref=e1198]:
+                        - link "Restart Policy" [ref=e1199] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy-restart-policy
+                        - heading "Configure what to do when the process exits. Docs" [level=2] [ref=e1200]:
+                          - text: Configure what to do when the process exits.
+                          - link "Docs" [ref=e1201] [cursor=pointer]:
+                            - /url: https://docs.railway.com/deploy/deployments#restart-policy
+                            - text: Docs↗
+                      - generic [ref=e1202]:
+                        - generic [ref=e1203]:
+                          - paragraph [ref=e1205]: Never
+                          - paragraph [ref=e1206]: Never restart the container if it stops.
+                        - button "Restart Policy" [disabled] [ref=e1207]:
+                          - img [ref=e1209]
+                      - generic [ref=e1211]:
+                        - img [ref=e1213]
+                        - text: Services with a cron schedule do not have a restart policy.
+                      - generic:
+                        - generic:
+                          - heading "Number of times to try and restart the service if it stopped due to an error." [level=2]
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Max restart retries
+                            - generic:
+                              - spinbutton "Max restart retries": "10"
+                - generic [ref=e1216]:
+                  - img [ref=e1218]
+                  - heading "Config-as-code" [level=1] [ref=e1221]
+                  - generic [ref=e1223]:
+                    - generic [ref=e1224]:
+                      - link "Railway Config File" [ref=e1225] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#config-as-code-file
+                      - heading "Manage your build and deployment settings through a config file. Docs" [level=2] [ref=e1226]:
+                        - text: Manage your build and deployment settings through a config file.
+                        - link "Docs" [ref=e1227] [cursor=pointer]:
+                          - /url: https://docs.railway.com/guides/config-as-code
+                          - text: Docs↗
+                    - button "Add File Path" [ref=e1228] [cursor=pointer]:
+                      - img [ref=e1230]
+                      - generic [ref=e1232]: Add File Path
+                - generic [ref=e1233]:
+                  - img [ref=e1235]
+                  - heading "Feature-flags" [level=1] [ref=e1237]
+                  - generic [ref=e1242]:
+                    - switch "Skipped Builds Skips the build step when the same source code was already built in a previous deployment. GitHub only. Learn more" [ref=e1243] [cursor=pointer]
+                    - generic [ref=e1246] [cursor=pointer]:
+                      - paragraph [ref=e1247]: Skipped Builds
+                      - paragraph [ref=e1248]:
+                        - text: Skips the build step when the same source code was already built in a previous deployment. GitHub only.
+                        - link "Learn more" [ref=e1249]:
+                          - /url: https://docs.railway.com/builds/skipped-builds
+                          - text: Learn more↗
+                - generic [ref=e1250]:
+                  - img [ref=e1252]
+                  - generic [ref=e1255]:
+                    - generic [ref=e1256]:
+                      - link "Delete Service" [ref=e1257] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#danger-delete-service
+                      - heading "Deleting this service will permanently delete all its deployments and remove it from this environment. This cannot be undone." [level=2] [ref=e1258]
+                    - button "Delete service" [ref=e1260] [cursor=pointer]:
+                      - generic [ref=e1261]: Delete service
+              - complementary [ref=e1262]:
+                - list [ref=e1263]:
+                  - listitem [ref=e1264]:
+                    - link "Source" [ref=e1265] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#source
+                  - listitem [ref=e1266]:
+                    - link "Networking" [ref=e1267] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#networking
+                  - listitem [ref=e1268]:
+                    - link "Scale" [ref=e1269] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#scale
+                  - listitem [ref=e1270]:
+                    - link "Build" [ref=e1271] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#build
+                  - listitem [ref=e1272]:
+                    - link "Deploy" [ref=e1273] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#deploy
+                  - listitem [ref=e1274]:
+                    - link "Config-as-code" [ref=e1275] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#config-as-code
+                  - listitem [ref=e1276]:
+                    - link "Feature-flags" [ref=e1277] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#feature-flags
+                  - listitem [ref=e1278]:
+                    - link "Danger" [ref=e1279] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings/#danger

@@ -17,8 +17,8 @@ export function formatArabicNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-const defaultSiteUrl = "https://weddingdaawa.up.railway.app";
-const templatePreviewQrUrl = "https://weddingdaawa.up.railway.app/";
+const defaultSiteUrl = "https://daawa.up.railway.app";
+const templatePreviewQrUrl = "https://daawa.up.railway.app/";
 
 export function normalizeSiteUrl(value?: string | null) {
   const raw = value

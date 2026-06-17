@@ -1,0 +1,198 @@
+- generic [ref=e16]:
+  - banner [ref=e18]:
+    - generic [ref=e19]:
+      - link "Railway Logo" [ref=e20] [cursor=pointer]:
+        - /url: /dashboard
+        - img "Railway Logo" [ref=e22]
+      - generic [ref=e25]:
+        - button "surprising-analysis" [ref=e28] [cursor=pointer]:
+          - generic "Badr 2's Projects" [ref=e29]
+          - generic [ref=e31]: surprising-analysis
+          - img [ref=e33]
+        - button "production" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: production
+          - img [ref=e40]
+    - navigation [ref=e42]:
+      - generic [ref=e44]:
+        - button "Toggle activity" [ref=e46] [cursor=pointer]:
+          - img [ref=e48]
+        - button [ref=e50] [cursor=pointer]:
+          - img [ref=e53]
+        - button "Agent" [ref=e56] [cursor=pointer]:
+          - img [ref=e58]
+          - text: Agent
+  - generic [ref=e60]:
+    - navigation "Project navigation" [ref=e61]:
+      - generic [ref=e62]:
+        - link "Architecture" [ref=e65] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e67]
+        - link "Observability" [ref=e73] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/observability?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e75]
+        - link "Logs" [ref=e78] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/logs?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e80]
+        - link "Settings" [ref=e84] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e86]
+      - button [ref=e89] [cursor=pointer]:
+        - generic "Badr 2" [ref=e91]
+    - region [ref=e97]:
+      - generic [ref=e98]:
+        - generic [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e106]:
+              - generic:
+                - img
+                - generic:
+                  - button "easygoing-education Last run failed 42 minutes ago Next in 21 minutes" [ref=e471]:
+                    - generic [ref=e108]:
+                      - link "easygoing-education Last run failed 42 minutes ago" [ref=e472] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e111]:
+                          - img [ref=e113]
+                          - paragraph [ref=e116]: easygoing-education
+                        - generic [ref=e117]:
+                          - img [ref=e474]
+                          - paragraph [ref=e121]:
+                            - text: Last run failed
+                            - time [ref=e476]: 42 minutes ago
+                      - link "Next in 21 minutes" [ref=e122] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e123]:
+                          - img [ref=e125]
+                          - paragraph [ref=e128]:
+                            - text: Next
+                            - time [ref=e130]: in 21 minutes
+                  - button "BadrDaawa daawa.up.railway.app Online badrdaawa-volume-4W1g" [ref=e131]:
+                    - generic [ref=e132]:
+                      - link "BadrDaawa daawa.up.railway.app Online" [ref=e134] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e135]:
+                          - img [ref=e137]
+                          - generic [ref=e139]:
+                            - paragraph [ref=e140]: BadrDaawa
+                            - paragraph [ref=e141]: daawa.up.railway.app
+                        - generic [ref=e143]:
+                          - img [ref=e144]
+                          - paragraph [ref=e147]: Online
+                      - link "badrdaawa-volume-4W1g" [ref=e149] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/8ab00a39-f024-4769-b934-3cc1d30a427f/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e151]:
+                          - img [ref=e153]
+                          - paragraph [ref=e155]: badrdaawa-volume-4W1g
+                  - button "Postgres Online postgres-volume" [ref=e156]:
+                    - generic [ref=e157]:
+                      - link "Postgres Online" [ref=e159] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/1b8a489a-5807-4122-9e3b-f440a527568a/database?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - paragraph [ref=e163]: Postgres
+                        - generic [ref=e165]:
+                          - img [ref=e166]
+                          - paragraph [ref=e169]: Online
+                      - link "postgres-volume" [ref=e171] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/ab077c7f-96ba-4347-8192-dd2c10ba428c/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e173]:
+                          - img [ref=e175]
+                          - paragraph [ref=e177]: postgres-volume
+            - toolbar "Canvas options" [ref=e179]:
+              - button "Canvas settings" [ref=e180] [cursor=pointer]:
+                - img [ref=e182]
+              - group "canvas action" [ref=e192]:
+                - button "Zoom in" [ref=e193] [cursor=pointer]:
+                  - img [ref=e195]
+                - button "Zoom out" [ref=e197] [cursor=pointer]:
+                  - img [ref=e199]
+                - button "Center canvas" [ref=e200] [cursor=pointer]:
+                  - img [ref=e202]
+              - group "canvas action" [ref=e207]:
+                - button "Undo" [ref=e208] [cursor=pointer]:
+                  - img [ref=e210]
+                - button "Redo" [ref=e213] [cursor=pointer]:
+                  - img [ref=e215]
+              - button "Visibility layers" [ref=e218] [cursor=pointer]:
+                - img [ref=e220]
+            - img [ref=e222]
+        - generic [ref=e227]:
+          - generic [ref=e228]:
+            - generic [ref=e229]:
+              - generic [ref=e231]:
+                - button [ref=e232] [cursor=pointer]:
+                  - img [ref=e234]
+                - heading "easygoing-education" [level=1] [ref=e236]:
+                  - button "easygoing-education" [ref=e237] [cursor=pointer]
+              - link [ref=e239] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - img [ref=e241]
+            - generic [ref=e243]:
+              - link "Cron Runs" [active] [ref=e244] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e245]: Cron Runs
+              - link "Deployments" [ref=e246] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e247]: Deployments
+              - link "Variables" [ref=e249] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/variables?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e250]: Variables
+              - link "Metrics" [ref=e251] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e252]: Metrics
+              - link "Console" [ref=e253] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/console?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e254]: Console
+              - link "Settings" [ref=e255] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e256]: Settings
+          - generic [ref=e480]:
+            - generic [ref=e481]:
+              - img [ref=e483]
+              - paragraph [ref=e487]:
+                - text: Next run
+                - time [ref=e489]: in 20 minutes
+              - paragraph [ref=e491]: Runs at 0 minutes past the hour, every 3 hours (UTC)
+              - generic [ref=e492]:
+                - link "Edit schedule" [ref=e493] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-cron-schedule
+                  - generic [ref=e494]: Edit schedule
+                - button "Run now" [ref=e495] [cursor=pointer]:
+                  - generic [ref=e496]: Run now
+            - generic [ref=e497]:
+              - generic [ref=e498]:
+                - generic [ref=e499]:
+                  - paragraph [ref=e500]: Current Deployment
+                  - link "Deployment history" [ref=e501] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - link "Active bbb 33 minutes ago via GitHub View logs" [ref=e502] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=bcb2b3db-cf91-4a70-beb7-5e985db1fc7f
+                  - generic [ref=e505]:
+                    - generic [ref=e507]: Active
+                    - generic [ref=e509]:
+                      - generic "badrabdoph-cell" [ref=e510]
+                      - img [ref=e513]
+                    - generic [ref=e516]:
+                      - paragraph [ref=e517]: bbb
+                      - paragraph [ref=e518]:
+                        - time [ref=e519]: 33 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e520]:
+                      - button "Deployment actions" [ref=e521]:
+                        - img [ref=e523]
+                      - link "View logs" [ref=e527]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=bcb2b3db-cf91-4a70-beb7-5e985db1fc7f#deploy
+                        - generic [ref=e528]: View logs
+              - generic [ref=e529]:
+                - paragraph [ref=e530]: Recent Executions
+                - link "6/17/26 – 7:57 PM bbb 2s (42m)" [ref=e532] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=6768b75c-aa1f-4cfd-bcfa-1a78caad6939&start=2026-06-17T16%3A57%3A24.150Z&end=2026-06-17T16%3A57%3A26.227Z&returnTo=cron-schedule
+                  - paragraph [ref=e534]:
+                    - time [ref=e535]: 6/17/26
+                    - text: –
+                    - time [ref=e536]: 7:57 PM
+                  - paragraph [ref=e539]: bbb
+                  - paragraph [ref=e542]:
+                    - time [ref=e543]: 2s
+                    - generic [ref=e544]:
+                      - text: (
+                      - time [ref=e545]: 42m
+                      - text: )

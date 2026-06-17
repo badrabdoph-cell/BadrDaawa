@@ -1,0 +1,756 @@
+- generic [ref=e2]:
+  - generic [ref=e16]:
+    - banner [ref=e18]:
+      - generic [ref=e19]:
+        - link "Railway Logo" [ref=e20] [cursor=pointer]:
+          - /url: /dashboard
+          - img "Railway Logo" [ref=e22]
+        - generic [ref=e25]:
+          - button "surprising-analysis" [ref=e28] [cursor=pointer]:
+            - generic "Badr 2's Projects" [ref=e29]
+            - generic [ref=e31]: surprising-analysis
+            - img [ref=e33]
+          - button "production" [ref=e37] [cursor=pointer]:
+            - generic [ref=e38]: production
+            - img [ref=e40]
+      - navigation [ref=e42]:
+        - generic [ref=e44]:
+          - button "Toggle activity" [ref=e46] [cursor=pointer]:
+            - img [ref=e48]
+          - button [ref=e50] [cursor=pointer]:
+            - img [ref=e53]
+          - button "Agent" [ref=e56] [cursor=pointer]:
+            - img [ref=e58]
+            - text: Agent
+    - generic [ref=e60]:
+      - navigation "Project navigation" [ref=e61]:
+        - generic [ref=e62]:
+          - link "Architecture" [ref=e65] [cursor=pointer]:
+            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+            - img [ref=e67]
+          - link "Observability" [ref=e73] [cursor=pointer]:
+            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/observability?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+            - img [ref=e75]
+          - link "Logs" [ref=e78] [cursor=pointer]:
+            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/logs?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+            - img [ref=e80]
+          - link "Settings" [ref=e84] [cursor=pointer]:
+            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+            - img [ref=e86]
+        - button [ref=e89] [cursor=pointer]:
+          - generic "Badr 2" [ref=e91]
+      - region [ref=e97]:
+        - generic [ref=e98]:
+          - generic [ref=e950]:
+            - img [ref=e951]
+            - generic [ref=e952]:
+              - generic [ref=e954]:
+                - generic:
+                  - img
+                  - generic:
+                    - button "easygoing-education Last run failed 29 minutes ago Next in 34 minutes" [ref=e955]:
+                      - generic [ref=e956]:
+                        - link "easygoing-education Last run failed 29 minutes ago" [ref=e958] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                          - generic [ref=e959]:
+                            - img [ref=e961]
+                            - paragraph [ref=e964]: easygoing-education
+                          - generic [ref=e965]:
+                            - img [ref=e967]
+                            - paragraph [ref=e969]:
+                              - text: Last run failed
+                              - time [ref=e970]: 29 minutes ago
+                        - link "Next in 34 minutes" [ref=e971] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                          - generic [ref=e972]:
+                            - img [ref=e974]
+                            - paragraph [ref=e977]:
+                              - text: Next
+                              - time [ref=e979]: in 34 minutes
+                    - button "BadrDaawa daawa.up.railway.app Online · Building (00:35) badrdaawa-volume-4W1g" [ref=e980]:
+                      - generic [ref=e981]:
+                        - link "BadrDaawa daawa.up.railway.app Online · Building (00:35)" [ref=e983] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                          - generic [ref=e984]:
+                            - img [ref=e986]
+                            - generic [ref=e988]:
+                              - paragraph [ref=e989]: BadrDaawa
+                              - paragraph [ref=e990]: daawa.up.railway.app
+                          - generic [ref=e992]:
+                            - img [ref=e993]
+                            - paragraph [ref=e996]:
+                              - text: Online
+                              - generic [ref=e997]:
+                                - text: ·
+                                - generic [ref=e998]:
+                                  - text: Building (
+                                  - time [ref=e999]: 00:35
+                                  - text: )
+                        - link "badrdaawa-volume-4W1g" [ref=e1001] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/8ab00a39-f024-4769-b934-3cc1d30a427f/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                          - generic [ref=e1003]:
+                            - img [ref=e1005]
+                            - paragraph [ref=e1007]: badrdaawa-volume-4W1g
+                    - button "Postgres Online postgres-volume" [ref=e1008]:
+                      - generic [ref=e1009]:
+                        - link "Postgres Online" [ref=e1011] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/1b8a489a-5807-4122-9e3b-f440a527568a/database?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                          - paragraph [ref=e1015]: Postgres
+                          - generic [ref=e1017]:
+                            - img [ref=e1018]
+                            - paragraph [ref=e1021]: Online
+                        - link "postgres-volume" [ref=e1023] [cursor=pointer]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/ab077c7f-96ba-4347-8192-dd2c10ba428c/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                          - generic [ref=e1025]:
+                            - img [ref=e1027]
+                            - paragraph [ref=e1029]: postgres-volume
+              - toolbar "Canvas options" [ref=e1031]:
+                - button "Canvas settings" [ref=e1032] [cursor=pointer]:
+                  - img [ref=e1034]
+                - group "canvas action" [ref=e1044]:
+                  - button "Zoom in" [ref=e1045] [cursor=pointer]:
+                    - img [ref=e1047]
+                  - button "Zoom out" [ref=e1049] [cursor=pointer]:
+                    - img [ref=e1051]
+                  - button "Center canvas" [ref=e1052] [cursor=pointer]:
+                    - img [ref=e1054]
+                - group "canvas action" [ref=e1059]:
+                  - button "Undo" [ref=e1060] [cursor=pointer]:
+                    - img [ref=e1062]
+                  - button "Redo" [ref=e1065] [cursor=pointer]:
+                    - img [ref=e1067]
+                - button "Visibility layers" [ref=e1070] [cursor=pointer]:
+                  - img [ref=e1072]
+              - img [ref=e1074]
+          - generic [ref=e111]:
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - generic [ref=e117]:
+                    - button [ref=e118] [cursor=pointer]:
+                      - img [ref=e120]
+                    - heading "BadrDaawa" [level=1] [ref=e122]:
+                      - button "BadrDaawa" [ref=e123] [cursor=pointer]
+                  - link [ref=e125] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - img [ref=e127]
+                - generic [ref=e129]:
+                  - link "Deployments" [ref=e130] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e131]: Deployments
+                  - link "Backups" [ref=e133] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/backups?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e134]: Backups
+                  - link "Variables" [ref=e135] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/variables?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e136]: Variables
+                  - link "Metrics" [ref=e137] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e138]: Metrics
+                  - link "Console" [ref=e139] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/console?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e140]: Console
+                  - link "Settings" [ref=e141] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e142]: Settings
+              - generic [ref=e145]:
+                - generic [ref=e146]:
+                  - generic [ref=e147]:
+                    - img [ref=e149]
+                    - link "daawa.up.railway.app" [ref=e152] [cursor=pointer]:
+                      - /url: https://daawa.up.railway.app
+                  - generic [ref=e153]:
+                    - generic [ref=e154]:
+                      - img [ref=e156]
+                      - link "US West" [ref=e159] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-region-config
+                    - generic [ref=e160]:
+                      - img [ref=e162]
+                      - link "1 Replica" [ref=e164] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-region-config
+                - generic [ref=e165]:
+                  - generic [ref=e166]:
+                    - 'link "Active fix: gzip backup before GitHub upload + schema drift check + update prune filter for .json.gz 16 minutes ago via GitHub View logs" [ref=e1077] [cursor=pointer]':
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=7a40d6c8-057b-4017-98f6-3ef72f96daab#deploy
+                      - generic [ref=e169]:
+                        - generic [ref=e171]: Active
+                        - generic [ref=e173]:
+                          - generic "badrabdoph-cell" [ref=e174]
+                          - img [ref=e177]
+                        - generic [ref=e180]:
+                          - paragraph [ref=e181]: "fix: gzip backup before GitHub upload + schema drift check + update prune filter for .json.gz"
+                          - paragraph [ref=e182]:
+                            - time [ref=e183]: 16 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e184]:
+                          - button "Deployment actions" [ref=e185]:
+                            - img [ref=e187]
+                          - link "View logs" [ref=e191]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=7a40d6c8-057b-4017-98f6-3ef72f96daab#deploy
+                            - generic [ref=e192]: View logs
+                    - button "Deployment successful" [ref=e195] [cursor=pointer]:
+                      - generic [ref=e196]:
+                        - img [ref=e198]
+                        - paragraph [ref=e201]: Deployment successful
+                      - img [ref=e203]
+                  - generic [ref=e1078]:
+                    - 'link "Building fix: resolve TypeScript error in githubOnlyPayload build BackupPayload.metadata was typed as unknown, causing spread error. Rebuild metadata from scratch using known fields instead of spreading. 33 seconds ago via GitHub View logs" [ref=e1079] [cursor=pointer]':
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=cddcf4da-527b-4fe8-b9cc-f3fa28f9e4f1#build
+                      - generic [ref=e1081]:
+                        - generic [ref=e1083]: Building
+                        - generic [ref=e1085]:
+                          - generic "badrabdoph-cell" [ref=e1086]
+                          - img [ref=e1089]
+                        - generic [ref=e1092]:
+                          - paragraph [ref=e1093]: "fix: resolve TypeScript error in githubOnlyPayload build BackupPayload.metadata was typed as unknown, causing spread error. Rebuild metadata from scratch using known fields instead of spreading."
+                          - paragraph [ref=e1094]:
+                            - time [ref=e1095]: 33 seconds ago
+                            - text: via GitHub
+                        - generic [ref=e1096]:
+                          - button "Deployment actions" [ref=e1097]:
+                            - img [ref=e1099]
+                          - link "View logs" [ref=e1103]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=cddcf4da-527b-4fe8-b9cc-f3fa28f9e4f1#build
+                            - generic [ref=e1104]: View logs
+                    - 'button "Deployment in progress: Taking a snapshot of the code... Building the image... Publishing image... Waiting for dependencies to deploy... Migrating volume... Running pre-deploy command... Creating containers... Tidying up previous deployments..." [ref=e1107] [cursor=pointer]':
+                      - generic [ref=e1108]:
+                        - paragraph [ref=e1109]: "Deployment in progress:"
+                        - generic [ref=e1110]:
+                          - paragraph [ref=e1112]: Taking a snapshot of the code...
+                          - paragraph [ref=e1114]: Building the image...
+                          - paragraph [ref=e1116]: Publishing image...
+                          - paragraph [ref=e1118]: Waiting for dependencies to deploy...
+                          - paragraph [ref=e1120]: Migrating volume...
+                          - paragraph [ref=e1122]: Running pre-deploy command...
+                          - paragraph [ref=e1124]: Creating containers...
+                          - paragraph [ref=e1126]: Tidying up previous deployments...
+                      - img [ref=e1128]
+                - generic [ref=e207]:
+                  - generic [ref=e208]:
+                    - button "History" [expanded] [ref=e209] [cursor=pointer]:
+                      - img [ref=e211]
+                      - paragraph [ref=e213]: History
+                    - button "Hide Skipped" [ref=e214] [cursor=pointer]
+                  - region "History" [ref=e215]:
+                    - generic [ref=e216]:
+                      - 'link "Failed fix: strip uploads from GitHub backup to stay under API size limit 67.9 MB full backup (with base64 uploads) exceeds GitHub''s blob API limit even after gzip. Uploads are stored on Railway volume — no need to sync them to GitHub. Only runtime tables (~200 KB) go to GitHub. - Local backup still includes uploads for full disaster recovery - GitHub backup contains only runtime data + metadata - Gzip compression still applied to GitHub payload - Old full backups on GitHub will be pruned naturally (keepLast: 60) 4 minutes ago via GitHub View logs" [ref=e1130] [cursor=pointer]':
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113#details
+                        - generic [ref=e219]:
+                          - generic [ref=e221]: Failed
+                          - generic [ref=e223]:
+                            - generic "badrabdoph-cell" [ref=e224]
+                            - img [ref=e227]
+                          - generic [ref=e230]:
+                            - paragraph [ref=e231]: "fix: strip uploads from GitHub backup to stay under API size limit 67.9 MB full backup (with base64 uploads) exceeds GitHub's blob API limit even after gzip. Uploads are stored on Railway volume — no need to sync them to GitHub. Only runtime tables (~200 KB) go to GitHub. - Local backup still includes uploads for full disaster recovery - GitHub backup contains only runtime data + metadata - Gzip compression still applied to GitHub payload - Old full backups on GitHub will be pruned naturally (keepLast: 60)"
+                            - paragraph [ref=e232]:
+                              - time [ref=e233]: 4 minutes ago
+                              - text: via GitHub
+                          - generic [ref=e234]:
+                            - button "Deployment actions" [ref=e235]:
+                              - img [ref=e237]
+                            - link "View logs" [ref=e241]:
+                              - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113#details
+                              - generic [ref=e242]: View logs
+                      - generic [ref=e244]:
+                        - button "Deployment failed during build process (01:25)" [expanded] [ref=e245] [cursor=pointer]:
+                          - generic [ref=e246]:
+                            - generic [ref=e247]:
+                              - img [ref=e249]
+                              - paragraph [ref=e251]: Deployment failed during build process
+                            - paragraph [ref=e252]:
+                              - text: (
+                              - time [ref=e253]: 01:25
+                              - text: )
+                          - img [ref=e255]
+                        - region "Deployment failed during build process (01:25)" [ref=e257]:
+                          - generic [ref=e259]:
+                            - img [ref=e261]
+                            - generic [ref=e263]:
+                              - paragraph [ref=e265]: Initialization
+                              - paragraph [ref=e266]:
+                                - text: (
+                                - time [ref=e267]: 01:25
+                                - text: )
+                          - generic [ref=e268]:
+                            - generic [ref=e269]:
+                              - img [ref=e271]
+                              - generic [ref=e273]:
+                                - paragraph [ref=e275]:
+                                  - text: Build
+                                  - generic [ref=e276]: › Build image
+                                - paragraph [ref=e277]:
+                                  - text: (
+                                  - time [ref=e278]: 01:25
+                                  - text: )
+                            - generic [ref=e280]:
+                              - paragraph [ref=e281]:
+                                - text: Failed to build an image.
+                                - link "Please check the build logs for more details." [ref=e282] [cursor=pointer]:
+                                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113#build
+                              - link [ref=e1131] [cursor=pointer]:
+                                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113&context=2026-06-17T17%3A23%3A52.879589251Z#build
+                                - generic [ref=e1132]:
+                                  - generic [ref=e1134]: "[10/10] RUN pnpm build"
+                                  - generic [ref=e1135]:
+                                    - generic [ref=e1136]: "> badrdaawa@0.1.0 prebuild /app > prisma generate"
+                                    - generic [ref=e1137]: Prisma schema loaded from prisma/schema.prisma
+                                    - generic [ref=e1138]: "✔ Generated Prisma Client (v5.22.0) to ./node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client in 294ms Start by importing your Prisma Client (See: https://pris.ly/d/importing-client) Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse"
+                                    - generic [ref=e1139]: "> badrdaawa@0.1.0 build /app > NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next build"
+                                    - generic [ref=e1140]: ▲ Next.js 15.5.19
+                                    - generic [ref=e1141]: "- Experiments (use with caution): · optimizePackageImports"
+                                    - generic [ref=e1142]: Creating an optimized production build ...
+                                    - generic [ref=e1143]: ✓ Compiled successfully in 22.0s
+                                    - generic [ref=e1144]: Linting and checking validity of types ...
+                                    - generic [ref=e1145]: Failed to compile.
+                                    - generic [ref=e1146]: "./lib/backups.ts:431:9 Type error: Spread types may only be created from object types. \x1b[0m \x1b[90m 429 |\x1b[39m uploads\x1b[33m:\x1b[39m []\x1b[33m,\x1b[39m \x1b[90m 430 |\x1b[39m metadata\x1b[33m:\x1b[39m { \x1b[31m\x1b[1m>\x1b[22m\x1b[39m\x1b[90m 431 |\x1b[39m \x1b[33m...\x1b[39mpayload\x1b[33m.\x1b[39mmetadata\x1b[33m,\x1b[39m \x1b[90m |\x1b[39m \x1b[31m\x1b[1m^\x1b[22m\x1b[39m \x1b[90m 432 |\x1b[39m classification\x1b[33m:\x1b[39m { \x1b[90m 433 |\x1b[39m included\x1b[33m:\x1b[39m \x1b[32m\"Runtime tables only (no uploads to stay under GitHub size limit)\"\x1b[39m\x1b[33m,\x1b[39m \x1b[90m 434 |\x1b[39m excluded\x1b[33m:\x1b[39m \x1b[32m\"File uploads — stored locally on Railway volume\"\x1b[39m\x1b[33m,\x1b[39m\x1b[0m"
+                                    - generic [ref=e1147]: "Next.js build worker exited with code: 1 and signal: null"
+                                    - generic [ref=e1148]: ELIFECYCLE Command failed with exit code 1.
+                                    - text: "process \"/bin/sh -c pnpm build\" did not complete successfully: exit code: 1"
+                          - generic [ref=e285]:
+                            - img [ref=e287]
+                            - generic [ref=e290]:
+                              - paragraph [ref=e291]: Agent usage limit reached. Raise your limit to diagnose why this deployment failed.
+                              - button "Update limit" [ref=e293] [cursor=pointer]:
+                                - generic [ref=e294]: Update limit
+                          - generic [ref=e296]:
+                            - img [ref=e298]
+                            - generic [ref=e300]:
+                              - paragraph [ref=e302]: Deploy
+                              - paragraph [ref=e303]: Not started
+                          - generic [ref=e305]:
+                            - img [ref=e307]
+                            - generic [ref=e309]:
+                              - paragraph [ref=e311]: Post-deploy
+                              - paragraph [ref=e312]: Not started
+                    - link "Removed mnn 33 minutes ago via GitHub View logs" [ref=e1149] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=2a2d7823-65a8-40de-ba75-163ee2749ea3
+                      - generic [ref=e316]:
+                        - generic [ref=e318]: Removed
+                        - generic [ref=e320]:
+                          - generic "badrabdoph-cell" [ref=e321]
+                          - img [ref=e324]
+                        - generic [ref=e327]:
+                          - paragraph [ref=e328]: mnn
+                          - paragraph [ref=e329]:
+                            - time [ref=e330]: 33 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e331]:
+                          - button "Deployment actions" [ref=e332]:
+                            - img [ref=e334]
+                          - link "View logs" [ref=e339]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=2a2d7823-65a8-40de-ba75-163ee2749ea3#deploy
+                            - generic [ref=e340]: View logs
+                    - link "Removed bbb 37 minutes ago via GitHub View logs" [ref=e1150] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=db9d5e5b-fb5e-4fe0-8b67-1e986de75d45
+                      - generic [ref=e344]:
+                        - generic [ref=e346]: Removed
+                        - generic [ref=e348]:
+                          - generic "badrabdoph-cell" [ref=e349]
+                          - img [ref=e352]
+                        - generic [ref=e355]:
+                          - paragraph [ref=e356]: bbb
+                          - paragraph [ref=e357]:
+                            - time [ref=e358]: 37 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e359]:
+                          - button "Deployment actions" [ref=e360]:
+                            - img [ref=e362]
+                          - link "View logs" [ref=e367]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=db9d5e5b-fb5e-4fe0-8b67-1e986de75d45#deploy
+                            - generic [ref=e368]: View logs
+                    - link "Removed Create migration.sql 39 minutes ago via GitHub View logs" [ref=e1151] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=80b7cb2c-662c-45da-8621-4162556c4eb2
+                      - generic [ref=e372]:
+                        - generic [ref=e374]: Removed
+                        - generic [ref=e376]:
+                          - generic "badrabdoph-cell" [ref=e377]
+                          - img [ref=e380]
+                        - generic [ref=e383]:
+                          - paragraph [ref=e384]: Create migration.sql
+                          - paragraph [ref=e385]:
+                            - time [ref=e386]: 39 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e387]:
+                          - button "Deployment actions" [ref=e388]:
+                            - img [ref=e390]
+                          - link "View logs" [ref=e395]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=80b7cb2c-662c-45da-8621-4162556c4eb2#deploy
+                            - generic [ref=e396]: View logs
+                    - link "Removed bbb 44 minutes ago via GitHub View logs" [ref=e1152] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=098cea73-e0bb-41d7-aec8-818113284faf
+                      - generic [ref=e400]:
+                        - generic [ref=e402]: Removed
+                        - generic [ref=e404]:
+                          - generic "badrabdoph-cell" [ref=e405]
+                          - img [ref=e408]
+                        - generic [ref=e411]:
+                          - paragraph [ref=e412]: bbb
+                          - paragraph [ref=e413]:
+                            - time [ref=e414]: 44 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e415]:
+                          - button "Deployment actions" [ref=e416]:
+                            - img [ref=e418]
+                          - link "View logs" [ref=e423]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=098cea73-e0bb-41d7-aec8-818113284faf#deploy
+                            - generic [ref=e424]: View logs
+                    - link "Removed bbb 53 minutes ago via GitHub View logs" [ref=e1153] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=9d96d470-3b95-4c99-9992-f8fd88f9ef7a
+                      - generic [ref=e428]:
+                        - generic [ref=e430]: Removed
+                        - generic [ref=e432]:
+                          - generic "badrabdoph-cell" [ref=e433]
+                          - img [ref=e436]
+                        - generic [ref=e439]:
+                          - paragraph [ref=e440]: bbb
+                          - paragraph [ref=e441]:
+                            - time [ref=e442]: 53 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e443]:
+                          - button "Deployment actions" [ref=e444]:
+                            - img [ref=e446]
+                          - link "View logs" [ref=e451]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=9d96d470-3b95-4c99-9992-f8fd88f9ef7a#deploy
+                            - generic [ref=e452]: View logs
+                    - link "Removed Update route.ts 56 minutes ago via GitHub View logs" [ref=e1154] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=22499ab4-38ab-4ce3-9b0c-bf117474e636
+                      - generic [ref=e456]:
+                        - generic [ref=e458]: Removed
+                        - generic [ref=e460]:
+                          - generic "badrabdoph-cell" [ref=e461]
+                          - img [ref=e464]
+                        - generic [ref=e467]:
+                          - paragraph [ref=e468]: Update route.ts
+                          - paragraph [ref=e469]:
+                            - time [ref=e470]: 56 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e471]:
+                          - button "Deployment actions" [ref=e472]:
+                            - img [ref=e474]
+                          - link "View logs" [ref=e479]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=22499ab4-38ab-4ce3-9b0c-bf117474e636#deploy
+                            - generic [ref=e480]: View logs
+                    - link "Removed Create page-2026-06-17T16-26-50-988Z.yml 58 minutes ago via GitHub View logs" [ref=e1155] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeb397d0-0d08-4318-bdaf-cf3e3b2699b9
+                      - generic [ref=e484]:
+                        - generic [ref=e486]: Removed
+                        - generic [ref=e488]:
+                          - generic "badrabdoph-cell" [ref=e489]
+                          - img [ref=e492]
+                        - generic [ref=e495]:
+                          - paragraph [ref=e496]: Create page-2026-06-17T16-26-50-988Z.yml
+                          - paragraph [ref=e497]:
+                            - time [ref=e498]: 58 minutes ago
+                            - text: via GitHub
+                        - generic [ref=e499]:
+                          - button "Deployment actions" [ref=e500]:
+                            - img [ref=e502]
+                          - link "View logs" [ref=e507]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeb397d0-0d08-4318-bdaf-cf3e3b2699b9#deploy
+                            - generic [ref=e508]: View logs
+            - generic [ref=e539]:
+              - generic [ref=e540]:
+                - generic [ref=e541]:
+                  - img [ref=e543]
+                  - generic [ref=e545]:
+                    - link "BadrDaawa" [ref=e546] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                    - generic [ref=e547]: /
+                    - button "eeea3126" [ref=e548] [cursor=pointer]
+                    - generic [ref=e549]: Failed
+                  - generic [ref=e550]:
+                    - button "Deployment actions" [ref=e551] [cursor=pointer]:
+                      - img [ref=e553]
+                    - time [ref=e557]: Jun 17, 2026, 8:22 PM GMT+3
+                    - link [ref=e558] [cursor=pointer]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                      - img [ref=e560]
+                - generic [ref=e562]:
+                  - link "daawa.up.railway.app" [ref=e564] [cursor=pointer]:
+                    - /url: https://daawa.up.railway.app
+                  - link "Get Help" [ref=e566] [cursor=pointer]:
+                    - /url: https://backboard.railway.com/csc/auth/login?redirect_uri=https://station-server.railway.com/auth/callback
+                    - img [ref=e568]
+                    - generic [ref=e571]: Get Help
+              - tablist [ref=e572]:
+                - tab "Details" [ref=e573] [cursor=pointer]
+                - tab "Build Logs" [selected] [ref=e574] [cursor=pointer]: Build Logs
+                - tab "Deploy Logs" [ref=e576] [cursor=pointer]
+                - tab "HTTP Logs" [ref=e577] [cursor=pointer]
+                - tab "Network Flow Logs" [ref=e578] [cursor=pointer]
+              - tabpanel "Build Logs" [ref=e579]:
+                - generic [ref=e580]:
+                  - img [ref=e582]
+                  - generic [ref=e585]: Diagnosis › Agent usage limit reached. Raise your limit to diagnose why this deployment failed.
+                  - button "Update limit" [ref=e586] [cursor=pointer]:
+                    - generic [ref=e587]: Update limit
+                - generic [ref=e589]:
+                  - generic [ref=e592]:
+                    - generic [ref=e593]:
+                      - generic:
+                        - img
+                      - generic [ref=e594]:
+                        - generic: Search build logs
+                        - textbox [ref=e595]
+                      - generic [ref=e597]: /
+                    - button "Options" [ref=e598] [cursor=pointer]:
+                      - img [ref=e600]
+                  - table [ref=e604]:
+                    - rowgroup [ref=e605]:
+                      - row "Time (غرينتش+3) Message" [ref=e606]:
+                        - columnheader "Time (غرينتش+3)" [ref=e607]: Time (غرينتش+3)
+                        - columnheader "Message" [ref=e611]: Message
+                        - columnheader [ref=e613]:
+                          - button "Layout settings" [ref=e614] [cursor=pointer]:
+                            - img [ref=e616]
+                    - rowgroup [ref=e621]:
+                      - row "You reached the start of the range Jun 17, 2026, 8:17 PM" [ref=e622]:
+                        - cell "You reached the start of the range Jun 17, 2026, 8:17 PM" [ref=e623]:
+                          - generic [ref=e625]:
+                            - text: You reached the start of the range
+                            - img [ref=e627]
+                            - time [ref=e629]: Jun 17, 2026, 8:17 PM
+                      - row "Jun 17 2026 20:22:24 scheduling build on Metal builder \"builder-zoruvv\"" [ref=e630]:
+                        - cell "Jun 17 2026 20:22:24" [ref=e631] [cursor=pointer]:
+                          - generic [ref=e632]:
+                            - button [ref=e633]
+                            - time [ref=e636]: Jun 17 2026 20:22:24
+                        - cell "scheduling build on Metal builder \"builder-zoruvv\"" [ref=e637]:
+                          - button "scheduling build on Metal builder \"builder-zoruvv\"" [ref=e638]
+                      - row "Jun 17 2026 20:23:00 unpacking archive 575.9 MB 2.5s" [ref=e639]:
+                        - cell "Jun 17 2026 20:23:00" [ref=e640] [cursor=pointer]:
+                          - generic [ref=e641]:
+                            - button [ref=e642]
+                            - time [ref=e645]: Jun 17 2026 20:23:00
+                        - cell "unpacking archive 575.9 MB 2.5s" [ref=e646]:
+                          - generic [ref=e647]:
+                            - img [ref=e649]
+                            - generic [ref=e651]: unpacking archive
+                            - generic [ref=e652]: 575.9 MB
+                            - generic [ref=e653]: 2.5s
+                      - row "Jun 17 2026 20:23:00 internal load build definition from Dockerfile 0ms" [ref=e654]:
+                        - cell "Jun 17 2026 20:23:00" [ref=e655] [cursor=pointer]:
+                          - generic [ref=e656]:
+                            - button [ref=e657]
+                            - time [ref=e660]: Jun 17 2026 20:23:00
+                        - cell "internal load build definition from Dockerfile 0ms" [ref=e661]:
+                          - button "internal load build definition from Dockerfile 0ms" [ref=e662]:
+                            - generic [ref=e663]:
+                              - generic [ref=e664]:
+                                - img [ref=e666]
+                                - generic [ref=e668]: internal
+                              - generic [ref=e669]: load build definition from Dockerfile
+                              - time [ref=e671]: 0ms
+                      - row "Jun 17 2026 20:23:00 internal load metadata for docker.io/library/node:22-bookworm-slim 442ms" [ref=e672]:
+                        - cell "Jun 17 2026 20:23:00" [ref=e673] [cursor=pointer]:
+                          - generic [ref=e674]:
+                            - button [ref=e675]
+                            - time [ref=e678]: Jun 17 2026 20:23:00
+                        - cell "internal load metadata for docker.io/library/node:22-bookworm-slim 442ms" [ref=e679]:
+                          - button "internal load metadata for docker.io/library/node:22-bookworm-slim 442ms" [ref=e680]:
+                            - generic [ref=e681]:
+                              - generic [ref=e682]:
+                                - img [ref=e684]
+                                - generic [ref=e686]: internal
+                              - generic [ref=e687]: load metadata for docker.io/library/node:22-bookworm-slim
+                              - time [ref=e689]: 442ms
+                      - row "Jun 17 2026 20:23:01 internal load .dockerignore 0ms" [ref=e690]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e691] [cursor=pointer]:
+                          - generic [ref=e692]:
+                            - button [ref=e693]
+                            - time [ref=e696]: Jun 17 2026 20:23:01
+                        - cell "internal load .dockerignore 0ms" [ref=e697]:
+                          - button "internal load .dockerignore 0ms" [ref=e698]:
+                            - generic [ref=e699]:
+                              - generic [ref=e700]:
+                                - img [ref=e702]
+                                - generic [ref=e704]: internal
+                              - generic [ref=e705]: load .dockerignore
+                              - time [ref=e707]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 12ms" [ref=e708]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e709] [cursor=pointer]:
+                          - generic [ref=e710]:
+                            - button [ref=e711]
+                            - time [ref=e714]: Jun 17 2026 20:23:01
+                        - cell "[ 1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 12ms" [ref=e715]:
+                          - button "[ 1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 12ms" [ref=e716]:
+                            - generic [ref=e717]:
+                              - generic [ref=e718]: "[ 1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752"
+                              - time [ref=e720]: 12ms
+                      - row "Jun 17 2026 20:23:01 internal load build context 0ms" [ref=e721]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e722] [cursor=pointer]:
+                          - generic [ref=e723]:
+                            - button [ref=e724]
+                            - time [ref=e727]: Jun 17 2026 20:23:01
+                        - cell "internal load build context 0ms" [ref=e728]:
+                          - button "internal load build context 0ms" [ref=e729]:
+                            - generic [ref=e730]:
+                              - generic [ref=e731]:
+                                - img [ref=e733]
+                                - generic [ref=e735]: internal
+                              - generic [ref=e736]: load build context
+                              - time [ref=e738]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 8/10] RUN pnpm install --frozen-lockfile cached 0ms" [ref=e739]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e740] [cursor=pointer]:
+                          - generic [ref=e741]:
+                            - button [ref=e742]
+                            - time [ref=e745]: Jun 17 2026 20:23:01
+                        - cell "[ 8/10] RUN pnpm install --frozen-lockfile cached 0ms" [ref=e746]:
+                          - button "[ 8/10] RUN pnpm install --frozen-lockfile cached 0ms" [ref=e747]:
+                            - generic [ref=e748]:
+                              - generic [ref=e749]: "[ 8/10] RUN pnpm install --frozen-lockfile cached"
+                              - time [ref=e751]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 7/10] COPY prisma ./prisma cached 0ms" [ref=e752]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e753] [cursor=pointer]:
+                          - generic [ref=e754]:
+                            - button [ref=e755]
+                            - time [ref=e758]: Jun 17 2026 20:23:01
+                        - cell "[ 7/10] COPY prisma ./prisma cached 0ms" [ref=e759]:
+                          - button "[ 7/10] COPY prisma ./prisma cached 0ms" [ref=e760]:
+                            - generic [ref=e761]:
+                              - generic [ref=e762]: "[ 7/10] COPY prisma ./prisma cached"
+                              - time [ref=e764]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 6/10] COPY .npmrc package.json pnpm-lock.yaml ./ cached 0ms" [ref=e765]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e766] [cursor=pointer]:
+                          - generic [ref=e767]:
+                            - button [ref=e768]
+                            - time [ref=e771]: Jun 17 2026 20:23:01
+                        - cell "[ 6/10] COPY .npmrc package.json pnpm-lock.yaml ./ cached 0ms" [ref=e772]:
+                          - button "[ 6/10] COPY .npmrc package.json pnpm-lock.yaml ./ cached 0ms" [ref=e773]:
+                            - generic [ref=e774]:
+                              - generic [ref=e775]: "[ 6/10] COPY .npmrc package.json pnpm-lock.yaml ./ cached"
+                              - time [ref=e777]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 5/10] RUN corepack enable && corepack prepare pnpm@10.15.1 --activate cached 0ms" [ref=e778]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e779] [cursor=pointer]:
+                          - generic [ref=e780]:
+                            - button [ref=e781]
+                            - time [ref=e784]: Jun 17 2026 20:23:01
+                        - cell "[ 5/10] RUN corepack enable && corepack prepare pnpm@10.15.1 --activate cached 0ms" [ref=e785]:
+                          - button "[ 5/10] RUN corepack enable && corepack prepare pnpm@10.15.1 --activate cached 0ms" [ref=e786]:
+                            - generic [ref=e787]:
+                              - generic [ref=e788]: "[ 5/10] RUN corepack enable && corepack prepare pnpm@10.15.1 --activate cached"
+                              - time [ref=e790]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 4/10] RUN pg_dump --version && pg_restore --version cached 0ms" [ref=e791]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e792] [cursor=pointer]:
+                          - generic [ref=e793]:
+                            - button [ref=e794]
+                            - time [ref=e797]: Jun 17 2026 20:23:01
+                        - cell "[ 4/10] RUN pg_dump --version && pg_restore --version cached 0ms" [ref=e798]:
+                          - button "[ 4/10] RUN pg_dump --version && pg_restore --version cached 0ms" [ref=e799]:
+                            - generic [ref=e800]:
+                              - generic [ref=e801]: "[ 4/10] RUN pg_dump --version && pg_restore --version cached"
+                              - time [ref=e803]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 3/10] RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 && rm -rf /var/lib/apt/lists/* cached 0ms" [ref=e804]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e805] [cursor=pointer]:
+                          - generic [ref=e806]:
+                            - button [ref=e807]
+                            - time [ref=e810]: Jun 17 2026 20:23:01
+                        - cell "[ 3/10] RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 && rm -rf /var/lib/apt/lists/* cached 0ms" [ref=e811]:
+                          - button "[ 3/10] RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 && rm -rf /var/lib/apt/lists/* cached 0ms" [ref=e812]:
+                            - generic [ref=e813]:
+                              - generic [ref=e814]: "[ 3/10] RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && install -d /usr/share/postgresql-common/pgdg && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc && echo \"deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main\" > /etc/apt/sources.list.d/pgdg.list && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 && rm -rf /var/lib/apt/lists/* cached"
+                              - time [ref=e816]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 2/10] WORKDIR /app cached 0ms" [ref=e817]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e818] [cursor=pointer]:
+                          - generic [ref=e819]:
+                            - button [ref=e820]
+                            - time [ref=e823]: Jun 17 2026 20:23:01
+                        - cell "[ 2/10] WORKDIR /app cached 0ms" [ref=e824]:
+                          - button "[ 2/10] WORKDIR /app cached 0ms" [ref=e825]:
+                            - generic [ref=e826]:
+                              - generic [ref=e827]: "[ 2/10] WORKDIR /app cached"
+                              - time [ref=e829]: 0ms
+                      - row "Jun 17 2026 20:23:01 [ 9/10] COPY . . 4s" [ref=e830]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e831] [cursor=pointer]:
+                          - generic [ref=e832]:
+                            - button [ref=e833]
+                            - time [ref=e836]: Jun 17 2026 20:23:01
+                        - cell "[ 9/10] COPY . . 4s" [ref=e837]:
+                          - button "[ 9/10] COPY . . 4s" [ref=e838]:
+                            - generic [ref=e839]:
+                              - generic [ref=e840]: "[ 9/10] COPY . ."
+                              - time [ref=e842]: 4s
+                      - row [ref=e843]:
+                        - cell "Jun 17 2026 20:23:01" [ref=e844] [cursor=pointer]:
+                          - generic [ref=e845]:
+                            - button [ref=e846]
+                            - time [ref=e849]: Jun 17 2026 20:23:01
+                        - cell [ref=e850]:
+                          - button [ref=e851] [cursor=pointer]:
+                            - generic [ref=e852]:
+                              - generic [ref=e853]:
+                                - img [ref=e855]
+                                - generic [ref=e857]: "1"
+                              - generic [ref=e858]: RUN pnpm build
+                              - time [ref=e860]: 46s
+                              - generic [ref=e861]:
+                                - generic [ref=e862]: "> badrdaawa@0.1.0 prebuild /app"
+                                - generic [ref=e863]: "> prisma generate"
+                              - generic [ref=e865]: Prisma schema loaded from prisma/schema.prisma
+                              - generic [ref=e866]:
+                                - generic [ref=e867]: ✔ Generated Prisma Client (v5.22.0) to ./node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client in 294ms
+                                - generic [ref=e868]: "Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)"
+                                - generic [ref=e869]: "Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse"
+                              - generic [ref=e870]:
+                                - generic [ref=e871]: "> badrdaawa@0.1.0 build /app"
+                                - generic [ref=e872]: "> NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next build"
+                              - generic [ref=e874]: ▲ Next.js 15.5.19
+                              - generic [ref=e875]:
+                                - generic [ref=e876]: "- Experiments (use with caution):"
+                                - generic [ref=e877]: · optimizePackageImports
+                              - generic [ref=e880]: Creating an optimized production build ...
+                              - generic [ref=e882]: ✓ Compiled successfully in 22.0s
+                              - generic [ref=e884]: Linting and checking validity of types ...
+                              - generic [ref=e886]: Failed to compile.
+                              - generic [ref=e887]:
+                                - generic [ref=e888]: ./lib/backups.ts:431:9
+                                - generic [ref=e889]:
+                                  - paragraph [ref=e890]: "Type error: Spread types may only be created from object types."
+                                  - img [ref=e892]
+                                - generic [ref=e895]: "429 | uploads: [],"
+                                - generic [ref=e896]: "430 | metadata: {"
+                                - generic [ref=e897]: "> 431 | ...payload.metadata,"
+                                - generic [ref=e898]: "| ^"
+                                - generic [ref=e899]: "432 | classification: {"
+                                - generic [ref=e900]: "433 | included: \"Runtime tables only (no uploads to stay under GitHub size limit)\","
+                                - generic [ref=e901]: "434 | excluded: \"File uploads — stored locally on Railway volume\","
+                              - generic [ref=e903]: "Next.js build worker exited with code: 1 and signal: null"
+                              - generic [ref=e905]: ELIFECYCLE Command failed with exit code 1.
+                      - row "Jun 17 2026 20:23:21 uploading snapshot 429.3 MB 24.1s" [ref=e906]:
+                        - cell "Jun 17 2026 20:23:21" [ref=e907] [cursor=pointer]:
+                          - generic [ref=e908]:
+                            - button [ref=e909]
+                            - time [ref=e912]: Jun 17 2026 20:23:21
+                        - cell "uploading snapshot 429.3 MB 24.1s" [ref=e913]:
+                          - generic [ref=e914]:
+                            - img [ref=e916]
+                            - generic [ref=e918]: uploading snapshot
+                            - generic [ref=e919]: 429.3 MB
+                            - generic [ref=e920]: 24.1s
+                      - 'row "Jun 17 2026 20:23:52 Build Failed: build daemon returned an error < failed to solve: process \"/bin/sh -c pnpm build\" did not complete successfully: exit code: 1 >" [ref=e921]':
+                        - cell "Jun 17 2026 20:23:52" [ref=e922] [cursor=pointer]:
+                          - generic [ref=e923]:
+                            - button [ref=e924]
+                            - time [ref=e927]: Jun 17 2026 20:23:52
+                        - 'cell "Build Failed: build daemon returned an error < failed to solve: process \"/bin/sh -c pnpm build\" did not complete successfully: exit code: 1 >" [ref=e928]':
+                          - 'button "Build Failed: build daemon returned an error < failed to solve: process \"/bin/sh -c pnpm build\" did not complete successfully: exit code: 1 >" [ref=e929]'
+                      - row "You reached the end of the range Jun 17, 2026, 8:28 PM" [ref=e930]:
+                        - cell "You reached the end of the range Jun 17, 2026, 8:28 PM" [ref=e931]:
+                          - generic [ref=e933]:
+                            - text: You reached the end of the range
+                            - img [ref=e935]
+                            - time [ref=e937]: Jun 17, 2026, 8:28 PM
+                    - generic [ref=e938]:
+                      - button "Jump to top" [ref=e939] [cursor=pointer]:
+                        - img [ref=e941]
+                      - button "Jump to bottom" [ref=e943] [cursor=pointer]:
+                        - img [ref=e945]
+  - generic [ref=e1161]:
+    - img [ref=e1163]
+    - generic [ref=e1166]:
+      - generic [ref=e1167]:
+        - paragraph [ref=e1168]: Canvas loading slowly
+        - link "Dismiss" [ref=e1169] [cursor=pointer]:
+          - /url: ""
+          - img [ref=e1171]
+      - paragraph [ref=e1173]: The canvas is taking longer than expected to load. Please wait or try refreshing the page.
