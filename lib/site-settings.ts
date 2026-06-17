@@ -31,6 +31,7 @@ export type SitePhotographerSettings = {
   defaultName: string;
   defaultInstagramUrl: string;
   defaultFacebookUrl: string;
+  defaultLogoUrl: string;
 };
 
 export type SiteSettings = {
@@ -80,6 +81,7 @@ export const defaultSiteSettings: SiteSettings = {
     defaultName: "badrabdoph",
     defaultInstagramUrl: "https://www.instagram.com/",
     defaultFacebookUrl: "https://www.facebook.com/",
+    defaultLogoUrl: "",
   },
   updatedAt: "",
 };
@@ -162,6 +164,7 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       defaultName: cleanText(input.photographer?.defaultName, fallback.photographer.defaultName).slice(0, 80),
       defaultInstagramUrl: cleanUrl(input.photographer?.defaultInstagramUrl, fallback.photographer.defaultInstagramUrl),
       defaultFacebookUrl: cleanUrl(input.photographer?.defaultFacebookUrl, fallback.photographer.defaultFacebookUrl),
+      defaultLogoUrl: typeof input.photographer?.defaultLogoUrl === "string" ? input.photographer.defaultLogoUrl.trim() : "",
     },
     updatedAt: cleanOptionalText(input.updatedAt),
   };
@@ -194,6 +197,7 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     name: next.photographer.defaultName,
     instagram: next.photographer.defaultInstagramUrl,
     facebook: next.photographer.defaultFacebookUrl,
+    logoUrl: next.photographer.defaultLogoUrl,
   });
 
   await writeProjectContentSetting("site-settings", next);

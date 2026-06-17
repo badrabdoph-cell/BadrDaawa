@@ -16327,6 +16327,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 100%;
   height: 100%;
   border-radius: inherit;
+  background: inherit;
   object-fit: contain;
   object-position: center;
 }

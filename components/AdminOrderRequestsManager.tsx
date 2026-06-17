@@ -465,6 +465,7 @@ export function AdminOrderRequestsManager({
         facebookUrl: form.photographerFacebookUrl,
         instagramUrl: form.photographerInstagramUrl,
         whatsappUrl: form.photographerWhatsappUrl,
+        _logoSource: form.photographerLogo.url ? "custom" : "global",
       },
     }),
     [effectivePreviewMusic, form],

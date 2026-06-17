@@ -78,6 +78,23 @@ function toPhotographer(value: unknown): Invitation["photographer"] | undefined 
   };
 }
 
+function toPhotographerWithSource(value: unknown): { photographer: Invitation["photographer"]; logoSource: "global" | "custom" | undefined } | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  return {
+    photographer: {
+      enabled: raw.enabled !== false,
+      name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "badrabdoph",
+      description: typeof raw.description === "string" ? raw.description : undefined,
+      logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
+      instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
+      facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
+      whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
+    },
+    logoSource: raw._logoSource === "custom" ? "custom" : raw._logoSource === "global" ? "global" : undefined,
+  };
+}
+
 function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
   const gallery = toStringArray(invitation.gallery);
   const normalizedHero = normalizeInternalAssetUrl(invitation.heroPhoto);

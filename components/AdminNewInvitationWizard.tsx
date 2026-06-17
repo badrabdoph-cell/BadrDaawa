@@ -748,6 +748,7 @@ export function AdminNewInvitationWizard({
           facebookUrl: draft.photographerFacebookUrl,
           instagramUrl: draft.photographerInstagramUrl,
           whatsappUrl: draft.photographerWhatsappUrl,
+          _logoSource: draft.photographerLogo.url ? "custom" : "global",
         },
       }),
     });

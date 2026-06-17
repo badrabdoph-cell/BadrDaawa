@@ -48,6 +48,7 @@ type BuilderPayload = {
     facebookUrl?: string;
     instagramUrl?: string;
     whatsappUrl?: string;
+    _logoSource?: "global" | "custom";
   };
 };
 
@@ -86,15 +87,21 @@ async function resolveMusic(payload: BuilderPayload) {
 async function resolvePhotographer(payload: BuilderPayload) {
   const input = payload.photographer;
   if (!input?.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "", description: "", whatsappUrl: "" };
+
+  const hadCustomLogo = Boolean(input.logoDataUrl || (input.logoUrl && input._logoSource !== "global"));
+
   const logoGallery = input.logoDataUrl ? await saveInvitationGalleryImages([input.logoDataUrl]) : [];
+  const resolvedLogoUrl = logoGallery[0] || (hadCustomLogo ? cleanText(input.logoUrl) : "");
+
   return {
     enabled: true,
     name: cleanText(input.name, "المصور الفوتوغرافي"),
     description: cleanText(input.description) || "",
-    logoUrl: logoGallery[0] || cleanText(input.logoUrl),
+    logoUrl: resolvedLogoUrl,
     facebookUrl: cleanUrl(input.facebookUrl) || "https://www.facebook.com/",
     instagramUrl: cleanUrl(input.instagramUrl) || "https://www.instagram.com/",
     whatsappUrl: cleanUrl(input.whatsappUrl) || "",
+    _logoSource: hadCustomLogo ? "custom" : "global",
   };
 }
 

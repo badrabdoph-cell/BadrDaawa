@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Camera, ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings } from "lucide-react";
+import { Camera, ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings, UploadCloud } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -212,7 +212,8 @@ export default async function AdminSiteSettingsPage({
             <Camera size={22} />
             <div>
               <span className="eyebrow">Photographer</span>
-              <h2>ظهور بيانات المصور</h2>
+              <h2>ظهور بيانات المصور والشعار</h2>
+              <p>هذا هو الشعار الافتراضي لجميع الدعوات الجديدة. يمكن تغييره لكل دعوة على حدة وقت النشر.</p>
             </div>
           </div>
           <label className="admin-toggle-row template-inline-toggle site-settings-main-toggle">
@@ -232,8 +233,23 @@ export default async function AdminSiteSettingsPage({
               <span>فيسبوك المصور الافتراضي</span>
               <input name="photographerFacebookUrl" defaultValue={settings.photographer.defaultFacebookUrl} />
             </label>
+            <label className="field">
+              <span>شعار المصور الافتراضي</span>
+              <input name="photographerLogoFile" type="file" accept={acceptedImageFormats} />
+              <small>أفضل قياس: 200×200 بكسل. صيغ مدعومة: JPG, PNG, WebP</small>
+            </label>
           </div>
-          <p className="site-settings-note">هذا الإعداد لا يضيف المصور تلقائياً لأي دعوة؛ هو يتحكم فقط في السماح بظهور بيانات المصور عندما تكون مفعلة داخل الدعوة نفسها.</p>
+          {settings.photographer.defaultLogoUrl ? (
+            <div className="site-settings-logo-preview">
+              <UploadCloud size={18} />
+              <img src={settings.photographer.defaultLogoUrl} alt="شعار المصور الافتراضي" />
+              <span>{settings.photographer.defaultLogoUrl}</span>
+            </div>
+          ) : null}
+          <p className="site-settings-note">
+            هذا الشعار هو الأساس لجميع الدعوات الجديدة. عند تغييره، يمكنك تحديث الدعوات الحالية دفعة واحدة من صفحة
+            {" "}<Link href="/admin/photographer-logo">إدارة شعار المصور</Link>.
+          </p>
         </article>
 
 

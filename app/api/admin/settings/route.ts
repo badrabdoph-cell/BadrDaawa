@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const logoFile = formData.get("logoFile");
     const uploadedLogoUrl = await saveLogo(logoFile instanceof File ? logoFile : null);
+    const photographerLogoFile = formData.get("photographerLogoFile");
+    const uploadedPhotographerLogoUrl = await saveLogo(photographerLogoFile instanceof File ? photographerLogoFile : null);
     const currentContent = await getHomeContent();
     const currentPreview = await getHomePreviewSettings();
     const primaryCtaLabel = text(formData, "primaryCtaLabel");
@@ -97,6 +99,7 @@ export async function POST(request: NextRequest) {
         defaultName: text(formData, "photographerName"),
         defaultInstagramUrl: text(formData, "photographerInstagramUrl"),
         defaultFacebookUrl: text(formData, "photographerFacebookUrl"),
+        defaultLogoUrl: uploadedPhotographerLogoUrl || text(formData, "photographerLogoUrl"),
       },
     });
 
