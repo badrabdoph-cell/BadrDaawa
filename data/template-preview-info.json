@@ -56,12 +56,12 @@
   "language": "ar",
   "brideName": "Nada",
   "groomName": "Mohamed",
-  "updatedAt": "2026-06-15T12:16:00.969Z",
+  "updatedAt": "2026-06-17T11:52:25.959Z",
   "adminScope": {
     "mode": "all",
     "excludedSlugs": []
   },
-  "weddingDate": "2026-10-26",
+  "weddingDate": "2026-04-20",
   "weddingTime": "07:00 مساءً",
   "heroVideoUrl": "",
   "photographer": {
@@ -70,6 +70,7 @@
     "logoUrl": "",
     "description": "تابعو كواليس الفوتوسيشن علي استوري الفوتوجرافر❤️",
     "facebookUrl": "https://www.facebook.com/badrabdophoto",
+    "whatsappUrl": "",
     "instagramUrl": "https://www.instagram.com/badr_abdo_ph"
   },
   "templateOverrides": {}
