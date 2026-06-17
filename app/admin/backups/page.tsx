@@ -13,9 +13,10 @@ import {
   ShieldAlert,
   TriangleAlert,
 } from "lucide-react";
-import { getBackupRuntimeStatus, listBackupSnapshots } from "@/lib/backups";
+import { getBackupRuntimeStatus, getScheduledBackupInfo, listBackupSnapshots } from "@/lib/backups";
 import { VerifyBackupButton } from "./VerifyBackupButton";
 import { RestoreBackupButton } from "./RestoreBackupButton";
+import AutoBackupDashboard from "./AutoBackupDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -56,10 +57,11 @@ export default async function BackupsPage({
 }: {
   searchParams: Promise<{ created?: string; error?: string }>;
 }) {
-  const [params, backups, runtimeStatus] = await Promise.all([
+  const [params, backups, runtimeStatus, scheduledInfo] = await Promise.all([
     searchParams,
     listBackupSnapshots(),
     getBackupRuntimeStatus(),
+    getScheduledBackupInfo(),
   ]);
   const latest = backups[0];
   const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
@@ -105,6 +107,51 @@ export default async function BackupsPage({
         <div className="notice danger">
           فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL
           وإمكانية الوصول إلى Storage.
+        </div>
+      ) : null}
+
+      <AutoBackupDashboard
+        lastScheduledAt={scheduledInfo.lastScheduled?.createdAt ?? null}
+        lastScheduledSuccessAt={scheduledInfo.lastScheduledSuccess?.createdAt ?? null}
+        nextScheduledAt={scheduledInfo.nextScheduledAt}
+      />
+
+      {/* ── Scheduled Backups Log ── */}
+      {scheduledInfo.recentScheduled.length > 0 ? (
+        <div className="panel" style={{ padding: 0, overflow: "hidden", marginBottom: 18 }}>
+          <div className="backup-history-header">
+            <h3>آخر {scheduledInfo.recentScheduled.length} نسخ تلقائية</h3>
+          </div>
+          <div className="table-shell">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>التاريخ</th>
+                  <th>النوع</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scheduledInfo.recentScheduled.map((job, i) => (
+                  <tr key={job.createdAt + String(i)}>
+                    <td>{formatBackupDate(job.createdAt)}</td>
+                    <td>Scheduled</td>
+                    <td>
+                      <span
+                        className={`status ${job.status === "SUCCESS" ? "success" : job.status === "FAILED" ? "danger" : "info"}`}
+                      >
+                        {job.status === "SUCCESS"
+                          ? "Success"
+                          : job.status === "FAILED"
+                            ? "Failed"
+                            : job.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : null}
 

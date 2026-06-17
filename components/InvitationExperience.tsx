@@ -27,7 +27,7 @@ import type { Invitation, TemplateDefinition } from "@/lib/types";
 import { getInvitationUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { withVisitSource } from "@/lib/visit-source";
 
-const galleryImages = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
+const galleryImages = ["/assets/brand/hero-luxury.png", "", ""];
 
 function cleanInviteImage(value?: string | null) {
   const url = normalizeInternalAssetUrl(value);

@@ -15,7 +15,7 @@ import { normalizeInternalAssetUrl } from "./utils";
 const maxGalleryImageBytes = 3 * 1024 * 1024;
 const maxRawGalleryImageBytes = 80 * 1024 * 1024;
 
-export const fallbackInvitationGallery = ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"];
+export const fallbackInvitationGallery = ["/assets/brand/hero-luxury.png", "", ""];
 
 function isExistingImageUrl(value: string) {
   return value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://");

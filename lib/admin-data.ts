@@ -193,7 +193,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     venue: row.venue,
     city: row.city || "",
     mapUrl: row.mapUrl || "",
-    heroPhoto: (heroPhoto && isBrowserDisplayImageUrl(heroPhoto) ? heroPhoto : "") || gallery[0] || "/assets/invite/badr-sarah-1.jpeg",
+    heroPhoto: (heroPhoto && isBrowserDisplayImageUrl(heroPhoto) ? heroPhoto : "") || gallery[0] || "/assets/brand/hero-luxury.png",
     heroVideoUrl: cleanInvitationHeroVideoUrl(row.heroVideoUrl || rawTexts.heroVideoUrl) || undefined,
     gallery,
     musicUrl: row.musicUrl || undefined,

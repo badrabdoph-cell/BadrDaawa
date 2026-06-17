@@ -696,10 +696,10 @@ export function OrderForm({
     if (showValidationErrors(stepErrors)) return false;
     if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
     if (stepId === "photos") {
-      const savedImages = draftImageUrls.some((url) => url);
-      if (!savedImages) {
+      const savedImages = draftImageUrls.filter((url) => url).length;
+      if (savedImages < 2) {
         setState("error");
-        setMessage("ارفع صورة واحدة على الأقل للمتابعة.");
+        setMessage(`ارفع صورتين على الأقل للمتابعة (${savedImages} من 2).`);
         return false;
       }
     }
@@ -1490,9 +1490,9 @@ export function OrderForm({
 
     try {
       const orderImages = await getOrderImageDataUrls(formData);
-      if (orderImages.length === 0) {
+      if (orderImages.length < 2) {
         setState("error");
-        setMessage("ارفع صورة واحدة على الأقل للدعوة.");
+        setMessage(`ارفع صورتين على الأقل للدعوة (${orderImages.length} من 2).`);
         return;
       }
       if (selectedRawImageCount(formData) > orderImages.length) {
@@ -2016,7 +2016,7 @@ export function OrderForm({
                   : form.musicChoice === "upload" ? "ملف MP3"
                   : form.musicChoice === "video" ? "صوت من فيديو"
                   : "رابط أغنية";
-                const imagesIncomplete = previewImageUrls.length < 3;
+                const imagesIncomplete = previewImageUrls.length < 2;
                 const imageLabel = imagesIncomplete ? `⚠️ ${previewImageUrls.length} من 3` : `${previewImageUrls.length} من 3`;
                 return [
                   ["القالب", selectedTemplate.arabicName, 0],

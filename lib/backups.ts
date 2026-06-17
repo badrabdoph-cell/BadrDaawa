@@ -753,6 +753,60 @@ export async function getBackupRuntimeStatus(): Promise<BackupRuntimeStatus> {
   };
 }
 
+export type ScheduledBackupInfo = {
+  lastScheduled: {
+    createdAt: string;
+    status: string;
+    fileName: string | null;
+  } | null;
+  lastScheduledSuccess: {
+    createdAt: string;
+    status: string;
+    fileName: string | null;
+  } | null;
+  recentScheduled: Array<{
+    createdAt: string;
+    status: string;
+    fileName: string | null;
+  }>;
+  nextScheduledAt: string | null;
+};
+
+export async function getScheduledBackupInfo(): Promise<ScheduledBackupInfo> {
+  noStore();
+  if (!prisma) {
+    return { lastScheduled: null, lastScheduledSuccess: null, recentScheduled: [], nextScheduledAt: null };
+  }
+  const [lastScheduled, lastScheduledSuccess, recentScheduled] = await Promise.all([
+    prisma.backupJob
+      .findFirst({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" } })
+      .catch(() => null),
+    prisma.backupJob
+      .findFirst({ where: { type: "scheduled", status: "SUCCESS" }, orderBy: { createdAt: "desc" } })
+      .catch(() => null),
+    prisma.backupJob
+      .findMany({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" }, take: 5 })
+      .catch(() => []),
+  ]);
+  const nextScheduledAt = lastScheduled?.finishedAt
+    ? new Date(lastScheduled.finishedAt.getTime() + 3 * 60 * 60 * 1000).toISOString()
+    : null;
+  return {
+    lastScheduled: lastScheduled
+      ? { createdAt: lastScheduled.createdAt.toISOString(), status: lastScheduled.status, fileName: lastScheduled.fileName }
+      : null,
+    lastScheduledSuccess: lastScheduledSuccess
+      ? { createdAt: lastScheduledSuccess.createdAt.toISOString(), status: lastScheduledSuccess.status, fileName: lastScheduledSuccess.fileName }
+      : null,
+    recentScheduled: recentScheduled.map((job) => ({
+      createdAt: job.createdAt.toISOString(),
+      status: job.status,
+      fileName: job.fileName,
+    })),
+    nextScheduledAt,
+  };
+}
+
 export async function verifyBackupNow(): Promise<BackupVerificationResult> {
   noStore();
   const startedAt = new Date();
