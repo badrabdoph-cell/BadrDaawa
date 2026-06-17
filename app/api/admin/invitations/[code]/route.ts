@@ -25,7 +25,7 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-async function updateDatabaseInvitation(code: string, action: string, customSlug?: string, disabledReason?: string, disabledBy?: string) {
+async function updateDatabaseInvitation(code: string, action: string, customSlug?: string, disabledReason?: string) {
   if (!prisma) return false;
 
   try {
@@ -50,7 +50,7 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     if (action === "disable") {
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
-        data: { disabledAt: new Date(), disabledReason: disabledReason || null, disabledBy: disabledBy || null },
+        data: { disabledAt: new Date(), disabledReason: disabledReason || null },
       });
       return result.count > 0;
     }
@@ -58,7 +58,7 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     if (action === "enable") {
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
-        data: { disabledAt: null, disabledReason: null, disabledBy: null },
+        data: { disabledAt: null, disabledReason: null },
       });
       return result.count > 0;
     }
@@ -167,8 +167,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return redirectBack(request, "database");
   }
 
-  const disabledBy = action === "disable" ? await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || undefined : undefined;
-  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug, action === "disable" ? disabledReason : undefined, disabledBy);
+  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug, action === "disable" ? disabledReason : undefined);
   const changed = updatedDatabase;
 
   if (changed) {
