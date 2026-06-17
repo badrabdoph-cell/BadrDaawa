@@ -29,9 +29,7 @@ function stopAudio(audio: HTMLAudioElement | null) {
 export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
   const pathname = usePathname();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const mutedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [needsGesture, setNeedsGesture] = useState(false);
   const cleanMusicUrl = typeof musicUrl === "string" ? musicUrl.trim() : "";
   const enabledPath = isMusicEnabledPath(pathname);
@@ -45,7 +43,7 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     }
 
     activeInviteAudio = audio;
-    audio.muted = mutedRef.current;
+    audio.muted = false;
     audio.volume = 1;
 
     try {
@@ -60,9 +58,12 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     }
   }, []);
 
-  useEffect(() => {
-    mutedRef.current = isMuted;
-  }, [isMuted]);
+  const pause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    setIsPlaying(false);
+  }, []);
 
   useEffect(() => {
     if (!cleanMusicUrl || !enabledPath) {
@@ -75,8 +76,9 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     const audio = audioRef.current;
     if (!audio) return;
     audio.loop = true;
-    audio.preload = "metadata";
+    audio.preload = "auto";
     audio.setAttribute("playsinline", "");
+    audio.load();
 
     const onPlay = () => {
       setNeedsGesture(false);
@@ -106,11 +108,20 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     function stopOnLeave() {
       stopAudio(audio);
     }
+    function onVisibilityChange() {
+      if (document.hidden) {
+        const currentAudio = audioRef.current;
+        if (currentAudio && !currentAudio.paused) {
+          pause();
+        }
+      }
+    }
 
     window.addEventListener(inviteOpenedEventName, playAfterOpening);
     window.addEventListener("pointerdown", playAfterGesture, { passive: true });
     window.addEventListener("keydown", playAfterGesture);
     window.addEventListener("pagehide", stopOnLeave);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     void play();
 
     return () => {
@@ -118,39 +129,34 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
       window.removeEventListener("pointerdown", playAfterGesture);
       window.removeEventListener("keydown", playAfterGesture);
       window.removeEventListener("pagehide", stopOnLeave);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
       stopAudio(audio);
     };
-  }, [cleanMusicUrl, enabledPath, pathname, play]);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.muted = isMuted;
-  }, [isMuted]);
+  }, [cleanMusicUrl, enabledPath, pathname, play, pause]);
 
   if (!cleanMusicUrl || !enabledPath) return null;
 
   return (
     <div className="music-control" aria-live="polite">
-      <audio ref={audioRef} src={cleanMusicUrl} loop preload="metadata" playsInline />
+      <audio ref={audioRef} src={cleanMusicUrl} loop preload="auto" playsInline />
       <button
-        className={["music-button", needsGesture ? "attention" : "", isPlaying && !isMuted ? "playing" : ""].filter(Boolean).join(" ")}
+        className={["music-button", needsGesture ? "attention" : "", isPlaying ? "playing" : ""].filter(Boolean).join(" ")}
         type="button"
         onClick={() => {
           const audio = audioRef.current;
           if (!audio || audio.paused || needsGesture) {
-            mutedRef.current = false;
-            setIsMuted(false);
             void play();
             return;
           }
-          setIsMuted((current) => !current);
+          pause();
         }}
-        title={isMuted || !isPlaying ? "تشغيل الموسيقى" : "كتم الموسيقى"}
-        aria-label={isMuted || !isPlaying ? "تشغيل الموسيقى" : "كتم الموسيقى"}
+        title={!isPlaying ? "تشغيل الموسيقى" : "إيقاف الموسيقى"}
+        aria-label={!isPlaying ? "تشغيل الموسيقى" : "إيقاف الموسيقى"}
       >
-        {isMuted || !isPlaying ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        {!isPlaying ? <VolumeX size={18} /> : <Volume2 size={18} />}
       </button>
     </div>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, UsersRound, X } from "lucide-react";
 
 const adminSections = [
   {
@@ -84,6 +84,7 @@ const adminSections = [
     icon: Settings,
     links: [
       { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
+      { href: "/admin/photographer-logo", label: "شعار المصور", icon: Camera },
       { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
       { href: "/admin/monitoring", label: "مركز مراقبة النظام", icon: Activity },
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },

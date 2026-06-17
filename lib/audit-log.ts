@@ -22,7 +22,8 @@ export type AuditAction =
   | "cleanup.database.delete"
   | "cleanup.storage.delete"
   | "github.sync"
-  | "backup.restore";
+  | "backup.restore"
+  | "photographer-logo.bulk-update";
 
 export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GuestBookMessage" | "Cleanup" | "GitHubSync" | "Backup";
 
@@ -259,4 +260,5 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "cleanup.storage.delete": "تنظيف التخزين",
   "github.sync": "مزامنة GitHub",
   "backup.restore": "استعادة Backup",
+  "photographer-logo.bulk-update": "تحديث شعار المصور",
 };

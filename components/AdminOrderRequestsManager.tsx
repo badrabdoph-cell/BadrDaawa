@@ -217,6 +217,7 @@ function payloadFromFormState(form: OrderFormState, action: "review" | "update" 
       facebookUrl: form.photographerFacebookUrl,
       instagramUrl: form.photographerInstagramUrl,
       whatsappUrl: form.photographerWhatsappUrl,
+      _logoSource: form.photographerLogo.url ? "custom" : "global",
     },
     rejectionReason: form.rejectionReason,
   };

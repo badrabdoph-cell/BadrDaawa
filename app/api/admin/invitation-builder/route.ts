@@ -88,10 +88,24 @@ async function resolvePhotographer(payload: BuilderPayload) {
   const input = payload.photographer;
   if (!input?.enabled) return { enabled: false, name: "", logoUrl: "", facebookUrl: "", instagramUrl: "", description: "", whatsappUrl: "" };
 
-  const hadCustomLogo = Boolean(input.logoDataUrl || (input.logoUrl && input._logoSource !== "global"));
-
   const logoGallery = input.logoDataUrl ? await saveInvitationGalleryImages([input.logoDataUrl]) : [];
-  const resolvedLogoUrl = logoGallery[0] || (hadCustomLogo ? cleanText(input.logoUrl) : "");
+
+  let resolvedLogoUrl: string;
+  let logoSource: "global" | "custom";
+
+  if (logoGallery[0]) {
+    resolvedLogoUrl = logoGallery[0];
+    logoSource = "custom";
+  } else if (input._logoSource === "global") {
+    resolvedLogoUrl = cleanText(input.logoUrl) || "";
+    logoSource = "global";
+  } else if (cleanText(input.logoUrl)) {
+    resolvedLogoUrl = cleanText(input.logoUrl);
+    logoSource = "custom";
+  } else {
+    resolvedLogoUrl = "";
+    logoSource = "global";
+  }
 
   return {
     enabled: true,
@@ -101,7 +115,7 @@ async function resolvePhotographer(payload: BuilderPayload) {
     facebookUrl: cleanUrl(input.facebookUrl) || "https://www.facebook.com/",
     instagramUrl: cleanUrl(input.instagramUrl) || "https://www.instagram.com/",
     whatsappUrl: cleanUrl(input.whatsappUrl) || "",
-    _logoSource: hadCustomLogo ? "custom" : "global",
+    _logoSource: logoSource,
   };
 }
 

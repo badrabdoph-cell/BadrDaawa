@@ -77,7 +77,7 @@ export function AudioPlayer({
         ref={audioRef}
         src={cleanSrc}
         loop={loop}
-        preload="none"
+        preload="auto"
         playsInline
         onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || 0)}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime || 0)}

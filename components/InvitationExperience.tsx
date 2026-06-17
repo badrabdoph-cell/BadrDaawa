@@ -75,7 +75,7 @@ function InviteHeroMedia({
   strength?: string;
 }) {
   if (videoUrl) {
-    return <video className={["invite-hero-video", className].filter(Boolean).join(" ")} src={videoUrl} poster={image} muted loop playsInline autoPlay preload="metadata" data-invite-parallax data-invite-parallax-strength={strength} />;
+    return <video className={["invite-hero-video", className].filter(Boolean).join(" ")} src={videoUrl} poster={image} muted loop playsInline autoPlay preload="auto" data-invite-parallax data-invite-parallax-strength={strength} />;
   }
   if (!canUseOptimizedImage(image)) {
     return <img className={className || undefined} src={image} alt={alt} loading="lazy" decoding="async" data-invite-parallax data-invite-parallax-strength={strength} />;

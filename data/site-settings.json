@@ -29,7 +29,8 @@
     "defaultName": "Badr Abdo Ph",
     "defaultFacebookUrl": "https://www.facebook.com/badrabdophoto",
     "defaultInstagramUrl": "https://www.instagram.com/badr_abdo_ph",
-    "showPhotographerCard": true
+    "showPhotographerCard": true,
+    "defaultLogoUrl": ""
   },
   "contactPhones": [
     "01038434472"

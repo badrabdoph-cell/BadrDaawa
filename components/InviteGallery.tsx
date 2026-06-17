@@ -76,7 +76,7 @@ export function InviteGallery({ images, locale = "ar", className = "", label, al
         return (
           <figure className={figureClassName} key={`${image}-${index}`}>
             {videoUrl ? (
-              <video className="invite-hero-video" src={videoUrl} poster={image} muted loop playsInline autoPlay preload="metadata" data-invite-parallax data-invite-parallax-strength="0.72" />
+              <video className="invite-hero-video" src={videoUrl} poster={image} muted loop playsInline autoPlay preload="auto" data-invite-parallax data-invite-parallax-strength="0.72" />
             ) : canUseOptimizedImage(image) ? (
               <Image
                 src={image}

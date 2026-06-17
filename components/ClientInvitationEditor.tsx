@@ -407,6 +407,7 @@ export function ClientInvitationEditor({
         logoDataUrl: "",
         facebookUrl: photographerFacebookUrl,
         instagramUrl: photographerInstagramUrl,
+        _logoSource: photographerLogo.previewUrl ? "custom" : "global",
       },
       }),
     });
