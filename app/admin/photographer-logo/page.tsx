@@ -1,4 +1,5 @@
-import { Camera, CheckCircle2, Image, RefreshCw, Save, UsersRound, XCircle } from "lucide-react";
+import { Camera, Save } from "lucide-react";
+import { PhotographerBulkUpdate } from "@/components/PhotographerBulkUpdate";
 import { PhotographerLogoUploader } from "@/components/PhotographerLogoUploader";
 import { getSiteSettings } from "@/lib/site-settings";
 import { prisma } from "@/lib/db";
@@ -90,13 +91,9 @@ export default async function AdminPhotographerLogoPage({
   }
 
   const hasInvitations = invitations.length > 0;
-  const customCount = invitations.filter((inv) => inv.hasCustomLogo).length;
-  const defaultCount = invitations.filter((inv) => !inv.hasCustomLogo).length;
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('DOMContentLoaded',function(){var sa=document.getElementById('select-all');sa&&sa.addEventListener('change',function(){document.querySelectorAll('.inv-select').forEach(function(i){i.checked=sa.checked})})})" }} />
-
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Photographer Logo</span>
@@ -151,78 +148,7 @@ export default async function AdminPhotographerLogoPage({
       </form>
 
       {hasInvitations ? (
-        <>
-          <div className="admin-metrics-grid" style={{ marginBottom: 16 }}>
-            <div className="admin-metric-card">
-              <UsersRound size={20} />
-              <span>إجمالي الدعوات مع المصور</span>
-              <strong>{invitations.length}</strong>
-            </div>
-            <div className="admin-metric-card">
-              <CheckCircle2 size={20} />
-              <span>شعار افتراضي</span>
-              <strong>{defaultCount}</strong>
-            </div>
-            <div className="admin-metric-card">
-              <XCircle size={20} />
-              <span>شعار مخصص</span>
-              <strong>{customCount}</strong>
-            </div>
-          </div>
-
-          <form action="/api/admin/photographer-logo" method="post">
-            <input type="hidden" name="mode" value="update-selected" />
-            <article className="panel" style={{ marginBottom: 16 }}>
-              <div className="admin-card-head" style={{ marginBottom: 14 }}>
-                <Image size={22} />
-                <div>
-                  <span className="eyebrow">Bulk Update</span>
-                  <h2>تحديث الدعوات الحالية</h2>
-                  <p>اختر الدعوات التي تريد تحديثها بالشعار والبيانات الافتراضية الجديدة.</p>
-                </div>
-              </div>
-              <div className="admin-order-list">
-                <div className="admin-order-item" style={{ fontWeight: 600, background: "rgba(245,234,214,0.04)", borderBottom: "1px solid rgba(245,234,214,0.1)" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flex: "0 0 auto" }}>
-                    <input id="select-all" type="checkbox" />
-                    <small>الكل</small>
-                  </label>
-                  <span style={{ flex: 1 }}><strong>اسم العروسين</strong></span>
-                  <small style={{ flex: "0 0 90px", textAlign: "center" }}>الحالة</small>
-                  <small style={{ flex: "0 0 70px", textAlign: "center" }}>الشعار</small>
-                </div>
-                {invitations.map((inv) => (
-                  <div className="admin-order-item" key={inv.code}>
-                    <label style={{ display: "flex", alignItems: "center", flex: "0 0 auto", cursor: "pointer" }}>
-                      <input type="checkbox" name="codes" value={inv.code} className="inv-select" defaultChecked />
-                    </label>
-                    <span>
-                      <strong>{inv.groomName} و {inv.brideName}</strong>
-                      <small>كود: {inv.code}</small>
-                    </span>
-                    <em className={`status ${inv.status === "ACTIVE" ? "success" : "neutral"}`} style={{ flex: "0 0 90px", textAlign: "center" }}>
-                      {inv.status === "ACTIVE" ? "منشورة" : "مسودة"}
-                    </em>
-                    {inv.logoUrl ? (
-                      <img src={inv.logoUrl} alt="شعار" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.08)", flex: "0 0 36px" }} />
-                    ) : (
-                      <Camera size={18} style={{ opacity: 0.3, flex: "0 0 36px" }} />
-                    )}
-                    <em className={`status ${inv.hasCustomLogo ? "warning" : "success"}`} style={{ flex: "0 0 70px", textAlign: "center" }}>
-                      {inv.hasCustomLogo ? "مخصص" : "افتراضي"}
-                    </em>
-                  </div>
-                ))}
-              </div>
-              <div className="button-row" style={{ marginTop: 16 }}>
-                <button className="btn btn-gold btn-glow" type="submit">
-                  <RefreshCw size={18} />
-                  تحديث المحدد
-                </button>
-              </div>
-            </article>
-          </form>
-        </>
+        <PhotographerBulkUpdate invitations={invitations} />
       ) : (
         <div className="admin-empty-state compact">
           <Camera size={32} />
