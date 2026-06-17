@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { XCircle } from "lucide-react";
 import { DisabledInvitationNotice } from "@/components/DisabledInvitationNotice";
 import { DynamicPageView } from "@/components/DynamicPageView";
 import { InvitationExperience } from "@/components/InvitationExperience";
@@ -10,7 +12,7 @@ import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
 import { getMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
-import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
+import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
@@ -49,6 +51,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       robots: { index: false, follow: false },
     };
   }
+  const rejectedOrder = await getRejectedOrderByInvitationCode(code);
+  if (rejectedOrder) {
+    return {
+      title: "تم رفض الدعوة",
+      description: "تم رفض طلب الدعوة من الإدارة.",
+      robots: { index: false, follow: false },
+    };
+  }
   const page = await getDynamicPageBySlug(code);
   if (page) return getDynamicPageMetadata(page);
   return getMissingInvitationSeoMetadata();
@@ -62,6 +72,28 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
       return <PendingInvitationNotice code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} />;
+    }
+    const rejectedOrder = await getRejectedOrderByInvitationCode(code);
+    if (rejectedOrder) {
+      return (
+        <main className="pending-invitation-page" dir="rtl">
+          <section className="pending-invitation-card">
+            <XCircle size={44} aria-hidden="true" style={{ margin: "0 auto 12px", color: "#dc2626" }} />
+            <span className="eyebrow">تم الرفض</span>
+            <h1>تم رفض طلب الدعوة</h1>
+            <p>للأسف، تم رفض طلب الدعوة من الإدارة. للاستفسار، تواصل مع فريق الدعم.</p>
+            {rejectedOrder.rejectionReason ? (
+              <div className="rejection-reason-box" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: 12, padding: "12px 18px", margin: "8px auto", maxWidth: 420, fontSize: "0.92rem", textAlign: "center" }}>
+                <strong>سبب الرفض:</strong>
+                <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.8)" }}>{rejectedOrder.rejectionReason}</p>
+              </div>
+            ) : null}
+            <Link className="btn btn-gold" href="/" style={{ marginTop: 16 }}>
+              العودة للرئيسية
+            </Link>
+          </section>
+        </main>
+      );
     }
     const page = await getDynamicPageBySlug(code);
     if (page) return <DynamicPageView page={page} />;
