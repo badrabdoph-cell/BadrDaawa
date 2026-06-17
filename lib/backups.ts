@@ -578,16 +578,46 @@ export async function listBackupSnapshots() {
       }),
   );
   const sorted = summaries.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-  if (!prisma || !sorted.length) return sorted;
+  if (!prisma) return sorted;
 
-  const jobs = await prisma.backupJob.findMany({
-    where: {
-      fileName: {
-        in: sorted.map((summary) => summary.fileName),
+  const localFileNames = new Set(sorted.map((s) => s.fileName));
+  const localFileNameList = sorted.length ? sorted.map((s) => s.fileName) : [""];
+
+  const [jobs, orphanJobs] = await Promise.all([
+    prisma.backupJob.findMany({
+      where: { fileName: { in: localFileNameList } },
+      orderBy: { createdAt: "desc" },
+    }).catch(() => []),
+    prisma.backupJob.findMany({
+      where: {
+        status: "SUCCESS",
+        fileName: { not: null },
+        NOT: { fileName: { in: localFileNameList } },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  }).catch(() => []);
+      orderBy: { createdAt: "desc" },
+    }).catch(() => []),
+  ]);
+
+  const orphanSummaries = orphanJobs
+    .filter((j) => j.fileName && !localFileNames.has(j.fileName))
+    .map((job) => toBackupSummary(
+      job.fileName!,
+      Number(job.sizeBytes) || 0,
+      job.createdAt.toISOString(),
+      "database",
+      0,
+      "SUCCESS",
+      {
+        verified: Boolean(job.githubSha && job.githubUrl),
+        commitSha: job.githubSha,
+        fileUrl: job.githubUrl,
+        repoPath: null,
+      },
+    ));
+
+  const merged = [...sorted, ...orphanSummaries]
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
   const jobByFileName = new Map<string, (typeof jobs)[number]>();
   for (const job of jobs) {
     if (job.fileName && !jobByFileName.has(job.fileName)) {
@@ -595,7 +625,7 @@ export async function listBackupSnapshots() {
     }
   }
 
-  return sorted.map((summary) => {
+  return merged.map((summary) => {
     const job = jobByFileName.get(summary.fileName);
     if (!job) return summary;
     return {
