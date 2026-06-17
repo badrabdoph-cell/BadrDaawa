@@ -6,7 +6,6 @@ import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
 import { uploadRuntimeBackupToGitHub } from "./github-sync";
 import { parseJsonFileIfSafe } from "./json-file-safety";
-import { isProjectContentAppSettingKey } from "./project-content-store";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
 import { listUploadFiles, readUploadFile } from "./storage-provider";
 
@@ -171,7 +170,7 @@ async function readDatabaseMetadata() {
       guests,
       orders,
       analyticsEvents,
-      nonProjectAppSettings,
+      appSettingsCount,
       guestBookMessages,
       coupleMessagesSettings,
       checkIns,
@@ -181,6 +180,8 @@ async function readDatabaseMetadata() {
       auditLogs,
       backupJobs,
       syncLogs,
+      dynamicPages,
+      weddingTemplates,
     ] = await Promise.all([
       prisma.adminUser.count(),
       prisma.customer.count(),
@@ -188,7 +189,7 @@ async function readDatabaseMetadata() {
       prisma.guestRsvp.count(),
       prisma.orderRequest.count(),
       prisma.analyticsEvent.count(),
-      prisma.appSetting.count({ where: { key: { notIn: projectContentAppSettingKeys() } } }),
+      prisma.appSetting.count(),
       prisma.guestBookMessage.count(),
       prisma.coupleMessagesSetting.count(),
       prisma.invitationCheckIn.count(),
@@ -198,6 +199,8 @@ async function readDatabaseMetadata() {
       prisma.auditLog.count(),
       prisma.backupJob.count(),
       prisma.syncLog.count(),
+      prisma.dynamicPage.count(),
+      prisma.weddingTemplate.count(),
     ]);
     return {
       counts: {
@@ -207,7 +210,7 @@ async function readDatabaseMetadata() {
         guestRsvp: guests,
         orders,
         analyticsEvents,
-        nonProjectAppSettings,
+        appSettings: appSettingsCount,
         guestBookMessages,
         coupleMessagesSettings,
         checkIns,
@@ -217,6 +220,8 @@ async function readDatabaseMetadata() {
         auditLogs,
         backupJobs,
         syncLogs,
+        dynamicPages,
+        weddingTemplates,
       },
     };
   } catch (error) {
@@ -225,45 +230,49 @@ async function readDatabaseMetadata() {
   }
 }
 
-function projectContentAppSettingKeys() {
-  return [
-    "project-content:site-settings",
-    "project-content:home-content",
-    "project-content:home-preview-settings",
-    "project-content:template-settings",
-    "project-content:template-preview-info",
-    "project-content:templates-preview-music",
-    "project-content:music-library",
-    "project-content:legal-pages",
-    "project-content:message-templates",
-    "project-content:content-presets",
-    "project-content:custom-templates",
-  ];
-}
-
 async function readRuntimeDataSnapshot() {
   if (!prisma) throw new Error("DATABASE_URL is required to create a Runtime Data backup.");
 
-  const appSettings = await prisma.appSetting.findMany();
-  const nonProjectAppSettings = appSettings.filter((setting) => !isProjectContentAppSettingKey(setting.key));
+  const [appSettings, adminUsers, customers, invitations, guestRsvps, orderRequests, analyticsEvents, guestBookMessages, coupleMessagesSettings, clientMessages, invitationCheckIns, weddingLiveModes, internalNotes, auditLogs, backupJobs, syncLogs, dynamicPages, weddingTemplates] = await Promise.all([
+    prisma.appSetting.findMany({ orderBy: { key: "asc" } }),
+    prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.customer.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.invitation.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.guestRsvp.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.orderRequest.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.analyticsEvent.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.guestBookMessage.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.coupleMessagesSetting.findMany({ orderBy: { updatedAt: "asc" } }),
+    prisma.clientMessage.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.invitationCheckIn.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.weddingLiveMode.findMany({ orderBy: { updatedAt: "asc" } }),
+    prisma.internalNote.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.auditLog.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.backupJob.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.syncLog.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.dynamicPage.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.weddingTemplate.findMany({ orderBy: { createdAt: "asc" } }),
+  ]);
 
   return {
-    adminUsers: await prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } }),
-    customers: await prisma.customer.findMany({ orderBy: { createdAt: "asc" } }),
-    invitations: await prisma.invitation.findMany({ orderBy: { createdAt: "asc" } }),
-    guestRsvps: await prisma.guestRsvp.findMany({ orderBy: { createdAt: "asc" } }),
-    orderRequests: await prisma.orderRequest.findMany({ orderBy: { createdAt: "asc" } }),
-    analyticsEvents: await prisma.analyticsEvent.findMany({ orderBy: { createdAt: "asc" } }),
-    appSettings: nonProjectAppSettings,
-    guestBookMessages: await prisma.guestBookMessage.findMany({ orderBy: { createdAt: "asc" } }),
-    coupleMessagesSettings: await prisma.coupleMessagesSetting.findMany({ orderBy: { updatedAt: "asc" } }),
-    clientMessages: await prisma.clientMessage.findMany({ orderBy: { createdAt: "asc" } }),
-    invitationCheckIns: await prisma.invitationCheckIn.findMany({ orderBy: { createdAt: "asc" } }),
-    weddingLiveModes: await prisma.weddingLiveMode.findMany({ orderBy: { updatedAt: "asc" } }),
-    internalNotes: await prisma.internalNote.findMany({ orderBy: { createdAt: "asc" } }),
-    auditLogs: await prisma.auditLog.findMany({ orderBy: { createdAt: "asc" } }),
-    backupJobs: await prisma.backupJob.findMany({ orderBy: { createdAt: "asc" } }),
-    syncLogs: await prisma.syncLog.findMany({ orderBy: { createdAt: "asc" } }),
+    adminUsers,
+    customers,
+    invitations,
+    guestRsvps,
+    orderRequests,
+    analyticsEvents,
+    appSettings,
+    guestBookMessages,
+    coupleMessagesSettings,
+    clientMessages,
+    invitationCheckIns,
+    weddingLiveModes,
+    internalNotes,
+    auditLogs,
+    backupJobs,
+    syncLogs,
+    dynamicPages,
+    weddingTemplates,
   };
 }
 
@@ -395,8 +404,8 @@ export async function createBackupSnapshot(type = "manual") {
       metadata: {
         database,
         classification: {
-          included: "Runtime Data and customer uploads only",
-          excluded: "Project Content, code, templates, base site assets, and project music",
+          included: "All PostgreSQL tables + file uploads",
+          excluded: "Code and base site assets only",
         },
         runtimeTables: Object.fromEntries(Object.entries(runtimeData).map(([table, rows]) => [table, rows.length])),
         uploads: {
@@ -857,6 +866,8 @@ function restoreTableOrder(): string[] {
   return [
     "adminUsers",
     "customers",
+    "weddingTemplates",
+    "dynamicPages",
     "invitations",
     "orderRequests",
     "guestRsvps",
@@ -890,6 +901,8 @@ function deleteTableOrder(): string[] {
     "guestRsvps",
     "orderRequests",
     "invitations",
+    "weddingTemplates",
+    "dynamicPages",
     "customers",
     "adminUsers",
   ];
@@ -913,6 +926,8 @@ function prismaModelForTable(table: string) {
     auditLogs: prisma?.auditLog,
     backupJobs: prisma?.backupJob,
     syncLogs: prisma?.syncLog,
+    dynamicPages: prisma?.dynamicPage,
+    weddingTemplates: prisma?.weddingTemplate,
   };
   return map[table];
 }
@@ -938,6 +953,151 @@ async function insertTableData(table: string, rows: unknown[]): Promise<number> 
   return inserted;
 }
 
+type V1Payload = {
+  version: number;
+  database?: Record<string, unknown[]>;
+  dataFiles?: Record<string, unknown>;
+  uploads?: Array<Record<string, unknown>>;
+};
+
+function normalizeV1Payload(v1: V1Payload): { runtimeData: Record<string, unknown[]>; uploads: Array<Record<string, unknown>> } {
+  const db = v1.database ?? {};
+  const dataFiles = v1.dataFiles ?? {};
+  const runtimeData: Record<string, unknown[]> = {};
+  const now = new Date().toISOString();
+
+  runtimeData.customers = (db.customers as Record<string, unknown>[]) ?? [];
+  runtimeData.analyticsEvents = (db.analyticsEvents as Record<string, unknown>[]) ?? [];
+  runtimeData.backupJobs = (db.backupJobs as Record<string, unknown>[]) ?? [];
+
+  const templates = (db.templates as Record<string, unknown>[]) ?? [];
+  runtimeData.weddingTemplates = templates.map((t) => ({
+    ...t,
+    category: t.category ?? "migrated",
+    style: t.style ?? "classic",
+    concept: t.concept ?? "",
+    opening: t.opening ?? "",
+    layout: t.layout ?? "",
+    typography: t.typography ?? "",
+    palette: t.palette ?? {},
+    previewUrl: t.previewUrl ?? "",
+    createdAt: t.createdAt ?? now,
+    updatedAt: t.updatedAt ?? now,
+  }));
+
+  const customers = runtimeData.customers as Record<string, unknown>[];
+  type Rec = Record<string, unknown>;
+  const firstCustomerId = (customers[0]?.id as string) ?? "v1-migration-customer";
+  const firstTemplateId = ((runtimeData.weddingTemplates[0] as Rec)?.id as string) ?? "v1-migration-template";
+
+  const invitations = (db.invitations as Record<string, unknown>[]) ?? [];
+  runtimeData.invitations = invitations.map((inv) => ({
+    ...inv,
+    weddingTime: inv.weddingTime ?? "",
+    customerId: inv.customerId ?? firstCustomerId,
+    templateId: inv.templateId ?? firstTemplateId,
+    language: inv.language ?? "ar",
+    city: inv.city ?? null,
+    mapUrl: inv.mapUrl ?? null,
+    manageToken: inv.manageToken ?? null,
+    manageTokenExpiresAt: inv.manageTokenExpiresAt ?? null,
+    qrCodeUrl: inv.qrCodeUrl ?? null,
+    viewCount: inv.viewCount ?? 0,
+    deletedAt: inv.deletedAt ?? null,
+  }));
+
+  const orders = (db.orders as Record<string, unknown>[]) ?? [];
+  runtimeData.orderRequests = orders.map((o) => ({
+    ...o,
+    weddingDate: o.weddingDate ?? o.submittedAt ?? o.createdAt ?? now,
+    venue: o.venue ?? "",
+    orderNumber: o.orderNumber ?? null,
+    dedupeKey: o.dedupeKey ?? null,
+    mapUrl: o.mapUrl ?? null,
+    notes: o.notes ?? null,
+    rejectionReason: o.rejectionReason ?? null,
+    publishedInvitationCode: o.publishedInvitationCode ?? null,
+    manageToken: o.manageToken ?? null,
+    manageTokenExpiresAt: o.manageTokenExpiresAt ?? null,
+    language: o.language ?? "ar",
+    templateId: o.templateId ?? null,
+    customerId: o.customerId ?? null,
+    deletedAt: o.deletedAt ?? null,
+    submittedAt: o.submittedAt ?? o.createdAt ?? now,
+  }));
+
+  const invitationByCode: Record<string, string> = {};
+  for (const inv of runtimeData.invitations as Record<string, unknown>[]) {
+    if (inv.code) invitationByCode[inv.code as string] = inv.id as string;
+  }
+  const guests = (db.guests as Record<string, unknown>[]) ?? [];
+  runtimeData.guestRsvps = guests.map((g) => ({
+    ...g,
+    attendees: g.attendees ?? 1,
+    note: g.note ?? null,
+    ipHash: g.ipHash ?? null,
+    userAgent: g.userAgent ?? null,
+    invitationId: g.invitationId
+      ? (g.invitationId as string)
+      : g.invitationCode
+        ? (invitationByCode[g.invitationCode as string] ?? "v1-missing-invitation")
+        : "v1-missing-invitation",
+  }));
+
+  const auditItems = dataFiles["audit-log.json"];
+  if (Array.isArray(auditItems)) {
+    runtimeData.auditLogs = (auditItems as Record<string, unknown>[]).map((a) => ({
+      id: a.id,
+      createdAt: a.createdAt ?? now,
+      actorType: (a.actor as Record<string, unknown>)?.type ?? "unknown",
+      actorId: (a.actor as Record<string, unknown>)?.id ?? null,
+      actorLabel: (a.actor as Record<string, unknown>)?.label ?? "Unknown",
+      action: a.action,
+      entityType: (a.entity as Record<string, unknown>)?.type ?? "Unknown",
+      entityId: (a.entity as Record<string, unknown>)?.id ?? "",
+      entityLabel: (a.entity as Record<string, unknown>)?.label ?? null,
+      oldValues: a.oldValues ?? null,
+      newValues: a.newValues ?? null,
+      metadata: a.metadata ?? null,
+    }));
+  }
+
+  const gbData = dataFiles["guest-book.json"] as Record<string, unknown> | undefined;
+  const messages = Array.isArray(gbData?.messages) ? (gbData.messages as Record<string, unknown>[]) : [];
+  if (messages.length > 0) {
+    runtimeData.guestBookMessages = messages.map((m) => ({
+      ...m,
+      updatedAt: m.updatedAt ?? m.createdAt ?? now,
+      reviewedAt: m.reviewedAt ?? null,
+    }));
+  }
+
+  const projectContentMap: Record<string, string> = {
+    "home-content.json": "project-content:home-content",
+    "music-library.json": "project-content:music-library",
+    "template-settings.json": "project-content:template-settings",
+    "templates-preview-music.json": "project-content:templates-preview-music",
+  };
+  const appSettings: Record<string, unknown>[] = [];
+  for (const [fileName, appSettingKey] of Object.entries(projectContentMap)) {
+    const value = (dataFiles as Record<string, unknown>)[fileName];
+    if (value !== undefined && value !== null) {
+      appSettings.push({
+        key: appSettingKey,
+        value: JSON.parse(JSON.stringify(value)),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+  runtimeData.appSettings = appSettings;
+
+  return {
+    runtimeData,
+    uploads: (v1.uploads ?? []) as Array<Record<string, unknown>>,
+  };
+}
+
 export async function restoreFromBackup(fileName: string): Promise<RestoreResult> {
   noStore();
   const startedAt = Date.now();
@@ -956,15 +1116,28 @@ export async function restoreFromBackup(fileName: string): Promise<RestoreResult
     return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Backup file not found on disk. It may only exist on GitHub — download it first." };
   }
 
-  const safe = await parseJsonFileIfSafe<{
-    runtimeData?: Record<string, unknown[]>;
-    uploads?: Array<{ key?: string; relativePath?: string; base64?: string; contentType?: string; [k: string]: unknown }>;
-  }>(filePath, fileName, maxBackupSummaryBytes);
+  const safe = await parseJsonFileIfSafe<Record<string, unknown>>(filePath, fileName, maxBackupSummaryBytes);
   if (!safe.value) {
     return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: safe.skipped ? "Backup file is too large." : "Backup file is not valid JSON." };
   }
 
-  const { runtimeData, uploads } = safe.value;
+  const { version, database } = safe.value;
+  const isV1 = version === 1 && database && typeof database === "object";
+
+  let runtimeData: Record<string, unknown[]> | undefined;
+  let uploads: Array<Record<string, unknown>> | undefined;
+
+  if (isV1) {
+    console.log(`[Restore] Detected version 1 backup — normalizing to version 2 format.`);
+    const normalized = normalizeV1Payload(safe.value as V1Payload);
+    runtimeData = normalized.runtimeData;
+    uploads = normalized.uploads;
+  } else {
+    const v = safe.value as { runtimeData?: Record<string, unknown[]>; uploads?: Array<Record<string, unknown>> };
+    runtimeData = v.runtimeData;
+    uploads = v.uploads;
+  }
+
   if (!runtimeData || typeof runtimeData !== "object") {
     return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Backup file does not contain runtimeData." };
   }
@@ -1002,13 +1175,15 @@ export async function restoreFromBackup(fileName: string): Promise<RestoreResult
     if (Array.isArray(uploads) && uploads.length > 0) {
       const { writeUploadFile } = await import("./storage-provider");
       for (const upload of uploads) {
-        if (!upload.base64 || !upload.relativePath) continue;
+        const b64 = upload.base64 as string | undefined;
+        const rp = upload.relativePath as string | undefined;
+        if (!b64 || !rp) continue;
         try {
-          const bytes = Buffer.from(upload.base64, "base64");
-          await writeUploadFile(upload.relativePath, bytes, upload.contentType);
+          const bytes = Buffer.from(b64, "base64");
+          await writeUploadFile(rp, bytes, upload.contentType as string | undefined);
           uploadsRestored++;
         } catch (uploadError) {
-          console.error(`[Restore] Failed to restore upload: ${upload.relativePath}`, uploadError);
+          console.error(`[Restore] Failed to restore upload: ${rp}`, uploadError);
         }
       }
     }
