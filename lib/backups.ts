@@ -843,6 +843,200 @@ export async function verifyBackupNow(): Promise<BackupVerificationResult> {
   }
 }
 
+export type RestoreResult = {
+  ok: boolean;
+  fileName: string;
+  itemsRestored: number;
+  uploadsRestored: number;
+  steps: Array<{ table: string; deleted: number; inserted: number }>;
+  durationMs: number;
+  error: string | null;
+};
+
+function restoreTableOrder(): string[] {
+  return [
+    "adminUsers",
+    "customers",
+    "invitations",
+    "orderRequests",
+    "guestRsvps",
+    "analyticsEvents",
+    "appSettings",
+    "guestBookMessages",
+    "coupleMessagesSettings",
+    "clientMessages",
+    "invitationCheckIns",
+    "weddingLiveModes",
+    "internalNotes",
+    "auditLogs",
+    "backupJobs",
+    "syncLogs",
+  ];
+}
+
+function deleteTableOrder(): string[] {
+  return [
+    "syncLogs",
+    "backupJobs",
+    "auditLogs",
+    "internalNotes",
+    "weddingLiveModes",
+    "invitationCheckIns",
+    "clientMessages",
+    "coupleMessagesSettings",
+    "guestBookMessages",
+    "appSettings",
+    "analyticsEvents",
+    "guestRsvps",
+    "orderRequests",
+    "invitations",
+    "customers",
+    "adminUsers",
+  ];
+}
+
+function prismaModelForTable(table: string) {
+  const map: Record<string, unknown> = {
+    adminUsers: prisma?.adminUser,
+    customers: prisma?.customer,
+    invitations: prisma?.invitation,
+    guestRsvps: prisma?.guestRsvp,
+    orderRequests: prisma?.orderRequest,
+    analyticsEvents: prisma?.analyticsEvent,
+    appSettings: prisma?.appSetting,
+    guestBookMessages: prisma?.guestBookMessage,
+    coupleMessagesSettings: prisma?.coupleMessagesSetting,
+    clientMessages: prisma?.clientMessage,
+    invitationCheckIns: prisma?.invitationCheckIn,
+    weddingLiveModes: prisma?.weddingLiveMode,
+    internalNotes: prisma?.internalNote,
+    auditLogs: prisma?.auditLog,
+    backupJobs: prisma?.backupJob,
+    syncLogs: prisma?.syncLog,
+  };
+  return map[table];
+}
+
+async function deleteTableData(table: string): Promise<number> {
+  const model = prismaModelForTable(table) as { deleteMany: () => Promise<{ count: number }> } | undefined;
+  if (!model?.deleteMany) return 0;
+  const result = await model.deleteMany();
+  return result.count;
+}
+
+async function insertTableData(table: string, rows: unknown[]): Promise<number> {
+  if (!rows.length) return 0;
+  const model = prismaModelForTable(table) as { createMany: (args: { data: unknown[] }) => Promise<{ count: number }> } | undefined;
+  if (!model?.createMany) return 0;
+  const BATCH_SIZE = 500;
+  let inserted = 0;
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const result = await model.createMany({ data: batch });
+    inserted += result.count;
+  }
+  return inserted;
+}
+
+export async function restoreFromBackup(fileName: string): Promise<RestoreResult> {
+  noStore();
+  const startedAt = Date.now();
+  const steps: RestoreResult["steps"] = [];
+
+  if (!/^[a-z0-9-]+\.json$/i.test(fileName)) {
+    return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Invalid file name." };
+  }
+
+  const filePath = path.join(backupDir, fileName);
+  if (!filePath.startsWith(backupDir)) {
+    return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Invalid file path." };
+  }
+
+  if (!(await exists(filePath))) {
+    return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Backup file not found on disk. It may only exist on GitHub — download it first." };
+  }
+
+  const safe = await parseJsonFileIfSafe<{
+    runtimeData?: Record<string, unknown[]>;
+    uploads?: Array<{ key?: string; relativePath?: string; base64?: string; contentType?: string; [k: string]: unknown }>;
+  }>(filePath, fileName, maxBackupSummaryBytes);
+  if (!safe.value) {
+    return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: safe.skipped ? "Backup file is too large." : "Backup file is not valid JSON." };
+  }
+
+  const { runtimeData, uploads } = safe.value;
+  if (!runtimeData || typeof runtimeData !== "object") {
+    return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Backup file does not contain runtimeData." };
+  }
+
+  if (!prisma) {
+    return { ok: false, fileName, itemsRestored: 0, uploadsRestored: 0, steps, durationMs: Date.now() - startedAt, error: "Database is not available." };
+  }
+
+  try {
+    // Step 1: Delete all runtime data in FK-safe order
+    const deleteOrder = deleteTableOrder();
+    for (const table of deleteOrder) {
+      const data = runtimeData[table];
+      if (!data) continue;
+      const deleted = await deleteTableData(table);
+      steps.push({ table, deleted, inserted: 0 });
+    }
+
+    // Step 2: Insert runtime data from backup in FK-safe order
+    const insertOrder = restoreTableOrder();
+    for (const table of insertOrder) {
+      const rows = runtimeData[table];
+      if (!rows || !rows.length) continue;
+      const inserted = await insertTableData(table, rows);
+      const existingStep = steps.find((s) => s.table === table);
+      if (existingStep) {
+        existingStep.inserted = inserted;
+      } else {
+        steps.push({ table, deleted: 0, inserted });
+      }
+    }
+
+    // Step 3: Restore upload files
+    let uploadsRestored = 0;
+    if (Array.isArray(uploads) && uploads.length > 0) {
+      const { writeUploadFile } = await import("./storage-provider");
+      for (const upload of uploads) {
+        if (!upload.base64 || !upload.relativePath) continue;
+        try {
+          const bytes = Buffer.from(upload.base64, "base64");
+          await writeUploadFile(upload.relativePath, bytes, upload.contentType);
+          uploadsRestored++;
+        } catch (uploadError) {
+          console.error(`[Restore] Failed to restore upload: ${upload.relativePath}`, uploadError);
+        }
+      }
+    }
+
+    const itemsRestored = steps.reduce((sum, s) => sum + s.inserted, 0);
+    return {
+      ok: true,
+      fileName,
+      itemsRestored,
+      uploadsRestored,
+      steps,
+      durationMs: Date.now() - startedAt,
+      error: null,
+    };
+  } catch (error) {
+    const message = toErrorMessage(error);
+    return {
+      ok: false,
+      fileName,
+      itemsRestored: steps.reduce((sum, s) => sum + s.inserted, 0),
+      uploadsRestored: 0,
+      steps,
+      durationMs: Date.now() - startedAt,
+      error: message,
+    };
+  }
+}
+
 export async function getBackupDiagnostics(): Promise<BackupDiagnostics> {
   noStore();
   const backups = await listBackupSnapshots().catch(() => []);

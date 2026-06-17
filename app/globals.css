@@ -7909,6 +7909,141 @@ img {
   color: rgba(255, 247, 232, 0.42);
 }
 
+.restore-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.restore-result-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(480px, 100%);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid rgba(243, 207, 115, 0.16);
+  border-radius: 18px;
+  background: #1a1d20;
+  color: #fff7e8;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.restore-result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.restore-result-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.restore-result-close {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 247, 232, 0.5);
+  cursor: pointer;
+}
+
+.restore-result-close:hover {
+  color: #fff7e8;
+  background: rgba(255, 247, 232, 0.08);
+}
+
+.restore-icon-success {
+  color: #4caf87;
+}
+
+.restore-icon-error {
+  color: #d9534f;
+}
+
+.restore-result-summary {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(76, 175, 135, 0.1);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.restore-result-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(217, 83, 79, 0.1);
+  color: #f5a5a2;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.restore-result-error svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #d9534f;
+}
+
+.restore-result-steps {
+  display: grid;
+  gap: 6px;
+}
+
+.restore-step-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 248, 234, 0.04);
+  font-size: 0.85rem;
+}
+
+.restore-step-label {
+  font-weight: 700;
+  color: rgba(255, 247, 232, 0.8);
+}
+
+.restore-step-counts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  direction: ltr;
+}
+
+.restore-step-deleted {
+  color: #d9534f;
+  font-weight: 700;
+}
+
+.restore-step-arrow {
+  color: rgba(255, 247, 232, 0.3);
+  font-weight: 700;
+}
+
+.restore-step-inserted {
+  color: #4caf87;
+  font-weight: 700;
+}
+
+.restore-result-reload {
+  text-align: center;
+  color: rgba(255, 247, 232, 0.5);
+  font-size: 0.82rem;
+}
+
 .recent-edit-status-grid {
   margin-top: 0;
 }

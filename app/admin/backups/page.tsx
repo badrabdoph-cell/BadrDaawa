@@ -1,6 +1,7 @@
 import { Archive, CloudDownload, DatabaseBackup, FileJson, ShieldCheck } from "lucide-react";
 import { getBackupRuntimeStatus, listBackupSnapshots } from "@/lib/backups";
 import { VerifyBackupButton } from "./VerifyBackupButton";
+import { RestoreBackupButton } from "./RestoreBackupButton";
 
 export const dynamic = "force-dynamic";
 
@@ -56,9 +57,7 @@ export default async function BackupsPage({
           تم إنشاء النسخة: <strong>{params.created}</strong>
         </div>
       ) : null}
-      {params.error === "manual-restore-only" ? (
-        <div className="notice danger">الاستعادة داخل التطبيق متوقفة. الاستعادة تتم يدوياً فقط عبر PostgreSQL بعد اختيار ملف backup مقصود.</div>
-      ) : params.error === "create" ? (
+      {params.error === "create" ? (
         <div className="notice danger">فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL وإمكانية الوصول إلى Storage.</div>
       ) : null}
 
@@ -183,7 +182,7 @@ export default async function BackupsPage({
       <section id="backup-restore" className="admin-tab-section" aria-label="استعادة النسخ الاحتياطية">
         <div className="backup-sync-note">
           <ShieldCheck size={18} />
-          <span>Backups للRecovery فقط. لا توجد استعادة تلقائية أو استعادة من GitHub داخل التطبيق. الاستعادة اليدوية تتم خارج التطبيق باستخدام `scripts/restore-postgres-backup.mjs` على قاعدة PostgreSQL المقصودة.</span>
+          <span>اختر نسخة من الجدول أدناه واضغط على زر الاستعادة. سيتم حذف جميع البيانات الحالية (العملاء، الدعوات، الحجوزات، الإحصائيات، إلخ) واستبدالها ببيانات النسخة. لتفعيل الاستعادة، يجب تعيين المتغير البيئي <code>ALLOW_DESTRUCTIVE_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL</code>.</span>
         </div>
       </section>
 
@@ -220,6 +219,7 @@ export default async function BackupsPage({
                       <a className="btn btn-soft btn-icon" href={`/api/admin/backups/${backup.fileName}`} title="تحميل">
                         <CloudDownload size={17} />
                       </a>
+                      <RestoreBackupButton fileName={backup.fileName} />
                     </div>
                   </td>
                 </tr>
