@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { DisabledInvitationNotice } from "@/components/DisabledInvitationNotice";
 import { DynamicPageView } from "@/components/DynamicPageView";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
@@ -30,7 +31,16 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { code } = await params;
   const invitation = await getCachedInvitationByCode(code);
-  if (invitation) return getInvitationSeoMetadata(invitation);
+  if (invitation) {
+    if (invitation.disabledAt || invitation.disabledReason) {
+      return {
+        title: "الدعوة معطلة",
+        description: "تم تعطيل هذه الدعوة من الإدارة.",
+        robots: { index: false, follow: false },
+      };
+    }
+    return getInvitationSeoMetadata(invitation);
+  }
   const pendingOrder = await getPendingOrderByInvitationCode(code);
   if (pendingOrder) {
     return {
@@ -58,6 +68,13 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     notFound();
   }
 
+  if (invitation.disabledAt || invitation.disabledReason) {
+    if (invitation.customSlug && code !== invitation.customSlug) {
+      redirect(`/${invitation.customSlug}`);
+    }
+    const siteSettings = await getSiteSettings();
+    return <DisabledInvitationNotice reason={invitation.disabledReason} whatsappUrl={siteSettings.whatsappUrl} />;
+  }
   if (!invitation.isActive) {
     notFound();
   }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { Archive, CalendarDays, Eye, Filter, Search, Settings2, Sparkles, Trash2, UserCheck } from "lucide-react";
+import { Archive, CalendarDays, Eye, Filter, Search, Settings2, ShieldAlert, Sparkles, Trash2, UserCheck } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { AdminInvitationSingleDelete } from "@/components/AdminInvitationActions";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
@@ -34,7 +34,8 @@ function isExpiredInvitation(weddingDate: string) {
   return date.getTime() < Date.now();
 }
 
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string }) {
+function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string }) {
+  if (invitation.disabledAt) return "disabled";
   if (invitation.status === "archived") return "archived";
   if (invitation.status === "paused" || !invitation.isActive) return "paused";
   if (isExpiredInvitation(invitation.weddingDate)) return "expired";
@@ -46,6 +47,7 @@ function stateLabel(state: string) {
   if (state === "paused") return "متوقفة";
   if (state === "expired") return "منتهية";
   if (state === "archived") return "مؤرشفة";
+  if (state === "disabled") return "معطلة";
   return "كل الحالات";
 }
 
@@ -99,6 +101,7 @@ export default async function InvitationsPage({
     });
   const activeCount = invitations.filter((invitation) => getInvitationState(invitation) === "active").length;
   const pausedCount = invitations.filter((invitation) => getInvitationState(invitation) === "paused").length;
+  const disabledCount = invitations.filter((invitation) => getInvitationState(invitation) === "disabled").length;
   const expiredCount = invitations.filter((invitation) => getInvitationState(invitation) === "expired").length;
   const archivedCount = invitations.filter((invitation) => getInvitationState(invitation) === "archived").length;
   const totalViews = invitations.reduce((sum, invitation) => sum + invitation.views, 0);
@@ -112,6 +115,8 @@ export default async function InvitationsPage({
     invalid: "الإجراء غير صالح.",
     "custom-slug": "تم تحديث رابط الدعوة المخصص.",
     "custom-url-error": params.message || "تعذر حفظ الرابط المخصص.",
+    disable: "تم تعطيل الدعوة.",
+    enable: "تم إعادة تفعيل الدعوة.",
   };
   const noteMessages: Record<string, string> = {
     created: "تمت إضافة الملاحظة الداخلية.",
@@ -169,6 +174,11 @@ export default async function InvitationsPage({
           <span>متوقفة</span>
           <strong>{formatArabicNumber(pausedCount)}</strong>
         </div>
+        <div className="admin-list-stat danger">
+          <ShieldAlert size={19} />
+          <span>معطلة</span>
+          <strong>{formatArabicNumber(disabledCount)}</strong>
+        </div>
         <div className="admin-list-stat">
           <CalendarDays size={19} />
           <span>منتهية</span>
@@ -197,6 +207,7 @@ export default async function InvitationsPage({
             <option value="all">كل الحالات</option>
             <option value="active">نشطة</option>
             <option value="paused">متوقفة</option>
+            <option value="disabled">معطلة</option>
             <option value="expired">منتهية</option>
             <option value="archived">مؤرشفة</option>
           </select>

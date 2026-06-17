@@ -12200,6 +12200,25 @@ img {
   font-weight: 700;
 }
 
+.pending-invitation-card .disabled-reason {
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(198, 58, 58, 0.07);
+  color: #7a2020;
+  font-weight: 600;
+  line-height: 1.7;
+  width: 100%;
+}
+
+.pending-invitation-card .disabled-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 6px;
+  width: 100%;
+}
+
 .admin-loading {
   display: grid;
   gap: 18px;
@@ -27306,6 +27325,60 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 .btn-danger:disabled {
   background: #fecaca;
   border-color: #fca5a5;
+}
+
+.admin-disable-form {
+  width: 100%;
+}
+
+.admin-disable-form summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-disable-form summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-disable-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid rgba(198, 58, 58, 0.2);
+  border-radius: 12px;
+  background: rgba(198, 58, 58, 0.04);
+}
+
+.admin-disable-form-body textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.disabled-info-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(198, 58, 58, 0.25);
+  border-radius: 12px;
+  background: rgba(198, 58, 58, 0.06);
+}
+
+.disabled-info-box p {
+  margin: 0;
+  font-weight: 600;
+  color: #7a2020;
+  line-height: 1.7;
 }
 
 /* Table enhancements */

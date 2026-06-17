@@ -25,7 +25,7 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-async function updateDatabaseInvitation(code: string, action: string, customSlug?: string) {
+async function updateDatabaseInvitation(code: string, action: string, customSlug?: string, disabledReason?: string) {
   if (!prisma) return false;
 
   try {
@@ -43,6 +43,22 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
         data: { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE" },
+      });
+      return result.count > 0;
+    }
+
+    if (action === "disable") {
+      const result = await prisma.invitation.updateMany({
+        where: { code, deletedAt: null },
+        data: { disabledAt: new Date(), disabledReason: disabledReason || null },
+      });
+      return result.count > 0;
+    }
+
+    if (action === "enable") {
+      const result = await prisma.invitation.updateMany({
+        where: { code, deletedAt: null },
+        data: { disabledAt: null, disabledReason: null },
       });
       return result.count > 0;
     }
@@ -96,19 +112,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   
   let action: string;
   let customSlug = "";
+  let disabledReason = "";
   
   if (jsonMode) {
-    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string } | null;
+    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string; disabledReason?: string } | null;
     if (!body) return jsonMode ? jsonError("بيانات غير صالحة.") : redirectBack(request, "invalid");
     action = (body.action || "").trim();
     customSlug = body.customSlug || "";
+    disabledReason = body.disabledReason || "";
   } else {
     const formData = await request.formData();
     action = String(formData.get("action") || "").trim();
     customSlug = String(formData.get("customSlug") || "").trim();
+    disabledReason = String(formData.get("disabledReason") || "").trim();
   }
 
-  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete"].includes(action)) {
+  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete", "disable", "enable"].includes(action)) {
     return redirectBack(request, "invalid");
   }
 
@@ -148,7 +167,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return redirectBack(request, "database");
   }
 
-  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug);
+  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug, action === "disable" ? disabledReason : undefined);
   const changed = updatedDatabase;
 
   if (changed) {
@@ -160,10 +179,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     safeRevalidatePath(`/${code}/ad_3399`);
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
-      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "custom-slug" ? "invitation.update" : "invitation.resume",
+      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "disable" ? "invitation.disable" : action === "enable" ? "invitation.enable" : action === "custom-slug" ? "invitation.update" : "invitation.resume",
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
-      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
+      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : action === "disable" ? { disabledAt: new Date().toISOString(), disabledReason } : action === "enable" ? { disabledAt: null, disabledReason: null } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
       metadata: { storage: "database" },
     });
   }

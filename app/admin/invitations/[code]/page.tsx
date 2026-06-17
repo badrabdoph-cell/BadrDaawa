@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Archive, CalendarDays, CheckCircle2, Copy, Eye, ExternalLink, Link2, Music2, Pause, Play, Settings2, StickyNote, Trash2, UserCheck, UsersRound } from "lucide-react";
+import { Archive, CalendarDays, CheckCircle2, Copy, Eye, ExternalLink, Link2, Music2, Pause, Play, Settings2, ShieldAlert, StickyNote, Trash2, UserCheck, UsersRound } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
@@ -259,6 +259,31 @@ export default async function AdminInvitationDetailsPage({
               <strong>{invitation.weddingTime || "غير محدد"}</strong>
             </div>
           </div>
+          {invitation.disabledAt ? (
+            <div className="disabled-info-box">
+              <span className="status danger">معطلة</span>
+              {invitation.disabledReason ? <p>{invitation.disabledReason}</p> : null}
+              <form action={`/api/admin/invitations/${invitation.code}`} method="post">
+                <button className="btn btn-soft" name="action" value="enable" type="submit">
+                  <Play size={17} />
+                  إعادة تفعيل الدعوة
+                </button>
+              </form>
+            </div>
+          ) : (
+            <details className="admin-disable-form">
+              <summary className="btn btn-soft danger-button">
+                <ShieldAlert size={17} />
+                تعطيل الدعوة
+              </summary>
+              <form action={`/api/admin/invitations/${invitation.code}`} method="post" className="admin-disable-form-body">
+                <textarea name="disabledReason" rows={3} placeholder="سبب التعطيل (سيظهر للزائرين)" required />
+                <button className="btn btn-danger" name="action" value="disable" type="submit">
+                  تأكيد التعطيل
+                </button>
+              </form>
+            </details>
+          )}
           <div className="invitation-detail-actions">
             <FavoriteToggleButton
               entityType="invitation"

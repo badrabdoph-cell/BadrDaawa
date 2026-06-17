@@ -41,6 +41,8 @@ type AdminInvitationRow = {
   photographer?: unknown;
   status?: string;
   isActive?: boolean;
+  disabledAt?: Date | string | null;
+  disabledReason?: string | null;
   viewCount?: number;
   views?: number;
   customerId: string;
@@ -201,6 +203,8 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer),
     isActive: row.status ? row.status === "ACTIVE" : Boolean(row.isActive),
+    disabledAt: row.disabledAt instanceof Date ? row.disabledAt.toISOString() : row.disabledAt || undefined,
+    disabledReason: row.disabledReason || undefined,
     views: row.viewCount ?? row.views ?? 0,
     customerId: row.customerId,
   };

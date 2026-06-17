@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { CheckCircle2, Download, MessageCircle, UserCheck, UsersRound } from "lucide-react";
+import { AdminMessagesBanner } from "@/components/AdminMessagesBanner";
 import { notFound, redirect } from "next/navigation";
 import { ClientInvitationEditor } from "@/components/ClientInvitationEditor";
 import { ClientShareTools } from "@/components/ClientShareTools";
 import { ClientWeddingLiveModePanel } from "@/components/ClientWeddingLiveModePanel";
 import { CustomerAnalyticsPanel } from "@/components/CustomerAnalyticsPanel";
 import { CustomerGuestBookPanel } from "@/components/CustomerGuestBookPanel";
-import { CustomerMessagesPanel } from "@/components/CustomerMessagesPanel";
 import { GuestTable } from "@/components/GuestTable";
 import { InvitationQrTools } from "@/components/InvitationQrTools";
 import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
@@ -78,7 +78,6 @@ export default async function CustomerAdminPage({
   const publicSlug = invitation.customSlug || invitation.code;
   const url = `${getPublicSiteUrl(requestHeaders).replace(/\/$/, "")}/${publicSlug}`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`يسعدنا دعوتكم لحضور حفل زفاف ${invitation.groomName} و ${invitation.brideName}\n${url}`)}`;
-  const unreadClientMessages = clientMessages.filter((message) => !message.readAt).length;
   const guestBookPending = guestBookMessages.filter((message) => message.status === "pending").length;
   const responseTotal = analytics.confirmedResponses + analytics.declinedResponses;
   const guestMessagesTotal = guestBookMessages.length;
@@ -176,15 +175,110 @@ export default async function CustomerAdminPage({
         .customer-admin-refresh .guest-book-status-pill {
           filter: saturate(0.78);
         }
+        .customer-admin-refresh .admin-messages-banner {
+          position: relative;
+          width: min(1120px, calc(100% - 28px));
+          margin: 0 auto 18px;
+          border: 1px solid rgba(185, 135, 56, 0.3);
+          border-radius: 22px;
+          background: linear-gradient(135deg, rgba(255, 248, 235, 0.95), rgba(255, 241, 215, 0.92));
+          box-shadow: 0 10px 28px rgba(46, 33, 19, 0.08);
+          padding: 16px 20px;
+        }
+        .customer-admin-refresh .admin-messages-banner-head {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 12px;
+          color: var(--client-gold-deep);
+          font-weight: 700;
+          font-size: 0.95rem;
+        }
+        .customer-admin-refresh .admin-messages-banner-head strong {
+          margin-inline-start: auto;
+          font-size: 0.82rem;
+          background: rgba(185, 135, 56, 0.15);
+          padding: 3px 12px;
+          border-radius: 40px;
+        }
+        .customer-admin-refresh .admin-messages-banner-dismiss {
+          position: absolute;
+          top: 12px;
+          inset-inline-end: 14px;
+          background: none;
+          border: none;
+          color: var(--client-muted);
+          cursor: pointer;
+          padding: 4px;
+          line-height: 1;
+        }
+        .customer-admin-refresh .admin-messages-banner-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .customer-admin-refresh .admin-message-banner-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: 14px;
+          background: rgba(255, 253, 248, 0.78);
+          border: 1px solid rgba(126, 88, 35, 0.1);
+        }
+        .customer-admin-refresh .admin-message-banner-card.unread {
+          border-color: rgba(185, 135, 56, 0.3);
+          background: rgba(255, 253, 248, 0.95);
+        }
+        .customer-admin-refresh .admin-message-banner-icon {
+          flex-shrink: 0;
+          margin-top: 2px;
+          color: var(--client-gold);
+        }
+        .customer-admin-refresh .admin-message-banner-body {
+          flex: 1;
+          min-width: 0;
+        }
+        .customer-admin-refresh .admin-message-banner-title {
+          font-weight: 700;
+          font-size: 0.88rem;
+          color: var(--client-ink);
+        }
+        .customer-admin-refresh .admin-message-banner-body p {
+          margin: 2px 0 0;
+          font-size: 0.82rem;
+          color: var(--client-muted);
+          line-height: 1.5;
+        }
+        .customer-admin-refresh .admin-message-banner-body time {
+          display: block;
+          font-size: 0.72rem;
+          color: var(--client-muted);
+          margin-top: 4px;
+          opacity: 0.7;
+        }
+        .customer-admin-refresh .admin-message-banner-mark {
+          flex-shrink: 0;
+          background: rgba(185, 135, 56, 0.12);
+          border: none;
+          color: var(--client-gold-deep);
+          cursor: pointer;
+          padding: 6px 8px;
+          border-radius: 40px;
+          font-size: 0.78rem;
+          line-height: 1;
+          transition: background 0.15s;
+        }
+        .customer-admin-refresh .admin-message-banner-mark:hover {
+          background: rgba(185, 135, 56, 0.22);
+        }
         @media (max-width: 720px) {
           .customer-admin-refresh .customer-mobile-stats,
           .customer-admin-refresh .customer-priority-panel,
           .customer-admin-refresh .customer-mobile-section,
-          .customer-admin-refresh .customer-editor-accordions {
+          .customer-admin-refresh .customer-editor-accordions,
+          .customer-admin-refresh .admin-messages-banner {
             width: min(100% - 18px, 1120px);
-          }
-          .customer-admin-refresh .customer-mobile-stats {
-            grid-template-columns: 1fr;
           }
           .customer-admin-refresh .customer-mobile-stats article {
             min-height: 96px;
@@ -195,6 +289,8 @@ export default async function CustomerAdminPage({
           }
         }
       `}</style>
+
+      <AdminMessagesBanner invitationCode={invitation.code} messages={clientMessages} />
 
       <section className="customer-mobile-stats" aria-label="ملخص الدعوة">
         <article>
@@ -305,11 +401,6 @@ export default async function CustomerAdminPage({
               </a>
             </div>
           </article>
-        </details>
-        <details className="customer-admin-accordion">
-          <summary>رسائل الإدارة</summary>
-          <div className="customer-accordion-count">{formatArabicNumber(unreadClientMessages)} رسالة جديدة من الإدارة</div>
-          <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
         </details>
         <details className="customer-admin-accordion">
           <summary>إحصائيات الدعوة</summary>

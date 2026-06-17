@@ -27,6 +27,8 @@ type DatabaseInvitation = {
   texts?: unknown;
   photographer?: unknown;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
+  disabledAt: Date | null;
+  disabledReason: string | null;
   viewCount: number;
   customerId: string;
   template: {
@@ -121,7 +123,9 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     musicEnabled: invitation.musicEnabled === true || (invitation.musicEnabled == null && Boolean(invitation.musicUrl)),
     texts: normalizeInvitationTexts(invitation.texts),
     photographer: toPhotographer(invitation.photographer),
-    isActive: invitation.status === "ACTIVE",
+    isActive: invitation.status === "ACTIVE" && !invitation.disabledAt,
+    disabledAt: invitation.disabledAt?.toISOString(),
+    disabledReason: invitation.disabledReason || undefined,
     views: invitation.viewCount,
     customerId: invitation.customerId,
   };

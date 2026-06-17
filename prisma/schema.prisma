@@ -118,6 +118,8 @@ model Invitation {
   template    WeddingTemplate   @relation(fields: [templateId], references: [id])
   guests      GuestRsvp[]
   events      AnalyticsEvent[]
+  disabledAt  DateTime?
+  disabledReason String?
   deletedAt   DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
