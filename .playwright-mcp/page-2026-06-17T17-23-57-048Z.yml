@@ -1,0 +1,410 @@
+- generic [ref=e16]:
+  - banner [ref=e18]:
+    - generic [ref=e19]:
+      - link "Railway Logo" [ref=e20] [cursor=pointer]:
+        - /url: /dashboard
+        - img "Railway Logo" [ref=e22]
+      - generic [ref=e25]:
+        - button "surprising-analysis" [ref=e28] [cursor=pointer]:
+          - generic "Badr 2's Projects" [ref=e29]
+          - generic [ref=e31]: surprising-analysis
+          - img [ref=e33]
+        - button "production" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: production
+          - img [ref=e40]
+    - navigation [ref=e42]:
+      - generic [ref=e44]:
+        - button "Toggle activity" [ref=e46] [cursor=pointer]:
+          - img [ref=e48]
+        - button [ref=e50] [cursor=pointer]:
+          - img [ref=e53]
+        - button "Agent" [ref=e56] [cursor=pointer]:
+          - img [ref=e58]
+          - text: Agent
+  - generic [ref=e60]:
+    - navigation "Project navigation" [ref=e61]:
+      - generic [ref=e62]:
+        - link "Architecture" [ref=e65] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e67]
+        - link "Observability" [ref=e73] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/observability?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e75]
+        - link "Logs" [ref=e78] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/logs?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e80]
+        - link "Settings" [ref=e84] [cursor=pointer]:
+          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+          - img [ref=e86]
+      - button [ref=e89] [cursor=pointer]:
+        - generic "Badr 2" [ref=e91]
+    - region [ref=e97]:
+      - generic [ref=e98]:
+        - generic [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e106]:
+              - generic:
+                - img
+                - generic:
+                  - button "easygoing-education Last run failed 26 minutes ago Next in 36 minutes" [ref=e623]:
+                    - generic [ref=e108]:
+                      - link "easygoing-education Last run failed 26 minutes ago" [ref=e613] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/schedule?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e111]:
+                          - img [ref=e113]
+                          - paragraph [ref=e116]: easygoing-education
+                        - generic [ref=e117]:
+                          - img [ref=e119]
+                          - paragraph [ref=e121]:
+                            - text: Last run failed
+                            - time [ref=e122]: 26 minutes ago
+                      - link "Next in 36 minutes" [ref=e624] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/845f1f3b-be90-43c6-aa6b-e87d76c32e30/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e124]:
+                          - img [ref=e126]
+                          - paragraph [ref=e129]:
+                            - text: Next
+                            - time [ref=e131]: in 36 minutes
+                  - button "BadrDaawa daawa.up.railway.app Online 1 badrdaawa-volume-4W1g" [ref=e625]:
+                    - generic [ref=e133]:
+                      - link "BadrDaawa daawa.up.railway.app Online 1" [ref=e626] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e136]:
+                          - img [ref=e138]
+                          - generic [ref=e140]:
+                            - paragraph [ref=e141]: BadrDaawa
+                            - paragraph [ref=e142]: daawa.up.railway.app
+                        - generic [ref=e143]:
+                          - generic [ref=e144]:
+                            - img [ref=e145]
+                            - paragraph [ref=e148]: Online
+                          - generic [ref=e627]:
+                            - img [ref=e629]
+                            - paragraph [ref=e631]: "1"
+                      - link "badrdaawa-volume-4W1g" [ref=e153] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/8ab00a39-f024-4769-b934-3cc1d30a427f/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e155]:
+                          - img [ref=e157]
+                          - paragraph [ref=e159]: badrdaawa-volume-4W1g
+                  - button "Postgres Online postgres-volume" [ref=e160]:
+                    - generic [ref=e161]:
+                      - link "Postgres Online" [ref=e163] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/1b8a489a-5807-4122-9e3b-f440a527568a/database?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - paragraph [ref=e167]: Postgres
+                        - generic [ref=e169]:
+                          - img [ref=e170]
+                          - paragraph [ref=e173]: Online
+                      - link "postgres-volume" [ref=e175] [cursor=pointer]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/volume/ab077c7f-96ba-4347-8192-dd2c10ba428c/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                        - generic [ref=e177]:
+                          - img [ref=e179]
+                          - paragraph [ref=e181]: postgres-volume
+            - toolbar "Canvas options" [ref=e183]:
+              - button "Canvas settings" [ref=e184] [cursor=pointer]:
+                - img [ref=e186]
+              - group "canvas action" [ref=e196]:
+                - button "Zoom in" [ref=e197] [cursor=pointer]:
+                  - img [ref=e199]
+                - button "Zoom out" [ref=e201] [cursor=pointer]:
+                  - img [ref=e203]
+                - button "Center canvas" [ref=e204] [cursor=pointer]:
+                  - img [ref=e206]
+              - group "canvas action" [ref=e211]:
+                - button "Undo" [ref=e212] [cursor=pointer]:
+                  - img [ref=e214]
+                - button "Redo" [ref=e217] [cursor=pointer]:
+                  - img [ref=e219]
+              - button "Visibility layers" [ref=e222] [cursor=pointer]:
+                - img [ref=e224]
+            - img [ref=e226]
+        - generic [ref=e231]:
+          - generic [ref=e232]:
+            - generic [ref=e233]:
+              - generic [ref=e235]:
+                - button [ref=e236] [cursor=pointer]:
+                  - img [ref=e238]
+                - heading "BadrDaawa" [level=1] [ref=e240]:
+                  - button "BadrDaawa" [ref=e241] [cursor=pointer]
+              - link [ref=e243] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - img [ref=e245]
+            - generic [ref=e247]:
+              - link "Deployments" [ref=e248] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e249]: Deployments
+              - link "Backups" [ref=e251] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/backups?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e252]: Backups
+              - link "Variables" [ref=e253] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/variables?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e254]: Variables
+              - link "Metrics" [ref=e255] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/metrics?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e256]: Metrics
+              - link "Console" [ref=e257] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/console?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e258]: Console
+              - link "Settings" [ref=e259] [cursor=pointer]:
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518
+                - generic [ref=e260]: Settings
+          - generic [ref=e263]:
+            - generic [ref=e264]:
+              - generic [ref=e265]:
+                - img [ref=e267]
+                - link "daawa.up.railway.app" [ref=e270] [cursor=pointer]:
+                  - /url: https://daawa.up.railway.app
+              - generic [ref=e271]:
+                - generic [ref=e272]:
+                  - img [ref=e274]
+                  - link "US West" [ref=e277] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-region-config
+                - generic [ref=e278]:
+                  - img [ref=e280]
+                  - link "1 Replica" [ref=e282] [cursor=pointer]:
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b/settings?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518#deploy-region-config
+            - generic [ref=e284]:
+              - 'link "Active fix: gzip backup before GitHub upload + schema drift check + update prune filter for .json.gz 14 minutes ago via GitHub View logs" [ref=e632] [cursor=pointer]':
+                - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=7a40d6c8-057b-4017-98f6-3ef72f96daab#deploy
+                - generic [ref=e287]:
+                  - generic [ref=e289]: Active
+                  - generic [ref=e291]:
+                    - generic "badrabdoph-cell" [ref=e292]
+                    - img [ref=e295]
+                  - generic [ref=e298]:
+                    - paragraph [ref=e299]: "fix: gzip backup before GitHub upload + schema drift check + update prune filter for .json.gz"
+                    - paragraph [ref=e300]:
+                      - time [ref=e301]: 14 minutes ago
+                      - text: via GitHub
+                  - generic [ref=e302]:
+                    - button "Deployment actions" [ref=e303]:
+                      - img [ref=e305]
+                    - link "View logs" [ref=e309]:
+                      - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=7a40d6c8-057b-4017-98f6-3ef72f96daab#deploy
+                      - generic [ref=e310]: View logs
+              - button "Deployment successful" [ref=e313] [cursor=pointer]:
+                - generic [ref=e314]:
+                  - img [ref=e316]
+                  - paragraph [ref=e319]: Deployment successful
+                - img [ref=e321]
+            - generic [ref=e377]:
+              - generic [ref=e378]:
+                - button "History" [expanded] [ref=e379] [cursor=pointer]:
+                  - img [ref=e381]
+                  - paragraph [ref=e383]: History
+                - button "Hide Skipped" [ref=e384] [cursor=pointer]
+              - region "History" [ref=e385]:
+                - generic [ref=e633]:
+                  - 'link "Failed fix: strip uploads from GitHub backup to stay under API size limit 67.9 MB full backup (with base64 uploads) exceeds GitHub''s blob API limit even after gzip. Uploads are stored on Railway volume — no need to sync them to GitHub. Only runtime tables (~200 KB) go to GitHub. - Local backup still includes uploads for full disaster recovery - GitHub backup contains only runtime data + metadata - Gzip compression still applied to GitHub payload - Old full backups on GitHub will be pruned naturally (keepLast: 60) 1 minute ago via GitHub View logs" [ref=e634] [cursor=pointer]':
+                    - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113#details
+                    - generic [ref=e636]:
+                      - generic [ref=e638]: Failed
+                      - generic [ref=e640]:
+                        - generic "badrabdoph-cell" [ref=e641]
+                        - img [ref=e644]
+                      - generic [ref=e647]:
+                        - paragraph [ref=e648]: "fix: strip uploads from GitHub backup to stay under API size limit 67.9 MB full backup (with base64 uploads) exceeds GitHub's blob API limit even after gzip. Uploads are stored on Railway volume — no need to sync them to GitHub. Only runtime tables (~200 KB) go to GitHub. - Local backup still includes uploads for full disaster recovery - GitHub backup contains only runtime data + metadata - Gzip compression still applied to GitHub payload - Old full backups on GitHub will be pruned naturally (keepLast: 60)"
+                        - paragraph [ref=e649]:
+                          - time [ref=e650]: 1 minute ago
+                          - text: via GitHub
+                      - generic [ref=e651]:
+                        - button "Deployment actions" [ref=e652]:
+                          - img [ref=e654]
+                        - link "View logs" [ref=e658]:
+                          - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113#details
+                          - generic [ref=e659]: View logs
+                  - generic [ref=e661]:
+                    - button "Deployment failed during build process (01:25)" [expanded] [ref=e662] [cursor=pointer]:
+                      - generic [ref=e663]:
+                        - generic [ref=e664]:
+                          - img [ref=e666]
+                          - paragraph [ref=e668]: Deployment failed during build process
+                        - paragraph [ref=e669]:
+                          - text: (
+                          - time [ref=e670]: 01:25
+                          - text: )
+                      - img [ref=e672]
+                    - region "Deployment failed during build process (01:25)" [ref=e674]:
+                      - generic [ref=e676]:
+                        - img [ref=e678]
+                        - generic [ref=e680]:
+                          - paragraph [ref=e682]: Initialization
+                          - paragraph [ref=e683]:
+                            - text: (
+                            - time [ref=e684]: 01:25
+                            - text: )
+                      - generic [ref=e685]:
+                        - generic [ref=e686]:
+                          - img [ref=e688]
+                          - generic [ref=e690]:
+                            - paragraph [ref=e692]:
+                              - text: Build
+                              - generic [ref=e693]: › Build image
+                            - paragraph [ref=e694]:
+                              - text: (
+                              - time [ref=e695]: 01:25
+                              - text: )
+                        - paragraph [ref=e698]:
+                          - text: Failed to build an image.
+                          - link "Please check the build logs for more details." [ref=e699] [cursor=pointer]:
+                            - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeea3126-e102-49dc-8654-78f260f65113#build
+                      - generic [ref=e701]:
+                        - img [ref=e703]
+                        - generic [ref=e706]:
+                          - paragraph [ref=e707]: Agent usage limit reached. Raise your limit to diagnose why this deployment failed.
+                          - button "Update limit" [ref=e709] [cursor=pointer]:
+                            - generic [ref=e710]: Update limit
+                      - generic [ref=e712]:
+                        - img [ref=e714]
+                        - generic [ref=e716]:
+                          - paragraph [ref=e718]: Deploy
+                          - paragraph [ref=e719]: Not started
+                      - generic [ref=e721]:
+                        - img [ref=e723]
+                        - generic [ref=e725]:
+                          - paragraph [ref=e727]: Post-deploy
+                          - paragraph [ref=e728]: Not started
+                - link "Removed mnn 30 minutes ago via GitHub View logs" [ref=e617] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=2a2d7823-65a8-40de-ba75-163ee2749ea3
+                  - generic [ref=e389]:
+                    - generic [ref=e391]: Removed
+                    - generic [ref=e393]:
+                      - generic "badrabdoph-cell" [ref=e394]
+                      - img [ref=e397]
+                    - generic [ref=e400]:
+                      - paragraph [ref=e401]: mnn
+                      - paragraph [ref=e402]:
+                        - time [ref=e403]: 30 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e404]:
+                      - button "Deployment actions" [ref=e405]:
+                        - img [ref=e407]
+                      - link "View logs" [ref=e412]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=2a2d7823-65a8-40de-ba75-163ee2749ea3#deploy
+                        - generic [ref=e413]: View logs
+                - link "Removed bbb 34 minutes ago via GitHub View logs" [ref=e618] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=db9d5e5b-fb5e-4fe0-8b67-1e986de75d45
+                  - generic [ref=e417]:
+                    - generic [ref=e419]: Removed
+                    - generic [ref=e421]:
+                      - generic "badrabdoph-cell" [ref=e422]
+                      - img [ref=e425]
+                    - generic [ref=e428]:
+                      - paragraph [ref=e429]: bbb
+                      - paragraph [ref=e430]:
+                        - time [ref=e431]: 34 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e432]:
+                      - button "Deployment actions" [ref=e433]:
+                        - img [ref=e435]
+                      - link "View logs" [ref=e440]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=db9d5e5b-fb5e-4fe0-8b67-1e986de75d45#deploy
+                        - generic [ref=e441]: View logs
+                - link "Removed Create migration.sql 37 minutes ago via GitHub View logs" [ref=e729] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=80b7cb2c-662c-45da-8621-4162556c4eb2
+                  - generic [ref=e445]:
+                    - generic [ref=e447]: Removed
+                    - generic [ref=e449]:
+                      - generic "badrabdoph-cell" [ref=e450]
+                      - img [ref=e453]
+                    - generic [ref=e456]:
+                      - paragraph [ref=e457]: Create migration.sql
+                      - paragraph [ref=e458]:
+                        - time [ref=e459]: 37 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e460]:
+                      - button "Deployment actions" [ref=e461]:
+                        - img [ref=e463]
+                      - link "View logs" [ref=e468]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=80b7cb2c-662c-45da-8621-4162556c4eb2#deploy
+                        - generic [ref=e469]: View logs
+                - link "Removed bbb 42 minutes ago via GitHub View logs" [ref=e730] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=098cea73-e0bb-41d7-aec8-818113284faf
+                  - generic [ref=e473]:
+                    - generic [ref=e475]: Removed
+                    - generic [ref=e477]:
+                      - generic "badrabdoph-cell" [ref=e478]
+                      - img [ref=e481]
+                    - generic [ref=e484]:
+                      - paragraph [ref=e485]: bbb
+                      - paragraph [ref=e486]:
+                        - time [ref=e487]: 42 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e488]:
+                      - button "Deployment actions" [ref=e489]:
+                        - img [ref=e491]
+                      - link "View logs" [ref=e496]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=098cea73-e0bb-41d7-aec8-818113284faf#deploy
+                        - generic [ref=e497]: View logs
+                - link "Removed bbb 51 minutes ago via GitHub View logs" [ref=e731] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=9d96d470-3b95-4c99-9992-f8fd88f9ef7a
+                  - generic [ref=e501]:
+                    - generic [ref=e503]: Removed
+                    - generic [ref=e505]:
+                      - generic "badrabdoph-cell" [ref=e506]
+                      - img [ref=e509]
+                    - generic [ref=e512]:
+                      - paragraph [ref=e513]: bbb
+                      - paragraph [ref=e514]:
+                        - time [ref=e515]: 51 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e516]:
+                      - button "Deployment actions" [ref=e517]:
+                        - img [ref=e519]
+                      - link "View logs" [ref=e524]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=9d96d470-3b95-4c99-9992-f8fd88f9ef7a#deploy
+                        - generic [ref=e525]: View logs
+                - link "Removed Update route.ts 54 minutes ago via GitHub View logs" [ref=e732] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=22499ab4-38ab-4ce3-9b0c-bf117474e636
+                  - generic [ref=e529]:
+                    - generic [ref=e531]: Removed
+                    - generic [ref=e533]:
+                      - generic "badrabdoph-cell" [ref=e534]
+                      - img [ref=e537]
+                    - generic [ref=e540]:
+                      - paragraph [ref=e541]: Update route.ts
+                      - paragraph [ref=e542]:
+                        - time [ref=e543]: 54 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e544]:
+                      - button "Deployment actions" [ref=e545]:
+                        - img [ref=e547]
+                      - link "View logs" [ref=e552]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=22499ab4-38ab-4ce3-9b0c-bf117474e636#deploy
+                        - generic [ref=e553]: View logs
+                - link "Removed Create page-2026-06-17T16-26-50-988Z.yml 56 minutes ago via GitHub View logs" [ref=e733] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeb397d0-0d08-4318-bdaf-cf3e3b2699b9
+                  - generic [ref=e557]:
+                    - generic [ref=e559]: Removed
+                    - generic [ref=e561]:
+                      - generic "badrabdoph-cell" [ref=e562]
+                      - img [ref=e565]
+                    - generic [ref=e568]:
+                      - paragraph [ref=e569]: Create page-2026-06-17T16-26-50-988Z.yml
+                      - paragraph [ref=e570]:
+                        - time [ref=e571]: 56 minutes ago
+                        - text: via GitHub
+                    - generic [ref=e572]:
+                      - button "Deployment actions" [ref=e573]:
+                        - img [ref=e575]
+                      - link "View logs" [ref=e580]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=eeb397d0-0d08-4318-bdaf-cf3e3b2699b9#deploy
+                        - generic [ref=e581]: View logs
+                - link "Removed admin 5 1 hour ago via GitHub View logs" [ref=e582] [cursor=pointer]:
+                  - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=a9287ce0-c1b1-4e28-a256-bcf8270bb7ae
+                  - generic [ref=e585]:
+                    - generic [ref=e587]: Removed
+                    - generic [ref=e589]:
+                      - generic "badrabdoph-cell" [ref=e590]
+                      - img [ref=e593]
+                    - generic [ref=e596]:
+                      - paragraph [ref=e597]: admin 5
+                      - paragraph [ref=e598]:
+                        - time [ref=e599]: 1 hour ago
+                        - text: via GitHub
+                    - generic [ref=e600]:
+                      - button "Deployment actions" [ref=e601]:
+                        - img [ref=e603]
+                      - link "View logs" [ref=e608]:
+                        - /url: /project/44d0bc91-2e93-402a-a715-62e349a23bca/service/39469f38-a279-4dd4-99b1-1ba6a1bc8d4b?environmentId=264aa4a5-08ac-40f2-987f-d1aac0a53518&id=a9287ce0-c1b1-4e28-a256-bcf8270bb7ae#deploy
+                        - generic [ref=e609]: View logs

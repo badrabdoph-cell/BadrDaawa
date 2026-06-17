@@ -424,19 +424,29 @@ export async function createBackupSnapshot(type = "manual") {
     await writeFile(backupPath, json, "utf8");
     await cleanupOldBackups();
 
-    const githubOnlyPayload = {
-      ...payload,
+    const runtimeTables = Object.fromEntries(Object.entries(runtimeData).map(([table, rows]) => [table, rows.length]));
+    const uploadsMeta = {
+      files: uploads.length,
+      bytes: uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0),
+      note: "Uploads excluded from GitHub backup. Stored locally on Railway volume.",
+    };
+    const githubOnlyPayload: Record<string, unknown> = {
+      version: payload.version,
+      type: payload.type,
+      createdAt: payload.createdAt,
+      source: payload.source,
+      app: (payload as Record<string, unknown>).app,
+      retention: (payload as Record<string, unknown>).retention,
+      runtimeData: payload.runtimeData,
       uploads: [],
       metadata: {
-        ...payload.metadata,
+        database,
         classification: {
           included: "Runtime tables only (no uploads to stay under GitHub size limit)",
           excluded: "File uploads — stored locally on Railway volume",
         },
-        uploads: {
-          ...payload.metadata.uploads,
-          note: "Uploads excluded from GitHub backup. Stored locally on Railway volume.",
-        },
+        runtimeTables,
+        uploads: uploadsMeta,
       },
     };
     const githubJson = `${JSON.stringify(githubOnlyPayload, jsonReplacer, 2)}\n`;
