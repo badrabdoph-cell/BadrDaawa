@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Archive, CalendarDays, CheckCircle2, Copy, Eye, ExternalLink, Link2, Music2, Pause, Play, Settings2, ShieldAlert, StickyNote, Trash2, UserCheck, UsersRound } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
+import { CopySuccessButton } from "@/components/CopySuccessButton";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
@@ -356,6 +357,9 @@ export default async function AdminInvitationDetailsPage({
               <strong dir="ltr">{clientAdminUrl}</strong>
               <CopyButton value={clientAdminUrl} label="نسخ" />
             </div>
+          </div>
+          <div className="invitation-success-copy-row">
+            <CopySuccessButton publicUrl={invitationUrl} adminUrl={clientAdminUrl} />
           </div>
           <form className="custom-slug-form invitation-custom-slug-form" action={`/api/admin/invitations/${invitation.code}`} method="post">
             <input type="hidden" name="action" value="custom-slug" />

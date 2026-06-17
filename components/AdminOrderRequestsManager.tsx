@@ -21,6 +21,7 @@ import {
 } from "@/components/AdminInvitationTools";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
+import { CopySuccessButton } from "@/components/CopySuccessButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
@@ -970,6 +971,9 @@ export function AdminOrderRequestsManager({
               <span>رابط إدارة الدعوة</span>
               <strong>{links.adminUrl}</strong>
               <button className="btn btn-soft" type="button" onClick={() => copy(links.adminUrl)}><Copy size={16} /> نسخ</button>
+            </div>
+            <div className="orders-success-copy-row">
+              <CopySuccessButton publicUrl={links.publicUrl} adminUrl={links.adminUrl} />
             </div>
           </div>
         ) : null}

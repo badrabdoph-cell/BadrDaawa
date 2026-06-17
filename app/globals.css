@@ -7103,6 +7103,12 @@ img {
   grid-row: 1 / span 2;
 }
 
+.invitation-success-copy-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
 .invitation-custom-slug-form {
   width: 100%;
   max-width: 620px;
@@ -12209,6 +12215,13 @@ img {
   min-width: 0;
   overflow-wrap: anywhere;
   color: #f7ecd0;
+}
+
+.orders-success-copy-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
 }
 
 .builder-preview-panel {
