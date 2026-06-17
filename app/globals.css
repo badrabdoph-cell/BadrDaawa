@@ -16277,6 +16277,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   place-items: center;
   width: 58px;
   height: 58px;
+  overflow: hidden;
   border: 2px solid rgba(255, 235, 166, 0.8);
   border-radius: 50%;
   background: radial-gradient(circle, #fff6d5, #b48b39 62%, #2b2113);
@@ -18686,6 +18687,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 64px;
   height: 64px;
   flex: 0 0 auto;
+  overflow: hidden;
   border-radius: 50%;
   background: linear-gradient(135deg, #8e6321, #f6d67e);
   color: #110d08;
@@ -19051,6 +19053,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 74px;
   height: 74px;
   margin-bottom: 8px;
+  overflow: hidden;
   border: 1px solid rgba(117, 105, 92, 0.14);
   border-radius: 50%;
   background: #fff;
@@ -19419,6 +19422,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 56px;
   height: 56px;
   flex: 0 0 auto;
+  overflow: hidden;
   border-radius: 50%;
   background: #d4af37;
   color: #1a1a1a;
@@ -20265,6 +20269,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   place-items: center;
   width: 64px;
   height: 64px;
+  overflow: hidden;
   border: 3px solid #2c3b2e;
   border-radius: 999px;
   background: #ffffff;
@@ -20744,6 +20749,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 74px;
   height: 74px;
   margin-bottom: 8px;
+  overflow: hidden;
   border: 1px solid rgba(117, 105, 92, 0.14);
   border-radius: 50%;
   background: #fff;
@@ -24451,6 +24457,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   width: 64px;
   height: 64px;
   flex: 0 0 auto;
+  overflow: hidden;
   border: 1px solid #d4af37;
   border-radius: 999px;
   background: #0a1110;
