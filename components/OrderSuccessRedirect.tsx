@@ -98,7 +98,8 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
   }
 
   function shareWhatsApp() {
-    const text = `*طلب دعوة زفاف*\n\nالرقم: ${payload.orderNumber || "غير محدد"}\nالعروسان: ${payload.groomName || ""} و ${payload.brideName || ""}\nالتاريخ: ${payload.weddingDate || "غير محدد"}\nالقاعة: ${payload.venue || "غير محدد"}\nطريقة الدفع: ${paymentMethodLabel(payload.paymentMethod)}\n\nتم إرسال الطلب بنجاح ✅`;
+    const paymentLine = payload.paymentMethod ? `\nطريقة الدفع: ${paymentMethodLabel(payload.paymentMethod)}` : "";
+    const text = `*طلب دعوة زفاف*\n\nالرقم: ${payload.orderNumber || "غير محدد"}\nالعروسان: ${payload.groomName || ""} و ${payload.brideName || ""}\nالتاريخ: ${payload.weddingDate || "غير محدد"}\nالقاعة: ${payload.venue || "غير محدد"}${paymentLine}\n\nتم إرسال الطلب بنجاح ✅`;
     const encoded = encodeURIComponent(text);
     const waUrl = `https://wa.me/?text=${encoded}`;
     window.open(waUrl, "_blank");
@@ -126,8 +127,8 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
         <div className="order-success-copy">
           <p className="order-success-kicker">تم استلام الطلب</p>
           <h1 id="order-success-title">تم استلام طلبكم بنجاح ❤️</h1>
-          <p>تم إرسال طلب الدعوة وسنتواصل معكم خلال وقت قصير.</p>
-          <p>سيتم فتح واتساب لإكمال التفاصيل وتأكيد الطلب.</p>
+          <p>هيتم تحويلك علي واتساب خدمه العملاء</p>
+          <p>ابعتله نص الايصال ال هتلاقيه جاهز فالشات ✨</p>
         </div>
 
         {payload.orderNumber ? (
@@ -162,12 +163,6 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
               <div className="order-success-detail-row">
                 <span>القاعة</span>
                 <strong>{payload.venue}</strong>
-              </div>
-            ) : null}
-            {payload.paymentMethod ? (
-              <div className="order-success-detail-row">
-                <span>طريقة الدفع</span>
-                <strong>{paymentMethodLabel(payload.paymentMethod)}</strong>
               </div>
             ) : null}
           </div>

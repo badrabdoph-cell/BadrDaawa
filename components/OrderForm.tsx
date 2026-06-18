@@ -512,11 +512,13 @@ export function OrderForm({
   initialDraft,
   templates,
   skipTemplateStep = false,
+  showPaymentMethods = false,
 }: {
   initialTemplate?: string;
   initialDraft?: OrderInitialDraft;
   templates: OrderTemplateOption[];
   skipTemplateStep?: boolean;
+  showPaymentMethods?: boolean;
 }) {
   const fallbackTemplate = templates[0] || { slug: "featured-1", name: "Featured 1", arabicName: "مميز 1", previewImage: "/assets/templates/featured-1.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
@@ -1572,7 +1574,7 @@ export function OrderForm({
             weddingDate: readableDate || currentForm.weddingDate,
             venue: currentForm.venue,
             templateName: selectedTemplate.arabicName,
-            paymentMethod: form.paymentMethod,
+            ...(showPaymentMethods ? { paymentMethod: form.paymentMethod } : {}),
             musicChoice: form.musicChoice,
             photographerEnabled: form.photographerEnabled,
             storyEnabled: form.storyEnabled,
@@ -2125,6 +2127,7 @@ export function OrderForm({
               {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
             </div>
 
+            {showPaymentMethods ? (
             <div className="order-review-payment">
               <h3><span>طريقة الدفع</span></h3>
               <div className="order-payment-options">
@@ -2145,6 +2148,8 @@ export function OrderForm({
                 </label>
               </div>
             </div>
+            ) : null}
+
             <p className="order-review-submit-note" id="confirm-order">
               اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل تأكيد الدعوة.
             </p>

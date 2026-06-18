@@ -92,6 +92,9 @@ export async function POST(request: NextRequest) {
         primaryCtaLabel,
         secondaryCtaLabel,
       },
+      order: {
+        showPaymentMethods: formData.has("showPaymentMethods"),
+      },
     });
 
     await updateHomeContent({

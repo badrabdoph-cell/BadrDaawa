@@ -26,6 +26,10 @@ export type SiteHomepageSettings = {
   secondaryCtaLabel: string;
 };
 
+export type SiteOrderSettings = {
+  showPaymentMethods: boolean;
+};
+
 export type SitePhotographerSettings = {
   showPhotographerCard: boolean;
   defaultName: string;
@@ -45,6 +49,7 @@ export type SiteSettings = {
   seo: SiteSeoSettings;
   homepage: SiteHomepageSettings;
   photographer: SitePhotographerSettings;
+  order: SiteOrderSettings;
   updatedAt: string;
 };
 
@@ -75,6 +80,9 @@ export const defaultSiteSettings: SiteSettings = {
     showPricing: true,
     primaryCtaLabel: "ابدأ تصميم دعوتك",
     secondaryCtaLabel: "استعرض التصاميم",
+  },
+  order: {
+    showPaymentMethods: false,
   },
   photographer: {
     showPhotographerCard: process.env.SHOW_PHOTOGRAPHER_CARD !== "false",
@@ -159,6 +167,9 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       primaryCtaLabel: cleanText(input.homepage?.primaryCtaLabel, fallback.homepage.primaryCtaLabel).slice(0, 80),
       secondaryCtaLabel: cleanText(input.homepage?.secondaryCtaLabel, fallback.homepage.secondaryCtaLabel).slice(0, 80),
     },
+    order: {
+      showPaymentMethods: normalizeBoolean(input.order?.showPaymentMethods, fallback.order.showPaymentMethods),
+    },
     photographer: {
       showPhotographerCard: normalizeBoolean(input.photographer?.showPhotographerCard, fallback.photographer.showPhotographerCard),
       defaultName: cleanText(input.photographer?.defaultName, fallback.photographer.defaultName).slice(0, 80),
@@ -189,6 +200,7 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     socialLinks: { ...current.socialLinks, ...input.socialLinks },
     seo: { ...current.seo, ...input.seo },
     homepage: { ...current.homepage, ...input.homepage },
+    order: { ...current.order, ...input.order },
     photographer: { ...current.photographer, ...input.photographer },
     updatedAt: new Date().toISOString(),
   });

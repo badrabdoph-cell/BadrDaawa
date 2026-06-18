@@ -154,6 +154,23 @@ export default async function AdminSiteSettingsPage({
 
         <article className="panel site-settings-card">
           <div className="admin-card-head">
+            <Settings size={22} />
+            <div>
+              <span className="eyebrow">Order</span>
+              <h2>إعدادات الطلب</h2>
+              <p>التحكم في خيارات طلب الدعوة.</p>
+            </div>
+          </div>
+          <div className="site-settings-toggles">
+            <label className="admin-toggle-row template-inline-toggle">
+              <input name="showPaymentMethods" type="checkbox" defaultChecked={settings.order.showPaymentMethods} />
+              إظهار خيارات طريقة الدفع في طلب الدعوة
+            </label>
+          </div>
+        </article>
+
+        <article className="panel site-settings-card">
+          <div className="admin-card-head">
             <Home size={22} />
             <div>
               <span className="eyebrow">Homepage</span>

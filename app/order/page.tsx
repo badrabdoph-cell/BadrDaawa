@@ -445,7 +445,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       </header>
       <main className="order-builder-main">
         <div className="container order-shell">
-          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} />
+          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} showPaymentMethods={siteSettings.order.showPaymentMethods} />
         </div>
       </main>
       <OrderRequestUxPatches />
