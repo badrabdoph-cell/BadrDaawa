@@ -7,10 +7,8 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function BackupCleanupPage() {
-  const [report, csrfToken] = await Promise.all([
-    getMediaCleanupReport().catch(() => null),
-    generateCsrfToken(),
-  ]);
+  const csrfToken = await generateCsrfToken();
+  const report = await getMediaCleanupReport().catch(() => null);
 
   const oldBackups = report?.oldBackupFiles || [];
 

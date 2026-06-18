@@ -6,10 +6,10 @@ import { Database, Trash2, Clock, AlertTriangle } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function DatabaseCleanupPage() {
-  const [dbStatus, mediaReport, csrfToken] = await Promise.all([
+  const csrfToken = await generateCsrfToken();
+  const [dbStatus, mediaReport] = await Promise.all([
     scanDatabase(),
     getMediaCleanupReport().catch(() => null),
-    generateCsrfToken(),
   ]);
 
   const sectionStyle = { display: "grid", gap: 10, padding: 16, border: "1px solid rgba(245,234,214,0.1)", borderRadius: 14 };

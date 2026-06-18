@@ -6,10 +6,8 @@ import { FileImage, Image as ImageIcon, Music, Video, HardDrive, AlertTriangle, 
 export const dynamic = "force-dynamic";
 
 export default async function MediaCleanupPage() {
-  const [report, csrfToken] = await Promise.all([
-    getMediaCleanupReport().catch(() => null),
-    generateCsrfToken(),
-  ]);
+  const csrfToken = await generateCsrfToken();
+  const report = await getMediaCleanupReport().catch(() => null);
 
   return (
     <>

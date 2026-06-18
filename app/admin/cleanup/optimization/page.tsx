@@ -15,10 +15,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function OptimizationPage() {
-  const [status, csrfToken] = await Promise.all([
-    checkOptimizationStatus(),
-    generateCsrfToken(),
-  ]);
+  const csrfToken = await generateCsrfToken();
+  const status = await checkOptimizationStatus();
 
   const optimizationTasks = [
     {
