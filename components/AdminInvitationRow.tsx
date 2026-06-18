@@ -56,8 +56,7 @@ export function AdminInvitationRow({
   code, groomName, brideName, weddingDate, views,
   stateEmoji, stateLabel, stateClass,
   publicPath, adminPath, invitationUrl, adminUrl,
-  isDisabled, isFavorite,
-  disabledReason, disabledBy,
+  isDisabled, disabledReason, disabledBy,
   trialDays, trialRemaining,
 }: Props) {
   const router = useRouter();
@@ -271,20 +270,7 @@ export function AdminInvitationRow({
             weddingDate
           )}
         </td>
-        <td className="cell-views" data-label="الزيارات">
-          <div className="cell-views-content">
-            <FavoriteToggleButton
-              entityType="invitation"
-              entityId={code}
-              label={`${groomName} و ${brideName}`}
-              href="/admin/invitations"
-              returnTo="/admin/invitations"
-              active={isFavorite}
-              iconOnly
-            />
-            <span>{views}</span>
-          </div>
-        </td>
+        <td className="cell-views" data-label="الزيارات">{views}</td>
         <td className="cell-status" data-label="الحالة">
           <span className={stateClass}>{stateLabel}</span>
           {trialDays && trialRemaining != null ? (

@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 
 const navLinks = [
   { href: "/templates", label: "التصاميم" },
-  { href: "/client-invitations", label: "دعوات حقيقية" },
 ];
 
 export async function SiteHeader() {
