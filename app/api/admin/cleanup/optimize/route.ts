@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { validateCsrfToken } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const isValid = await validateCsrfToken(request);
-  if (!isValid) {
-    return NextResponse.json({ error: "CSRF token" }, { status: 403 });
-  }
-
   try {
     const formData = await request.formData();
     const action = formData.get("action") as string;

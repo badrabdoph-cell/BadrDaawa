@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFullScan } from "@/lib/cleanup";
-import { validateCsrfToken } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const isValid = await validateCsrfToken(request);
-  if (!isValid) {
-    return NextResponse.json({ error: "CSRF token" }, { status: 403 });
-  }
-
   try {
     const report = await runFullScan();
     return NextResponse.json({

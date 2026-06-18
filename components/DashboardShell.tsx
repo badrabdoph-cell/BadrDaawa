@@ -16,7 +16,6 @@ const adminSections = [
     links: [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
       { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
-      { href: "/admin/invitations-v2", label: "الدعوات الموحد", icon: UsersRound },
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
     ],
@@ -32,6 +31,16 @@ const adminSections = [
       { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
       { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
       { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
+    ],
+  },
+  {
+    id: "unified",
+    title: "الدعوات والعملاء",
+    description: "دمج الدعوات والعملاء في واجهة واحدة (تجريبي)",
+    accent: "gold",
+    icon: UsersRound,
+    links: [
+      { href: "/admin/invitations-customers", label: "الدعوات والعملاء", icon: UsersRound },
     ],
   },
   {
@@ -369,6 +378,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       I: "/admin/invitations",
       O: "/admin/orders",
       C: "/admin/customers",
+      U: "/admin/invitations-customers",
       T: "/admin/templates",
       S: "/admin/settings",
     };

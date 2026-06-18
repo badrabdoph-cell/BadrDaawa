@@ -84,7 +84,7 @@ export default async function UnifiedInvitationDetailsPage({ params }: { params:
   const confirmedAttendees = confirmedGuests.reduce((sum, guest) => sum + Math.max(1, guest.attendees || 1), 0);
   const template = templates.find((item) => item.slug === invitation.templateSlug);
   const invitationState = getInvitationState(invitation);
-  const returnTo = `/admin/invitations-v2/${encodeURIComponent(invitation.code)}`;
+  const returnTo = `/admin/invitations-customers/${encodeURIComponent(invitation.code)}`;
   const approvedMessages = messages.filter((message) => message.status === "approved").length;
 
   // Customer data
@@ -114,10 +114,10 @@ export default async function UnifiedInvitationDetailsPage({ params }: { params:
 
       <div className="dashboard-head invitation-detail-head">
         <div>
-          <Link className="admin-back-link" href="/admin/invitations-v2">العودة للقائمة الموحدة</Link>
-          <span className="eyebrow">Unified Management</span>
+          <Link className="admin-back-link" href="/admin/invitations-customers">العودة للقائمة الموحدة</Link>
+          <span className="eyebrow">Invitations & Customers</span>
           <h1>{invitation.groomName} و {invitation.brideName}</h1>
-          <p>صفحة موحدة تجمع تفاصيل الدعوة ومعلومات العميل وإجراءات الإدارة كاملة.</p>
+          <p>صفحة موحدة تجمع تفاصيل الدعوة ومعلومات العميل وإجراءات الإدارة كاملة (تجريبي).</p>
         </div>
         <div className="button-row">
           <span className={stateClassName(invitationState)}><span className={`status-dot ${invitationState}`} />{stateLabel(invitationState)}</span>
@@ -214,7 +214,7 @@ export default async function UnifiedInvitationDetailsPage({ params }: { params:
                   {customerOtherInvitations.map((other) => {
                     const otherState = getInvitationState(other);
                     return (
-                      <Link key={other.id} href={`/admin/invitations-v2/${encodeURIComponent(other.code)}`} className="other-invitation-item">
+                      <Link key={other.id} href={`/admin/invitations-customers/${encodeURIComponent(other.code)}`} className="other-invitation-item">
                         <span className={`status-dot ${stateClassName(otherState).replace("status ", "")}`} />
                         <strong>{other.groomName} و {other.brideName}</strong>
                         <span className={stateClassName(otherState)}>{stateLabel(otherState)}</span>

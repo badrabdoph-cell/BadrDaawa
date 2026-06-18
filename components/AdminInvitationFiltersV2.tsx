@@ -64,7 +64,7 @@ export function AdminInvitationFiltersV2({ query, selectedState, selectedSort, s
       </label>
       <button className="btn btn-soft" type="submit">تطبيق</button>
       {hasFilters ? (
-        <Link className="btn btn-soft" href="/admin/invitations-v2">مسح</Link>
+        <Link className="btn btn-soft" href="/admin/invitations-customers">مسح</Link>
       ) : null}
     </form>
   );

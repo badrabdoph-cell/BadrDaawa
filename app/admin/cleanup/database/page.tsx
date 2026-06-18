@@ -1,12 +1,10 @@
 import { scanDatabase } from "@/lib/cleanup";
 import { getMediaCleanupReport } from "@/lib/media-cleanup";
-import { generateCsrfToken } from "@/lib/csrf";
 import { Database, Trash2, Clock, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DatabaseCleanupPage() {
-  const csrfToken = await generateCsrfToken();
   const [dbStatus, mediaReport] = await Promise.all([
     scanDatabase(),
     getMediaCleanupReport().catch(() => null),
@@ -111,7 +109,6 @@ export default async function DatabaseCleanupPage() {
         </div>
         <div className="backup-action-menu" style={{ marginTop: 14 }}>
           <form action="/api/admin/cleanup/database" method="post">
-            <input type="hidden" name="csrf" value={csrfToken} />
             <input type="hidden" name="action" value="old-analytics" />
             <button className="btn btn-gold" type="submit">
               🗑 حذف سجلات التحليلات القديمة ({dbStatus.oldTempRecords})
@@ -119,7 +116,6 @@ export default async function DatabaseCleanupPage() {
           </form>
           <span className="backup-action-divider" />
           <form action="/api/admin/cleanup/database" method="post">
-            <input type="hidden" name="csrf" value={csrfToken} />
             <input type="hidden" name="action" value="expired-trash" />
             <button className="btn btn-gold" type="submit">
               🗑 تفريغ المهملات منتهية الصلاحية ({dbStatus.expiredTrash})
@@ -127,7 +123,6 @@ export default async function DatabaseCleanupPage() {
           </form>
           <span className="backup-action-divider" />
           <form action="/api/admin/cleanup/database" method="post">
-            <input type="hidden" name="csrf" value={csrfToken} />
             <input type="hidden" name="action" value="orphans" />
             <button className="btn btn-soft" type="submit">
               🗑 حذف السجلات اليتيمة ({dbStatus.orphanedRecords})

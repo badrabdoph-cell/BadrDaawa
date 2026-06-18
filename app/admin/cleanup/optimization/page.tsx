@@ -1,5 +1,4 @@
 import { checkOptimizationStatus } from "@/lib/cleanup";
-import { generateCsrfToken } from "@/lib/csrf";
 import {
   Gauge,
   Database,
@@ -15,7 +14,6 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function OptimizationPage() {
-  const csrfToken = await generateCsrfToken();
   const status = await checkOptimizationStatus();
 
   const optimizationTasks = [
@@ -116,7 +114,6 @@ export default async function OptimizationPage() {
               <p>{task.desc}</p>
               <div className="backup-action-menu" style={{ marginTop: 8 }}>
                 <form action="/api/admin/cleanup/optimize" method="post">
-                  <input type="hidden" name="csrf" value={csrfToken} />
                   <input type="hidden" name="action" value={task.action} />
                   <button className="btn btn-soft" type="submit">
                     تشغيل
@@ -140,7 +137,6 @@ export default async function OptimizationPage() {
           تنفيذ جميع عمليات التحسين الآمنة مرة واحدة. هذا سيقوم بإعادة بناء الفهارس، تحديث الإحصائيات، وتنظيف الكاش.
         </p>
         <form action="/api/admin/cleanup/optimize" method="post">
-          <input type="hidden" name="csrf" value={csrfToken} />
           <input type="hidden" name="action" value="all" />
           <button className="btn btn-gold btn-glow" type="submit">
             ⚡ تحسين شامل

@@ -129,9 +129,9 @@ export default async function UnifiedInvitationsPage({ searchParams }: { searchP
     <>
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Unified Invitations</span>
-          <h1>قسم الدعوات الموحد</h1>
-          <p>إدارة شاملة للدعوات والعملاء معاً: بيانات الدعوة، معلومات العميل، الإحصائيات، والإجراءات في مكان واحد.</p>
+          <span className="eyebrow">Invitations & Customers</span>
+          <h1>الدعوات والعملاء</h1>
+          <p>قسم موحد يجمع الدعوات والعملاء معاً: بيانات الدعوة، معلومات العميل، الإحصائيات، والإجراءات في مكان واحد (تجريبي).</p>
         </div>
         <div className="button-row">
           <Link className="btn btn-gold" href="/admin/new-invitation">
@@ -231,7 +231,7 @@ export default async function UnifiedInvitationsPage({ searchParams }: { searchP
                     <td className="cell-name" data-label="اسم الدعوة">
                       <div className="admin-name-content">
                         <span className="inv-code">{invitation.code}</span>
-                        <Link href={`/admin/invitations-v2/${encodeURIComponent(invitation.code)}`}>
+                        <Link href={`/admin/invitations-customers/${encodeURIComponent(invitation.code)}`}>
                           <strong>{invitation.groomName} و {invitation.brideName}</strong>
                         </Link>
                       </div>
@@ -259,7 +259,7 @@ export default async function UnifiedInvitationsPage({ searchParams }: { searchP
                     </td>
                     <td className="cell-actions" data-label="الإجراءات">
                       <div className="admin-row-actions">
-                        <Link className="btn btn-sm btn-gold" href={`/admin/invitations-v2/${encodeURIComponent(invitation.code)}`}>
+                        <Link className="btn btn-sm btn-gold" href={`/admin/invitations-customers/${encodeURIComponent(invitation.code)}`}>
                           <Settings2 size={16} />
                           إدارة
                         </Link>

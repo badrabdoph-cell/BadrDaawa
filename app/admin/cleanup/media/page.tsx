@@ -1,12 +1,10 @@
 import { getMediaCleanupReport } from "@/lib/media-cleanup";
 import { formatBytes } from "@/lib/cleanup";
-import { generateCsrfToken } from "@/lib/csrf";
 import { FileImage, Image as ImageIcon, Music, Video, HardDrive, AlertTriangle, Trash2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function MediaCleanupPage() {
-  const csrfToken = await generateCsrfToken();
   const report = await getMediaCleanupReport().catch(() => null);
 
   return (
@@ -97,7 +95,6 @@ export default async function MediaCleanupPage() {
             </div>
             <div className="backup-action-menu" style={{ marginTop: 14, flexWrap: "wrap" }}>
               <form action="/api/admin/cleanup/execute" method="post">
-                <input type="hidden" name="csrf" value={csrfToken} />
                 <input type="hidden" name="action" value="orphans" />
                 <button className="btn btn-gold" type="submit">
                   🧹 حذف الملفات اليتيمة ({report.orphanFiles.length})
@@ -105,7 +102,6 @@ export default async function MediaCleanupPage() {
               </form>
               <span className="backup-action-divider" />
               <form action="/api/admin/cleanup/execute" method="post">
-                <input type="hidden" name="csrf" value={csrfToken} />
                 <input type="hidden" name="action" value="duplicates" />
                 <button className="btn btn-soft" type="submit">
                   🧹 حذف الملفات المكررة ({report.duplicateFiles.length})
@@ -113,7 +109,6 @@ export default async function MediaCleanupPage() {
               </form>
               <span className="backup-action-divider" />
               <form action="/api/admin/cleanup/execute" method="post">
-                <input type="hidden" name="csrf" value={csrfToken} />
                 <input type="hidden" name="action" value="temp" />
                 <button className="btn btn-soft" type="submit">
                   🧹 حذف الملفات المؤقتة ({report.oldTemporaryFiles.length})
@@ -121,7 +116,6 @@ export default async function MediaCleanupPage() {
               </form>
               <span className="backup-action-divider" />
               <form action="/api/admin/cleanup/execute" method="post">
-                <input type="hidden" name="csrf" value={csrfToken} />
                 <input type="hidden" name="action" value="all" />
                 <button className="btn btn-gold btn-glow" type="submit">
                   🧹 تنظيف شامل للوسائط

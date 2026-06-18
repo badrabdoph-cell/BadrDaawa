@@ -1,13 +1,11 @@
 import { getMediaCleanupReport } from "@/lib/media-cleanup";
 import { formatBytes } from "@/lib/cleanup";
-import { generateCsrfToken } from "@/lib/csrf";
 import { Archive, Clock, HardDrive, AlertTriangle, Trash2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function BackupCleanupPage() {
-  const csrfToken = await generateCsrfToken();
   const report = await getMediaCleanupReport().catch(() => null);
 
   const oldBackups = report?.oldBackupFiles || [];
@@ -67,7 +65,6 @@ export default async function BackupCleanupPage() {
         </div>
         <div className="backup-action-menu" style={{ marginTop: 14 }}>
           <form action="/api/admin/cleanup/execute" method="post">
-            <input type="hidden" name="csrf" value={csrfToken} />
             <input type="hidden" name="action" value="old-backups" />
             <button className="btn btn-gold" type="submit" disabled={oldBackups.length === 0}>
               🗑 حذف النسخ القديمة ({oldBackups.length})
