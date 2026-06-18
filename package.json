@@ -18,6 +18,9 @@
     "db:studio": "prisma studio",
     "audit:cleanup": "node scripts/safe-cleanup-audit.mjs",
     "backup:trigger": "node scripts/trigger-backup-cron.mjs",
+    "backup:local": "node scripts/trigger-backup-local.mjs",
+    "dev:cron": "node scripts/local-dev-cron.mjs",
+    "dev:full": "node scripts/local-dev-cron.mjs & NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next dev",
     "migrate:storage": "node scripts/migrate-storage.mjs"
   },
   "dependencies": {
