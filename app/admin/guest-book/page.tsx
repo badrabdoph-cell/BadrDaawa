@@ -1,4 +1,3 @@
-import { generateCsrfToken } from "@/lib/csrf";
 import Link from "next/link";
 import { CheckCircle2, Filter, MessageCircleHeart, Pencil, Search, Trash2, XCircle } from "lucide-react";
 import { ConfirmingSubmitButton } from "@/components/ConfirmingSubmitButton";
@@ -55,7 +54,7 @@ function matchesMessage(message: GuestBookMessage, query: string, invitationTitl
 
 export default async function AdminGuestBookPage({ searchParams }: { searchParams: Promise<GuestBookPageParams> }) {
   const params = await searchParams;
-  const [messages, invitations, allSettings, csrfToken] = await Promise.all([getAllGuestBookMessages(), getAdminInvitations(), getAllCoupleMessagesSettings(), generateCsrfToken()]);
+  const [messages, invitations, allSettings] = await Promise.all([getAllGuestBookMessages(), getAdminInvitations(), getAllCoupleMessagesSettings()]);
   const invitationMap = new Map(invitations.map((invitation) => [invitation.code, `${invitation.groomName} و ${invitation.brideName}`]));
   const settingsMap = new Map(allSettings.map((setting) => [setting.invitationCode, setting.mode]));
   const status = params.status || "all";
@@ -118,7 +117,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
       <section className="panel">
         {settingsInvitationCode ? (
           <form className="couple-messages-settings-panel" action="/api/admin/guest-book" method="post">
-            <input type="hidden" name="csrf_token" value={csrfToken} />
             <input type="hidden" name="action" value="settings" />
             <label className="admin-select-field">
               <span>إعدادات دعوة</span>
@@ -186,7 +184,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
               { action: "bulk-approve-pending", label: "اعتماد جميع الرسائل المعلقة", count: stats.pending, confirm: "اعتماد" },
             ].map((item) => (
               <form className="guest-book-bulk-card" action="/api/admin/guest-book" method="post" key={item.action}>
-                <input type="hidden" name="csrf_token" value={csrfToken} />
                 <input type="hidden" name="action" value={item.action} />
                 <input type="hidden" name="expectedCount" value={item.count} />
                 <strong>{item.label}</strong>
@@ -199,7 +196,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
             ))}
 
             <form className="guest-book-bulk-card wide" action="/api/admin/guest-book" method="post">
-              <input type="hidden" name="csrf_token" value={csrfToken} />
               <input type="hidden" name="action" value="bulk-delete-invitation" />
               <strong>حذف الرسائل الخاصة بدعوة محددة</strong>
               <label className="admin-select-field">
@@ -220,7 +216,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
           </div>
 
           <form id="guest-book-bulk-selected-form" className="guest-book-selected-actions" action="/api/admin/guest-book" method="post">
-            <input type="hidden" name="csrf_token" value={csrfToken} />
             <input type="hidden" name="action" value="bulk-selected-delete" />
             <input name="confirmText" placeholder="اكتب حذف أو اعتماد حسب الإجراء" aria-label="تأكيد الإجراء الجماعي المحدد" />
             <ConfirmingSubmitButton className="btn btn-soft danger-button" name="action" value="bulk-selected-delete" countSelector=".guest-book-select-checkbox:checked" confirmTitle="حذف الرسائل المحددة" confirmMessage="سيتم حذف الرسائل التي قمت بتحديدها فقط.">
@@ -264,19 +259,16 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                   <td>
                     <div className="button-row">
                       <form action="/api/admin/guest-book" method="post">
-                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="messageId" value={message.id} />
                         <input type="hidden" name="action" value="approve" />
                         <button className="btn btn-soft btn-icon" type="submit" title="قبول"><CheckCircle2 size={16} /></button>
                       </form>
                       <form action="/api/admin/guest-book" method="post">
-                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="messageId" value={message.id} />
                         <input type="hidden" name="action" value="reject" />
                         <button className="btn btn-soft btn-icon" type="submit" title="رفض"><XCircle size={16} /></button>
                       </form>
                       <form action="/api/admin/guest-book" method="post">
-                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="messageId" value={message.id} />
                         <input type="hidden" name="action" value="delete" />
                         <button className="btn btn-soft btn-icon danger-button" type="submit" title="حذف"><Trash2 size={16} /></button>
@@ -284,7 +276,6 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                       <details className="guest-book-edit-details">
                         <summary className="btn btn-soft btn-icon" title="تعديل"><Pencil size={16} /></summary>
                         <form className="guest-book-edit-form" action="/api/admin/guest-book" method="post">
-                          <input type="hidden" name="csrf_token" value={csrfToken} />
                           <input type="hidden" name="messageId" value={message.id} />
                           <input type="hidden" name="action" value="edit" />
                           <input name="name" defaultValue={message.name} placeholder="اسم المرسل" maxLength={80} required />

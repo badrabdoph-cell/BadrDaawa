@@ -1,4 +1,3 @@
-import { generateCsrfToken } from "@/lib/csrf";
 import { ArchiveRestore, RotateCcw, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { getTrashItems, type TrashEntityType } from "@/lib/trash";
@@ -33,7 +32,7 @@ export default async function TrashPage({
 }: {
   searchParams: Promise<TrashPageParams>;
 }) {
-  const [params, items, csrfToken] = await Promise.all([searchParams, getTrashItems(), generateCsrfToken()]);
+  const [params, items] = await Promise.all([searchParams, getTrashItems()]);
   const query = (params.q || "").trim().toLowerCase();
   const selectedType = params.type || "all";
   const filteredItems = items.filter((item) => {
@@ -106,7 +105,7 @@ export default async function TrashPage({
         {query || selectedType !== "all" ? <Link className="btn btn-soft" href="/admin/trash">مسح</Link> : null}
       </form>
 
-      <TrashBulkActions items={filteredItems} csrfToken={csrfToken} filterType={selectedType} />
+      <TrashBulkActions items={filteredItems} filterType={selectedType} />
     </>
   );
 }

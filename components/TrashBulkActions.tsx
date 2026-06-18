@@ -8,11 +8,10 @@ import type { TrashItem, TrashEntityType } from "@/lib/trash";
 
 type Props = {
   items: TrashItem[];
-  csrfToken: string;
   filterType: string;
 };
 
-export function TrashBulkActions({ items, csrfToken, filterType }: Props) {
+export function TrashBulkActions({ items, filterType }: Props) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -41,7 +40,6 @@ export function TrashBulkActions({ items, csrfToken, filterType }: Props) {
 
     const formData = new FormData();
     formData.append("action", action);
-    formData.append("csrf_token", csrfToken);
 
     for (const compositeId of selectedIds) {
       const parts = compositeId.split("-");
@@ -174,7 +172,6 @@ export function TrashBulkActions({ items, csrfToken, filterType }: Props) {
                   <td>
                     <div className="button-row" style={{ gap: "6px" }}>
                       <form action="/api/admin/trash" method="post">
-                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="action" value="restore" />
                         <input type="hidden" name="type" value={item.type} />
                         <input type="hidden" name="id" value={item.id} />
@@ -185,7 +182,6 @@ export function TrashBulkActions({ items, csrfToken, filterType }: Props) {
                         </button>
                       </form>
                       <form action="/api/admin/trash" method="post">
-                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="action" value="hard-delete" />
                         <input type="hidden" name="type" value={item.type} />
                         <input type="hidden" name="id" value={item.id} />

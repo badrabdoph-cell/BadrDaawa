@@ -1,4 +1,3 @@
-import { generateCsrfToken } from "@/lib/csrf";
 import Link from "next/link";
 import { ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
@@ -19,7 +18,7 @@ export default async function AdminSiteSettingsPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const [params, settings, previewSettings, templates, csrfToken] = await Promise.all([searchParams, getSiteSettings(), getHomePreviewSettings(), getTemplatesWithSettings(), generateCsrfToken()]);
+  const [params, settings, previewSettings, templates] = await Promise.all([searchParams, getSiteSettings(), getHomePreviewSettings(), getTemplatesWithSettings()]);
   const message = notice(params.saved, params.error);
 
   return (
@@ -39,7 +38,6 @@ export default async function AdminSiteSettingsPage({
       {message ? <div className={message.kind === "danger" ? "notice danger" : "notice success"}>{message.text}</div> : null}
 
       <form className="site-settings-form" action="/api/admin/settings" method="post" encType="multipart/form-data">
-        <input type="hidden" name="csrf_token" value={csrfToken} />
         <article className="panel site-settings-card">
           <div className="admin-card-head">
             <Settings size={22} />
