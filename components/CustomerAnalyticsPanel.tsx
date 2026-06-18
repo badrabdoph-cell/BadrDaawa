@@ -1,17 +1,11 @@
 import { CalendarDays, Eye, UserCheck, UserX, UsersRound } from "lucide-react";
 import type { CustomerInvitationAnalytics } from "@/lib/customer-analytics";
-import { formatArabicNumber } from "@/lib/utils";
+import { formatArabicNumber, formatDateTime } from "@/lib/utils";
 
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: "numeric" }).format(date);
-}
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 export function CustomerAnalyticsPanel({ analytics }: { analytics: CustomerInvitationAnalytics }) {

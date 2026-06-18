@@ -1,0 +1,268 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - link "BadrDaawa Control Center" [ref=e6] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e8]
+          - generic [ref=e10]:
+            - strong [ref=e11]: BadrDaawa
+            - generic [ref=e12]: Control Center
+        - generic [ref=e13]:
+          - img [ref=e14]
+          - generic [ref=e17]:
+            - strong [ref=e18]: Super Admin
+            - generic [ref=e19]: جلسة آمنة ومفعلة
+        - link "بحث سريع... Ctrl+K" [ref=e20] [cursor=pointer]:
+          - /url: /admin/search
+          - img [ref=e21]
+          - generic [ref=e24]: بحث سريع...
+          - generic [ref=e25]: Ctrl+K
+        - navigation "لوحة الإدارة" [ref=e26]:
+          - generic "الأقسام الرئيسية" [ref=e27]:
+            - button "الدعوات إنشاء ومتابعة الدعوات والطلبات" [pressed] [ref=e28] [cursor=pointer]:
+              - img [ref=e30]
+              - strong [ref=e33]: الدعوات
+              - generic [ref=e34]: إنشاء ومتابعة الدعوات والطلبات
+            - button "العملاء حسابات العملاء والتواصل والملاحظات" [ref=e35] [cursor=pointer]:
+              - img [ref=e37]
+              - strong [ref=e41]: العملاء
+              - generic [ref=e42]: حسابات العملاء والتواصل والملاحظات
+            - button "الفعاليات الحضور والتحليلات وتشغيل يوم الفرح" [ref=e43] [cursor=pointer]:
+              - img [ref=e45]
+              - strong [ref=e48]: الفعاليات
+              - generic [ref=e49]: الحضور والتحليلات وتشغيل يوم الفرح
+            - button "المحتوى القوالب والوسائط والصفحات العامة" [ref=e50] [cursor=pointer]:
+              - img [ref=e52]
+              - strong [ref=e58]: المحتوى
+              - generic [ref=e59]: القوالب والوسائط والصفحات العامة
+            - button "النسخ والمزامنة النسخ الاحتياطي وGitHub والمهام" [ref=e60] [cursor=pointer]:
+              - img [ref=e62]
+              - strong [ref=e68]: النسخ والمزامنة
+              - generic [ref=e69]: النسخ الاحتياطي وGitHub والمهام
+            - button "الإعدادات والنظام الإشعارات والمراقبة والسجلات" [ref=e70] [cursor=pointer]:
+              - img [ref=e72]
+              - strong [ref=e75]: الإعدادات والنظام
+              - generic [ref=e76]: الإشعارات والمراقبة والسجلات
+            - button "مساحة العمل بحث ومفضلة وروابط يومية" [ref=e77] [cursor=pointer]:
+              - img [ref=e79]
+              - strong [ref=e82]: مساحة العمل
+              - generic [ref=e83]: بحث ومفضلة وروابط يومية
+          - region "الدعوات" [ref=e84]:
+            - generic [ref=e85]:
+              - generic [ref=e86]: القسم الفرعي
+              - heading "الدعوات" [level=2] [ref=e87]
+              - paragraph [ref=e88]: إنشاء ومتابعة الدعوات والطلبات
+            - generic [ref=e89]:
+              - link "الرئيسية" [ref=e90] [cursor=pointer]:
+                - /url: /admin
+                - img [ref=e91]
+                - generic [ref=e96]: الرئيسية
+              - link "الدعوات المنشورة" [ref=e97] [cursor=pointer]:
+                - /url: /admin/invitations
+                - img [ref=e98]
+                - generic [ref=e101]: الدعوات المنشورة
+              - link "الدعوات المعلقة 1" [ref=e102] [cursor=pointer]:
+                - /url: /admin/orders
+                - img [ref=e103]
+                - generic [ref=e106]: الدعوات المعلقة
+                - strong [ref=e107]: "1"
+              - link "إنشاء دعوة" [ref=e108] [cursor=pointer]:
+                - /url: /admin/new-invitation
+                - img [ref=e109]
+                - generic [ref=e111]: إنشاء دعوة
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - link "فتح الموقع" [ref=e114] [cursor=pointer]:
+            - /url: /
+            - img [ref=e115]
+            - text: فتح الموقع
+          - button "الوضع الليلي" [ref=e118] [cursor=pointer]:
+            - img [ref=e119]
+        - button "تسجيل خروج" [ref=e122] [cursor=pointer]:
+          - img [ref=e123]
+          - text: تسجيل خروج
+    - main [ref=e126]:
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - navigation "مسار التنقل" [ref=e129]:
+            - link "الرئيسية" [ref=e130] [cursor=pointer]:
+              - /url: /admin
+          - heading "الرئيسية" [level=1] [ref=e131]
+        - generic [ref=e132]:
+          - img [ref=e133]
+          - textbox "بحث عام..." [ref=e136]
+          - button "بحث" [ref=e137] [cursor=pointer]
+        - generic [ref=e138]:
+          - link "القوالب" [ref=e139] [cursor=pointer]:
+            - /url: /admin/templates
+            - img [ref=e140]
+          - link "المفضلة" [ref=e146] [cursor=pointer]:
+            - /url: /admin/favorites
+            - img [ref=e147]
+          - link "2" [ref=e149] [cursor=pointer]:
+            - /url: /admin/notifications
+            - img [ref=e150]
+            - strong [ref=e153]: "2"
+      - generic [ref=e154]:
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e157]: الرئيسية
+            - heading "مركز إدارة المنصة" [level=1] [ref=e158]
+            - paragraph [ref=e159]: نظرة تشغيلية واحدة للطلبات والدعوات والحضور والنسخ الاحتياطي حتى تبدأ قرارك من الرقم الصحيح.
+          - generic [ref=e160]:
+            - link "الطلبات الجديدة" [ref=e161] [cursor=pointer]:
+              - /url: /admin/orders
+              - img [ref=e162]
+              - text: الطلبات الجديدة
+            - link "إنشاء دعوة" [ref=e165] [cursor=pointer]:
+              - /url: /admin/new-invitation
+              - img [ref=e166]
+              - text: إنشاء دعوة
+        - region "ملخص الإدارة اليومي" [ref=e167]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - img [ref=e170]
+              - generic [ref=e172]:
+                - generic [ref=e173]: Dashboard
+                - heading "نظرة مختصرة" [level=2] [ref=e174]
+            - link "إنشاء دعوة" [ref=e175] [cursor=pointer]:
+              - /url: /admin/new-invitation
+              - img [ref=e176]
+              - text: إنشاء دعوة
+          - generic [ref=e177]:
+            - link "عدد الدعوات 8 3 معطلة · 4 نشطة" [ref=e178] [cursor=pointer]:
+              - /url: /admin/invitations
+              - img [ref=e179]
+              - generic [ref=e182]: عدد الدعوات
+              - strong [ref=e183]: "8"
+              - generic [ref=e184]: 3 معطلة · 4 نشطة
+            - link "عدد العملاء 9 حسابات العملاء المتاحة للإدارة" [ref=e185] [cursor=pointer]:
+              - /url: /admin/customers
+              - img [ref=e186]
+              - generic [ref=e190]: عدد العملاء
+              - strong [ref=e191]: "9"
+              - generic [ref=e192]: حسابات العملاء المتاحة للإدارة
+            - link "عدد الزوار 286 إجمالي مشاهدات الدعوات" [ref=e193] [cursor=pointer]:
+              - /url: /admin/analytics
+              - img [ref=e194]
+              - generic [ref=e197]: عدد الزوار
+              - strong [ref=e198]: "286"
+              - generic [ref=e199]: إجمالي مشاهدات الدعوات
+            - link "عدد الطلبات 1 1 طلب جديد ينتظر قرار" [ref=e200] [cursor=pointer]:
+              - /url: /admin/orders
+              - img [ref=e201]
+              - generic [ref=e204]: عدد الطلبات
+              - strong [ref=e205]: "1"
+              - generic [ref=e206]: 1 طلب جديد ينتظر قرار
+            - link "ردود الحضور 16 15 ضيف متوقع" [ref=e207] [cursor=pointer]:
+              - /url: /admin/attendance
+              - img [ref=e208]
+              - generic [ref=e212]: ردود الحضور
+              - strong [ref=e213]: "16"
+              - generic [ref=e214]: 15 ضيف متوقع
+            - link "آخر الرسائل 19 3 بانتظار المراجعة" [ref=e215] [cursor=pointer]:
+              - /url: /admin/guest-book
+              - img [ref=e216]
+              - generic [ref=e219]: آخر الرسائل
+              - strong [ref=e220]: "19"
+              - generic [ref=e221]: 3 بانتظار المراجعة
+        - region "اختصارات التشغيل" [ref=e222]:
+          - link "راجع الطلبات 1 طلب جديد محتاج متابعة" [ref=e223] [cursor=pointer]:
+            - /url: /admin/orders
+            - img [ref=e224]
+            - generic [ref=e227]:
+              - strong [ref=e228]: راجع الطلبات
+              - generic [ref=e229]: 1 طلب جديد محتاج متابعة
+            - img [ref=e230]
+          - link "دعوات العملاء 8 دعوة مسجلة" [ref=e233] [cursor=pointer]:
+            - /url: /admin/invitations
+            - img [ref=e234]
+            - generic [ref=e237]:
+              - strong [ref=e238]: دعوات العملاء
+              - generic [ref=e239]: 8 دعوة مسجلة
+            - img [ref=e240]
+          - link "العملاء 9 حساب عميل" [ref=e243] [cursor=pointer]:
+            - /url: /admin/customers
+            - img [ref=e244]
+            - generic [ref=e248]:
+              - strong [ref=e249]: العملاء
+              - generic [ref=e250]: 9 حساب عميل
+            - img [ref=e251]
+          - link "الرسائل والتهاني 3 رسالة معلقة" [ref=e254] [cursor=pointer]:
+            - /url: /admin/guest-book
+            - img [ref=e255]
+            - generic [ref=e258]:
+              - strong [ref=e259]: الرسائل والتهاني
+              - generic [ref=e260]: 3 رسالة معلقة
+            - img [ref=e261]
+        - generic [ref=e264]:
+          - article [ref=e265]:
+            - generic [ref=e266]:
+              - img [ref=e267]
+              - generic [ref=e269]:
+                - generic [ref=e270]: متابعة سريعة
+                - heading "أحدث الطلبات" [level=2] [ref=e271]
+            - generic [ref=e272]:
+              - link "Mohamed & Esraa 8 يوليو 2026 جديد" [ref=e273] [cursor=pointer]:
+                - /url: /admin/orders
+                - generic [ref=e274]:
+                  - strong [ref=e275]: Mohamed & Esraa
+                  - generic [ref=e276]: 8 يوليو 2026
+                - emphasis [ref=e277]: جديد
+              - link "MAHMOUD & YASMINA 10 سبتمبر 2026 تم النشر" [ref=e278] [cursor=pointer]:
+                - /url: /admin/orders
+                - generic [ref=e279]:
+                  - strong [ref=e280]: MAHMOUD & YASMINA
+                  - generic [ref=e281]: 10 سبتمبر 2026
+                - emphasis [ref=e282]: تم النشر
+              - link "كمال & امل 30 يوليو 2026 تم النشر" [ref=e283] [cursor=pointer]:
+                - /url: /admin/orders
+                - generic [ref=e284]:
+                  - strong [ref=e285]: كمال & امل
+                  - generic [ref=e286]: 30 يوليو 2026
+                - emphasis [ref=e287]: تم النشر
+              - link "Mostafa & Alaa 21 أغسطس 2026 تم النشر" [ref=e288] [cursor=pointer]:
+                - /url: /admin/orders
+                - generic [ref=e289]:
+                  - strong [ref=e290]: Mostafa & Alaa
+                  - generic [ref=e291]: 21 أغسطس 2026
+                - emphasis [ref=e292]: تم النشر
+          - article [ref=e293]:
+            - generic [ref=e294]:
+              - img [ref=e295]
+              - generic [ref=e298]:
+                - generic [ref=e299]: نشاط الدعوات
+                - heading "آخر الدعوات" [level=2] [ref=e300]
+            - generic [ref=e301]:
+              - link "MAHMOUD و YASMINA 10 سبتمبر 2026 نشطة" [ref=e302] [cursor=pointer]:
+                - /url: /admin/invitations/mahmoud-yasmina-46
+                - generic [ref=e303]:
+                  - strong [ref=e304]: MAHMOUD و YASMINA
+                  - generic [ref=e305]: 10 سبتمبر 2026
+                - emphasis [ref=e306]: نشطة
+              - link "كمال و امل 30 يوليو 2026 نشطة" [ref=e308] [cursor=pointer]:
+                - /url: /admin/invitations/kmal-aml-62
+                - generic [ref=e309]:
+                  - strong [ref=e310]: كمال و امل
+                  - generic [ref=e311]: 30 يوليو 2026
+                - emphasis [ref=e312]: نشطة
+              - link "Mostafa و Alaa 21 أغسطس 2026 نشطة" [ref=e314] [cursor=pointer]:
+                - /url: /admin/invitations/mostafa-alaa-62
+                - generic [ref=e315]:
+                  - strong [ref=e316]: Mostafa و Alaa
+                  - generic [ref=e317]: 21 أغسطس 2026
+                - emphasis [ref=e318]: نشطة
+              - link "Sabry و Menna 29 أغسطس 2026 معطلة" [ref=e320] [cursor=pointer]:
+                - /url: /admin/invitations/sabry-menna-72
+                - generic [ref=e321]:
+                  - strong [ref=e322]: Sabry و Menna
+                  - generic [ref=e323]: 29 أغسطس 2026
+                - emphasis [ref=e324]: معطلة
+              - link "محمد و ساره 15 يونيو 2026 متوقفة" [ref=e326] [cursor=pointer]:
+                - /url: /admin/invitations/mohamed-sara-57
+                - generic [ref=e327]:
+                  - strong [ref=e328]: محمد و ساره
+                  - generic [ref=e329]: 15 يونيو 2026
+                - emphasis [ref=e330]: متوقفة
+  - alert [ref=e332]

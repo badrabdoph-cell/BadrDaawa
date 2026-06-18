@@ -138,6 +138,8 @@ export function ClientInvitationEditor({
     iframeRef.current?.contentWindow?.postMessage({ source: "badr-admin-preview", type: "preview:update", payload: previewPayload }, window.location.origin);
   }, [previewPayload]);
 
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
       if (!dirty) return;
@@ -161,6 +163,17 @@ export function ClientInvitationEditor({
     window.addEventListener("message", onPreviewReady);
     return () => window.removeEventListener("message", onPreviewReady);
   }, [postPreviewUpdate]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (dirty) save();
+    }, 30000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [dirty, groomName, brideName, weddingDate, weddingTime, venue, city, mapUrl, images, heroVideoUrl, musicEnabled, musicUrl, invitationTexts, photographerEnabled, photographerName, photographerLogo.previewUrl, photographerFacebookUrl, photographerInstagramUrl]);
 
   function markDirty() {
     setDirty(true);

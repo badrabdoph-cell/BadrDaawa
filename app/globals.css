@@ -14654,10 +14654,109 @@ img {
   color: #6f4b16;
 }
 
-.guest-export-actions {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.guest-export-actions,
+.guest-table-actions {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  width: min(100%, 260px);
+  gap: 8px;
+}
+
+.guest-table-actions {
+  width: 100%;
+}
+
+.guest-table-actions .btn {
+  min-height: 38px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  gap: 5px;
+  flex: 1 1 auto;
+}
+
+.guest-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 8px;
+}
+
+.guest-pagination span {
+  color: var(--client-muted, #796b5f);
+  font-weight: 950;
+  font-size: 0.9rem;
+}
+
+.guest-pagination .btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+}
+
+.bulk-whatsapp-wrapper,
+.guest-excel-import-wrapper {
+  padding: 12px;
+  border: 1px solid rgba(185, 135, 56, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.bulk-whatsapp-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.bulk-whatsapp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.bulk-whatsapp-head svg {
+  color: #25d366;
+  flex-shrink: 0;
+}
+
+.bulk-whatsapp-head strong {
+  color: var(--client-ink, #221a13);
+  display: block;
+}
+
+.bulk-whatsapp-head p {
+  margin: 2px 0 0;
+  color: var(--client-muted, #796b5f);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.bulk-whatsapp-panel textarea {
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid rgba(126, 88, 35, 0.14);
+  border-radius: 12px;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.bulk-whatsapp-panel small {
+  color: var(--client-muted, #796b5f);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.guest-excel-import {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.guest-excel-import small {
+  width: 100%;
 }
 
 .guest-export-actions .btn {
@@ -27263,6 +27362,15 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .guest-table-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guest-pagination {
+    flex-wrap: wrap;
+  }
+
   .admin-home-grid,
   .admin-ops-grid,
   .admin-list-overview,
@@ -27419,6 +27527,15 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   .customer-response-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .dashboard-tabs button {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+
+  .guest-table-actions {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -35871,4 +35988,422 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 .orders-queue-status-dropdown button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* ==================== Client Dashboard Refresh Styles ==================== */
+.customer-admin-refresh {
+  --client-ivory: #fffdf8;
+  --client-cream: #fbf4e9;
+  --client-gold: #b98738;
+  --client-gold-deep: #7d551f;
+  --client-ink: #221a13;
+  --client-muted: #796b5f;
+  --client-line: rgba(126, 88, 35, 0.17);
+  --client-soft-shadow: 0 16px 42px rgba(46, 33, 19, 0.09);
+  background:
+    radial-gradient(circle at 88% 3%, rgba(185, 135, 56, 0.13), transparent 24rem),
+    linear-gradient(180deg, #fffaf1 0%, #fbf4e9 48%, #fffdf8 100%);
+}
+
+.customer-admin-refresh .customer-mobile-section-head .eyebrow {
+  color: #8a6429;
+}
+
+.customer-admin-refresh .customer-mobile-section-head h2,
+.customer-admin-refresh .customer-admin-accordion summary {
+  color: var(--client-ink);
+}
+
+.customer-admin-refresh .customer-admin-accordion,
+.customer-admin-refresh .customer-priority-panel,
+.customer-admin-refresh .customer-guest-book-panel,
+.customer-admin-refresh .customer-response-row,
+.customer-admin-refresh .guest-mobile-row {
+  border-color: rgba(126, 88, 35, 0.14);
+  background: rgba(255, 253, 248, 0.82);
+  box-shadow: 0 10px 28px rgba(46, 33, 19, 0.07);
+}
+
+.customer-admin-refresh .customer-admin-accordion {
+  border-radius: 22px;
+}
+
+.customer-admin-refresh .customer-admin-accordion summary {
+  font-weight: 900;
+}
+
+.customer-admin-refresh .customer-preview-accordion {
+  border-color: rgba(185, 135, 56, 0.24);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.92), rgba(246, 229, 198, 0.62));
+  box-shadow: 0 18px 46px rgba(46, 33, 19, 0.1);
+}
+
+.customer-admin-refresh .customer-preview-accordion summary {
+  color: var(--client-gold-deep);
+}
+
+.customer-admin-refresh .builder-preview-panel {
+  border-top: 1px solid rgba(126, 88, 35, 0.12);
+  padding-top: 16px;
+}
+
+.customer-admin-refresh .builder-phone-frame {
+  border-color: rgba(126, 88, 35, 0.18);
+  box-shadow: 0 18px 44px rgba(46, 33, 19, 0.13);
+}
+
+.customer-admin-refresh .builder-editor-panel,
+.customer-admin-refresh .builder-section,
+.customer-admin-refresh .customer-export-card {
+  border-color: rgba(126, 88, 35, 0.13);
+  background: rgba(255, 253, 248, 0.78);
+}
+
+.customer-admin-refresh .status.success,
+.customer-admin-refresh .status.danger,
+.customer-admin-refresh .guest-book-status-pill {
+  filter: saturate(0.78);
+}
+
+.customer-admin-refresh .admin-messages-banner {
+  position: relative;
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto 18px;
+  border: 1px solid rgba(185, 135, 56, 0.3);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 248, 235, 0.95), rgba(255, 241, 215, 0.92));
+  box-shadow: 0 10px 28px rgba(46, 33, 19, 0.08);
+  padding: 16px 20px;
+}
+
+.customer-admin-refresh .admin-messages-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--client-gold-deep);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.customer-admin-refresh .admin-messages-banner-head strong {
+  margin-inline-start: auto;
+  font-size: 0.82rem;
+  background: rgba(185, 135, 56, 0.15);
+  padding: 3px 12px;
+  border-radius: 40px;
+}
+
+.customer-admin-refresh .admin-message-banner-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 253, 248, 0.78);
+  border: 1px solid rgba(126, 88, 35, 0.1);
+}
+
+.customer-admin-refresh .admin-message-banner-card.unread {
+  border-color: rgba(185, 135, 56, 0.3);
+  background: rgba(255, 253, 248, 0.95);
+}
+
+.customer-admin-refresh .admin-message-banner-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--client-gold);
+}
+
+.customer-admin-refresh .admin-message-banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.customer-admin-refresh .admin-message-banner-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--client-ink);
+}
+
+.customer-admin-refresh .admin-message-banner-body p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--client-muted);
+  line-height: 1.5;
+}
+
+.customer-admin-refresh .admin-message-banner-body time {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--client-muted);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.customer-admin-refresh .admin-message-banner-mark {
+  flex-shrink: 0;
+  background: rgba(185, 135, 56, 0.12);
+  border: none;
+  color: var(--client-gold-deep);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 40px;
+  font-size: 0.78rem;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.customer-admin-refresh .admin-message-banner-mark:hover {
+  background: rgba(185, 135, 56, 0.22);
+}
+
+.customer-admin-refresh .customer-mobile-stats,
+.customer-admin-refresh .customer-priority-panel,
+.customer-admin-refresh .customer-mobile-section,
+.customer-admin-refresh .customer-editor-accordions,
+.customer-admin-refresh .admin-messages-banner {
+  width: min(1120px, calc(100% - 28px));
+  margin-inline: auto;
+}
+
+.customer-admin-refresh .customer-mobile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.customer-admin-refresh .customer-mobile-stats article {
+  display: grid;
+  align-content: space-between;
+  gap: 8px;
+  min-height: 118px;
+  padding: 16px;
+  border: 1px solid var(--client-line, rgba(126, 88, 35, 0.17));
+  border-radius: 22px;
+  background: rgba(255, 253, 248, 0.82);
+  box-shadow: var(--client-soft-shadow, 0 16px 42px rgba(46, 33, 19, 0.09));
+}
+
+.customer-admin-refresh .customer-mobile-stats article svg {
+  color: var(--client-gold-deep, #7d551f);
+}
+
+.customer-admin-refresh .customer-mobile-stats span {
+  color: var(--client-muted, #796b5f);
+  font-size: 0.82rem;
+  font-weight: 950;
+  line-height: 1.45;
+}
+
+.customer-admin-refresh .customer-mobile-stats strong {
+  color: var(--client-ink, #221a13);
+  font-size: clamp(1.65rem, 5vw, 2.4rem);
+  line-height: 0.95;
+}
+
+@media (max-width: 720px) {
+  .customer-admin-refresh .customer-mobile-stats,
+  .customer-admin-refresh .customer-priority-panel,
+  .customer-admin-refresh .customer-mobile-section,
+  .customer-admin-refresh .customer-editor-accordions,
+  .customer-admin-refresh .admin-messages-banner {
+    width: min(100% - 18px, 1120px);
+  }
+
+  .customer-admin-refresh .customer-mobile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-admin-refresh .customer-mobile-stats article {
+    min-height: 96px;
+  }
+
+  .customer-admin-refresh .customer-preview-accordion .builder-phone-frame {
+    max-width: 330px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 460px) {
+  .customer-admin-refresh .customer-mobile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==================== Client Dashboard Tabs ==================== */
+.dashboard-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid rgba(126, 88, 35, 0.13);
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.72);
+  color: var(--client-muted, #796b5f);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 950;
+  line-height: 1;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.dashboard-tabs button:hover {
+  border-color: rgba(185, 135, 56, 0.3);
+  background: rgba(255, 253, 248, 0.92);
+}
+
+.dashboard-tabs button.active {
+  border-color: rgba(185, 135, 56, 0.4);
+  background: linear-gradient(135deg, rgba(185, 135, 56, 0.14), rgba(185, 135, 56, 0.08));
+  color: var(--client-gold-deep, #7d551f);
+  box-shadow: 0 4px 12px rgba(185, 135, 56, 0.12);
+}
+
+.dashboard-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+/* ==================== Error Boundary ==================== */
+.error-boundary-fallback {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 28px 18px;
+  margin: 12px 0;
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: 16px;
+  background: rgba(254, 242, 242, 0.72);
+  text-align: center;
+}
+
+.error-boundary-fallback svg {
+  color: #dc2626;
+}
+
+.error-boundary-fallback strong {
+  color: #991b1b;
+  font-size: 1rem;
+}
+
+.error-boundary-fallback p {
+  color: #7f1d1d;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ==================== Quick Support ==================== */
+.quick-support-btn {
+  min-height: 42px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.quick-support-footer {
+  display: grid;
+  justify-items: center;
+  margin-top: 24px;
+  padding: 18px;
+  border-top: 1px solid rgba(126, 88, 35, 0.1);
+}
+
+.quick-support-footer .btn {
+  min-height: 48px;
+  padding: 11px 28px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  gap: 8px;
+}
+
+/* ==================== Guest Table More Hint ==================== */
+.guest-table-more-hint {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(185, 135, 56, 0.08);
+  color: var(--client-muted, #796b5f);
+  font-size: 0.85rem;
+  font-weight: 950;
+  text-align: center;
+}
+
+.guest-table-more-hint strong {
+  color: var(--client-gold-deep, #7d551f);
+}
+
+/* ==================== Trial Notification Bar ==================== */
+.trial-notification-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.trial-notification-icon {
+  font-size: 20px;
+}
+
+/* ==================== Notices in customer page ==================== */
+.customer-notice {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto 16px;
+}
+
+/* ==================== Dashboard Topbar ==================== */
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.dashboard-topbar h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  line-height: 1.2;
+}
+
+.dashboard-topbar p {
+  margin: 0;
+  color: var(--muted);
+  direction: ltr;
+  font-weight: 900;
+  font-size: 0.82rem;
 }

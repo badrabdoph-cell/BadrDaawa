@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, MessageCircleHeart, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, MessageCircleHeart, XCircle } from "lucide-react";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
-import { formatArabicNumber } from "@/lib/utils";
+import { formatArabicNumber, formatDateTime } from "@/lib/utils";
 import { useState } from "react";
 
 const statusLabels: Record<GuestBookStatus, string> = {
@@ -17,23 +17,41 @@ const modeLabels: Record<GuestBookMode, string> = {
   moderated: "مراجعة قبل النشر",
 };
 
-function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value || "-";
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
-
 type ModerateAction = "approve" | "reject";
 
 export function CustomerGuestBookPanel({ invitationCode, messages, settings }: { invitationCode: string; messages: GuestBookMessage[]; settings: CoupleMessagesSettings }) {
   const [items, setItems] = useState(messages);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [settingsMode, setSettingsMode] = useState<GuestBookMode>(settings.mode);
+  const [settingsBusy, setSettingsBusy] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState("");
 
   const stats = {
     total: items.length,
     pending: items.filter((message) => message.status === "pending").length,
     published: items.filter((message) => message.status === "approved").length,
   };
+
+  async function saveSettings() {
+    setSettingsBusy(true);
+    setSettingsMessage("");
+    try {
+      const res = await fetch("/api/client/guest-book/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invitationCode, mode: settingsMode }),
+      });
+      if (res.ok) {
+        setSettingsMessage("تم حفظ الإعداد.");
+      } else {
+        setSettingsMessage("تعذر حفظ الإعداد.");
+      }
+    } catch {
+      setSettingsMessage("تعذر حفظ الإعداد.");
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
 
   async function moderate(messageId: string, action: ModerateAction) {
     setBusyId(messageId);
@@ -58,7 +76,7 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
       <div className="customer-messages-head">
         <MessageCircleHeart size={24} />
         <div>
-          <h2>كلمات وذكريات للعرسان ❤️</h2>
+          <h2>كلمات وذكريات للعرسان</h2>
           <p>رسائل وتهاني الضيوف الخاصة بهذه الدعوة فقط، وتبقى كجزء من الذكريات بعد الفرح.</p>
         </div>
         <strong className="customer-unread-badge">{formatArabicNumber(stats.total)} رسالة</strong>
@@ -70,18 +88,21 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
         <span>منشورة <strong>{formatArabicNumber(stats.published)}</strong></span>
       </div>
 
-      <form className="customer-guest-book-settings" action="/api/client/guest-book/settings" method="post">
-        <input type="hidden" name="invitationCode" value={invitationCode} />
+      <div className="customer-guest-book-settings">
         <label>
           <span>إعدادات القسم</span>
-          <select name="mode" defaultValue={settings.mode}>
+          <select value={settingsMode} onChange={(e) => setSettingsMode(e.target.value as GuestBookMode)}>
             {Object.entries(modeLabels).map(([value, label]) => (
               <option value={value} key={value}>{label}</option>
             ))}
           </select>
         </label>
-        <button className="btn btn-soft" type="submit">حفظ الإعداد</button>
-      </form>
+        <button className="btn btn-soft" type="button" onClick={saveSettings} disabled={settingsBusy}>
+          {settingsBusy ? <Loader2 size={16} /> : null}
+          حفظ الإعداد
+        </button>
+        {settingsMessage ? <small className={settingsMessage.includes("تعذر") ? "status danger" : "status success"}>{settingsMessage}</small> : null}
+      </div>
 
       {items.length ? (
         <div className="customer-guest-book-list">

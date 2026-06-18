@@ -3,6 +3,7 @@ import { KeyRound, LockKeyhole } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SectionIntro } from "@/components/SectionIntro";
+import { ClientLoginForm } from "@/components/ClientLoginForm";
 
 export default function ClientLoginPage() {
   return (
@@ -20,24 +21,7 @@ export default function ClientLoginPage() {
               </Link>
             </div>
           </div>
-          <form className="form-panel">
-            <div className="field">
-              <label htmlFor="username">اسم المستخدم</label>
-              <input id="username" placeholder="username" />
-            </div>
-            <div className="field" style={{ marginTop: 14 }}>
-              <label htmlFor="password">كلمة المرور</label>
-              <input id="password" type="password" placeholder="password" />
-            </div>
-            <button className="btn btn-gold" type="button" style={{ marginTop: 18 }}>
-              <LockKeyhole size={18} />
-              دخول
-            </button>
-            <p className="status" style={{ marginTop: 16 }}>
-              <KeyRound size={16} />
-              يتم تسليم بيانات الدخول مع رابط الدعوة.
-            </p>
-          </form>
+          <ClientLoginForm />
         </div>
       </main>
       <SiteFooter />

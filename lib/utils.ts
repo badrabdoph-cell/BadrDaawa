@@ -206,3 +206,9 @@ export function calculateAttendance(guests: { attendees: number; status: string 
     { totalResponses: 0, confirmedGuests: 0, declinedGuests: 0 },
   );
 }
+
+export function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
