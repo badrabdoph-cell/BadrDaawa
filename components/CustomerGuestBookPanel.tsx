@@ -3,7 +3,7 @@
 import { CheckCircle2, Loader2, MessageCircleHeart, XCircle } from "lucide-react";
 import type { CoupleMessagesSettings, GuestBookMessage, GuestBookMode, GuestBookStatus } from "@/lib/types";
 import { formatArabicNumber, formatDateTime } from "@/lib/utils";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const statusLabels: Record<GuestBookStatus, string> = {
   pending: "بانتظار الموافقة",
@@ -25,12 +25,19 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
   const [settingsMode, setSettingsMode] = useState<GuestBookMode>(settings.mode);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | GuestBookStatus>("all");
 
   const stats = {
     total: items.length,
     pending: items.filter((message) => message.status === "pending").length,
     published: items.filter((message) => message.status === "approved").length,
+    rejected: items.filter((message) => message.status === "rejected").length,
   };
+
+  const filteredItems = useMemo(() => {
+    if (filterStatus === "all") return items;
+    return items.filter((message) => message.status === filterStatus);
+  }, [items, filterStatus]);
 
   async function saveSettings() {
     setSettingsBusy(true);
@@ -82,10 +89,39 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
         <strong className="customer-unread-badge">{formatArabicNumber(stats.total)} رسالة</strong>
       </div>
 
-      <div className="customer-guest-book-stats">
-        <span>الإجمالي <strong>{formatArabicNumber(stats.total)}</strong></span>
-        <span>معلقة <strong>{formatArabicNumber(stats.pending)}</strong></span>
-        <span>منشورة <strong>{formatArabicNumber(stats.published)}</strong></span>
+      <div className="customer-guest-book-filters">
+        <button
+          type="button"
+          className={`customer-guest-book-filter-card ${filterStatus === "all" ? "active" : ""}`}
+          onClick={() => setFilterStatus("all")}
+        >
+          <span className="customer-guest-book-filter-label">الكل</span>
+          <strong>{formatArabicNumber(stats.total)}</strong>
+        </button>
+        <button
+          type="button"
+          className={`customer-guest-book-filter-card ${filterStatus === "pending" ? "active" : ""}`}
+          onClick={() => setFilterStatus("pending")}
+        >
+          <span className="customer-guest-book-filter-label">جديده</span>
+          <strong>{formatArabicNumber(stats.pending)}</strong>
+        </button>
+        <button
+          type="button"
+          className={`customer-guest-book-filter-card ${filterStatus === "approved" ? "active" : ""}`}
+          onClick={() => setFilterStatus("approved")}
+        >
+          <span className="customer-guest-book-filter-label">منشوره</span>
+          <strong>{formatArabicNumber(stats.published)}</strong>
+        </button>
+        <button
+          type="button"
+          className={`customer-guest-book-filter-card ${filterStatus === "rejected" ? "active" : ""}`}
+          onClick={() => setFilterStatus("rejected")}
+        >
+          <span className="customer-guest-book-filter-label">مرفوضه</span>
+          <strong>{formatArabicNumber(stats.rejected)}</strong>
+        </button>
       </div>
 
       <div className="customer-guest-book-settings">
@@ -104,9 +140,9 @@ export function CustomerGuestBookPanel({ invitationCode, messages, settings }: {
         {settingsMessage ? <small className={settingsMessage.includes("تعذر") ? "status danger" : "status success"}>{settingsMessage}</small> : null}
       </div>
 
-      {items.length ? (
+      {filteredItems.length ? (
         <div className="customer-guest-book-list">
-          {items.map((message) => (
+          {filteredItems.map((message) => (
             <article className="customer-guest-book-card" key={message.id}>
               <header>
                 <strong>{message.name || "ضيف عزيز"}</strong>

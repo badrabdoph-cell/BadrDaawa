@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { BarChart3, Download, Edit3, Gift, Heart, MessageCircle, MessageCircleHeart, QrCode, Radio, Share2, UsersRound } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BarChart3, CalendarDays, CheckCircle2, Download, Edit3, ExternalLink, Heart, Home, MessageCircle, MessageCircleHeart, QrCode, Share2, UserCheck, UsersRound, XCircle } from "lucide-react";
 import type { ClientMessage, ContentPreset, CoupleMessagesSettings, GuestBookMessage, GuestRsvp, Invitation, MessageTemplate, TemplateDefinition, WeddingLiveModeConfig } from "@/lib/types";
 import type { CustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -13,11 +13,7 @@ import { ClientShareTools } from "./ClientShareTools";
 import { ClientWeddingLiveModePanel } from "./ClientWeddingLiveModePanel";
 import { CustomerAnalyticsPanel } from "./CustomerAnalyticsPanel";
 import { ClientInvitationEditor } from "./ClientInvitationEditor";
-import { QuickSupportButton } from "./QuickSupportButton";
-import { CheckCircle2, UsersRound as UsersRoundIcon, MessageCircle as MessageCircleIcon } from "lucide-react";
 import { formatArabicNumber } from "@/lib/utils";
-import { UserCheck, XCircle } from "lucide-react";
-import { formatDateTime } from "@/lib/utils";
 
 type MusicFile = { id?: string; name?: string; url: string; modifiedAt: number };
 type DashboardTab = "overview" | "guests" | "guestbook" | "editor" | "share" | "analytics";
@@ -71,8 +67,6 @@ export function ClientDashboardShell({
 }) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const guestBookPending = guestBookMessages.filter((m) => m.status === "pending").length;
-  const unreadMessages = clientMessages.filter((m) => !m.readAt).length;
-  const responseTotal = analytics.confirmedResponses + analytics.declinedResponses;
 
   const tabBadge = useMemo(
     () =>
@@ -89,32 +83,42 @@ export function ClientDashboardShell({
 
   return (
     <div className="customer-admin customer-admin-refresh">
-      <section className="dashboard-topbar customer-topbar">
-        <div>
-          <h1>{invitation.groomName} و {invitation.brideName}</h1>
-          <p dir="ltr">{url.replace(/^https?:\/\//, "")}</p>
-        </div>
-        <div className="button-row">
-          <QuickSupportButton whatsappUrl={whatsappSupportUrl} />
-        </div>
-      </section>
+      <header className="customer-dashboard-header">
+        <section className="dashboard-topbar">
+          <div className="dashboard-topbar-actions">
+            <a className="btn btn-soft" href={url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={17} /> دعوتك
+            </a>
+            <a className="btn btn-gold" href={whatsappSupportUrl || "#"} target="_blank" rel="noopener noreferrer">
+              <MessageCircle size={17} /> خدمة العملاء
+            </a>
+            <a className="btn btn-soft" href="/" target="_blank" rel="noopener noreferrer">
+              <Home size={17} /> الرئيسيه
+            </a>
+          </div>
+        </section>
 
-      <nav className="dashboard-tabs" role="tablist" aria-label="أقسام لوحة التحكم">
-        {(Object.keys(TAB_LABELS) as DashboardTab[]).map((tab) => (
-          <button
-            key={tab}
-            role="tab"
-            aria-selected={activeTab === tab}
-            className={activeTab === tab ? "active" : ""}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-          >
-            {TAB_ICONS[tab]}
-            <span>{TAB_LABELS[tab]}</span>
-            {tabBadge[tab] > 0 ? <sup className="dashboard-tab-badge">{tabBadge[tab]}</sup> : null}
-          </button>
-        ))}
-      </nav>
+        {activeTab === "overview" ? (
+          <CompactStatsSection analytics={analytics} guestBookMessages={guestBookMessages} />
+        ) : null}
+
+        <nav className="dashboard-tabs" role="tablist" aria-label="أقسام لوحة التحكم">
+          {(Object.keys(TAB_LABELS) as DashboardTab[]).map((tab) => (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={activeTab === tab ? "active" : ""}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+            >
+              {TAB_ICONS[tab]}
+              <span>{TAB_LABELS[tab]}</span>
+              {tabBadge[tab] > 0 ? <sup className="dashboard-tab-badge">{tabBadge[tab]}</sup> : null}
+            </button>
+          ))}
+        </nav>
+      </header>
 
       {activeTab === "overview" ? (
         <OverviewTab
@@ -131,7 +135,6 @@ export function ClientDashboardShell({
           template={template}
           contentPresets={contentPresets}
           coupleMessagesSettings={coupleMessagesSettings}
-          whatsappSupportUrl={whatsappSupportUrl}
         />
       ) : null}
 
@@ -207,6 +210,100 @@ export function ClientDashboardShell({
   );
 }
 
+function CompactStatsSection({
+  analytics,
+  guestBookMessages,
+}: {
+  analytics: CustomerInvitationAnalytics;
+  guestBookMessages: GuestBookMessage[];
+}) {
+  const responseTotal = analytics.confirmedResponses + analytics.declinedResponses;
+  const guestMessagesTotal = guestBookMessages.length;
+  const confirmedPercent = responseTotal ? Math.round((analytics.confirmedResponses / responseTotal) * 100) : 0;
+  const declinedPercent = responseTotal ? 100 - confirmedPercent : 0;
+  const maxDayViews = Math.max(1, ...analytics.openDays.map((day) => day.count));
+
+  function formatDate(value: string) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short" }).format(date);
+  }
+
+  return (
+    <section className="customer-compact-stats" aria-label="ملخص الدعوة">
+      <div className="customer-compact-stats-grid">
+        <article>
+          <CheckCircle2 size={16} />
+          <span>عدد الردود</span>
+          <strong>{formatArabicNumber(responseTotal)}</strong>
+        </article>
+        <article>
+          <UsersRound size={16} />
+          <span>الحضور المتوقع</span>
+          <strong>{formatArabicNumber(analytics.expectedAttendees)}</strong>
+        </article>
+        <article>
+          <MessageCircleHeart size={16} />
+          <span>عدد الرسائل</span>
+          <strong>{formatArabicNumber(guestMessagesTotal)}</strong>
+        </article>
+        <article>
+          <BarChart3 size={16} />
+          <span>عدد الزيارات</span>
+          <strong>{formatArabicNumber(analytics.visits)}</strong>
+        </article>
+        <article>
+          <UserCheck size={16} />
+          <span>حضور مؤكد</span>
+          <strong>{formatArabicNumber(analytics.confirmedResponses)}</strong>
+        </article>
+        <article>
+          <XCircle size={16} />
+          <span>اعتذارات</span>
+          <strong>{formatArabicNumber(analytics.declinedResponses)}</strong>
+        </article>
+      </div>
+      <div className="customer-compact-stats-extras">
+        <article className="customer-compact-chart">
+          <div className="customer-compact-chart-head">
+            <UsersRound size={14} />
+            <span>توزيع الردود</span>
+          </div>
+          <div className="customer-compact-rsvp-bar" aria-label={`حضور ${confirmedPercent}% واعتذار ${declinedPercent}%`}>
+            <span className="confirmed" style={{ width: `${confirmedPercent}%` }} />
+            <span className="declined" style={{ width: `${declinedPercent}%` }} />
+          </div>
+          <div className="customer-compact-legend">
+            <span><i className="confirmed" /> حضور {formatArabicNumber(confirmedPercent)}%</span>
+            <span><i className="declined" /> اعتذار {formatArabicNumber(declinedPercent)}%</span>
+          </div>
+        </article>
+        <article className="customer-compact-chart">
+          <div className="customer-compact-chart-head">
+            <CalendarDays size={14} />
+            <span>أكثر أيام فتح الدعوة</span>
+          </div>
+          {analytics.openDays.length ? (
+            <div className="customer-compact-day-bars">
+              {analytics.openDays.slice(0, 3).map((day) => (
+                <div className="customer-compact-day-bar" key={day.date}>
+                  <span>{formatDate(day.date)}</span>
+                  <div><i style={{ width: `${Math.max(8, (day.count / maxDayViews) * 100)}%` }} /></div>
+                  <strong>{formatArabicNumber(day.count)}</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="admin-empty-state compact">
+              <p>لا توجد زيارات يومية مسجلة بعد</p>
+            </div>
+          )}
+        </article>
+      </div>
+    </section>
+  );
+}
+
 function OverviewTab({
   invitation,
   analytics,
@@ -221,7 +318,6 @@ function OverviewTab({
   template,
   contentPresets,
   coupleMessagesSettings,
-  whatsappSupportUrl,
 }: {
   invitation: Invitation;
   analytics: CustomerInvitationAnalytics;
@@ -236,11 +332,7 @@ function OverviewTab({
   template: Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
   contentPresets: ContentPreset[];
   coupleMessagesSettings: CoupleMessagesSettings;
-  whatsappSupportUrl?: string | null;
 }) {
-  const responseTotal = analytics.confirmedResponses + analytics.declinedResponses;
-  const guestMessagesTotal = guestBookMessages.length;
-
   return (
     <>
       {invitation.trialEndsAt && !invitation.disabledAt ? (
@@ -252,43 +344,21 @@ function OverviewTab({
         </div>
       ) : null}
 
-      <section className="customer-mobile-stats" aria-label="ملخص الدعوة">
-        <article>
-          <CheckCircle2 size={20} />
-          <span>عدد الردود</span>
-          <strong>{formatArabicNumber(responseTotal)}</strong>
-        </article>
-        <article>
-          <UsersRoundIcon size={20} />
-          <span>الحضور المتوقع</span>
-          <strong>{formatArabicNumber(analytics.expectedAttendees)}</strong>
-        </article>
-        <article>
-          <MessageCircleIcon size={20} />
-          <span>عدد الرسائل</span>
-          <strong>{formatArabicNumber(guestMessagesTotal)}</strong>
-        </article>
-        <article>
-          <BarChart3 size={20} />
-          <span>عدد الزيارات</span>
-          <strong>{formatArabicNumber(analytics.visits)}</strong>
-        </article>
-        <article>
-          <UserCheck size={20} />
-          <span>حضور مؤكد</span>
-          <strong>{formatArabicNumber(analytics.confirmedResponses)}</strong>
-        </article>
-        <article>
-          <XCircle size={20} />
-          <span>اعتذارات</span>
-          <strong>{formatArabicNumber(analytics.declinedResponses)}</strong>
-        </article>
-      </section>
-
-      <ErrorBoundary name="messages">
-        <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
+      {/* Guest Book Section - moved above Guests */}
+      <ErrorBoundary name="guest-book">
+        <section className="customer-mobile-section">
+          <div className="customer-mobile-section-head">
+            <div>
+              <span className="eyebrow">تهاني الضيوف</span>
+              <h2>تهاني الضيوف</h2>
+            </div>
+            <strong>{formatArabicNumber(guestBookPending)} جديد</strong>
+          </div>
+          <CustomerGuestBookPanel invitationCode={invitation.code} messages={guestBookMessages} settings={coupleMessagesSettings} />
+        </section>
       </ErrorBoundary>
 
+      {/* Guests Section */}
       <ErrorBoundary name="guest-table">
         <section className="customer-mobile-section">
           <div className="customer-mobile-section-head">
@@ -306,19 +376,7 @@ function OverviewTab({
         </section>
       </ErrorBoundary>
 
-      <ErrorBoundary name="guest-book">
-        <section className="customer-mobile-section">
-          <div className="customer-mobile-section-head">
-            <div>
-              <span className="eyebrow">تهاني الضيوف</span>
-              <h2>تهاني الضيوف</h2>
-            </div>
-            <strong>{formatArabicNumber(guestBookPending)} جديد</strong>
-          </div>
-          <CustomerGuestBookPanel invitationCode={invitation.code} messages={guestBookMessages} settings={coupleMessagesSettings} />
-        </section>
-      </ErrorBoundary>
-
+      {/* Share & Tools */}
       <ErrorBoundary name="share-and-tools">
         <section className="customer-mobile-section customer-accordion-stack">
           <details className="customer-admin-accordion">
@@ -345,24 +403,18 @@ function OverviewTab({
               </div>
             </article>
           </details>
-          <details className="customer-admin-accordion">
-            <summary>إحصائيات الدعوة</summary>
-            <CustomerAnalyticsPanel analytics={analytics} />
-          </details>
         </section>
       </ErrorBoundary>
 
+      {/* Editor */}
       <ErrorBoundary name="editor">
         <ClientInvitationEditor invitation={invitation} template={template} musicFiles={musicFiles} contentPresets={contentPresets} publicUrl={url} />
       </ErrorBoundary>
 
-      {whatsappSupportUrl ? (
-        <div className="quick-support-footer">
-          <a className="btn btn-gold" href={whatsappSupportUrl} target="_blank" rel="noopener noreferrer">
-            <MessageCircle size={17} /> تواصل مع فريق الدعم عبر واتساب
-          </a>
-        </div>
-      ) : null}
+      {/* Messages Center - moved to very last */}
+      <ErrorBoundary name="messages">
+        <CustomerMessagesPanel invitationCode={invitation.code} messages={clientMessages} />
+      </ErrorBoundary>
     </>
   );
 }
