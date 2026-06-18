@@ -78,16 +78,41 @@ export function PublishedInvitationRow({
   const isDisabled = !!disabledAt;
 
   async function handleToggleState() {
+    if (!isDisabled) {
+      const reason = window.prompt("سبب التعطيل (مطلوب):");
+      if (reason === null) return;
+      if (!reason.trim()) {
+        alert("يجب كتابة سبب التعطيل.");
+        return;
+      }
+      setActionLoading(true);
+      try {
+        const res = await fetch(`/api/admin/invitations/${encodeURIComponent(code)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ action: "disable", disabledReason: reason.trim() }),
+        });
+        const data = await res.json().catch(() => null) as { ok?: boolean } | null;
+        if (!res.ok || !data?.ok) throw new Error("تعذر تعطيل الدعوة.");
+        router.refresh();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "حدث خطأ.");
+      } finally {
+        setActionLoading(false);
+        setMenuOpen(false);
+      }
+      return;
+    }
+
     setActionLoading(true);
     try {
-      const action = isDisabled ? "enable" : "disable";
       const res = await fetch(`/api/admin/invitations/${encodeURIComponent(code)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action: "enable" }),
       });
       const data = await res.json().catch(() => null) as { ok?: boolean } | null;
-      if (!res.ok || !data?.ok) throw new Error("تعذر تحديث الحالة.");
+      if (!res.ok || !data?.ok) throw new Error("تعذر تفعيل الدعوة.");
       router.refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "حدث خطأ.");

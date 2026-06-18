@@ -58,7 +58,7 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     if (action === "enable") {
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
-        data: { disabledAt: null, disabledReason: null, disabledBy: null },
+        data: { disabledAt: null, disabledReason: null, disabledBy: null, status: "ACTIVE" },
       });
       return result.count > 0;
     }
@@ -145,6 +145,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return jsonMode ? jsonError("قاعدة البيانات غير متاحة.", 503) : redirectBack(request, "database");
     }
     try {
+      await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data: { deletedAt: new Date(), status: "ARCHIVED" } });
       const result = await hardDeleteInvitationCompletely(code);
       if (!result.ok) throw new Error("لم يتم العثور على الدعوة.");
       safeRevalidatePath("/admin/invitations");

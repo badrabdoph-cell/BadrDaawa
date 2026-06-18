@@ -20241,75 +20241,116 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
 .live-mode-admin-grid {
   display: grid;
-  gap: 14px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .live-mode-admin-card {
   display: grid;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(21, 24, 34, 0.6);
+  transition: border-color 0.2s, background 0.2s;
 }
 
 .live-mode-admin-card.active {
-  border-color: rgba(34, 197, 94, 0.24);
-  background: rgba(240, 253, 244, 0.8);
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(21, 24, 34, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.12);
 }
 
 .live-mode-admin-card-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
-.live-mode-admin-card-head strong,
+.live-mode-admin-card-head strong {
+  display: block;
+  color: #fff7e8;
+  font-size: 0.92rem;
+}
+
 .live-mode-admin-card-head small {
   display: block;
-}
-
-.live-mode-admin-card-head small {
-  margin-top: 4px;
-  color: #64748b;
-  font-weight: 800;
+  margin-top: 2px;
+  color: rgba(245, 234, 214, 0.5);
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .live-mode-admin-card-head > span {
-  min-height: 28px;
-  padding: 5px 10px;
+  flex-shrink: 0;
+  padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.15);
-  color: #475569;
-  font-size: 0.78rem;
-  font-weight: 950;
+  font-size: 0.75rem;
+  font-weight: 850;
   white-space: nowrap;
+  background: rgba(148, 163, 184, 0.15);
+  color: rgba(245, 234, 214, 0.5);
 }
 
 .live-mode-admin-card.active .live-mode-admin-card-head > span {
-  background: rgba(34, 197, 94, 0.14);
-  color: #15803d;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
 }
 
 .live-mode-admin-mini-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .live-mode-admin-mini-stats b {
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.06);
-  color: #334155;
-  font-size: 0.8rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(245, 234, 214, 0.05);
+  color: rgba(245, 234, 214, 0.65);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.live-mode-admin-card.active .live-mode-admin-mini-stats b {
+  color: rgba(245, 234, 214, 0.78);
 }
 
 .live-mode-admin-form {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+}
+
+.live-mode-admin-form .builder-checkline {
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+
+.live-mode-admin-form .field {
+  gap: 4px;
+}
+
+.live-mode-admin-form .field span {
+  font-size: 0.78rem;
+  color: rgba(245, 234, 214, 0.55);
+}
+
+.live-mode-admin-form .field textarea {
+  min-height: 50px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  border-radius: 8px;
+}
+
+.live-mode-admin-form .field textarea[name="events"] {
+  min-height: 72px;
+}
+
+.live-mode-admin-form button[type="submit"] {
+  justify-self: start;
 }
 
 .guest-book-form {
@@ -27445,7 +27486,12 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   }
 
   .live-mode-admin-card-head {
-    display: grid;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .live-mode-admin-card-head > span {
+    align-self: flex-start;
   }
 
   .template-photographer-card {
