@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, ScanLine, Search, ScrollText, Settings, ShieldCheck, Sparkles, Star, Trash2, TriangleAlert, UsersRound, Wrench, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -61,6 +61,22 @@ const adminSections = [
       { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
       { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
       { href: "/admin/broadcast", label: "شاشة البث", icon: RadioTower },
+    ],
+  },
+  {
+    id: "cleanup",
+    title: "التنظيف والصيانة",
+    description: "تنظيف وتحسين وأداء النظام",
+    accent: "amber",
+    icon: Sparkles,
+    links: [
+      { href: "/admin/cleanup", label: "مركز التنظيف", icon: Wrench },
+      { href: "/admin/cleanup/scan", label: "الفحص الشامل", icon: ScanLine },
+      { href: "/admin/cleanup/database", label: "قاعدة البيانات", icon: DatabaseBackup },
+      { href: "/admin/cleanup/media", label: "الوسائط", icon: FileImage },
+      { href: "/admin/cleanup/backups", label: "النسخ الاحتياطية", icon: Archive },
+      { href: "/admin/cleanup/optimization", label: "تحسين الأداء", icon: Activity },
+      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
     ],
   },
   {

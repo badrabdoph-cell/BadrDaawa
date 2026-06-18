@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { deleteMediaFilesByAction, type StorageCleanupAction } from "@/lib/media-cleanup";
+import { validateCsrfToken } from "@/lib/csrf";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(request: NextRequest) {
+  const isValid = await validateCsrfToken(request);
+  if (!isValid) {
+    return NextResponse.json({ error: "CSRF token" }, { status: 403 });
+  }
+
+  try {
+    const formData = await request.formData();
+    const action = (formData.get("action") as string) || "orphans";
+
+    const validActions: StorageCleanupAction[] = [
+      "orphans", "duplicates", "original-images", "music-unused",
+      "database-orphans", "old-backups", "all",
+    ];
+
+    if (!validActions.includes(action as StorageCleanupAction)) {
+      return NextResponse.json({ ok: false, error: `إجراء غير صالح: ${action}` }, { status: 400 });
+    }
+
+    const result = await deleteMediaFilesByAction(action as StorageCleanupAction);
+
+    revalidatePath("/admin/cleanup");
+    revalidatePath("/admin/cleanup/media");
+    revalidatePath("/admin/cleanup/backups");
+    revalidatePath("/admin/cleanup/scan");
+    revalidatePath("/admin/media");
+    revalidatePath("/admin/backups");
+
+    return NextResponse.json({
+      ok: true,
+      action: result.action,
+      deletedFiles: result.deletedFiles.length,
+      deletedBackups: result.deletedBackups.length,
+      deletedDatabaseOrphans: result.deletedDatabaseOrphans.length,
+      deletedSizeBytes: result.deletedSizeBytes,
+      skippedFiles: result.skippedFiles.length,
+      backupFileName: result.backupFileName,
+      redirect: `/admin/cleanup/media?status=cleaned&count=${result.deletedFiles.length}&size=${result.deletedSizeBytes}`,
+    });
+  } catch (error) {
+    return NextResponse.json({ ok: false, error: String(error) }, { status: 500 });
+  }
+}

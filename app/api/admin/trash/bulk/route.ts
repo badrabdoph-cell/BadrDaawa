@@ -19,18 +19,21 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const action = String(formData.get("action") || "");
-  const type = String(formData.get("type") || "");
   const idsRaw = formData.getAll("ids[]");
+  const typesRaw = formData.getAll("types[]");
 
-  if ((action !== "bulk-restore" && action !== "bulk-hard-delete") || !entityTypes.has(type) || idsRaw.length === 0) {
+  if ((action !== "bulk-restore" && action !== "bulk-hard-delete") || idsRaw.length === 0 || idsRaw.length !== typesRaw.length) {
     return NextResponse.redirect(getRedirectUrl("/admin/trash?status=invalid", request.headers, request.nextUrl.origin), 303);
   }
 
-  const entityType = type as TrashEntityType;
   const ids = idsRaw.map((id) => String(id));
+  const types = typesRaw.map((t) => String(t));
   let successCount = 0;
 
-  for (const id of ids) {
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    const entityType = types[i] as TrashEntityType;
+    if (!entityTypes.has(entityType)) continue;
     try {
       if (action === "bulk-restore") {
         const ok = await restoreTrashItem(entityType, id, "database");
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
     actor: await getAuditActorFromAdminRequest(request),
     action: action === "bulk-restore" ? "backup.restore" : "invitation.delete",
     entity: { type: "Cleanup", id: ids.join(","), label: `${ids.length} items` },
-    newValues: { action, type: entityType, count: ids.length, successCount },
+    newValues: { action, types, count: ids.length, successCount },
     metadata: { source: "trash-bulk" },
   });
 

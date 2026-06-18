@@ -41,20 +41,21 @@ export function TrashBulkActions({ items, csrfToken, filterType }: Props) {
 
     const formData = new FormData();
     formData.append("action", action);
-    formData.append("type", filterType === "all" ? "invitation" : filterType);
     formData.append("csrf_token", csrfToken);
 
     for (const compositeId of selectedIds) {
       const parts = compositeId.split("-");
+      const type = parts[1];
       const id = parts.slice(2).join("-");
       formData.append("ids[]", id);
+      formData.append("types[]", type);
     }
 
     try {
       const res = await fetch("/api/admin/trash/bulk", { method: "POST", body: formData });
       if (res.redirected) {
         setSelectedIds(new Set());
-        router.refresh();
+        window.location.href = res.url;
       }
     } catch {
     } finally {
