@@ -1030,7 +1030,7 @@ export function AdminNewInvitationWizard({
               <UserRound size={16} />
               اسم العريس
             </label>
-            <input id="adminGroomName" placeholder="مثال: بدر" value={draft.groomName} onChange={(event) => patch({ groomName: event.target.value })} required />
+            <input id="adminGroomName" placeholder="مثال: محمد" value={draft.groomName} onChange={(event) => patch({ groomName: event.target.value })} required />
           </div>
 
           <div className="field">
@@ -1038,7 +1038,7 @@ export function AdminNewInvitationWizard({
               <UserRound size={16} />
               اسم العروس
             </label>
-            <input id="adminBrideName" placeholder="مثال: سارة" value={draft.brideName} onChange={(event) => patch({ brideName: event.target.value })} required />
+            <input id="adminBrideName" placeholder="مثال: ندي" value={draft.brideName} onChange={(event) => patch({ brideName: event.target.value })} required />
           </div>
 
           <div className="field">

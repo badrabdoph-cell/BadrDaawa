@@ -1794,7 +1794,7 @@ export function OrderForm({
                   <UserRound size={16} />
                   اسم العريس
                 </label>
-                <input id="groomName" name="groomName" placeholder="مثال: بدر" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
+                <input id="groomName" name="groomName" placeholder="مثال: محمد" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
                 {errors.groomName ? <small className="field-error" id="groomName-error">{errors.groomName}</small> : null}
               </div>
 
@@ -1803,7 +1803,7 @@ export function OrderForm({
                   <UserRound size={16} />
                   اسم العروس
                 </label>
-                <input id="brideName" name="brideName" placeholder="مثال: سارة" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
+                <input id="brideName" name="brideName" placeholder="مثال: ندي" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
                 {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
               </div>
 
