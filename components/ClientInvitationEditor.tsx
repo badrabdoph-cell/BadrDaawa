@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Clock, Copy, Disc3, Eye, FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud, UserRound } from "lucide-react";
+import { Clock, Copy, Disc3, Eye, FileVideo, Heart, ImagePlus, Link2, Loader2, MessageSquareText, Music2, Plus, Save, Trash2, UploadCloud } from "lucide-react";
 import { uploadAdminHeroVideo } from "@/components/AdminInvitationTools";
 import { ContentPresetPicker } from "@/components/ContentPresetPicker";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
@@ -74,11 +74,6 @@ export function ClientInvitationEditor({
   );
   const [heroVideoUrl, setHeroVideoUrl] = useState(invitation.heroVideoUrl || "");
   const [heroVideoName, setHeroVideoName] = useState(invitation.heroVideoUrl?.split("/").pop() || "");
-  const [photographerEnabled, setPhotographerEnabled] = useState(Boolean(invitation.photographer?.enabled));
-  const [photographerName, setPhotographerName] = useState(invitation.photographer?.name || "");
-  const [photographerLogo, setPhotographerLogo] = useState<ImageSlotState>({ previewUrl: invitation.photographer?.logoUrl || "", dataUrl: "", name: "", loading: false });
-  const [photographerFacebookUrl, setPhotographerFacebookUrl] = useState(invitation.photographer?.facebookUrl || "");
-  const [photographerInstagramUrl, setPhotographerInstagramUrl] = useState(invitation.photographer?.instagramUrl || "");
   const [musicEnabled, setMusicEnabled] = useState(invitation.musicEnabled !== false && Boolean(invitation.musicUrl));
   const [musicUrl, setMusicUrl] = useState(invitation.musicUrl || "");
   const [musicChoice, setMusicChoice] = useState<"library" | "upload" | "video" | "url">(() => (musicFiles.some((file) => file.url === invitation.musicUrl) ? "library" : "upload"));
@@ -91,7 +86,6 @@ export function ClientInvitationEditor({
   const [dirty, setDirty] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const imageInputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const photographerLogoInputRef = useRef<HTMLInputElement | null>(null);
   const fieldRefs = {
     groomName: useRef<HTMLInputElement | null>(null),
     brideName: useRef<HTMLInputElement | null>(null),
@@ -123,15 +117,8 @@ export function ClientInvitationEditor({
       musicUrl,
       disableMusic: !musicEnabled,
       texts: invitationTexts,
-      photographer: {
-        enabled: photographerEnabled,
-        name: photographerName,
-        logoUrl: photographerLogo.previewUrl,
-        facebookUrl: photographerFacebookUrl,
-        instagramUrl: photographerInstagramUrl,
-      },
     }),
-    [brideName, city, groomName, heroVideoUrl, images, invitationTexts, mapUrl, musicEnabled, musicUrl, photographerEnabled, photographerFacebookUrl, photographerInstagramUrl, photographerLogo.previewUrl, photographerName, venue, weddingDate, weddingTime],
+    [brideName, city, groomName, heroVideoUrl, images, invitationTexts, mapUrl, musicEnabled, musicUrl, venue, weddingDate, weddingTime],
   );
 
   const postPreviewUpdate = useCallback(() => {
@@ -173,7 +160,7 @@ export function ClientInvitationEditor({
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [dirty, groomName, brideName, weddingDate, weddingTime, venue, city, mapUrl, images, heroVideoUrl, musicEnabled, musicUrl, invitationTexts, photographerEnabled, photographerName, photographerLogo.previewUrl, photographerFacebookUrl, photographerInstagramUrl]);
+  }, [dirty, groomName, brideName, weddingDate, weddingTime, venue, city, mapUrl, images, heroVideoUrl, musicEnabled, musicUrl, invitationTexts]);
 
   function markDirty() {
     setDirty(true);
@@ -222,20 +209,6 @@ export function ClientInvitationEditor({
       setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, loading: false } : item)));
       setStatus("error");
       setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع الصورة. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
-    }
-  }
-
-  async function handleLogoFile(file?: File | null) {
-    if (!file) return;
-    markDirty();
-    setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: true });
-    try {
-      const url = await uploadBrowserPreviewImage(file, { slot: "client-photographer-logo" });
-      setPhotographerLogo({ dataUrl: "", previewUrl: url, name: file.name, loading: false });
-    } catch (error) {
-      setPhotographerLogo({ dataUrl: "", previewUrl: "", name: file.name, loading: false });
-      setStatus("error");
-      setMessage(error instanceof Error && error.message !== "preview-image-upload-failed" ? error.message : "تعذر رفع شعار المصور. جرّب صورة أخرى أو قلل حجمها ثم أعد المحاولة.");
     }
   }
 
@@ -339,13 +312,8 @@ export function ClientInvitationEditor({
           if (image.closest(".qr-card")) return;
           event.preventDefault();
           event.stopPropagation();
-          if (image.closest('[class*="photographer"]') || image.classList.contains("photographer-logo-image")) {
-            photographerLogoInputRef.current?.click();
-            return;
-          }
-
           const editableImages = Array.from(doc.querySelectorAll<HTMLImageElement>("img")).filter(
-            (item) => !item.closest(".qr-card") && !item.closest('[class*="photographer"]') && !item.classList.contains("photographer-logo-image"),
+            (item) => !item.closest(".qr-card"),
           );
           const imageIndex = editableImages.indexOf(image);
           imageInputRefs.current[Math.max(0, Math.min(imageIndex, 2))]?.click();
@@ -380,7 +348,7 @@ export function ClientInvitationEditor({
       setMessage("رابط الموسيقى لازم يكون ملف صوت مباشر.");
       return;
     }
-    if (images.some((image) => image.loading) || photographerLogo.loading || busy) {
+    if (images.some((image) => image.loading) || busy) {
       setStatus("error");
       setMessage("استنى لحظة لحد ما رفع الملفات يخلص قبل الحفظ.");
       return;
@@ -388,11 +356,6 @@ export function ClientInvitationEditor({
     if (images.some((image) => image.name && !image.previewUrl)) {
       setStatus("error");
       setMessage("في صورة مختارة لكنها لم تُرفع بنجاح. ارفعها مرة أخرى قبل حفظ الدعوة.");
-      return;
-    }
-    if (photographerEnabled && photographerLogo.name && !photographerLogo.previewUrl) {
-      setStatus("error");
-      setMessage("شعار المصور لم يُرفع بنجاح. ارفعه مرة أخرى أو احذف الاختيار قبل الحفظ.");
       return;
     }
     setBusy(true);
@@ -413,17 +376,6 @@ export function ClientInvitationEditor({
         musicUrl,
         musicDataUrl,
         texts: invitationTexts,
-      photographer: {
-        enabled: photographerEnabled,
-        name: photographerName,
-        description: invitation.photographer?.description || "",
-        logoUrl: photographerLogo.previewUrl,
-        logoDataUrl: "",
-        facebookUrl: photographerFacebookUrl,
-        instagramUrl: photographerInstagramUrl,
-        whatsappUrl: invitation.photographer?.whatsappUrl || "",
-        _logoSource: photographerLogo.previewUrl ? "custom" : "global",
-      },
       }),
     });
     const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -547,34 +499,6 @@ export function ClientInvitationEditor({
             })}
           </div>
           <small className="builder-inline-hint">اترك عناوين وأوصاف الصور فارغة ليظل المعرض بالطريقة الحالية.</small>
-        </div>
-
-        <div className="builder-section">
-          <button className={photographerEnabled ? "builder-toggle active" : "builder-toggle"} type="button" onClick={() => { setPhotographerEnabled(!photographerEnabled); markDirty(); }}>
-            <UserRound size={17} />
-            {photographerEnabled ? "إخفاء بيانات المصور" : "إضافة بيانات المصور"}
-          </button>
-          {photographerEnabled ? (
-            <div className="builder-mini-grid">
-              <label className="field">
-                <span>اسم المصور</span>
-                <input value={photographerName} onChange={(event) => { setPhotographerName(event.target.value); markDirty(); }} />
-              </label>
-              <label className="field">
-                <span>Facebook</span>
-                <input value={photographerFacebookUrl} onChange={(event) => { setPhotographerFacebookUrl(event.target.value); markDirty(); }} />
-              </label>
-              <label className="field">
-                <span>Instagram</span>
-                <input value={photographerInstagramUrl} onChange={(event) => { setPhotographerInstagramUrl(event.target.value); markDirty(); }} />
-              </label>
-              <label className="builder-logo-upload">
-                <UploadCloud size={17} />
-                <span>{photographerLogo.name || "رفع شعار المصور أو صورته"}</span>
-                <input ref={photographerLogoInputRef} type="file" accept={acceptedImageFormats} onChange={(event) => handleLogoFile(event.target.files?.[0])} />
-              </label>
-            </div>
-          ) : null}
         </div>
 
         <div className="builder-section">
