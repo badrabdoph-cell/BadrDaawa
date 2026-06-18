@@ -259,6 +259,7 @@ export type ClientMessage = {
   title: string;
   body: string;
   sender: "admin";
+  scope: "single" | "all";
   createdAt: string;
   readAt?: string;
 };

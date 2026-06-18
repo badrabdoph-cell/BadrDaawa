@@ -301,6 +301,7 @@ model ClientMessage {
   title          String
   body           String
   sender         String   @default("admin")
+  scope          String   @default("single")
   readAt         DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

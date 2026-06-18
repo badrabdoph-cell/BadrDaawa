@@ -11216,7 +11216,7 @@ img {
   gap: 10px;
   max-height: calc(100vh - 130px);
   padding: 14px;
-  overflow: hidden;
+  overflow: hidden auto;
 }
 
 .orders-queue-head {
@@ -11276,6 +11276,7 @@ img {
   display: grid;
   gap: 7px;
   width: 100%;
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;

@@ -13,6 +13,7 @@ function toClientMessage(row: {
   title: string;
   body: string;
   sender: string;
+  scope: string;
   createdAt: Date;
   readAt: Date | null;
 }): ClientMessage {
@@ -22,6 +23,7 @@ function toClientMessage(row: {
     title: row.title,
     body: row.body,
     sender: "admin",
+    scope: row.scope === "all" ? "all" : "single",
     createdAt: row.createdAt.toISOString(),
     ...(row.readAt ? { readAt: row.readAt.toISOString() } : {}),
   };
@@ -42,7 +44,7 @@ export async function getAllClientMessages() {
 export async function getClientMessages(invitationCode: string) {
   const cleanCode = invitationCode.trim().toLowerCase();
   const messages = await getAllClientMessages();
-  return messages.filter((message) => message.invitationCode.toLowerCase() === cleanCode);
+  return messages.filter((message) => message.scope === "all" || message.invitationCode.toLowerCase() === cleanCode);
 }
 
 export async function getClientUnreadMessageCount(invitationCode: string) {
