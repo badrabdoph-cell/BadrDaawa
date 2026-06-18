@@ -14,6 +14,15 @@ import {
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { getRedirectUrl } from "@/lib/utils";
 
+function sanitizeText(value: FormDataEntryValue | null, maxLength = 2000): string {
+  if (!value) return "";
+  return String(value)
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
 export const runtime = "nodejs";
 
 async function isAdmin(request: NextRequest) {
@@ -123,8 +132,8 @@ export async function POST(request: NextRequest) {
 
   if (action === "edit") {
     const updated = await updateGuestBookMessage(messageId, {
-      name: formData.get("name"),
-      message: formData.get("message"),
+      name: sanitizeText(formData.get("name"), 80),
+      message: sanitizeText(formData.get("message"), 600),
       status: formData.get("status"),
     });
     if (!updated) {

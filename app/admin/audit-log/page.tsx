@@ -37,9 +37,10 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function compactJson(value: unknown) {
-  if (value === undefined) return "";
-  const text = JSON.stringify(value, null, 2);
+function compactJson(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  if (!text || text === "{}" || text === "[]") return undefined;
   return text.length > 700 ? `${text.slice(0, 700)}...` : text;
 }
 
@@ -54,16 +55,16 @@ function buildExportHref(params: AuditLogPageParams) {
 function AuditDiff({ entry }: { entry: AuditLogEntry }) {
   const oldValues = compactJson(entry.oldValues);
   const newValues = compactJson(entry.newValues);
-  if (!oldValues && !newValues) return <span className="audit-muted">لا توجد قيم مسجلة</span>;
+  if (oldValues == null && newValues == null) return <span className="audit-muted">لا توجد قيم مسجلة</span>;
   return (
     <div className="audit-diff-grid">
-      {oldValues ? (
+      {oldValues != null ? (
         <details>
           <summary>قبل</summary>
           <pre>{oldValues}</pre>
         </details>
       ) : null}
-      {newValues ? (
+      {newValues != null ? (
         <details>
           <summary>بعد</summary>
           <pre>{newValues}</pre>

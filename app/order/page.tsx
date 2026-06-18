@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Crown } from "lucide-react";
+import { ArrowLeft, Crown } from "lucide-react";
 import type { OrderInitialDraft } from "@/components/OrderForm";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderRequestUxPatches } from "@/components/OrderRequestUxPatches";
@@ -9,6 +9,10 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
+
+function sanitizeString(value: string): string {
+  return value.replace(/<[^>]*>/g, "").trim().slice(0, 500);
+}
 
 export const metadata: Metadata = {
   title: "صمّم دعوتك الآن",
@@ -56,24 +60,24 @@ export default async function OrderPage({ searchParams }: PageProps) {
   if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
   const initialDraft: OrderInitialDraft = {
-    groomName: params.groomName || "",
-    brideName: params.brideName || "",
-    phone: params.phone || "",
-    weddingDate: params.weddingDate || "",
+    groomName: sanitizeString(params.groomName || ""),
+    brideName: sanitizeString(params.brideName || ""),
+    phone: sanitizeString(params.phone || ""),
+    weddingDate: sanitizeString(params.weddingDate || ""),
     weddingTime: params.weddingTime || "07:00 مساءً",
-    mapUrl: params.mapUrl || "",
-    venue: params.venue || "",
-    notes: params.notes || "",
+    mapUrl: sanitizeString(params.mapUrl || ""),
+    venue: sanitizeString(params.venue || ""),
+    notes: sanitizeString(params.notes || ""),
     photographerEnabled: params.photographerEnabled === "1",
-    photographerName: params.photographerName || "",
-    photographerFacebookUrl: params.photographerFacebookUrl || "",
-    photographerInstagramUrl: params.photographerInstagramUrl || "",
-    openingText: params.openingText || "",
+    photographerName: sanitizeString(params.photographerName || ""),
+    photographerFacebookUrl: sanitizeString(params.photographerFacebookUrl || ""),
+    photographerInstagramUrl: sanitizeString(params.photographerInstagramUrl || ""),
+    openingText: sanitizeString(params.openingText || ""),
     storyEnabled: params.storyEnabled === "1",
     story: parseStoryParam(params.story),
     musicEnabled: params.musicEnabled ? params.musicEnabled === "1" : true,
     musicChoice: params.musicChoice === "upload" || params.musicChoice === "video" || params.musicChoice === "url" ? params.musicChoice : "default",
-    musicUrl: params.musicUrl || "",
+    musicUrl: sanitizeString(params.musicUrl || ""),
     imageUrls: (params.gallery || "").split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3),
   };
 
@@ -262,7 +266,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
             <span>{siteSettings.siteName}</span>
           </Link>
           <Link className="btn btn-soft order-builder-back-link" href="/templates">
-            <ArrowRight size={17} />
+            <ArrowLeft size={17} />
             رجوع للقوالب
           </Link>
         </div>

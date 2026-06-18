@@ -1,7 +1,7 @@
-import { AlertTriangle, CheckCircle2, CopyCheck, DatabaseBackup, FileAudio, FileImage, Filter, HardDrive, ImageOff, Music2, RotateCw, Search, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
-import { CopyButton } from "@/components/CopyButton";
+import { AlertTriangle, BarChart3, CheckCircle2, CopyCheck, DatabaseBackup, FileAudio, FileImage, Filter, HardDrive, ImageOff, Music2, RotateCw, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { getMediaCleanupReport, type MediaCleanupReport, type MediaFileReportItem, type MediaKind, type StorageCleanupAction } from "@/lib/media-cleanup";
 import { formatArabicNumber } from "@/lib/utils";
+import { MediaBrowser } from "./media-browser";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +23,6 @@ function formatBytes(value: number) {
   if (!value) return "0 KB";
   if (value < 1024 * 1024) return `${formatArabicNumber(Math.max(1, Math.round(value / 1024)))} KB`;
   return `${formatArabicNumber(Number((value / (1024 * 1024)).toFixed(1)))} MB`;
-}
-
-function sourceLabel(source: string) {
-  if (source === "Invitation") return "دعوة";
-  if (source === "Order") return "طلب";
-  if (source === "Template") return "قالب";
-  if (source === "MusicLibrary") return "مكتبة الموسيقى";
-  if (source === "RuntimeData") return "بيانات التشغيل";
-  return "إعدادات";
 }
 
 function errorMessage(value?: string) {
@@ -113,104 +104,6 @@ function filterFiles(files: MediaFileReportItem[], params: MediaPageParams) {
   });
 }
 
-function MediaPreview({ file }: { file: MediaFileReportItem }) {
-  if (file.kind === "video") {
-    return (
-      <div className="media-library-audio-preview">
-        <FileAudio size={24} />
-        <video controls preload="metadata" src={file.url} />
-      </div>
-    );
-  }
-  if (file.kind === "audio") {
-    return (
-      <div className="media-library-audio-preview">
-        <FileAudio size={24} />
-        <audio controls preload="none" src={file.url} />
-      </div>
-    );
-  }
-  return <img src={file.url} alt="" loading="lazy" />;
-}
-
-function MediaRows({ files }: { files: MediaFileReportItem[] }) {
-  if (!files.length) {
-    return (
-      <div className="admin-empty-state compact">
-        <ImageOff size={22} />
-        <strong>لا توجد ملفات مطابقة.</strong>
-      </div>
-    );
-  }
-
-  return (
-    <div className="media-library-grid">
-      {files.map((file) => (
-        <article className="media-library-card" key={file.url}>
-          <div className={file.kind === "audio" || file.kind === "video" ? "media-library-preview audio" : "media-library-preview"}>
-            <MediaPreview file={file} />
-          </div>
-          <div className="media-library-card-body">
-            <div>
-              <strong>{file.relativePath}</strong>
-              <span>{file.kind === "image" ? "صورة" : file.kind === "video" ? "فيديو" : "صوت"} · {file.extension.toUpperCase()} · {formatBytes(file.sizeBytes)}</span>
-            </div>
-            <div className="media-source-badges">
-              {file.sources.length ? file.sources.map((source) => <em key={source}>{sourceLabel(source)}</em>) : <em className="unused">غير مستخدم</em>}
-            </div>
-            {file.usageDetails.length ? (
-              <div className="media-usage-list">
-                {file.usageDetails.slice(0, 5).map((usage, index) => (
-                  <small key={`${usage.source}-${usage.label}-${index}`}>{sourceLabel(usage.source)}: {usage.label}</small>
-                ))}
-                {file.usageDetails.length > 5 ? <small>+ {formatArabicNumber(file.usageDetails.length - 5)} استخدام آخر</small> : null}
-              </div>
-            ) : null}
-            {file.cleanupReasons.length ? (
-              <div className="media-usage-list">
-                {file.cleanupReasons.map((reason) => (
-                  <small key={reason}>سبب التنظيف: {reason}</small>
-                ))}
-              </div>
-            ) : null}
-            <div className="media-library-actions">
-              <CopyButton value={file.url} label="نسخ الرابط" className="btn btn-soft" />
-              <form action="/api/admin/media/file" method="post" encType="multipart/form-data" className="media-replace-form">
-                <input type="hidden" name="action" value="replace" />
-                <input type="hidden" name="url" value={file.url} />
-                <label className="btn btn-soft">
-                  <UploadCloud size={16} />
-                  استبدال
-                  <input
-                    name="file"
-                    type="file"
-                    accept={
-                      file.kind === "image"
-                        ? `image/*,.${file.extension}`
-                        : file.kind === "video"
-                          ? `video/*,.${file.extension}`
-                          : `audio/*,.${file.extension}`
-                    }
-                  />
-                </label>
-                <button className="btn btn-soft" type="submit">حفظ</button>
-              </form>
-              <form action="/api/admin/media/file" method="post">
-                <input type="hidden" name="action" value="delete" />
-                <input type="hidden" name="url" value={file.url} />
-                <button className="btn btn-soft danger-button" type="submit" disabled={file.sources.length > 0} title={file.sources.length ? "لا يمكن حذف ملف مستخدم" : "حذف الملف"}>
-                  <Trash2 size={16} />
-                  حذف
-                </button>
-              </form>
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 function CleanupActionCard({ report, actionConfig }: { report: MediaCleanupReport; actionConfig: (typeof cleanupActions)[number] }) {
   const Icon = actionConfig.icon;
   const count = actionConfig.getCount(report);
@@ -266,20 +159,20 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       {skippedCount ? <div className="notice danger"><AlertTriangle size={18} /> تم تخطي {formatArabicNumber(skippedCount)} ملف أثناء التنظيف.</div> : null}
 
       <section className="media-stats-grid">
-        <article className="admin-list-stat"><FileImage size={19} /><span>كل الملفات</span><strong>{formatArabicNumber(report.totalFiles)}</strong></article>
+        <article className="admin-list-stat"><BarChart3 size={19} /><span>كل الملفات</span><strong>{formatArabicNumber(report.totalFiles)}</strong></article>
         <article className="admin-list-stat"><HardDrive size={19} /><span>الحجم الكلي</span><strong>{formatBytes(report.totalSizeBytes)}</strong></article>
         <article className="admin-list-stat good"><ShieldCheck size={19} /><span>مستخدم</span><strong>{formatArabicNumber(report.usedFiles.length)} · {formatBytes(report.usedSizeBytes)}</strong></article>
         <article className="admin-list-stat danger"><ImageOff size={19} /><span>يتيم</span><strong>{formatArabicNumber(report.orphanFiles.length)} · {formatBytes(report.unusedSizeBytes)}</strong></article>
-        <article className="admin-list-stat danger"><DatabaseBackup size={19} /><span>سجلات يتيمة</span><strong>{formatArabicNumber(report.databaseOrphanRecords)}</strong></article>
         <article className="admin-list-stat danger"><HardDrive size={19} /><span>قابل للاسترداد</span><strong>{formatBytes(report.recoverableSizeBytes)}</strong></article>
+        <article className="admin-list-stat danger"><DatabaseBackup size={19} /><span>سجلات يتيمة</span><strong>{formatArabicNumber(report.databaseOrphanRecords)}</strong></article>
       </section>
 
       <section className="media-stats-grid">
         <article className="admin-list-stat good"><FileImage size={19} /><span>الصور</span><strong>{formatArabicNumber(report.imageFiles)}</strong></article>
         <article className="admin-list-stat good"><FileAudio size={19} /><span>الصوت</span><strong>{formatArabicNumber(report.audioFiles)}</strong></article>
         <article className="admin-list-stat good"><FileAudio size={19} /><span>الفيديو</span><strong>{formatArabicNumber(report.videoFiles)}</strong></article>
+        <article className="admin-list-stat good"><FileImage size={19} /><span>صور مقابل أخرى</span><strong>{formatArabicNumber(report.imageFiles)} / {formatArabicNumber(report.audioFiles + report.videoFiles)}</strong></article>
         <article className="admin-list-stat"><CopyCheck size={19} /><span>مكرر</span><strong>{formatArabicNumber(report.duplicateFiles.length)} · {formatBytes(report.duplicateSizeBytes)}</strong></article>
-        <article className="admin-list-stat"><DatabaseBackup size={19} /><span>Backups قديمة</span><strong>{formatArabicNumber(report.oldBackupFiles.length)}</strong></article>
         <article className="admin-list-stat"><Music2 size={19} /><span>موسيقى غير مستخدمة</span><strong>{formatArabicNumber(report.unusedMusicFiles.length)}</strong></article>
       </section>
 
@@ -336,7 +229,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
             <h2>كل الوسائط</h2>
           </div>
         </div>
-        <MediaRows files={filteredFiles} />
+        <MediaBrowser files={filteredFiles} />
       </section>
     </>
   );

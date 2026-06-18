@@ -38,7 +38,7 @@ function statusLabel(status: string) {
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, customers, guestBookMessages] = await Promise.all([getAdminInvitations(), getAdminOrders(), getAdminGuests(), getAdminCustomers(), getAllGuestBookMessages()]);
+  const [invitations, orders, guests, customers, guestBookMessages] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => [])]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
@@ -224,7 +224,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                     <strong>{invitation.groomName} و {invitation.brideName}</strong>
                     <small>{formatOrderDate(invitation.weddingDate)}</small>
                   </span>
-                  <em className={invitation.disabledAt ? "status danger" : invitation.isActive ? "status success" : "status danger"}>{invitation.disabledAt ? "🔴 معطلة" : invitation.isActive ? "نشطة" : "متوقفة"}</em>
+                  <em className={invitation.disabledAt ? "status danger" : invitation.isActive ? "status success" : "status danger"}><>{invitation.disabledAt ? <><span className="status-dot disabled" />معطلة</> : invitation.isActive ? <><span className="status-dot active" />نشطة</> : <><span className="status-dot paused" />متوقفة</>}</></em>
                 </Link>
               ))}
             </div>

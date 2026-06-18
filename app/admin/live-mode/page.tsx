@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Megaphone, Radio, Search, UsersRound } from "lucide-react";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getCheckInDashboard } from "@/lib/check-ins";
-import { getApprovedGuestBookMessages } from "@/lib/guest-book";
+import { getAllGuestBookMessages } from "@/lib/guest-book";
 import { formatArabicNumber } from "@/lib/utils";
 import { getAllWeddingLiveModes, serializeLiveModeEvents } from "@/lib/wedding-live-mode";
 
@@ -30,12 +30,13 @@ export default async function AdminLiveModePage({ searchParams }: { searchParams
     return !query || haystack.includes(query);
   });
   const activeCount = configs.filter((config) => config.enabled).length;
+  const allMessages = await getAllGuestBookMessages();
   const approvedCounts = new Map<string, number>();
-  await Promise.all(
-    invitations.map(async (invitation) => {
-      approvedCounts.set(invitation.code, (await getApprovedGuestBookMessages(invitation.code)).length);
-    }),
-  );
+  for (const msg of allMessages) {
+    if (msg.status === "approved") {
+      approvedCounts.set(msg.invitationCode, (approvedCounts.get(msg.invitationCode) || 0) + 1);
+    }
+  }
 
   return (
     <section className="admin-command-center live-mode-admin-page">

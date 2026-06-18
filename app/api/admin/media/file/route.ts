@@ -41,6 +41,16 @@ export async function POST(request: NextRequest) {
     return redirectMedia(request, { mediaSaved: "deleted", backup: result.backupFileName || "" });
   }
 
+  if (action === "bulk-delete") {
+    const urls = formData.getAll("url").map(String).filter(Boolean);
+    let deleted = 0;
+    for (const deleteUrl of urls) {
+      const result = await deleteMediaFile(deleteUrl);
+      if (result.ok) deleted++;
+    }
+    return redirectMedia(request, { deleted: String(deleted), backup: "bulk" });
+  }
+
   if (action === "replace") {
     const file = formData.get("file");
     const result = await replaceMediaFile(url, file instanceof File ? file : null);

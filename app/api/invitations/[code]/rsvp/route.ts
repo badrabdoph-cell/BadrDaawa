@@ -30,7 +30,10 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   try {
-    const invitation = await prisma.invitation.findFirst({ where: { code, deletedAt: null } });
+    const invitation = await prisma.invitation.findFirst({
+      where: { code, deletedAt: null },
+      select: { id: true, status: true, disabledAt: true },
+    });
     if (!invitation) {
       return NextResponse.json({ error: "الدعوة غير موجودة في قاعدة البيانات" }, { status: 404 });
     }
@@ -63,6 +66,7 @@ export async function POST(request: Request, context: RouteContext) {
         note: parsed.data.note,
       },
     });
+    // ad_3399 is always the client dashboard path — hardcoded for now
     revalidatePath(`/${code}/ad_3399`);
     revalidatePath("/admin/analytics");
     return NextResponse.json({ ok: true });

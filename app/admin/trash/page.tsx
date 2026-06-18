@@ -1,3 +1,4 @@
+import { generateCsrfToken } from "@/lib/csrf";
 import { ArchiveRestore, RotateCcw, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { getTrashItems, type TrashEntityType } from "@/lib/trash";
@@ -40,7 +41,7 @@ export default async function TrashPage({
 }: {
   searchParams: Promise<TrashPageParams>;
 }) {
-  const [params, items] = await Promise.all([searchParams, getTrashItems()]);
+  const [params, items, csrfToken] = await Promise.all([searchParams, getTrashItems(), generateCsrfToken()]);
   const query = (params.q || "").trim().toLowerCase();
   const selectedType = params.type || "all";
   const filteredItems = items.filter((item) => {
@@ -139,6 +140,7 @@ export default async function TrashPage({
                 <td>
                   <div className="button-row">
                     <form action="/api/admin/trash" method="post">
+                      <input type="hidden" name="csrf_token" value={csrfToken} />
                       <input type="hidden" name="action" value="restore" />
                       <input type="hidden" name="type" value={item.type} />
                       <input type="hidden" name="id" value={item.id} />
@@ -149,6 +151,7 @@ export default async function TrashPage({
                       </button>
                     </form>
                     <form action="/api/admin/trash" method="post">
+                      <input type="hidden" name="csrf_token" value={csrfToken} />
                       <input type="hidden" name="action" value="hard-delete" />
                       <input type="hidden" name="type" value={item.type} />
                       <input type="hidden" name="id" value={item.id} />

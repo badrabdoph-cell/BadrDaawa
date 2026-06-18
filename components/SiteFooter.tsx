@@ -9,11 +9,11 @@ export async function SiteFooter() {
   const settings = await getSiteSettings();
   const supportUrl = settings.whatsappUrl || getWhatsAppOrderUrl("محتاج دعم فني في دعوة الفرح");
   const socialLinks = [
-    { label: "فيسبوك", href: settings.socialLinks.facebook },
-    { label: "إنستجرام", href: settings.socialLinks.instagram },
-    { label: "تيك توك", href: settings.socialLinks.tiktok },
-    { label: "يوتيوب", href: settings.socialLinks.youtube },
-    { label: "تيليجرام", href: settings.socialLinks.telegram },
+    { label: "فيسبوك", href: settings.socialLinks?.facebook },
+    { label: "إنستجرام", href: settings.socialLinks?.instagram },
+    { label: "تيك توك", href: settings.socialLinks?.tiktok },
+    { label: "يوتيوب", href: settings.socialLinks?.youtube },
+    { label: "تيليجرام", href: settings.socialLinks?.telegram },
   ].filter((link) => link.href);
 
   return (

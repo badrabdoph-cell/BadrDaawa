@@ -114,6 +114,9 @@ export async function POST(request: NextRequest) {
   }
 
   const contentLength = Number(request.headers.get("content-length") || 0);
+  if (!request.headers.has("content-length")) {
+    return NextResponse.json({ error: "طلب غير صالح: يجب تحديد حجم المحتوى." }, { status: 411 });
+  }
   if (contentLength > maxOrderRequestBytes) {
     console.error(`[Order API] Rejected large order payload: ${contentLength} bytes.`);
     return NextResponse.json(
@@ -232,7 +235,10 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
 
-      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true, publishedInvitationCode: true, manageToken: true } }).catch(() => null);
+      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true, publishedInvitationCode: true, manageToken: true } }).catch((err) => {
+        console.error("Deduplication check failed:", err);
+        return null;
+      });
       if (existingOrder) {
         const duplicateInvitationCode = existingOrder.publishedInvitationCode || reservedInvitationCode;
         const duplicateManageToken = existingOrder.manageToken || reservedManageToken;

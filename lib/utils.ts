@@ -13,6 +13,21 @@ export function formatArabicDate(date: string) {
   }).format(new Date(date));
 }
 
+export function formatDate(value: string | null | undefined, locale = "ar-SA"): string {
+  if (!value) return "غير محدد";
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "غير محدد";
+    return new Intl.DateTimeFormat(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+  } catch {
+    return "غير محدد";
+  }
+}
+
 export function formatArabicNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
@@ -171,6 +186,10 @@ export function getWhatsAppOrderUrl(message: string, recipient?: string | null) 
   }
 
   return `https://wa.me/${normalizePhoneForWhatsApp(configuredRecipient)}?text=${encodeURIComponent(message)}`;
+}
+
+export function canUseOptimizedImage(src: string): boolean {
+  return typeof src === "string" && (src.startsWith("/") || src.startsWith("/_next/"));
 }
 
 export function calculateAttendance(guests: { attendees: number; status: string }[]) {

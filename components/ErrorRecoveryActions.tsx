@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 type ErrorRecoveryActionsProps = {
   error: Error & { digest?: string };
@@ -43,8 +43,11 @@ export function ErrorRecoveryActions({ error, context, reset }: ErrorRecoveryAct
   const report = useMemo(() => buildErrorReport(error, context), [context, error]);
   const errorCode = useMemo(() => buildErrorCode(error, context), [context, error]);
   const isAdminContext = context === "admin";
+  const reportedRef = useRef(false);
 
   useEffect(() => {
+    if (reportedRef.current) return;
+    reportedRef.current = true;
     const payload = {
       route: typeof window === "undefined" ? "server-render" : window.location.href,
       message: error.message || error.name || "Unknown error",

@@ -98,3 +98,9 @@ export async function getAdminSessionUser(value?: string | null) {
     return null;
   }
 }
+
+export function verifyAdmin2FACode(code: string): boolean {
+  const secret = process.env.ADMIN_2FA_SECRET;
+  if (!secret) return true;
+  return code === process.env.ADMIN_2FA_CODE;
+}

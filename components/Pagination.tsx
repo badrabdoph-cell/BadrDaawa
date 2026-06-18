@@ -52,14 +52,18 @@ export function Pagination({ currentPage, totalPages, baseUrl, onPageChange }: P
 
   return (
     <div className="pagination">
-      <Link
-        href={getPageUrl(Math.max(1, currentPage - 1))}
-        className={currentPage === 1 ? "disabled" : ""}
-        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-        aria-disabled={currentPage === 1}
-      >
-        <ChevronRight size={18} />
-      </Link>
+      {currentPage === 1 ? (
+        <span className="disabled" aria-disabled="true">
+          <ChevronRight size={18} />
+        </span>
+      ) : (
+        <Link
+          href={getPageUrl(currentPage - 1)}
+          onClick={() => handlePageChange(currentPage - 1)}
+        >
+          <ChevronRight size={18} />
+        </Link>
+      )}
 
       {pageNumbers.map((page, index) => {
         if (page === "...") {
@@ -86,14 +90,18 @@ export function Pagination({ currentPage, totalPages, baseUrl, onPageChange }: P
         );
       })}
 
-      <Link
-        href={getPageUrl(Math.min(totalPages, currentPage + 1))}
-        className={currentPage === totalPages ? "disabled" : ""}
-        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-        aria-disabled={currentPage === totalPages}
-      >
-        <ChevronLeft size={18} />
-      </Link>
+      {currentPage === totalPages ? (
+        <span className="disabled" aria-disabled="true">
+          <ChevronLeft size={18} />
+        </span>
+      ) : (
+        <Link
+          href={getPageUrl(currentPage + 1)}
+          onClick={() => handlePageChange(currentPage + 1)}
+        >
+          <ChevronLeft size={18} />
+        </Link>
+      )}
     </div>
   );
 }

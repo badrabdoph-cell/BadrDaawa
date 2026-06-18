@@ -40,6 +40,8 @@ export default async function AdminErrorsPage({
   const latest = events[0];
   const adminErrors = events.filter((event) => event.user.startsWith("admin")).length;
   const routeCount = new Set(events.map((event) => event.route)).size;
+  const DISPLAY_LIMIT = 100;
+  const displayEvents = events.length > DISPLAY_LIMIT ? events.slice(0, DISPLAY_LIMIT) : events;
 
   return (
     <>
@@ -107,7 +109,7 @@ export default async function AdminErrorsPage({
             </tr>
           </thead>
           <tbody>
-            {events.map((event) => (
+            {displayEvents.map((event) => (
               <tr key={event.id}>
                 <td><AdminErrorEventCopyButton event={event} /></td>
                 <td className="admin-long-link">{shortRoute(event.route)}</td>
@@ -130,7 +132,7 @@ export default async function AdminErrorsPage({
                 </td>
               </tr>
             ))}
-            {!events.length ? (
+            {!displayEvents.length ? (
               <tr>
                 <td colSpan={7}>
                   <div className="admin-empty-state compact">
@@ -144,6 +146,11 @@ export default async function AdminErrorsPage({
           </tbody>
         </table>
       </div>
+      {events.length > DISPLAY_LIMIT && (
+        <p className="text-sm text-gray-500 mt-4 text-center">
+          عرض أول {DISPLAY_LIMIT} من أصل {events.length}. استخدم خاصية البحث للتصفية.
+        </p>
+      )}
     </>
   );
 }

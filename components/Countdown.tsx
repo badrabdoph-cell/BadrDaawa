@@ -39,8 +39,8 @@ function normalizeDigits(value: string) {
 
 function parseWeddingTime(weddingTime?: string) {
   const normalized = normalizeDigits(weddingTime || "").trim().toLowerCase();
-  const hasPm = /\b(pm|p\.m\.)\b|مساء|مساءً|مساءا|مساءًا|(?:^|\s)م(?:\s|$)/i.test(normalized);
-  const hasAm = /\b(am|a\.m\.)\b|صباح|صباحاً|صباحا|صباحًا|(?:^|\s)ص(?:\s|$)/i.test(normalized);
+  const hasPm = /\b(?:pm|p\.m\.)\b|مساءً?|م$/i.test(normalized);
+  const hasAm = /\b(?:am|a\.m\.)\b|صباحاً?|ص$/i.test(normalized);
   const match = normalized.match(/(\d{1,2})(?:\s*[:.]\s*(\d{1,2}))?/);
   let hours = match ? Number(match[1]) : 20;
   let minutes = match?.[2] ? Number(match[2]) : 0;

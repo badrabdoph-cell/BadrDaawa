@@ -26,12 +26,14 @@ function formatDate(value: string) {
 export default async function AdminMessagesPage({ searchParams }: { searchParams: Promise<AdminMessagesParams> }) {
   const [params, invitations, messages, unreadCount, messageTemplates, requestHeaders] = await Promise.all([searchParams, getAdminInvitations(), getAllClientMessages(), getTotalUnreadClientMessages(), getMessageTemplates(), headers()]);
   const query = (params.q || "").trim().toLowerCase();
+  const invitationMap = new Map(invitations.map((inv) => [inv.code, inv]));
   const filteredMessages = messages.filter((message) => {
-    const invitation = invitations.find((item) => item.code === message.invitationCode);
+    const invitation = invitationMap.get(message.invitationCode);
     const haystack = [message.title, message.body, message.invitationCode, invitation?.groomName, invitation?.brideName, invitation?.venue].join(" ").toLowerCase();
     return !query || haystack.includes(query);
   });
-
+  const DISPLAY_LIMIT = 100;
+  const displayMessages = filteredMessages.length > DISPLAY_LIMIT ? filteredMessages.slice(0, DISPLAY_LIMIT) : filteredMessages;
   return (
     <>
       <div className="dashboard-head">
@@ -100,8 +102,8 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
             </tr>
           </thead>
           <tbody>
-            {filteredMessages.map((message) => {
-              const invitation = invitations.find((item) => item.code === message.invitationCode);
+            {displayMessages.map((message) => {
+              const invitation = invitationMap.get(message.invitationCode);
               return (
                 <tr key={message.id}>
                   <td>
@@ -118,7 +120,7 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
                 </tr>
               );
             })}
-            {!filteredMessages.length ? (
+            {!displayMessages.length ? (
               <tr>
                 <td colSpan={5}>
                   <div className="admin-empty-state compact">
@@ -131,6 +133,11 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
           </tbody>
         </table>
       </div>
+      {filteredMessages.length > DISPLAY_LIMIT && (
+        <p className="text-sm text-gray-500 mt-4 text-center">
+          عرض أول {DISPLAY_LIMIT} من أصل {filteredMessages.length}. استخدم خاصية البحث للتصفية.
+        </p>
+      )}
     </>
   );
 }

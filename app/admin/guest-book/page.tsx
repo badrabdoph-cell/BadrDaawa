@@ -1,3 +1,4 @@
+import { generateCsrfToken } from "@/lib/csrf";
 import Link from "next/link";
 import { CheckCircle2, Filter, MessageCircleHeart, Pencil, Search, Trash2, XCircle } from "lucide-react";
 import { ConfirmingSubmitButton } from "@/components/ConfirmingSubmitButton";
@@ -54,7 +55,7 @@ function matchesMessage(message: GuestBookMessage, query: string, invitationTitl
 
 export default async function AdminGuestBookPage({ searchParams }: { searchParams: Promise<GuestBookPageParams> }) {
   const params = await searchParams;
-  const [messages, invitations, allSettings] = await Promise.all([getAllGuestBookMessages(), getAdminInvitations(), getAllCoupleMessagesSettings()]);
+  const [messages, invitations, allSettings, csrfToken] = await Promise.all([getAllGuestBookMessages(), getAdminInvitations(), getAllCoupleMessagesSettings(), generateCsrfToken()]);
   const invitationMap = new Map(invitations.map((invitation) => [invitation.code, `${invitation.groomName} و ${invitation.brideName}`]));
   const settingsMap = new Map(allSettings.map((setting) => [setting.invitationCode, setting.mode]));
   const status = params.status || "all";
@@ -67,6 +68,8 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
     const matchesInvitation = !selectedInvitation || message.invitationCode === selectedInvitation;
     return matchesStatus && matchesInvitation && matchesMessage(message, query, invitationTitle);
   });
+  const DISPLAY_LIMIT = 100;
+  const displayMessages = filtered.length > DISPLAY_LIMIT ? filtered.slice(0, DISPLAY_LIMIT) : filtered;
   const stats = {
     total: messages.length,
     pending: messages.filter((message) => message.status === "pending").length,
@@ -82,7 +85,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Couple Messages</span>
-          <h1>كلمات وذكريات للعرسان ❤️</h1>
+          <h1>كلمات وذكريات للعرسان</h1>
           <p>مكان موحد لرسائل وتهاني الضيوف، مع صور اختيارية ومراجعة قبل النشر أو نشر تلقائي حسب إعداد كل دعوة.</p>
         </div>
       </div>
@@ -115,6 +118,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
       <section className="panel">
         {settingsInvitationCode ? (
           <form className="couple-messages-settings-panel" action="/api/admin/guest-book" method="post">
+            <input type="hidden" name="csrf_token" value={csrfToken} />
             <input type="hidden" name="action" value="settings" />
             <label className="admin-select-field">
               <span>إعدادات دعوة</span>
@@ -182,6 +186,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
               { action: "bulk-approve-pending", label: "اعتماد جميع الرسائل المعلقة", count: stats.pending, confirm: "اعتماد" },
             ].map((item) => (
               <form className="guest-book-bulk-card" action="/api/admin/guest-book" method="post" key={item.action}>
+                <input type="hidden" name="csrf_token" value={csrfToken} />
                 <input type="hidden" name="action" value={item.action} />
                 <input type="hidden" name="expectedCount" value={item.count} />
                 <strong>{item.label}</strong>
@@ -194,6 +199,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
             ))}
 
             <form className="guest-book-bulk-card wide" action="/api/admin/guest-book" method="post">
+              <input type="hidden" name="csrf_token" value={csrfToken} />
               <input type="hidden" name="action" value="bulk-delete-invitation" />
               <strong>حذف الرسائل الخاصة بدعوة محددة</strong>
               <label className="admin-select-field">
@@ -214,6 +220,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
           </div>
 
           <form id="guest-book-bulk-selected-form" className="guest-book-selected-actions" action="/api/admin/guest-book" method="post">
+            <input type="hidden" name="csrf_token" value={csrfToken} />
             <input type="hidden" name="action" value="bulk-selected-delete" />
             <input name="confirmText" placeholder="اكتب حذف أو اعتماد حسب الإجراء" aria-label="تأكيد الإجراء الجماعي المحدد" />
             <ConfirmingSubmitButton className="btn btn-soft danger-button" name="action" value="bulk-selected-delete" countSelector=".guest-book-select-checkbox:checked" confirmTitle="حذف الرسائل المحددة" confirmMessage="سيتم حذف الرسائل التي قمت بتحديدها فقط.">
@@ -239,7 +246,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
               </tr>
             </thead>
             <tbody>
-              {filtered.map((message) => (
+              {displayMessages.map((message) => (
                 <tr key={message.id}>
                   <td>
                     <input className="guest-book-select-checkbox" form="guest-book-bulk-selected-form" type="checkbox" name="selectedMessageId" value={message.id} aria-label={`تحديد رسالة ${message.name}`} />
@@ -257,16 +264,19 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                   <td>
                     <div className="button-row">
                       <form action="/api/admin/guest-book" method="post">
+                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="messageId" value={message.id} />
                         <input type="hidden" name="action" value="approve" />
                         <button className="btn btn-soft btn-icon" type="submit" title="قبول"><CheckCircle2 size={16} /></button>
                       </form>
                       <form action="/api/admin/guest-book" method="post">
+                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="messageId" value={message.id} />
                         <input type="hidden" name="action" value="reject" />
                         <button className="btn btn-soft btn-icon" type="submit" title="رفض"><XCircle size={16} /></button>
                       </form>
                       <form action="/api/admin/guest-book" method="post">
+                        <input type="hidden" name="csrf_token" value={csrfToken} />
                         <input type="hidden" name="messageId" value={message.id} />
                         <input type="hidden" name="action" value="delete" />
                         <button className="btn btn-soft btn-icon danger-button" type="submit" title="حذف"><Trash2 size={16} /></button>
@@ -274,6 +284,7 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
                       <details className="guest-book-edit-details">
                         <summary className="btn btn-soft btn-icon" title="تعديل"><Pencil size={16} /></summary>
                         <form className="guest-book-edit-form" action="/api/admin/guest-book" method="post">
+                          <input type="hidden" name="csrf_token" value={csrfToken} />
                           <input type="hidden" name="messageId" value={message.id} />
                           <input type="hidden" name="action" value="edit" />
                           <input name="name" defaultValue={message.name} placeholder="اسم المرسل" maxLength={80} required />
@@ -292,7 +303,12 @@ export default async function AdminGuestBookPage({ searchParams }: { searchParam
               ))}
             </tbody>
           </table>
-          {!filtered.length ? <div className="admin-empty-state compact">لا توجد رسائل مطابقة للفلاتر الحالية.</div> : null}
+          {!displayMessages.length ? <div className="admin-empty-state compact">لا توجد رسائل مطابقة للفلاتر الحالية.</div> : null}
+          {filtered.length > DISPLAY_LIMIT && (
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              عرض أول {DISPLAY_LIMIT} من أصل {filtered.length}. استخدم خاصية البحث للتصفية.
+            </p>
+          )}
         </div>
       </section>
     </section>

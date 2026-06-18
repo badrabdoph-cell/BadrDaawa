@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { BarChart3, CalendarDays, Download, FileSpreadsheet, FileText, MousePointerClick, Share2, TrendingUp, UserCheck, UsersRound, UserX } from "lucide-react";
+import { BarChart3, CalendarDays, MousePointerClick, Share2, TrendingUp, UserCheck, UsersRound, UserX } from "lucide-react";
 import { StatsGrid } from "@/components/StatsGrid";
-import { analyticsDateLabel, getAdminAnalyticsReport, type AnalyticsPeriod } from "@/lib/admin-analytics";
+import { analyticsDateLabel, getAdminAnalyticsReport, type AnalyticsPeriod, type AdminAnalyticsReport } from "@/lib/admin-analytics";
 import { formatArabicNumber } from "@/lib/utils";
+import { ExportButtons } from "./export-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +28,6 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(date);
 }
 
-function exportHref(period: AnalyticsPeriod, format: "pdf" | "xlsx" | "csv") {
-  return `/api/admin/analytics/export?period=${period}&format=${format}`;
-}
-
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -49,20 +46,7 @@ export default async function AnalyticsPage({
           <h1>تحليلات وتقارير المنصة</h1>
           <p>نظام موحد للزيارات، مصادر الدخول، RSVP، أداء الدعوات، ومقارنة النتائج.</p>
         </div>
-        <div className="button-row">
-          <Link className="btn btn-soft" href={exportHref(report.period, "csv")}>
-            <Download size={17} />
-            CSV
-          </Link>
-          <Link className="btn btn-soft" href={exportHref(report.period, "xlsx")}>
-            <FileSpreadsheet size={17} />
-            Excel
-          </Link>
-          <Link className="btn btn-gold" href={exportHref(report.period, "pdf")}>
-            <FileText size={17} />
-            PDF
-          </Link>
-        </div>
+        <ExportButtons report={report} />
       </div>
 
       <form className="analytics-filter-bar" action="/admin/analytics" method="get" aria-label="فلاتر التحليلات">
@@ -102,13 +86,32 @@ export default async function AnalyticsPage({
           </div>
           {report.viewGrowth.some((item) => item.count > 0) ? (
             <div className="analytics-bar-chart">
-              {report.viewGrowth.map((item) => (
-                <div className="analytics-bar-column" key={item.date}>
-                  <strong>{formatArabicNumber(item.count)}</strong>
-                  <span style={{ height: `${Math.max(7, (item.count / maxGrowth) * 100)}%` }} />
-                  <small>{analyticsDateLabel(item.date)}</small>
-                </div>
-              ))}
+              <svg width={Math.max(report.viewGrowth.length * 72 + 16, 200)} height={240} style={{ minHeight: 250 }}>
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="1" x2="0" y2="0">
+                    <stop offset="0%" stopColor="#bd8f3f" />
+                    <stop offset="100%" stopColor="#f3cf73" />
+                  </linearGradient>
+                </defs>
+                {report.viewGrowth.map((item, i) => {
+                  const barHeight = Math.max(8, (item.count / maxGrowth) * 180);
+                  const x = i * 72 + 8;
+                  const y = 220 - barHeight;
+                  return (
+                    <g key={item.date}>
+                      <rect x={x} y={y} width={56} height={barHeight} rx={6} fill="url(#barGradient)">
+                        <title>{item.count} زيارة</title>
+                      </rect>
+                      <text x={x + 28} y={y - 6} textAnchor="middle" fill="#fff7e8" fontSize={11} fontWeight={900}>
+                        {formatArabicNumber(item.count)}
+                      </text>
+                      <text x={x + 28} y={238} textAnchor="middle" fill="rgba(245,234,214,0.66)" fontSize={10} fontWeight={800}>
+                        {analyticsDateLabel(item.date)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
           ) : (
             <div className="admin-empty-state compact">

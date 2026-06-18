@@ -68,7 +68,17 @@ async function optimizeImage(item: CropItem, width: number, height: number, qual
   context.imageSmoothingQuality = "high";
   context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, width, height);
 
-  const url = canvas.toDataURL("image/jpeg", quality);
+  const url = await new Promise<string>((resolve) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      } else {
+        resolve("");
+      }
+    }, "image/jpeg", quality);
+  });
   return { url, size: dataUrlSize(url) };
 }
 
@@ -89,6 +99,7 @@ export function ImageCropUploader({
 }) {
   const [items, setItems] = useState<CropItem[]>([]);
   const timers = useRef<Record<string, number>>({});
+  const optimizeVersionRef = useRef(0);
   const objectUrls = useRef<string[]>([]);
   const ratio = useMemo(() => `${targetWidth} / ${targetHeight}`, [targetHeight, targetWidth]);
 
@@ -100,12 +111,16 @@ export function ImageCropUploader({
   }, []);
 
   const queueOptimize = (nextItem: CropItem) => {
+    const currentVersion = ++optimizeVersionRef.current;
     window.clearTimeout(timers.current[nextItem.id]);
     timers.current[nextItem.id] = window.setTimeout(async () => {
+      if (currentVersion !== optimizeVersionRef.current) return;
       try {
         const optimized = await optimizeImage(nextItem, targetWidth, targetHeight, 0.84);
+        if (currentVersion !== optimizeVersionRef.current) return;
         setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, canPreview: true, optimizedUrl: optimized.url, optimizedSize: optimized.size } : item)));
       } catch {
+        if (currentVersion !== optimizeVersionRef.current) return;
         setItems((current) => current.map((item) => (item.id === nextItem.id ? { ...item, canPreview: false, optimizedUrl: "", optimizedSize: 0 } : item)));
       }
     }, 160);

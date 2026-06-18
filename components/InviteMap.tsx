@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { LocateFixed, MapPin, Navigation, Route, Share2 } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
@@ -144,10 +144,6 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
       { enableHighAccuracy: true, maximumAge: 90000, timeout: 9000 },
     );
   }, []);
-
-  useEffect(() => {
-    requestUserLocation();
-  }, [requestUserLocation]);
 
   async function shareLocation() {
     setShareState("idle");

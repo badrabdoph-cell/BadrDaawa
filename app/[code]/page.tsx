@@ -17,6 +17,11 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
 
+function getQueryParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
 export const dynamic = "force-dynamic";
 
 type InvitationSearchParams = {
@@ -66,18 +71,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function InvitationPage({ params, searchParams }: PageProps) {
   const [{ code }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
-  const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
+  const isSilentPreview = getQueryParam(query?.silentPreview) === "1" || getQueryParam(query?.embed) === "1";
   await autoDisableExpiredTrial(code);
-  const invitation = await getCachedInvitationByCode(code);
+  const [invitation, siteSettings] = await Promise.all([getCachedInvitationByCode(code), getSiteSettings()]);
   if (!invitation) {
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
-      const siteSettings = await getSiteSettings();
       return <PendingInvitationNotice code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
     }
     const rejectedOrder = await getRejectedOrderByInvitationCode(code);
     if (rejectedOrder) {
-      const siteSettings = await getSiteSettings();
       return (
         <main className="pending-invitation-page" dir="rtl">
           <section className="pending-invitation-card">
@@ -116,7 +119,6 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     if (invitation.customSlug && code !== invitation.customSlug) {
       redirect(`/${invitation.customSlug}`);
     }
-    const siteSettings = await getSiteSettings();
     if (invitation.disabledBy === "system" && invitation.trialEndsAt) {
       return (
         <main className="pending-invitation-page" dir="rtl">
@@ -155,7 +157,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     redirect(`/${invitation.customSlug}${params.size ? `?${params.toString()}` : ""}`);
   }
 
-  const [template, fallbackTemplate, siteSettings, musicLibrary] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getSiteSettings(), getMusicLibrary()]);
+  const [template, fallbackTemplate, musicLibrary] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getMusicLibrary()]);
   const resolvedTemplate = template || fallbackTemplate;
   if (!resolvedTemplate) {
     notFound();
@@ -170,12 +172,12 @@ export default async function InvitationPage({ params, searchParams }: PageProps
   if (!isSilentPreview) {
     const referrer = requestHeaders.get("referer");
     const userAgent = requestHeaders.get("user-agent");
-    await recordInvitationView(invitation.code, {
+    recordInvitationView(invitation.code, {
       source: detectVisitSource({ searchParams: query, referrer, userAgent }),
       searchParams: query,
       referrer,
       userAgent,
-    });
+    }).catch((err) => console.error("Failed to record invitation view:", err));
   }
 
   const locale = resolveLocale(invitation.language);

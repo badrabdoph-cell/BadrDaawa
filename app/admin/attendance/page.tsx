@@ -3,7 +3,7 @@ import { BarChart3, CheckCircle2, Download, Search, UsersRound, UserX, UserCheck
 import { AdminAttendancePrintButton } from "@/components/AdminAttendancePrintButton";
 import { CopyButton } from "@/components/CopyButton";
 import { getAttendanceDashboard, type AttendanceSortKey, type AttendanceStatusFilter, type AttendanceSortDir } from "@/lib/attendance";
-import { formatArabicNumber, normalizePhoneForWhatsApp } from "@/lib/utils";
+import { formatArabicNumber, normalizePhoneForWhatsApp, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +27,6 @@ const sortLabels: Record<AttendanceSortKey, string> = {
   attendees: "المرافقين",
   invitation: "الدعوة",
 };
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value || "-";
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(date);
-}
 
 function buildHref(params: AttendancePageParams, patch: AttendancePageParams) {
   const next = new URLSearchParams();
@@ -253,7 +247,7 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
 
         <div className="pagination">
           <Link aria-disabled={dashboard.pagination.page <= 1} href={buildHref(params, { page: String(Math.max(1, dashboard.pagination.page - 1)) })}>السابق</Link>
-          {Array.from({ length: dashboard.pagination.totalPages }).slice(0, 10).map((_, index) => {
+          {Array.from({ length: dashboard.pagination.totalPages }).map((_, index) => {
             const page = index + 1;
             return (
               <Link className={page === dashboard.pagination.page ? "active" : ""} href={buildHref(params, { page: String(page) })} key={page}>

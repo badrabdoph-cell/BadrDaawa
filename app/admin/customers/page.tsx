@@ -1,4 +1,4 @@
-import { KeyRound, Trash2, UserCheck, UserPlus, UsersRound } from "lucide-react";
+import { Trash2, UserCheck, UsersRound } from "lucide-react";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { StatsGrid } from "@/components/StatsGrid";
@@ -58,10 +58,7 @@ export default async function CustomersPage({
           <span className="eyebrow">Customers</span>
           <h1>العملاء وبيانات الدخول</h1>
         </div>
-        <button className="btn btn-gold" type="button" disabled title="إضافة العملاء تتم حالياً تلقائياً عند إنشاء الدعوات.">
-          <UserPlus size={18} />
-          عميل جديد
-        </button>
+
       </div>
       {message ? <div className={params.status === "deleted" ? "notice success" : "notice danger"}>{message}</div> : null}
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
@@ -95,7 +92,7 @@ export default async function CustomersPage({
             </tr>
           </thead>
           <tbody>
-            {customers.map((customer) => (
+            {customers.slice(0, 50).map((customer) => (
               <tr key={customer.username}>
                 <td>{customer.name}</td>
                 <td>{customer.phone}</td>
@@ -124,10 +121,7 @@ export default async function CustomersPage({
                       active={isAdminFavorite(favorites, "customer", customer.id)}
                       iconOnly
                     />
-                    <button className="btn btn-soft" type="button" disabled title="تغيير كلمة مرور العميل غير مربوط بإجراء حالي.">
-                      <KeyRound size={17} />
-                      Reset Password
-                    </button>
+
                     <form action={`/api/admin/customers/${customer.id}`} method="post">
                       <button className="btn btn-soft danger-button" name="action" value="delete" type="submit">
                         <Trash2 size={17} />
@@ -140,6 +134,7 @@ export default async function CustomersPage({
             ))}
           </tbody>
         </table>
+        {customers.length > 50 ? <p className="admin-note">عرض أول 50 عميلاً من أصل {customers.length}.</p> : null}
       </div>
     </>
   );

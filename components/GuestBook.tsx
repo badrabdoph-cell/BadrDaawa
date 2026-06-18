@@ -34,6 +34,7 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
+    if (settings.mode === "disabled") return;
     if (isPreview) return;
     let alive = true;
     async function loadMessages() {
@@ -47,7 +48,7 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
     return () => {
       alive = false;
     };
-  }, [apiCode, isPreview]);
+  }, [apiCode, isPreview, settings.mode]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

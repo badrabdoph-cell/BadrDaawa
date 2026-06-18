@@ -23,7 +23,7 @@ function isUniqueConstraintError(error: unknown) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
+    return NextResponse.json({ error: "غير مصرح." }, { status: 401 });
   }
 
   const formData = await request.formData();

@@ -6,6 +6,15 @@ import { getAdminInvitations } from "@/lib/admin-data";
 import { getCustomerAdminPath } from "@/lib/slug";
 import { getRedirectUrl } from "@/lib/utils";
 
+function sanitizeText(value: FormDataEntryValue | null, maxLength = 2000): string {
+  if (!value) return "";
+  return String(value)
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
 export const runtime = "nodejs";
 
 async function isAdmin(request: NextRequest) {
@@ -27,7 +36,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/messages?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
-  const message = await createClientMessage({ invitationCode, title, body });
+  const message = await createClientMessage({ invitationCode, title: sanitizeText(title, 120), body: sanitizeText(body, 3000) });
   if (!message) {
     return NextResponse.redirect(getRedirectUrl("/admin/messages?error=failed", request.headers, request.nextUrl.origin), 303);
   }

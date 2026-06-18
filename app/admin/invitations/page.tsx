@@ -101,14 +101,17 @@ export default async function InvitationsPage({
       const searchable = [invitation.code, invitation.customSlug, invitation.groomName, invitation.brideName, invitation.venue, invitation.city, template?.arabicName || invitation.templateSlug].join(" ").toLowerCase();
       return (!query || searchable.includes(query)) && (selectedState === "all" || state === selectedState);
     })
+    .map((inv) => ({ ...inv, _weddingDate: new Date(inv.weddingDate).getTime() }))
     .sort((a, b) => {
       if (selectedSort === "views") return b.views - a.views;
-      if (selectedSort === "weddingDate") return new Date(a.weddingDate).getTime() - new Date(b.weddingDate).getTime();
+      if (selectedSort === "weddingDate") return a._weddingDate - b._weddingDate;
       if (selectedSort === "attendees") return (guestStatsByCode.get(b.code)?.attendees || 0) - (guestStatsByCode.get(a.code)?.attendees || 0);
       return 0;
     });
   const adminPaths = await Promise.all(filteredInvitations.map((inv) => getInvitationManagePath(inv.code).then((path) => ({ code: inv.code, path }))));
   const adminPathByCode = new Map(adminPaths.map((item) => [item.code, item.path]));
+  const DISPLAY_LIMIT = 100;
+  const renderedInvitations = filteredInvitations.length > DISPLAY_LIMIT ? filteredInvitations.slice(0, DISPLAY_LIMIT) : filteredInvitations;
   const activeCount = invitations.filter((invitation) => getInvitationState(invitation) === "active").length;
   const pausedCount = invitations.filter((invitation) => getInvitationState(invitation) === "paused").length;
   const disabledCount = invitations.filter((invitation) => getInvitationState(invitation) === "disabled").length;
@@ -235,7 +238,7 @@ export default async function InvitationsPage({
               </tr>
             </thead>
             <tbody>
-              {filteredInvitations.map((invitation) => {
+              {renderedInvitations.map((invitation) => {
                 const publicSlug = invitation.customSlug || invitation.code;
                 const invitationUrl = `${siteUrl}/${publicSlug}`;
                 const invitationState = getInvitationState(invitation);
@@ -273,6 +276,11 @@ export default async function InvitationsPage({
           <strong>لا توجد دعوات مطابقة</strong>
           <p>جرّب تغيير البحث أو حالة الفلترة.</p>
         </div>
+      )}
+      {filteredInvitations.length > DISPLAY_LIMIT && (
+        <p className="text-sm text-gray-500 mt-4 text-center">
+          عرض أول {DISPLAY_LIMIT} من أصل {filteredInvitations.length}. استخدم خاصية البحث للتصفية.
+        </p>
       )}
     </>
   );

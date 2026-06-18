@@ -97,9 +97,16 @@ function setupNativeErrorSurface() {
   if (window.__badrErrorSurfaceReady) return;
   window.__badrErrorSurfaceReady = true;
 
-  window.badrNotify = (notification) => {
-    if (notification.type && notification.type !== "error") return "";
-    return "site-error";
+  const existingBadrNotify = (window as any).badrNotify;
+
+  (window as any).badrNotify = (notification: any) => {
+    if (typeof existingBadrNotify === "function") {
+      existingBadrNotify(notification);
+    }
+    if (notification.type === "error") {
+      return "site-error";
+    }
+    return "";
   };
 
   window.addEventListener("error", (event) => {

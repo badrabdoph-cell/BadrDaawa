@@ -55,6 +55,8 @@ export default async function OrdersPage({
     }),
   );
   const initialTab = params.tab === "pending" || params.tab === "published" || params.tab === "rejected" ? params.tab : undefined;
+  const DISPLAY_LIMIT = 100;
+  const displayOrders = ordersWithLinks.length > DISPLAY_LIMIT ? ordersWithLinks.slice(0, DISPLAY_LIMIT) : ordersWithLinks;
   const openCount = ordersWithLinks.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
   const noteMessage = noteStatusMessage(params.noteStatus);
   const favoriteMessage = favoriteStatusMessage(params.favoriteStatus);
@@ -79,7 +81,12 @@ export default async function OrdersPage({
       </div>
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
       {favoriteMessage ? <div className={params.favoriteStatus === "added" || params.favoriteStatus === "removed" ? "notice success" : "notice danger"}>{favoriteMessage}</div> : null}
-      <AdminOrderRequestsManager orders={ordersWithLinks} templates={templateOptions} musicFiles={musicLibrary.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0, sizeBytes: slot.sizeBytes, extension: slot.extension }))} contentPresets={contentPresets} internalNotes={internalNotes} favorites={favorites} siteUrl={siteUrl} templatePreviewInfo={previewInfo} initialTab={initialTab} />
+      <AdminOrderRequestsManager orders={displayOrders} templates={templateOptions} musicFiles={musicLibrary.slots.filter((slot) => slot.url).map((slot) => ({ id: slot.id, name: slot.name, url: slot.url, modifiedAt: Date.parse(slot.updatedAt || slot.createdAt || "") || 0, sizeBytes: slot.sizeBytes, extension: slot.extension }))} contentPresets={contentPresets} internalNotes={internalNotes} favorites={favorites} siteUrl={siteUrl} templatePreviewInfo={previewInfo} initialTab={initialTab} />
+      {ordersWithLinks.length > DISPLAY_LIMIT && (
+        <p className="text-sm text-gray-500 mt-4 text-center">
+          عرض أول {DISPLAY_LIMIT} من أصل {ordersWithLinks.length}. استخدم خاصية البحث للتصفية.
+        </p>
+      )}
     </>
   );
 }

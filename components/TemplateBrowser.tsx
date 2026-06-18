@@ -33,7 +33,7 @@ export function TemplateBrowser({ templates }: { templates: TemplateDefinition[]
   const [query, setQuery] = useState("");
   const [activeStyle, setActiveStyle] = useState("all");
 
-  const styles = useMemo(() => ["all", ...Array.from(new Set(templates.map((template) => template.style)))], [templates]);
+  const styles = useMemo(() => ["all", ...Array.from(new Set(templates.map((template) => template.style).filter(Boolean)))], [templates]);
   const filteredTemplates = useMemo(() => {
     const cleanQuery = normalize(query);
     return templates.filter((template) => {

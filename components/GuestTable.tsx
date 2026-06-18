@@ -73,7 +73,7 @@ export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; in
               <span className="guest-mobile-phone" dir="ltr">{guest.phone || "بدون رقم"}</span>
               <div className="guest-mobile-actions">
                 {guest.phone ? (
-                  <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}`} title="واتساب" aria-label={`مراسلة ${guest.name} عبر واتساب`}>
+                  <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}?text=${encodeURIComponent("مرحباً! نحن في انتظارك في حفل الزفاف 🎉")}`} title="واتساب" aria-label={`مراسلة ${guest.name} عبر واتساب`}>
                     <MessageCircle size={16} />
                   </a>
                 ) : null}
@@ -110,7 +110,7 @@ export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; in
                 <td>
                   <div className="button-row">
                     {guest.phone ? (
-                      <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}`} title="واتساب">
+                      <a className="btn btn-soft btn-icon" href={`https://wa.me/${normalizePhoneForWhatsApp(guest.phone)}?text=${encodeURIComponent("مرحباً! نحن في انتظارك في حفل الزفاف 🎉")}`} title="واتساب">
                         <MessageCircle size={17} />
                       </a>
                     ) : null}

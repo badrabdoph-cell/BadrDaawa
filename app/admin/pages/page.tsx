@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { ExternalLink, FilePenLine, Globe2, PlusCircle, Save, Trash2 } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 import { getDynamicPages, type DynamicPage } from "@/lib/dynamic-pages";
 
 export const dynamic = "force-dynamic";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(new Date(value));
-}
 
 function notice(saved?: string, error?: string, message?: string) {
   if (error) return { kind: "danger", text: message || "تعذر تنفيذ العملية. راجع البيانات وحاول مرة أخرى." };

@@ -48,7 +48,8 @@ export default async function AdminCheckInsPage({ searchParams }: { searchParams
       const text = `${row.invitation.code} ${row.invitation.groomName} ${row.invitation.brideName} ${row.invitation.venue}`.toLowerCase();
       return (!selectedInvitation || row.invitation.code === selectedInvitation) && (!query || text.includes(query));
     })
-    .sort((a, b) => b.actual - a.actual || b.confirmed - a.confirmed);
+    .sort((a, b) => b.actual - a.actual || b.confirmed - a.confirmed)
+    .slice(0, 200);
   const recentCheckIns = dashboard.checkIns
     .filter((item) => (!selectedInvitation || item.invitationCode === selectedInvitation) && (!query || `${item.invitationCode} ${invitationMap.get(item.invitationCode)?.groomName || ""} ${invitationMap.get(item.invitationCode)?.brideName || ""}`.toLowerCase().includes(query)))
     .slice(0, 40);

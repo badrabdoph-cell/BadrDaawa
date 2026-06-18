@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { DashboardShell } from "@/components/DashboardShell";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
@@ -12,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 
   if (!(await verifyAdminSessionCookie(session))) {
-    return <div className="admin-dark-shell">{children}</div>;
+    redirect("/admin/login");
   }
 
   return (

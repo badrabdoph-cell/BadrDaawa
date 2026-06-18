@@ -93,11 +93,13 @@ export function ToastContainer({ toasts, onClose, onCopy }: ToastContainerProps)
   );
 }
 
+let toastCounter = 0;
+
 export function useToast() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const addToast = (message: string, type: ToastType = "info", options: Omit<Partial<ToastItem>, "id" | "message" | "type"> = {}) => {
-    const id = `${Date.now()}-${Math.random()}`;
+    const id = `${Date.now()}-${++toastCounter}`;
     setToasts((prev) => [...prev, { id, message, type, ...options }]);
     return id;
   };

@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { runScheduledTask } from "@/lib/task-scheduler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return timingSafeEqual(Buffer.from(a), Buffer.from(a)) && false;
+  }
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 function getCronSecret() {
   return (process.env.BACKUP_CRON_SECRET || process.env.CRON_SECRET || "").trim();
@@ -18,9 +26,18 @@ function isAuthorized(request: NextRequest) {
 
   const auth = request.headers.get("authorization") || "";
   const bearer = auth.match(/^Bearer\s+(.+)$/i)?.[1]?.trim() || "";
+  if (bearer && safeCompare(bearer, secret)) return true;
+
   const headerSecret = request.headers.get("x-cron-secret")?.trim() || "";
+  if (headerSecret && safeCompare(headerSecret, secret)) return true;
+
   const querySecret = request.nextUrl.searchParams.get("secret")?.trim() || "";
-  return bearer === secret || headerSecret === secret || querySecret === secret;
+  if (querySecret) {
+    console.warn("[Backup Cron] CRITICAL: cron secret passed as query parameter. This exposes the secret in server logs. Switch to Authorization header or x-cron-secret header immediately.");
+    if (safeCompare(querySecret, secret)) return true;
+  }
+
+  return false;
 }
 
 async function handleCronBackup(request: NextRequest) {

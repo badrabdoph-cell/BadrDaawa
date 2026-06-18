@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { canUseOptimizedImage } from "@/lib/utils";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
@@ -47,10 +48,6 @@ function shouldShowSingleImage(className: string) {
   return className.split(/\s+/).some((name) => SINGLE_IMAGE_CLASSES.has(name));
 }
 
-function canUseOptimizedImage(src: string) {
-  return src.startsWith("/") && !src.startsWith("/uploads/") && !src.toLowerCase().endsWith(".svg");
-}
-
 function getFigureClassName(className: string, index: number) {
   if (hasClass(className, "featured-gallery")) {
     return index === 1 ? "featured-photo-card" : "featured-arch-card";
@@ -90,7 +87,7 @@ export function InviteGallery({ images, locale = "ar", className = "", label, al
                 data-invite-parallax-strength="0.72"
               />
             ) : (
-              <img src={image} alt={`${altPrefix} ${index + 1}`} loading="lazy" decoding="async" draggable={false} data-invite-parallax data-invite-parallax-strength="0.72" />
+              <img src={image} alt={`${altPrefix} ${index + 1}`} loading="lazy" decoding="async" draggable={false} style={{ aspectRatio: "auto", maxWidth: "100%" }} data-invite-parallax data-invite-parallax-strength="0.72" />
             )}
             {figureClassName === "featured-photo-card" ? <span aria-hidden="true" /> : null}
           </figure>

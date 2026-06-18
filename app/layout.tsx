@@ -6,28 +6,24 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   return {
     metadataBase: getMetadataBaseUrl(),
     title: {
-      default: settings.seo.title,
-      template: `%s | ${settings.siteName}`,
+      default: settings?.seo?.title,
+      template: `%s | ${settings?.siteName || "BadrDaawa"}`,
     },
-    description: settings.seo.description,
-    keywords: settings.seo.keywords
-      .split(",")
-      .map((keyword) => keyword.trim())
-      .filter(Boolean),
+    description: settings?.seo?.description,
+    keywords: settings?.seo?.keywords?.split(",").map((k) => k.trim()).filter(Boolean) || [],
     openGraph: {
-      title: settings.seo.ogTitle,
-      description: settings.seo.ogDescription,
-      siteName: settings.siteName,
+      title: settings?.seo?.ogTitle,
+      description: settings?.seo?.ogDescription,
+      siteName: settings?.siteName || "BadrDaawa",
       locale: "ar_EG",
       type: "website",
-      images: settings.logoUrl ? [{ url: settings.logoUrl }] : undefined,
+      images: settings?.logoUrl ? [{ url: settings.logoUrl }] : undefined,
     },
   };
 }

@@ -8,7 +8,7 @@ function absoluteUrl(path: string) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
+  try { var now = new Date();
   const routes: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: absoluteUrl("/templates"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
@@ -56,4 +56,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     seen.add(route.url);
     return true;
   });
+  } catch { return []; }
 }

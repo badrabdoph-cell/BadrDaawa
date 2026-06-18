@@ -43,11 +43,11 @@ function getInvitationState(invitation: { isActive: boolean; weddingDate: string
 }
 
 function stateLabel(state: string) {
-  if (state === "active") return "🟢 نشطة";
-  if (state === "paused") return "🟡 متوقفة";
+  if (state === "active") return "نشطة";
+  if (state === "paused") return "متوقفة";
   if (state === "expired") return "منتهية";
   if (state === "archived") return "مؤرشفة";
-  if (state === "disabled") return "🔴 معطلة";
+  if (state === "disabled") return "معطلة";
   return "غير محددة";
 }
 
@@ -112,7 +112,7 @@ export default async function AdminInvitationDetailsPage({
           <p>صفحة واحدة لإدارة التفاصيل التي خرجت من قائمة الدعوات الرئيسية: الإحصائيات، الضيوف، الرسائل، الموسيقى، الملاحظات، الإعدادات والروابط.</p>
         </div>
         <div className="button-row">
-          <span className={stateClassName(invitationState)}>{stateLabel(invitationState)}</span>
+          <span className={stateClassName(invitationState)}><span className={`status-dot ${invitationState}`} />{stateLabel(invitationState)}</span>
           <Link className="btn btn-soft" href={`/${publicSlug}`}>
             <Eye size={17} />
             عرض الدعوة

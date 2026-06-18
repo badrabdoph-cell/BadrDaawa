@@ -81,7 +81,7 @@ export function RsvpForm({ code }: { code: string }) {
         </div>
       </div>
       <button className="btn btn-gold" type="submit" disabled={state === "loading"}>
-        {state === "loading" ? <Loader2 size={18} className="animate-float" /> : form.status === "confirmed" ? <Check size={18} /> : <X size={18} />}
+        {state === "loading" ? <Loader2 size={18} className="animate-float" /> : form.status === "confirmed" ? <Check size={18} /> : null}
         تأكيد الرد
       </button>
       {message ? <p className={state === "error" ? "status danger" : "status success"}>{message}</p> : null}
