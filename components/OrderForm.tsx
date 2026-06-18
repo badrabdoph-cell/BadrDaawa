@@ -2242,17 +2242,6 @@ export function OrderForm({
                 <strong>{form.photographerEnabled ? "مضاف" : "غير مضاف"}</strong>
               </div>
             </div>
-            <hr />
-            <div className="order-summary-pricing">
-              <div className="order-summary-row">
-                <span>الباقة</span>
-                <strong>{form.photographerEnabled || form.storyEnabled || form.musicChoice !== "default" ? "الباقة الكاملة" : "الباقة الأساسية"}</strong>
-              </div>
-              <div className="order-summary-row total">
-                <span>السعر التقديري</span>
-                <strong>{form.photographerEnabled || form.storyEnabled || form.musicChoice !== "default" ? "300 ج" : "100 ج"}</strong>
-              </div>
-            </div>
           </div>
         </aside>
       </div>
