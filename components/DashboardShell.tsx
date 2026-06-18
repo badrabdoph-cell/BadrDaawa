@@ -16,6 +16,7 @@ const adminSections = [
     links: [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
       { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
+      { href: "/admin/invitations-v2", label: "الدعوات الموحد", icon: UsersRound },
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
     ],

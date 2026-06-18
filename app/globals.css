@@ -36671,3 +36671,283 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* === Unified Invitations V2 Styles === */
+
+.unified-invitation-table .col-customer {
+  min-width: 180px;
+}
+
+.unified-invitation-table .col-client-status {
+  min-width: 90px;
+}
+
+.unified-invitation-table td.cell-customer .customer-info-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.unified-invitation-table td.cell-customer .customer-name {
+  font-weight: 600;
+}
+
+.unified-invitation-table td.cell-customer .customer-phone {
+  font-size: 0.8rem;
+  color: var(--text-muted, #999);
+  direction: ltr;
+  display: inline-block;
+}
+
+.unified-invitation-table td.cell-customer .customer-username {
+  font-size: 0.72rem;
+  color: var(--text-muted-dim, #777);
+  direction: ltr;
+  display: inline-block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Customer Card in Detail Page */
+.unified-customer-card {
+  background: var(--card-bg, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-color, rgba(245,234,214,0.12));
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.customer-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.customer-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-teal, #14b8a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.customer-primary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customer-primary-info .customer-name {
+  font-size: 1.1rem;
+}
+
+.customer-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.customer-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--card-bg-alt, rgba(255,255,255,0.02));
+  border-radius: 8px;
+  border: 1px solid var(--border-color, rgba(245,234,214,0.08));
+}
+
+.customer-detail-item svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.customer-detail-item span {
+  font-size: 0.78rem;
+  color: var(--text-muted, #999);
+  min-width: 60px;
+}
+
+.customer-detail-item strong {
+  font-size: 0.88rem;
+  margin-left: auto;
+  direction: ltr;
+  text-align: right;
+}
+
+.customer-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.customer-editor-panel {
+  background: var(--card-bg-alt, rgba(255,255,255,0.02));
+  border: 1px solid var(--border-color, rgba(245,234,214,0.12));
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.customer-editor-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.customer-editor-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.customer-editor-field svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.customer-editor-field span {
+  min-width: 50px;
+  font-size: 0.82rem;
+  color: var(--text-muted, #999);
+}
+
+.customer-editor-field input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, rgba(245,234,214,0.15));
+  border-radius: 6px;
+  background: var(--card-bg, rgba(255,255,255,0.04));
+  color: inherit;
+  font-size: 0.88rem;
+}
+
+.customer-editor-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customer-editor-message {
+  font-size: 0.82rem;
+  padding: 4px 0;
+}
+
+.customer-editor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.customer-other-invitations {
+  border: 1px solid var(--border-color, rgba(245,234,214,0.1));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.customer-other-invitations summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customer-other-invitations-list {
+  display: grid;
+  gap: 2px;
+  padding: 4px 8px 8px;
+}
+
+.other-invitation-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.other-invitation-item:hover {
+  background: var(--card-bg-alt, rgba(255,255,255,0.05));
+}
+
+.other-invitation-item strong {
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+.other-invitation-item small {
+  font-size: 0.75rem;
+  color: var(--text-muted, #999);
+}
+
+.customer-notes-section {
+  margin-top: 4px;
+}
+
+.customer-editor-trigger {
+  display: flex;
+}
+
+.unified-section-card {
+  margin-bottom: 20px;
+}
+
+.text-success {
+  color: #22c55e;
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+/* Unified Table Mobile */
+@media (max-width: 768px) {
+  .unified-invitation-table thead {
+    display: none;
+  }
+  .unified-invitation-table tbody,
+  .unified-invitation-table tr,
+  .unified-invitation-table td {
+    display: block;
+  }
+  .unified-invitation-table tr {
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color, rgba(245,234,214,0.1));
+    border-radius: 8px;
+  }
+  .unified-invitation-table td {
+    padding: 4px 0;
+    border: none;
+  }
+  .unified-invitation-table td::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    color: var(--text-muted, #999);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .unified-invitation-table td.cell-state {
+    display: none;
+  }
+  .unified-invitation-table td.cell-name .admin-name-content {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .unified-invitation-table td.cell-actions {
+    padding-top: 8px;
+  }
+}
