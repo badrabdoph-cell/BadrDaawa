@@ -97,6 +97,7 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
               <th>العميل</th>
               <th>العنوان</th>
               <th>الرسالة</th>
+              <th>النطاق</th>
               <th>الحالة</th>
               <th>الوقت</th>
             </tr>
@@ -105,24 +106,33 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
             {displayMessages.map((message) => {
               const invitation = invitationMap.get(message.invitationCode);
               return (
-                <tr key={message.id}>
-                  <td>
-                    <strong>{invitation ? `${invitation.groomName} و ${invitation.brideName}` : message.invitationCode}</strong>
-                    <small>{message.invitationCode}</small>
-                  </td>
-                  <td>{message.title}</td>
-                  <td className="message-preview-cell">{message.body}</td>
-                  <td>
-                    <span className={message.readAt ? "status success" : "status warning"}>{message.readAt ? "مقروء" : "غير مقروء"}</span>
-                    {message.readAt ? <small>{formatDate(message.readAt)}</small> : null}
-                  </td>
-                  <td>{formatDate(message.createdAt)}</td>
-                </tr>
+                  <tr key={message.id}>
+                    <td>
+                      {message.scope === "all" ? (
+                        <strong>كل العملاء</strong>
+                      ) : (
+                        <>
+                          <strong>{invitation ? `${invitation.groomName} و ${invitation.brideName}` : message.invitationCode}</strong>
+                          <small>{message.invitationCode}</small>
+                        </>
+                      )}
+                    </td>
+                    <td>{message.title}</td>
+                    <td className="message-preview-cell">{message.body}</td>
+                    <td>
+                      <span className={message.scope === "all" ? "status info" : "status"}>{message.scope === "all" ? "عام" : "خاص"}</span>
+                    </td>
+                    <td>
+                      <span className={message.readAt ? "status success" : "status warning"}>{message.readAt ? "مقروء" : "غير مقروء"}</span>
+                      {message.readAt ? <small>{formatDate(message.readAt)}</small> : null}
+                    </td>
+                    <td>{formatDate(message.createdAt)}</td>
+                  </tr>
               );
             })}
             {!displayMessages.length ? (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <div className="admin-empty-state compact">
                     <MessageSquareText size={22} />
                     <strong>لا توجد رسائل مطابقة.</strong>

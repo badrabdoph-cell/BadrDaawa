@@ -30,13 +30,14 @@ export async function POST(request: NextRequest) {
   const invitationCode = String(formData.get("invitationCode") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const body = String(formData.get("body") || "").trim();
+  const scope = String(formData.get("scope") || "single").trim();
   const invitations = await getAdminInvitations();
   const invitation = invitations.find((item) => item.code === invitationCode);
-  if (!invitation || !body) {
+  if ((scope !== "all" && !invitation) || !body) {
     return NextResponse.redirect(getRedirectUrl("/admin/messages?error=missing", request.headers, request.nextUrl.origin), 303);
   }
 
-  const message = await createClientMessage({ invitationCode, title: sanitizeText(title, 120), body: sanitizeText(body, 3000) });
+  const message = await createClientMessage({ invitationCode, title: sanitizeText(title, 120), body: sanitizeText(body, 3000), scope });
   if (!message) {
     return NextResponse.redirect(getRedirectUrl("/admin/messages?error=failed", request.headers, request.nextUrl.origin), 303);
   }

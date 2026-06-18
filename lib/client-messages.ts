@@ -57,11 +57,12 @@ export async function getTotalUnreadClientMessages() {
   return messages.filter((message) => !message.readAt).length;
 }
 
-export async function createClientMessage(input: { invitationCode: string; title?: string; body: string }) {
+export async function createClientMessage(input: { invitationCode: string; title?: string; body: string; scope?: string }) {
   const invitationCode = cleanText(input.invitationCode, 140);
   const body = cleanText(input.body, maxMessageLength);
   if (!invitationCode || !body) return null;
   const title = cleanText(input.title || "رسالة من الإدارة", maxTitleLength) || "رسالة من الإدارة";
+  const scope = input.scope === "all" ? "all" : "single";
   if (!prisma) {
     console.error("[Client Messages] PostgreSQL is not configured. Refusing JSON write.");
     return null;
@@ -73,6 +74,7 @@ export async function createClientMessage(input: { invitationCode: string; title
       title,
       body,
       sender: "admin",
+      scope,
     },
   });
   return toClientMessage(saved);
