@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { Archive, CalendarDays, Eye, Settings2, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
+import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { AdminInvitationRow } from "@/components/AdminInvitationRow";
@@ -71,12 +72,13 @@ export default async function InvitationsPage({
 }: {
   searchParams: Promise<InvitationListParams>;
 }) {
-  const [params, invitations, guests, templates, requestHeaders] = await Promise.all([
+  const [params, invitations, guests, templates, requestHeaders, favorites] = await Promise.all([
     searchParams,
     getAdminInvitations(),
     getAdminGuests(),
     getTemplatesWithSettings(),
     headers(),
+    getAdminFavorites(),
   ]);
   const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
   const query = (params.q || "").trim().toLowerCase();
@@ -245,6 +247,7 @@ export default async function InvitationsPage({
                 const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" || invitationState === "trial-ended" ? "\uD83D\uDD34" : invitationState === "trial" ? "\uD83D\uDFE0" : "";
                 const adminPath = adminPathByCode.get(invitation.code);
                 const adminUrl = adminPath ? `${siteUrl}${adminPath}` : "";
+                const rowIsFavorite = isAdminFavorite(favorites, "invitation", invitation.code);
                 return (
                   <AdminInvitationRow
                     key={invitation.id}
@@ -261,6 +264,7 @@ export default async function InvitationsPage({
                     invitationUrl={invitationUrl}
                     adminUrl={adminUrl}
                     isDisabled={invitationState === "disabled" || invitationState === "trial-ended"}
+                    isFavorite={rowIsFavorite}
                     disabledReason={invitation.disabledReason}
                     disabledBy={invitation.disabledBy}
                     trialDays={invitation.trialDays}

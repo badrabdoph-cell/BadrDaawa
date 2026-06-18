@@ -24,7 +24,7 @@ type Props = {
   invitationUrl: string;
   adminUrl: string;
   isDisabled: boolean;
-  isFavorite: boolean;
+  isFavorite?: boolean;
   disabledReason?: string;
   disabledBy?: string;
   trialDays?: number;
