@@ -91,6 +91,19 @@ export async function getErrorEvents(filters: ErrorTrackingFilters = {}) {
   return store.events.filter((event) => matches(event, filters));
 }
 
+export async function clearErrorEvents() {
+  const store = await readStore();
+  store.events = [];
+  await writeStore(store);
+}
+
+export async function clearErrorEventsOlderThan(cutoffMs: number) {
+  const store = await readStore();
+  const cutoff = Date.now() - cutoffMs;
+  store.events = store.events.filter((event) => new Date(event.createdAt).getTime() > cutoff);
+  await writeStore(store);
+}
+
 export function serializeErrorForTracking(error: unknown) {
   if (error instanceof Error) {
     return {

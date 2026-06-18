@@ -100,7 +100,7 @@ export function PhotographerLogoUploader({
           <div className="new-invite-crop-card" style={{ maxWidth: 420 }}>
             <div className="new-invite-crop-head">
               <strong>قص الشعار</strong>
-              <button className="admin-icon-button" type="button" onClick={cancelCrop}><X size={17} /></button>
+              <button className="admin-icon-button" type="button" onClick={cancelCrop} title="إلغاء"><X size={17} /></button>
             </div>
             <div className="new-invite-crop-preview" style={{ aspectRatio: "1 / 1", borderRadius: "50%" }}>
               <img

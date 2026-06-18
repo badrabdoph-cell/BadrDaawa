@@ -1,21 +1,26 @@
-import { Activity, CalendarClock, CheckCircle2, Clock3, DatabaseBackup, History, Play, TriangleAlert } from "lucide-react";
-import { getTaskExecutionLog, listScheduledTasks, type ScheduledTaskRun, type ScheduledTaskStatus, type ScheduledTaskView } from "@/lib/task-scheduler";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Activity, CalendarClock, CheckCircle2, Clock3, DatabaseBackup, History, Loader2, Play, RefreshCw, TriangleAlert, XCircle } from "lucide-react";
+import type { ScheduledTaskRun, ScheduledTaskStatus, ScheduledTaskView } from "@/lib/task-scheduler";
 import { formatArabicNumber } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
-type TasksPageParams = {
-  task?: string;
-  result?: "success" | "failed";
-  error?: string;
-};
-
-const statusLabel: Record<ScheduledTaskStatus, string> = {
+const statusLabel: Record<string, string> = {
   idle: "لم تعمل بعد",
   running: "قيد التشغيل",
   success: "نجحت",
   failed: "فشلت",
+  completed: "مكتمل",
 };
+
+const statusFilters = [
+  { value: "", label: "الكل" },
+  { value: "running", label: "قيد التشغيل" },
+  { value: "success", label: "ناجحة" },
+  { value: "failed", label: "فاشلة" },
+  { value: "idle", label: "لم تعمل" },
+];
 
 function formatDateTime(value?: string) {
   if (!value) return "لم يتم التشغيل";
@@ -41,18 +46,16 @@ function formatDuration(value: number) {
   return `${formatArabicNumber(Number((value / 60_000).toFixed(1)))}m`;
 }
 
-function taskById(tasks: ScheduledTaskView[], id?: string) {
-  return tasks.find((task) => task.id === id);
-}
-
-function StatusPill({ status }: { status?: ScheduledTaskStatus | ScheduledTaskRun["status"] }) {
+function StatusPill({ status }: { status?: string }) {
   const cleanStatus = status || "idle";
-  const className = cleanStatus === "success" ? "good" : cleanStatus === "failed" ? "danger" : cleanStatus === "running" ? "pending" : "";
-  return <span className={`admin-health-pill ${className}`}>{statusLabel[cleanStatus as ScheduledTaskStatus] || cleanStatus}</span>;
+  const className = cleanStatus === "success" || cleanStatus === "completed" ? "good" : cleanStatus === "failed" ? "danger" : cleanStatus === "running" ? "pending" : "";
+  return <span className={`admin-health-pill ${className}`}>{statusLabel[cleanStatus] || cleanStatus}</span>;
 }
 
-function TaskCard({ task }: { task: ScheduledTaskView }) {
+function TaskCard({ task, onRetry }: { task: ScheduledTaskView; onRetry: (id: string) => void }) {
   const lastRun = task.lastRun;
+  const failed = task.status === "failed";
+
   return (
     <article className={`panel task-card task-card--${task.status || "idle"}`}>
       <div className="task-card-head">
@@ -78,6 +81,12 @@ function TaskCard({ task }: { task: ScheduledTaskView }) {
           <History size={16} />
           آخر تشغيل: {formatDateTime(lastRun?.finishedAt)}
         </span>
+        {lastRun ? (
+          <span>
+            <Activity size={16} />
+            المدة: {formatDuration(lastRun.durationMs)}
+          </span>
+        ) : null}
       </div>
 
       {lastRun ? (
@@ -96,13 +105,19 @@ function TaskCard({ task }: { task: ScheduledTaskView }) {
             تشغيل الآن
           </button>
         </form>
+        {failed ? (
+          <button className="btn btn-soft" type="button" onClick={() => onRetry(task.id)}>
+            <RefreshCw size={17} />
+            إعادة المحاولة
+          </button>
+        ) : null}
       </div>
     </article>
   );
 }
 
 function RunRow({ run, tasks }: { run: ScheduledTaskRun; tasks: ScheduledTaskView[] }) {
-  const task = taskById(tasks, run.taskId);
+  const task = tasks.find((t) => t.id === run.taskId);
   return (
     <tr>
       <td>{task?.title || run.taskId}</td>
@@ -115,12 +130,89 @@ function RunRow({ run, tasks }: { run: ScheduledTaskRun; tasks: ScheduledTaskVie
   );
 }
 
-export default async function AdminTasksPage({ searchParams }: { searchParams: Promise<TasksPageParams> }) {
-  const [params, tasks, runs] = await Promise.all([searchParams, listScheduledTasks(), getTaskExecutionLog(80)]);
-  const selectedTask = taskById(tasks, params.task);
+export default function AdminTasksPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status") || "";
+
+  const [tasks, setTasks] = useState<ScheduledTaskView[]>([]);
+  const [runs, setRuns] = useState<ScheduledTaskRun[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [clearing, setClearing] = useState(false);
+
+  const fetchData = useCallback(async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    else setRefreshing(true);
+    try {
+      const res = await fetch("/api/admin/tasks/data");
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data.tasks || []);
+        setRuns(data.runs || []);
+      }
+    } catch {
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData(true);
+    const interval = setInterval(() => fetchData(false), 10000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  const handleRetry = (taskId: string) => {
+    const form = document.createElement("form");
+    form.method = "post";
+    form.action = "/api/admin/tasks";
+    const actionInput = document.createElement("input");
+    actionInput.type = "hidden";
+    actionInput.name = "action";
+    actionInput.value = "run";
+    form.appendChild(actionInput);
+    const idInput = document.createElement("input");
+    idInput.type = "hidden";
+    idInput.name = "taskId";
+    idInput.value = taskId;
+    form.appendChild(idInput);
+    document.body.appendChild(form);
+    form.submit();
+  };
+
+  const handleClearCompleted = async () => {
+    setClearing(true);
+    try {
+      const res = await fetch("/api/admin/tasks/data", { method: "DELETE" });
+      if (res.ok) await fetchData(false);
+    } catch {
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const setFilter = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("status", value);
+    else params.delete("status");
+    router.push(`/admin/tasks?${params.toString()}`);
+  };
+
+  const filteredTasks = statusFilter ? tasks.filter((t) => t.status === statusFilter) : tasks;
   const successfulRuns = runs.filter((run) => run.status === "success").length;
   const failedRuns = runs.filter((run) => run.status === "failed").length;
   const latestRun = runs[0];
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "300px", gap: "12px", opacity: 0.6 }}>
+        <Loader2 size={24} className="spin" />
+        جاري تحميل المهام...
+      </div>
+    );
+  }
 
   return (
     <>
@@ -130,20 +222,14 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
           <h1>المهام المجدولة</h1>
           <p>تشغيل يدوي للمهام وسجل Backup. التشغيل التلقائي للنسخ الاحتياطي يتم من Railway Cron فقط.</p>
         </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          {refreshing ? <Loader2 size={16} className="spin" /> : null}
+          <button className="btn btn-soft" type="button" onClick={() => fetchData(false)} disabled={refreshing}>
+            <RefreshCw size={16} />
+            تحديث
+          </button>
+        </div>
       </div>
-
-      {params.result ? (
-        <div className={params.result === "success" ? "notice success" : "notice danger"}>
-          {params.result === "success" ? <CheckCircle2 size={18} /> : <TriangleAlert size={18} />}
-          {selectedTask ? `نتيجة تشغيل ${selectedTask.title}: ${params.result === "success" ? "نجحت" : "فشلت"}.` : "تم تنفيذ المهمة."}
-        </div>
-      ) : null}
-      {params.error ? (
-        <div className="notice danger">
-          <TriangleAlert size={18} />
-          تعذر تنفيذ الإجراء: {decodeURIComponent(params.error)}
-        </div>
-      ) : null}
 
       <section className="task-stats-grid">
         <article className="admin-list-stat">
@@ -169,14 +255,33 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
         <article className="admin-list-stat">
           <DatabaseBackup size={19} />
           <span>آخر تنفيذ</span>
-          <strong>{latestRun ? formatDateTime(latestRun.finishedAt) : "لا يوجد"}</strong>
+          <strong style={{ fontSize: "0.95rem" }}>{latestRun ? formatDateTime(latestRun.finishedAt) : "لا يوجد"}</strong>
         </article>
       </section>
 
-      <section className="tasks-grid">
-        {tasks.map((task) => (
-          <TaskCard task={task} key={task.id} />
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        {statusFilters.map((f) => (
+          <button
+            key={f.value}
+            className={`btn btn-soft ${statusFilter === f.value ? "btn-gold" : ""}`}
+            type="button"
+            onClick={() => setFilter(f.value)}
+            style={{ minHeight: "36px", padding: "6px 14px", fontSize: "0.85rem" }}
+          >
+            {f.label}
+          </button>
         ))}
+      </div>
+
+      <section className="tasks-grid">
+        {filteredTasks.map((task) => (
+          <TaskCard task={task} key={task.id} onRetry={handleRetry} />
+        ))}
+        {filteredTasks.length === 0 ? (
+          <div className="panel" style={{ textAlign: "center", padding: "32px" }}>
+            <p style={{ opacity: 0.5 }}>لا توجد مهام بهذه الحالة</p>
+          </div>
+        ) : null}
       </section>
 
       <section className="panel task-log-panel">
@@ -186,6 +291,16 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
             <span className="eyebrow">Execution Log</span>
             <h2>سجل التنفيذ</h2>
           </div>
+          <button
+            className="btn btn-soft"
+            type="button"
+            onClick={handleClearCompleted}
+            disabled={clearing || runs.length === 0}
+            style={{ minHeight: "36px", padding: "6px 14px", fontSize: "0.85rem" }}
+          >
+            {clearing ? <Loader2 size={15} className="spin" /> : <XCircle size={15} />}
+            مسح المكتملة
+          </button>
         </div>
 
         <div className="table-shell">

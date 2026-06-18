@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3, CalendarDays, MapPinCheckInside, Search, UserCheck, UsersRound } from "lucide-react";
+import { AdminExportButton } from "@/components/AdminExportButton";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getCheckInDashboard } from "@/lib/check-ins";
 import { formatArabicNumber } from "@/lib/utils";
@@ -63,6 +64,22 @@ export default async function AdminCheckInsPage({ searchParams }: { searchParams
           <span className="eyebrow">Actual Attendance</span>
           <h1>الوصول الفعلي</h1>
           <p>إحصائيات تسجيل الوصول منفصلة عن RSVP التقليدي، لتعرف من وصل فعليًا لمكان الحفل.</p>
+        </div>
+        <div className="dashboard-actions">
+          <AdminExportButton
+            label="تصدير تقرير"
+            filename={`checkins-${new Date().toISOString().slice(0, 10)}.csv`}
+            headers={["الدعوة", "العريس", "العروسة", "القاعة", "RSVP مؤكد", "وصول فعلي", "نسبة الوصول"]}
+            rows={rows.map((row) => [
+              row.invitation.code,
+              row.invitation.groomName,
+              row.invitation.brideName,
+              row.invitation.venue,
+              formatArabicNumber(row.confirmed),
+              formatArabicNumber(row.actual),
+              `${formatArabicNumber(Math.round(row.rate))}%`,
+            ])}
+          />
         </div>
       </div>
 

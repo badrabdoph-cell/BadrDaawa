@@ -1,4 +1,5 @@
 import { Trash2, UserCheck, UsersRound } from "lucide-react";
+import { AdminExportButton } from "@/components/AdminExportButton";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { StatsGrid } from "@/components/StatsGrid";
@@ -58,7 +59,20 @@ export default async function CustomersPage({
           <span className="eyebrow">Customers</span>
           <h1>العملاء وبيانات الدخول</h1>
         </div>
-
+        <div className="dashboard-actions">
+          <AdminExportButton
+            label="تصدير Excel"
+            filename={`customers-${new Date().toISOString().slice(0, 10)}.csv`}
+            headers={["الاسم", "الهاتف", "اسم الدخول", "عدد الدعوات", "الحالة"]}
+            rows={customers.map((c) => [
+              c.name,
+              c.phone,
+              c.username,
+              String(c.invitations),
+              c.isActive ? "نشط" : "متوقف",
+            ])}
+          />
+        </div>
       </div>
       {message ? <div className={params.status === "deleted" ? "notice success" : "notice danger"}>{message}</div> : null}
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}

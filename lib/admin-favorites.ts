@@ -39,7 +39,7 @@ function normalizeHref(value: unknown) {
   return href;
 }
 
-function normalizeFavorite(value: AdminFavoriteInput): AdminFavorite | null {
+function normalizeFavorite(value: AdminFavoriteInput & { note?: unknown }): AdminFavorite | null {
   const entityType = normalizeEntityType(value.entityType);
   const entityId = cleanText(value.entityId, 180);
   const label = cleanText(value.label, 180);
@@ -52,6 +52,7 @@ function normalizeFavorite(value: AdminFavoriteInput): AdminFavorite | null {
     label,
     href,
     createdAt: typeof value.createdAt === "string" && value.createdAt ? value.createdAt : nowIso(),
+    note: typeof value.note === "string" && value.note.trim() ? value.note.trim().slice(0, 500) : undefined,
   };
 }
 
@@ -123,6 +124,24 @@ export async function removeAdminFavorite(entityType: unknown, entityId: unknown
   if (next.length === favorites.length) return false;
   await writeFavorites(next);
   return true;
+}
+
+export async function updateAdminFavoriteNote(id: string, note: string) {
+  const favorites = await readFavoritesRaw();
+  const cleaned = note.trim().slice(0, 500);
+  const next = favorites.map((favorite) => {
+    if (favorite.id !== id) return favorite;
+    return { ...favorite, note: cleaned || undefined };
+  });
+  await writeFavorites(next);
+}
+
+export async function reorderAdminFavorites(orderedIds: string[]) {
+  const favorites = await readFavoritesRaw();
+  const map = new Map(favorites.map((f) => [f.id, f]));
+  const next = orderedIds.map((id) => map.get(id)).filter(Boolean) as AdminFavorite[];
+  const remaining = favorites.filter((f) => !orderedIds.includes(f.id));
+  await writeFavorites([...next, ...remaining]);
 }
 
 export async function toggleAdminFavorite(input: {

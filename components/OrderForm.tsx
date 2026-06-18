@@ -49,6 +49,7 @@ type FormState = {
   musicEnabled: boolean;
   musicChoice: MusicChoice;
   musicUrl: string;
+  paymentMethod: "cod" | "bank" | "ewallet";
 };
 
 type MusicChoice = "default" | "upload" | "video" | "url";
@@ -540,6 +541,7 @@ export function OrderForm({
     musicEnabled: initialDraft?.musicEnabled ?? true,
     musicChoice: initialDraft?.musicChoice || "default",
     musicUrl: initialDraft?.musicUrl || "",
+    paymentMethod: "cod",
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -1565,6 +1567,15 @@ export function OrderForm({
             whatsappUrl,
             orderNumber: data?.orderNumber || "",
             invitationCode: data?.invitationCode || "",
+            groomName: currentForm.groomName,
+            brideName: currentForm.brideName,
+            weddingDate: readableDate || currentForm.weddingDate,
+            venue: currentForm.venue,
+            templateName: selectedTemplate.arabicName,
+            paymentMethod: form.paymentMethod,
+            musicChoice: form.musicChoice,
+            photographerEnabled: form.photographerEnabled,
+            storyEnabled: form.storyEnabled,
           }),
         );
       } catch {
@@ -2114,6 +2125,26 @@ export function OrderForm({
               {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
             </div>
 
+            <div className="order-review-payment">
+              <h3><span>طريقة الدفع</span></h3>
+              <div className="order-payment-options">
+                <label className={`order-payment-option ${form.paymentMethod === "cod" ? "active" : ""}`}>
+                  <input type="radio" name="paymentMethod" value="cod" checked={form.paymentMethod === "cod"} onChange={() => updateField("paymentMethod", "cod")} />
+                  <span>الدفع عند الاستلام</span>
+                  <small>ادفع نقداً عند استلام الدعوة</small>
+                </label>
+                <label className={`order-payment-option ${form.paymentMethod === "bank" ? "active" : ""}`}>
+                  <input type="radio" name="paymentMethod" value="bank" checked={form.paymentMethod === "bank"} onChange={() => updateField("paymentMethod", "bank")} />
+                  <span>تحويل بنكي</span>
+                  <small>حوالة بنكية على الحساب</small>
+                </label>
+                <label className={`order-payment-option ${form.paymentMethod === "ewallet" ? "active" : ""}`}>
+                  <input type="radio" name="paymentMethod" value="ewallet" checked={form.paymentMethod === "ewallet"} onChange={() => updateField("paymentMethod", "ewallet")} />
+                  <span>محفظة إلكترونية</span>
+                  <small>الدفع عبر المحفظة الإلكترونية (قريباً)</small>
+                </label>
+              </div>
+            </div>
             <p className="order-review-submit-note" id="confirm-order">
               اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل تأكيد الدعوة.
             </p>
@@ -2166,6 +2197,59 @@ export function OrderForm({
             )}
           </div>
         </form>
+        <aside className="order-summary-sidebar">
+          <div className="order-summary-card">
+            <h3>ملخص الطلب</h3>
+            <div className="order-summary-template">
+              <img src={selectedTemplate.previewImage} alt="" />
+              <div>
+                <strong>{selectedTemplate.arabicName}</strong>
+                <small>{selectedTemplate.name}</small>
+              </div>
+            </div>
+            <div className="order-summary-options">
+              <div className="order-summary-row">
+                <span>الإسمين</span>
+                <strong>{form.groomName || "..."} و {form.brideName || "..."}</strong>
+              </div>
+              <div className="order-summary-row">
+                <span>تاريخ المناسبة</span>
+                <strong>{readableDate || "لم يحدد"}</strong>
+              </div>
+              <div className="order-summary-row">
+                <span>القاعة</span>
+                <strong>{form.venue || "لم يحدد"}</strong>
+              </div>
+              <div className="order-summary-row">
+                <span>الصور</span>
+                <strong>{previewImageUrls.length ? `${previewImageUrls.length} صور` : "لم ترفع بعد"}</strong>
+              </div>
+              <div className="order-summary-row">
+                <span>الموسيقى</span>
+                <strong>{!form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : "مخصصة"}</strong>
+              </div>
+              <div className="order-summary-row">
+                <span>قصة العروسين</span>
+                <strong>{form.storyEnabled ? "مضافة" : "غير مضافة"}</strong>
+              </div>
+              <div className="order-summary-row">
+                <span>المصور</span>
+                <strong>{form.photographerEnabled ? "مضاف" : "غير مضاف"}</strong>
+              </div>
+            </div>
+            <hr />
+            <div className="order-summary-pricing">
+              <div className="order-summary-row">
+                <span>الباقة</span>
+                <strong>{form.photographerEnabled || form.storyEnabled || form.musicChoice !== "default" ? "الباقة الكاملة" : "الباقة الأساسية"}</strong>
+              </div>
+              <div className="order-summary-row total">
+                <span>السعر التقديري</span>
+                <strong>{form.photographerEnabled || form.storyEnabled || form.musicChoice !== "default" ? "300 ج" : "100 ج"}</strong>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
 
       {orderPreviewOpen ? (

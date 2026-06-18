@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  MoreHorizontal, Settings2, Eye, Trash2,
+  MoreHorizontal, Settings2, Eye, Trash2, Pencil, Save, X,
   Ban, CheckCircle, Copy, Check,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -62,8 +62,14 @@ export function AdminInvitationRow({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editGroom, setEditGroom] = useState(groomName);
+  const [editBride, setEditBride] = useState(brideName);
+  const [editDate, setEditDate] = useState(weddingDate);
+  const [editSaving, setEditSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const editRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -78,6 +84,60 @@ export function AdminInvitationRow({
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!editing) return;
+    function handleClick(e: MouseEvent) {
+      if (editRef.current && !editRef.current.contains(e.target as Node)) {
+        handleCancelEdit();
+      }
+    }
+    setTimeout(() => document.addEventListener("mousedown", handleClick), 0);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [editing]);
+
+  function handleStartEdit() {
+    setEditGroom(groomName);
+    setEditBride(brideName);
+    setEditDate(weddingDate);
+    setEditing(true);
+    setMenuOpen(false);
+  }
+
+  async function handleSaveEdit() {
+    if (!editGroom.trim() || !editBride.trim()) {
+      alert("اسم العريس والعروس مطلوبان.");
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/admin/invitations/${encodeURIComponent(code)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          action: "update-details",
+          groomName: editGroom.trim(),
+          brideName: editBride.trim(),
+          weddingDate: editDate,
+        }),
+      });
+      const data = await res.json().catch(() => null) as { ok?: boolean } | null;
+      if (!res.ok || !data?.ok) throw new Error("تعذر حفظ التعديلات.");
+      router.refresh();
+      setEditing(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "حدث خطأ.");
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  function handleCancelEdit() {
+    setEditing(false);
+    setEditGroom(groomName);
+    setEditBride(brideName);
+    setEditDate(weddingDate);
+  }
 
   async function handleToggleState() {
     if (!isDisabled) {
@@ -146,7 +206,7 @@ export function AdminInvitationRow({
 
   return (
     <>
-      <tr className={`admin-invitation-row ${mobileExpanded ? "expanded" : ""}`}>
+      <tr className={`admin-invitation-row ${mobileExpanded ? "expanded" : ""} ${editing ? "editing" : ""}`}>
         <td className="cell-state" data-label="">
           <span className={`state-dot ${stateClass.replace("status ", "")}`}>{stateEmoji}</span>
         </td>
@@ -160,16 +220,54 @@ export function AdminInvitationRow({
             <span className={`chevron ${mobileExpanded ? "rotated" : ""}`}>{">"}</span>
           </button>
           <div className="admin-name-content">
-            <span className="inv-code">{code}</span>
-            <strong>{groomName} و {brideName}</strong>
-            {isDisabled && (disabledReason || disabledBy) ? (
-              <small className="disabled-hint" title={disabledBy ? `بواسطة: ${disabledBy}` : undefined}>
-                {disabledReason ? `🔴 ${disabledReason}` : disabledBy ? `معطلة بواسطة ${disabledBy}` : null}
-              </small>
-            ) : null}
+            {editing ? (
+              <div className="inline-edit-fields" ref={editRef}>
+                <input
+                  className="inline-edit-input"
+                  value={editGroom}
+                  onChange={(e) => setEditGroom(e.target.value)}
+                  placeholder="اسم العريس"
+                />
+                <input
+                  className="inline-edit-input"
+                  value={editBride}
+                  onChange={(e) => setEditBride(e.target.value)}
+                  placeholder="اسم العروس"
+                />
+                <div className="inline-edit-actions">
+                  <button className="btn btn-sm btn-gold" type="button" onClick={handleSaveEdit} disabled={editSaving}>
+                    {editSaving ? "..." : <><Save size={14} /> حفظ</>}
+                  </button>
+                  <button className="btn btn-sm btn-soft" type="button" onClick={handleCancelEdit}>
+                    <X size={14} /> إلغاء
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <span className="inv-code">{code}</span>
+                <strong>{groomName} و {brideName}</strong>
+                {isDisabled && (disabledReason || disabledBy) ? (
+                  <small className="disabled-hint" title={disabledBy ? `بواسطة: ${disabledBy}` : undefined}>
+                    {disabledReason ? `🔴 ${disabledReason}` : disabledBy ? `معطلة بواسطة ${disabledBy}` : null}
+                  </small>
+                ) : null}
+              </>
+            )}
           </div>
         </td>
-        <td className="cell-date" data-label="تاريخ الحفل">{weddingDate}</td>
+        <td className="cell-date" data-label="تاريخ الحفل">
+          {editing ? (
+            <input
+              className="inline-edit-input inline-edit-date"
+              type="date"
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+            />
+          ) : (
+            weddingDate
+          )}
+        </td>
         <td className="cell-views" data-label="الزيارات">{views}</td>
         <td className="cell-status" data-label="الحالة">
           <span className={stateClass}>{stateLabel}</span>
@@ -181,10 +279,18 @@ export function AdminInvitationRow({
         </td>
         <td className="cell-actions" data-label="الإجراءات">
           <div className="admin-row-actions">
-            <Link className="btn btn-sm btn-gold" href={adminPath}>
-              <Settings2 size={16} />
-              إدارة
-            </Link>
+            {editing ? null : (
+              <Link className="btn btn-sm btn-gold" href={adminPath}>
+                <Settings2 size={16} />
+                إدارة
+              </Link>
+            )}
+            {editing ? null : (
+              <button className="btn btn-sm btn-soft" type="button" onClick={handleStartEdit}>
+                <Pencil size={16} />
+                تعديل
+              </button>
+            )}
             <div className="admin-more-actions" ref={menuRef}>
               <button
                 ref={btnRef}

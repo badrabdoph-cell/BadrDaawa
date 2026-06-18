@@ -1531,7 +1531,7 @@ export function AdminNewInvitationWizard({
           <div className="new-invite-crop-card">
             <div className="new-invite-crop-head">
               <strong>قص الصورة</strong>
-              <button className="admin-icon-button" type="button" onClick={() => { URL.revokeObjectURL(cropDraft.sourceUrl); setCropDraft(null); }}><X size={17} /></button>
+              <button className="admin-icon-button" type="button" onClick={() => { URL.revokeObjectURL(cropDraft.sourceUrl); setCropDraft(null); }} title="إغلاق"><X size={17} /></button>
             </div>
             <div className="new-invite-crop-preview">
               <img src={cropDraft.sourceUrl} alt="قص الصورة" style={{ objectPosition: `${50 + cropDraft.cropX * 50}% ${50 + cropDraft.cropY * 50}%`, transform: `scale(${cropDraft.zoom})` }} />

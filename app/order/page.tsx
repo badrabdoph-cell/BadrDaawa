@@ -238,6 +238,178 @@ export default async function OrderPage({ searchParams }: PageProps) {
           line-height: 1.6;
         }
 
+        .order-studio-page .order-wizard-layout {
+          display: flex;
+          gap: 24px;
+          align-items: flex-start;
+        }
+
+        .order-studio-page .order-wizard-layout .form-panel {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .order-studio-page .order-summary-sidebar {
+          width: 280px;
+          flex-shrink: 0;
+          position: sticky;
+          top: 24px;
+        }
+
+        .order-studio-page .order-summary-card {
+          border: 1px solid var(--studio-line);
+          border-radius: 20px;
+          padding: 18px;
+          background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,248,239,0.9));
+          box-shadow: 0 12px 28px rgba(46, 33, 21, 0.075);
+        }
+
+        .order-studio-page .order-summary-card h3 {
+          font-size: 1rem;
+          margin-bottom: 14px;
+          color: #4a3520;
+        }
+
+        .order-studio-page .order-summary-card hr {
+          border: none;
+          border-top: 1px solid var(--studio-line);
+          margin: 12px 0;
+        }
+
+        .order-studio-page .order-summary-template {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          padding-bottom: 12px;
+          margin-bottom: 12px;
+          border-bottom: 1px solid var(--studio-line);
+        }
+
+        .order-studio-page .order-summary-template img {
+          width: 48px;
+          height: 48px;
+          border-radius: 10px;
+          object-fit: cover;
+          border: 1px solid var(--studio-line);
+        }
+
+        .order-studio-page .order-summary-template div strong {
+          display: block;
+          font-size: 0.9rem;
+          color: #3a2a18;
+        }
+
+        .order-studio-page .order-summary-template div small {
+          font-size: 0.78rem;
+          color: #7a6a58;
+        }
+
+        .order-studio-page .order-summary-options {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .order-studio-page .order-summary-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.85rem;
+        }
+
+        .order-studio-page .order-summary-row span {
+          color: #7a6a58;
+        }
+
+        .order-studio-page .order-summary-row strong {
+          color: #3a2a18;
+          font-weight: 600;
+        }
+
+        .order-studio-page .order-summary-row.total strong {
+          font-size: 1.1rem;
+          color: #8e6428;
+        }
+
+        .order-studio-page .order-summary-pricing .order-summary-row strong {
+          font-weight: 700;
+        }
+
+        .order-studio-page .order-review-payment {
+          margin-top: 20px;
+          padding-top: 16px;
+          border-top: 1px solid var(--studio-line);
+        }
+
+        .order-studio-page .order-review-payment h3 {
+          font-size: 1rem;
+          margin-bottom: 12px;
+          color: #4a3520;
+        }
+
+        .order-studio-page .order-review-payment h3 span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .order-studio-page .order-payment-options {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .order-studio-page .order-payment-option {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 14px;
+          border: 1.5px solid var(--studio-line);
+          border-radius: 16px;
+          cursor: pointer;
+          transition: border-color 0.18s, background 0.18s;
+          background: #fffefb;
+        }
+
+        .order-studio-page .order-payment-option:hover {
+          border-color: rgba(185, 137, 61, 0.4);
+        }
+
+        .order-studio-page .order-payment-option.active {
+          border-color: rgba(185, 137, 61, 0.48);
+          background: linear-gradient(180deg, rgba(255,253,248,0.99), rgba(246,234,213,0.85));
+        }
+
+        .order-studio-page .order-payment-option input[type="radio"] {
+          accent-color: #8e6428;
+          width: 18px;
+          height: 18px;
+        }
+
+        .order-studio-page .order-payment-option span {
+          font-weight: 600;
+          color: #3a2a18;
+          font-size: 0.9rem;
+        }
+
+        .order-studio-page .order-payment-option small {
+          display: block;
+          font-size: 0.78rem;
+          color: #7a6a58;
+          font-weight: 400;
+        }
+
+        @media (max-width: 860px) {
+          .order-studio-page .order-wizard-layout {
+            flex-direction: column;
+          }
+
+          .order-studio-page .order-summary-sidebar {
+            width: 100%;
+            position: static;
+          }
+        }
+
         @media (max-width: 720px) {
           .order-studio-page .order-builder-main {
             padding-block: 8px 56px;

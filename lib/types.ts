@@ -157,6 +157,7 @@ export type AdminFavorite = {
   label: string;
   href: string;
   createdAt: string;
+  note?: string;
 };
 
 export type GuestRsvp = {

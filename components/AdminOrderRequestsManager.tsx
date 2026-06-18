@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, CheckCircle2, CheckSquare, Clock, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, Volume2, VolumeX, XCircle } from "lucide-react";
+import { Check, CheckCircle2, CheckSquare, ChevronDown, Clock, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, Volume2, VolumeX, XCircle } from "lucide-react";
 import {
   AdminInvitationTools,
   emptyAdminToolImages,
@@ -337,6 +337,16 @@ export function AdminOrderRequestsManager({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ type: "single" | "selected" | "all-pending" | "all-published" | "all-rejected"; ids?: string[] } | null>(null);
+  const [statusMenuOrderId, setStatusMenuOrderId] = useState<string | null>(null);
+  const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
+
+  useEffect(() => {
+    if (!statusMenuOrderId) return;
+    function handleClick() { setStatusMenuOrderId(null); }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [statusMenuOrderId]);
 
   const tabItems = useMemo(() => {
     if (tab === "pending") return items.filter((order) => !["published", "converted", "rejected"].includes(order.status));
@@ -848,6 +858,7 @@ export function AdminOrderRequestsManager({
               const isFinal = ["published", "converted", "rejected"].includes(order.status);
               const isPublishingThisOrder = busy === "publish" && busyOrderId === order.id;
               const feedback = actionFeedback[order.id];
+              const statusMenuOpen = statusMenuOrderId === order.id;
               return (
                 <article className={active ? "orders-queue-item active" : "orders-queue-item"} key={order.id}>
                   <div className="orders-queue-item-row">
@@ -859,8 +870,85 @@ export function AdminOrderRequestsManager({
                       <strong>{orderTitle(order, index)}</strong>
                       <small>{formatDateTime(order.submittedAt || order.createdAt)}</small>
                     </button>
+                    <div className="orders-queue-status-menu">
+                      <button className="orders-queue-status-trigger" type="button" onClick={(e) => { e.stopPropagation(); setStatusMenuOrderId(statusMenuOpen ? null : order.id); }} aria-label="تغيير الحالة">
+                        <ChevronDown size={14} />
+                      </button>
+                      {statusMenuOpen ? (
+                        <div className="orders-queue-status-dropdown" onClick={(e) => e.stopPropagation()}>
+                          {(["new", "reviewing", "edited", "accepted", "rejected"] as StatusKind[]).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              className={order.status === s ? "active" : ""}
+                              disabled={busy !== "idle"}
+                              onClick={async () => {
+                                setStatusMenuOrderId(null);
+                                if (s === "rejected") {
+                                  setSelectedId(order.id);
+                                  setNotice({ kind: "error", text: "افتح الطلب واكتب سبب الرفض أولاً." });
+                                  return;
+                                }
+                                if (s === order.status) return;
+                                try {
+                                  const res = await fetch(`/api/admin/orders/${order.id}`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json", Accept: "application/json" },
+                                    body: JSON.stringify({ action: "update-status", status: s }),
+                                  });
+                                  const data = await res.json().catch(() => null) as { order?: OrderRequest; error?: string } | null;
+                                  if (res.ok && data?.order) {
+                                    setItems((current) => current.map((item) => (item.id === order.id ? data.order! : item)));
+                                    window.dispatchEvent(new Event("admin-orders-count-refresh"));
+                                  } else {
+                                    setNotice({ kind: "error", text: data?.error || "تعذر تحديث الحالة." });
+                                  }
+                                } catch {
+                                  setNotice({ kind: "error", text: "تعذر تحديث الحالة." });
+                                }
+                              }}
+                            >
+                              {statusMap[s].label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="orders-queue-item-actions">
+                    {!isFinal && (
+                      <>
+                        <button className="orders-queue-accept" type="button" disabled={busy !== "idle"} onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/admin/orders/${order.id}`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json", Accept: "application/json" },
+                              body: JSON.stringify({ action: "update-status", status: "accepted" }),
+                            });
+                            const data = await res.json().catch(() => null) as { order?: OrderRequest; error?: string } | null;
+                            if (res.ok && data?.order) {
+                              setItems((current) => current.map((item) => (item.id === order.id ? data.order! : item)));
+                              window.dispatchEvent(new Event("admin-orders-count-refresh"));
+                            } else {
+                              setNotice({ kind: "error", text: data?.error || "تعذر قبول الطلب." });
+                            }
+                          } catch {
+                            setNotice({ kind: "error", text: "تعذر قبول الطلب." });
+                          }
+                        }}>
+                          <Check size={14} />
+                          قبول
+                        </button>
+                        <button className="orders-queue-reject" type="button" disabled={busy !== "idle"} onClick={() => {
+                          setSelectedId(order.id);
+                          setRejectingOrderId(rejectingOrderId === order.id ? null : order.id);
+                          setRejectReasonInput(order.rejectionReason || "");
+                        }}>
+                          <XCircle size={14} />
+                          رفض
+                        </button>
+                      </>
+                    )}
                     {!isFinal && (
                       <button className="orders-queue-publish" type="button" disabled={busy !== "idle"} onClick={() => quickPublish(order)}>
                         {isPublishingThisOrder ? <Loader2 size={15} /> : <Send size={15} />}
@@ -871,6 +959,33 @@ export function AdminOrderRequestsManager({
                       <Trash2 size={14} /> حذف
                     </button>
                   </div>
+                  {rejectingOrderId === order.id ? (
+                    <div className="orders-queue-reject-inline">
+                      <textarea
+                        placeholder="اكتب سبب الرفض..."
+                        value={rejectReasonInput}
+                        onChange={(e) => setRejectReasonInput(e.target.value)}
+                        rows={2}
+                      />
+                      <div className="orders-queue-reject-actions">
+                        <button className="btn btn-soft danger-button" type="button" disabled={busy !== "idle"} onClick={async () => {
+                          if (!rejectReasonInput.trim()) {
+                            setNotice({ kind: "error", text: "اكتب سبب الرفض أولاً." });
+                            return;
+                          }
+                          setRejectingOrderId(null);
+                          const state = formFromOrder(order, fallbackTemplate, musicFiles);
+                          await runOrderAction(order, "reject", { ...state, rejectionReason: rejectReasonInput });
+                        }}>
+                          {busy === "reject" ? <Loader2 size={14} /> : <XCircle size={14} />}
+                          تأكيد الرفض
+                        </button>
+                        <button className="btn btn-soft" type="button" onClick={() => setRejectingOrderId(null)}>
+                          إلغاء
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                   {feedback ? (
                     <div className={`orders-queue-feedback ${feedback.kind}`} role="status" aria-live="polite">
                       {feedback.kind === "success" ? <CheckCircle2 size={15} /> : feedback.kind === "error" ? <XCircle size={15} /> : <Loader2 size={15} />}
@@ -916,6 +1031,40 @@ export function AdminOrderRequestsManager({
             <span className={`order-status-chip ${selectedStatus.className}`}>{selectedStatus.label}</span>
           </div>
         </div>
+
+        {selectedOrder ? (
+          <div className="orders-timeline">
+            <div className={`orders-timeline-step ${selectedOrder.submittedAt || selectedOrder.createdAt ? "done" : ""}`}>
+              <span className="orders-timeline-dot" />
+              <div>
+                <strong>تم التقديم</strong>
+                <small>{formatDateTime(selectedOrder.submittedAt || selectedOrder.createdAt)}</small>
+              </div>
+            </div>
+            <div className={`orders-timeline-step ${selectedOrder.status === "reviewing" || selectedOrder.status === "accepted" || selectedOrder.status === "published" || selectedOrder.status === "converted" ? "done" : ""} ${selectedOrder.status === "reviewing" ? "current" : ""}`}>
+              <span className="orders-timeline-dot" />
+              <div>
+                <strong>قيد المراجعة</strong>
+                {selectedOrder.status === "reviewing" ? <small>جارٍ المراجعة حالياً</small> : null}
+              </div>
+            </div>
+            <div className={`orders-timeline-step ${selectedOrder.status === "accepted" || selectedOrder.status === "published" || selectedOrder.status === "converted" ? "done" : ""} ${selectedOrder.status === "accepted" ? "current" : ""}`}>
+              <span className="orders-timeline-dot" />
+              <div>
+                <strong>تم القبول</strong>
+                {selectedOrder.status === "accepted" ? <small>بانتظار النشر</small> : null}
+              </div>
+            </div>
+            <div className={`orders-timeline-step ${selectedOrder.status === "published" || selectedOrder.status === "converted" ? "done" : ""} ${selectedOrder.status === "published" ? "current" : ""} ${selectedOrder.status === "rejected" ? "rejected" : ""}`}>
+              <span className="orders-timeline-dot" />
+              <div>
+                <strong>{selectedOrder.status === "rejected" ? "مرفوض" : "تم النشر"}</strong>
+                {selectedOrder.status === "published" || selectedOrder.status === "converted" ? <small>الدعوة منشورة ونشطة</small> : null}
+                {selectedOrder.status === "rejected" ? <small>{selectedOrder.rejectionReason || "تم الرفض"}</small> : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {notice ? <div className={notice.kind === "error" ? "notice danger" : "notice success"}>{notice.text}</div> : null}
 
@@ -971,14 +1120,18 @@ export function AdminOrderRequestsManager({
               </select>
             </label>
           </div>
-          <label className="field">
-            <span>ملاحظات الطلب</span>
-            <textarea value={form.notes} onChange={(event) => patchForm({ notes: event.target.value })} rows={4} />
-          </label>
-          <label className="field">
-            <span>سبب الرفض</span>
-            <textarea value={form.rejectionReason} onChange={(event) => patchForm({ rejectionReason: event.target.value })} rows={3} />
-          </label>
+          <div className="orders-notes-section">
+            <h3><span>ملاحظات الطلب</span></h3>
+            <label className="field">
+              <textarea value={form.notes} onChange={(event) => patchForm({ notes: event.target.value })} rows={4} placeholder="ملاحظات إضافية عن الطلب..." />
+            </label>
+          </div>
+          <div className="orders-notes-section">
+            <h3><span>سبب الرفض</span></h3>
+            <label className="field">
+              <textarea value={form.rejectionReason} onChange={(event) => patchForm({ rejectionReason: event.target.value })} rows={3} placeholder="اكتب سبب الرفض هنا..." />
+            </label>
+          </div>
         </div>
 
         <div className="orders-action-row">

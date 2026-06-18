@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, UsersRound, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, UsersRound, X } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
   {
@@ -128,7 +129,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [notificationsBadge, setNotificationsBadge] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [routeBusy, setRouteBusy] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const routeBusyTimerRef = useRef<number | null>(null);
+  const router = useRouter();
+  const pendingKeys = useRef<string[]>([]);
 
   useEffect(() => {
     setSelectedSectionId(activeSection.id);
@@ -343,6 +347,62 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    const map: Record<string, string> = {
+      I: "/admin/invitations",
+      O: "/admin/orders",
+      C: "/admin/customers",
+      T: "/admin/templates",
+      S: "/admin/settings",
+    };
+
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
+      pendingKeys.current = [];
+      return;
+    }
+
+    if (event.key === "?" && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault();
+      setShortcutsOpen((open) => !open);
+      pendingKeys.current = [];
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setShortcutsOpen(false);
+      pendingKeys.current = [];
+      return;
+    }
+
+    const eventKey = event.key.toUpperCase();
+    if (eventKey === "G") {
+      pendingKeys.current = ["G"];
+      setTimeout(() => { pendingKeys.current = []; }, 1000);
+      return;
+    }
+
+    if (pendingKeys.current.length === 1 && pendingKeys.current[0] === "G" && map[eventKey]) {
+      event.preventDefault();
+      pendingKeys.current = [];
+      const href = map[eventKey];
+      if (href && href !== window.location.pathname) {
+        window.sessionStorage.setItem(
+          pendingAdminActionKey,
+          JSON.stringify({ kind: "link", label: href, time: Date.now() }),
+        );
+        router.push(href);
+      }
+      return;
+    }
+
+    pendingKeys.current = [];
+  }, [router]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   return (
     <div className="dashboard-layout">
       {routeBusy ? <div className="admin-route-progress" role="status" aria-label="جاري تحميل لوحة الإدارة" /> : null}
@@ -365,6 +425,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <span>جلسة آمنة ومفعلة</span>
             </div>
           </div>
+
+          <Link href="/admin/search" className="sidebar-search-link">
+            <Search size={16} />
+            <span>بحث سريع...</span>
+            <kbd>Ctrl+K</kbd>
+          </Link>
 
           <nav className="dashboard-nav dashboard-section-nav" aria-label="لوحة الإدارة">
             <div className="dashboard-primary-sections" aria-label="الأقسام الرئيسية">
@@ -414,10 +480,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
 
         <div className="dashboard-sidebar-footer">
-          <Link className="dashboard-home-link" href="/">
-            <Home size={17} />
-            فتح الموقع
-          </Link>
+          <div className="sidebar-footer-row">
+            <Link className="dashboard-home-link" href="/">
+              <Home size={17} />
+              فتح الموقع
+            </Link>
+            <ThemeToggle />
+          </div>
           <form action="/api/auth/admin/logout" method="post">
             <button className="dashboard-logout" type="submit">
               <LogOut size={17} />
@@ -548,6 +617,91 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </form>
         </div>
       </aside>
+
+      {shortcutsOpen ? (
+        <div
+          className="shortcuts-backdrop"
+          onClick={() => setShortcutsOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="اختصارات لوحة الإدارة"
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            display: "grid", placeItems: "center",
+            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "480px", width: "calc(100% - 32px)",
+              display: "grid", gap: "14px", padding: "24px",
+            }}
+          >
+            <div className="admin-card-head">
+              <Keyboard size={22} />
+              <div>
+                <span className="eyebrow">Keyboard Shortcuts</span>
+                <h2>اختصارات لوحة الإدارة</h2>
+              </div>
+            </div>
+            <div style={{ display: "grid", gap: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>I</kbd></span>
+                <span>الدعوات المنشورة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>O</kbd></span>
+                <span>الدعوات المعلقة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>C</kbd></span>
+                <span>العملاء</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>T</kbd></span>
+                <span>القوالب</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>S</kbd></span>
+                <span>الإعدادات</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>?</kbd></span>
+                <span>عرض الاختصارات</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>Esc</kbd></span>
+                <span>إغلاق</span>
+              </div>
+            </div>
+            <button
+              className="btn btn-gold"
+              type="button"
+              onClick={() => setShortcutsOpen(false)}
+              style={{ justifySelf: "center", marginTop: "4px" }}
+            >
+              إغلاق
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
+
+const kbdStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: "32px",
+  height: "28px",
+  padding: "0 8px",
+  border: "1px solid rgba(245,234,214,0.2)",
+  borderRadius: "6px",
+  background: "rgba(245,234,214,0.08)",
+  fontSize: "0.82rem",
+  fontWeight: 900,
+  fontFamily: "monospace",
+};

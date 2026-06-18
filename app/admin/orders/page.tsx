@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { AdminExportButton } from "@/components/AdminExportButton";
 import { AdminOrderRequestsManager } from "@/components/AdminOrderRequestsManager";
 import { getAdminOrders } from "@/lib/admin-data";
 import { getAdminFavorites } from "@/lib/admin-favorites";
@@ -77,6 +78,23 @@ export default async function OrdersPage({
           <span className="eyebrow">Order Requests</span>
           <h1>طلبات الدعوات ({openCount})</h1>
           <p>كل طلب من الموقع يتسجل هنا بالصور والموسيقى وبيانات المصور، تراجعه في نفس الصفحة ثم تنشره كدعوة جاهزة.</p>
+        </div>
+        <div className="dashboard-actions">
+          <AdminExportButton
+            label="تصدير Excel"
+            filename={`orders-${new Date().toISOString().slice(0, 10)}.csv`}
+            headers={["رقم الطلب", "العريس", "العروسة", "الهاتف", "تاريخ المناسبة", "القاعة", "الحالة", "تاريخ الطلب"]}
+            rows={displayOrders.map((order) => [
+              order.orderNumber || "",
+              order.groomName,
+              order.brideName,
+              order.phone,
+              order.weddingDate,
+              order.venue,
+              order.status,
+              order.createdAt,
+            ])}
+          />
         </div>
       </div>
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
