@@ -1,16 +1,14 @@
-/**
- * سكربت تشغيل النسخ الاحتياطي محلياً
- *
- * يمكن استخدامه:
- * 1. يدوياً:                    pnpm backup:local
- * 2. عبر macOS crontab:         * */3 * * * /path/to/node /path/to/scripts/trigger-backup-local.mjs
- * 3. عبر launchd (أفضل):       استخدام ملف plist للتشغيل الدوري
- *
- * المتغيرات المطلوبة (مع قيم افتراضية للتطوير):
- *   BACKUP_CRON_SECRET أو CRON_SECRET — مفتاح التوثيق (افتراضياً badrdaawa-local-dev-cron-secret للتطوير)
- *   NEXT_PUBLIC_SITE_URL — رابط الموقع (افتراضياً http://localhost:3000)
- *   PORT — منفذ التطوير (افتراضياً 3000)
- */
+// سكربت تشغيل النسخ الاحتياطي محلياً
+//
+// يمكن استخدامه:
+// 1. يدوياً:                    pnpm backup:local
+// 2. عبر macOS crontab:         كل 3 ساعات
+// 3. عبر launchd (أفضل):       استخدام ملف plist للتشغيل الدوري
+//
+// المتغيرات المطلوبة (مع قيم افتراضية للتطوير):
+//   BACKUP_CRON_SECRET أو CRON_SECRET — مفتاح التوثيق
+//   NEXT_PUBLIC_SITE_URL — رابط الموقع (افتراضياً http://localhost:3000)
+//   PORT — منفذ التطوير (افتراضياً 3000)
 
 const LOCAL_DEV_SECRET = "badrdaawa-local-dev-cron-secret";
 
