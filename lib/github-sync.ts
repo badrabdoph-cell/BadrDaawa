@@ -439,20 +439,17 @@ async function pruneOldRuntimeBackups(config: SyncConfig, keepLast: number) {
     });
 
   for (const entry of backupFiles.slice(keepLast)) {
-    const encodedPath = repoContentPath(entry.path);
-    const current = await githubRequest<GitHubContentItem>(
-      `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(config.branch)}`,
-      { method: "GET" },
-      config.token,
-    );
+    const fileSha = entry.sha;
+    if (!fileSha) continue;
 
+    const encodedPath = repoContentPath(entry.path);
     await githubRequest<GitHubPutContentsResponse>(
       `/repos/${owner}/${repo}/contents/${encodedPath}`,
       {
         method: "DELETE",
         body: JSON.stringify({
           message: `chore(backup): prune runtime backup ${path.basename(entry.path)}`.slice(0, 500),
-          sha: current.sha,
+          sha: fileSha,
           branch: config.branch,
         }),
       },
