@@ -1,9 +1,11 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getAdminCustomers, getAdminGuests, getAdminInvitations, getAdminOrders } from "./admin-data";
 import { getTemplatesWithSettings } from "./template-settings";
+import { searchContentTexts, collectAllTextEntries } from "./content-text-registry";
 import type { GuestRsvp, Invitation, OrderRequest, TemplateDefinition } from "./types";
+import type { ContentTextEntry } from "./content-text-registry";
 
-export type AdminSearchKind = "invitations" | "customers" | "orders" | "guests" | "templates";
+export type AdminSearchKind = "invitations" | "customers" | "orders" | "guests" | "templates" | "content" | "admin-ui";
 
 export type AdminSearchResult = {
   id: string;
@@ -11,6 +13,8 @@ export type AdminSearchResult = {
   subtitle: string;
   meta?: string;
   href: string;
+  source?: string;
+  editable?: boolean;
 };
 
 export type AdminSearchGroup = {
@@ -32,6 +36,8 @@ const groupLabels: Record<AdminSearchKind, string> = {
   orders: "الطلبات",
   guests: "الحضور",
   templates: "القوالب",
+  content: "المحتوى",
+  "admin-ui": "نصوص الإدارة",
 };
 
 function normalizeSearchText(value: unknown) {
@@ -123,6 +129,18 @@ function buildGuestResult(guest: GuestRsvp): AdminSearchResult {
   };
 }
 
+function buildContentTextResult(entry: ContentTextEntry): AdminSearchResult {
+  return {
+    id: entry.id,
+    title: entry.title,
+    subtitle: entry.text.slice(0, 120),
+    meta: `${entry.sourceLabel} - ${entry.groupLabel}`,
+    href: entry.href,
+    source: entry.source,
+    editable: entry.editable,
+  };
+}
+
 export async function getGlobalAdminSearchResults(query: string, limitPerGroup = 8): Promise<AdminSearchResponse> {
   noStore();
   const cleanQuery = query.trim();
@@ -148,6 +166,10 @@ export async function getGlobalAdminSearchResults(query: string, limitPerGroup =
       })),
     };
   }
+
+  const allContentTextMatches = await searchContentTexts(cleanQuery);
+  const contentTextMatches = allContentTextMatches.filter((e) => e.source !== "admin-ui");
+  const adminUiTextMatches = allContentTextMatches.filter((e) => e.source === "admin-ui");
 
   const invitationMatches = invitations.filter((invitation) =>
     matchesSearch(queryTokens, [
@@ -230,6 +252,18 @@ export async function getGlobalAdminSearchResults(query: string, limitPerGroup =
       label: groupLabels.templates,
       total: templateMatches.length,
       results: limitResults(templateMatches, limitPerGroup).map(buildTemplateResult),
+    },
+    {
+      kind: "content",
+      label: groupLabels.content,
+      total: contentTextMatches.length,
+      results: limitResults(contentTextMatches, limitPerGroup).map(buildContentTextResult),
+    },
+    {
+      kind: "admin-ui",
+      label: groupLabels["admin-ui"],
+      total: adminUiTextMatches.length,
+      results: limitResults(adminUiTextMatches, limitPerGroup).map(buildContentTextResult),
     },
   ];
 

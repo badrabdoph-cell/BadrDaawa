@@ -71,6 +71,7 @@ const adminSections = [
       { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
       { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
       { href: "/admin/broadcast", label: "شاشة البث", icon: RadioTower },
+      { href: "/admin/texts", label: "إدارة النصوص", icon: FilePenLine },
     ],
   },
   {

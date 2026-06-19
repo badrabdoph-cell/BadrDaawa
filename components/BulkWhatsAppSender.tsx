@@ -59,8 +59,8 @@ export function BulkWhatsAppSender({ guests, invitationViews }: { guests: GuestR
         <div className="bulk-send-error-alert">
           <AlertTriangle size={20} />
           <div>
-            <strong>لم يتم تفعيل ميزه الرسائل لك</strong>
-            <p>هذه الخاصية قيد التطوير، سيتم تفعيلها قريباً.</p>
+            <strong>لم يتم تفعيل ميزه الرسائل لك 🫠</strong>
+            <p>هذه الخاصيه متاحه فقط للباقات البريميم 🏆</p>
           </div>
         </div>
       ) : null}
