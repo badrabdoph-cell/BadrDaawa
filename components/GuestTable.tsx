@@ -14,7 +14,7 @@ function copyGuestValue(guest: GuestRsvp) {
   return `${guest.name}\n${guest.phone || "بدون رقم"}`;
 }
 
-export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; invitationCode?: string }) {
+export function GuestTable({ guests, invitationCode, invitationViews }: { guests: GuestRsvp[]; invitationCode?: string; invitationViews?: number }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | GuestRsvp["status"]>("all");
   const [page, setPage] = useState(0);
@@ -82,7 +82,7 @@ export function GuestTable({ guests, invitationCode }: { guests: GuestRsvp[]; in
 
       {showBulk && invitationCode ? (
         <div className="bulk-whatsapp-wrapper">
-          <BulkWhatsAppSender guests={guests} />
+          <BulkWhatsAppSender guests={guests} invitationViews={invitationViews} />
         </div>
       ) : null}
 

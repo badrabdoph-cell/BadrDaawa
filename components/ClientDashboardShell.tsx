@@ -147,7 +147,7 @@ export function ClientDashboardShell({
                 <h2>الضيوف</h2>
               </div>
             </div>
-            <GuestTable guests={guests} invitationCode={invitation.code} />
+            <GuestTable guests={guests} invitationCode={invitation.code} invitationViews={invitation.views} />
           </section>
         </ErrorBoundary>
       ) : null}
@@ -367,7 +367,7 @@ function OverviewTab({
               <h2>الضيوف</h2>
             </div>
           </div>
-          <GuestTable guests={guests.slice(0, 10)} invitationCode={invitation.code} />
+          <GuestTable guests={guests.slice(0, 10)} invitationCode={invitation.code} invitationViews={invitation.views} />
           {guests.length > 10 ? (
             <p className="guest-table-more-hint">
               وعرض {guests.length - 10} ضيف آخر — انتقل لتبويب <strong>الضيوف</strong> لمشاهدة الكل

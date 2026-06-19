@@ -14748,6 +14748,71 @@ img {
   font-weight: 900;
 }
 
+.bulk-send-mode-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 4px;
+  border: 1px solid rgba(245, 234, 214, 0.08);
+}
+
+.bulk-send-mode-tabs button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(126, 88, 35, 0.5);
+  font-weight: 850;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bulk-send-mode-tabs button.active {
+  background: rgba(201, 155, 71, 0.12);
+  color: #9f742b;
+}
+
+.bulk-send-mode-tabs button:not(.active):hover {
+  color: rgba(126, 88, 35, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bulk-send-error-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid rgba(198, 58, 58, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(198, 58, 58, 0.08), rgba(198, 58, 58, 0.03));
+  color: #7a2020;
+}
+
+.bulk-send-error-alert svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #dc2626;
+}
+
+.bulk-send-error-alert strong {
+  font-size: 0.95rem;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.bulk-send-error-alert p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: rgba(122, 32, 32, 0.65);
+}
+
 .guest-excel-import {
   display: flex;
   flex-wrap: wrap;
