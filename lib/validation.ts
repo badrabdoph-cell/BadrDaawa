@@ -12,7 +12,7 @@ const coupleStoryItemSchema = z.object({
 export const orderRequestSchema = z.object({
   groomName: z.string().trim().min(2),
   brideName: z.string().trim().min(2),
-  phone: z.string().trim().optional().default(""),
+  phone: z.string().trim().regex(/^01\d{9}$/, "رقم الهاتف غير صحيح"),
   weddingDate: z.string().trim().min(8).refine(validDateString, "اكتب تاريخ صحيح"),
   weddingTime: z.string().trim().optional().default("07:00 مساءً"),
   venue: z.string().trim().optional().default(""),

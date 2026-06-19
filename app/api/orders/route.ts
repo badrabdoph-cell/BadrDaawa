@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
   const parsed = orderRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "اكتب اسم العريس واسم العروس وتاريخ الفرح، وبعدها تقدر تكمل الطلب على واتساب.", details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: "اكتب البيانات كاملة وبالهيئة الصحيحة قبل التأكيد.", details: parsed.error.flatten() }, { status: 400 });
   }
 
   const selectedTemplate = await getPublicTemplateWithSettings(parsed.data.templateSlug);
