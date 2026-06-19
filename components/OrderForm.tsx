@@ -687,7 +687,10 @@ export function OrderForm({
       if (allErrors.groomName) nextErrors.groomName = allErrors.groomName;
       if (allErrors.brideName) nextErrors.brideName = allErrors.brideName;
     }
-    if (stepId === "event" && allErrors.weddingDate) nextErrors.weddingDate = allErrors.weddingDate;
+    if (stepId === "event") {
+      if (allErrors.weddingDate) nextErrors.weddingDate = allErrors.weddingDate;
+      if (allErrors.phone) nextErrors.phone = allErrors.phone;
+    }
     if (stepId === "venue") {
       if (allErrors.venue) nextErrors.venue = allErrors.venue;
       if (allErrors.mapUrl) nextErrors.mapUrl = allErrors.mapUrl;
