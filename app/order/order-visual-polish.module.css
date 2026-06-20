@@ -3,23 +3,33 @@
 }
 
 .scope :global(.order-studio-page) {
+  --order-polish-surface: #fffefb;
+  --order-polish-surface-strong: #ffffff;
+  --order-polish-cream: #fbf2e4;
+  --order-polish-cream-deep: #edd8b8;
   --order-polish-gold: #bd8f3f;
-  --order-polish-gold-deep: #7f581f;
-  --order-polish-ink: #241913;
-  --order-polish-muted: #736253;
-  --order-polish-line: rgba(114, 76, 32, 0.2);
-  --order-polish-line-strong: rgba(189, 143, 63, 0.48);
-  --order-polish-shadow: 0 22px 58px rgba(53, 37, 22, 0.13);
-  --order-polish-shadow-strong: 0 26px 72px rgba(53, 37, 22, 0.18);
+  --order-polish-gold-soft: #e8c878;
+  --order-polish-gold-deep: #74511e;
+  --order-polish-ink: #21150f;
+  --order-polish-ink-soft: #3d2b1f;
+  --order-polish-muted: #6a5a4b;
+  --order-polish-line: rgba(112, 75, 31, 0.22);
+  --order-polish-line-strong: rgba(189, 143, 63, 0.58);
+  --order-polish-focus: rgba(189, 143, 63, 0.16);
+  --order-polish-shadow: 0 20px 54px rgba(51, 34, 18, 0.14);
+  --order-polish-shadow-strong: 0 28px 78px rgba(51, 34, 18, 0.2);
+  --order-polish-shadow-gold: 0 22px 52px rgba(126, 88, 31, 0.2);
+  color: var(--order-polish-ink);
 }
 
 .scope :global(.order-studio-page .order-wizard-card) {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(114, 76, 32, 0.18) !important;
+  border: 1px solid rgba(112, 75, 31, 0.2) !important;
   background:
-    radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.78), transparent 20rem),
-    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(250, 241, 227, 0.94)) !important;
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.92), transparent 21rem),
+    radial-gradient(circle at 92% 6%, rgba(232, 200, 120, 0.18), transparent 22rem),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.99), rgba(248, 237, 220, 0.96)) !important;
   box-shadow: var(--order-polish-shadow-strong) !important;
 }
 
@@ -27,124 +37,189 @@
   content: "";
   position: absolute;
   inset: 10px;
-  border: 1px solid rgba(189, 143, 63, 0.12);
+  border: 1px solid rgba(189, 143, 63, 0.14);
   border-radius: inherit;
+  pointer-events: none;
+}
+
+.scope :global(.order-studio-page .order-wizard-card::after) {
+  content: "";
+  position: absolute;
+  inset: -42% -12% auto auto;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(232, 200, 120, 0.18), transparent 66%);
   pointer-events: none;
 }
 
 .scope :global(.order-studio-page .order-wizard-header) {
   position: relative;
-  z-index: 1;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(114, 76, 32, 0.12);
-}
-
-.scope :global(.order-studio-page .order-wizard-header h2) {
-  color: var(--order-polish-ink) !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  z-index: 2;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(112, 75, 31, 0.14);
 }
 
 .scope :global(.order-studio-page .order-wizard-header span),
 .scope :global(.order-studio-page .order-wizard-trust-note) {
   color: var(--order-polish-muted) !important;
+  font-weight: 800;
+}
+
+.scope :global(.order-studio-page .order-wizard-header h2) {
+  color: var(--order-polish-ink) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .scope :global(.order-studio-page .order-wizard-header > strong) {
   display: inline-grid;
-  min-width: 54px;
-  min-height: 54px;
+  min-width: 56px;
+  min-height: 56px;
   place-items: center;
-  border: 1px solid rgba(189, 143, 63, 0.32);
+  border: 1px solid rgba(189, 143, 63, 0.38);
   border-radius: 999px;
-  background: linear-gradient(135deg, #fffdf8, #f1d7a4);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.85), transparent 32%),
+    linear-gradient(135deg, #fffdf8, #ecd19a 58%, #c49b4d);
   color: var(--order-polish-gold-deep) !important;
-  box-shadow: 0 14px 30px rgba(126, 88, 31, 0.16), inset 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow: var(--order-polish-shadow-gold), inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
 .scope :global(.order-studio-page .order-progress-track) {
-  height: 9px;
+  height: 10px;
   overflow: hidden;
-  border: 1px solid rgba(114, 76, 32, 0.12);
+  border: 1px solid rgba(112, 75, 31, 0.14);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: inset 0 2px 8px rgba(53, 37, 22, 0.06);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 2px 10px rgba(51, 34, 18, 0.075);
 }
 
 .scope :global(.order-studio-page .order-progress-track span) {
   position: relative;
   overflow: hidden;
   border-radius: inherit;
-  background: linear-gradient(90deg, #7f581f, #bd8f3f, #e6c372) !important;
+  background: linear-gradient(90deg, #74511e 0%, #bd8f3f 48%, #f1d582 100%) !important;
+  box-shadow: 0 0 22px rgba(189, 143, 63, 0.34);
 }
 
 .scope :global(.order-studio-page .order-progress-track span::after) {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
-  animation: orderPolishShine 2.8s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.64), transparent);
+  animation: orderPolishShine 2.55s ease-in-out infinite;
 }
 
 .scope :global(.order-studio-page .order-step-tabs) {
-  border-color: rgba(114, 76, 32, 0.16) !important;
-  background: rgba(255, 250, 242, 0.82) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 12px 24px rgba(53, 37, 22, 0.06);
+  border-color: rgba(112, 75, 31, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.9), rgba(255, 247, 235, 0.78)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 12px 28px rgba(51, 34, 18, 0.075);
 }
 
 .scope :global(.order-studio-page .order-step-tabs button) {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid rgba(114, 76, 32, 0.12) !important;
-  background: rgba(255, 253, 248, 0.74) !important;
+  border: 1px solid rgba(112, 75, 31, 0.15) !important;
+  background: linear-gradient(180deg, rgba(255, 254, 251, 0.86), rgba(255, 249, 240, 0.74)) !important;
   color: var(--order-polish-muted);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.74);
+}
+
+.scope :global(.order-studio-page .order-step-tabs button strong) {
+  color: var(--order-polish-ink-soft);
+  font-weight: 950;
+}
+
+.scope :global(.order-studio-page .order-step-tabs button small) {
+  color: var(--order-polish-muted);
+  font-weight: 800;
+}
+
+.scope :global(.order-studio-page .order-step-tabs button span) {
+  box-shadow: 0 8px 18px rgba(51, 34, 18, 0.1);
 }
 
 .scope :global(.order-studio-page .order-step-tabs button.active) {
   border-color: var(--order-polish-line-strong) !important;
-  background: linear-gradient(180deg, #fffefb, #f4dfb7) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255,255,255,0.9), transparent 8rem),
+    linear-gradient(180deg, #fffefb, #f2dbab) !important;
   color: var(--order-polish-gold-deep) !important;
-  box-shadow: 0 16px 34px rgba(126, 88, 31, 0.18) !important;
+  box-shadow: 0 18px 38px rgba(126, 88, 31, 0.2), 0 0 0 4px rgba(189, 143, 63, 0.08) !important;
+}
+
+.scope :global(.order-studio-page .order-step-tabs button.active strong),
+.scope :global(.order-studio-page .order-step-tabs button.active small) {
+  color: var(--order-polish-gold-deep) !important;
 }
 
 .scope :global(.order-studio-page .order-step-tabs button.done) {
-  border-color: rgba(49, 95, 86, 0.22) !important;
-  background: linear-gradient(180deg, rgba(255,253,248,0.95), rgba(231, 244, 238, 0.72)) !important;
+  border-color: rgba(49, 95, 86, 0.24) !important;
+  background: linear-gradient(180deg, rgba(255,253,248,0.96), rgba(229, 242, 235, 0.78)) !important;
 }
 
 .scope :global(.order-studio-page .order-wizard-step.is-active),
 .scope :global(.order-studio-page .order-alert) {
-  animation: orderPolishStepIn 260ms ease both;
+  animation: orderPolishStepIn 280ms cubic-bezier(0.22, 0.72, 0.22, 1) both;
 }
 
 .scope :global(.order-studio-page .field) {
   position: relative;
-  border: 1px solid rgba(114, 76, 32, 0.13);
-  border-radius: 22px;
-  padding: 12px;
-  background: rgba(255, 253, 248, 0.74);
-  box-shadow: 0 10px 24px rgba(53, 37, 22, 0.055), inset 0 1px 0 rgba(255,255,255,0.78);
+  border: 1px solid rgba(112, 75, 31, 0.16);
+  border-radius: 23px;
+  padding: 13px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255,255,255,0.74), transparent 8rem),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.88), rgba(255, 248, 239, 0.78));
+  box-shadow: 0 12px 28px rgba(51, 34, 18, 0.075), inset 0 1px 0 rgba(255,255,255,0.86);
   transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
+.scope :global(.order-studio-page .field::after) {
+  content: "";
+  position: absolute;
+  inset-inline: 18px;
+  inset-block-end: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(189, 143, 63, 0.72), transparent);
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition: opacity 180ms ease, transform 220ms ease;
+  pointer-events: none;
+}
+
 .scope :global(.order-studio-page .field:focus-within) {
-  border-color: rgba(189, 143, 63, 0.58);
+  border-color: rgba(189, 143, 63, 0.66);
   background: #fffefb;
-  box-shadow: 0 18px 38px rgba(126, 88, 31, 0.14), 0 0 0 4px rgba(189, 143, 63, 0.11);
+  box-shadow: 0 20px 44px rgba(126, 88, 31, 0.16), 0 0 0 4px rgba(189, 143, 63, 0.13), inset 0 1px 0 rgba(255,255,255,0.95);
   transform: translateY(-1px);
+}
+
+.scope :global(.order-studio-page .field:focus-within::after) {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .scope :global(.order-studio-page .field.has-error),
 .scope :global(.order-studio-page .field:has([aria-invalid="true"])) {
-  border-color: rgba(185, 82, 47, 0.46);
-  background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,238,231,0.8));
-  box-shadow: 0 12px 28px rgba(185, 82, 47, 0.12);
+  border-color: rgba(185, 82, 47, 0.52);
+  background: linear-gradient(180deg, rgba(255,253,248,0.99), rgba(255,236,227,0.84));
+  box-shadow: 0 14px 32px rgba(185, 82, 47, 0.14), 0 0 0 4px rgba(185, 82, 47, 0.07);
 }
 
 .scope :global(.order-studio-page .field label) {
-  color: #5f4936;
-  font-weight: 900;
+  color: #4f3928;
+  font-weight: 950;
+  letter-spacing: -0.01em;
   transition: color 180ms ease, transform 180ms ease;
+}
+
+.scope :global(.order-studio-page .field label svg) {
+  color: var(--order-polish-gold-deep);
+  filter: drop-shadow(0 5px 10px rgba(126, 88, 31, 0.18));
 }
 
 .scope :global(.order-studio-page .field:focus-within label) {
@@ -155,48 +230,58 @@
 .scope :global(.order-studio-page .order-wizard-flow .field input),
 .scope :global(.order-studio-page .order-wizard-flow .field textarea),
 .scope :global(.order-studio-page .order-wizard-flow .field select) {
-  min-height: 54px;
-  border: 1.5px solid rgba(114, 76, 32, 0.18) !important;
-  border-radius: 16px !important;
-  background: #fffefb !important;
+  min-height: 56px;
+  border: 1.5px solid rgba(112, 75, 31, 0.2) !important;
+  border-radius: 17px !important;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fffdf8 100%) !important;
   color: var(--order-polish-ink) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 18px rgba(53, 37, 22, 0.045) !important;
+  font-weight: 850;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.96), 0 9px 20px rgba(51, 34, 18, 0.055) !important;
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
 }
 
+.scope :global(.order-studio-page .order-wizard-flow .field input::placeholder),
+.scope :global(.order-studio-page .order-wizard-flow .field textarea::placeholder) {
+  color: rgba(106, 90, 75, 0.66);
+  font-weight: 750;
+}
+
 .scope :global(.order-studio-page .order-wizard-flow .field textarea) {
-  min-height: 108px;
+  min-height: 112px;
 }
 
 .scope :global(.order-studio-page .order-wizard-flow .field input:focus),
 .scope :global(.order-studio-page .order-wizard-flow .field textarea:focus),
 .scope :global(.order-studio-page .order-wizard-flow .field select:focus) {
   outline: none;
-  border-color: rgba(189, 143, 63, 0.72) !important;
-  box-shadow: 0 0 0 4px rgba(189, 143, 63, 0.13), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+  border-color: rgba(189, 143, 63, 0.82) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(189, 143, 63, 0.15), inset 0 1px 0 rgba(255,255,255,0.98), 0 12px 28px rgba(126, 88, 31, 0.09) !important;
 }
 
 .scope :global(.order-studio-page .field-preview),
 .scope :global(.order-studio-page .order-music-url-hint) {
   color: var(--order-polish-muted) !important;
-  font-weight: 750;
+  font-weight: 800;
 }
 
 .scope :global(.order-studio-page .field-error) {
   display: inline-flex;
   width: fit-content;
   margin-top: 8px;
-  padding: 5px 9px;
-  border: 1px solid rgba(185, 82, 47, 0.22);
+  padding: 6px 10px;
+  border: 1px solid rgba(185, 82, 47, 0.25);
   border-radius: 999px;
-  background: rgba(255, 238, 231, 0.88);
-  color: #8b3b23 !important;
-  font-weight: 900;
+  background: rgba(255, 238, 231, 0.92);
+  color: #823820 !important;
+  font-weight: 950;
+  box-shadow: 0 8px 18px rgba(185, 82, 47, 0.08);
 }
 
 .scope :global(.order-studio-page .btn),
 .scope :global(.order-studio-page button) {
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease, opacity 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease, opacity 180ms ease, filter 180ms ease;
 }
 
 .scope :global(.order-studio-page .btn:hover),
@@ -212,29 +297,39 @@
 .scope :global(.order-studio-page .btn-gold),
 .scope :global(.order-studio-page .order-submit) {
   border: 0 !important;
-  background: linear-gradient(135deg, #7f581f 0%, #bd8f3f 50%, #e5c372 100%) !important;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(255,255,255,0.28), transparent 20%),
+    linear-gradient(135deg, #6f4b17 0%, #bd8f3f 48%, #efcf79 100%) !important;
   color: #fffdf8 !important;
-  box-shadow: 0 16px 36px rgba(126, 88, 31, 0.24) !important;
+  text-shadow: 0 1px 0 rgba(67, 42, 14, 0.28);
+  box-shadow: 0 18px 40px rgba(126, 88, 31, 0.28), inset 0 1px 0 rgba(255,255,255,0.28) !important;
+}
+
+.scope :global(.order-studio-page .btn-gold:hover),
+.scope :global(.order-studio-page .order-submit:hover) {
+  filter: saturate(1.08) brightness(1.02);
+  box-shadow: 0 24px 54px rgba(126, 88, 31, 0.34), inset 0 1px 0 rgba(255,255,255,0.36) !important;
 }
 
 .scope :global(.order-studio-page .btn-gold::after),
 .scope :global(.order-studio-page .order-submit::after) {
-  animation: orderPolishButtonShine 3.6s ease-in-out infinite;
+  animation: orderPolishButtonShine 3.25s ease-in-out infinite;
 }
 
 .scope :global(.order-studio-page .btn-soft),
 .scope :global(.order-studio-page .order-review-item),
 .scope :global(.order-studio-page .location-picker-trigger) {
-  border-color: rgba(114, 76, 32, 0.2) !important;
-  background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,248,239,0.9)) !important;
-  box-shadow: 0 12px 28px rgba(53, 37, 22, 0.075) !important;
+  border-color: rgba(112, 75, 31, 0.22) !important;
+  background: linear-gradient(180deg, rgba(255,253,248,0.99), rgba(255,248,239,0.92)) !important;
+  color: var(--order-polish-ink-soft) !important;
+  box-shadow: 0 13px 30px rgba(51, 34, 18, 0.085) !important;
 }
 
 .scope :global(.order-studio-page .btn-soft:hover),
 .scope :global(.order-studio-page .order-review-item:hover),
 .scope :global(.order-studio-page .location-picker-trigger:hover) {
-  border-color: rgba(189, 143, 63, 0.42) !important;
-  box-shadow: 0 18px 42px rgba(53, 37, 22, 0.12) !important;
+  border-color: rgba(189, 143, 63, 0.5) !important;
+  box-shadow: 0 20px 46px rgba(51, 34, 18, 0.14) !important;
 }
 
 .scope :global(.order-studio-page .order-template-card),
@@ -248,10 +343,12 @@
 .scope :global(.order-studio-page .order-payment-option) {
   position: relative;
   overflow: hidden;
-  border-color: rgba(114, 76, 32, 0.18) !important;
-  background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,248,239,0.9)) !important;
-  box-shadow: 0 14px 32px rgba(53, 37, 22, 0.09) !important;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+  border-color: rgba(112, 75, 31, 0.2) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255,255,255,0.74), transparent 9rem),
+    linear-gradient(180deg, rgba(255,253,248,0.99), rgba(255,247,235,0.92)) !important;
+  box-shadow: 0 15px 34px rgba(51, 34, 18, 0.1) !important;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease, filter 180ms ease;
 }
 
 .scope :global(.order-studio-page .order-template-card:hover),
@@ -262,8 +359,9 @@
 .scope :global(.order-studio-page .order-review-item:hover),
 .scope :global(.order-studio-page .order-payment-option:hover) {
   transform: translateY(-2px);
-  border-color: rgba(189, 143, 63, 0.42) !important;
-  box-shadow: 0 20px 48px rgba(53, 37, 22, 0.14) !important;
+  border-color: rgba(189, 143, 63, 0.52) !important;
+  filter: saturate(1.04);
+  box-shadow: 0 22px 52px rgba(51, 34, 18, 0.16) !important;
 }
 
 .scope :global(.order-studio-page .order-template-card.active),
@@ -271,16 +369,37 @@
 .scope :global(.order-studio-page .order-music-choice-grid button.active),
 .scope :global(.order-studio-page .order-extra-card.is-added),
 .scope :global(.order-studio-page .order-payment-option.active) {
-  border-color: rgba(189, 143, 63, 0.62) !important;
+  border-color: rgba(189, 143, 63, 0.7) !important;
   background:
-    radial-gradient(circle at 12% 0%, rgba(255,255,255,0.88), transparent 12rem),
-    linear-gradient(180deg, #fffefb, #f3ddb1) !important;
-  box-shadow: 0 22px 54px rgba(126, 88, 31, 0.18), 0 0 0 4px rgba(189, 143, 63, 0.08) !important;
+    radial-gradient(circle at 14% 0%, rgba(255,255,255,0.95), transparent 12rem),
+    linear-gradient(180deg, #fffefb 0%, #f1d8a6 100%) !important;
+  box-shadow: 0 24px 58px rgba(126, 88, 31, 0.22), 0 0 0 4px rgba(189, 143, 63, 0.1) !important;
+}
+
+.scope :global(.order-studio-page .order-template-card strong),
+.scope :global(.order-studio-page .order-extra-card strong),
+.scope :global(.order-studio-page .order-review-item strong),
+.scope :global(.order-studio-page .order-music-default-card strong),
+.scope :global(.order-studio-page .order-summary-card strong),
+.scope :global(.order-studio-page .order-payment-option span) {
+  color: var(--order-polish-ink) !important;
+  font-weight: 950;
+}
+
+.scope :global(.order-studio-page .order-template-card small),
+.scope :global(.order-studio-page .order-extra-card small),
+.scope :global(.order-studio-page .order-review-item small),
+.scope :global(.order-studio-page .order-music-default-card span),
+.scope :global(.order-studio-page .order-summary-card small),
+.scope :global(.order-studio-page .order-payment-option small) {
+  color: var(--order-polish-muted) !important;
+  font-weight: 800;
 }
 
 .scope :global(.order-studio-page .order-music-choice-grid button),
 .scope :global(.order-studio-page .order-extra-card),
-.scope :global(.order-studio-page .order-payment-option) {
+.scope :global(.order-studio-page .order-payment-option),
+.scope :global(.order-studio-page .order-step-tabs button) {
   isolation: isolate;
 }
 
@@ -293,10 +412,10 @@
   inset: -75% auto -75% -42%;
   width: 34%;
   transform: rotate(18deg);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.58), transparent);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 180ms ease, transform 360ms ease;
+  transition: opacity 180ms ease, transform 390ms ease;
 }
 
 .scope :global(.order-studio-page .order-music-choice-grid button:hover::after),
@@ -308,30 +427,39 @@
 .scope :global(.order-studio-page .order-extra-card.is-added::after),
 .scope :global(.order-studio-page .order-payment-option.active::after) {
   opacity: 1;
-  transform: translateX(320%) rotate(18deg);
+  transform: translateX(330%) rotate(18deg);
 }
 
 .scope :global(.order-studio-page .order-alert) {
   border-radius: 18px !important;
-  box-shadow: 0 16px 34px rgba(53, 37, 22, 0.11) !important;
+  box-shadow: 0 18px 38px rgba(51, 34, 18, 0.13) !important;
 }
 
 .scope :global(.order-studio-page .order-upload-floating-warning) {
-  border: 1px solid rgba(189, 143, 63, 0.38);
+  border: 1px solid rgba(189, 143, 63, 0.42);
   border-radius: 18px;
-  background: rgba(255, 253, 248, 0.94);
-  box-shadow: 0 16px 42px rgba(53, 37, 22, 0.16);
+  background: rgba(255, 253, 248, 0.96);
+  color: var(--order-polish-ink);
+  box-shadow: 0 18px 46px rgba(51, 34, 18, 0.18);
   backdrop-filter: blur(14px);
 }
 
 .scope :global(.order-studio-page .order-review-confidence span) {
   border-radius: 999px;
-  background: rgba(255,253,248,0.86) !important;
+  background: rgba(255,253,248,0.9) !important;
+  color: var(--order-polish-ink-soft) !important;
 }
 
 .scope :global(.order-studio-page .order-review-final-note) {
-  border-color: rgba(189, 143, 63, 0.28) !important;
-  background: linear-gradient(135deg, rgba(255,253,248,0.96), rgba(243, 221, 177, 0.72)) !important;
+  border-color: rgba(189, 143, 63, 0.34) !important;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255,255,255,0.75), transparent 10rem),
+    linear-gradient(135deg, rgba(255,253,248,0.98), rgba(242, 218, 171, 0.78)) !important;
+  color: var(--order-polish-ink) !important;
+}
+
+.scope :global(.order-studio-page .order-review-final-note::before) {
+  box-shadow: 0 12px 26px rgba(126, 88, 31, 0.24), 0 0 24px rgba(232, 200, 120, 0.22);
 }
 
 .scope :global(.order-studio-page .order-summary-card) {
@@ -359,7 +487,7 @@
 
   .scope :global(.order-studio-page .order-wizard-card) {
     border-radius: 20px !important;
-    box-shadow: 0 16px 38px rgba(53, 37, 22, 0.12) !important;
+    box-shadow: 0 18px 42px rgba(51, 34, 18, 0.14) !important;
   }
 
   .scope :global(.order-studio-page .order-wizard-card::before) {
@@ -451,20 +579,20 @@
 }
 
 @keyframes orderPolishShine {
-  0%, 45% { transform: translateX(-120%); opacity: 0; }
-  55% { opacity: 1; }
-  100% { transform: translateX(120%); opacity: 0; }
+  0%, 42% { transform: translateX(-125%); opacity: 0; }
+  54% { opacity: 1; }
+  100% { transform: translateX(125%); opacity: 0; }
 }
 
 @keyframes orderPolishButtonShine {
-  0%, 58% { transform: translateX(-160%) rotate(18deg); opacity: 0; }
-  68% { opacity: 1; }
-  100% { transform: translateX(420%) rotate(18deg); opacity: 0; }
+  0%, 56% { transform: translateX(-170%) rotate(18deg); opacity: 0; }
+  67% { opacity: 1; }
+  100% { transform: translateX(430%) rotate(18deg); opacity: 0; }
 }
 
 @keyframes orderPolishStepIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(9px) scale(0.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes orderPolishModalIn {
