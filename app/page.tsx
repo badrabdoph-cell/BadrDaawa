@@ -234,149 +234,14 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           animation-delay: 1.5s;
         }
 
-        .live-template-section .live-phone-frame {
-          position: relative;
-          isolation: isolate;
-          width: min(390px, 88vw);
-          aspect-ratio: 430 / 932;
-          margin-inline: auto;
-          padding: 18px;
-          overflow: visible;
-          border: 2px solid transparent;
-          border-radius: 68px;
-          background:
-            linear-gradient(145deg, #08090c, #25272d 38%, #090a0d 68%, #3a3d45) padding-box,
-            linear-gradient(135deg, rgba(255,255,255,0.7), rgba(80,80,88,0.18), rgba(0,0,0,0.95), rgba(255,255,255,0.24)) border-box;
-          box-shadow:
-            0 42px 92px rgba(25, 18, 12, 0.36),
-            0 18px 38px rgba(0, 0, 0, 0.28),
-            inset 0 1px 0 rgba(255,255,255,0.34),
-            inset 0 -1px 0 rgba(0,0,0,0.88);
-          outline: 1px solid rgba(255,255,255,0.08);
-          outline-offset: -11px;
-          animation: livePreviewPhoneFloat 5.5s ease-in-out infinite;
-        }
-
-        .live-template-section .live-phone-frame::before {
-          content: "";
-          position: absolute;
-          inset: 8px;
-          z-index: 4;
-          border: 2px solid rgba(255,255,255,0.08);
-          border-radius: 58px;
-          box-shadow:
-            inset 0 0 0 1px rgba(0,0,0,0.9),
-            inset 0 0 28px rgba(0,0,0,0.36);
-          pointer-events: none;
-        }
-
-        .live-template-section .live-phone-frame::after {
-          content: "";
-          position: absolute;
-          top: 31px;
-          left: 50%;
-          z-index: 8;
-          width: 124px;
-          height: 35px;
-          transform: translateX(-50%);
-          border-radius: 999px;
-          background:
-            radial-gradient(circle at 78% 50%, #11141a 0 5px, #2b3340 6px 7px, transparent 8px),
-            linear-gradient(180deg, #050609, #15171d 58%, #050609);
-          box-shadow:
-            0 3px 10px rgba(0,0,0,0.52),
-            inset 0 1px 1px rgba(255,255,255,0.08),
-            inset 0 -1px 2px rgba(0,0,0,0.9);
-          pointer-events: none;
-        }
-
-        .live-template-section .live-phone-frame > .live-preview-badge {
-          top: 62px;
-          z-index: 9;
-          border-color: rgba(255, 255, 255, 0.2);
-          background: rgba(16, 18, 22, 0.62);
-          color: #fffdf8;
-          backdrop-filter: blur(14px);
-          box-shadow: 0 10px 28px rgba(0,0,0,0.26);
-          pointer-events: none;
-        }
-
-        .live-template-section .live-phone-frame > iframe,
-        .live-template-section .live-phone-frame > video,
-        .live-template-section .live-phone-frame > img,
-        .live-template-section .live-phone-frame > .live-preview-media {
-          position: relative;
-          z-index: 1;
-          display: block;
-          width: 100%;
-          height: 100%;
-          min-height: 0;
-          border: 0;
-          border-radius: 50px;
-          overflow: hidden;
-          background: #07080b;
-          object-fit: cover;
-          box-shadow:
-            inset 0 0 0 1px rgba(255,255,255,0.06),
-            0 0 0 1px rgba(0,0,0,0.8);
-        }
-
-        .live-template-section .live-phone-frame:hover {
-          box-shadow:
-            0 48px 104px rgba(25, 18, 12, 0.4),
-            0 20px 42px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255,255,255,0.4),
-            inset 0 -1px 0 rgba(0,0,0,0.9);
-        }
-
         @keyframes heroStickerFloat {
           0%, 100% { transform: translateY(0) rotate(0deg); }
           50% { transform: translateY(-10px) rotate(6deg); }
         }
 
-        @keyframes livePreviewPhoneFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-
         @media (max-width: 640px) {
           .hero-sticker {
             display: none;
-          }
-
-          .live-template-section .live-phone-frame {
-            width: min(356px, 88vw);
-            padding: 14px;
-            border-radius: 56px;
-          }
-
-          .live-template-section .live-phone-frame::before {
-            inset: 7px;
-            border-radius: 48px;
-          }
-
-          .live-template-section .live-phone-frame::after {
-            top: 25px;
-            width: 106px;
-            height: 31px;
-          }
-
-          .live-template-section .live-phone-frame > iframe,
-          .live-template-section .live-phone-frame > video,
-          .live-template-section .live-phone-frame > img,
-          .live-template-section .live-phone-frame > .live-preview-media {
-            border-radius: 42px;
-          }
-
-          .live-template-section .live-phone-frame > .live-preview-badge {
-            top: 54px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .hero-sticker,
-          .live-template-section .live-phone-frame {
-            animation: none;
           }
         }
       `}</style>
