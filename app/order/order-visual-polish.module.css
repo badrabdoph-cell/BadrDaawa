@@ -1,0 +1,485 @@
+:global(.order-studio-page) {
+  --order-polish-surface: #fffefb;
+  --order-polish-cream: #fbf2e4;
+  --order-polish-gold: #bd8f3f;
+  --order-polish-gold-deep: #7f581f;
+  --order-polish-ink: #241913;
+  --order-polish-muted: #736253;
+  --order-polish-line: rgba(114, 76, 32, 0.2);
+  --order-polish-line-strong: rgba(189, 143, 63, 0.48);
+  --order-polish-shadow: 0 22px 58px rgba(53, 37, 22, 0.13);
+  --order-polish-shadow-strong: 0 26px 72px rgba(53, 37, 22, 0.18);
+}
+
+:global(.order-studio-page .order-wizard-card) {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(114, 76, 32, 0.18) !important;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.78), transparent 20rem),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(250, 241, 227, 0.94)) !important;
+  box-shadow: var(--order-polish-shadow-strong) !important;
+}
+
+:global(.order-studio-page .order-wizard-card::before) {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(189, 143, 63, 0.12);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+:global(.order-studio-page .order-wizard-header) {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(114, 76, 32, 0.12);
+}
+
+:global(.order-studio-page .order-wizard-header span),
+:global(.order-studio-page .order-wizard-trust-note) {
+  color: var(--order-polish-muted) !important;
+}
+
+:global(.order-studio-page .order-wizard-header h2) {
+  color: var(--order-polish-ink) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+:global(.order-studio-page .order-wizard-header > strong) {
+  display: inline-grid;
+  min-width: 54px;
+  min-height: 54px;
+  place-items: center;
+  border: 1px solid rgba(189, 143, 63, 0.32);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fffdf8, #f1d7a4);
+  color: var(--order-polish-gold-deep) !important;
+  box-shadow: 0 14px 30px rgba(126, 88, 31, 0.16), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+:global(.order-studio-page .order-progress-track) {
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid rgba(114, 76, 32, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 2px 8px rgba(53, 37, 22, 0.06);
+}
+
+:global(.order-studio-page .order-progress-track span) {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7f581f, #bd8f3f, #e6c372) !important;
+}
+
+:global(.order-studio-page .order-progress-track span::after) {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: orderPolishShine 2.8s ease-in-out infinite;
+}
+
+:global(.order-studio-page .order-step-tabs) {
+  border-color: rgba(114, 76, 32, 0.16) !important;
+  background: rgba(255, 250, 242, 0.82) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 12px 24px rgba(53, 37, 22, 0.06);
+}
+
+:global(.order-studio-page .order-step-tabs button) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(114, 76, 32, 0.12) !important;
+  background: rgba(255, 253, 248, 0.74) !important;
+  color: var(--order-polish-muted);
+}
+
+:global(.order-studio-page .order-step-tabs button::after) {
+  content: "";
+  position: absolute;
+  inset: -70% auto -70% -42%;
+  z-index: -1;
+  width: 36%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.54), transparent);
+  opacity: 0;
+  transition: transform 340ms ease, opacity 180ms ease;
+}
+
+:global(.order-studio-page .order-step-tabs button:hover::after),
+:global(.order-studio-page .order-step-tabs button.active::after) {
+  opacity: 1;
+  transform: translateX(320%) rotate(18deg);
+}
+
+:global(.order-studio-page .order-step-tabs button.active) {
+  border-color: var(--order-polish-line-strong) !important;
+  background: linear-gradient(180deg, #fffefb, #f4dfb7) !important;
+  color: var(--order-polish-gold-deep) !important;
+  box-shadow: 0 16px 34px rgba(126, 88, 31, 0.18) !important;
+}
+
+:global(.order-studio-page .order-step-tabs button.done) {
+  border-color: rgba(49, 95, 86, 0.22) !important;
+  background: linear-gradient(180deg, rgba(255,253,248,0.95), rgba(231, 244, 238, 0.72)) !important;
+}
+
+:global(.order-studio-page .order-wizard-step.is-active) {
+  animation: orderPolishStepIn 260ms ease both;
+}
+
+:global(.order-studio-page .field) {
+  position: relative;
+  border: 1px solid rgba(114, 76, 32, 0.13);
+  border-radius: 22px;
+  padding: 12px;
+  background: rgba(255, 253, 248, 0.74);
+  box-shadow: 0 10px 24px rgba(53, 37, 22, 0.055), inset 0 1px 0 rgba(255,255,255,0.78);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+:global(.order-studio-page .field:focus-within) {
+  border-color: rgba(189, 143, 63, 0.58);
+  background: #fffefb;
+  box-shadow: 0 18px 38px rgba(126, 88, 31, 0.14), 0 0 0 4px rgba(189, 143, 63, 0.11);
+  transform: translateY(-1px);
+}
+
+:global(.order-studio-page .field.has-error),
+:global(.order-studio-page .field:has([aria-invalid="true"])) {
+  border-color: rgba(185, 82, 47, 0.46);
+  background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,238,231,0.8));
+  box-shadow: 0 12px 28px rgba(185, 82, 47, 0.12);
+}
+
+:global(.order-studio-page .field label) {
+  color: #5f4936;
+  font-weight: 900;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+:global(.order-studio-page .field:focus-within label) {
+  color: var(--order-polish-gold-deep);
+  transform: translateY(-1px);
+}
+
+:global(.order-studio-page .order-wizard-flow .field input),
+:global(.order-studio-page .order-wizard-flow .field textarea),
+:global(.order-studio-page .order-wizard-flow .field select) {
+  min-height: 54px;
+  border: 1.5px solid rgba(114, 76, 32, 0.18) !important;
+  border-radius: 16px !important;
+  background: #fffefb !important;
+  color: var(--order-polish-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 18px rgba(53, 37, 22, 0.045) !important;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+:global(.order-studio-page .order-wizard-flow .field textarea) {
+  min-height: 108px;
+}
+
+:global(.order-studio-page .order-wizard-flow .field input:focus),
+:global(.order-studio-page .order-wizard-flow .field textarea:focus),
+:global(.order-studio-page .order-wizard-flow .field select:focus) {
+  outline: none;
+  border-color: rgba(189, 143, 63, 0.72) !important;
+  box-shadow: 0 0 0 4px rgba(189, 143, 63, 0.13), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+}
+
+:global(.order-studio-page .field-preview),
+:global(.order-studio-page .order-music-url-hint) {
+  color: var(--order-polish-muted) !important;
+  font-weight: 750;
+}
+
+:global(.order-studio-page .field-error) {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border: 1px solid rgba(185, 82, 47, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 238, 231, 0.88);
+  color: #8b3b23 !important;
+  font-weight: 900;
+}
+
+:global(.order-studio-page .btn),
+:global(.order-studio-page button) {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease, opacity 180ms ease;
+}
+
+:global(.order-studio-page .btn:hover),
+:global(.order-studio-page button:hover) {
+  transform: translateY(-1px);
+}
+
+:global(.order-studio-page .btn:active),
+:global(.order-studio-page button:active) {
+  transform: translateY(0) scale(0.99);
+}
+
+:global(.order-studio-page .btn-gold),
+:global(.order-studio-page .order-submit) {
+  border: 0 !important;
+  background: linear-gradient(135deg, #7f581f 0%, #bd8f3f 50%, #e5c372 100%) !important;
+  color: #fffdf8 !important;
+  box-shadow: 0 16px 36px rgba(126, 88, 31, 0.24) !important;
+}
+
+:global(.order-studio-page .btn-gold::after),
+:global(.order-studio-page .order-submit::after) {
+  animation: orderPolishButtonShine 3.6s ease-in-out infinite;
+}
+
+:global(.order-studio-page .btn-soft),
+:global(.order-studio-page .order-review-item),
+:global(.order-studio-page .location-picker-trigger) {
+  border-color: rgba(114, 76, 32, 0.2) !important;
+  background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,248,239,0.9)) !important;
+  box-shadow: 0 12px 28px rgba(53, 37, 22, 0.075) !important;
+}
+
+:global(.order-studio-page .btn-soft:hover),
+:global(.order-studio-page .order-review-item:hover),
+:global(.order-studio-page .location-picker-trigger:hover) {
+  border-color: rgba(189, 143, 63, 0.42) !important;
+  box-shadow: 0 18px 42px rgba(53, 37, 22, 0.12) !important;
+}
+
+:global(.order-studio-page .order-template-card),
+:global(.order-studio-page .compact-image-card),
+:global(.order-studio-page .order-music-default-card),
+:global(.order-studio-page .order-music-upload),
+:global(.order-studio-page .order-extra-card),
+:global(.order-studio-page .order-review-item),
+:global(.order-studio-page .order-summary-card),
+:global(.order-studio-page .order-location-preview),
+:global(.order-studio-page .order-payment-option) {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(114, 76, 32, 0.18) !important;
+  background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,248,239,0.9)) !important;
+  box-shadow: 0 14px 32px rgba(53, 37, 22, 0.09) !important;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+:global(.order-studio-page .order-template-card:hover),
+:global(.order-studio-page .compact-image-card:hover),
+:global(.order-studio-page .order-music-default-card:hover),
+:global(.order-studio-page .order-music-upload:hover),
+:global(.order-studio-page .order-extra-card:hover),
+:global(.order-studio-page .order-review-item:hover),
+:global(.order-studio-page .order-payment-option:hover) {
+  transform: translateY(-2px);
+  border-color: rgba(189, 143, 63, 0.42) !important;
+  box-shadow: 0 20px 48px rgba(53, 37, 22, 0.14) !important;
+}
+
+:global(.order-studio-page .order-template-card.active),
+:global(.order-studio-page .order-music-default-card.active),
+:global(.order-studio-page .order-music-choice-grid button.active),
+:global(.order-studio-page .order-extra-card.is-added),
+:global(.order-studio-page .order-payment-option.active) {
+  border-color: rgba(189, 143, 63, 0.62) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255,255,255,0.88), transparent 12rem),
+    linear-gradient(180deg, #fffefb, #f3ddb1) !important;
+  box-shadow: 0 22px 54px rgba(126, 88, 31, 0.18), 0 0 0 4px rgba(189, 143, 63, 0.08) !important;
+}
+
+:global(.order-studio-page .order-music-choice-grid button),
+:global(.order-studio-page .order-extra-card) {
+  isolation: isolate;
+}
+
+:global(.order-studio-page .order-music-choice-grid button::after),
+:global(.order-studio-page .order-extra-card::after),
+:global(.order-studio-page .order-payment-option::after) {
+  content: "";
+  position: absolute;
+  inset: -75% auto -75% -42%;
+  width: 34%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.46), transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 360ms ease;
+}
+
+:global(.order-studio-page .order-music-choice-grid button:hover::after),
+:global(.order-studio-page .order-extra-card:hover::after),
+:global(.order-studio-page .order-payment-option:hover::after),
+:global(.order-studio-page .order-music-choice-grid button.active::after),
+:global(.order-studio-page .order-extra-card.is-added::after),
+:global(.order-studio-page .order-payment-option.active::after) {
+  opacity: 1;
+  transform: translateX(310%) rotate(18deg);
+}
+
+:global(.order-studio-page .order-alert) {
+  border-radius: 18px !important;
+  box-shadow: 0 16px 34px rgba(53, 37, 22, 0.11) !important;
+  animation: orderPolishStepIn 240ms ease both;
+}
+
+:global(.order-studio-page .order-upload-floating-warning) {
+  border: 1px solid rgba(185, 137, 61, 0.38);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 16px 42px rgba(53, 37, 22, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+:global(.order-studio-page .order-review-confidence span) {
+  border-radius: 999px;
+  background: rgba(255,253,248,0.86) !important;
+}
+
+:global(.order-studio-page .order-review-final-note) {
+  border-color: rgba(189, 143, 63, 0.28) !important;
+  background: linear-gradient(135deg, rgba(255,253,248,0.96), rgba(243, 221, 177, 0.72)) !important;
+}
+
+:global(.order-studio-page .order-summary-card) {
+  backdrop-filter: blur(12px);
+}
+
+:global(.order-studio-page .order-preview-modal),
+:global(.order-studio-page .location-picker-modal),
+:global(.order-studio-page [role="dialog"]) {
+  animation: orderPolishModalIn 220ms ease both;
+}
+
+:global(.order-studio-page .order-payment-option input[type="radio"]) {
+  accent-color: var(--order-polish-gold-deep);
+}
+
+@media (max-width: 720px) {
+  :global(.order-studio-page .order-builder-main) {
+    padding-block: 6px 54px !important;
+  }
+
+  :global(.order-studio-page .order-shell) {
+    width: min(100% - 14px, 1120px) !important;
+  }
+
+  :global(.order-studio-page .order-wizard-card) {
+    border-radius: 20px !important;
+    box-shadow: 0 16px 38px rgba(53, 37, 22, 0.12) !important;
+  }
+
+  :global(.order-studio-page .order-wizard-card::before) {
+    inset: 7px;
+  }
+
+  :global(.order-studio-page .order-wizard-header) {
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  :global(.order-studio-page .order-wizard-header h2) {
+    font-size: clamp(1.35rem, 7vw, 1.85rem) !important;
+  }
+
+  :global(.order-studio-page .order-wizard-trust-note) {
+    display: none !important;
+  }
+
+  :global(.order-studio-page .order-wizard-header > strong) {
+    min-width: 46px;
+    min-height: 46px;
+    font-size: 0.88rem;
+  }
+
+  :global(.order-studio-page .order-step-tabs) {
+    display: flex !important;
+    gap: 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    padding: 7px !important;
+    scrollbar-width: none;
+  }
+
+  :global(.order-studio-page .order-step-tabs::-webkit-scrollbar) {
+    display: none;
+  }
+
+  :global(.order-studio-page .order-step-tabs button) {
+    min-width: 112px;
+    min-height: 54px !important;
+    scroll-snap-align: start;
+    border-radius: 15px !important;
+  }
+
+  :global(.order-studio-page .field) {
+    border-radius: 18px;
+    padding: 10px;
+  }
+
+  :global(.order-studio-page .order-wizard-flow .field input),
+  :global(.order-studio-page .order-wizard-flow .field textarea),
+  :global(.order-studio-page .order-wizard-flow .field select) {
+    min-height: 52px;
+    border-radius: 14px !important;
+    font-size: 16px !important;
+  }
+
+  :global(.order-studio-page .btn),
+  :global(.order-studio-page button) {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :global(.order-studio-page .order-music-choice-grid button),
+  :global(.order-studio-page .order-extra-card),
+  :global(.order-studio-page .order-payment-option) {
+    min-height: 66px !important;
+  }
+
+  :global(.order-studio-page .order-template-card:hover),
+  :global(.order-studio-page .compact-image-card:hover),
+  :global(.order-studio-page .order-music-default-card:hover),
+  :global(.order-studio-page .order-music-upload:hover),
+  :global(.order-studio-page .order-extra-card:hover),
+  :global(.order-studio-page .order-review-item:hover),
+  :global(.order-studio-page .order-payment-option:hover) {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(.order-studio-page *),
+  :global(.order-studio-page *::before),
+  :global(.order-studio-page *::after) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes orderPolishShine {
+  0%, 45% { transform: translateX(-120%); opacity: 0; }
+  55% { opacity: 1; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
+@keyframes orderPolishButtonShine {
+  0%, 58% { transform: translateX(-160%) rotate(18deg); opacity: 0; }
+  68% { opacity: 1; }
+  100% { transform: translateX(420%) rotate(18deg); opacity: 0; }
+}
+
+@keyframes orderPolishStepIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes orderPolishModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
