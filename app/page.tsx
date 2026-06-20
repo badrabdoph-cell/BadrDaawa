@@ -384,7 +384,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                                 <Icon size={22} />
                               </span>
                               <strong>
-                                <CountUpNumber value={stat.value} continuous />
+                                <CountUpNumber value={stat.value} />
                               </strong>
                               <small>{stat.label}</small>
                             </article>
