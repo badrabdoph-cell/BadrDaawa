@@ -15,7 +15,8 @@ export function CountUpNumber({
   continuous?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement | null>(null);
-  const [displayValue, setDisplayValue] = useState(0);
+  const targetValue = value + fakeOffset;
+  const [displayValue, setDisplayValue] = useState(continuous ? targetValue : 0);
 
   useEffect(() => {
     const element = ref.current;
@@ -23,35 +24,19 @@ export function CountUpNumber({
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
-      setDisplayValue(value + fakeOffset);
+      setDisplayValue(targetValue);
       return;
     }
 
-    const targetValue = value + fakeOffset;
-    if (targetValue <= 0) {
+    if (!continuous && targetValue <= 0) {
       setDisplayValue(0);
       return;
     }
 
     let frame = 0;
-    let startedAt = 0;
     let hasPlayed = false;
-    let currentValue = 0;
+    let currentValue = continuous ? targetValue : 0;
     let tickTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startedAt) startedAt = timestamp;
-      const progress = Math.min((timestamp - startedAt) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      currentValue = Math.round(targetValue * eased);
-      setDisplayValue(currentValue);
-
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(animate);
-      } else if (continuous) {
-        scheduleNextTick();
-      }
-    };
 
     const scheduleNextTick = () => {
       const delay = 800 + Math.random() * 1800;
@@ -62,11 +47,32 @@ export function CountUpNumber({
       }, delay);
     };
 
+    const runAnimation = () => {
+      if (continuous) {
+        scheduleNextTick();
+        return;
+      }
+
+      let startedAt = 0;
+      const animate = (timestamp: number) => {
+        if (!startedAt) startedAt = timestamp;
+        const progress = Math.min((timestamp - startedAt) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        currentValue = Math.round(targetValue * eased);
+        setDisplayValue(currentValue);
+
+        if (progress < 1) {
+          frame = window.requestAnimationFrame(animate);
+        }
+      };
+      frame = window.requestAnimationFrame(animate);
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting || hasPlayed) return;
         hasPlayed = true;
-        frame = window.requestAnimationFrame(animate);
+        runAnimation();
         observer.disconnect();
       },
       { threshold: 0.35 },
@@ -79,7 +85,7 @@ export function CountUpNumber({
       window.cancelAnimationFrame(frame);
       if (tickTimer) clearTimeout(tickTimer);
     };
-  }, [duration, value, fakeOffset, continuous]);
+  }, [duration, value, fakeOffset, continuous, targetValue]);
 
   return <span ref={ref}>{formatArabicNumber(displayValue)}</span>;
 }

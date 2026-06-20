@@ -59,20 +59,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const previewTemplateSrc = `/templates/${previewSettings?.templateSlug || "featured-1"}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
-  const publicStatsBase = {
-    invitations: platformStats?.invitations ?? 0,
-    customers: platformStats?.customers ?? 0,
-    confirmedRsvps: platformStats?.confirmedRsvps ?? 0,
-  };
-  const FAKE_OFFSET = {
-    invitations: 113,
-    customers: 116,
-    confirmedRsvps: 8269,
-  };
-  const stats = [
-    { label: "دعوة رقمية", value: publicStatsBase.invitations, icon: Smartphone, fakeOffset: FAKE_OFFSET.invitations },
-    { label: "عميل سعيد", value: publicStatsBase.customers, icon: UsersRound, fakeOffset: FAKE_OFFSET.customers },
-    { label: "تسجيل حضور", value: publicStatsBase.confirmedRsvps, icon: UserCheck, fakeOffset: FAKE_OFFSET.confirmedRsvps },
+  const LIVE_STATS_BASE = [
+    { label: "دعوه منشأه", value: 116, icon: Smartphone },
+    { label: "زياره", value: 60062, icon: UsersRound },
+    { label: "تسجيل حضور", value: 8322, icon: UserCheck },
   ];
 
   return (
@@ -385,16 +375,16 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                         </span>
                       </div>
                       <div className="home-platform-stats-grid">
-                        {stats.map((stat, i) => {
+                        {LIVE_STATS_BASE.map((stat, i) => {
                           const Icon = stat.icon;
-                          const isFeatured = i === stats.length - 1;
+                          const isFeatured = i === LIVE_STATS_BASE.length - 1;
                           return (
                             <article className={`home-platform-stat-card${isFeatured ? " home-platform-stat-card-featured" : ""}`} key={stat.label}>
                               <span className="home-platform-stat-icon">
                                 <Icon size={22} />
                               </span>
                               <strong>
-                                <CountUpNumber value={stat.value} fakeOffset={stat.fakeOffset} continuous />
+                                <CountUpNumber value={stat.value} continuous />
                               </strong>
                               <small>{stat.label}</small>
                             </article>
