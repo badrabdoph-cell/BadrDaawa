@@ -138,14 +138,14 @@ const minimumOrderStoryStages = 2;
 const maximumOrderStoryStages = 4;
 
 const orderWizardSteps = [
-  { id: "template", title: "اختيار القالب" },
-  { id: "couple", title: "بيانات العروسين" },
-  { id: "event", title: "بيانات المناسبة" },
-  { id: "venue", title: "مكان الحفل" },
-  { id: "photos", title: "الصور" },
-  { id: "music", title: "الموسيقى" },
-  { id: "extras", title: "إضافات مهمة" },
-  { id: "review", title: "مراجعة الطلب" },
+  { id: "template", title: "اختيار القالب", icon: LayoutTemplate, short: "القالب" },
+  { id: "couple", title: "بيانات العروسين", icon: Heart, short: "الأسماء" },
+  { id: "event", title: "بيانات المناسبة", icon: CalendarDays, short: "الموعد" },
+  { id: "venue", title: "مكان الحفل", icon: MapPin, short: "المكان" },
+  { id: "photos", title: "الصور", icon: ImagePlus, short: "الصور" },
+  { id: "music", title: "الموسيقى", icon: Music2, short: "الموسيقى" },
+  { id: "extras", title: "إضافات مهمة", icon: Plus, short: "الإضافات" },
+  { id: "review", title: "مراجعة الطلب", icon: Check, short: "التأكيد" },
 ] as const;
 
 type OrderWizardStepId = (typeof orderWizardSteps)[number]["id"];
@@ -431,6 +431,7 @@ function CompactOrderImageInput({
   const isError = upload.phase === "error";
   const statusText = isSaved ? "تم الرفع" : isError ? "فشل الرفع" : upload.phase === "idle" ? "اضغط" : upload.message;
   const slotHint = orderImageSlots[index]?.hint || "صورة";
+  const requirementText = index < 2 ? "مطلوبة" : "اختيارية";
 
   return (
     <div
@@ -469,7 +470,7 @@ function CompactOrderImageInput({
         </em>
       </div>
       <div className="compact-image-meta">
-        <strong>{orderImageSlots[index]?.title}</strong>
+        <strong>{orderImageSlots[index]?.title} <em>{requirementText}</em></strong>
         <small>{upload.fileName || fileName || slotHint}</small>
         <div className={`compact-upload-status ${upload.phase}`}>
           <span>{isSaved ? "✓ تم الرفع" : statusText}</span>
@@ -1730,6 +1731,7 @@ export function OrderForm({
             {orderWizardSteps.map((step, index) => {
               const done = index < activeStepIndex;
               const active = index === activeStepIndex;
+              const StepIcon = step.icon;
               return (
                 <button
                   className={`${active ? "active" : ""} ${done ? "done" : ""}`}
@@ -1741,7 +1743,7 @@ export function OrderForm({
                   aria-current={active ? "step" : undefined}
                   disabled={skipTemplateStep && index === 0}
                 >
-                  <span>{done ? <Check size={13} /> : index + 1}</span>
+                  <span>{done ? <Check size={13} /> : <StepIcon size={14} />}</span>
                   <strong>{step.title}</strong>
                   <small>{active ? "الحالية" : done ? "تمت" : index === activeStepIndex + 1 ? "التالية" : ""}</small>
                 </button>
@@ -1794,7 +1796,16 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "couple" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "couple"}>
-            <div className="input-grid order-compact-grid">
+            <div className="order-stage-intro order-couple-intro">
+              <span>المرحلة الأجمل</span>
+              <h3>نبدأ بأسماء أبطال الدعوة</h3>
+              <p>اكتب الاسمين كما تحب ظهورهما داخل التصميم النهائي.</p>
+            </div>
+            <div className="order-live-name-card" aria-live="polite">
+              <span>معاينة الاسم داخل الدعوة</span>
+              <strong>{fieldValue(form.groomName, "اسم العريس")} <em>&</em> {fieldValue(form.brideName, "اسم العروس")}</strong>
+            </div>
+            <div className="input-grid order-compact-grid order-featured-fields">
               <div className={`field ${errors.groomName ? "has-error" : ""}`}>
                 <label htmlFor="groomName">
                   <UserRound size={16} />
@@ -1817,6 +1828,16 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "event" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "event"}>
+            <div className="order-stage-intro">
+              <span>موعد الفرح</span>
+              <h3>ثبّت التاريخ والوقت بوضوح</h3>
+              <p>سنستخدم هذه البيانات كما هي في الدعوة وتقويم الضيوف.</p>
+            </div>
+            <div className="order-date-hero" aria-live="polite">
+              <CalendarDays size={22} />
+              <div><span>التاريخ المختار</span><strong>{readableDate || "اختر تاريخ المناسبة"}</strong></div>
+              <em>{form.weddingTime || "وقت الحفل"}</em>
+            </div>
             <div className="input-grid order-compact-grid">
               <div className={`field ${errors.weddingDate ? "has-error" : ""}`}>
                 <label htmlFor="weddingDate">
@@ -1868,6 +1889,11 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "venue" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "venue"}>
+            <div className="order-stage-intro">
+              <span>مكان الاحتفال</span>
+              <h3>اجعل وصول الضيوف أسهل</h3>
+              <p>اسم القاعة مهم، واللوكيشن يمكن إضافته الآن أو لاحقاً.</p>
+            </div>
             <div className="input-grid order-compact-grid">
               <div className={`field ${errors.venue ? "has-error" : ""}`}>
                 <label htmlFor="venue">
@@ -1894,7 +1920,7 @@ export function OrderForm({
               window.history.pushState({ modal: "map-picker", stepIndex: activeStepIndex }, "");
             }}>
               <MapPin size={16} />
-              اختياري: حدد المكان من الخريطة بدل نسخ الرابط
+              <strong>اختيار الموقع من الخريطة</strong><small>حرّك الخريطة وثبّت مكان القاعة بدل نسخ الرابط</small>
             </button>
 
             <div className="order-location-preview">
@@ -1922,6 +1948,7 @@ export function OrderForm({
                 <h2 id="order-images-title">رفع الصور</h2>
                 <p>ارفع حتى 3 صور للدعوة. يتم ضغط الصور تلقائياً للحفاظ على الجودة وسرعة التحميل.</p>
               </div>
+              <div className="order-upload-showcase"><strong>الغلاف هو الصورة الأهم</strong><span>استخدم صورة واضحة وستظهر أولاً في الدعوة.</span></div>
               <div className="compact-image-grid">
                 {orderImageSlots.map((slot, index) => (
                   <div className="compact-image-card" key={slot.title}>
@@ -1944,6 +1971,7 @@ export function OrderForm({
               <div className={`order-music-default-card ${form.musicEnabled && form.musicChoice === "default" ? "active" : ""}`}>
                 <Music2 size={22} />
                 <div>
+                  <em>موصى بها</em>
                   <strong>{form.musicEnabled && form.musicChoice === "default" ? "الموسيقى الافتراضية مفعلة" : form.musicEnabled ? "تم تغيير إعدادات الموسيقى" : "الموسيقى متوقفة"}</strong>
                   <span>يمكنك المتابعة مباشرة، أو تغيير الإعدادات عند الحاجة.</span>
                 </div>
@@ -2024,6 +2052,11 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "extras" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "extras"}>
+            <div className="order-stage-intro">
+              <span>لمسة شخصية</span>
+              <h3>إضافات تجعل الدعوة أقرب لكم</h3>
+              <p>أضف بيانات المصور أو حكايتكم الخاصة بتصميم يظهر كخط زمني أنيق.</p>
+            </div>
             <div className="order-extras-grid">
               <button className={`order-extra-card ${form.photographerEnabled ? "is-added" : ""} ${photographerFieldsOpen ? "is-open" : ""}`} type="button" onClick={togglePhotographerFields} aria-expanded={photographerFieldsOpen}>
                 <Camera size={20} />
@@ -2048,6 +2081,11 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
+            <div className="order-review-hero" role="note">
+              <span>اللمسة الأخيرة</span>
+              <h3>{fieldValue(form.groomName, "اسم العريس")} <em>&</em> {fieldValue(form.brideName, "اسم العروس")}</h3>
+              <p>{readableDate || "تاريخ المناسبة"} · {fieldValue(form.venue, "مكان الحفل")}</p>
+            </div>
             <div className="order-review-final-note" role="note">
               وصلت للمرحلة الأخيرة. راجع البيانات الأساسية ثم اضغط تأكيد الدعوة بثقة.
             </div>
@@ -2211,7 +2249,7 @@ export function OrderForm({
         </form>
         <aside className="order-summary-sidebar">
           <div className="order-summary-card">
-            <h3>ملخص الطلب</h3>
+            <span className="order-summary-eyebrow">معاينة فورية</span><h3>ملخص الطلب</h3>
             <div className="order-summary-template">
               <img src={selectedTemplate.previewImage} alt="" />
               <div>
@@ -2222,7 +2260,7 @@ export function OrderForm({
             <div className="order-summary-options">
               <div className="order-summary-row">
                 <span>الإسمين</span>
-                <strong>{form.groomName || "..."} و {form.brideName || "..."}</strong>
+                <strong>{form.groomName || "..."} <em>&</em> {form.brideName || "..."}</strong>
               </div>
               <div className="order-summary-row">
                 <span>تاريخ المناسبة</span>
