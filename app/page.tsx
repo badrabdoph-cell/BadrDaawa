@@ -1,6 +1,6 @@
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
-import { BellRing, Check, Clock3, Eye, Gem, Headphones, Heart, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Sparkles, Star, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
+import { BellRing, Check, Clock3, Eye, Gem, Headphones, Heart, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Smartphone, Sparkles, Star, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
 import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -60,14 +60,19 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
   const publicStatsBase = {
-    invitations: platformStats?.invitations ?? 113,
-    customers: platformStats?.customers ?? 113,
-    confirmedRsvps: platformStats?.confirmedRsvps ?? 31640,
+    invitations: platformStats?.invitations ?? 0,
+    customers: platformStats?.customers ?? 0,
+    confirmedRsvps: platformStats?.confirmedRsvps ?? 0,
+  };
+  const FAKE_OFFSET = {
+    invitations: 113,
+    customers: 116,
+    confirmedRsvps: 8269,
   };
   const stats = [
-    { label: "دعوة رقمية", value: publicStatsBase.invitations, icon: Sparkles },
-    { label: "عميل سعيد", value: publicStatsBase.customers, icon: UsersRound },
-    { label: "تسجيل حضور", value: publicStatsBase.confirmedRsvps, icon: UserCheck },
+    { label: "دعوة رقمية", value: publicStatsBase.invitations, icon: Smartphone, fakeOffset: FAKE_OFFSET.invitations },
+    { label: "عميل سعيد", value: publicStatsBase.customers, icon: UsersRound, fakeOffset: FAKE_OFFSET.customers },
+    { label: "تسجيل حضور", value: publicStatsBase.confirmedRsvps, icon: UserCheck, fakeOffset: FAKE_OFFSET.confirmedRsvps },
   ];
 
   return (
@@ -374,21 +379,22 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   <section className="home-platform-stats home-platform-stats-compact home-platform-stats-after-preview" aria-label="إحصائيات المنصة">
                     <div className="home-platform-stats-inner">
                       <div className="home-platform-stats-head">
-                        <span className="eyebrow">
+                        <span className="eyebrow" data-broadcast-key="stats.eyebrow" data-broadcast-label="نص الإحصائيات" data-broadcast-kind="text" data-broadcast-value="آلاف الدعوات بدأت من هنا">
                           <Sparkles size={16} />
                           آلاف الدعوات بدأت من هنا
                         </span>
                       </div>
                       <div className="home-platform-stats-grid">
-                        {stats.map((stat) => {
+                        {stats.map((stat, i) => {
                           const Icon = stat.icon;
+                          const isFeatured = i === stats.length - 1;
                           return (
-                            <article className="home-platform-stat-card" key={stat.label}>
+                            <article className={`home-platform-stat-card${isFeatured ? " home-platform-stat-card-featured" : ""}`} key={stat.label}>
                               <span className="home-platform-stat-icon">
                                 <Icon size={22} />
                               </span>
                               <strong>
-                                <CountUpNumber value={stat.value} />
+                                <CountUpNumber value={stat.value} fakeOffset={stat.fakeOffset} continuous />
                               </strong>
                               <small>{stat.label}</small>
                             </article>
