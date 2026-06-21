@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getMusicLibrary, getMusicSlotByIdOrUrl, type MusicLibrary, type MusicSlot } from "./music-library";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 
 export type TemplatesPreviewMusicSettings = {
   enabled: boolean;
@@ -32,9 +32,23 @@ async function writeSettings(settings: TemplatesPreviewMusicSettings) {
   await writeProjectContentSetting("templates-preview-music", settings);
 }
 
+async function writeDraftSettings(settings: TemplatesPreviewMusicSettings) {
+  await writeDraftContent("templates-preview-music", settings);
+}
+
 export async function getTemplatesPreviewMusicSettings() {
   noStore();
   return readProjectContentSetting("templates-preview-music", defaultSettings, (value) => normalizeSettings(value as Partial<TemplatesPreviewMusicSettings>));
+}
+
+export async function getDraftTemplatesPreviewMusicSettings() {
+  noStore();
+  return readDraftContent("templates-preview-music", defaultSettings, (value) => normalizeSettings(value as Partial<TemplatesPreviewMusicSettings>));
+}
+
+export async function getPublishedTemplatesPreviewMusicSettings() {
+  noStore();
+  return readPublishedContent("templates-preview-music", defaultSettings, (value) => normalizeSettings(value as Partial<TemplatesPreviewMusicSettings>));
 }
 
 export async function updateTemplatesPreviewMusicSettings(input: { enabled: boolean; trackId?: string }) {
@@ -44,6 +58,16 @@ export async function updateTemplatesPreviewMusicSettings(input: { enabled: bool
     updatedAt: new Date().toISOString(),
   });
   await writeSettings(settings);
+  return settings;
+}
+
+export async function updateTemplatesPreviewMusicSettingsDraft(input: { enabled: boolean; trackId?: string }) {
+  const settings = normalizeSettings({
+    enabled: input.enabled,
+    trackId: input.enabled ? input.trackId || "" : "",
+    updatedAt: new Date().toISOString(),
+  });
+  await writeDraftSettings(settings);
   return settings;
 }
 

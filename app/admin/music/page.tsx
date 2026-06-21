@@ -3,7 +3,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { TemplatesPreviewMusicForm } from "@/components/TemplatesPreviewMusicForm";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { isUploadedMusicUrl } from "@/lib/audio-files";
-import { getDefaultMusicSlot, getMusicLibrary, getMusicUsage, type MusicSlot } from "@/lib/music-library";
+import { getDefaultMusicSlot, getDraftMusicLibrary, getMusicUsage, type MusicSlot } from "@/lib/music-library";
 import { resolveTemplatesPreviewMusic } from "@/lib/templates-preview-music";
 import { formatArabicNumber } from "@/lib/utils";
 
@@ -65,14 +65,14 @@ function trackStatus(track: MusicSlot, defaultTrack?: MusicSlot) {
 }
 
 export default async function AdminMusicPage({ searchParams }: { searchParams: Promise<MusicPageParams> }) {
-  const [params, library, invitations] = await Promise.all([searchParams, getMusicLibrary(), getAdminInvitations()]);
+  const [params, library, invitations] = await Promise.all([searchParams, getDraftMusicLibrary(), getAdminInvitations()]);
   const tracks = library.slots.filter((slot) => slot.url);
   const templatesPreviewMusic = await resolveTemplatesPreviewMusic(library);
   const defaultTrack = getDefaultMusicSlot(library);
   const usage = getMusicUsage(invitations, library);
   const confirmTrack = params.confirmDelete ? tracks.find((track) => track.id === params.confirmDelete) : undefined;
   const uploadedTracks = tracks.filter((track) => isUploadedMusicUrl(track.url));
-  const totalSize = tracks.reduce((sum, track) => sum + (track.sizeBytes || 0), 0);
+  const totalSize = tracks.reduce((sum: number, track: MusicSlot) => sum + (track.sizeBytes || 0), 0);
   const mostUsed = usage.mostUsedTrack;
   const success = saveMessage(params);
   const error = errorMessage(params.error);

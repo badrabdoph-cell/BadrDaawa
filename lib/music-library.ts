@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { cleanNewDirectAudioUrl, cleanPlayableAudioUrl, isUploadedMusicUrl } from "./audio-files";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import { statUploadFile } from "./storage-provider";
 import type { Invitation } from "./types";
 
@@ -104,6 +104,18 @@ async function readMusicLibraryFile(): Promise<Partial<MusicLibrary>> {
   );
 }
 
+async function readDraftMusicLibraryFile(): Promise<Partial<MusicLibrary>> {
+  return readDraftContent<Partial<MusicLibrary>>("music-library", { slots: [{ ...defaultMusicSlot }] }, (value) =>
+    value && typeof value === "object" && !Array.isArray(value) ? (value as Partial<MusicLibrary>) : {},
+  );
+}
+
+async function readPublishedMusicLibraryFile(): Promise<Partial<MusicLibrary>> {
+  return readPublishedContent<Partial<MusicLibrary>>("music-library", { slots: [{ ...defaultMusicSlot }] }, (value) =>
+    value && typeof value === "object" && !Array.isArray(value) ? (value as Partial<MusicLibrary>) : {},
+  );
+}
+
 function normalizeSlot(input: Partial<MusicSlot>, existingIds: string[], fallbackName = "مقطع موسيقى"): MusicSlot | null {
   const url = cleanPlayableAudioUrl(input.url || "");
   const name = cleanText(input.name || "", fallbackName);
@@ -182,9 +194,25 @@ async function writeMusicLibrary(library: MusicLibrary) {
   await writeProjectContentSetting("music-library", normalizeMusicLibrary(library));
 }
 
+async function writeDraftMusicLibrary(library: MusicLibrary) {
+  await writeDraftContent("music-library", normalizeMusicLibrary(library));
+}
+
 export async function getMusicLibrary() {
   noStore();
   const normalized = normalizeMusicLibrary(await readMusicLibraryFile());
+  return { slots: await Promise.all(normalized.slots.map(enrichMusicSlot)) };
+}
+
+export async function getDraftMusicLibrary() {
+  noStore();
+  const normalized = normalizeMusicLibrary(await readDraftMusicLibraryFile());
+  return { slots: await Promise.all(normalized.slots.map(enrichMusicSlot)) };
+}
+
+export async function getPublishedMusicLibrary() {
+  noStore();
+  const normalized = normalizeMusicLibrary(await readPublishedMusicLibraryFile());
   return { slots: await Promise.all(normalized.slots.map(enrichMusicSlot)) };
 }
 
@@ -291,6 +319,45 @@ export async function saveMusicSlot(input: { id?: string; name: string; url: str
 
   const nextSlots = slotIndex >= 0 ? library.slots.map((slot, index) => (index === slotIndex ? nextSlot : slot)) : [nextSlot, ...library.slots.filter((slot) => slot.url)];
   await writeMusicLibrary({
+    slots: nextSlots.map((slot) => ({
+      ...slot,
+      enabled: input.enabled ? slot.id === nextSlot.id : slot.enabled && slot.id !== nextSlot.id,
+    })),
+  });
+  return nextSlot;
+}
+
+export async function saveMusicSlotDraft(input: { id?: string; name: string; url: string; enabled: boolean; source?: MusicSourceKind; durationSeconds?: number }) {
+  const library = await getDraftMusicLibrary();
+  const cleanedName = cleanText(input.name, defaultMusicSlot.name);
+  const cleanedUrl = input.source === "url" ? cleanNewDirectAudioUrl(input.url) : cleanPlayableAudioUrl(input.url);
+  if (!cleanedUrl) return null;
+
+  const existingIndex = input.id ? library.slots.findIndex((slot) => slot.id === input.id) : -1;
+  const existingSameNameIndex = library.slots.findIndex((slot) => slot.name.trim().toLowerCase() === cleanedName.toLowerCase());
+  const slotIndex = existingIndex >= 0 ? existingIndex : existingSameNameIndex;
+  const existingIds = library.slots.map((slot) => slot.id);
+  const existing = slotIndex >= 0 ? library.slots[slotIndex] : null;
+  const extension = extensionFromUrl(cleanedUrl);
+  const now = new Date().toISOString();
+  const nextSlot: MusicSlot = {
+    id: existing?.id || makeTrackId(cleanedName, existingIds),
+    name: cleanedName,
+    url: cleanedUrl,
+    enabled: input.enabled,
+    applyToAll: true,
+    templateSlugs: [],
+    updatedAt: now,
+    createdAt: existing?.createdAt || now,
+    source: input.source || sourceFromUrl(cleanedUrl),
+    sizeBytes: existing?.url === cleanedUrl ? existing.sizeBytes : undefined,
+    mimeType: mimeFromExtension(extension),
+    extension,
+    durationSeconds: input.durationSeconds || existing?.durationSeconds,
+  };
+
+  const nextSlots = slotIndex >= 0 ? library.slots.map((slot, index) => (index === slotIndex ? nextSlot : slot)) : [nextSlot, ...library.slots.filter((slot) => slot.url)];
+  await writeDraftMusicLibrary({
     slots: nextSlots.map((slot) => ({
       ...slot,
       enabled: input.enabled ? slot.id === nextSlot.id : slot.enabled && slot.id !== nextSlot.id,

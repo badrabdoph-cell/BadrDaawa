@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ExternalLink, FileText, Save } from "lucide-react";
-import { getLegalPages, legalPageSlugs, type LegalPageSlug } from "@/lib/legal-pages";
+import { getDraftLegalPages, legalPageSlugs, type LegalPageSlug } from "@/lib/legal-pages";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function AdminLegalPagesPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const [pages, params] = await Promise.all([getLegalPages(), searchParams]);
+  const [pages, params] = await Promise.all([getDraftLegalPages(), searchParams]);
   const message = notice(params.saved, params.error);
 
   return (

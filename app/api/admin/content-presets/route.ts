@@ -1,8 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { createContentPreset, deleteContentPreset, updateContentPreset } from "@/lib/content-presets";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { createContentPresetDraft, deleteContentPresetDraft, updateContentPresetDraft } from "@/lib/content-presets";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -34,10 +33,9 @@ export async function POST(request: NextRequest) {
 
   if (action === "delete") {
     if (!id) return redirectPresets(request, { error: "id" });
-    const deleted = await deleteContentPreset(id);
+    const deleted = await deleteContentPresetDraft(id);
     if (!deleted) return redirectPresets(request, { error: "id" });
     revalidatePresetConsumers();
-    queueGitHubSync(`Content preset deleted: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectPresets(request, { saved: "deleted" });
   }
 
@@ -54,16 +52,14 @@ export async function POST(request: NextRequest) {
 
   if (action === "update") {
     if (!id) return redirectPresets(request, { error: "id" });
-    const updated = await updateContentPreset(id, input);
+    const updated = await updateContentPresetDraft(id, input);
     if (!updated) return redirectPresets(request, { error: "id" });
     revalidatePresetConsumers();
-    queueGitHubSync(`Content preset updated: ${updated.id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectPresets(request, { saved: "updated" });
   }
 
-  const created = await createContentPreset(input);
+  const created = await createContentPresetDraft(input);
   if (!created) return redirectPresets(request, { error: "required" });
   revalidatePresetConsumers();
-  queueGitHubSync(`Content preset created: ${created.id}.`, { uploadProjectFiles: true, changeType: "project" });
   return redirectPresets(request, { saved: "created" });
 }

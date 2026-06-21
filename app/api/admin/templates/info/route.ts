@@ -2,8 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { getTemplatePreviewInfo, updateTemplatePreviewInfo } from "@/lib/template-preview-info";
+import { getDraftTemplatePreviewInfo, updateTemplatePreviewInfoDraft } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -38,7 +37,7 @@ export async function GET(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const info = await getTemplatePreviewInfo();
+  const info = await getDraftTemplatePreviewInfo();
   return NextResponse.json(info);
 }
 
@@ -48,8 +47,8 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const oldValues = await getTemplatePreviewInfo().catch(() => null);
-  const next = await updateTemplatePreviewInfo({
+  const oldValues = await getDraftTemplatePreviewInfo().catch(() => null);
+  const next = await updateTemplatePreviewInfoDraft({
     language: text(formData, "language") === "en" ? "en" : "ar",
     groomName: text(formData, "groomName"),
     brideName: text(formData, "brideName"),
@@ -86,7 +85,6 @@ export async function POST(request: NextRequest) {
   revalidatePath("/admin/templates");
   revalidatePath("/templates");
   for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);
-  queueGitHubSync("Templates preview information updated from compatibility endpoint.", { uploadProjectFiles: true, changeType: "project" });
 
   await recordAuditLog({
     actor: await getAuditActorFromAdminRequest(request),

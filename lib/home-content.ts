@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 
 export type HomeFeaturePoint = {
   id: string;
@@ -203,6 +203,24 @@ function normalizeContent(input: Partial<HomeContent>): HomeContent {
 export async function getHomeContent() {
   noStore();
   return readProjectContentSetting("home-content", defaultHomeContent, (value) => normalizeContent(value as Partial<HomeContent>));
+}
+
+// Draft/Publish System Functions
+export async function getDraftHomeContent() {
+  noStore();
+  return readDraftContent("home-content", defaultHomeContent, (value) => normalizeContent(value as Partial<HomeContent>));
+}
+
+export async function getPublishedHomeContent() {
+  noStore();
+  return readPublishedContent("home-content", defaultHomeContent, (value) => normalizeContent(value as Partial<HomeContent>));
+}
+
+export async function updateHomeContentDraft(input: Partial<HomeContent>) {
+  const current = await getDraftHomeContent();
+  const next = normalizeContent({ ...current, ...input });
+  await writeDraftContent("home-content", next);
+  return next;
 }
 
 export async function updateHomeContent(input: Partial<HomeContent>) {

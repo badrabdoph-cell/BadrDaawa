@@ -5,14 +5,14 @@ import { AdminTemplatePreviewInfoEditor } from "@/components/AdminTemplatePrevie
 import { AdminTextEditor } from "@/components/AdminTextEditor";
 import { getInvitationByCode } from "@/lib/invitation-data";
 import { extractInvitationCodeFromInput } from "@/lib/site-settings";
-import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
+import { getDraftTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export default async function AdminTemplatesPage({ searchParams }: { searchParams: Promise<{ invitation?: string; saved?: string; imported?: string }> }) {
   const params = await searchParams;
   const searchedCode = extractInvitationCodeFromInput(params.invitation || "");
   const searchedInvitation = searchedCode ? await getInvitationByCode(searchedCode) : undefined;
-  const [templates, templatePreviewInfo] = await Promise.all([getTemplatesWithSettings(), getTemplatePreviewInfo()]);
+  const [templates, templatePreviewInfo] = await Promise.all([getTemplatesWithSettings(), getDraftTemplatePreviewInfo()]);
 
   return (
     <>

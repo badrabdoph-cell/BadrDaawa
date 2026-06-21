@@ -1,8 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { isLegalPageSlug, updateLegalPage } from "@/lib/legal-pages";
+import { isLegalPageSlug, updateLegalPageDraft } from "@/lib/legal-pages";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -31,12 +30,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/legal?error=slug", request.headers, request.nextUrl.origin), 303);
   }
 
-  const page = await updateLegalPage(slug, {
+  const page = await updateLegalPageDraft(slug, {
     title: formData.get("title"),
     description: formData.get("description"),
     content: formData.get("content"),
   });
   revalidateLegalPages();
-  queueGitHubSync(`Legal page updated: .`, { uploadProjectFiles: true, changeType: "project" });
   return NextResponse.redirect(getRedirectUrl(`/admin/legal?saved=${page.slug}`, request.headers, request.nextUrl.origin), 303);
 }

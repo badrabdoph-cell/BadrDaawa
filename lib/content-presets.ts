@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { defaultInvitationTexts } from "./invitation-texts";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import type { ContentPreset, ContentPresetKind } from "./types";
 
 type ContentPresetInput = {
@@ -95,13 +95,43 @@ async function readPresetsRaw() {
   });
 }
 
+async function readDraftPresetsRaw() {
+  return readDraftContent("content-presets", seedPresets(), (parsed) => {
+    if (!Array.isArray(parsed)) return seedPresets();
+    const presets = parsed.map((item) => normalizePreset(item as ContentPresetInput)).filter(Boolean) as ContentPreset[];
+    return presets.length ? sortPresets(presets) : seedPresets();
+  });
+}
+
+async function readPublishedPresetsRaw() {
+  return readPublishedContent("content-presets", seedPresets(), (parsed) => {
+    if (!Array.isArray(parsed)) return seedPresets();
+    const presets = parsed.map((item) => normalizePreset(item as ContentPresetInput)).filter(Boolean) as ContentPreset[];
+    return presets.length ? sortPresets(presets) : seedPresets();
+  });
+}
+
 async function writePresets(presets: ContentPreset[]) {
   await writeProjectContentSetting("content-presets", sortPresets(presets));
+}
+
+async function writeDraftPresets(presets: ContentPreset[]) {
+  await writeDraftContent("content-presets", sortPresets(presets));
 }
 
 export async function getContentPresets() {
   noStore();
   return readPresetsRaw();
+}
+
+export async function getDraftContentPresets() {
+  noStore();
+  return readDraftPresetsRaw();
+}
+
+export async function getPublishedContentPresets() {
+  noStore();
+  return readPublishedPresetsRaw();
 }
 
 export async function createContentPreset(input: { kind: unknown; title: unknown; content: unknown; secondaryContent?: unknown }) {
@@ -144,5 +174,49 @@ export async function deleteContentPreset(id: string) {
   const next = presets.filter((preset) => preset.id !== id);
   if (next.length === presets.length) return false;
   await writePresets(next);
+  return true;
+}
+
+// Draft/Publish System Functions
+export async function createContentPresetDraft(input: { kind: unknown; title: unknown; content: unknown; secondaryContent?: unknown }) {
+  const preset = normalizePreset({
+    id: createPresetId(),
+    kind: normalizeKind(input.kind),
+    title: input.title,
+    content: input.content,
+    secondaryContent: input.secondaryContent,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
+  if (!preset) return null;
+  const presets = await readDraftPresetsRaw();
+  await writeDraftPresets([preset, ...presets]);
+  return preset;
+}
+
+export async function updateContentPresetDraft(id: string, input: { kind: unknown; title: unknown; content: unknown; secondaryContent?: unknown }) {
+  const presets = await readDraftPresetsRaw();
+  const index = presets.findIndex((preset) => preset.id === id);
+  if (index === -1) return null;
+  const updated = normalizePreset({
+    ...presets[index],
+    kind: normalizeKind(input.kind),
+    title: input.title,
+    content: input.content,
+    secondaryContent: input.secondaryContent,
+    updatedAt: nowIso(),
+  });
+  if (!updated) return null;
+  const next = presets.slice();
+  next[index] = updated;
+  await writeDraftPresets(next);
+  return updated;
+}
+
+export async function deleteContentPresetDraft(id: string) {
+  const presets = await readDraftPresetsRaw();
+  const next = presets.filter((preset) => preset.id !== id);
+  if (next.length === presets.length) return false;
+  await writeDraftPresets(next);
   return true;
 }

@@ -26,9 +26,11 @@ export type AuditAction =
   | "cleanup.storage.delete"
   | "github.sync"
   | "backup.restore"
-  | "photographer-logo.bulk-update";
+  | "photographer-logo.bulk-update"
+  | "content.publish"
+  | "content.discard";
 
-export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GuestBookMessage" | "Cleanup" | "GitHubSync" | "Backup";
+export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GuestBookMessage" | "Cleanup" | "GitHubSync" | "Backup" | "ContentPublish";
 
 export type AuditLogEntry = {
   id: string;
@@ -267,4 +269,6 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "github.sync": "مزامنة GitHub",
   "backup.restore": "استعادة Backup",
   "photographer-logo.bulk-update": "تحديث شعار المصور",
+  "content.publish": "نشر المحتوى",
+  "content.discard": "إلغاء المسودات",
 };

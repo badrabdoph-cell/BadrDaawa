@@ -1,7 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { cleanPlayableAudioUrl } from "./audio-files";
 import { getActiveMusicSlot, getMusicLibrary } from "./music-library";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import { getTemplateBySlug, invitationTemplates } from "./templates";
 import { resolveTemplatesPreviewMusic } from "./templates-preview-music";
 import type { TemplateDefinition } from "./types";
@@ -67,8 +67,22 @@ async function readTemplateSettings(): Promise<TemplateSettings> {
   return readProjectContentSetting("template-settings", {}, (value) => (value && typeof value === "object" && !Array.isArray(value) ? (value as TemplateSettings) : {}));
 }
 
+async function readDraftTemplateSettings(): Promise<TemplateSettings> {
+  noStore();
+  return readDraftContent("template-settings", {}, (value) => (value && typeof value === "object" && !Array.isArray(value) ? (value as TemplateSettings) : {}));
+}
+
+async function readPublishedTemplateSettings(): Promise<TemplateSettings> {
+  noStore();
+  return readPublishedContent("template-settings", {}, (value) => (value && typeof value === "object" && !Array.isArray(value) ? (value as TemplateSettings) : {}));
+}
+
 async function writeTemplateSettings(settings: TemplateSettings) {
   await writeProjectContentSetting("template-settings", settings);
+}
+
+async function writeDraftTemplateSettings(settings: TemplateSettings) {
+  await writeDraftContent("template-settings", settings);
 }
 
 function applyTemplateSettings(template: TemplateDefinition, settings: TemplateSettings, globalMusicUrl?: string): TemplateDefinition {

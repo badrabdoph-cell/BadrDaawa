@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { getHomePreviewSettings } from "@/lib/preview-settings";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
+import { getDraftSiteSettings } from "@/lib/site-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export default async function AdminSiteSettingsPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const [params, settings, previewSettings, templates] = await Promise.all([searchParams, getSiteSettings(), getHomePreviewSettings(), getTemplatesWithSettings()]);
+  const [params, settings, previewSettings, templates] = await Promise.all([searchParams, getDraftSiteSettings(), getDraftHomePreviewSettings(), getTemplatesWithSettings()]);
   const message = notice(params.saved, params.error);
 
   return (
@@ -201,7 +201,7 @@ export default async function AdminSiteSettingsPage({
             <label className="field">
               <span>قالب معاينة الرئيسية</span>
               <select name="homePreviewTemplateSlug" defaultValue={previewSettings.templateSlug}>
-                {templates.map((template) => (
+                {templates.map((template: { slug: string; arabicName: string }) => (
                   <option key={template.slug} value={template.slug}>
                     {template.arabicName}
                   </option>

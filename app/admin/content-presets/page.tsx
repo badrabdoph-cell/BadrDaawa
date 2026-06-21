@@ -1,5 +1,5 @@
 import { FilePenLine, MessageSquareText, PlusCircle, Save, Trash2 } from "lucide-react";
-import { contentPresetKindLabels, getContentPresets } from "@/lib/content-presets";
+import { contentPresetKindLabels, getDraftContentPresets } from "@/lib/content-presets";
 import type { ContentPreset, ContentPresetKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -67,13 +67,13 @@ export default async function ContentPresetsPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const [presets, query] = await Promise.all([getContentPresets(), searchParams]);
+  const [presets, query] = await Promise.all([getDraftContentPresets(), searchParams]);
   const message = statusMessage(query.saved, query.error);
   const totals = {
     all: presets.length,
-    opening: presets.filter((preset) => preset.kind === "opening").length,
-    welcome: presets.filter((preset) => preset.kind === "welcome").length,
-    rsvp: presets.filter((preset) => preset.kind === "rsvp").length,
+    opening: presets.filter((preset: ContentPreset) => preset.kind === "opening").length,
+    welcome: presets.filter((preset: ContentPreset) => preset.kind === "welcome").length,
+    rsvp: presets.filter((preset: ContentPreset) => preset.kind === "rsvp").length,
   };
 
   return (

@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
-import { getHomeContent, updateHomeContent } from "@/lib/home-content";
+import { getHomeContent, updateHomeContentDraft } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
-import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
+import { getHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
-import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
+import { getSiteSettings, updateSiteSettingsDraft } from "@/lib/site-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
     const primaryCtaLabel = text(formData, "primaryCtaLabel");
     const secondaryCtaLabel = text(formData, "secondaryCtaLabel");
 
-    await updateSiteSettings({
+    await updateSiteSettingsDraft({
       siteName: text(formData, "siteName"),
       logoUrl: uploadedLogoUrl || text(formData, "logoUrl"),
       siteDescription: text(formData, "siteDescription"),
@@ -97,7 +96,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await updateHomeContent({
+    await updateHomeContentDraft({
       ...currentContent,
       hero: {
         ...currentContent.hero,
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await updateHomePreviewSettings({
+    await updateHomePreviewSettingsDraft({
       mode: text(formData, "homePreviewMode") || currentPreview.mode,
       templateSlug: text(formData, "homePreviewTemplateSlug") || currentPreview.templateSlug,
       mediaUrl: text(formData, "homePreviewMediaUrl"),
@@ -115,7 +114,6 @@ export async function POST(request: NextRequest) {
     });
 
     ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
-    queueGitHubSync("Site settings updated from admin.", { uploadProjectFiles: true, changeType: "project" });
 
     console.log("[Admin Settings] Successfully saved");
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);

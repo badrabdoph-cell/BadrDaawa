@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import { normalizePhoneForWhatsApp } from "./utils";
 
 export type SiteSocialLinks = {
@@ -190,6 +190,46 @@ export async function getSiteSettings() {
     facebook: settings.photographer.defaultFacebookUrl,
   });
   return settings;
+}
+
+// Draft/Publish System Functions
+export async function getDraftSiteSettings() {
+  noStore();
+  const settings = await readDraftContent("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
+  console.log("[Site Settings Draft] Loaded successfully");
+  return settings;
+}
+
+export async function getPublishedSiteSettings() {
+  noStore();
+  const settings = await readPublishedContent("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
+  console.log("[Site Settings Published] Loaded successfully");
+  return settings;
+}
+
+export async function updateSiteSettingsDraft(input: Partial<SiteSettings>) {
+  const current = await getDraftSiteSettings();
+  const next = normalizeSettings({
+    ...current,
+    ...input,
+    socialLinks: { ...current.socialLinks, ...input.socialLinks },
+    seo: { ...current.seo, ...input.seo },
+    homepage: { ...current.homepage, ...input.homepage },
+    order: { ...current.order, ...input.order },
+    photographer: { ...current.photographer, ...input.photographer },
+    updatedAt: new Date().toISOString(),
+  });
+
+  console.log("[Site Settings Draft] Updating photographer to:", {
+    name: next.photographer.defaultName,
+    instagram: next.photographer.defaultInstagramUrl,
+    facebook: next.photographer.defaultFacebookUrl,
+    logoUrl: next.photographer.defaultLogoUrl,
+  });
+
+  await writeDraftContent("site-settings", next);
+  console.log("[Site Settings Draft] Successfully saved to database");
+  return next;
 }
 
 export async function updateSiteSettings(input: Partial<SiteSettings>) {

@@ -9,6 +9,7 @@ import {
   MessageCircleHeart,
   Plus,
   Sparkles,
+  Upload,
   UserCheck,
   UsersRound,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { getAdminCustomers, getAdminGuests, getAdminInvitations, getAdminOrders 
 import { hasDatabaseConfig } from "@/lib/database-url";
 import { getAllGuestBookMessages } from "@/lib/guest-book";
 import { formatArabicNumber } from "@/lib/utils";
+import { getPublishMeta } from "@/lib/project-content-store";
 
 function formatOrderDate(value: string) {
   const date = new Date(value);
@@ -38,7 +40,7 @@ function statusLabel(status: string) {
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, customers, guestBookMessages] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => [])]);
+  const [invitations, orders, guests, customers, guestBookMessages, publishMeta] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => []), getPublishMeta()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
@@ -48,6 +50,8 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const confirmedGuests = guests.filter((guest) => guest.status === "confirmed");
   const pendingGuestBookMessages = guestBookMessages.filter((message) => message.status === "pending");
   const expectedAttendees = confirmedGuests.reduce((sum, guest) => sum + Math.max(1, guest.attendees || 1), 0);
+  const pendingChangesCount = Object.keys(publishMeta.pendingChanges || {}).length;
+  const hasUnpublishedChanges = publishMeta.hasUnpublishedChanges;
 
   return (
     <>
@@ -138,6 +142,12 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <span>آخر الرسائل</span>
             <strong>{formatAdminNumber(guestBookMessages.length)}</strong>
             <small>{formatAdminNumber(pendingGuestBookMessages.length)} بانتظار المراجعة</small>
+          </Link>
+          <Link className={`admin-metric-card ${hasUnpublishedChanges ? "has-pending-changes" : ""}`} href="/admin/publish">
+            <Upload size={20} />
+            <span>النشر</span>
+            <strong>{formatAdminNumber(pendingChangesCount)}</strong>
+            <small>{hasUnpublishedChanges ? "تغييرات غير منشورة" : "لا توجد تغييرات"}</small>
           </Link>
         </div>
       </section>

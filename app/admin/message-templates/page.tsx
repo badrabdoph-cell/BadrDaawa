@@ -1,5 +1,5 @@
 import { Braces, MessageCircle, MessageSquareText, PlusCircle, Save, Trash2 } from "lucide-react";
-import { getMessageTemplates, messageTemplateKindLabels } from "@/lib/message-templates";
+import { getDraftMessageTemplates, messageTemplateKindLabels } from "@/lib/message-templates";
 import { getMessageTemplateVariables } from "@/lib/message-template-render";
 import type { MessageTemplate, MessageTemplateKind } from "@/lib/types";
 import { formatArabicNumber } from "@/lib/utils";
@@ -65,14 +65,14 @@ export default async function MessageTemplatesPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const [templates, query] = await Promise.all([getMessageTemplates(), searchParams]);
+  const [templates, query] = await Promise.all([getDraftMessageTemplates(), searchParams]);
   const message = statusMessage(query.saved, query.error);
   const variables = getMessageTemplateVariables();
   const totals = {
     all: templates.length,
-    whatsapp: templates.filter((template) => template.kind === "whatsapp").length,
-    welcome: templates.filter((template) => template.kind === "welcome").length,
-    reminder: templates.filter((template) => template.kind === "reminder").length,
+    whatsapp: templates.filter((template: MessageTemplate) => template.kind === "whatsapp").length,
+    welcome: templates.filter((template: MessageTemplate) => template.kind === "welcome").length,
+    reminder: templates.filter((template: MessageTemplate) => template.kind === "reminder").length,
   };
 
   return (

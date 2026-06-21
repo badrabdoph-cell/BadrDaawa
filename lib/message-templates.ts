@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import type { MessageTemplate, MessageTemplateKind } from "./types";
 
 type MessageTemplateInput = {
@@ -96,13 +96,43 @@ async function readTemplatesRaw() {
   });
 }
 
+async function readDraftTemplatesRaw() {
+  return readDraftContent("message-templates", seedTemplates(), (parsed) => {
+    if (!Array.isArray(parsed)) return seedTemplates();
+    const templates = parsed.map((item) => normalizeTemplate(item as MessageTemplateInput)).filter(Boolean) as MessageTemplate[];
+    return templates.length ? sortTemplates(templates) : seedTemplates();
+  });
+}
+
+async function readPublishedTemplatesRaw() {
+  return readPublishedContent("message-templates", seedTemplates(), (parsed) => {
+    if (!Array.isArray(parsed)) return seedTemplates();
+    const templates = parsed.map((item) => normalizeTemplate(item as MessageTemplateInput)).filter(Boolean) as MessageTemplate[];
+    return templates.length ? sortTemplates(templates) : seedTemplates();
+  });
+}
+
 async function writeTemplates(templates: MessageTemplate[]) {
   await writeProjectContentSetting("message-templates", sortTemplates(templates));
+}
+
+async function writeDraftTemplates(templates: MessageTemplate[]) {
+  await writeDraftContent("message-templates", sortTemplates(templates));
 }
 
 export async function getMessageTemplates() {
   noStore();
   return readTemplatesRaw();
+}
+
+export async function getDraftMessageTemplates() {
+  noStore();
+  return readDraftTemplatesRaw();
+}
+
+export async function getPublishedMessageTemplates() {
+  noStore();
+  return readPublishedTemplatesRaw();
 }
 
 export async function createMessageTemplate(input: { kind: unknown; title: unknown; content: unknown }) {
@@ -143,5 +173,47 @@ export async function deleteMessageTemplate(id: string) {
   const next = templates.filter((template) => template.id !== id);
   if (next.length === templates.length) return false;
   await writeTemplates(next);
+  return true;
+}
+
+// Draft/Publish System Functions
+export async function createMessageTemplateDraft(input: { kind: unknown; title: unknown; content: unknown }) {
+  const template = normalizeTemplate({
+    id: createTemplateId(),
+    kind: input.kind,
+    title: input.title,
+    content: input.content,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
+  if (!template) return null;
+  const templates = await readDraftTemplatesRaw();
+  await writeDraftTemplates([template, ...templates]);
+  return template;
+}
+
+export async function updateMessageTemplateDraft(id: string, input: { kind: unknown; title: unknown; content: unknown }) {
+  const templates = await readDraftTemplatesRaw();
+  const index = templates.findIndex((template) => template.id === id);
+  if (index === -1) return null;
+  const updated = normalizeTemplate({
+    ...templates[index],
+    kind: input.kind,
+    title: input.title,
+    content: input.content,
+    updatedAt: nowIso(),
+  });
+  if (!updated) return null;
+  const next = templates.slice();
+  next[index] = updated;
+  await writeDraftTemplates(next);
+  return updated;
+}
+
+export async function deleteMessageTemplateDraft(id: string) {
+  const templates = await readDraftTemplatesRaw();
+  const next = templates.filter((template) => template.id !== id);
+  if (next.length === templates.length) return false;
+  await writeDraftTemplates(next);
   return true;
 }

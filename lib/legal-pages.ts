@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 
 export type LegalPageSlug = "privacy-policy" | "terms" | "refund-policy" | "usage-policy";
 
@@ -78,13 +78,41 @@ async function readLegalPagesFile() {
   });
 }
 
+async function readDraftLegalPagesFile() {
+  return readDraftContent("legal-pages", defaultLegalPages, (parsed) => {
+    const source = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<Record<LegalPageSlug, Partial<LegalPageContent>>>) : {};
+    return Object.fromEntries(legalPageSlugs.map((slug) => [slug, normalizePage(slug, source[slug])])) as Record<LegalPageSlug, LegalPageContent>;
+  });
+}
+
+async function readPublishedLegalPagesFile() {
+  return readPublishedContent("legal-pages", defaultLegalPages, (parsed) => {
+    const source = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Partial<Record<LegalPageSlug, Partial<LegalPageContent>>>) : {};
+    return Object.fromEntries(legalPageSlugs.map((slug) => [slug, normalizePage(slug, source[slug])])) as Record<LegalPageSlug, LegalPageContent>;
+  });
+}
+
 async function writeLegalPages(pages: Record<LegalPageSlug, LegalPageContent>) {
   await writeProjectContentSetting("legal-pages", pages);
+}
+
+async function writeDraftLegalPages(pages: Record<LegalPageSlug, LegalPageContent>) {
+  await writeDraftContent("legal-pages", pages);
 }
 
 export async function getLegalPages() {
   noStore();
   return readLegalPagesFile();
+}
+
+export async function getDraftLegalPages() {
+  noStore();
+  return readDraftLegalPagesFile();
+}
+
+export async function getPublishedLegalPages() {
+  noStore();
+  return readPublishedLegalPagesFile();
 }
 
 export async function getLegalPage(slug: LegalPageSlug) {
@@ -102,6 +130,18 @@ export async function updateLegalPage(slug: LegalPageSlug, input: { title?: unkn
     updatedAt: new Date().toISOString(),
   });
   await writeLegalPages(pages);
+  return pages[slug];
+}
+
+export async function updateLegalPageDraft(slug: LegalPageSlug, input: { title?: unknown; description?: unknown; content?: unknown }) {
+  const pages = await readDraftLegalPagesFile();
+  pages[slug] = normalizePage(slug, {
+    title: input.title,
+    description: input.description,
+    content: input.content,
+    updatedAt: new Date().toISOString(),
+  });
+  await writeDraftLegalPages(pages);
   return pages[slug];
 }
 

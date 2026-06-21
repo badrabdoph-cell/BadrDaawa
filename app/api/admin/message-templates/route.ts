@@ -1,8 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { createMessageTemplate, deleteMessageTemplate, updateMessageTemplate } from "@/lib/message-templates";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { createMessageTemplateDraft, deleteMessageTemplateDraft, updateMessageTemplateDraft } from "@/lib/message-templates";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -34,10 +33,9 @@ export async function POST(request: NextRequest) {
 
   if (action === "delete") {
     if (!id) return redirectTemplates(request, { error: "id" });
-    const deleted = await deleteMessageTemplate(id);
+    const deleted = await deleteMessageTemplateDraft(id);
     if (!deleted) return redirectTemplates(request, { error: "id" });
     revalidateConsumers();
-    queueGitHubSync(`Message template deleted: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectTemplates(request, { saved: "deleted" });
   }
 
@@ -53,16 +51,14 @@ export async function POST(request: NextRequest) {
 
   if (action === "update") {
     if (!id) return redirectTemplates(request, { error: "id" });
-    const updated = await updateMessageTemplate(id, input);
+    const updated = await updateMessageTemplateDraft(id, input);
     if (!updated) return redirectTemplates(request, { error: "id" });
     revalidateConsumers();
-    queueGitHubSync(`Message template updated: ${updated.id}.`, { uploadProjectFiles: true, changeType: "project" });
     return redirectTemplates(request, { saved: "updated" });
   }
 
-  const created = await createMessageTemplate(input);
+  const created = await createMessageTemplateDraft(input);
   if (!created) return redirectTemplates(request, { error: "required" });
   revalidateConsumers();
-  queueGitHubSync(`Message template created: ${created.id}.`, { uploadProjectFiles: true, changeType: "project" });
   return redirectTemplates(request, { saved: "created" });
 }

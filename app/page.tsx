@@ -8,10 +8,10 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { QuickBenefits } from "@/components/QuickBenefits";
 import { HowItWorks } from "@/components/HowItWorks";
-import { getHomeContent } from "@/lib/home-content";
-import { getHomePreviewSettings } from "@/lib/preview-settings";
+import { getPublishedHomeContent } from "@/lib/home-content";
+import { getPublishedHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { FEATURE_ICONS } from "@/lib/feature-icons";
 
 const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
@@ -58,7 +58,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
-  const [previewSettings, content, siteSettings, platformStats] = await Promise.all([getHomePreviewSettings().catch(() => null), getHomeContent().catch(() => null), getSiteSettings().catch(() => null), getHomePlatformStats().catch(() => null)]);
+  const [previewSettings, content, siteSettings, platformStats] = await Promise.all([getPublishedHomePreviewSettings().catch(() => null), getPublishedHomeContent().catch(() => null), getPublishedSiteSettings().catch(() => null), getHomePlatformStats().catch(() => null)]);
   const previewTemplateSrc = `/templates/${previewSettings?.templateSlug || "featured-1"}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;

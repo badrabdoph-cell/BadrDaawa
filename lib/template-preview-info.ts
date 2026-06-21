@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import type { CoupleStoryItem, GalleryStoryItem, InvitationTexts, Language } from "./types";
 
 export type TemplatePreviewInfo = {
@@ -244,6 +244,16 @@ export async function getTemplatePreviewInfo() {
   return readProjectContentSetting("template-preview-info", defaultTemplatePreviewInfo, (value) => normalizeTemplatePreviewInfo(value as Partial<TemplatePreviewInfo>));
 }
 
+export async function getDraftTemplatePreviewInfo() {
+  noStore();
+  return readDraftContent("template-preview-info", defaultTemplatePreviewInfo, (value) => normalizeTemplatePreviewInfo(value as Partial<TemplatePreviewInfo>));
+}
+
+export async function getPublishedTemplatePreviewInfo() {
+  noStore();
+  return readPublishedContent("template-preview-info", defaultTemplatePreviewInfo, (value) => normalizeTemplatePreviewInfo(value as Partial<TemplatePreviewInfo>));
+}
+
 export async function updateTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>) {
   const current = await getTemplatePreviewInfo();
   const next = normalizeTemplatePreviewInfo({
@@ -261,6 +271,26 @@ export async function updateTemplatePreviewInfo(input: Partial<TemplatePreviewIn
   });
 
   await writeProjectContentSetting("template-preview-info", next);
+  return next;
+}
+
+export async function updateTemplatePreviewInfoDraft(input: Partial<TemplatePreviewInfo>) {
+  const current = await getDraftTemplatePreviewInfo();
+  const next = normalizeTemplatePreviewInfo({
+    ...current,
+    ...input,
+    texts: {
+      ...current.texts,
+      ...input.texts,
+    },
+    photographer: {
+      ...current.photographer,
+      ...input.photographer,
+    },
+    updatedAt: new Date().toISOString(),
+  });
+
+  await writeDraftContent("template-preview-info", next);
   return next;
 }
 
