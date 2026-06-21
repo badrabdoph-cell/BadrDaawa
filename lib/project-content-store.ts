@@ -247,6 +247,7 @@ export async function promoteDraftToPublished(key: ProjectContentKey): Promise<v
     return;
   }
   await writePublishedContent(key, draft);
+  await writeAppSetting(definition.appSettingKey, draft);
   console.log(`[Project Content] Promoted draft to published for ${key}`);
 }
 

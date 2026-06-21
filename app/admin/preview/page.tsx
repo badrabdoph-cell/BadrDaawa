@@ -1,12 +1,12 @@
 import { Image, Link2, MonitorPlay, Save, UploadCloud, Video } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
-import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
+import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPreviewPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
-  const [params, settings, templates] = await Promise.all([searchParams, getDraftHomePreviewSettings(), getTemplatesWithSettings()]);
+  const [params, settings, templates] = await Promise.all([searchParams, getHomePreviewSettings(), getTemplatesWithSettings()]);
   const selectedTemplate = templates.find((template) => template.slug === settings.templateSlug) || templates[0];
 
   return (

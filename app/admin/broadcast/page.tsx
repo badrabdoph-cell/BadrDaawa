@@ -1,13 +1,13 @@
 import { BroadcastStudio } from "@/components/BroadcastStudio";
 import { buildBroadcastFields, getBroadcastPreviewValue } from "@/lib/broadcast-fields";
-import { getDraftHomeContent } from "@/lib/home-content";
-import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
+import { getHomeContent } from "@/lib/home-content";
+import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBroadcastPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
-  const [params, content, previewSettings, templates] = await Promise.all([searchParams, getDraftHomeContent(), getDraftHomePreviewSettings(), getTemplatesWithSettings()]);
+  const [params, content, previewSettings, templates] = await Promise.all([searchParams, getHomeContent(), getHomePreviewSettings(), getTemplatesWithSettings()]);
   const fields = buildBroadcastFields(content, getBroadcastPreviewValue(previewSettings));
 
   return (
