@@ -2126,6 +2126,325 @@ img {
     linear-gradient(180deg, rgba(255, 246, 226, 0.46), rgba(255, 250, 239, 0.34));
 }
 
+/* ─── Announcement Bar ─── */
+
+.announcement-bar {
+  position: relative;
+  z-index: 60;
+  border-bottom: 1px solid rgba(189, 143, 63, 0.2);
+  background: linear-gradient(135deg, #c99b47, #f0cd78);
+  color: #1e160d;
+}
+
+.announcement-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.announcement-bar-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.announcement-bar-text span:last-child {
+  display: inline;
+}
+
+.announcement-bar-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #1e160d;
+  color: #fff9ec;
+  font-size: 0.8rem;
+  font-weight: 900;
+  white-space: nowrap;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.announcement-bar-cta:hover {
+  transform: translateY(-1px);
+  background: #0c0e13;
+}
+
+@media (max-width: 640px) {
+  .announcement-bar-inner {
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: auto;
+    padding: 8px 12px;
+  }
+
+  .announcement-bar-text {
+    font-size: 0.78rem;
+  }
+
+  .announcement-bar-cta {
+    font-size: 0.75rem;
+    min-height: 28px;
+    padding: 4px 12px;
+  }
+}
+
+/* ─── Quick Benefits ─── */
+
+.quick-benefits {
+  padding: clamp(24px, 4vw, 40px) 0 clamp(12px, 2vw, 20px);
+}
+
+.quick-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(10px, 1.4vw, 16px);
+}
+
+.quick-benefit-card {
+  display: grid;
+  gap: 10px;
+  min-height: 130px;
+  align-content: start;
+  padding: clamp(14px, 2vw, 20px);
+  border: 1px solid rgba(189, 143, 63, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 253, 248, 0.5);
+  box-shadow: 0 16px 38px rgba(84, 58, 24, 0.06);
+}
+
+.quick-benefit-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #9f742b, #f3cf73 52%, #fff0ad);
+  color: #1e160d;
+  box-shadow: 0 10px 22px rgba(180, 123, 31, 0.16);
+}
+
+.quick-benefit-title {
+  display: block;
+  color: #2f2418;
+  font-size: clamp(0.92rem, 1.3vw, 1.05rem);
+  line-height: 1.35;
+}
+
+.quick-benefit-desc {
+  margin: 4px 0 0;
+  color: #766b60;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.quick-benefits-action {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(14px, 2.4vw, 22px);
+}
+
+.quick-benefits-more {
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 900;
+  animation: quick-benefits-bounce 2.2s ease-in-out infinite;
+}
+
+@keyframes quick-benefits-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@media (max-width: 640px) {
+  .quick-benefits-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-benefit-card {
+    min-height: 110px;
+  }
+}
+
+/* ─── How It Works ─── */
+
+.how-it-works {
+  padding: clamp(28px, 5vw, 48px) 0;
+  text-align: center;
+}
+
+.how-it-works-title {
+  margin: 0 0 clamp(22px, 4vw, 36px);
+  color: #2f2418;
+  font-size: clamp(1.45rem, 4.5vw, 2.4rem);
+  font-weight: 950;
+  line-height: 1.15;
+}
+
+.how-it-works-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.how-it-works-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.how-it-works-step-inner {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-width: 140px;
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+.how-it-works-step-number {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9f742b, #f3cf73 52%, #fff0ad);
+  color: #1e160d;
+  font-size: 0.85rem;
+  font-weight: 1000;
+  box-shadow: 0 8px 20px rgba(180, 123, 31, 0.18);
+}
+
+.how-it-works-step-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(255, 253, 248, 0.7);
+  border: 1px solid rgba(189, 143, 63, 0.18);
+  color: #8e6428;
+  box-shadow: 0 12px 28px rgba(84, 58, 24, 0.08);
+}
+
+.how-it-works-step-title {
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  font-weight: 950;
+  color: #2f2418;
+}
+
+.how-it-works-arrow {
+  display: flex;
+  align-items: center;
+  color: #b9893d;
+  opacity: 0.5;
+}
+
+.how-it-works-subtitle {
+  margin: clamp(16px, 3vw, 24px) auto 0;
+  max-width: 520px;
+  color: #766b60;
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  font-weight: 700;
+}
+
+.how-it-works-actions {
+  justify-content: center;
+  margin-top: clamp(16px, 3vw, 24px);
+}
+
+@media (max-width: 640px) {
+  .how-it-works-steps {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .how-it-works-step {
+    width: 100%;
+  }
+
+  .how-it-works-step-inner {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid rgba(189, 143, 63, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 253, 248, 0.5);
+  }
+
+  .how-it-works-step-number {
+    order: 0;
+  }
+
+  .how-it-works-step-icon {
+    order: 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .how-it-works-step-title {
+    order: 2;
+  }
+
+  .how-it-works-arrow {
+    display: none;
+  }
+}
+
+/* ─── Pricing Offer Bar ─── */
+
+.pricing-offer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(100%, 980px);
+  margin: 28px auto 0;
+  padding: 12px 16px;
+  border: 1px solid rgba(189, 143, 63, 0.24);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 246, 226, 0.9), rgba(243, 207, 115, 0.18));
+  color: #2f2418;
+  font-size: clamp(0.88rem, 1.6vw, 1rem);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.home-pricing-slashed {
+  text-decoration: line-through;
+  opacity: 0.6;
+  margin-inline-end: 6px;
+}
+
+.home-pricing-free {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #315f56, #2b7a62);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 1000;
+}
+
 .live-visitors-section {
   padding: clamp(12px, 2.2vw, 20px) 0 0;
   background: transparent;

@@ -5,6 +5,9 @@ import { CountUpNumber } from "@/components/CountUpNumber";
 import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { QuickBenefits } from "@/components/QuickBenefits";
+import { HowItWorks } from "@/components/HowItWorks";
 import { getHomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
@@ -59,6 +62,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const previewTemplateSrc = `/templates/${previewSettings?.templateSlug || "featured-1"}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
+  const showAnyContent = siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
   const LIVE_STATS_BASE = [
     { label: "دعوه منشأه", value: 116, icon: Smartphone },
     { label: "زياره", value: 60062, icon: UsersRound },
@@ -67,179 +71,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   return (
     <div className="page-shell">
-      <style>{`
-        .home-features-title-block {
-          display: grid;
-          justify-items: center;
-          gap: 10px;
-          margin: 0 auto clamp(20px, 5vw, 34px);
-          text-align: center;
-        }
-
-        .home-features-title-icon {
-          display: grid;
-          width: 44px;
-          height: 44px;
-          place-items: center;
-          border: 1px solid rgba(185, 137, 61, 0.28);
-          border-radius: 999px;
-          background: linear-gradient(135deg, #fffdf8, #f2dfbd);
-          color: #8e6428;
-          box-shadow: 0 12px 26px rgba(142, 100, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.74);
-        }
-
-        .home-features-title-block h2 {
-          max-width: 780px;
-          margin: 0;
-          color: #241b13;
-          font-size: clamp(1.65rem, 7vw, 3.35rem);
-          font-weight: 950;
-          line-height: 1.16;
-          letter-spacing: -0.035em;
-        }
-
-        .home-features-title-divider {
-          display: flex;
-          width: min(240px, 62vw);
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          color: #b9893d;
-        }
-
-        .home-features-title-divider::before,
-        .home-features-title-divider::after {
-          content: "";
-          height: 1px;
-          flex: 1;
-          background: linear-gradient(90deg, transparent, rgba(185, 137, 61, 0.46));
-        }
-
-        .home-features-title-divider::after {
-          background: linear-gradient(90deg, rgba(185, 137, 61, 0.46), transparent);
-        }
-
-        .hero-title-style::before {
-          background: linear-gradient(180deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.85) 50%, rgba(251, 247, 239, 0.5) 100%) !important;
-        }
-
-        .hero-title-block {
-          display: grid;
-          justify-items: center;
-          gap: 8px;
-          margin: 0 auto;
-          position: relative;
-          text-align: center;
-        }
-
-        .hero-title-icon {
-          display: grid;
-          width: 56px;
-          height: 56px;
-          margin-bottom: 6px;
-          place-items: center;
-          border: 1px solid rgba(185, 137, 61, 0.32);
-          border-radius: 999px;
-          background: linear-gradient(135deg, #fffdf8, #f2dfbd);
-          color: #8e6428;
-          box-shadow: 0 14px 28px rgba(142, 100, 40, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-
-        .hero-title-kicker {
-          color: #b9893d;
-          font-size: clamp(0.78rem, 1.4vw, 0.95rem);
-          font-weight: 900;
-          letter-spacing: 0.34em;
-          text-transform: uppercase;
-        }
-
-        .hero-title-main {
-          max-width: 820px;
-          margin: 0;
-          color: #241b13;
-          font-size: clamp(2.4rem, 10vw, 5.4rem);
-          font-weight: 1000;
-          line-height: 1.04;
-          letter-spacing: -0.04em;
-          text-wrap: balance;
-        }
-
-        .hero-title-accent {
-          max-width: 680px;
-          color: #766b60;
-          font-size: clamp(1.05rem, 2.6vw, 1.5rem);
-          font-weight: 700;
-          line-height: 1.45;
-          text-wrap: balance;
-        }
-
-        .hero-title-divider {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          width: min(200px, 46vw);
-          margin: 2px 0 4px;
-          color: #b9893d;
-        }
-
-        .hero-title-divider::before,
-        .hero-title-divider::after {
-          content: "";
-          height: 1px;
-          flex: 1;
-          background: linear-gradient(90deg, transparent, rgba(185, 137, 61, 0.5));
-        }
-
-        .hero-title-divider::after {
-          background: linear-gradient(90deg, rgba(185, 137, 61, 0.5), transparent);
-        }
-
-        .hero-sticker {
-          position: absolute;
-          opacity: 0.35;
-          animation: heroStickerFloat 3.6s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        .hero-sticker-tl {
-          top: -14px;
-          inset-inline-start: -18px;
-          color: #bd8f3f;
-        }
-
-        .hero-sticker-tr {
-          top: -6px;
-          inset-inline-end: -16px;
-          color: #a8435a;
-          animation-delay: 0.5s;
-        }
-
-        .hero-sticker-bl {
-          bottom: 4px;
-          inset-inline-start: -26px;
-          color: #315f56;
-          animation-delay: 1s;
-        }
-
-        .hero-sticker-br {
-          bottom: 10px;
-          inset-inline-end: -22px;
-          color: #bd8f3f;
-          animation-delay: 1.5s;
-        }
-
-        @keyframes heroStickerFloat {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(6deg); }
-        }
-
-        @media (max-width: 640px) {
-          .hero-sticker {
-            display: none;
-          }
-        }
-      `}</style>
+      <AnnouncementBar />
       <SiteHeader />
       <main>
         <section className="hero clean-hero hero-title-style">
@@ -264,22 +96,114 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 <span className="hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content?.hero?.kicker || "دعوتك الرقمية"}>
                   {content?.hero?.kicker || "دعوتك الرقمية"}
                 </span>
-                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={content?.hero?.mainTitle || "دعوتك"}>
-                  {content?.hero?.mainTitle || "دعوتك"}
+                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={"ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى"}>
+                  ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى
                 </span>
                 <span className="hero-title-divider" aria-hidden="true" />
-                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="العنوان الملون" data-broadcast-kind="text" data-broadcast-value={content?.hero?.accentTitle || "بأجمل التفاصيل"}>
-                  {content?.hero?.accentTitle || "بأجمل التفاصيل"}
+                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="الوصف" data-broadcast-kind="text" data-broadcast-value={"صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره."}>
+                  صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره.
                 </span>
               </h1>
+              <div className="button-row" style={{ justifyContent: "center", marginTop: "clamp(16px, 3vw, 28px)" }}>
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+                  <Palette size={19} />
+                  <span>شاهد التصاميم</span>
+                </Link>
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+                  <Sparkles size={19} />
+                  <span>اطلب دعوتك الآن</span>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
 
-        {showHomePanels ? <HomeSectionDivider variant="wave" /> : null}
+        <QuickBenefits />
+
+        <HowItWorks />
+
+        {showAnyContent ? (
+          <HomeSectionDivider variant="wave" />
+        ) : null}
+
+        {showAnyContent ? (
+          <section className="home-platform-stats home-platform-stats-compact home-platform-stats-after-preview" aria-label="إحصائيات المنصة">
+              <div className="home-platform-stats-inner">
+                <div className="home-platform-stats-head">
+                  <span className="eyebrow" data-broadcast-key="stats.eyebrow" data-broadcast-label="نص الإحصائيات" data-broadcast-kind="text" data-broadcast-value="آلاف الدعوات بدأت من هنا">
+                    <Sparkles size={16} />
+                    آلاف الدعوات بدأت من هنا
+                  </span>
+                </div>
+                <div className="home-platform-stats-grid">
+                  {LIVE_STATS_BASE.map((stat, i) => {
+                    const Icon = stat.icon;
+                    const isFeatured = i === LIVE_STATS_BASE.length - 1;
+                    return (
+                      <article className={`home-platform-stat-card${isFeatured ? " home-platform-stat-card-featured" : ""}`} key={stat.label}>
+                        <span className="home-platform-stat-icon">
+                          <Icon size={22} />
+                        </span>
+                        <strong>
+                          <CountUpNumber value={stat.value} />
+                        </strong>
+                        <small>{stat.label}</small>
+                      </article>
+                    );
+                  })}
+                </div>
+                <LiveVisitorsCounter />
+              </div>
+          </section>
+        ) : null}
+
+        {siteSettings?.homepage?.showPreview ? (
+          <section className="section compact live-template-section" data-no-scroll-animation>
+            <div className="container live-template-wrap">
+              <div className="live-preview-stack">
+                <div className="live-preview-title">
+                  <span data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content?.preview?.eyebrow || "معاينة حية"}>
+                    {content?.preview?.eyebrow || "معاينة حية"}
+                  </span>
+                  <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value="شاهد كيف تعمل الدعوة">
+                    شاهد كيف تعمل الدعوة
+                  </h2>
+                </div>
+                <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara" data-broadcast-key="preview.media" data-broadcast-label="ميديا المعاينة" data-broadcast-kind="media" data-broadcast-value={previewSettings?.mode === "video" ? previewSettings?.videoUrl : previewSettings?.mode === "image" ? previewSettings?.imageUrl : previewSettings?.templateSlug}>
+                  <span className="live-preview-badge" data-broadcast-key="preview.badge" data-broadcast-label="شارة المعاينة" data-broadcast-kind="text" data-broadcast-value={content?.preview?.badge || "دعوة رقمية"}>
+                    {content?.preview?.badge || "دعوة رقمية"}
+                  </span>
+                  {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
+                    <img className="live-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" loading="lazy" decoding="async" />
+                  ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
+                    <video className="live-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
+                  ) : (
+                    <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
+                  )}
+                </div>
+                <div className="button-row live-preview-actions">
+                  <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/badr-sarah-1">
+                    <Eye size={19} />
+                    <span data-broadcast-key="preview.fullInviteCta" data-broadcast-label="زر فتح الدعوة" data-broadcast-kind="text" data-broadcast-value={content?.preview?.fullInviteCta || "فتح الدعوة"}>
+                      {content?.preview?.fullInviteCta || "فتح الدعوة"}
+                    </span>
+                  </Link>
+                  <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+                    <Sparkles size={19} />
+                    <span data-broadcast-key="preview.orderCta" data-broadcast-label="زر طلب مشابه" data-broadcast-kind="text" data-broadcast-value={content?.preview?.orderCta || "اطلب مشابه"}>
+                      {content?.preview?.orderCta || "اطلب مشابه"}
+                    </span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {showHomePanels ? <HomeSectionDivider variant="lace" /> : null}
 
         {siteSettings?.homepage?.showFeatures ? (
-          <section className="home-features-panel home-features-panel-upgraded" aria-label="مميزات الدعوة الرقمية">
+          <section id="features-section" className="home-features-panel home-features-panel-upgraded" aria-label="مميزات الدعوة الرقمية">
             <div className="home-features-title-block">
               <span className="home-features-title-icon" aria-hidden="true">
                 <Sparkles size={18} />
@@ -322,129 +246,58 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           </div>
         </div>
 
-        {showHomePanels ? (
-          <section className="section compact live-template-section" data-no-scroll-animation>
-            <div className="container live-template-wrap">
-              <div className="live-preview-stack">
-
-                {siteSettings?.homepage?.showPreview ? (
-                  <>
-                    <div className="live-preview-title">
-                <span data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content?.preview?.eyebrow || "معاينة حية"}>
-                  {content?.preview?.eyebrow || "معاينة حية"}
+        {siteSettings?.homepage?.showPricing ? (
+          <>
+            <div className="pricing-offer-bar">
+              🎁 جميع الباقات مجانية حالياً لفترة محدودة أثناء المرحلة التجريبية.
+            </div>
+            <div className="home-pricing-panel" aria-label="باقات الأسعار">
+              <div className="home-pricing-head">
+                <span data-broadcast-key="pricing.eyebrow" data-broadcast-label="نص الباقات الصغير" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.eyebrow || "الباقات"}>
+                  {content?.pricing?.eyebrow || "الباقات"}
                 </span>
-                <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value="شاهد كيف تعمل الدعوة">
-                  شاهد كيف تعمل الدعوة
+                <h2 data-broadcast-key="pricing.title" data-broadcast-label="عنوان الباقات" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.title || "اختر باقتك"}>
+                  {content?.pricing?.title || "اختر باقتك"}
                 </h2>
               </div>
-              <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara" data-broadcast-key="preview.media" data-broadcast-label="ميديا المعاينة" data-broadcast-kind="media" data-broadcast-value={previewSettings?.mode === "video" ? previewSettings?.videoUrl : previewSettings?.mode === "image" ? previewSettings?.imageUrl : previewSettings?.templateSlug}>
-                <span className="live-preview-badge" data-broadcast-key="preview.badge" data-broadcast-label="شارة المعاينة" data-broadcast-kind="text" data-broadcast-value={content?.preview?.badge || "دعوة رقمية"}>
-                  {content?.preview?.badge || "دعوة رقمية"}
-                </span>
-                {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
-                  <img className="live-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" loading="lazy" decoding="async" />
-                ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
-                  <video className="live-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
-                ) : (
-                  <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
-                )}
-              </div>
-              <div className="button-row live-preview-actions">
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/badr-sarah-1">
-                  <Eye size={19} />
-                  <span data-broadcast-key="preview.fullInviteCta" data-broadcast-label="زر فتح الدعوة" data-broadcast-kind="text" data-broadcast-value={content?.preview?.fullInviteCta || "فتح الدعوة"}>
-                    {content?.preview?.fullInviteCta || "فتح الدعوة"}
-                  </span>
-                </Link>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-                  <Sparkles size={19} />
-                  <span data-broadcast-key="preview.orderCta" data-broadcast-label="زر طلب مشابه" data-broadcast-kind="text" data-broadcast-value={content?.preview?.orderCta || "اطلب مشابه"}>
-                    {content?.preview?.orderCta || "اطلب مشابه"}
-                  </span>
-                </Link>
-              </div>
-                  </>
-                ) : null}
-                {(siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing) ? (
-                  <section className="home-platform-stats home-platform-stats-compact home-platform-stats-after-preview" aria-label="إحصائيات المنصة">
-                    <div className="home-platform-stats-inner">
-                      <div className="home-platform-stats-head">
-                        <span className="eyebrow" data-broadcast-key="stats.eyebrow" data-broadcast-label="نص الإحصائيات" data-broadcast-kind="text" data-broadcast-value="آلاف الدعوات بدأت من هنا">
-                          <Sparkles size={16} />
-                          آلاف الدعوات بدأت من هنا
-                        </span>
-                      </div>
-                      <div className="home-platform-stats-grid">
-                        {LIVE_STATS_BASE.map((stat, i) => {
-                          const Icon = stat.icon;
-                          const isFeatured = i === LIVE_STATS_BASE.length - 1;
-                          return (
-                            <article className={`home-platform-stat-card${isFeatured ? " home-platform-stat-card-featured" : ""}`} key={stat.label}>
-                              <span className="home-platform-stat-icon">
-                                <Icon size={22} />
-                              </span>
-                              <strong>
-                                <CountUpNumber value={stat.value} />
-                              </strong>
-                              <small>{stat.label}</small>
-                            </article>
-                          );
-                        })}
-                      </div>
-                      <LiveVisitorsCounter />
-                    </div>
-                  </section>
-                ) : null}
-                {siteSettings?.homepage?.showPreview && siteSettings?.homepage?.showPricing ? <HomeSectionDivider variant="arc" /> : null}
-                {siteSettings?.homepage?.showPricing ? (
-                  <div className="home-pricing-panel" aria-label="باقات الأسعار">
-                <div className="home-pricing-head">
-                  <span data-broadcast-key="pricing.eyebrow" data-broadcast-label="نص الباقات الصغير" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.eyebrow || "الباقات"}>
-                    {content?.pricing?.eyebrow || "الباقات"}
-                  </span>
-                  <h2 data-broadcast-key="pricing.title" data-broadcast-label="عنوان الباقات" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.title || "اختر باقتك"}>
-                    {content?.pricing?.title || "اختر باقتك"}
-                  </h2>
+              <div className="home-pricing-table" role="table" aria-label="مقارنة باقات الدعوة">
+                <div className="home-pricing-row home-pricing-table-head" role="row">
+                  <div className="home-pricing-feature-head" role="columnheader">الميزة</div>
+                  <div className="home-pricing-plan-head" role="columnheader">
+                    <span data-broadcast-key="pricing.invitationPlanName" data-broadcast-label="اسم الباقة الأولى" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.invitationPlanName || "الباقة الأساسية"}>
+                      {content?.pricing?.invitationPlanName || "الباقة الأساسية"}
+                    </span>
+                    <strong data-broadcast-key="pricing.invitationPrice" data-broadcast-label="سعر الباقة الأولى" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.invitationPrice || "---"}>
+                      <span className="home-pricing-slashed">{content?.pricing?.invitationPrice || "---"}</span>
+                      <span className="home-pricing-free">مجاناً الآن</span>
+                    </strong>
+                  </div>
+                  <div className="home-pricing-plan-head home-pricing-plan-head-featured" role="columnheader">
+                    <span data-broadcast-key="pricing.plusPlanName" data-broadcast-label="اسم الباقة الثانية" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.plusPlanName || "الباقة الماسية"}>
+                      {content?.pricing?.plusPlanName || "الباقة الماسية"}
+                    </span>
+                    <strong data-broadcast-key="pricing.plusPrice" data-broadcast-label="سعر الباقة الثانية" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.plusPrice || "---"}>
+                      <span className="home-pricing-slashed">{content?.pricing?.plusPrice || "---"}</span>
+                      <span className="home-pricing-free">مجاناً الآن</span>
+                    </strong>
+                  </div>
                 </div>
-                <div className="home-pricing-table" role="table" aria-label="مقارنة باقات الدعوة">
-                  <div className="home-pricing-row home-pricing-table-head" role="row">
-                    <div className="home-pricing-feature-head" role="columnheader">الميزة</div>
-                    <div className="home-pricing-plan-head" role="columnheader">
-                      <span data-broadcast-key="pricing.invitationPlanName" data-broadcast-label="اسم الباقة الأولى" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.invitationPlanName || "الباقة الأساسية"}>
-                        {content?.pricing?.invitationPlanName || "الباقة الأساسية"}
-                      </span>
-                      <strong data-broadcast-key="pricing.invitationPrice" data-broadcast-label="سعر الباقة الأولى" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.invitationPrice || "---"}>
-                        {content?.pricing?.invitationPrice || "---"}
-                      </strong>
+                {(content?.pricing?.rows || []).map((row) => (
+                  <div className="home-pricing-row" role="row" key={row.id}>
+                    <div className="home-pricing-feature" role="cell" data-broadcast-key={`pricing.rows.${row.id}.feature`} data-broadcast-label={`ميزة باقة: ${row.feature}`} data-broadcast-kind="text" data-broadcast-value={row.feature}>
+                      {row.feature}
                     </div>
-                    <div className="home-pricing-plan-head home-pricing-plan-head-featured" role="columnheader">
-                      <span data-broadcast-key="pricing.plusPlanName" data-broadcast-label="اسم الباقة الثانية" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.plusPlanName || "الباقة الماسية"}>
-                        {content?.pricing?.plusPlanName || "الباقة الماسية"}
-                      </span>
-                      <strong data-broadcast-key="pricing.plusPrice" data-broadcast-label="سعر الباقة الثانية" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.plusPrice || "---"}>
-                        {content?.pricing?.plusPrice || "---"}
-                      </strong>
+                    <div className="home-pricing-state" role="cell" aria-label={row.invitation ? "متاح" : "غير متاح"}>
+                      {row.invitation ? <Check size={20} /> : <X size={20} />}
+                    </div>
+                    <div className="home-pricing-state home-pricing-state-featured" role="cell" aria-label={row.plus ? "متاح" : "غير متاح"}>
+                      {row.plus ? <Check size={20} /> : <X size={20} />}
                     </div>
                   </div>
-                  {(content?.pricing?.rows || []).map((row) => (
-                    <div className="home-pricing-row" role="row" key={row.id}>
-                      <div className="home-pricing-feature" role="cell" data-broadcast-key={`pricing.rows.${row.id}.feature`} data-broadcast-label={`ميزة باقة: ${row.feature}`} data-broadcast-kind="text" data-broadcast-value={row.feature}>
-                        {row.feature}
-                      </div>
-                      <div className="home-pricing-state" role="cell" aria-label={row.invitation ? "متاح" : "غير متاح"}>
-                        {row.invitation ? <Check size={20} /> : <X size={20} />}
-                      </div>
-                      <div className="home-pricing-state home-pricing-state-featured" role="cell" aria-label={row.plus ? "متاح" : "غير متاح"}>
-                        {row.plus ? <Check size={20} /> : <X size={20} />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                  </div>
-                ) : null}
+                ))}
               </div>
             </div>
-          </section>
+          </>
         ) : null}
       </main>
       <SiteFooter />
