@@ -1169,6 +1169,55 @@ img {
   padding: clamp(34px, 7vw, 74px) 0 clamp(22px, 5vw, 54px);
 }
 
+@media (max-width: 640px) {
+  .hero.clean-hero {
+    min-height: 0;
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+
+  .hero-title-block .hero-title-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 0;
+  }
+
+  .hero-title-block .hero-title-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .hero-title-block .hero-title-main {
+    font-size: clamp(1.35rem, 6.5vw, 2rem);
+    line-height: 1.1;
+    max-width: 100%;
+  }
+
+  .hero-title-block .hero-title-accent {
+    font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+    max-width: 100%;
+  }
+
+  .hero-title-block {
+    gap: 4px;
+  }
+
+  .hero-title-divider {
+    margin: 0;
+  }
+
+  .hero-copy .button-row .home-cta {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .hero-copy .button-row {
+    margin-top: 12px !important;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
 .home-platform-stats {
   position: relative;
   padding: clamp(24px, 4vw, 44px) 0 clamp(18px, 3vw, 34px);
@@ -2368,44 +2417,52 @@ img {
 
 @media (max-width: 640px) {
   .how-it-works-steps {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    gap: 2px;
   }
 
   .how-it-works-step {
-    width: 100%;
+    flex: 1;
+    width: auto;
   }
 
   .how-it-works-step-inner {
-    grid-template-columns: auto 1fr;
-    justify-items: start;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    width: auto;
     min-width: 0;
-    padding: 14px 16px;
-    border: 1px solid rgba(189, 143, 63, 0.14);
-    border-radius: 14px;
-    background: rgba(255, 253, 248, 0.5);
+    padding: 6px 2px;
+    border: 0;
+    border-radius: 0;
+    background: none;
   }
 
   .how-it-works-step-number {
-    order: 0;
+    width: 20px;
+    height: 20px;
+    font-size: 0.6rem;
   }
 
   .how-it-works-step-icon {
-    order: 1;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .how-it-works-step-icon svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 
   .how-it-works-step-title {
-    order: 2;
+    font-size: 0.6rem;
+    text-align: center;
   }
 
-  .how-it-works-arrow {
-    display: none;
+  .how-it-works-arrow svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
