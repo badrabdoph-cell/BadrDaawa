@@ -36,9 +36,8 @@ export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code
 
     if (isPreview) {
       await new Promise((r) => setTimeout(r, 500));
-      setCheckedIn(true);
       setState("success");
-      setMessage(t("invitation.checkIn.success"));
+      setMessage("معاد الفرح لسه مجاش اصلا عشان تسجل حضورك😅❤️");
       return;
     }
 
