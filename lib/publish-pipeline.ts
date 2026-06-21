@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { prisma } from "./db";
 import { commitContentFiles, type GitHubCommitResult } from "./github-content";
 import {
@@ -95,10 +96,35 @@ export async function publishAllChanges(publishedBy: string): Promise<PublishRes
 
     console.log(`[Publish Pipeline] Promoted ${draftKeys.length} items to published`);
 
-    // Step 5: Clear pending changes
+    // Step 5: Record ContentVersion
+    if (prisma) {
+      const latestVersion = await prisma.contentVersion.findFirst({ orderBy: { version: "desc" } });
+      const nextVersion = (latestVersion?.version ?? 0) + 1;
+      await prisma.contentVersion.create({
+        data: {
+          version: nextVersion,
+          commitSha: githubResult.commitSha,
+          publishedBy,
+          changedKeys: draftKeys,
+        },
+      });
+      console.log(`[Publish Pipeline] ContentVersion #${nextVersion} recorded`);
+    }
+
+    // Step 6: Clear pending changes
     await clearPendingChanges();
 
-    // Step 6: Update metadata
+    // Step 7: Revalidate public pages
+    revalidatePath("/");
+    revalidatePath("/templates");
+    revalidatePath("/order");
+    revalidatePath("/privacy-policy");
+    revalidatePath("/terms");
+    revalidatePath("/refund-policy");
+    revalidatePath("/usage-policy");
+    console.log(`[Publish Pipeline] Revalidated public pages`);
+
+    // Step 8: Update metadata
     await updatePublishMeta({
       lastPublishedAt: new Date().toISOString(),
       lastPublishedBy: publishedBy,
@@ -106,7 +132,7 @@ export async function publishAllChanges(publishedBy: string): Promise<PublishRes
 
     console.log(`[Publish Pipeline] Updated publish metadata`);
 
-    // Step 7: Audit Log
+    // Step 9: Audit Log
     await recordAuditLog({
       actor: getSystemAuditActor(publishedBy),
       action: "content.publish",
@@ -191,6 +217,15 @@ async function generateDynamicPagesFile(): Promise<{ repoPath: string; bytes: Bu
     };
   } catch (error) {
     console.error("[Publish Pipeline] Failed to generate dynamic pages file:", error);
+    return null;
+  }
+}
+
+export async function getLatestContentVersion() {
+  if (!prisma) return null;
+  try {
+    return await prisma.contentVersion.findFirst({ orderBy: { version: "desc" } });
+  } catch {
     return null;
   }
 }

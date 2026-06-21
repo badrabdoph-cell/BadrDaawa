@@ -237,6 +237,15 @@ model BackupJob {
   @@index([status])
 }
 
+model ContentVersion {
+  id           String   @id @default(cuid())
+  version      Int      @unique
+  commitSha    String?
+  publishedBy  String
+  publishedAt  DateTime @default(now())
+  changedKeys  String[]
+}
+
 model SafeBackup {
   id             String    @id @default(cuid())
   backupFileName String    @unique

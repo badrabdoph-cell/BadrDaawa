@@ -1,5 +1,5 @@
 import { getPublishMeta, discardAllDrafts } from "@/lib/project-content-store";
-import { publishAllChanges } from "@/lib/publish-pipeline";
+import { publishAllChanges, getLatestContentVersion } from "@/lib/publish-pipeline";
 import { getAdminSessionUser } from "@/lib/admin-session";
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
 import { cookies } from "next/headers";
@@ -51,7 +51,7 @@ export default async function AdminPublishPage({
   searchParams: Promise<{ published?: string; discarded?: string; updated?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const meta = await getPublishMeta();
+  const [meta, latestVersion] = await Promise.all([getPublishMeta(), getLatestContentVersion()]);
   
   const pendingChanges = meta.pendingChanges || {};
   const pendingChangeKeys = Object.keys(pendingChanges) as Array<string>;
@@ -105,6 +105,39 @@ export default async function AdminPublishPage({
             )}
           </div>
         </article>
+
+        {latestVersion && (
+          <article className="panel publish-version-card">
+            <div className="admin-card-head">
+              <div>
+                <span className="eyebrow">Version</span>
+                <h2>الإصدار الحالي</h2>
+              </div>
+            </div>
+            <div className="publish-status-content">
+              <div className="status-item">
+                <span className="label">رقم الإصدار:</span>
+                <span className="value">#{latestVersion.version}</span>
+              </div>
+              <div className="status-item">
+                <span className="label">آخر نشر:</span>
+                <span className="value">{new Date(latestVersion.publishedAt).toLocaleString("ar-EG")}</span>
+              </div>
+              {latestVersion.publishedBy && (
+                <div className="status-item">
+                  <span className="label">تم النشر بواسطة:</span>
+                  <span className="value">{latestVersion.publishedBy}</span>
+                </div>
+              )}
+              {latestVersion.commitSha && (
+                <div className="status-item">
+                  <span className="label">Commit SHA:</span>
+                  <span className="value" style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{latestVersion.commitSha.slice(0, 12)}</span>
+                </div>
+              )}
+            </div>
+          </article>
+        )}
 
         <article className="panel publish-actions-card">
           <div className="admin-card-head">

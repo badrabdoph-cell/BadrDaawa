@@ -1,7 +1,7 @@
 import { Camera, Save } from "lucide-react";
 import { PhotographerBulkUpdate } from "@/components/PhotographerBulkUpdate";
 import { PhotographerLogoUploader } from "@/components/PhotographerLogoUploader";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getDraftSiteSettings } from "@/lib/site-settings";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export default async function AdminPhotographerLogoPage({
 }: {
   searchParams: Promise<Params>;
 }) {
-  const [params, settings] = await Promise.all([searchParams, getSiteSettings()]);
+  const [params, settings] = await Promise.all([searchParams, getDraftSiteSettings()]);
   const message = notice(params.settings_saved, params.success, params.error, params.updated, params.skipped);
 
   const globalLogoUrl = settings.photographer.defaultLogoUrl;
