@@ -114,6 +114,16 @@ export function InvitePoll({
     setMessage("");
     setSuccess(null);
 
+    if (isPreview) {
+      await new Promise((r) => setTimeout(r, 600));
+      setState("success");
+      setSuccess({ name: guestName, status, alreadyRegistered: false });
+      setName("");
+      setPhone("");
+      setPhoneError("");
+      return;
+    }
+
     try {
       const response = await fetch(`/api/invitations/${apiCode}/rsvp`, {
         method: "POST",
@@ -216,9 +226,8 @@ export function InvitePoll({
               </div>
             </div>
             <div className="rsvp-calendar-actions">
-              <SmartCalendarButton googleUrl={googleCalendarUrl} icsUrl={icsCalendarUrl} locale={locale} isPreview={isPreview} />
+              <SmartCalendarButton googleUrl={googleCalendarUrl} icsUrl={icsCalendarUrl} locale={locale} />
             </div>
-            {isPreview ? <p className="status">{t("invitation.calendar.previewNote")}</p> : null}
           </div>
         ) : null}
 

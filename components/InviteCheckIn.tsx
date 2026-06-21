@@ -20,9 +20,9 @@ export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code
   const t = getInvitationTranslator(resolveLocale(locale));
   const apiCode = encodeURIComponent(code);
   const storageKey = useMemo(() => `badrdaawa-checked-in-${code}`, [code]);
-  const [state, setState] = useState<CheckInState>(isPreview ? "idle" : "idle");
+  const [state, setState] = useState<CheckInState>("idle");
   const [checkedIn, setCheckedIn] = useState(false);
-  const [message, setMessage] = useState(isPreview ? t("invitation.checkIn.previewMessage") : "");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (isPreview) return;
@@ -30,9 +30,17 @@ export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code
   }, [isPreview, storageKey]);
 
   async function submit() {
-    if (isPreview || checkedIn) return;
+    if (checkedIn) return;
     setState("loading");
     setMessage("");
+
+    if (isPreview) {
+      await new Promise((r) => setTimeout(r, 500));
+      setCheckedIn(true);
+      setState("success");
+      setMessage(t("invitation.checkIn.success"));
+      return;
+    }
 
     try {
       const visitorKey = createVisitorKey(code);
@@ -67,7 +75,7 @@ export function InviteCheckIn({ code, isPreview = false, locale = "ar" }: { code
           <p>{t("invitation.checkIn.description")}</p>
         </div>
       </div>
-      <button className="btn btn-gold btn-glow check-in-button" type="button" onClick={submit} disabled={isPreview || checkedIn || state === "loading"}>
+      <button className="btn btn-gold btn-glow check-in-button" type="button" onClick={submit} disabled={checkedIn || state === "loading"}>
         {state === "loading" ? <Loader2 size={18} className="animate-float" /> : <CheckCircle2 size={18} />}
         {checkedIn ? t("invitation.checkIn.done") : t("invitation.checkIn.button")}
       </button>

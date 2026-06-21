@@ -145,7 +145,7 @@ function InvitationGuestBook({ invitation }: { invitation: Invitation }) {
   return (
     <>
       <CoupleStoryTimeline story={getInvitationTexts(invitation).story} locale={invitation.language} />
-      <AddToCalendar invitation={invitation} isPreview={isPreview} />
+      <AddToCalendar invitation={invitation} />
       {invitation.checkInEnabled === false ? null : <InviteCheckIn code={invitation.code} isPreview={isPreview} locale={invitation.language} />}
       <GuestBook code={invitation.code} isPreview={isPreview} locale={invitation.language} />
     </>

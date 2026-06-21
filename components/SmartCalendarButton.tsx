@@ -20,13 +20,11 @@ export function SmartCalendarButton({
   googleUrl,
   icsUrl,
   locale = "ar",
-  isPreview = false,
   className = "btn btn-gold btn-glow",
 }: {
   googleUrl: string;
   icsUrl: string;
   locale?: Language;
-  isPreview?: boolean;
   className?: string;
 }) {
   const t = getInvitationTranslator(resolveLocale(locale));
@@ -37,12 +35,11 @@ export function SmartCalendarButton({
   }, []);
 
   const href = useMemo(() => {
-    if (isPreview) return undefined;
     return device === "apple" ? icsUrl : googleUrl;
-  }, [device, googleUrl, icsUrl, isPreview]);
+  }, [device, googleUrl, icsUrl]);
 
   return (
-    <a className={isPreview ? `${className} disabled` : className} href={href} target={device === "apple" ? undefined : "_blank"} rel={device === "apple" ? undefined : "noreferrer"} aria-disabled={isPreview}>
+    <a className={className} href={href} target={device === "apple" ? undefined : "_blank"} rel={device === "apple" ? undefined : "noreferrer"}>
       <CalendarPlus size={17} />
       {t("invitation.calendar.addButton")}
     </a>

@@ -7,7 +7,7 @@ import type { Invitation } from "@/lib/types";
 import { getInvitationUrl } from "@/lib/utils";
 import { SmartCalendarButton } from "./SmartCalendarButton";
 
-export function AddToCalendar({ invitation, isPreview = false }: { invitation: Invitation; isPreview?: boolean }) {
+export function AddToCalendar({ invitation }: { invitation: Invitation }) {
   const locale = resolveLocale(invitation.language);
   const t = getInvitationTranslator(locale);
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
@@ -28,9 +28,8 @@ export function AddToCalendar({ invitation, isPreview = false }: { invitation: I
         </div>
       </div>
       <div className="add-calendar-actions">
-        <SmartCalendarButton googleUrl={googleUrl} icsUrl={icsUrl} locale={locale} isPreview={isPreview} />
+        <SmartCalendarButton googleUrl={googleUrl} icsUrl={icsUrl} locale={locale} />
       </div>
-      {isPreview ? <p className="status">{t("invitation.calendar.previewNote")}</p> : null}
     </section>
   );
 }

@@ -35,7 +35,10 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
 
   useEffect(() => {
     if (settings.mode === "disabled") return;
-    if (isPreview) return;
+    if (isPreview) {
+      setMessages(getPreviewMessages(resolvedLocale));
+      return;
+    }
     let alive = true;
     async function loadMessages() {
       const response = await fetch(`/api/invitations/${apiCode}/guest-book`, { cache: "no-store" }).catch(() => null);
@@ -52,7 +55,6 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isPreview) return;
     const cleanName = name.trim();
     const cleanMessage = message.trim();
     if (!cleanName || !cleanMessage) {
@@ -62,6 +64,24 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
     }
     setState("loading");
     setNotice("");
+
+    if (isPreview) {
+      await new Promise((r) => setTimeout(r, 500));
+      const mockMessage: GuestBookMessage = {
+        id: `preview-msg-${Date.now()}`,
+        invitationCode: code,
+        name: cleanName,
+        message: cleanMessage,
+        status: "approved",
+        createdAt: new Date().toISOString(),
+      };
+      setState("success");
+      setNotice(t("invitation.coupleMessages.published"));
+      setMessages((current) => [mockMessage, ...current]);
+      setName("");
+      setMessage("");
+      return;
+    }
 
     let response: Response;
     let data: GuestBookSubmitResponse | null = null;
@@ -108,15 +128,13 @@ export function GuestBook({ code, isPreview = false, locale = "ar" }: { code: st
       </div>
 
       <form className="guest-book-form" onSubmit={submit}>
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("invitation.coupleMessages.namePlaceholder")} maxLength={80} required disabled={isPreview || state === "loading"} aria-label={t("invitation.coupleMessages.namePlaceholder")} />
-        <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={t("invitation.coupleMessages.messagePlaceholder")} maxLength={600} rows={4} required disabled={isPreview || state === "loading"} aria-label={t("invitation.coupleMessages.messagePlaceholder")} />
-        <button className="btn btn-gold btn-glow" type="submit" disabled={isPreview || state === "loading"}>
+        <input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("invitation.coupleMessages.namePlaceholder")} maxLength={80} required disabled={state === "loading"} aria-label={t("invitation.coupleMessages.namePlaceholder")} />
+        <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={t("invitation.coupleMessages.messagePlaceholder")} maxLength={600} rows={4} required disabled={state === "loading"} aria-label={t("invitation.coupleMessages.messagePlaceholder")} />
+        <button className="btn btn-gold btn-glow" type="submit" disabled={state === "loading"}>
           {state === "loading" ? <Loader2 size={18} className="animate-float" /> : <Send size={18} />}
           {t("invitation.coupleMessages.submit")}
         </button>
       </form>
-
-      {isPreview ? <p className="status">{t("invitation.coupleMessages.previewNote")}</p> : null}
       {notice ? <p className={state === "error" ? "status danger" : "status success"}>{notice}</p> : null}
 
       <div className="guest-book-list" aria-live="polite">
