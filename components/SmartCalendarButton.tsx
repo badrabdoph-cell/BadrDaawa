@@ -38,8 +38,10 @@ export function SmartCalendarButton({
     return device === "apple" ? icsUrl : googleUrl;
   }, [device, googleUrl, icsUrl]);
 
+  const isGoogleCalendar = href === googleUrl;
+
   return (
-    <a className={className} href={href} target={device === "apple" ? undefined : "_blank"} rel={device === "apple" ? undefined : "noreferrer"}>
+    <a className={className} href={href} target={isGoogleCalendar ? "_blank" : undefined} rel={isGoogleCalendar ? "noreferrer" : undefined}>
       <CalendarPlus size={17} />
       {t("invitation.calendar.addButton")}
     </a>

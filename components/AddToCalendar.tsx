@@ -12,7 +12,8 @@ export function AddToCalendar({ invitation }: { invitation: Invitation }) {
   const t = getInvitationTranslator(locale);
   const invitationUrl = getInvitationUrl(invitation.code, invitation.customSlug);
   const googleUrl = getGoogleCalendarUrl(invitation, invitationUrl);
-  const icsUrl = `/api/invitations/${invitation.code}/calendar/ics`;
+  const isPreview = invitation.code.startsWith("preview-");
+  const icsUrl = isPreview ? googleUrl : `/api/invitations/${invitation.code}/calendar/ics`;
   const { start } = getInvitationCalendarRange(invitation);
   const dateLocale = getLocaleMeta(locale).dateLocale;
   const eventTime = `${new Intl.DateTimeFormat(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(invitation.weddingDate))} - ${start.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })}`;
