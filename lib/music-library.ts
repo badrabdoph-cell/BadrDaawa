@@ -375,6 +375,15 @@ export async function renameMusicSlot(id: string, name: string) {
   return slots.find((item) => item.id === id) || null;
 }
 
+export async function renameMusicSlotDraft(id: string, name: string) {
+  const library = await getDraftMusicLibrary();
+  const slot = library.slots.find((item) => item.id === id);
+  if (!slot) return null;
+  const slots = library.slots.map((item) => (item.id === id ? { ...item, name: cleanText(name, item.name), updatedAt: new Date().toISOString() } : item));
+  await writeDraftMusicLibrary({ slots });
+  return slots.find((item) => item.id === id) || null;
+}
+
 export async function setMusicSlotEnabled(id: string, enabled: boolean) {
   const library = await getMusicLibrary();
   const slot = library.slots.find((item) => item.id === id);
@@ -388,10 +397,31 @@ export async function setMusicSlotEnabled(id: string, enabled: boolean) {
   return slots.find((item) => item.id === id) || null;
 }
 
+export async function setMusicSlotEnabledDraft(id: string, enabled: boolean) {
+  const library = await getDraftMusicLibrary();
+  const slot = library.slots.find((item) => item.id === id);
+  if (!slot?.url) return null;
+  const slots = library.slots.map((item) => ({
+    ...item,
+    enabled: enabled ? item.id === id : item.id === id ? false : item.enabled,
+    updatedAt: item.id === id ? new Date().toISOString() : item.updatedAt,
+  }));
+  await writeDraftMusicLibrary({ slots });
+  return slots.find((item) => item.id === id) || null;
+}
+
 export async function deleteMusicSlot(id: string) {
   const library = await getMusicLibrary();
   const slot = library.slots.find((item) => item.id === id);
   if (!slot) return null;
   await writeMusicLibrary({ slots: library.slots.filter((item) => item.id !== id) });
+  return slot;
+}
+
+export async function deleteMusicSlotDraft(id: string) {
+  const library = await getDraftMusicLibrary();
+  const slot = library.slots.find((item) => item.id === id);
+  if (!slot) return null;
+  await writeDraftMusicLibrary({ slots: library.slots.filter((item) => item.id !== id) });
   return slot;
 }

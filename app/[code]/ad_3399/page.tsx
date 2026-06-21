@@ -13,9 +13,9 @@ import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { getCoupleMessagesSettings, getGuestBookMessages } from "@/lib/guest-book";
 import { autoDisableExpiredTrial, getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
 import { getMessageTemplates } from "@/lib/message-templates";
-import { getMusicLibrary } from "@/lib/music-library";
+import { getPublishedMusicLibrary } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
 import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
@@ -39,7 +39,7 @@ export default async function CustomerAdminPage({
   if (!invitation) {
     const rejectedOrder = await getRejectedOrderByInvitationCode(code);
     if (rejectedOrder) {
-      const siteSettings = await getSiteSettings();
+      const siteSettings = await getPublishedSiteSettings();
       return (
         <main className="pending-invitation-page" dir="rtl">
           <section className="pending-invitation-card">
@@ -71,7 +71,7 @@ export default async function CustomerAdminPage({
     }
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
-      const siteSettings = await getSiteSettings();
+      const siteSettings = await getPublishedSiteSettings();
       return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
     }
     notFound();
@@ -105,14 +105,14 @@ export default async function CustomerAdminPage({
     getGuestsByInvitation(invitation.code),
     getTemplateWithSettings(invitation.templateSlug),
     getTemplateWithSettings("featured-1"),
-    getMusicLibrary(),
+    getPublishedMusicLibrary(),
     getClientMessages(invitation.code),
     getContentPresets(),
     getMessageTemplates(),
     getWeddingLiveMode(invitation.code),
     getGuestBookMessages(invitation.code, "all"),
     getCoupleMessagesSettings(invitation.code),
-    getSiteSettings(),
+    getPublishedSiteSettings(),
   ]);
   const resolvedTemplate = template || fallbackTemplate;
   if (!resolvedTemplate) {

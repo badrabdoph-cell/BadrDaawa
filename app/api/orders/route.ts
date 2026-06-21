@@ -5,7 +5,7 @@ import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "القالب المختار غير متاح حاليًا" }, { status: 400 });
   }
 
-  const siteSettings = await getSiteSettings();
+  const siteSettings = await getPublishedSiteSettings();
   const orderWhatsAppRecipient = siteSettings.whatsappUrl || siteSettings.contactPhones[0] || "";
   const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
   const music = await resolveOrderMusic({

@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSiteSettings();
+  const settings = await getPublishedSiteSettings();
   return {
     metadataBase: getMetadataBaseUrl(),
     title: {

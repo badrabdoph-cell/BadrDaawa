@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Crown } from "lucide-react";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export async function SiteFooter() {
-  const settings = await getSiteSettings();
+  const settings = await getPublishedSiteSettings();
   const supportUrl = settings.whatsappUrl || getWhatsAppOrderUrl("محتاج دعم فني في دعوة الفرح");
   const socialLinks = [
     { label: "فيسبوك", href: settings.socialLinks?.facebook },

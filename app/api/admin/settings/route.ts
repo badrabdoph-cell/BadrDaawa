@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
-import { getHomeContent, updateHomeContentDraft } from "@/lib/home-content";
+import { getDraftHomeContent, updateHomeContentDraft } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
-import { getHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
+import { getDraftHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettingsDraft } from "@/lib/site-settings";
 import { getRedirectUrl } from "@/lib/utils";
@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const logoFile = formData.get("logoFile");
     const uploadedLogoUrl = await saveLogo(logoFile instanceof File ? logoFile : null);
-    const currentContent = await getHomeContent();
-    const currentPreview = await getHomePreviewSettings();
+    const currentContent = await getDraftHomeContent();
+    const currentPreview = await getDraftHomePreviewSettings();
     const primaryCtaLabel = text(formData, "primaryCtaLabel");
     const secondaryCtaLabel = text(formData, "secondaryCtaLabel");
 

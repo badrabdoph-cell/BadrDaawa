@@ -5,7 +5,7 @@ import { ArrowLeft, Crown } from "lucide-react";
 import type { OrderInitialDraft } from "@/components/OrderForm";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderRequestUxPatches } from "@/components/OrderRequestUxPatches";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublicTemplatesWithSettings } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ function parseStoryParam(value?: string) {
 
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
-  const [templates, siteSettings] = await Promise.all([getPublicTemplatesWithSettings(), getSiteSettings()]);
+  const [templates, siteSettings] = await Promise.all([getPublicTemplatesWithSettings(), getPublishedSiteSettings()]);
   const selected = (params.template ? templates.find((template) => template.slug === params.template) : undefined) || templates[0];
   if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));

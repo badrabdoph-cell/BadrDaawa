@@ -11,9 +11,9 @@ import { getDynamicPageBySlug, getDynamicPageMetadata } from "@/lib/dynamic-page
 import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { autoDisableExpiredTrial, recordInvitationView } from "@/lib/invitation-data";
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
-import { getMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
+import { getPublishedMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
 
@@ -73,7 +73,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
   const [{ code }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   const isSilentPreview = getQueryParam(query?.silentPreview) === "1" || getQueryParam(query?.embed) === "1";
   await autoDisableExpiredTrial(code);
-  const [invitation, siteSettings] = await Promise.all([getCachedInvitationByCode(code), getSiteSettings()]);
+  const [invitation, siteSettings] = await Promise.all([getCachedInvitationByCode(code), getPublishedSiteSettings()]);
   if (!invitation) {
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
@@ -157,7 +157,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     redirect(`/${invitation.customSlug}${params.size ? `?${params.toString()}` : ""}`);
   }
 
-  const [template, fallbackTemplate, musicLibrary] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getMusicLibrary()]);
+  const [template, fallbackTemplate, musicLibrary] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getPublishedMusicLibrary()]);
   const resolvedTemplate = template || fallbackTemplate;
   if (!resolvedTemplate) {
     notFound();

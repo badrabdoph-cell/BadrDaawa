@@ -1,6 +1,6 @@
 import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
 import { getPendingOrderByInvitationCode } from "@/lib/order-request-links";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { redirect } from "next/navigation";
 
 export default async function CustomerAdminLoginPage({
@@ -13,7 +13,7 @@ export default async function CustomerAdminLoginPage({
   const [{ code }] = await Promise.all([params, searchParams]);
   const pendingOrder = await getPendingOrderByInvitationCode(code);
   if (pendingOrder) {
-    const siteSettings = await getSiteSettings();
+    const siteSettings = await getPublishedSiteSettings();
     return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
   }
 

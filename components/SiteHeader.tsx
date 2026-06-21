@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Crown, Headphones, Send } from "lucide-react";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ const navLinks = [
 ];
 
 export async function SiteHeader() {
-  const settings = await getSiteSettings();
+  const settings = await getPublishedSiteSettings();
   const supportUrl = settings.whatsappUrl || getWhatsAppOrderUrl("محتاج مساعدة في دعوة الفرح");
 
   return (
