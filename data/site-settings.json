@@ -7,6 +7,9 @@
     "ogDescription": "صمم دعوتك الرقمية بسهولة وشاركها مع ضيوفك عبر رابط خاص أو QR Code. قوالب احترافية، تأكيد حضور RSVP، موسيقى، معرض صور ولوحة متابعة متكاملة."
   },
   "email": "",
+  "order": {
+    "showPaymentMethods": false
+  },
   "logoUrl": "/assets/admin/branding/site-logo-1781536656977-9910afd2.webp",
   "homepage": {
     "showPreview": true,
@@ -16,7 +19,7 @@
     "secondaryCtaLabel": "استعرض التصاميم"
   },
   "siteName": "Wedding Daawa",
-  "updatedAt": "2026-06-17T13:14:49.278Z",
+  "updatedAt": "2026-06-21T23:28:38.701Z",
   "socialLinks": {
     "tiktok": "",
     "youtube": "",
@@ -26,8 +29,8 @@
   },
   "whatsappUrl": "https://wa.me/201038434472",
   "photographer": {
-    "defaultName": "Badr Abdo Ph",
-    "defaultLogoUrl": "/assets/admin/branding/photographer-logo-1781702089268-6afee7c4.webp",
+    "defaultName": "Photographer",
+    "defaultLogoUrl": "",
     "defaultFacebookUrl": "https://www.facebook.com/badrabdophoto",
     "defaultInstagramUrl": "https://www.instagram.com/badr_abdo_ph",
     "showPhotographerCard": true
