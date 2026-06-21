@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getHomeContent, updateHomeContent, type HomeContent } from "@/lib/home-content";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
 import { getRedirectUrl } from "@/lib/utils";
@@ -206,7 +205,6 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
 
   revalidatePath("/");
   revalidatePath("/admin/broadcast");
-  queueGitHubSync(`Broadcast screen updated: ${action}.`, { uploadProjectFiles: true, changeType: "project" });
 
   return { content, previewSettings };
 }

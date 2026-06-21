@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteUploadUrlIfUnused } from "@/lib/media-cleanup";
 import {
   getTemplatePreviewBaseInfo,
@@ -172,7 +171,6 @@ export async function POST(request: NextRequest) {
 
     await revalidateTemplates(templates);
     const deletedUploads = await cleanupReplacedUploads(beforeUrlsSnapshot, next);
-    queueGitHubSync("Templates content updated from redesigned admin editor.", { uploadProjectFiles: true, changeType: "project" });
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
       action: "template.change",

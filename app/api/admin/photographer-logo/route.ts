@@ -5,7 +5,6 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/db";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
@@ -167,7 +166,6 @@ export async function POST(request: NextRequest) {
       revalidatePath("/admin/templates");
       revalidatePath("/");
       revalidatePath("/templates");
-      queueGitHubSync("Photographer settings updated from photographer-logo admin.", { uploadProjectFiles: true, changeType: "project" });
 
       return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?settings_saved=1", request.headers, request.nextUrl.origin), 303);
     }

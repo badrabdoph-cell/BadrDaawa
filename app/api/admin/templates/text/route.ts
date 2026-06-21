@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getTemplatePreviewInfo, updateTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest) {
     revalidatePath("/admin/templates");
     revalidatePath("/templates");
     for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);
-    queueGitHubSync(`Template text updated: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
 
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),

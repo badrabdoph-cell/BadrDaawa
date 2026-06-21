@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { updateHomePreviewSettings } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
@@ -71,7 +70,6 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/");
   revalidatePath("/admin/preview");
-  queueGitHubSync("Homepage preview settings updated from admin.", { uploadProjectFiles: true, changeType: "project" });
 
   return NextResponse.redirect(getRedirectUrl("/admin/preview?saved=1", request.headers, request.nextUrl.origin), 303);
 }

@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getTemplateWithSettings, updateTemplateSettings } from "@/lib/template-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -49,7 +48,6 @@ export async function POST(request: NextRequest) {
     revalidatePath("/admin/templates");
     revalidatePath("/templates");
     revalidatePath(`/templates/${slug}/preview`);
-    queueGitHubSync(`Template settings updated: ${slug}.`, { uploadProjectFiles: true, changeType: "project" });
     const actor = await getAuditActorFromAdminRequest(request);
     const newValues = await getTemplateWithSettings(slug).catch(() => null);
     await recordAuditLog({
