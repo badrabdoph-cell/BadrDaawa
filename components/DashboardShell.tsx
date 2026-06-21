@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, ScanLine, Search, ScrollText, Settings, ShieldCheck, Sparkles, Star, Trash2, TriangleAlert, UsersRound, Wrench, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, ScanLine, Search, ScrollText, Settings, ShieldCheck, Sparkles, Star, Trash2, TriangleAlert, Upload, UsersRound, Wrench, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -75,6 +75,16 @@ const adminSections = [
     ],
   },
   {
+    id: "publishing",
+    title: "النشر",
+    description: "إدارة النشر والمسودات والتغييرات",
+    accent: "gold",
+    icon: Upload,
+    links: [
+      { href: "/admin/publish", label: "إدارة النشر", icon: Upload },
+    ],
+  },
+  {
     id: "cleanup",
     title: "التنظيف والصيانة",
     description: "تنظيف وتحسين وأداء النظام",
@@ -137,7 +147,7 @@ const adminSections = [
 ];
 
 const allAdminLinks = adminSections.flatMap((group) => group.links);
-const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications"]);
+const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications", "/admin/publish"]);
 const mobilePrimaryLinks = allAdminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
 const pendingAdminActionKey = "badr-admin-pending-action";
 
@@ -154,6 +164,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [ordersBadge, setOrdersBadge] = useState(0);
   const [messagesBadge, setMessagesBadge] = useState(0);
   const [notificationsBadge, setNotificationsBadge] = useState(0);
+  const [publishStatus, setPublishStatus] = useState<{ hasUnpublishedChanges: boolean; pendingChanges: number } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [routeBusy, setRouteBusy] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -374,11 +385,26 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    async function loadStatus() {
+      if (document.visibilityState === "hidden") return;
+      const response = await fetch("/api/admin/publish-status", { cache: "no-store" }).catch(() => null);
+      if (!alive || !response?.ok) return;
+      const data = (await response.json().catch(() => null)) as { hasUnpublishedChanges?: boolean; pendingChanges?: number } | null;
+      if (data) setPublishStatus({ hasUnpublishedChanges: !!data.hasUnpublishedChanges, pendingChanges: data.pendingChanges ?? 0 });
+    }
+    loadStatus();
+    const timer = window.setInterval(loadStatus, 30000);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, []);
+
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     const map: Record<string, string> = {
       I: "/admin/invitations",
       O: "/admin/orders",
       C: "/admin/customers",
+      P: "/admin/publish",
       U: "/admin/invitations-customers",
       T: "/admin/templates",
       S: "/admin/settings",
@@ -491,17 +517,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <p>{selectedSection.description}</p>
               </div>
               <div className="dashboard-nav-group-links">
-                {selectedSection.links.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = activeLink.href === link.href;
-                  return (
-                    <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
-                      <Icon size={18} />
-                      <span>{link.label}</span>
-                      {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
-                    </Link>
-                  );
-                })}
+                  {selectedSection.links.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = activeLink.href === link.href;
+                    return (
+                      <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
+                        <Icon size={18} />
+                        <span>{link.label}</span>
+                        {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
+                        {link.href === "/admin/publish" && publishStatus ? (
+                          <strong className={`dashboard-nav-badge publish-badge${publishStatus.hasUnpublishedChanges ? "" : " clean"}`}>
+                            {publishStatus.hasUnpublishedChanges ? "● مسودات" : "✓ منشور"}
+                          </strong>
+                        ) : null}
+                      </Link>
+                    );
+                  })}
               </div>
             </section>
           </nav>
@@ -572,6 +603,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <span className="admin-mobile-nav-icon">
                   <Icon size={19} />
                   {badge ? <strong>{badge}</strong> : null}
+                  {link.href === "/admin/publish" && publishStatus ? (
+                    <strong className={`publish-mobile-dot${publishStatus.hasUnpublishedChanges ? "" : " clean"}`} />
+                  ) : null}
                 </span>
                 <small>{link.label}</small>
               </Link>
@@ -624,6 +658,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                         <LinkIcon size={18} />
                         <span>{link.label}</span>
                         {badge ? <strong className="dashboard-nav-badge">{badge}</strong> : null}
+                        {link.href === "/admin/publish" && publishStatus ? (
+                          <strong className={`dashboard-nav-badge publish-badge${publishStatus.hasUnpublishedChanges ? "" : " clean"}`}>
+                            {publishStatus.hasUnpublishedChanges ? "● مسودات" : "✓ منشور"}
+                          </strong>
+                        ) : null}
                       </Link>
                     );
                   })}
@@ -690,6 +729,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>T</kbd></span>
                 <span>القوالب</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>P</kbd></span>
+                <span>إدارة النشر</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>S</kbd></span>

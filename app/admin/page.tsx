@@ -18,6 +18,7 @@ import { hasDatabaseConfig } from "@/lib/database-url";
 import { getAllGuestBookMessages } from "@/lib/guest-book";
 import { formatArabicNumber } from "@/lib/utils";
 import { getPublishMeta } from "@/lib/project-content-store";
+import { getLatestContentVersion } from "@/lib/publish-pipeline";
 
 function formatOrderDate(value: string) {
   const date = new Date(value);
@@ -40,7 +41,7 @@ function statusLabel(status: string) {
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, customers, guestBookMessages, publishMeta] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => []), getPublishMeta()]);
+  const [invitations, orders, guests, customers, guestBookMessages, publishMeta, latestVersion] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => []), getPublishMeta(), getLatestContentVersion()]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
@@ -184,6 +185,37 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <small>{formatArabicNumber(pendingGuestBookMessages.length)} رسالة معلقة</small>
           </span>
           <ArrowUpLeft size={18} />
+        </Link>
+      </section>
+
+      <section className="publish-dashboard-card admin-command-center">
+        <Link href="/admin/publish" className="publish-card-inner">
+          <div className="publish-card-head">
+            <Upload size={20} />
+            <strong>🚀 إدارة النشر</strong>
+          </div>
+          <div className="publish-card-metrics">
+            <div className="publish-metric">
+              <span>التغييرات المعلقة</span>
+              <em>{pendingChangesCount}</em>
+            </div>
+            <div className="publish-metric">
+              <span>آخر نشر</span>
+              <em>{latestVersion ? new Date(latestVersion.publishedAt).toLocaleString("ar-EG") : "—"}</em>
+            </div>
+            <div className="publish-metric">
+              <span>آخر Version</span>
+              <em>#{latestVersion?.version ?? "—"}</em>
+            </div>
+          </div>
+          <div className="publish-card-action">
+            <span className="btn btn-soft btn-sm">فتح صفحة النشر</span>
+          </div>
+          {hasUnpublishedChanges ? (
+            <span className="publish-card-badge">● مسودات</span>
+          ) : (
+            <span className="publish-card-badge clean">✓ منشور</span>
+          )}
         </Link>
       </section>
 
