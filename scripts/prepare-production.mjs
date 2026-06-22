@@ -231,12 +231,24 @@ try {
     env: { ...process.env, DATABASE_URL: databaseUrl, PRISMA_HIDE_UPDATE_MESSAGE: "true" },
     timeout: 15000,
   });
-  if (diffResult.status !== 0 && diffResult.stderr?.includes("P3014")) {
-    console.warn("[prepare] ⚠️ SCHEMA DRIFT: Schema has changes not yet migrated. Create migration:\n  pnpm dlx prisma migrate dev --create-only --name <description>");
-  } else if (diffResult.stdout?.trim() && diffResult.stdout.trim() !== "-- This is an empty migration") {
-    console.warn(`[prepare] ⚠️ SCHEMA DRIFT: ${diffResult.stdout.trim().length} bytes of unapplied changes. Create migration: pnpm dlx prisma migrate dev --create-only --name <description>`);
+  const hasDrift = (diffResult.status !== 0 && diffResult.stderr?.includes("P3014"))
+    || (diffResult.stdout?.trim() && diffResult.stdout.trim() !== "-- This is an empty migration");
+  if (hasDrift) {
+    console.warn("[prepare] ⚠️ Schema drift detected. Running prisma db push to apply un-migrated changes.");
+    const pushResult = spawnSync(prismaBin, ["db", "push", "--accept-data-loss"], {
+      cwd: root,
+      stdio: "inherit",
+      env: { ...process.env, DATABASE_URL: databaseUrl, PRISMA_HIDE_UPDATE_MESSAGE: "true" },
+      timeout: 30000,
+    });
+    if (pushResult.status === 0) {
+      console.log("[prepare] prisma db push succeeded.");
+    } else {
+      console.warn(`[prepare] prisma db push exited with code ${pushResult.status}. Schema may not match.`);
+    }
   }
-} catch {
+} catch (e) {
+  console.warn("[prepare] Schema drift check failed (non-fatal):", e.message);
 }
 
 console.log("[prepare] Startup restore and legacy JSON backfills are disabled permanently.");
