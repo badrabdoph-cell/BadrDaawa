@@ -42,15 +42,19 @@ export type TemplatePreviewOverride = Partial<TemplatePreviewEditableInfo> & {
 
 export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
   language: "ar",
-  groomName: "بدر",
-  brideName: "سارة",
-  weddingDate: "2026-10-26",
-  weddingTime: "07:00 مساءً",
-  venue: "قاعة رويال",
-  city: "البحيرة",
-  mapUrl: "https://maps.google.com/?q=Royal+Hall+Beheira",
+  groomName: "Mohamed",
+  brideName: "Nada",
+  weddingDate: "2026-09-09",
+  weddingTime: "08:00 مساءً",
+  venue: "قاعة Viora ✨",
+  city: "ايتاي اليارود_البحيرة",
+  mapUrl: "https://maps.app.goo.gl/abVGiAgYBxd5ez9r6",
   heroVideoUrl: "",
-  gallery: ["/assets/invite/badr-sarah-1.jpeg", "/assets/invite/badr-sarah-2.jpeg", "/assets/invite/badr-sarah-3.jpeg"],
+  gallery: [
+    "/uploads/template-previews/order-preview-1781482506096-a8b40030.webp",
+    "/uploads/template-previews/order-preview-1781482511733-f9676b9e.webp",
+    "/uploads/template-previews/order-preview-1781520786231-061ac182.webp",
+  ],
   texts: {
     openingText: "",
     inviteMessage: "فرحتنا هذه الليلة لا تكتمل إلا بوجودكم ومشاركتكم لنا أجمل لحظات العمر.",
@@ -66,19 +70,19 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
     ],
     story: [
       {
-        id: "preview-story-first-meeting",
+        id: "template-preview-story-1",
         title: "أول مرة شوفنا بعض ❤️",
         description: "كانت أول مقابلة بيننا في فرح صحبتي، ومن هنا بدأت الحكاية.",
         date: "15 / 11 / 2024",
       },
       {
-        id: "preview-story-engagement",
+        id: "template-preview-story-2",
         title: "الخطوبة 💍",
         description: "اليوم الذي قررنا فيه أن نكمل رحلتنا معاً ونبدأ فصلًا جديداً من حياتنا.",
         date: "02 / 02 / 2025",
       },
       {
-        id: "preview-story-wedding-day",
+        id: "template-preview-story-3",
         title: "يوم الزفاف 👰🤵",
         description: "اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً.",
         date: "26 / 10 / 2026",
@@ -87,11 +91,11 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
   },
   photographer: {
     enabled: true,
-    name: "badrabdoph",
-    description: "لقطات فرحتنا بعدسة خاصة.",
-    logoUrl: "",
-    instagramUrl: "https://www.instagram.com/",
-    facebookUrl: "https://www.facebook.com/",
+    name: "Photographer",
+    description: "تابعو كواليس الفوتوسيشن علي استوري الفوتوجرافر❤️",
+    logoUrl: "/assets/admin/branding/photographer-logo-1781702089268-6afee7c4.webp",
+    instagramUrl: "https://www.instagram.com/badr_abdo_ph",
+    facebookUrl: "https://www.facebook.com/badrabdophoto",
     whatsappUrl: "",
   },
   templateOverrides: {},
@@ -99,7 +103,7 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
     mode: "all",
     excludedSlugs: [],
   },
-  updatedAt: "",
+  updatedAt: "2026-06-21T23:28:38.715Z",
 };
 
 function cleanText(value: unknown, fallback = "", maxLength = 240) {

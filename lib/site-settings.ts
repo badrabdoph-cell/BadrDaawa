@@ -54,9 +54,9 @@ export type SiteSettings = {
 };
 
 export const defaultSiteSettings: SiteSettings = {
-  siteName: "BadrDaawa",
-  logoUrl: "",
-  siteDescription: "Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك.",
+  siteName: "Wedding Daawa",
+  logoUrl: "/assets/admin/branding/site-logo-1781536656977-9910afd2.webp",
+  siteDescription: "اصنع دعوتك بنفسك بشكل حديث وكريتف . اعرف عدد ال هيجضرو فرحك والمهتمين ليومك❤️",
   contactPhones: ["01038434472"],
   whatsappUrl: "https://wa.me/201038434472",
   email: "",
@@ -68,11 +68,11 @@ export const defaultSiteSettings: SiteSettings = {
     telegram: "",
   },
   seo: {
-    title: "BadrDaawa | دعوات زفاف رقمية فاخرة",
-    description: "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
-    keywords: "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, BadrDaawa",
-    ogTitle: "BadrDaawa | دعوة تليق بأجمل يوم في حياتكم",
-    ogDescription: "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة.",
+    title: "Wedding Daawa | دعوات زفاف رقمية فاخرة",
+    description: "منصة عربية متخصصة لإنشاء دعوات زفاف رقمية فاخرة مع QR Code وتأكيد حضور RSVP ومشاركة سهلة عبر واتساب ولوحة متابعة للحضور وقوالب احترافية قابلة للتخصيص.",
+    keywords: "دعوات زفاف رقمية, دعوة زفاف إلكترونية, دعوة فرح إلكترونية, Wedding Invitation, Wedding Daawa, RSVP, QR Code Wedding, دعوات زواج, دعوات أفراح, موقع دعوات إلكترونية, دعوة عرس رقمية, بطاقة دعوة زفاف, دعوة فرح اونلاين, قوالب دعوات زفاف, دعوات ف",
+    ogTitle: "Wedding Daawa | أنشئ دعوة زفاف رقمية فاخرة خلال دقائق",
+    ogDescription: "صمم دعوتك الرقمية بسهولة وشاركها مع ضيوفك عبر رابط خاص أو QR Code. قوالب احترافية، تأكيد حضور RSVP، موسيقى، معرض صور ولوحة متابعة متكاملة.",
   },
   homepage: {
     showFeatures: true,
@@ -86,12 +86,12 @@ export const defaultSiteSettings: SiteSettings = {
   },
   photographer: {
     showPhotographerCard: process.env.SHOW_PHOTOGRAPHER_CARD !== "false",
-    defaultName: "badrabdoph",
-    defaultInstagramUrl: "https://www.instagram.com/",
-    defaultFacebookUrl: "https://www.facebook.com/",
+    defaultName: "Photographer",
+    defaultInstagramUrl: "https://www.instagram.com/badr_abdo_ph",
+    defaultFacebookUrl: "https://www.facebook.com/badrabdophoto",
     defaultLogoUrl: "",
   },
-  updatedAt: "",
+  updatedAt: "2026-06-21T23:28:38.701Z",
 };
 
 function cleanText(value: unknown, fallback = "") {

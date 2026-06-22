@@ -1,3 +1,5 @@
+import { downloadAndRestoreFromGitHub } from "./lib/backups";
+
 export async function register() {
   if (process.env.NEXT_PHASE === "phase-production-build") return;
 
@@ -45,7 +47,6 @@ export async function register() {
   }
 
   console.log(`[instrumentation] بدء الاستعادة التلقائية من: ${latestBackup.fileName}`);
-  const { downloadAndRestoreFromGitHub } = await import(/* webpackIgnore: true */ "./lib/backups");
   const result = await downloadAndRestoreFromGitHub(latestBackup.fileName);
 
   if (result.ok) {

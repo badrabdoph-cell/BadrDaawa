@@ -1,12 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.plugins.push(
       new (require("webpack").NormalModuleReplacementPlugin)(/^node:/, (resource: { request: string }) => {
         resource.request = resource.request.replace(/^node:/, "");
       })
     );
+    if (isServer) {
+      const nodeBuiltins = [
+        "crypto", "zlib", "fs", "fs/promises", "path", "stream",
+        "http", "https", "url", "util", "assert", "buffer",
+        "child_process", "os", "net", "tls", "events", "querystring",
+        "string_decoder", "punycode", "timers", "tty",
+      ];
+      config.externals = [
+        ...(Array.isArray(config.externals) ? config.externals : [config.externals]).filter(Boolean),
+        ...nodeBuiltins,
+      ];
+    }
     return config;
   },
   poweredByHeader: false,

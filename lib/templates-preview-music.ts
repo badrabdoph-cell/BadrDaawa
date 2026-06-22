@@ -15,9 +15,9 @@ export type ResolvedTemplatesPreviewMusic = {
 };
 
 const defaultSettings: TemplatesPreviewMusicSettings = {
-  enabled: false,
-  trackId: "",
-  updatedAt: "",
+  enabled: true,
+  trackId: "music-المقطع-الرئيسي",
+  updatedAt: "2026-06-15T13:28:58.294Z",
 };
 
 function normalizeSettings(value: Partial<TemplatesPreviewMusicSettings> | null | undefined): TemplatesPreviewMusicSettings {
