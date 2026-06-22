@@ -1,6 +1,3 @@
-import { downloadAndRestoreFromGitHub } from "./lib/backups";
-import { findLatestBackupOnGitHub } from "./lib/github-sync";
-
 export async function register() {
   if (process.env.NEXT_PHASE === "phase-production-build") return;
 
@@ -27,6 +24,7 @@ export async function register() {
 
   let latestBackup;
   try {
+    const { findLatestBackupOnGitHub } = await import("./lib/github-sync");
     latestBackup = await findLatestBackupOnGitHub();
   } catch {
     console.error("[instrumentation] فشل البحث عن آخر نسخة احتياطية على GitHub");
@@ -45,6 +43,7 @@ export async function register() {
   }
 
   console.log(`[instrumentation] بدء الاستعادة التلقائية من: ${latestBackup.fileName} (commit: ${latestBackup.commitSha})`);
+  const { downloadAndRestoreFromGitHub } = await import("./lib/backups");
   const result = await downloadAndRestoreFromGitHub(latestBackup.fileName, {
     githubSha: latestBackup.commitSha,
     createdAt: latestBackup.createdAt,
