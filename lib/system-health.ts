@@ -214,15 +214,56 @@ async function checkPushNotifications() {
   }
 }
 
+async function checkPublishSystem(): Promise<SystemHealthCheck> {
+  if (!prisma) {
+    return { key: "publish", label: "النشر", level: "warning", status: "غير متاح", detail: "قاعدة البيانات غير متصلة" };
+  }
+  try {
+    const latestVersion = await prisma.contentVersion.findFirst({ orderBy: { version: "desc" } });
+    const versionCount = await prisma.contentVersion.count();
+    if (versionCount === 0) {
+      return { key: "publish", label: "النشر", level: "warning", status: "لا توجد إصدارات", detail: "لم يتم نشر أي محتوى بعد" };
+    }
+    return {
+      key: "publish",
+      label: "النشر",
+      level: "ok",
+      status: `${versionCount} إصدار`,
+      detail: `آخر إصدار: #${latestVersion!.version} في ${latestVersion!.publishedAt.toLocaleString("ar-EG")}`,
+    };
+  } catch (error) {
+    return { key: "publish", label: "النشر", level: "error", status: "خطأ", detail: "فشل التحقق", error: toErrorMessage(error) };
+  }
+}
+
+async function checkAutoRestoreReadiness(): Promise<SystemHealthCheck> {
+  const enabled = (process.env.AUTO_RESTORE_FROM_GITHUB || "").trim().toLowerCase() === "true";
+  const repoConfigured = Boolean((process.env.GITHUB_SYNC_REPO || "").trim() && (process.env.GITHUB_SYNC_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim());
+  const destructiveAllowed = (process.env.ALLOW_DESTRUCTIVE_RESTORE || "").trim() === "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL";
+
+  if (!enabled) {
+    return { key: "auto-restore", label: "Auto Restore", level: "warning", status: "معطل", detail: "AUTO_RESTORE_FROM_GITHUB غير مفعل" };
+  }
+  if (!repoConfigured) {
+    return { key: "auto-restore", label: "Auto Restore", level: "error", status: "غير جاهز", detail: "GitHub غير مهيأ" };
+  }
+  if (!destructiveAllowed) {
+    return { key: "auto-restore", label: "Auto Restore", level: "warning", status: "ALLOW_DESTRUCTIVE_RESTORE غير مضبوط", detail: "الاستعادة التلقائية تتطلب ALLOW_DESTRUCTIVE_RESTORE" };
+  }
+  return { key: "auto-restore", label: "Auto Restore", level: "ok", status: "جاهز", detail: "Auto Restore مفعل ومهيأ" };
+}
+
 export async function getSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
   noStore();
 
-  const [database, storage, githubSync, backups, push, invitationsResult, ordersResult] = await Promise.all([
+  const [database, storage, githubSync, backups, push, publish, autoRestore, invitationsResult, ordersResult] = await Promise.all([
     checkDatabase(),
     checkStorage(),
     checkGitHubSync(),
     checkBackups(),
     checkPushNotifications(),
+    checkPublishSystem(),
+    checkAutoRestoreReadiness(),
     getAdminInvitations()
       .then((items) => ({ count: items.length, error: "" }))
       .catch((error) => ({ count: 0, error: toErrorMessage(error) })),
@@ -254,7 +295,7 @@ export async function getSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
   }
 
   return {
-    checks: [database, githubSync, storage.check, backups.check, push.check, ...dataChecks],
+    checks: [database, githubSync, storage.check, backups.check, push.check, publish, autoRestore, ...dataChecks],
     metrics: {
       filesCount: storage.files.length,
       filesSizeBytes: storage.files.reduce((sum, file) => sum + file.size, 0),

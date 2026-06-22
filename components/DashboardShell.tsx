@@ -82,6 +82,7 @@ const adminSections = [
     icon: Upload,
     links: [
       { href: "/admin/publish", label: "إدارة النشر", icon: Upload },
+      { href: "/admin/versions", label: "سجل الإصدارات", icon: History },
     ],
   },
   {

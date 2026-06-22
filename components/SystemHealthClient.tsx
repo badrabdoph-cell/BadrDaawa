@@ -15,6 +15,8 @@ const checkIcons: Record<string, typeof Activity> = {
   storage: HardDrive,
   backup: FileArchive,
   "push-notifications": BellRing,
+  publish: Activity,
+  "auto-restore": Timer,
 };
 
 const levelLabel: Record<SystemHealthLevel, string> = {

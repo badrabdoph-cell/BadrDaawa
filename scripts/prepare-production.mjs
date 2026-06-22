@@ -185,6 +185,18 @@ function autoGenerateMissingSecrets() {
     generated.BACKUP_GITHUB_TOKEN = process.env.GITHUB_SYNC_TOKEN;
   }
 
+  if (!process.env.GITHUB_SYNC_TOKEN) {
+    console.warn("[prepare] ⚠️ GITHUB_SYNC_TOKEN غير مضبوط. النسخ الاحتياطي على GitHub والمزامنة لن تعمل.");
+    console.warn("[prepare] ⚠️ أنشئ GitHub Token (Settings → Developer settings → Personal access tokens → Fine-grained tokens)");
+    console.warn("[prepare] ⚠️ أعطه صلاحية Contents: Read and write للمستودع badrabdoph-cell/BadrDaawa");
+    console.warn("[prepare] ⚠️ ثم أضفه كـ GITHUB_SYNC_TOKEN في Railway Variables");
+  }
+
+  const backupCronSecret = generated.BACKUP_CRON_SECRET || process.env.BACKUP_CRON_SECRET;
+  if (backupCronSecret) {
+    console.log(`[prepare] BACKUP_CRON_SECRET: ${backupCronSecret.slice(0, 12)}... (احفظ هذه القيمة لإضافتها إلى Cron Job Service في Railway)`);
+  }
+
   if (changed) {
     const lines = Object.entries(generated).map(([k, v]) => `${k}=${v}`);
     writeFileSync(secretsFile, lines.join("\n") + "\n", "utf8");

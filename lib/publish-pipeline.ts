@@ -230,6 +230,18 @@ export async function getLatestContentVersion() {
   }
 }
 
+export async function getAllContentVersions(limit = 50) {
+  if (!prisma) return [];
+  try {
+    return await prisma.contentVersion.findMany({
+      orderBy: { version: "desc" },
+      take: limit,
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function getPublishStatus() {
   const meta = await import("./project-content-store").then((m) => m.getPublishMeta());
   return meta;
