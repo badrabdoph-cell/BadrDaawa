@@ -1,6 +1,6 @@
-import { createHash } from "node:crypto";
-import { readdir, readFile, stat, unlink } from "node:fs/promises";
-import path from "node:path";
+import { createHash } from "crypto";
+import { readdir, readFile, stat, unlink } from "fs/promises";
+import path from "path";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
 import { createBackupSnapshot, type BackupSummary } from "@/lib/backups";
 import { prisma } from "@/lib/db";

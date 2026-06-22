@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { ADMIN_SESSION_COOKIE, getAdminSessionUser } from "@/lib/admin-session";
 import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { saveOrderPreviewImages, type PreviewImageInput } from "@/lib/order-preview-images";

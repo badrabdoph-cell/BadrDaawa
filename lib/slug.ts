@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { randomInt } from "crypto";
 
 const reservedRoutes = new Set([
   "admin",

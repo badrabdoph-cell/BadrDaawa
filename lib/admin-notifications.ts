@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash } from "crypto";
 import { unstable_noStore as noStore } from "next/cache";
 import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import { getAdminInvitations, getAdminOrders } from "./admin-data";

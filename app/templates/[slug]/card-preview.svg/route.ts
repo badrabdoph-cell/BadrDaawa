@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from "fs/promises";
+import path from "path";
 import { NextResponse } from "next/server";
 import { getPublishedTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getPublicPublishedTemplateWithPreviewMusic } from "@/lib/template-settings";

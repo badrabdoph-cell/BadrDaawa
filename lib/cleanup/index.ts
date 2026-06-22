@@ -3,8 +3,8 @@ import { prisma } from "@/lib/db";
 import { getMediaCleanupReport, type MediaCleanupReport } from "@/lib/media-cleanup";
 import { getTrashItems } from "@/lib/trash";
 import { listBackupSnapshots } from "@/lib/backups";
-import { readdir, stat } from "node:fs/promises";
-import path from "node:path";
+import { readdir, stat } from "fs/promises";
+import path from "path";
 
 export type CleanupCategory =
   | "unused-files"
@@ -315,7 +315,7 @@ function isCoreDep(name: string): boolean {
 
 async function readFileSafe(filePath: string): Promise<string | null> {
   try {
-    const { readFile } = await import("node:fs/promises");
+    const { readFile } = await import("fs/promises");
     return await readFile(filePath, "utf-8");
   } catch {
     return null;

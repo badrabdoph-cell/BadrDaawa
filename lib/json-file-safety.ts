@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { readFile, stat } from "fs/promises";
 
 const defaultMaxJsonFileBytes = 8 * 1024 * 1024;
 

@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import path from "path";
 import { readAppSetting, writeAppSetting } from "./app-settings";
 
 export type ProjectContentKey =

@@ -1,8 +1,8 @@
-import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
+import { spawn } from "child_process";
+import { randomUUID } from "crypto";
+import { mkdir, readFile, rm, writeFile } from "fs/promises";
+import os from "os";
+import path from "path";
 
 type VideoExtension = "mp4" | "mov" | "webm";
 

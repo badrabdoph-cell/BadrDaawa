@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { deleteProjectAssetFile, writeProjectAssetFile } from "./project-assets";
 import { deleteUploadFile, listUploadFiles, writeUploadFile } from "./storage-provider";
 

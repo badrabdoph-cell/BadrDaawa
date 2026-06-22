@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "crypto";
 import { runScheduledTask } from "@/lib/task-scheduler";
 
 export const runtime = "nodejs";

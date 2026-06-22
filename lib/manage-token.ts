@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes } from "crypto";
 
 const TOKEN_BYTES = 24;
 const TOKEN_EXPIRY_DAYS = 30;

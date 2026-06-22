@@ -1,6 +1,6 @@
-import { mkdir, rename, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { randomBytes } from "node:crypto";
+import { mkdir, rename, writeFile } from "fs/promises";
+import path from "path";
+import { randomBytes } from "crypto";
 
 export async function writeTextFileAtomic(filePath: string, content: string) {
   await mkdir(path.dirname(filePath), { recursive: true });

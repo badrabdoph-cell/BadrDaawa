@@ -1,4 +1,4 @@
-import path from "node:path";
+import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { runtimeUploadSubdirs } from "@/lib/runtime-paths";
 import { getUploadFileContentType, normalizeStorageKey, statUploadFile, streamUploadFile } from "@/lib/storage-provider";

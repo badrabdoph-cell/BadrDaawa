@@ -54,6 +54,6 @@ export async function dispatchWebhook(event: WebhookEvent, data: Record<string, 
 }
 
 async function createSignature(payload: string): Promise<string> {
-  const { createHmac } = await import("node:crypto");
+  const { createHmac } = await import("crypto");
   return createHmac("sha256", WEBHOOK_SECRET).update(payload).digest("hex");
 }

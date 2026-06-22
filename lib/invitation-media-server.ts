@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { writeUploadFile } from "./storage-provider";
 
 const maxHeroVideoBytes = 35 * 1024 * 1024;

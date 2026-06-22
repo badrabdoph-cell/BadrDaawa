@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { normalizeImageForDisplay } from "./display-images";
 import { imageExtensionFromBytes, imageExtensionFromDataMime, imageExtensionFromMime, imageExtensionFromName, isBrowserDisplayImageUrl, isSupportedImageUrl } from "./image-formats";
 import { readPublicMediaFile, writeUploadFile } from "./storage-provider";

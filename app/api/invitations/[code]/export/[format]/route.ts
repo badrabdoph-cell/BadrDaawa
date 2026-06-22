@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync } from "fs";
+import { join } from "path";
 import PDFDocument from "pdfkit";
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/db";

@@ -1,6 +1,6 @@
-import { createHash } from "node:crypto";
-import { readdir, readFile, stat } from "node:fs/promises";
-import path from "node:path";
+import { createHash } from "crypto";
+import { readdir, readFile, stat } from "fs/promises";
+import path from "path";
 import { readProjectContentExportFiles } from "./project-content-store";
 import { runtimeUploadsDir } from "./runtime-paths";
 

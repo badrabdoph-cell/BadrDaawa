@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from "fs/promises";
+import path from "path";
 import { unstable_noStore as noStore } from "next/cache";
 import { readAppSettingOrSeed, writeAppSetting } from "./app-settings";
 import type { AdminFavorite, AdminFavoriteEntityType } from "./types";

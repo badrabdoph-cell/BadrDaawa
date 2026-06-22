@@ -1,4 +1,4 @@
-import { createPrivateKey, createSign } from "node:crypto";
+import { createPrivateKey, createSign } from "crypto";
 import { prisma } from "@/lib/db";
 
 type StoredSubscription = {

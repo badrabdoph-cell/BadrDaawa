@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  webpack: (config) => {
+    config.plugins.push(
+      new (require("webpack").NormalModuleReplacementPlugin)(/^node:/, (resource: { request: string }) => {
+        resource.request = resource.request.replace(/^node:/, "");
+      })
+    );
+    return config;
+  },
   poweredByHeader: false,
   serverExternalPackages: ["pdfkit", "heic-convert", "heic-decode", "libheif-js", "jpeg-js", "pngjs"],
   images: {

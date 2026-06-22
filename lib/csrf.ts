@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 // Generate a CSRF token and store in cookie
 export async function generateCsrfToken(): Promise<string> {
-  const { randomBytes } = await import("node:crypto");
+  const { randomBytes } = await import("crypto");
   const token = randomBytes(32).toString("hex");
   const cookieStore = await cookies();
   cookieStore.set("csrf_token", token, {
