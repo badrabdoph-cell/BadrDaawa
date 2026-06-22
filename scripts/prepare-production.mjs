@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 
 const root = process.cwd();
@@ -83,10 +84,58 @@ function logPostgresToolAvailability(command) {
   console.log(`[prepare] ${command} is available: ${output || "version detected"}`);
 }
 
+function generateSecret(bytes = 32) {
+  return randomBytes(bytes).toString("hex");
+}
+
+function autoGenerateMissingSecrets() {
+  const secretsFile = path.join(root, "data", ".secrets.env");
+
+  const generated = existsSync(secretsFile)
+    ? Object.fromEntries(
+        readFileSync(secretsFile, "utf8")
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => {
+            const idx = line.indexOf("=");
+            return idx === -1 ? null : [line.slice(0, idx), line.slice(idx + 1)];
+          })
+          .filter(Boolean),
+      )
+    : {};
+
+  const SECRETS = {
+    AUTH_SECRET: { gen: () => generateSecret(32) },
+    ADMIN_SESSION_SECRET: { gen: () => generateSecret(32) },
+    CLIENT_ADMIN_USERNAME: { gen: () => "admin" },
+    CLIENT_ADMIN_PASSWORD: { gen: () => generateSecret(16) },
+    CLIENT_SESSION_SECRET: { gen: () => generateSecret(32) },
+    BACKUP_CRON_SECRET: { gen: () => generateSecret(32) },
+  };
+
+  let changed = false;
+  for (const [key, config] of Object.entries(SECRETS)) {
+    if (process.env[key]) continue;
+    if (!generated[key]) {
+      generated[key] = config.gen();
+      changed = true;
+    }
+    process.env[key] = generated[key];
+  }
+
+  if (changed) {
+    const lines = Object.entries(generated).map(([k, v]) => `${k}=${v}`);
+    writeFileSync(secretsFile, lines.join("\n") + "\n", "utf8");
+    console.log(`[prepare] Generated and persisted ${Object.keys(SECRETS).length} missing secrets`);
+  }
+}
+
 for (const dir of dirs) {
   mkdirSync(dir, { recursive: true });
 }
 console.log(`[prepare] Runtime directories are ready: ${dirs.length}`);
+
+autoGenerateMissingSecrets();
 
 logPostgresToolAvailability("pg_restore");
 
@@ -114,7 +163,6 @@ try {
     console.warn(`[prepare] ⚠️ SCHEMA DRIFT: ${diffResult.stdout.trim().length} bytes of unapplied changes. Create migration: pnpm dlx prisma migrate dev --create-only --name <description>`);
   }
 } catch {
-  // diff check is best-effort
 }
 
 console.log("[prepare] Startup restore and legacy JSON backfills are disabled permanently.");

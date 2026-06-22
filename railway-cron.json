@@ -1,5 +1,5 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
+  "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
     "startCommand": "pnpm backup:trigger",
     "cronSchedule": "0 * * * *",
