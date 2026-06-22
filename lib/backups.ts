@@ -1624,3 +1624,633 @@ export async function isBackupSafe(backupFileName: string): Promise<boolean> {
   });
   return count > 0;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// NEW BACKUP SYSTEM v2 — Database / Uploads / Full (separate)
+// ═══════════════════════════════════════════════════════════════════
+
+export type BackupTypeV2 = "database" | "uploads" | "full";
+
+export type DatabaseBackupPayload = {
+  version: 2;
+  type: "database";
+  createdAt: string;
+  source: "database";
+  app: string;
+  runtimeData: Record<string, unknown[]>;
+};
+
+export type UploadsBackupManifest = {
+  version: 1;
+  createdAt: string;
+  type: "uploads";
+  totalFiles: number;
+  totalSizeBytes: number;
+  largestFileBytes: number;
+};
+
+export type FullBackupManifest = {
+  version: 1;
+  createdAt: string;
+  type: "full";
+  db: { sizeBytes: number };
+  uploads: { totalFiles: number; totalSizeBytes: number; largestFileBytes: number };
+};
+
+export type BackupFileEntry = {
+  relativePath: string;
+  bytes: Buffer;
+  contentType: string;
+  sha256: string;
+};
+
+export type V2RestoreResult = {
+  ok: boolean;
+  type: BackupTypeV2;
+  fileName: string;
+  itemsRestored: number;
+  uploadsRestored: number;
+  durationMs: number;
+  error: string | null;
+};
+
+const BACKUP_GITHUB_MAX_BLOB_SIZE = 90 * 1024 * 1024; // 90 MB safety margin under GitHub's 100 MB limit
+
+function formatBackupRepoPathV2(type: BackupTypeV2, fileName: string, createdAt: Date) {
+  const year = String(createdAt.getUTCFullYear());
+  const month = String(createdAt.getUTCMonth() + 1).padStart(2, "0");
+  const timestamp = fileName.replace(/^(scheduled|manual|verify|storage-cleanup|storage-cleanup-orphans|storage-cleanup-duplicates)-/i, "");
+  switch (type) {
+    case "database":
+      return `backups/database/${timestamp}`;
+    case "uploads":
+      return `backups/uploads/${year}/${month}/backup-${timestamp}`;
+    case "full":
+      return `backups/full/${timestamp}`;
+  }
+}
+
+function getRuntimeDataForBackup(): Record<string, unknown[]> {
+  return {};
+}
+
+async function collectRuntimeData(): Promise<Record<string, unknown[]>> {
+  if (!prisma) return {};
+  const tables = restoreTableOrder();
+  const runtimeData: Record<string, unknown[]> = {};
+  for (const table of tables) {
+    try {
+      const model = prismaModelForTable(prisma, table);
+      if (model?.findMany) {
+        runtimeData[table] = await model.findMany();
+      }
+    } catch {
+      runtimeData[table] = [];
+    }
+  }
+  return runtimeData;
+}
+
+// ── Create Database-only backup payload ──
+export async function createDatabaseBackupPayload(): Promise<{ bytes: Buffer; fileName: string; createdAt: Date }> {
+  const runtimeData = await collectRuntimeData();
+  const payload: DatabaseBackupPayload = {
+    version: 2,
+    type: "database",
+    createdAt: new Date().toISOString(),
+    source: "database",
+    app: "BadrDaawa",
+    runtimeData,
+  };
+  const json = JSON.stringify(payload, jsonReplacer, 2);
+  const bytes = gzipSync(Buffer.from(json, "utf8"), { level: 9 });
+  const createdAt = new Date();
+  const fileName = `database-${createdAt.toISOString().replace(/[:.]/g, "-").replace(/[^\w-]/g, "")}`;
+  return { bytes, fileName, createdAt };
+}
+
+// ── Create Uploads-only backup payload ──
+export async function createUploadsBackupPayload(): Promise<{
+  manifest: UploadsBackupManifest;
+  files: BackupFileEntry[];
+  createdAt: Date;
+}> {
+  const uploadFiles = await listUploadFiles();
+  const files: BackupFileEntry[] = [];
+  for (const file of uploadFiles.sort((a, b) => a.key.localeCompare(b.key))) {
+    const bytes = await readUploadFile(file.key);
+    if (!bytes) continue;
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    files.push({
+      relativePath: file.key,
+      bytes,
+      contentType: file.contentType || "application/octet-stream",
+      sha256,
+    });
+  }
+  const totalSizeBytes = files.reduce((sum, f) => sum + f.bytes.length, 0);
+  const largestFileBytes = files.reduce((max, f) => Math.max(max, f.bytes.length), 0);
+  const createdAt = new Date();
+  const manifest: UploadsBackupManifest = { version: 1, createdAt: createdAt.toISOString(), type: "uploads", totalFiles: files.length, totalSizeBytes, largestFileBytes };
+  return { manifest, files, createdAt };
+}
+
+// ── Create Full backup payload ──
+export async function createFullBackupPayload(): Promise<{
+  manifest: FullBackupManifest;
+  files: BackupFileEntry[];
+  createdAt: Date;
+}> {
+  const runtimeData = await collectRuntimeData();
+  const dbPayload: DatabaseBackupPayload = { version: 2, type: "database", createdAt: new Date().toISOString(), source: "database", app: "BadrDaawa", runtimeData };
+  const dbJson = JSON.stringify(dbPayload, jsonReplacer, 2);
+  const dbBytes = gzipSync(Buffer.from(dbJson, "utf8"), { level: 9 });
+  const createdAt = new Date();
+
+  const uploadFiles = await listUploadFiles();
+  const files: BackupFileEntry[] = [
+    { relativePath: "db.json.gz", bytes: dbBytes, contentType: "application/gzip", sha256: createHash("sha256").update(dbBytes).digest("hex") },
+  ];
+  let uploadsTotalBytes = 0;
+  let uploadsLargest = 0;
+  for (const file of uploadFiles.sort((a, b) => a.key.localeCompare(b.key))) {
+    const bytes = await readUploadFile(file.key);
+    if (!bytes) continue;
+    uploadsTotalBytes += bytes.length;
+    uploadsLargest = Math.max(uploadsLargest, bytes.length);
+    files.push({ relativePath: `uploads/${file.key}`, bytes, contentType: file.contentType || "application/octet-stream", sha256: createHash("sha256").update(bytes).digest("hex") });
+  }
+  const manifest: FullBackupManifest = { version: 1, createdAt: createdAt.toISOString(), type: "full", db: { sizeBytes: dbBytes.length }, uploads: { totalFiles: uploadFiles.length, totalSizeBytes: uploadsTotalBytes, largestFileBytes: uploadsLargest } };
+  return { manifest, files, createdAt };
+}
+
+// ── Create composite manifest blob and upload all files as separate Git blobs ──
+async function uploadMultiBlobBackupToGitHub(
+  type: BackupTypeV2,
+  fileName: string,
+  createdAt: Date,
+  manifest: Record<string, unknown>,
+  files: BackupFileEntry[],
+  reason: string,
+): Promise<{ commitSha: string; repoPath: string } | null> {
+  const { getSyncConfig } = await import("./github-sync");
+  const config = getSyncConfig();
+  if (!config) return null;
+  const { owner, repo } = config.repo;
+
+  const basePath = formatBackupRepoPathV2(type, fileName, createdAt);
+
+  const fileBlobs: Record<string, string> = {};
+  const treeEntries: Array<{ path: string; mode: string; type: string; sha: string }> = [];
+
+  for (const file of files) {
+    if (file.bytes.length > BACKUP_GITHUB_MAX_BLOB_SIZE) {
+      console.warn(`[MultiBlobUpload] Skipping ${file.relativePath} (${file.bytes.length} bytes exceeds 90 MB limit)`);
+      continue;
+    }
+    const blob = await githubRequest<GitHubBlob>(
+      `/repos/${owner}/${repo}/git/blobs`,
+      { method: "POST", body: JSON.stringify({ content: file.bytes.toString("base64"), encoding: "base64" }) },
+      config.token,
+    );
+    const entryPath = `${basePath}/${file.relativePath}`;
+    fileBlobs[file.relativePath] = blob.sha;
+    treeEntries.push({ path: entryPath, mode: "100644", type: "blob", sha: blob.sha });
+  }
+
+  const manifestWithBlobs = { ...manifest, fileBlobs };
+  const manifestBytes = gzipSync(Buffer.from(JSON.stringify(manifestWithBlobs), "utf8"), { level: 9 });
+
+  const manifestBlob = await githubRequest<GitHubBlob>(
+    `/repos/${owner}/${repo}/git/blobs`,
+    { method: "POST", body: JSON.stringify({ content: manifestBytes.toString("base64"), encoding: "base64" }) },
+    config.token,
+  );
+  treeEntries.unshift({ path: `${basePath}/manifest.json.gz`, mode: "100644", type: "blob", sha: manifestBlob.sha });
+
+  const ref = await githubRequest<GitHubRef>(
+    `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+    { method: "GET" }, config.token,
+  );
+  const headCommit = await githubRequest<GitHubCommit>(
+    `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+    { method: "GET" }, config.token,
+  );
+  const tree = await githubRequest<GitHubTree>(
+    `/repos/${owner}/${repo}/git/trees`,
+    { method: "POST", body: JSON.stringify({ base_tree: headCommit.tree.sha, tree: treeEntries }) },
+    config.token,
+  );
+  const commit = await githubRequest<GitHubCreatedCommit>(
+    `/repos/${owner}/${repo}/git/commits`,
+    { method: "POST", body: JSON.stringify({
+      message: `chore(backup): ${type} backup ${fileName}\n\n${reason}`.slice(0, 500),
+      tree: tree.sha, parents: [ref.object.sha],
+    })},
+    config.token,
+  );
+  await githubRequest(
+    `/repos/${owner}/${repo}/git/refs/heads/${branchRefPath(config.branch)}`,
+    { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) },
+    config.token,
+  );
+  return { commitSha: commit.sha, repoPath: basePath };
+}
+
+// ── Upload Database backup to GitHub ──
+export async function uploadDatabaseBackupToGitHub(bytes: Buffer, fileName: string, createdAt: Date, reason: string) {
+  const { getSyncConfig } = await import("./github-sync");
+  const config = getSyncConfig();
+  if (!config) return null;
+  const { owner, repo } = config.repo;
+
+  if (bytes.length > BACKUP_GITHUB_MAX_BLOB_SIZE) {
+    console.warn(`[DB Backup] ${fileName} is ${bytes.length} bytes > 90 MB limit, skipping`);
+    return null;
+  }
+
+  const repoPath = `backups/database/${fileName}.gz`;
+
+  const blob = await githubRequest<GitHubBlob>(
+    `/repos/${owner}/${repo}/git/blobs`,
+    { method: "POST", body: JSON.stringify({ content: bytes.toString("base64"), encoding: "base64" }) },
+    config.token,
+  );
+
+  const ref = await githubRequest<GitHubRef>(
+    `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+    { method: "GET" }, config.token,
+  );
+  const headCommit = await githubRequest<GitHubCommit>(
+    `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+    { method: "GET" }, config.token,
+  );
+
+  const tree = await githubRequest<GitHubTree>(
+    `/repos/${owner}/${repo}/git/trees`,
+    { method: "POST", body: JSON.stringify({ base_tree: headCommit.tree.sha, tree: [{ path: repoPath, mode: "100644", type: "blob", sha: blob.sha }] }) },
+    config.token,
+  );
+
+  const commit = await githubRequest<GitHubCreatedCommit>(
+    `/repos/${owner}/${repo}/git/commits`,
+    { method: "POST", body: JSON.stringify({ message: `chore(backup): database backup ${fileName}\n\n${reason}`.slice(0, 500), tree: tree.sha, parents: [ref.object.sha] }) },
+    config.token,
+  );
+
+  await githubRequest(
+    `/repos/${owner}/${repo}/git/refs/heads/${branchRefPath(config.branch)}`,
+    { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) },
+    config.token,
+  );
+
+  return { commitSha: commit.sha, repoPath };
+}
+
+// ── Upload Uploads backup to GitHub ──
+export async function uploadUploadsBackupToGitHub(
+  manifest: UploadsBackupManifest,
+  files: BackupFileEntry[],
+  fileName: string,
+  createdAt: Date,
+  reason: string,
+) {
+  const result = await uploadMultiBlobBackupToGitHub("uploads", fileName, createdAt, manifest as unknown as Record<string, unknown>, files, reason);
+  return result;
+}
+
+// ── Upload Full backup to GitHub ──
+export async function uploadFullBackupToGitHub(
+  manifest: FullBackupManifest,
+  files: BackupFileEntry[],
+  fileName: string,
+  createdAt: Date,
+  reason: string,
+) {
+  const result = await uploadMultiBlobBackupToGitHub("full", fileName, createdAt, manifest as unknown as Record<string, unknown>, files, reason);
+  return result;
+}
+
+// ── Find latest backup by type on GitHub ──
+export type GitHubBackupDiscoveryResultV2 = {
+  fileName: string;
+  commitSha: string;
+  repoPath: string;
+  createdAt: Date;
+  type: BackupTypeV2;
+};
+
+async function findBackupsOnGitHubByPrefix(prefix: string) {
+  const { getSyncConfig, githubRequest, GitHubRef, GitHubCommit, GitHubRecursiveTree, branchRefPath } = await import("./github-sync");
+  const config = getSyncConfig();
+  if (!config) return [];
+  const { owner, repo } = config.repo;
+
+  try {
+    const ref = await githubRequest<GitHubRef>(
+      `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+      { method: "GET" }, config.token,
+    );
+    const headCommit = await githubRequest<GitHubCommit>(
+      `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+      { method: "GET" }, config.token,
+    );
+    const tree = await githubRequest<GitHubRecursiveTree>(
+      `/repos/${owner}/${repo}/git/trees/${headCommit.tree.sha}?recursive=1`,
+      { method: "GET" }, config.token,
+    );
+    return tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(prefix));
+  } catch {
+    return [];
+  }
+}
+
+function backupTimestampFromPathV2(repoPath: string): number {
+  const match = repoPath.match(/(\d{8}T\d{6}Z)/);
+  if (!match) return 0;
+  const stamp = match[1];
+  const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
+  const time = Date.parse(iso);
+  return Number.isNaN(time) ? 0 : time;
+}
+
+export async function findLatestBackupOnGitHubByType(type: BackupTypeV2): Promise<GitHubBackupDiscoveryResultV2 | null> {
+  const prefix = type === "database" ? "backups/database/" : type === "uploads" ? "backups/uploads/" : "backups/full/";
+  const entries = await findBackupsOnGitHubByPrefix(prefix);
+  if (!entries.length) return null;
+
+  const sorted = entries.sort((a, b) => backupTimestampFromPathV2(b.path) - backupTimestampFromPathV2(a.path));
+  const latest = sorted[0];
+
+  const { getSyncConfig, githubRequest, GitHubCommit, GitHubRef, branchRefPath } = await import("./github-sync");
+  const config = getSyncConfig();
+  if (!config) return null;
+  const { owner, repo } = config.repo;
+
+  try {
+    const ref = await githubRequest<GitHubRef>(
+      `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+      { method: "GET" }, config.token,
+    );
+    const pathForMeta = type === "database" ? latest.path : latest.path.replace(/\/[^/]+$/, "/manifest.json.gz");
+    const match = pathForMeta.match(/(\d{8}T\d{6}Z)/);
+    const stamp = match?.[1];
+    let createdAt = new Date();
+    if (stamp) {
+      const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
+      const parsed = Date.parse(iso);
+      if (!Number.isNaN(parsed)) createdAt = new Date(parsed);
+    }
+    const pathParts = latest.path.replace(/\.gz$/, "").split("/");
+    const fileName = pathParts[pathParts.length - 1];
+    return { fileName, commitSha: ref.object.sha, repoPath: latest.path, createdAt, type };
+  } catch {
+    return null;
+  }
+}
+
+// ── Restore Database from GitHub ──
+export async function restoreDatabaseFromGitHub(options: { fileName?: string; commitSha?: string } = {}): Promise<V2RestoreResult> {
+  const startedAt = Date.now();
+  const { readGitHubBackupFile, getGitHubContentReadiness } = await import("./github-content");
+  const { getSyncConfig, formatBackupRepoPath: formatOld } = await import("./github-sync");
+
+  try {
+    let latest = options.fileName
+      ? { fileName: options.fileName, commitSha: options.commitSha || "" }
+      : await findLatestBackupOnGitHubByType("database");
+
+    if (!latest) {
+      return { ok: false, type: "database", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على نسخة احتياطية لقاعدة البيانات" };
+    }
+
+    if (!latest.commitSha) {
+      const full = await findLatestBackupOnGitHubByType("database");
+      if (!full) return { ok: false, type: "database", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على SHA" };
+      latest = full;
+    }
+
+    const repoPath = `backups/database/${latest.fileName}.gz`;
+
+    let rawBytes = await readGitHubBackupFile(repoPath, latest.commitSha);
+    if (!rawBytes) {
+      return { ok: false, type: "database", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "ملف النسخة غير موجود على GitHub" };
+    }
+
+    const text = gunzipSync(rawBytes).toString("utf8");
+    const payload: DatabaseBackupPayload = JSON.parse(text);
+    if (!payload.runtimeData) {
+      return { ok: false, type: "database", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "النسخة لا تحتوي على runtimeData" };
+    }
+
+    const steps: Array<{ table: string; deleted: number; inserted: number }> = [];
+    if (prisma) {
+      await prisma.$transaction(async (tx) => {
+        for (const table of deleteTableOrder()) {
+          const data = payload.runtimeData[table];
+          if (!data) continue;
+          const deleted = await deleteTableData(tx, table);
+          steps.push({ table, deleted, inserted: 0 });
+        }
+        for (const table of restoreTableOrder()) {
+          const rows = payload.runtimeData[table];
+          if (!rows?.length) continue;
+          const inserted = await insertTableData(tx, table, rows);
+          const existing = steps.find((s) => s.table === table);
+          if (existing) existing.inserted = inserted;
+          else steps.push({ table, deleted: 0, inserted });
+        }
+      });
+    }
+
+    const itemsRestored = steps.reduce((sum, s) => sum + s.inserted, 0);
+    return { ok: true, type: "database", fileName: latest.fileName, itemsRestored, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: null };
+  } catch (error) {
+    return { ok: false, type: "database", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ── Restore Uploads from GitHub ──
+export async function restoreUploadsFromGitHub(options: { fileName?: string; commitSha?: string } = {}): Promise<V2RestoreResult> {
+  const startedAt = Date.now();
+
+  try {
+    let latest = options.fileName
+      ? { fileName: options.fileName, commitSha: options.commitSha || "" }
+      : await findLatestBackupOnGitHubByType("uploads");
+
+    if (!latest) {
+      return { ok: false, type: "uploads", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على نسخة احتياطية للملفات" };
+    }
+
+    if (!latest.commitSha) {
+      const full = await findLatestBackupOnGitHubByType("uploads");
+      if (!full) return { ok: false, type: "uploads", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على SHA" };
+      latest = full;
+    }
+
+    const { readGitHubBlobBySha, githubRequest: ghReq } = await import("./github-content");
+    const { getSyncConfig, branchRefPath, GitHubCommit, GitHubRef, GitHubRecursiveTree } = await import("./github-sync");
+    const config = getSyncConfig();
+    if (!config) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "GitHub sync غير مهيأ" };
+
+    const { owner, repo } = config.repo;
+
+    const ref = await ghReq<GitHubRef>(
+      `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+      { method: "GET" }, config.token,
+    );
+    const headCommit = await ghReq<GitHubCommit>(
+      `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+      { method: "GET" }, config.token,
+    );
+    const tree = await ghReq<GitHubRecursiveTree>(
+      `/repos/${owner}/${repo}/git/trees/${headCommit.tree.sha}?recursive=1`,
+      { method: "GET" }, config.token,
+    );
+
+    const baseDir = `backups/uploads/`;
+    const uploadEntries = tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(baseDir));
+
+    const manifestEntry = uploadEntries.find((e) => e.path.endsWith("/manifest.json.gz"));
+    if (!manifestEntry?.sha) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على manifest" };
+
+    const manifestBlob = await readGitHubBlobBySha(manifestEntry.sha);
+    if (!manifestBlob) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "فشل قراءة manifest" };
+
+    const manifestData = JSON.parse(gunzipSync(manifestBlob).toString("utf8"));
+    const fileBlobs = manifestData.fileBlobs as Record<string, string> | undefined;
+    if (!fileBlobs) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "manifest لا يحتوي على fileBlobs" };
+
+    const { writeUploadFile } = await import("./storage-provider");
+    let uploadsRestored = 0;
+    for (const [relativePath, blobSha] of Object.entries(fileBlobs) as Array<[string, string]>) {
+      try {
+        const blobBuffer = await readGitHubBlobBySha(blobSha);
+        if (!blobBuffer) continue;
+        await writeUploadFile(relativePath, blobBuffer);
+        uploadsRestored++;
+      } catch (e) {
+        console.error(`[Uploads Restore] Failed to restore ${relativePath}:`, e);
+      }
+    }
+
+    return { ok: true, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored, durationMs: Date.now() - startedAt, error: null };
+  } catch (error) {
+    return { ok: false, type: "uploads", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ── Restore Full from GitHub ──
+export async function restoreFullFromGitHub(options: { fileName?: string; commitSha?: string } = {}): Promise<V2RestoreResult> {
+  const startedAt = Date.now();
+
+  try {
+    const dbResult = await restoreDatabaseFromGitHub(options);
+    const uploadsResult = await restoreUploadsFromGitHub(options);
+
+    return {
+      ok: dbResult.ok && uploadsResult.ok,
+      type: "full",
+      fileName: options.fileName || "full",
+      itemsRestored: dbResult.itemsRestored,
+      uploadsRestored: uploadsResult.uploadsRestored,
+      durationMs: Date.now() - startedAt,
+      error: !dbResult.ok ? dbResult.error : !uploadsResult.ok ? uploadsResult.error : null,
+    };
+  } catch (error) {
+    return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ── Check if uploads exist on disk ──
+export async function checkUploadsOnDisk(): Promise<boolean> {
+  try {
+    const files = await listUploadFiles();
+    return files.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+// ── Integrated auto-restore v2 ──
+export type AutoRestoreDecision = {
+  executed: boolean;
+  restored: boolean;
+  reason: string;
+  dbRestored?: boolean;
+  uploadsRestored?: boolean;
+  itemsRestored?: number;
+  uploadFilesRestored?: number;
+};
+
+export async function checkAndAutoRestoreV2(): Promise<AutoRestoreDecision> {
+  const enabled = (process.env.AUTO_RESTORE_FROM_GITHUB || "").toLowerCase() === "true";
+  if (!enabled) return { executed: false, restored: false, reason: "AUTO_RESTORE_FROM_GITHUB غير مفعّل" };
+
+  if (!prisma) return { executed: false, restored: false, reason: "قاعدة البيانات غير متصلة" };
+
+  let dbEmpty = false;
+  try {
+    const keysCount = await prisma.appSetting.count();
+    dbEmpty = keysCount === 0;
+  } catch {
+    return { executed: false, restored: false, reason: "فشل التحقق من قاعدة البيانات" };
+  }
+
+  const onlyIfEmpty = (process.env.AUTO_RESTORE_ONLY_IF_DB_EMPTY || "").trim().toLowerCase() !== "false";
+  if (onlyIfEmpty && !dbEmpty) {
+    const uploadsExist = await checkUploadsOnDisk().catch(() => false);
+    if (uploadsExist) {
+      return { executed: false, restored: false, reason: `قاعدة البيانات غير فارغة والملفات موجودة (${await prisma.appSetting.count()} مفتاح)` };
+    }
+    console.log("[Auto Restore] قاعدة البيانات غير فارغة لكن الملفات مفقودة، استعادة الملفات فقط");
+    const result = await restoreUploadsFromGitHub();
+    return {
+      executed: true,
+      restored: result.ok,
+      reason: result.ok ? `تمت استعادة ${result.uploadsRestored} ملف` : `فشلت استعادة الملفات: ${result.error}`,
+      uploadFilesRestored: result.uploadsRestored,
+      uploadsRestored: true,
+    };
+  }
+
+  if (dbEmpty) {
+    const uploadsExist = await checkUploadsOnDisk().catch(() => false);
+    if (!uploadsExist) {
+      console.log("[Auto Restore] قاعدة البيانات فارغة والملفات مفقودة، استعادة كاملة");
+      const result = await restoreFullFromGitHub();
+      return {
+        executed: true,
+        restored: result.ok,
+        reason: result.ok ? `تمت استعادة ${result.itemsRestored} عنصر و ${result.uploadsRestored} ملف` : `فشلت الاستعادة الكاملة: ${result.error}`,
+        itemsRestored: result.itemsRestored,
+        uploadFilesRestored: result.uploadsRestored,
+        dbRestored: result.itemsRestored > 0,
+        uploadsRestored: result.uploadsRestored > 0,
+      };
+    }
+    console.log("[Auto Restore] قاعدة البيانات فارغة، استعادة قاعدة البيانات فقط");
+    const result = await restoreDatabaseFromGitHub();
+    return {
+      executed: true,
+      restored: result.ok,
+      reason: result.ok ? `تمت استعادة ${result.itemsRestored} عنصر` : `فشلت استعادة قاعدة البيانات: ${result.error}`,
+      itemsRestored: result.itemsRestored,
+      dbRestored: result.ok,
+    };
+  }
+
+  return { executed: false, restored: false, reason: "لا حاجة للاستعادة" };
+}
+
+// ── githubRequest wrapper (needed for the v2 functions) ──
+import { githubRequest as _ghReq, branchRefPath as _brPath, GitHubBlob as _GB, GitHubRef as _GR, GitHubCommit as _GC, GitHubTree as _GT, GitHubCreatedCommit as _GCC, GitHubRecursiveTree as _GRT } from "./github-sync";
+const githubRequest = _ghReq;
+const branchRefPath = _brPath;
+type GitHubBlob = _GB;
+type GitHubRef = _GR;
+type GitHubCommit = _GC;
+type GitHubTree = _GT;
+type GitHubCreatedCommit = _GCC;
+type GitHubRecursiveTree = _GRT;
