@@ -85,7 +85,7 @@ function parseRepo(value: string) {
   return owner && repo ? { owner, repo } : null;
 }
 
-function getGitHubConfig() {
+export function getGitHubConfig() {
   const { token } = getGitHubTokenConfig();
   const rawRepo = process.env.GITHUB_SYNC_REPO || "";
   const repoInfo = parseRepo(rawRepo);
@@ -330,6 +330,25 @@ export async function readGitHubBackupFile(repoPath: string, githubSha: string):
     return null;
   } catch (error) {
     console.error("[readGitHubBackupFile] Blobs API fallback failed:", error);
+    return null;
+  }
+}
+
+export async function readGitHubBlobBySha(blobSha: string): Promise<Buffer | null> {
+  const config = getGitHubConfig();
+  if (!config) return null;
+  try {
+    const data = await githubRequest<{ content: string; encoding: string }>(
+      `/repos/${config.repo.owner}/${config.repo.repo}/git/blobs/${blobSha}`,
+      { method: "GET" },
+      config.token,
+    );
+    if (data.encoding === "base64" && data.content) {
+      return Buffer.from(data.content, "base64");
+    }
+    return null;
+  } catch (error) {
+    console.error("[readGitHubBlobBySha] Failed to fetch blob:", error);
     return null;
   }
 }

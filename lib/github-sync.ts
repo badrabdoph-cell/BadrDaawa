@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { readdir, readFile, stat } from "fs/promises";
 import path from "path";
+import { gzipSync, gunzipSync } from "zlib";
 import { readProjectContentExportFiles } from "./project-content-store";
 import { runtimeUploadsDir } from "./runtime-paths";
 
@@ -536,6 +537,7 @@ export async function uploadRuntimeBackupToGitHub(input: {
   createdAt: Date;
   reason: string;
   keepLast?: number;
+  uploads?: Array<Record<string, unknown>>;
 }): Promise<GitHubBackupUploadResult> {
   const config = getSyncConfig();
   if (!config) {
@@ -553,29 +555,115 @@ export async function uploadRuntimeBackupToGitHub(input: {
   const repoPath = formatBackupRepoPath(input.fileName, input.createdAt);
 
   try {
-    // Use Git Data API (blob) which supports files up to 100MB instead of Contents API (1MB limit)
+    if (input.uploads && input.uploads.length > 0) {
+      const originalPayload: Record<string, unknown> = JSON.parse(gunzipSync(input.bytes).toString("utf8"));
+
+      const uploadBlobs: Record<string, string> = {};
+      const treeEntries: Array<{ path: string; mode: string; type: string; sha: string }> = [];
+
+      for (let i = 0; i < input.uploads.length; i++) {
+        const upload = input.uploads[i];
+        const base64Content = upload.base64 as string;
+        if (!base64Content) continue;
+
+        const blob = await githubRequest<GitHubBlob>(
+          `/repos/${owner}/${repo}/git/blobs`,
+          { method: "POST", body: JSON.stringify({ content: base64Content, encoding: "base64" }) },
+          config.token,
+        );
+
+        const blobPath = `${repoPath}.upload/${i}`;
+        uploadBlobs[upload.relativePath as string] = blob.sha;
+        treeEntries.push({ path: blobPath, mode: "100644", type: "blob", sha: blob.sha });
+      }
+
+      const cleanUploads = input.uploads.map((u) => ({
+        relativePath: u.relativePath,
+        contentType: u.contentType,
+        sizeBytes: u.sizeBytes,
+        sha256: u.sha256,
+      }));
+
+      const cleanPayload = {
+        ...originalPayload,
+        uploads: cleanUploads,
+        _uploadBlobs: Object.keys(uploadBlobs).length > 0 ? uploadBlobs : undefined,
+      };
+
+      const cleanBytes = gzipSync(Buffer.from(JSON.stringify(cleanPayload), "utf8"), { level: 9 });
+
+      const mainBlob = await githubRequest<GitHubBlob>(
+        `/repos/${owner}/${repo}/git/blobs`,
+        { method: "POST", body: JSON.stringify({ content: cleanBytes.toString("base64"), encoding: "base64" }) },
+        config.token,
+      );
+
+      const ref = await githubRequest<GitHubRef>(
+        `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+        { method: "GET" }, config.token,
+      );
+
+      const headCommit = await githubRequest<GitHubCommit>(
+        `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+        { method: "GET" }, config.token,
+      );
+
+      treeEntries.unshift({ path: repoPath, mode: "100644", type: "blob", sha: mainBlob.sha });
+
+      const tree = await githubRequest<GitHubTree>(
+        `/repos/${owner}/${repo}/git/trees`,
+        {
+          method: "POST",
+          body: JSON.stringify({ base_tree: headCommit.tree.sha, tree: treeEntries }),
+        },
+        config.token,
+      );
+
+      const commit = await githubRequest<GitHubCreatedCommit>(
+        `/repos/${owner}/${repo}/git/commits`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            message: `chore(backup): upload runtime backup ${input.fileName}\n\n${input.reason}`.slice(0, 500),
+            tree: tree.sha, parents: [ref.object.sha],
+          }),
+        },
+        config.token,
+      );
+
+      await githubRequest(
+        `/repos/${owner}/${repo}/git/refs/heads/${branchRefPath(config.branch)}`,
+        { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) },
+        config.token,
+      );
+
+      const fileUrl = buildGitHubBlobUrl(config, repoPath);
+      await pruneOldRuntimeBackups(config, input.keepLast ?? 60);
+
+      return {
+        status: "synced",
+        message: `Runtime backup uploaded (${treeEntries.length - 1} upload blobs).`,
+        commitSha: commit.sha,
+        fileUrl,
+        repoPath,
+        verified: true,
+      };
+    }
+
     const blob = await githubRequest<GitHubBlob>(
       `/repos/${owner}/${repo}/git/blobs`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          content: input.bytes.toString("base64"),
-          encoding: "base64",
-        }),
-      },
+      { method: "POST", body: JSON.stringify({ content: input.bytes.toString("base64"), encoding: "base64" }) },
       config.token,
     );
 
     const ref = await githubRequest<GitHubRef>(
       `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
-      { method: "GET" },
-      config.token,
+      { method: "GET" }, config.token,
     );
 
     const headCommit = await githubRequest<GitHubCommit>(
       `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
-      { method: "GET" },
-      config.token,
+      { method: "GET" }, config.token,
     );
 
     const tree = await githubRequest<GitHubTree>(
@@ -584,14 +672,7 @@ export async function uploadRuntimeBackupToGitHub(input: {
         method: "POST",
         body: JSON.stringify({
           base_tree: headCommit.tree.sha,
-          tree: [
-            {
-              path: repoPath,
-              mode: "100644",
-              type: "blob",
-              sha: blob.sha,
-            },
-          ],
+          tree: [{ path: repoPath, mode: "100644", type: "blob", sha: blob.sha }],
         }),
       },
       config.token,
@@ -603,8 +684,7 @@ export async function uploadRuntimeBackupToGitHub(input: {
         method: "POST",
         body: JSON.stringify({
           message: `chore(backup): upload runtime backup ${input.fileName}\n\n${input.reason}`.slice(0, 500),
-          tree: tree.sha,
-          parents: [ref.object.sha],
+          tree: tree.sha, parents: [ref.object.sha],
         }),
       },
       config.token,
@@ -612,15 +692,11 @@ export async function uploadRuntimeBackupToGitHub(input: {
 
     await githubRequest(
       `/repos/${owner}/${repo}/git/refs/heads/${branchRefPath(config.branch)}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({ sha: commit.sha, force: false }),
-      },
+      { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) },
       config.token,
     );
 
     const fileUrl = buildGitHubBlobUrl(config, repoPath);
-
     await pruneOldRuntimeBackups(config, input.keepLast ?? 60);
 
     return {

@@ -1397,6 +1397,7 @@ export async function downloadAndRestoreFromGitHub(
 
   const runtimeData = payload.runtimeData as Record<string, unknown[]> | undefined;
   const uploads = payload.uploads as Array<Record<string, unknown>> | undefined;
+  const uploadBlobs = payload._uploadBlobs as Record<string, string> | undefined;
   if (!runtimeData || typeof runtimeData !== "object") {
     return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup file does not contain runtimeData" };
   }
@@ -1430,6 +1431,25 @@ export async function downloadAndRestoreFromGitHub(
 
     let uploadsRestored = 0;
     if (Array.isArray(uploads) && uploads.length > 0) {
+      if (uploadBlobs && typeof uploadBlobs === "object" && Object.keys(uploadBlobs).length > 0) {
+        const { readGitHubBlobBySha } = await import("./github-content");
+        for (const upload of uploads) {
+          const rp = upload.relativePath as string;
+          if (!rp) continue;
+          const blobSha = uploadBlobs[rp];
+          if (!blobSha) continue;
+          if (upload.base64) continue;
+          try {
+            const blobBuffer = await readGitHubBlobBySha(blobSha);
+            if (blobBuffer) {
+              upload.base64 = blobBuffer.toString("base64");
+              upload.encoding = "base64";
+            }
+          } catch (blobError) {
+            console.error(`[GitHub Restore] Failed to fetch upload blob for ${rp}:`, blobError);
+          }
+        }
+      }
       const { writeUploadFile } = await import("./storage-provider");
       for (const upload of uploads) {
         const b64 = upload.base64 as string | undefined;
