@@ -1,7 +1,7 @@
-import { createHash } from "node:crypto";
-import { readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { gzipSync, gunzipSync } from "node:zlib";
+import { createHash } from "crypto";
+import { readFile, readdir, stat, unlink, writeFile } from "fs/promises";
+import path from "path";
+import { gzipSync, gunzipSync } from "zlib";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";

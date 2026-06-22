@@ -166,11 +166,64 @@ export async function getPublicTemplateWithPreviewMusic(slug: string) {
   return template?.enabled ? template : undefined;
 }
 
+// Published Variants (for public-facing pages)
+export async function getPublishedTemplatesWithSettings() {
+  const [settings, globalMusicUrl] = await Promise.all([readPublishedTemplateSettings(), getGlobalMusicOverride()]);
+  return invitationTemplates.map((template) => applyTemplateSettings(template, settings, globalMusicUrl));
+}
+
+export async function getPublicPublishedTemplatesWithSettings() {
+  const templates = await getPublishedTemplatesWithSettings();
+  return templates.filter((template) => template.enabled);
+}
+
+export async function getPublishedTemplatesWithPreviewMusic() {
+  const [settings, previewMusic] = await Promise.all([readPublishedTemplateSettings(), resolveTemplatesPreviewMusic()]);
+  const previewMusicUrl = previewMusic.settings.enabled ? previewMusic.musicUrl : "";
+  return invitationTemplates.map((template) => applyTemplateSettings(template, settings, previewMusicUrl));
+}
+
+export async function getPublicPublishedTemplatesWithPreviewMusic() {
+  const templates = await getPublishedTemplatesWithPreviewMusic();
+  return templates.filter((template) => template.enabled);
+}
+
+export async function getPublishedTemplateWithSettings(slug: string) {
+  const template = getTemplateBySlug(slug);
+  if (!template) return undefined;
+  const [settings, globalMusicUrl] = await Promise.all([readPublishedTemplateSettings(), getGlobalMusicOverride()]);
+  return applyTemplateSettings(template, settings, globalMusicUrl);
+}
+
+export async function getPublicPublishedTemplateWithSettings(slug: string) {
+  const template = await getPublishedTemplateWithSettings(slug);
+  return template?.enabled ? template : undefined;
+}
+
+export async function getPublishedTemplateWithPreviewMusic(slug: string) {
+  const template = getTemplateBySlug(slug);
+  if (!template) return undefined;
+  const [settings, previewMusic] = await Promise.all([readPublishedTemplateSettings(), resolveTemplatesPreviewMusic()]);
+  const previewMusicUrl = previewMusic.settings.enabled ? previewMusic.musicUrl : "";
+  return applyTemplateSettings(template, settings, previewMusicUrl);
+}
+
+export async function getPublicPublishedTemplateWithPreviewMusic(slug: string) {
+  const template = await getPublishedTemplateWithPreviewMusic(slug);
+  return template?.enabled ? template : undefined;
+}
+
+export async function getPublishedTemplateSortOrderWithSettings(slug: string) {
+  const templates = await getPublishedTemplatesWithSettings();
+  const index = templates.findIndex((template) => template.slug === slug);
+  return index >= 0 ? index + 1 : templates.length + 1;
+}
+
 export async function updateTemplateMusic(slug: string, musicUrl: string) {
   const template = getTemplateBySlug(slug);
   if (!template) return false;
 
-  const settings = await readTemplateSettings();
+  const settings = await readDraftTemplateSettings();
   const cleanedMusicUrl = cleanAudioUrl(musicUrl);
 
   if (cleanedMusicUrl) {
@@ -186,7 +239,7 @@ export async function updateTemplateMusic(slug: string, musicUrl: string) {
     }
   }
 
-  await writeTemplateSettings(settings);
+  await writeDraftTemplateSettings(settings);
   return true;
 }
 
@@ -197,7 +250,7 @@ export async function updateTemplatesMusic(slugs: string[], musicUrl: string) {
   const cleanedMusicUrl = cleanAudioUrl(musicUrl);
   if (!selectedSlugs.length || !cleanedMusicUrl) return [];
 
-  const settings = await readTemplateSettings();
+  const settings = await readDraftTemplateSettings();
   for (const slug of selectedSlugs) {
     settings[slug] = {
       ...(settings[slug] || {}),
@@ -206,7 +259,7 @@ export async function updateTemplatesMusic(slugs: string[], musicUrl: string) {
     };
   }
 
-  await writeTemplateSettings(settings);
+  await writeDraftTemplateSettings(settings);
   return selectedSlugs;
 }
 
@@ -218,7 +271,7 @@ export async function updateTemplatesMusicState(slugs: string[], input: { musicU
   if (!selectedSlugs.length) return [];
   if (input.enabled && !cleanedMusicUrl) return [];
 
-  const settings = await readTemplateSettings();
+  const settings = await readDraftTemplateSettings();
   for (const slug of selectedSlugs) {
     const next = { ...(settings[slug] || {}) };
     next.musicMuted = !input.enabled;
@@ -226,7 +279,7 @@ export async function updateTemplatesMusicState(slugs: string[], input: { musicU
     settings[slug] = next;
   }
 
-  await writeTemplateSettings(settings);
+  await writeDraftTemplateSettings(settings);
   return selectedSlugs;
 }
 

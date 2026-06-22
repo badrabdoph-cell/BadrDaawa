@@ -45,7 +45,7 @@ export async function register() {
   }
 
   console.log(`[instrumentation] بدء الاستعادة التلقائية من: ${latestBackup.fileName}`);
-  const { downloadAndRestoreFromGitHub } = await import("./lib/backups");
+  const { downloadAndRestoreFromGitHub } = await import(/* webpackIgnore: true */ "./lib/backups");
   const result = await downloadAndRestoreFromGitHub(latestBackup.fileName);
 
   if (result.ok) {

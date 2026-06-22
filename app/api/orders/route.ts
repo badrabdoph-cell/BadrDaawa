@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
-import { getPublicTemplateWithSettings, getTemplateSortOrderWithSettings } from "@/lib/template-settings";
+import { getPublicPublishedTemplateWithSettings, getPublishedTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "اكتب البيانات كاملة وبالهيئة الصحيحة قبل التأكيد.", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const selectedTemplate = await getPublicTemplateWithSettings(parsed.data.templateSlug);
+  const selectedTemplate = await getPublicPublishedTemplateWithSettings(parsed.data.templateSlug);
   if (!selectedTemplate) {
     return NextResponse.json({ error: "القالب المختار غير متاح حاليًا" }, { status: 400 });
   }
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
           palette: selectedTemplate.palette,
           previewUrl: selectedTemplate.previewImage,
           enabled: selectedTemplate.enabled,
-          sortOrder: await getTemplateSortOrderWithSettings(selectedTemplate.slug),
+          sortOrder: await getPublishedTemplateSortOrderWithSettings(selectedTemplate.slug),
         },
         select: { id: true },
       });

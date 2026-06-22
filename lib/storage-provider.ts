@@ -1,7 +1,7 @@
-import { createReadStream } from "node:fs";
-import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { Readable } from "node:stream";
+import { createReadStream } from "fs";
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from "fs/promises";
+import path from "path";
+import { Readable } from "stream";
 import { runtimeUploadsDir } from "./runtime-paths";
 
 export type StorageProviderKind = "local" | "railway-volume" | "s3" | "r2";

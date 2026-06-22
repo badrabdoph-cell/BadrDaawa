@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TemplateBrowser } from "@/components/TemplateBrowser";
-import { getPublicTemplatesWithPreviewMusic } from "@/lib/template-settings";
+import { getPublicPublishedTemplatesWithPreviewMusic } from "@/lib/template-settings";
 
 export const metadata: Metadata = {
   title: "تصاميم الدعوات",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  const templates = await getPublicTemplatesWithPreviewMusic();
+  const templates = await getPublicPublishedTemplatesWithPreviewMusic();
 
   return (
     <div className="page-shell">

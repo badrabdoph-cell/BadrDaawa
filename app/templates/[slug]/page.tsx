@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Eye, Home, Palette, Sparkles } from "lucide-react";
-import { getPublicTemplateWithPreviewMusic } from "@/lib/template-settings";
+import { getPublicPublishedTemplateWithPreviewMusic } from "@/lib/template-settings";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { Metadata } from "next";
@@ -32,7 +32,7 @@ const styleLabels: Record<string, string> = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const template = await getPublicTemplateWithPreviewMusic(slug);
+  const template = await getPublicPublishedTemplateWithPreviewMusic(slug);
   if (!template) return {};
   return {
     title: template.arabicName,
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function TemplateDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const template = await getPublicTemplateWithPreviewMusic(slug);
+  const template = await getPublicPublishedTemplateWithPreviewMusic(slug);
   if (!template) notFound();
 
   const previewHref = `/templates/${template.slug}/preview?hidePreviewChrome=1`;

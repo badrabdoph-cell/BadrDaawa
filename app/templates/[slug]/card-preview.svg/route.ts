@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { getTemplatePreviewInfo } from "@/lib/template-preview-info";
-import { getPublicTemplateWithPreviewMusic } from "@/lib/template-settings";
+import { getPublishedTemplatePreviewInfo } from "@/lib/template-preview-info";
+import { getPublicPublishedTemplateWithPreviewMusic } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,7 @@ async function readTemplateSvg(previewImage: string) {
 
 export async function GET(_request: Request, { params }: RouteProps) {
   const { slug } = await params;
-  const [template, previewInfo] = await Promise.all([getPublicTemplateWithPreviewMusic(slug), getTemplatePreviewInfo()]);
+  const [template, previewInfo] = await Promise.all([getPublicPublishedTemplateWithPreviewMusic(slug), getPublishedTemplatePreviewInfo()]);
   if (!template) return new NextResponse("Not found", { status: 404 });
 
   const baseSvg = await readTemplateSvg(template.previewImage);

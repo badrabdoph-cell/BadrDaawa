@@ -1,5 +1,5 @@
-import { mkdirSync } from "node:fs";
-import path from "node:path";
+import { mkdirSync } from "fs";
+import path from "path";
 
 export const runtimeDataDir = path.join(process.cwd(), "data");
 export const runtimeBackupDir = path.join(runtimeDataDir, "backups");

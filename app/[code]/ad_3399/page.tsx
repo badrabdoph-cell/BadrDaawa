@@ -8,15 +8,15 @@ import { ClientDashboardShell } from "@/components/ClientDashboardShell";
 import { PendingInvitationNotice } from "@/components/PendingInvitationNotice";
 import { CLIENT_SESSION_COOKIE, verifyClientSessionCookie } from "@/lib/client-session";
 import { getClientMessages } from "@/lib/client-messages";
-import { getContentPresets } from "@/lib/content-presets";
+import { getPublishedContentPresets } from "@/lib/content-presets";
 import { getCustomerInvitationAnalytics } from "@/lib/customer-analytics";
 import { getCoupleMessagesSettings, getGuestBookMessages } from "@/lib/guest-book";
 import { autoDisableExpiredTrial, getGuestsByInvitation, getInvitationByCode } from "@/lib/invitation-data";
-import { getMessageTemplates } from "@/lib/message-templates";
+import { getPublishedMessageTemplates } from "@/lib/message-templates";
 import { getPublishedMusicLibrary } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
-import { getTemplateWithSettings } from "@/lib/template-settings";
+import { getPublishedTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
 import { getWeddingLiveMode } from "@/lib/wedding-live-mode";
 
@@ -103,12 +103,12 @@ export default async function CustomerAdminPage({
 
   const [guests, template, fallbackTemplate, musicFiles, clientMessages, contentPresets, messageTemplates, liveModeConfig, guestBookMessages, coupleMessagesSettings, siteSettings] = await Promise.all([
     getGuestsByInvitation(invitation.code),
-    getTemplateWithSettings(invitation.templateSlug),
-    getTemplateWithSettings("featured-1"),
+    getPublishedTemplateWithSettings(invitation.templateSlug),
+    getPublishedTemplateWithSettings("featured-1"),
     getPublishedMusicLibrary(),
     getClientMessages(invitation.code),
-    getContentPresets(),
-    getMessageTemplates(),
+    getPublishedContentPresets(),
+    getPublishedMessageTemplates(),
     getWeddingLiveMode(invitation.code),
     getGuestBookMessages(invitation.code, "all"),
     getCoupleMessagesSettings(invitation.code),

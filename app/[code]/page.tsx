@@ -14,7 +14,7 @@ import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStruc
 import { getPublishedMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
-import { getTemplateWithSettings } from "@/lib/template-settings";
+import { getPublishedTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
 
 function getQueryParam(value: string | string[] | undefined): string | undefined {
@@ -157,7 +157,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
     redirect(`/${invitation.customSlug}${params.size ? `?${params.toString()}` : ""}`);
   }
 
-  const [template, fallbackTemplate, musicLibrary] = await Promise.all([getTemplateWithSettings(invitation.templateSlug), getTemplateWithSettings("featured-1"), getPublishedMusicLibrary()]);
+  const [template, fallbackTemplate, musicLibrary] = await Promise.all([getPublishedTemplateWithSettings(invitation.templateSlug), getPublishedTemplateWithSettings("featured-1"), getPublishedMusicLibrary()]);
   const resolvedTemplate = template || fallbackTemplate;
   if (!resolvedTemplate) {
     notFound();

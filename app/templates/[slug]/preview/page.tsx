@@ -8,9 +8,9 @@ import { getLocaleMeta, resolveLocale } from "@/lib/i18n";
 import { isBrowserDisplayImageUrl } from "@/lib/image-formats";
 import { cleanInvitationHeroVideoUrl } from "@/lib/invitation-media";
 import { normalizeCoupleStory, normalizeGalleryStories } from "@/lib/invitation-texts";
-import { getSiteSettings } from "@/lib/site-settings";
-import { getTemplatePreviewInfo, resolveTemplatePreviewInfo } from "@/lib/template-preview-info";
-import { getTemplateWithPreviewMusic } from "@/lib/template-settings";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
+import { getPublishedTemplatePreviewInfo, resolveTemplatePreviewInfo } from "@/lib/template-preview-info";
+import { getPublishedTemplateWithPreviewMusic } from "@/lib/template-settings";
 import { normalizeInternalAssetUrl } from "@/lib/utils";
 import type { Invitation } from "@/lib/types";
 
@@ -109,7 +109,7 @@ function cleanPreviewGalleryStories(value: string | undefined) {
 export default async function TemplatePreviewPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const query = await searchParams;
-  const [template, siteSettings, templatePreviewInfo] = await Promise.all([getTemplateWithPreviewMusic(slug), getSiteSettings(), getTemplatePreviewInfo()]);
+  const [template, siteSettings, templatePreviewInfo] = await Promise.all([getPublishedTemplateWithPreviewMusic(slug), getPublishedSiteSettings(), getPublishedTemplatePreviewInfo()]);
   if (!template) notFound();
   const effectiveTemplatePreviewInfo = resolveTemplatePreviewInfo(templatePreviewInfo, template.slug);
   const previewGallery = cleanPreviewGallery(query?.gallery);

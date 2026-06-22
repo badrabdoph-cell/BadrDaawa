@@ -5,7 +5,7 @@ import { Sparkles } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getAdminInvitations } from "@/lib/admin-data";
-import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { getPublishedTemplatesWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl, formatArabicNumber } from "@/lib/utils";
 import { PublishedInvitationRow } from "@/components/PublishedInvitationActions";
 import { ClientInvitationsSearch } from "@/components/ClientInvitationsSearch";
@@ -55,7 +55,7 @@ export default async function ClientInvitationsPublicPage({
   const [params, invitations, templates, requestHeaders] = await Promise.all([
     searchParams,
     getAdminInvitations(),
-    getTemplatesWithSettings(),
+    getPublishedTemplatesWithSettings(),
     headers(),
   ]);
   const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
