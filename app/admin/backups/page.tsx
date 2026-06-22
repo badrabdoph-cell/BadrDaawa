@@ -403,6 +403,7 @@ export default async function BackupsPage({
                 <th>النوع</th>
                 <th>الحالة</th>
                 <th>الحجم</th>
+                <th>الملفات المرفوعة</th>
                 <th>تاريخ الإنشاء</th>
                 <th>إجراءات</th>
               </tr>
@@ -423,6 +424,17 @@ export default async function BackupsPage({
                       </span>
                     </td>
                     <td style={{ direction: "ltr", textAlign: "right" }}>{formatBytes(backup.sizeBytes)}</td>
+                    <td>
+                      {backup.uploadsCount > 0 ? (
+                        <span style={{ color: "#4caf87" }}>
+                          {backup.uploadsCount} ملف &middot; {formatBytes(backup.uploadsSizeBytes)}
+                        </span>
+                      ) : (
+                        <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>
+                          &#10005; لا توجد
+                        </span>
+                      )}
+                    </td>
                     <td>{formatBackupDate(backup.createdAt)}</td>
                     <td>
                       <div className="button-row">
@@ -446,7 +458,7 @@ export default async function BackupsPage({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <div className="admin-empty-state">
                       <strong>لا توجد نسخ احتياطية حتى الآن</strong>
                       <p>اضغط "إنشاء نسخة يدوية" وسيظهر الملف هنا مباشرة.</p>

@@ -18,6 +18,8 @@ export type BackupSummary = {
   createdAt: string;
   source: "database";
   items: number;
+  uploadsCount: number;
+  uploadsSizeBytes: number;
   github: {
     verified: boolean;
     commitSha: string | null;
@@ -410,6 +412,9 @@ export async function createBackupSnapshot(type = "manual") {
           excluded: "Code and base site assets only",
         },
         runtimeTables: Object.fromEntries(Object.entries(runtimeData).map(([table, rows]) => [table, rows.length])),
+        uploadsCount: uploads.length,
+        uploadsSizeBytes: uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0),
+        uploadsSizeMB: +(uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0) / (1024 * 1024)).toFixed(2),
         uploads: {
           files: uploads.length,
           bytes: uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0),
@@ -448,6 +453,9 @@ export async function createBackupSnapshot(type = "manual") {
           excluded: "Code and base site assets only",
         },
         runtimeTables,
+        uploadsCount: uploadCount,
+        uploadsSizeBytes: uploadBytes,
+        uploadsSizeMB: +(uploadBytes / (1024 * 1024)).toFixed(2),
         uploads: uploadsMeta,
       },
     };
@@ -462,6 +470,7 @@ export async function createBackupSnapshot(type = "manual") {
       createdAt,
       reason: `Runtime backup ${type} (${uploadCount} uploads, ${(uploadBytes / 1024).toFixed(1)} KB)`,
       keepLast: 60,
+      uploads,
     });
     if (githubUpload.status !== "synced" || !githubUpload.verified) {
       throw new Error(githubUpload.message || "GitHub backup upload failed.");
@@ -531,6 +540,7 @@ function toBackupSummary(
     fileUrl: null,
     repoPath: null,
   },
+  uploadsMeta?: { uploadsCount: number; uploadsSizeBytes: number },
 ): BackupSummary {
   return {
     fileName,
@@ -540,6 +550,8 @@ function toBackupSummary(
     createdAt,
     source,
     items,
+    uploadsCount: uploadsMeta?.uploadsCount ?? 0,
+    uploadsSizeBytes: uploadsMeta?.uploadsSizeBytes ?? 0,
     github,
   };
 }
@@ -564,6 +576,10 @@ export async function listBackupSnapshots() {
               source?: BackupSummary["source"];
               runtimeData?: Record<string, unknown[]>;
               uploads?: unknown[];
+              metadata?: {
+                uploadsCount?: number;
+                uploadsSizeBytes?: number;
+              };
             }>(filePath, entry.name, maxBackupSummaryBytes);
             const parsed = safe.value;
             if (!parsed) throw new Error(safe.skipped ? "oversized-backup" : "invalid-backup");
@@ -572,6 +588,10 @@ export async function listBackupSnapshots() {
               ? Object.values(parsed.runtimeData).reduce((sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0), 0)
               : 0;
             items = runtimeItems + (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0);
+            const meta = parsed.metadata;
+            const uploadsCount = meta?.uploadsCount ?? (Array.isArray(parsed.uploads) ? parsed.uploads.length : 0);
+            const uploadsSizeBytes = meta?.uploadsSizeBytes ?? 0;
+            return toBackupSummary(entry.name, fileStat.size, fileStat.mtime.toISOString(), source, items, undefined, undefined, { uploadsCount, uploadsSizeBytes });
           } catch {
             items = 0;
           }
