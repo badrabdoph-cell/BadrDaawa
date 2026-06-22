@@ -26,28 +26,28 @@ export type GitHubBackupUploadResult = {
   verified: boolean;
 };
 
-type GitHubRef = {
+export type GitHubRef = {
   object: {
     sha: string;
   };
 };
 
-type GitHubCommit = {
+export type GitHubCommit = {
   sha: string;
   tree: {
     sha: string;
   };
 };
 
-type GitHubBlob = {
+export type GitHubBlob = {
   sha: string;
 };
 
-type GitHubTree = {
+export type GitHubTree = {
   sha: string;
 };
 
-type GitHubCreatedCommit = {
+export type GitHubCreatedCommit = {
   sha: string;
   html_url?: string;
 };
@@ -60,7 +60,7 @@ type GitHubTreeEntry = {
   size?: number;
 };
 
-type GitHubRecursiveTree = {
+export type GitHubRecursiveTree = {
   sha: string;
   tree: GitHubTreeEntry[];
   truncated?: boolean;
@@ -214,7 +214,7 @@ function parseRepo(value: string) {
   return owner && repo ? { owner, repo } : null;
 }
 
-function getSyncConfig() {
+export function getSyncConfig() {
   if (process.env.GITHUB_SYNC_ENABLED === "false") return null;
 
   const { token, source: tokenSource } = getGitHubTokenConfig();
@@ -375,7 +375,7 @@ export async function hashSyncFiles(files: SyncFile[]): Promise<string> {
   return hash.digest("hex");
 }
 
-function branchRefPath(branch: string) {
+export function branchRefPath(branch: string) {
   return branch.split("/").map(encodeURIComponent).join("/");
 }
 
@@ -383,7 +383,7 @@ function repoContentPath(repoPath: string) {
   return repoPath.split("/").map(encodeURIComponent).join("/");
 }
 
-async function githubRequest<T>(pathName: string, init: RequestInit, token: string): Promise<T> {
+export async function githubRequest<T>(pathName: string, init: RequestInit, token: string): Promise<T> {
   const response = await fetch(`https://api.github.com${pathName}`, {
     ...init,
     headers: {

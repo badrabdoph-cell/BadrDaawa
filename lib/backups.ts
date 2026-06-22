@@ -1629,6 +1629,14 @@ export async function isBackupSafe(backupFileName: string): Promise<boolean> {
 // NEW BACKUP SYSTEM v2 — Database / Uploads / Full (separate)
 // ═══════════════════════════════════════════════════════════════════
 
+import { GitHubBlob as _GB_v2, GitHubRef as _GR_v2, GitHubCommit as _GC_v2, GitHubTree as _GT_v2, GitHubCreatedCommit as _GCC_v2, GitHubRecursiveTree as _GRT_v2 } from "./github-sync";
+type GitHubRef = _GR_v2;
+type GitHubCommit = _GC_v2;
+type GitHubBlob = _GB_v2;
+type GitHubTree = _GT_v2;
+type GitHubCreatedCommit = _GCC_v2;
+type GitHubRecursiveTree = _GRT_v2;
+
 export type BackupTypeV2 = "database" | "uploads" | "full";
 
 export type DatabaseBackupPayload = {
@@ -1700,7 +1708,7 @@ async function collectRuntimeData(): Promise<Record<string, unknown[]>> {
   const runtimeData: Record<string, unknown[]> = {};
   for (const table of tables) {
     try {
-      const model = prismaModelForTable(prisma, table);
+      const model = prismaModelForTable(prisma, table) as { findMany: (args?: unknown) => Promise<unknown[]> } | undefined;
       if (model?.findMany) {
         runtimeData[table] = await model.findMany();
       }
@@ -1941,7 +1949,7 @@ export type GitHubBackupDiscoveryResultV2 = {
 };
 
 async function findBackupsOnGitHubByPrefix(prefix: string) {
-  const { getSyncConfig, githubRequest, GitHubRef, GitHubCommit, GitHubRecursiveTree, branchRefPath } = await import("./github-sync");
+  const { getSyncConfig, githubRequest, branchRefPath } = await import("./github-sync");
   const config = getSyncConfig();
   if (!config) return [];
   const { owner, repo } = config.repo;
@@ -1982,7 +1990,7 @@ export async function findLatestBackupOnGitHubByType(type: BackupTypeV2): Promis
   const sorted = entries.sort((a, b) => backupTimestampFromPathV2(b.path) - backupTimestampFromPathV2(a.path));
   const latest = sorted[0];
 
-  const { getSyncConfig, githubRequest, GitHubCommit, GitHubRef, branchRefPath } = await import("./github-sync");
+  const { getSyncConfig, githubRequest, branchRefPath } = await import("./github-sync");
   const config = getSyncConfig();
   if (!config) return null;
   const { owner, repo } = config.repo;
@@ -2089,8 +2097,8 @@ export async function restoreUploadsFromGitHub(options: { fileName?: string; com
       latest = full;
     }
 
-    const { readGitHubBlobBySha, githubRequest: ghReq } = await import("./github-content");
-    const { getSyncConfig, branchRefPath, GitHubCommit, GitHubRef, GitHubRecursiveTree } = await import("./github-sync");
+    const { readGitHubBlobBySha } = await import("./github-content");
+    const { getSyncConfig, branchRefPath, githubRequest: ghReq } = await import("./github-sync");
     const config = getSyncConfig();
     if (!config) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "GitHub sync غير مهيأ" };
 
@@ -2245,12 +2253,6 @@ export async function checkAndAutoRestoreV2(): Promise<AutoRestoreDecision> {
 }
 
 // ── githubRequest wrapper (needed for the v2 functions) ──
-import { githubRequest as _ghReq, branchRefPath as _brPath, GitHubBlob as _GB, GitHubRef as _GR, GitHubCommit as _GC, GitHubTree as _GT, GitHubCreatedCommit as _GCC, GitHubRecursiveTree as _GRT } from "./github-sync";
-const githubRequest = _ghReq;
-const branchRefPath = _brPath;
-type GitHubBlob = _GB;
-type GitHubRef = _GR;
-type GitHubCommit = _GC;
-type GitHubTree = _GT;
-type GitHubCreatedCommit = _GCC;
-type GitHubRecursiveTree = _GRT;
+import { githubRequest as _ghReq_v2, branchRefPath as _brPath_v2 } from "./github-sync";
+const githubRequest = _ghReq_v2;
+const branchRefPath = _brPath_v2;
