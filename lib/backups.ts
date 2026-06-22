@@ -425,10 +425,12 @@ export async function createBackupSnapshot(type = "manual") {
     await cleanupOldBackups();
 
     const runtimeTables = Object.fromEntries(Object.entries(runtimeData).map(([table, rows]) => [table, rows.length]));
+    const uploadCount = uploads.length;
+    const uploadBytes = uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0);
     const uploadsMeta = {
-      files: uploads.length,
-      bytes: uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0),
-      note: "Uploads excluded from GitHub backup. Stored locally on Railway volume.",
+      files: uploadCount,
+      bytes: uploadBytes,
+      note: "Uploads included in GitHub backup.",
     };
     const githubOnlyPayload: Record<string, unknown> = {
       version: payload.version,
@@ -438,12 +440,12 @@ export async function createBackupSnapshot(type = "manual") {
       app: (payload as Record<string, unknown>).app,
       retention: (payload as Record<string, unknown>).retention,
       runtimeData: payload.runtimeData,
-      uploads: [],
+      uploads,
       metadata: {
         database,
         classification: {
-          included: "Runtime tables only (no uploads to stay under GitHub size limit)",
-          excluded: "File uploads — stored locally on Railway volume",
+          included: "Runtime tables + file uploads",
+          excluded: "Code and base site assets only",
         },
         runtimeTables,
         uploads: uploadsMeta,
@@ -458,7 +460,7 @@ export async function createBackupSnapshot(type = "manual") {
       fileName: githubFileName,
       bytes: githubCompressed,
       createdAt,
-      reason: `Runtime backup ${type} (no uploads)`,
+      reason: `Runtime backup ${type} (${uploadCount} uploads, ${(uploadBytes / 1024).toFixed(1)} KB)`,
       keepLast: 60,
     });
     if (githubUpload.status !== "synced" || !githubUpload.verified) {
@@ -1370,16 +1372,16 @@ export async function downloadAndRestoreFromGitHub(
     createdAt = job.createdAt;
   }
 
-  const { readGitHubFileAtCommit } = await import("./github-content");
+  const { readGitHubBackupFile } = await import("./github-content");
   const { formatBackupRepoPath } = await import("./github-sync");
   const repoPath = formatBackupRepoPath(backupFileName, createdAt);
   const repoPathGz = `${repoPath}.gz`;
 
   let rawBytes: Buffer | null = null;
 
-  rawBytes = await readGitHubFileAtCommit(repoPath, githubSha);
+  rawBytes = await readGitHubBackupFile(repoPath, githubSha);
   if (!rawBytes) {
-    rawBytes = await readGitHubFileAtCommit(repoPathGz, githubSha);
+    rawBytes = await readGitHubBackupFile(repoPathGz, githubSha);
   }
   if (!rawBytes) {
     return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup file not found on GitHub" };

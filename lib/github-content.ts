@@ -292,6 +292,48 @@ export async function readGitHubFileAtCommit(repoPath: string, commitSha: string
   }
 }
 
+export async function readGitHubBackupFile(repoPath: string, githubSha: string): Promise<Buffer | null> {
+  const buffer = await readGitHubFileAtCommit(repoPath, githubSha);
+  if (buffer) return buffer;
+
+  const config = getGitHubConfig();
+  if (!config) return null;
+
+  const { token, repo: repoInfo } = config;
+  const { owner, repo } = repoInfo;
+
+  try {
+    const commit = await githubRequest<{ tree: { sha: string } }>(
+      `/repos/${owner}/${repo}/git/commits/${githubSha}`,
+      { method: "GET" },
+      token,
+    );
+
+    const tree = await githubRequest<{ tree: Array<{ path: string; sha: string; type: string }>; truncated: boolean }>(
+      `/repos/${owner}/${repo}/git/trees/${commit.tree.sha}?recursive=1`,
+      { method: "GET" },
+      token,
+    );
+
+    const entry = tree.tree.find((e) => e.path === repoPath && e.type === "blob");
+    if (!entry?.sha) return null;
+
+    const blob = await githubRequest<{ content: string; encoding: string }>(
+      `/repos/${owner}/${repo}/git/blobs/${entry.sha}`,
+      { method: "GET" },
+      token,
+    );
+
+    if (blob.encoding === "base64" && blob.content) {
+      return Buffer.from(blob.content, "base64");
+    }
+    return null;
+  } catch (error) {
+    console.error("[readGitHubBackupFile] Blobs API fallback failed:", error);
+    return null;
+  }
+}
+
 export async function downloadContentFromGitHubCommit(commitSha: string): Promise<Record<string, unknown> | null> {
   const { getProjectContentDefinitions } = await import("./project-content-store");
   const definitions = getProjectContentDefinitions();
