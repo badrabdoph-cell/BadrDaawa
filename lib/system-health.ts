@@ -237,16 +237,7 @@ async function checkPublishSystem(): Promise<SystemHealthCheck> {
 }
 
 async function checkAutoRestoreReadiness(): Promise<SystemHealthCheck> {
-  const enabled = (process.env.AUTO_RESTORE_FROM_GITHUB || "").trim().toLowerCase() === "true";
-  const repoConfigured = Boolean((process.env.GITHUB_SYNC_REPO || "").trim() && (process.env.GITHUB_SYNC_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim());
-
-  if (!enabled) {
-    return { key: "auto-restore", label: "Auto Restore", level: "warning", status: "معطل", detail: "AUTO_RESTORE_FROM_GITHUB غير مفعل" };
-  }
-  if (!repoConfigured) {
-    return { key: "auto-restore", label: "Auto Restore", level: "error", status: "غير جاهز", detail: "GitHub غير مهيأ" };
-  }
-  return { key: "auto-restore", label: "Auto Restore", level: "ok", status: "جاهز", detail: "Auto Restore مفعل ومهيأ (يتم تلقائياً عند قاعدة بيانات فارغة)" };
+  return { key: "auto-restore", label: "Auto Restore", level: "ok", status: "يدوي", detail: "الاستعادة يدوية من لوحة التحكم" };
 }
 
 async function checkBackupScheduler(): Promise<SystemHealthCheck> {

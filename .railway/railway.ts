@@ -18,8 +18,6 @@ export default defineRailway((ctx) => {
       GITHUB_SYNC_BRANCH: "main",
       GITHUB_SYNC_REPO: "badrabdoph-cell/BadrDaawa",
 
-      AUTO_RESTORE_FROM_GITHUB: "true",
-
       BACKUP_CRON_URL: domain,
 
       SHOW_PHOTOGRAPHER_CARD: "true",
