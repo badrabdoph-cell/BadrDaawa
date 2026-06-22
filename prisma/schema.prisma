@@ -221,20 +221,25 @@ model DynamicPage {
 }
 
 model BackupJob {
-  id          String       @id @default(cuid())
-  type        String
-  status      BackupStatus @default(QUEUED)
-  fileName    String?
-  githubSha   String?
-  githubUrl   String?
-  sizeBytes   BigInt?
-  startedAt   DateTime?
-  finishedAt  DateTime?
-  error       String?
-  createdAt   DateTime     @default(now())
+  id                 String       @id @default(cuid())
+  type               String
+  status             BackupStatus @default(QUEUED)
+  fileName           String?
+  githubSha          String?
+  githubUrl          String?
+  sizeBytes          BigInt?
+  startedAt          DateTime?
+  finishedAt         DateTime?
+  error              String?
+  durationMs         Int?
+  stage              String?
+  attemptedFileName  String?
+  githubMessage      String?
+  createdAt          DateTime     @default(now())
 
   @@index([type, createdAt])
   @@index([status])
+  @@index([status, createdAt])
 }
 
 model ContentVersion {

@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   XCircle,
   BarChart3,
+  AlertCircle,
 } from "lucide-react";
 import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBackupSnapshots } from "@/lib/backups";
 import { formatBytes, formatDate, formatDuration, formatBackupType, formatBackupStatus, truncateSha } from "@/lib/backup-display";
@@ -22,6 +23,7 @@ import { MarkSafeButton } from "./MarkSafeButton";
 import { VerifyBackupButton } from "./VerifyBackupButton";
 import { RestoreBackupButton } from "./RestoreBackupButton";
 import AutoBackupDashboard from "./AutoBackupDashboard";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +52,11 @@ export default async function BackupsPage({
   const safeFileNames = new Map(safeBackups.map((s) => [s.backupFileName, s]));
   const latest = backups[0];
   const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
+  const failedJobs = await (prisma?.backupJob.findMany({
+    where: { status: "FAILED" },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  }).catch(() => []) ?? Promise.resolve([]));
   const overall = healthLevel(
     runtimeStatus.postgresDump,
     runtimeStatus.uploadsBackup,
@@ -366,6 +373,58 @@ export default async function BackupsPage({
               ? formatDate(runtimeStatus.lastError.createdAt)
               : ""}
           </span>
+        </div>
+      ) : null}
+
+      {/* ════════════════════════════════════════
+          RECENT FAILED ATTEMPTS
+      ════════════════════════════════════════ */}
+      {failedJobs.length > 0 ? (
+        <div className="panel" style={{ borderColor: "rgba(217, 83, 79, 0.3)" }}>
+          <div className="admin-card-head" style={{ marginBottom: 12 }}>
+            <AlertCircle size={20} color="#d9534f" />
+            <div>
+              <span className="eyebrow">Failed Backups</span>
+              <h2>محاولات فاشلة</h2>
+            </div>
+            <span style={{ fontSize: "0.8rem", color: "rgba(245, 234, 214, 0.5)", marginRight: "auto" }}>
+              آخر {failedJobs.length} محاولة
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {failedJobs.map((job) => (
+              <div key={job.id} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 14px", borderRadius: 8,
+                background: "rgba(217, 83, 79, 0.06)",
+                border: "1px solid rgba(217, 83, 79, 0.15)",
+                fontSize: "0.82rem",
+              }}>
+                <div style={{ minWidth: 140, color: "rgba(245, 234, 214, 0.6)", fontSize: "0.75rem" }}>
+                  {job.createdAt ? formatDate(job.createdAt.toISOString()) : "—"}
+                </div>
+                <div style={{ minWidth: 80, fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)", fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.5)" }}>
+                  {job.stage || "—"}
+                </div>
+                <div style={{ minWidth: 70, color: job.durationMs && job.durationMs > 30000 ? "#d9534f" : "rgba(245, 234, 214, 0.6)", fontSize: "0.72rem", direction: "ltr" }}>
+                  {job.durationMs ? formatDuration(job.durationMs) : "—"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ color: "rgba(245, 234, 214, 0.9)", fontWeight: 600 }}>
+                    {job.attemptedFileName || job.fileName || "—"}
+                  </span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "rgba(217, 83, 79, 0.8)", fontSize: "0.78rem" }}>
+                  {job.error || "—"}
+                </div>
+                {job.githubMessage ? (
+                  <span style={{ fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.4)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {job.githubMessage}
+                  </span>
+                ) : null}
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 

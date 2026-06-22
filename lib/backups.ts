@@ -305,7 +305,7 @@ async function readRuntimeUploadSnapshot() {
   return uploads;
 }
 
-async function createBackupJob(type: string, startedAt: Date) {
+async function createBackupJob(type: string, startedAt: Date, extra?: { attemptedFileName?: string }) {
   if (!prisma) return null;
   try {
     const job = await prisma.backupJob.create({
@@ -313,6 +313,7 @@ async function createBackupJob(type: string, startedAt: Date) {
         type,
         status: "RUNNING",
         startedAt,
+        attemptedFileName: extra?.attemptedFileName,
       },
     });
     return job.id;
@@ -331,6 +332,10 @@ async function updateBackupJob(
     githubSha?: string | null;
     githubUrl?: string | null;
     error?: string;
+    durationMs?: number;
+    stage?: string;
+    attemptedFileName?: string;
+    githubMessage?: string;
   },
 ) {
   if (!prisma || !id) return;
@@ -344,6 +349,10 @@ async function updateBackupJob(
         githubSha: data.githubSha,
         githubUrl: data.githubUrl,
         error: data.error,
+        durationMs: data.durationMs,
+        stage: data.stage,
+        attemptedFileName: data.attemptedFileName,
+        githubMessage: data.githubMessage,
         finishedAt: new Date(),
       },
     });
@@ -383,12 +392,17 @@ export async function createBackupSnapshot(type = "manual") {
   ensureRuntimeDirectories();
 
   const createdAt = new Date();
-  const jobId = await createBackupJob(type, createdAt);
+  const startTime = Date.now();
+  let currentStage = "initializing";
   let fileName: string | undefined;
   let sizeBytes: number | undefined;
+  let githubErrorMsg: string | undefined;
   console.log(`[Backup] Backup Started: ${type}`);
 
+  const jobId = await createBackupJob(type, createdAt, { attemptedFileName: formatBackupName(type) });
+
   try {
+    currentStage = "snapshot";
     const runtimeData = await readRuntimeDataSnapshot();
     const uploads = await readRuntimeUploadSnapshot();
     const database = await readDatabaseMetadata();
@@ -424,11 +438,13 @@ export async function createBackupSnapshot(type = "manual") {
     const json = `${JSON.stringify(payload, jsonReplacer, 2)}\n`;
     sizeBytes = Buffer.byteLength(json);
 
+    currentStage = "local_write";
     const backupPath = path.join(backupDir, fileName);
     ensureParentDirectory(backupPath);
     await writeFile(backupPath, json, "utf8");
     await cleanupOldBackups();
 
+    currentStage = "github_prepare";
     const runtimeTables = Object.fromEntries(Object.entries(runtimeData).map(([table, rows]) => [table, rows.length]));
     const uploadCount = uploads.length;
     const uploadBytes = uploads.reduce((sum, upload) => sum + upload.sizeBytes, 0);
@@ -464,6 +480,8 @@ export async function createBackupSnapshot(type = "manual") {
     const githubCompressed = gzipSync(githubRawBytes, { level: 9 });
     const githubFileName = `${fileName}.gz`;
     console.log(`[Backup] GitHub payload: ${githubRawBytes.length} → ${githubCompressed.length} bytes (${(githubCompressed.length / githubRawBytes.length * 100).toFixed(1)}%)`);
+
+    currentStage = "github_upload";
     const githubUpload = await uploadRuntimeBackupToGitHub({
       fileName: githubFileName,
       bytes: githubCompressed,
@@ -472,16 +490,22 @@ export async function createBackupSnapshot(type = "manual") {
       keepLast: 60,
       uploads,
     });
+
+    currentStage = "github_verify";
     if (githubUpload.status !== "synced" || !githubUpload.verified) {
-      throw new Error(githubUpload.message || "GitHub backup upload failed.");
+      githubErrorMsg = githubUpload.message || "GitHub backup upload failed.";
+      throw new Error(githubErrorMsg);
     }
     const items = countRuntimeItems(runtimeData, uploads.length);
-    console.log(`[Backup] Backup Completed: ${fileName} (${sizeBytes} bytes, ${items} runtime item(s)).`);
+    const durationMs = Date.now() - startTime;
+    console.log(`[Backup] Backup Completed: ${fileName} (${sizeBytes} bytes, ${items} runtime item(s), ${durationMs}ms).`);
 
     await updateBackupJob(jobId, {
       status: "SUCCESS",
       fileName,
       sizeBytes,
+      durationMs,
+      stage: "completed",
       githubSha: githubUpload.commitSha,
       githubUrl: githubUpload.fileUrl,
     });
@@ -494,17 +518,24 @@ export async function createBackupSnapshot(type = "manual") {
     });
   } catch (error) {
     const message = toErrorMessage(error);
-    console.error(`[Backup] Backup Failed: ${message}`);
+    const durationMs = Date.now() - startTime;
+    console.error(`[Backup] Backup Failed at stage "${currentStage}" after ${durationMs}ms: ${message}`);
     await updateBackupJob(jobId, {
       status: "FAILED",
       fileName,
       sizeBytes,
+      durationMs,
+      stage: currentStage,
+      attemptedFileName: fileName,
+      githubMessage: githubErrorMsg,
       error: message,
     });
     const failure = error instanceof Error ? error : new Error(message);
     Object.assign(failure, {
       backupFileName: fileName ?? null,
       backupSizeBytes: sizeBytes ?? null,
+      backupStage: currentStage,
+      backupDurationMs: durationMs,
       backupStoragePath: fileName ? backupPathFor(fileName) : null,
     });
     throw failure;
@@ -605,7 +636,7 @@ export async function listBackupSnapshots() {
   const localFileNames = new Set(sorted.map((s) => s.fileName));
   const localFileNameList = sorted.length ? sorted.map((s) => s.fileName) : [""];
 
-  const [jobs, orphanJobs] = await Promise.all([
+  const [jobs, successOrphans, failedOrphans] = await Promise.all([
     prisma.backupJob.findMany({
       where: { fileName: { in: localFileNameList } },
       orderBy: { createdAt: "desc" },
@@ -618,9 +649,18 @@ export async function listBackupSnapshots() {
       },
       orderBy: { createdAt: "desc" },
     }).catch(() => []),
+    prisma.backupJob.findMany({
+      where: {
+        status: "FAILED",
+        fileName: { not: null },
+        NOT: { fileName: { in: localFileNameList } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }).catch(() => []),
   ]);
 
-  const orphanSummaries = orphanJobs
+  const orphanSummaries = [...successOrphans, ...failedOrphans]
     .filter((j) => j.fileName && !localFileNames.has(j.fileName))
     .map((job) => toBackupSummary(
       job.fileName!,
@@ -628,9 +668,9 @@ export async function listBackupSnapshots() {
       job.createdAt.toISOString(),
       "database",
       0,
-      "SUCCESS",
+      job.status === "FAILED" ? "FAILED" : "SUCCESS",
       {
-        verified: Boolean(job.githubSha && job.githubUrl),
+        verified: Boolean(job.githubSha && job.githubUrl && job.status === "SUCCESS"),
         commitSha: job.githubSha,
         fileUrl: job.githubUrl,
         repoPath: null,
