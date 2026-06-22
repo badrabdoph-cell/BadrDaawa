@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
       return {
         fileName,
         repoPath: entry.path,
-        sha: entry.sha,
+        sha: commit.sha,
         size: entry.size,
         createdAt,
         type,
