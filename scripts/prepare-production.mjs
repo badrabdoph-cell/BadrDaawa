@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { randomBytes } from "node:crypto";
+import { randomBytes, generateKeyPairSync } from "node:crypto";
 import path from "node:path";
 
 const root = process.cwd();
@@ -88,6 +88,31 @@ function generateSecret(bytes = 32) {
   return randomBytes(bytes).toString("hex");
 }
 
+function generateVapidKeys() {
+  try {
+    const { publicKey, privateKey } = generateKeyPairSync("ec", {
+      namedCurve: "P-256",
+      publicKeyEncoding: { type: "spki", format: "jwk" },
+      privateKeyEncoding: { type: "pkcs8", format: "jwk" },
+    });
+
+    const xBytes = Buffer.from(publicKey.x, "base64url");
+    const yBytes = Buffer.from(publicKey.y, "base64url");
+    const uncompressed = Buffer.alloc(65);
+    uncompressed[0] = 0x04;
+    xBytes.copy(uncompressed, 1);
+    yBytes.copy(uncompressed, 33);
+
+    return {
+      publicKey: uncompressed.toString("base64url"),
+      privateKey: privateKey.d,
+    };
+  } catch (err) {
+    console.warn(`[prepare] Failed to generate VAPID keys: ${err.message}. Push notifications will not work.`);
+    return null;
+  }
+}
+
 function autoGenerateMissingSecrets() {
   const secretsFile = path.join(root, "data", ".secrets.env");
 
@@ -121,6 +146,28 @@ function autoGenerateMissingSecrets() {
       changed = true;
     }
     process.env[key] = generated[key];
+  }
+
+  if (!process.env.NEXTAUTH_SECRET) {
+    process.env.NEXTAUTH_SECRET = generated.AUTH_SECRET || process.env.AUTH_SECRET;
+  }
+
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && !process.env.VAPID_PRIVATE_KEY) {
+    const vapid = generateVapidKeys();
+    if (vapid) {
+      generated.NEXT_PUBLIC_VAPID_PUBLIC_KEY = vapid.publicKey;
+      generated.VAPID_PRIVATE_KEY = vapid.privateKey;
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = vapid.publicKey;
+      process.env.VAPID_PRIVATE_KEY = vapid.privateKey;
+      changed = true;
+    }
+  }
+
+  if (!process.env.VAPID_SUBJECT) {
+    const email = generated.ADMIN_EMAIL || process.env.ADMIN_EMAIL || "admin@badrdaawa.com";
+    generated.VAPID_SUBJECT = `mailto:${email}`;
+    process.env.VAPID_SUBJECT = `mailto:${email}`;
+    changed = true;
   }
 
   if (changed) {

@@ -1,7 +1,8 @@
 import { defineRailway, project, service, postgres } from "railway/iac";
 
-export default defineRailway(() => {
+export default defineRailway((ctx) => {
   const db = postgres("postgres");
+  const domain = "https://${{RAILWAY_PUBLIC_DOMAIN}}";
 
   const web = service("web", {
     start: "pnpm start",
@@ -9,12 +10,16 @@ export default defineRailway(() => {
     healthcheckTimeout: 300,
     env: {
       DATABASE_URL: db.env.DATABASE_URL,
-      NEXT_PUBLIC_SITE_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+      NEXT_PUBLIC_SITE_URL: domain,
+      NEXTAUTH_URL: domain,
+      APP_URL: domain,
       GITHUB_SYNC_ENABLED: "true",
       GITHUB_SYNC_BRANCH: "main",
       AUTO_RESTORE_FROM_GITHUB: "true",
       AUTO_RESTORE_ONLY_IF_DB_EMPTY: "true",
       ALLOW_DESTRUCTIVE_RESTORE: "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL",
+      SHOW_PHOTOGRAPHER_CARD: "true",
+      ENABLE_LEGACY_FILE_STORE: "false",
       NODE_ENV: "production",
       PORT: "8080",
     },
