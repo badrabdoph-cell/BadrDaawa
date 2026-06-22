@@ -1,4 +1,5 @@
 import { downloadAndRestoreFromGitHub } from "./lib/backups";
+import { findLatestBackupOnGitHub } from "./lib/github-sync";
 
 export async function register() {
   if (process.env.NEXT_PHASE === "phase-production-build") return;
@@ -26,17 +27,14 @@ export async function register() {
 
   let latestBackup;
   try {
-    latestBackup = await prisma.backupJob.findFirst({
-      where: { status: "SUCCESS", fileName: { not: null }, githubSha: { not: null } },
-      orderBy: { createdAt: "desc" },
-    });
+    latestBackup = await findLatestBackupOnGitHub();
   } catch {
-    console.error("[instrumentation] فشل البحث عن آخر نسخة احتياطية");
+    console.error("[instrumentation] فشل البحث عن آخر نسخة احتياطية على GitHub");
     return;
   }
 
-  if (!latestBackup?.fileName || !latestBackup.githubSha) {
-    console.log("[instrumentation] لا توجد نسخة احتياطية ناجحة على GitHub");
+  if (!latestBackup) {
+    console.log("[instrumentation] لا توجد نسخة احتياطية على GitHub");
     return;
   }
 
@@ -46,8 +44,11 @@ export async function register() {
     return;
   }
 
-  console.log(`[instrumentation] بدء الاستعادة التلقائية من: ${latestBackup.fileName}`);
-  const result = await downloadAndRestoreFromGitHub(latestBackup.fileName);
+  console.log(`[instrumentation] بدء الاستعادة التلقائية من: ${latestBackup.fileName} (commit: ${latestBackup.commitSha})`);
+  const result = await downloadAndRestoreFromGitHub(latestBackup.fileName, {
+    githubSha: latestBackup.commitSha,
+    createdAt: latestBackup.createdAt,
+  });
 
   if (result.ok) {
     console.log(`[instrumentation] تمت استعادة ${result.itemsRestored} عنصر بنجاح (${result.durationMs}ms)`);

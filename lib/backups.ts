@@ -1344,30 +1344,42 @@ export type GitHubRestoreResult = {
   error: string | null;
 };
 
-export async function downloadAndRestoreFromGitHub(backupFileName: string): Promise<GitHubRestoreResult> {
+export async function downloadAndRestoreFromGitHub(
+  backupFileName: string,
+  options?: { githubSha?: string; createdAt?: Date },
+): Promise<GitHubRestoreResult> {
   const startedAt = Date.now();
-  if (!prisma) {
-    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Database not available" };
-  }
 
-  const job = await prisma.backupJob.findFirst({ where: { fileName: backupFileName }, orderBy: { createdAt: "desc" } });
-  if (!job) {
-    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup job not found" };
-  }
-  if (!job.githubSha) {
-    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup has no GitHub commit SHA" };
+  let githubSha: string;
+  let createdAt: Date;
+  if (options?.githubSha) {
+    githubSha = options.githubSha;
+    createdAt = options.createdAt ?? new Date();
+  } else {
+    if (!prisma) {
+      return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Database not available" };
+    }
+    const job = await prisma.backupJob.findFirst({ where: { fileName: backupFileName }, orderBy: { createdAt: "desc" } });
+    if (!job) {
+      return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup job not found" };
+    }
+    if (!job.githubSha) {
+      return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup has no GitHub commit SHA" };
+    }
+    githubSha = job.githubSha;
+    createdAt = job.createdAt;
   }
 
   const { readGitHubFileAtCommit } = await import("./github-content");
   const { formatBackupRepoPath } = await import("./github-sync");
-  const repoPath = formatBackupRepoPath(backupFileName, job.createdAt);
+  const repoPath = formatBackupRepoPath(backupFileName, createdAt);
   const repoPathGz = `${repoPath}.gz`;
 
   let rawBytes: Buffer | null = null;
 
-  rawBytes = await readGitHubFileAtCommit(repoPath, job.githubSha);
+  rawBytes = await readGitHubFileAtCommit(repoPath, githubSha);
   if (!rawBytes) {
-    rawBytes = await readGitHubFileAtCommit(repoPathGz, job.githubSha);
+    rawBytes = await readGitHubFileAtCommit(repoPathGz, githubSha);
   }
   if (!rawBytes) {
     return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup file not found on GitHub" };

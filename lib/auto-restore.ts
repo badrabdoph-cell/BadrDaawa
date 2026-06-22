@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import { downloadAndRestoreFromGitHub } from "./backups";
+import { findLatestBackupOnGitHub } from "./github-sync";
 
 type AutoRestoreResult = {
   executed: boolean;
@@ -40,16 +41,13 @@ export async function checkAndAutoRestore(): Promise<AutoRestoreResult> {
 
   let latestBackup;
   try {
-    latestBackup = await prisma.backupJob.findFirst({
-      where: { status: "SUCCESS", fileName: { not: null }, githubSha: { not: null } },
-      orderBy: { createdAt: "desc" },
-    });
+    latestBackup = await findLatestBackupOnGitHub();
   } catch (error) {
-    return { executed: false, restored: false, reason: `فشل البحث عن آخر نسخة احتياطية: ${error instanceof Error ? error.message : String(error)}` };
+    return { executed: false, restored: false, reason: `فشل البحث عن آخر نسخة احتياطية على GitHub: ${error instanceof Error ? error.message : String(error)}` };
   }
 
-  if (!latestBackup?.fileName || !latestBackup.githubSha) {
-    return { executed: false, restored: false, reason: "لا توجد نسخة احتياطية ناجحة على GitHub" };
+  if (!latestBackup) {
+    return { executed: false, restored: false, reason: "لا توجد نسخة احتياطية على GitHub" };
   }
 
   const destructiveAllowed = env("ALLOW_DESTRUCTIVE_RESTORE") === "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL";
@@ -58,7 +56,10 @@ export async function checkAndAutoRestore(): Promise<AutoRestoreResult> {
   }
 
   console.log(`[Auto Restore] بدء الاستعادة التلقائية من: ${latestBackup.fileName}`);
-  const result = await downloadAndRestoreFromGitHub(latestBackup.fileName);
+  const result = await downloadAndRestoreFromGitHub(latestBackup.fileName, {
+    githubSha: latestBackup.commitSha,
+    createdAt: latestBackup.createdAt,
+  });
 
   if (result.ok) {
     console.log(`[Auto Restore] تمت استعادة ${result.itemsRestored} عنصر بنجاح (${result.durationMs}ms)`);

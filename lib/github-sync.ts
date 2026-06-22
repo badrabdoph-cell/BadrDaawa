@@ -421,6 +421,78 @@ function backupTimestampFromPath(repoPath: string) {
   return Number.isNaN(time) ? 0 : time;
 }
 
+export type GitHubBackupDiscoveryResult = {
+  fileName: string;
+  commitSha: string;
+  repoPath: string;
+  createdAt: Date;
+};
+
+export async function findLatestBackupOnGitHub(): Promise<GitHubBackupDiscoveryResult | null> {
+  const config = getSyncConfig();
+  if (!config) return null;
+
+  const { owner, repo } = config.repo;
+
+  try {
+    const ref = await githubRequest<GitHubRef>(
+      `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`,
+      { method: "GET" },
+      config.token,
+    );
+
+    const headCommit = await githubRequest<GitHubCommit>(
+      `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+      { method: "GET" },
+      config.token,
+    );
+
+    const tree = await githubRequest<GitHubRecursiveTree>(
+      `/repos/${owner}/${repo}/git/trees/${headCommit.tree.sha}?recursive=1`,
+      { method: "GET" },
+      config.token,
+    );
+
+    if (tree.truncated) {
+      console.warn("[findLatestBackupOnGitHub] Tree truncated, result may be incomplete");
+    }
+
+    const backupFiles = tree.tree
+      .filter((entry) => entry.type === "blob" && entry.path.startsWith("backups/"))
+      .sort((a, b) => {
+        const timeDiff = backupTimestampFromPath(b.path) - backupTimestampFromPath(a.path);
+        return timeDiff !== 0 ? timeDiff : b.path.localeCompare(a.path);
+      });
+
+    const latest = backupFiles[0];
+    if (!latest || !latest.sha) return null;
+
+    const pathParts = latest.path.replace(/\.gz$/, "").split("/");
+    const fileName = pathParts[pathParts.length - 1];
+
+    const match = latest.path.match(/(\d{8}T\d{6}Z)\.json(?:\.gz)?$/i);
+    const stamp = match?.[1];
+    let createdAt = new Date();
+    if (stamp) {
+      const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
+      const parsed = Date.parse(iso);
+      if (!Number.isNaN(parsed)) {
+        createdAt = new Date(parsed);
+      }
+    }
+
+    return {
+      fileName,
+      commitSha: headCommit.sha,
+      repoPath: latest.path,
+      createdAt,
+    };
+  } catch (error) {
+    console.error("[findLatestBackupOnGitHub]", error instanceof Error ? error.message : String(error));
+    return null;
+  }
+}
+
 async function pruneOldRuntimeBackups(config: SyncConfig, keepLast: number) {
   const { owner, repo } = config.repo;
   const ref = await githubRequest<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(config.branch)}`, { method: "GET" }, config.token);
