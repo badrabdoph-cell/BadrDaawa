@@ -17,7 +17,6 @@ import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBac
 import { MarkSafeButton } from "./MarkSafeButton";
 import { VerifyBackupButton } from "./VerifyBackupButton";
 import { RestoreBackupButton } from "./RestoreBackupButton";
-import GitHubBackupsPanel from "./GitHubBackupsPanel";
 import AutoBackupDashboard from "./AutoBackupDashboard";
 
 export const dynamic = "force-dynamic";
@@ -459,11 +458,6 @@ export default async function BackupsPage({
           </table>
         </div>
       </div>
-
-      {/* ════════════════════════════════════════
-          GITHUB BACKUPS
-      ════════════════════════════════════════ */}
-      <GitHubBackupsPanel />
 
       {/* ════════════════════════════════════════
           RESTORE CENTER
