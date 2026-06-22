@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, ScanLine, Search, ScrollText, Settings, ShieldCheck, Sparkles, Star, Trash2, TriangleAlert, Upload, UsersRound, Wrench, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -23,7 +23,7 @@ const adminSections = [
   {
     id: "customers",
     title: "العملاء",
-    description: "حسابات العملاء والتواصل والملاحظات",
+    description: "حسابات العملاء والتواصل",
     accent: "teal",
     icon: UsersRound,
     links: [
@@ -34,13 +34,19 @@ const adminSections = [
     ],
   },
   {
-    id: "unified",
-    title: "الدعوات والعملاء",
-    description: "دمج الدعوات والعملاء في واجهة واحدة (تجريبي)",
-    accent: "gold",
-    icon: UsersRound,
+    id: "content",
+    title: "المحتوى",
+    description: "القوالب والوسائط والصفحات",
+    accent: "rose",
+    icon: Palette,
     links: [
-      { href: "/admin/invitations-customers", label: "الدعوات والعملاء", icon: UsersRound },
+      { href: "/admin/templates", label: "القوالب", icon: Palette },
+      { href: "/admin/music", label: "الموسيقى", icon: Music2 },
+      { href: "/admin/media", label: "الوسائط", icon: FileImage },
+      { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
+      { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
+      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
+      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
     ],
   },
   {
@@ -57,27 +63,9 @@ const adminSections = [
     ],
   },
   {
-    id: "content",
-    title: "المحتوى",
-    description: "القوالب والوسائط والصفحات العامة",
-    accent: "rose",
-    icon: Palette,
-    links: [
-      { href: "/admin/templates", label: "القوالب", icon: Palette },
-      { href: "/admin/music", label: "الموسيقى", icon: Music2 },
-      { href: "/admin/media", label: "الوسائط", icon: FileImage },
-      { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
-      { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
-      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
-      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
-      { href: "/admin/broadcast", label: "شاشة البث", icon: RadioTower },
-      { href: "/admin/texts", label: "إدارة النصوص", icon: FilePenLine },
-    ],
-  },
-  {
     id: "publishing",
     title: "النشر",
-    description: "إدارة النشر والمسودات والتغييرات",
+    description: "إدارة النشر وسجل الإصدارات",
     accent: "gold",
     icon: Upload,
     links: [
@@ -86,60 +74,39 @@ const adminSections = [
     ],
   },
   {
-    id: "cleanup",
-    title: "التنظيف والصيانة",
-    description: "تنظيف وتحسين وأداء النظام",
-    accent: "amber",
-    icon: Sparkles,
-    links: [
-      { href: "/admin/cleanup", label: "مركز التنظيف", icon: Wrench },
-      { href: "/admin/cleanup/scan", label: "الفحص الشامل", icon: ScanLine },
-      { href: "/admin/cleanup/database", label: "قاعدة البيانات", icon: DatabaseBackup },
-      { href: "/admin/cleanup/media", label: "الوسائط", icon: FileImage },
-      { href: "/admin/cleanup/backups", label: "النسخ الاحتياطية", icon: Archive },
-      { href: "/admin/cleanup/optimization", label: "تحسين الأداء", icon: Activity },
-      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
-    ],
-  },
-  {
-    id: "sync",
-    title: "النسخ والمزامنة",
-    description: "النسخ الاحتياطي وGitHub والمهام",
+    id: "backups",
+    title: "النسخ الاحتياطي",
+    description: "النسخ والاستعادة والمزامنة",
     accent: "violet",
     icon: DatabaseBackup,
     links: [
-      { href: "/admin/sync", label: "مركز النسخ والمزامنة", icon: DatabaseBackup },
+      { href: "/admin/sync", label: "مركز النسخ", icon: DatabaseBackup },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
-      { href: "/admin/backups/v2", label: "نسخ v2", icon: DatabaseBackup },
-      { href: "/admin/backups/restore", label: "استعادة", icon: History },
-      { href: "/admin/backups/emergency", label: "طوارئ", icon: TriangleAlert },
-      { href: "/admin/sync-history", label: "سجل GitHub", icon: History },
+      { href: "/admin/backups/restore", label: "الاستعادة والطوارئ", icon: TriangleAlert },
       { href: "/admin/sync-settings", label: "GitHub", icon: Github },
       { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
     ],
   },
   {
     id: "system",
-    title: "الإعدادات والنظام",
-    description: "الإشعارات والمراقبة والسجلات",
+    title: "النظام",
+    description: "الإعدادات والمراقبة والسجلات",
     accent: "slate",
     icon: Settings,
     links: [
       { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
       { href: "/admin/photographer-logo", label: "شعار المصور", icon: Camera },
       { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
-      { href: "/admin/monitoring", label: "مركز مراقبة النظام", icon: Activity },
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
-      { href: "/admin/errors", label: "الأخطاء", icon: Bug },
-      { href: "/admin/audit-log", label: "السجل", icon: ScrollText },
-      { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
+      { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
+      { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
       { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
     ],
   },
   {
     id: "workspace",
     title: "مساحة العمل",
-    description: "بحث ومفضلة وروابط يومية",
+    description: "بحث ومفضلة",
     accent: "green",
     icon: Search,
     links: [

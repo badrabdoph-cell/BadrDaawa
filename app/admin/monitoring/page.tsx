@@ -3,95 +3,71 @@ import { Activity, ArrowUpLeft, Bug, History, RotateCcw, ScrollText, ShieldAlert
 
 const monitoringSections = [
   {
-    href: "/admin/system-health",
     title: "صحة النظام",
-    description: "حالة قاعدة البيانات والنسخ والمزامنة والخدمات.",
-    icon: Activity,
-    primary: true,
+    links: [
+      { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+      { href: "/admin/notifications", label: "الإشعارات", icon: ShieldAlert },
+    ],
   },
   {
-    href: "/admin/errors",
-    title: "الأخطاء",
-    description: "الأخطاء المسجلة من الواجهة والخادم.",
-    icon: Bug,
+    title: "السجلات",
+    links: [
+      { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
+      { href: "/admin/errors", label: "الأخطاء", icon: Bug },
+      { href: "/admin/recent-edits", label: "التعديلات الأخيرة", icon: History },
+    ],
   },
   {
-    href: "/admin/audit-log",
-    title: "السجل",
-    description: "تتبع الإجراءات الإدارية والتغييرات المهمة.",
-    icon: ScrollText,
-  },
-  {
-    href: "/admin/recent-edits",
-    title: "التعديلات الأخيرة",
-    description: "مراجعة آخر تعديلات واسترجاع النسخ عند الحاجة.",
-    icon: History,
-  },
-  {
-    href: "/admin/trash",
-    title: "سلة المهملات",
-    description: "استرجاع العناصر المحذوفة أو مراجعتها.",
-    icon: Trash2,
+    title: "الصيانة",
+    links: [
+      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
+      { href: "/admin/recent-edits", label: "مساحة التخزين", icon: RotateCcw },
+    ],
   },
 ];
 
-export default function AdminMonitoringHubPage() {
+export const dynamic = "force-dynamic";
+
+export default function MonitoringHubPage() {
   return (
-    <section className="admin-command-center">
+    <div className="admin-page">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Operations</span>
-          <h1>مراقبة النظام</h1>
-          <p>مركز موحد لصحة النظام، الأخطاء، السجلات، والاسترجاع.</p>
+          <span className="eyebrow">System Monitoring</span>
+          <h1>مركز مراقبة النظام</h1>
+          <p>جميع أدوات المراقبة والصيانة في مكان واحد</p>
         </div>
-        <Link className="btn btn-soft" href="/admin">
-          العودة للرئيسية
-        </Link>
       </div>
-
-      <section className="admin-start-grid" aria-label="أقسام مراقبة النظام">
-        {monitoringSections.map((section) => {
-          const Icon = section.icon;
-          return (
-            <Link className={section.primary ? "admin-start-card primary" : "admin-start-card"} href={section.href} key={section.href}>
-              <Icon size={22} />
-              <span>
-                <strong>{section.title}</strong>
-                <small>{section.description}</small>
-              </span>
-              <ArrowUpLeft size={18} />
-            </Link>
-          );
-        })}
-      </section>
-
-      <section className="panel admin-health-overview" aria-label="مسار المراقبة والاسترجاع">
-        <div className="admin-card-head">
-          <ShieldAlert size={22} />
-          <div>
-            <span className="eyebrow">Recovery Flow</span>
-            <h2>التشخيص والاسترجاع</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {monitoringSections.map((section) => (
+          <div key={section.title} className="panel">
+            <div className="admin-card-head">
+              <h2>{section.title}</h2>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {section.links.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="admin-nav-link"
+                    style={{ padding: "12px 16px", borderRadius: 8 }}
+                  >
+                    <Icon size={18} />
+                    {link.label}
+                    <ArrowUpLeft size={14} style={{ marginRight: "auto", opacity: 0.4 }} />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-        <div className="admin-mini-links">
-          <Link href="/admin/system-health">
-            <Activity size={16} />
-            صحة النظام
-          </Link>
-          <Link href="/admin/errors">
-            <Bug size={16} />
-            الأخطاء
-          </Link>
-          <Link href="/admin/recent-edits">
-            <RotateCcw size={16} />
-            التعديلات الأخيرة
-          </Link>
-          <Link href="/admin/trash">
-            <Trash2 size={16} />
-            سلة المهملات
-          </Link>
-        </div>
-      </section>
-    </section>
+        ))}
+      </div>
+      <div className="backup-sync-note" style={{ marginTop: 24 }}>
+        <ArrowUpLeft size={16} />
+        <span>هذه الصفحة ستُحول قريباً إلى لوحة النظام الموحدة. يمكنك الوصول للأقسام الفردية من القائمة الجانبية.</span>
+      </div>
+    </div>
   );
 }
