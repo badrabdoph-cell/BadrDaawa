@@ -269,6 +269,48 @@ export async function commitContentFiles(files: ContentFile[], message: string):
   }
 }
 
+export async function readGitHubFileAtCommit(repoPath: string, commitSha: string): Promise<Buffer | null> {
+  const config = getGitHubConfig();
+  if (!config) return null;
+
+  const { token, repo: repoInfo } = config;
+  const { owner, repo } = repoInfo;
+
+  try {
+    const data = await githubRequest<{ content: string; encoding: string }>(
+      `/repos/${owner}/${repo}/contents/${repoContentPath(repoPath)}?ref=${commitSha}`,
+      { method: "GET" },
+      token,
+    );
+
+    if (data.encoding === "base64" && data.content) {
+      return Buffer.from(data.content, "base64");
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function downloadContentFromGitHubCommit(commitSha: string): Promise<Record<string, unknown> | null> {
+  const { getProjectContentDefinitions } = await import("./project-content-store");
+  const definitions = getProjectContentDefinitions();
+  const result: Record<string, unknown> = {};
+
+  for (const def of definitions) {
+    const bytes = await readGitHubFileAtCommit(def.repoPath, commitSha);
+    if (!bytes) continue;
+    try {
+      const parsed = JSON.parse(bytes.toString("utf8"));
+      result[def.key] = parsed;
+    } catch {
+      console.warn(`[GitHub Content Read] Failed to parse ${def.repoPath} at ${commitSha}`);
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 export function getGitHubContentReadiness() {
   const config = getGitHubConfig();
   if (!config) {

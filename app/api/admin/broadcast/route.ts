@@ -1,8 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { getHomeContent, updateHomeContent, type HomeContent } from "@/lib/home-content";
-import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
+import { getDraftHomeContent, updateHomeContentDraft, type HomeContent } from "@/lib/home-content";
+import { getDraftHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -114,8 +114,8 @@ type BroadcastMutation = {
 };
 
 async function applyBroadcastMutation(payload: BroadcastMutation) {
-  let content = await getHomeContent();
-  let previewSettings = await getHomePreviewSettings();
+  let content = await getDraftHomeContent();
+  let previewSettings = await getDraftHomePreviewSettings();
   const action = payload.action || "text";
 
   if (action === "media" || ("kind" in payload && payload.kind === "media") || ("key" in payload && payload.key === "preview.media")) {
@@ -124,7 +124,7 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
     const requestedMode = String(("mediaMode" in payload && payload.mediaMode) || "");
     const mode = requestedMode === "image" || requestedMode === "video" || requestedMode === "template" ? requestedMode : inferPreviewMode(mediaUrl);
 
-    previewSettings = await updateHomePreviewSettings({
+    previewSettings = await updateHomePreviewSettingsDraft({
       mode,
       templateSlug,
       mediaUrl,
@@ -141,26 +141,26 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
       text,
       icon,
     });
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "deleteFeature") {
     const id = cleanText(payload.id || "");
     const next = structuredClone(content);
     next.features.points = next.features.points.filter((item) => item.id !== id);
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "moveFeatureUp") {
     const id = cleanText(payload.id || "");
     const next = structuredClone(content);
     const idx = next.features.points.findIndex((item) => item.id === id);
     if (idx <= 0) throw new Error("cannot_move_up");
     [next.features.points[idx - 1], next.features.points[idx]] = [next.features.points[idx], next.features.points[idx - 1]];
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "moveFeatureDown") {
     const id = cleanText(payload.id || "");
     const next = structuredClone(content);
     const idx = next.features.points.findIndex((item) => item.id === id);
     if (idx === -1 || idx >= next.features.points.length - 1) throw new Error("cannot_move_down");
     [next.features.points[idx], next.features.points[idx + 1]] = [next.features.points[idx + 1], next.features.points[idx]];
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "setFeatureIcon") {
     const id = cleanText(payload.id || "");
     const icon = typeof payload.icon === "string" ? payload.icon.trim() || undefined : undefined;
@@ -169,7 +169,7 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
     if (!point) throw new Error("missing_feature_point");
     if (icon) point.icon = icon;
     else delete point.icon;
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "addPricingRow") {
     const feature = cleanText(payload.feature || "");
     if (!feature) throw new Error("missing_pricing_feature");
@@ -180,12 +180,12 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
       invitation: typeof payload.invitation === "boolean" ? payload.invitation : true,
       plus: typeof payload.plus === "boolean" ? payload.plus : true,
     });
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "deletePricingRow") {
     const id = cleanText(payload.id || "");
     const next = structuredClone(content);
     next.pricing.rows = next.pricing.rows.filter((item) => item.id !== id);
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else if (action === "setPricingAvailability") {
     const id = cleanText(payload.id || "");
     const column = payload.column === "invitation" || payload.column === "plus" ? payload.column : "";
@@ -194,13 +194,13 @@ async function applyBroadcastMutation(payload: BroadcastMutation) {
     const row = next.pricing.rows.find((item) => item.id === id);
     if (!row) throw new Error("missing_pricing_row");
     row[column] = Boolean(payload.value);
-    content = await updateHomeContent(next);
+    content = await updateHomeContentDraft(next);
   } else {
     const key = "key" in payload ? String(payload.key || "") : "";
     if (!key) throw new Error("missing_key");
     const nextContent = updateTextContent(content, key, String(("value" in payload && payload.value) || ""));
     if (!nextContent) throw new Error("unknown_broadcast_key");
-    content = await updateHomeContent(nextContent);
+    content = await updateHomeContentDraft(nextContent);
   }
 
   revalidatePath("/");

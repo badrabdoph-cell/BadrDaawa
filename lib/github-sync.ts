@@ -402,7 +402,7 @@ async function githubRequest<T>(pathName: string, init: RequestInit, token: stri
   return (await response.json()) as T;
 }
 
-function formatBackupRepoPath(fileName: string, createdAt: Date) {
+export function formatBackupRepoPath(fileName: string, createdAt: Date) {
   const year = String(createdAt.getUTCFullYear());
   const month = String(createdAt.getUTCMonth() + 1).padStart(2, "0");
   return `backups/${year}/${month}/${fileName}`;

@@ -5,9 +5,9 @@ import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { deleteUploadUrlIfUnused } from "@/lib/media-cleanup";
 import {
   getTemplatePreviewBaseInfo,
-  getTemplatePreviewInfo,
+  getDraftTemplatePreviewInfo,
   resolveTemplatePreviewInfo,
-  updateTemplatePreviewInfo,
+  updateTemplatePreviewInfoDraft,
   type TemplatePreviewEditableInfo,
   type TemplatePreviewInfo,
 } from "@/lib/template-preview-info";
@@ -101,7 +101,7 @@ async function revalidateTemplates(templates: Awaited<ReturnType<typeof getTempl
 
 export async function GET(request: NextRequest) {
   if (!(await isAdmin(request))) return NextResponse.json({ ok: false, error: "انتهت جلسة الأدمن." }, { status: 401 });
-  const [previewInfo, templates] = await Promise.all([getTemplatePreviewInfo(), getTemplatesWithSettings()]);
+  const [previewInfo, templates] = await Promise.all([getDraftTemplatePreviewInfo(), getTemplatesWithSettings()]);
   return NextResponse.json(responsePayload(previewInfo, templates));
 }
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     const payload = (await request.json().catch(() => null)) as SavePayload | null;
     if (!payload?.content) return NextResponse.json({ ok: false, error: "بيانات الحفظ غير صالحة." }, { status: 400 });
 
-    const [current, templates] = await Promise.all([getTemplatePreviewInfo(), getTemplatesWithSettings()]);
+    const [current, templates] = await Promise.all([getDraftTemplatePreviewInfo(), getTemplatesWithSettings()]);
     const allSlugs = new Set(templates.map((template) => template.slug));
     const mode = payload.mode === "template" ? "template" : "global";
     const beforeUrlsSnapshot = current;
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       const slug = payload.templateSlug || "";
       if (!allSlugs.has(slug)) return NextResponse.json({ ok: false, error: "القالب المحدد غير موجود." }, { status: 400 });
       const base = resolveTemplatePreviewInfo(current, slug);
-      next = await updateTemplatePreviewInfo({
+      next = await updateTemplatePreviewInfoDraft({
         templateOverrides: {
           ...current.templateOverrides,
           [slug]: {
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
           };
         }
       }
-      next = await updateTemplatePreviewInfo({
+      next = await updateTemplatePreviewInfoDraft({
         ...mergeContent(base, payload.content),
         templateOverrides: nextOverrides,
         adminScope: { mode: scopeMode, excludedSlugs },

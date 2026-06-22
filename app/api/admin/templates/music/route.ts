@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { getTemplateWithSettings, updateTemplateSettings } from "@/lib/template-settings";
+import { getDraftTemplateWithSettings, updateDraftTemplateSettings } from "@/lib/template-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const slug = String(formData.get("slug") || "").trim();
-  const oldValues = await getTemplateWithSettings(slug).catch(() => null);
-  const updated = await updateTemplateSettings(slug, {
+  const oldValues = await getDraftTemplateWithSettings(slug).catch(() => null);
+  const updated = await updateDraftTemplateSettings(slug, {
     arabicName: String(formData.get("arabicName") || ""),
     category: String(formData.get("category") || ""),
     concept: String(formData.get("concept") || ""),
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/templates");
     revalidatePath(`/templates/${slug}/preview`);
     const actor = await getAuditActorFromAdminRequest(request);
-    const newValues = await getTemplateWithSettings(slug).catch(() => null);
+    const newValues = await getDraftTemplateWithSettings(slug).catch(() => null);
     await recordAuditLog({
       actor,
       action: "template.change",

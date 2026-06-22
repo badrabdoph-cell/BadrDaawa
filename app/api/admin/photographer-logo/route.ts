@@ -7,8 +7,8 @@ import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/db";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { writeProjectAssetFile } from "@/lib/project-assets";
-import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
-import { getTemplatePreviewInfo, updateTemplatePreviewInfo } from "@/lib/template-preview-info";
+import { getDraftSiteSettings, updateSiteSettingsDraft } from "@/lib/site-settings";
+import { getDraftTemplatePreviewInfo, updateTemplatePreviewInfoDraft } from "@/lib/template-preview-info";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const settings = await getSiteSettings();
+    const settings = await getDraftSiteSettings();
     if (!prisma) {
       return NextResponse.json({ error: "Database not available" }, { status: 503 });
     }
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      await updateSiteSettings({
+      await updateSiteSettingsDraft({
         photographer: {
           showPhotographerCard,
           defaultName: photographerName,
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      const currentPreview = await getTemplatePreviewInfo();
-      await updateTemplatePreviewInfo({
+      const currentPreview = await getDraftTemplatePreviewInfo();
+      await updateTemplatePreviewInfoDraft({
         ...currentPreview,
         photographer: {
           ...currentPreview.photographer,
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.redirect(getRedirectUrl("/admin/photographer-logo?error=noselection", request.headers, request.nextUrl.origin), 303);
       }
 
-      const settings = await getSiteSettings();
+      const settings = await getDraftSiteSettings();
       const globalLogoUrl = settings.photographer.defaultLogoUrl;
 
       if (!globalLogoUrl) {

@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { createCustomTemplateFromHtml } from "@/lib/custom-templates";
+import { createCustomTemplateFromHtmlDraft } from "@/lib/custom-templates";
 import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const result = await createCustomTemplateFromHtml({
+  const result = await createCustomTemplateFromHtmlDraft({
     name: String(formData.get("name") || ""),
     slug: String(formData.get("slug") || ""),
     category: String(formData.get("category") || ""),

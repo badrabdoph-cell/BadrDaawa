@@ -230,7 +230,14 @@ export async function updateTemplatesMusicState(slugs: string[], input: { musicU
   return selectedSlugs;
 }
 
-export async function updateTemplateSettings(
+export async function getDraftTemplateWithSettings(slug: string) {
+  const template = getTemplateBySlug(slug);
+  if (!template) return undefined;
+  const [settings, globalMusicUrl] = await Promise.all([readDraftTemplateSettings(), getGlobalMusicOverride()]);
+  return applyTemplateSettings(template, settings, globalMusicUrl);
+}
+
+export async function updateDraftTemplateSettings(
   slug: string,
   input: {
     arabicName?: string;
@@ -256,7 +263,7 @@ export async function updateTemplateSettings(
   const template = getTemplateBySlug(slug);
   if (!template) return false;
 
-  const settings = await readTemplateSettings();
+  const settings = await readDraftTemplateSettings();
   const next = { ...(settings[slug] || {}) };
 
   const arabicName = cleanText(input.arabicName || "", 90);
@@ -309,7 +316,7 @@ export async function updateTemplateSettings(
   };
 
   settings[slug] = next;
-  await writeTemplateSettings(settings);
+  await writeDraftTemplateSettings(settings);
   return true;
 }
 

@@ -28,9 +28,10 @@ export type AuditAction =
   | "backup.restore"
   | "photographer-logo.bulk-update"
   | "content.publish"
-  | "content.discard";
+  | "content.discard"
+  | "content.rollback";
 
-export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GuestBookMessage" | "Cleanup" | "GitHubSync" | "Backup" | "ContentPublish";
+export type AuditEntityType = "Invitation" | "Order" | "Template" | "Media" | "GuestBookMessage" | "Cleanup" | "GitHubSync" | "Backup" | "ContentPublish" | "ContentVersion";
 
 export type AuditLogEntry = {
   id: string;
@@ -271,4 +272,5 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "photographer-logo.bulk-update": "تحديث شعار المصور",
   "content.publish": "نشر المحتوى",
   "content.discard": "إلغاء المسودات",
+  "content.rollback": "الرجوع للإصدارات السابقة",
 };

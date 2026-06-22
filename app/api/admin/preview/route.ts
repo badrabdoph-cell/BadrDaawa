@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
-import { updateHomePreviewSettings } from "@/lib/preview-settings";
+import { updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getRedirectUrl } from "@/lib/utils";
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   const previewVideo = formData.get("previewVideo");
   const uploadedMedia = await savePreviewMedia(previewMedia instanceof File ? previewMedia : previewVideo instanceof File ? previewVideo : null);
 
-  await updateHomePreviewSettings({
+  await updateHomePreviewSettingsDraft({
     mode,
     templateSlug,
     mediaUrl,

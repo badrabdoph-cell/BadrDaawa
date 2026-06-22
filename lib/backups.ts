@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { gzipSync } from "node:zlib";
+import { gzipSync, gunzipSync } from "node:zlib";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
@@ -1025,40 +1025,43 @@ function deleteTableOrder(): string[] {
   ];
 }
 
-function prismaModelForTable(table: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TxClient = any;
+
+function prismaModelForTable(tx: TxClient, table: string) {
   const map: Record<string, unknown> = {
-    adminUsers: prisma?.adminUser,
-    customers: prisma?.customer,
-    invitations: prisma?.invitation,
-    guestRsvps: prisma?.guestRsvp,
-    orderRequests: prisma?.orderRequest,
-    analyticsEvents: prisma?.analyticsEvent,
-    appSettings: prisma?.appSetting,
-    guestBookMessages: prisma?.guestBookMessage,
-    coupleMessagesSettings: prisma?.coupleMessagesSetting,
-    clientMessages: prisma?.clientMessage,
-    invitationCheckIns: prisma?.invitationCheckIn,
-    weddingLiveModes: prisma?.weddingLiveMode,
-    internalNotes: prisma?.internalNote,
-    auditLogs: prisma?.auditLog,
-    backupJobs: prisma?.backupJob,
-    syncLogs: prisma?.syncLog,
-    dynamicPages: prisma?.dynamicPage,
-    weddingTemplates: prisma?.weddingTemplate,
+    adminUsers: tx.adminUser,
+    customers: tx.customer,
+    invitations: tx.invitation,
+    guestRsvps: tx.guestRsvp,
+    orderRequests: tx.orderRequest,
+    analyticsEvents: tx.analyticsEvent,
+    appSettings: tx.appSetting,
+    guestBookMessages: tx.guestBookMessage,
+    coupleMessagesSettings: tx.coupleMessagesSetting,
+    clientMessages: tx.clientMessage,
+    invitationCheckIns: tx.invitationCheckIn,
+    weddingLiveModes: tx.weddingLiveMode,
+    internalNotes: tx.internalNote,
+    auditLogs: tx.auditLog,
+    backupJobs: tx.backupJob,
+    syncLogs: tx.syncLog,
+    dynamicPages: tx.dynamicPage,
+    weddingTemplates: tx.weddingTemplate,
   };
   return map[table];
 }
 
-async function deleteTableData(table: string): Promise<number> {
-  const model = prismaModelForTable(table) as { deleteMany: () => Promise<{ count: number }> } | undefined;
+async function deleteTableData(tx: TxClient, table: string): Promise<number> {
+  const model = prismaModelForTable(tx, table) as { deleteMany: () => Promise<{ count: number }> } | undefined;
   if (!model?.deleteMany) return 0;
   const result = await model.deleteMany();
   return result.count;
 }
 
-async function insertTableData(table: string, rows: unknown[]): Promise<number> {
+async function insertTableData(tx: TxClient, table: string, rows: unknown[]): Promise<number> {
   if (!rows.length) return 0;
-  const model = prismaModelForTable(table) as { createMany: (args: { data: unknown[] }) => Promise<{ count: number }> } | undefined;
+  const model = prismaModelForTable(tx, table) as { createMany: (args: { data: unknown[] }) => Promise<{ count: number }> } | undefined;
   if (!model?.createMany) return 0;
   const BATCH_SIZE = 500;
   let inserted = 0;
@@ -1264,27 +1267,30 @@ export async function restoreFromBackup(fileName: string): Promise<RestoreResult
   }
 
   try {
-    // Step 1: Delete all runtime data in FK-safe order
-    const deleteOrder = deleteTableOrder();
-    for (const table of deleteOrder) {
-      const data = runtimeData[table];
-      if (!data) continue;
-      const deleted = await deleteTableData(table);
-      steps.push({ table, deleted, inserted: 0 });
-    }
+    // Steps 1 & 2: Delete + Insert runtime data in a single transaction
+    if (prisma) {
+      await prisma.$transaction(async (tx) => {
+        const deleteOrder = deleteTableOrder();
+        for (const table of deleteOrder) {
+          const data = runtimeData[table];
+          if (!data) continue;
+          const deleted = await deleteTableData(tx, table);
+          steps.push({ table, deleted, inserted: 0 });
+        }
 
-    // Step 2: Insert runtime data from backup in FK-safe order
-    const insertOrder = restoreTableOrder();
-    for (const table of insertOrder) {
-      const rows = runtimeData[table];
-      if (!rows || !rows.length) continue;
-      const inserted = await insertTableData(table, rows);
-      const existingStep = steps.find((s) => s.table === table);
-      if (existingStep) {
-        existingStep.inserted = inserted;
-      } else {
-        steps.push({ table, deleted: 0, inserted });
-      }
+        const insertOrder = restoreTableOrder();
+        for (const table of insertOrder) {
+          const rows = runtimeData[table];
+          if (!rows || !rows.length) continue;
+          const inserted = await insertTableData(tx, table, rows);
+          const existingStep = steps.find((s) => s.table === table);
+          if (existingStep) {
+            existingStep.inserted = inserted;
+          } else {
+            steps.push({ table, deleted: 0, inserted });
+          }
+        }
+      });
     }
 
     // Step 3: Restore upload files
@@ -1326,6 +1332,109 @@ export async function restoreFromBackup(fileName: string): Promise<RestoreResult
       durationMs: Date.now() - startedAt,
       error: message,
     };
+  }
+}
+
+export type GitHubRestoreResult = {
+  ok: boolean;
+  fileName: string;
+  itemsRestored: number;
+  uploadsRestored: number;
+  durationMs: number;
+  error: string | null;
+};
+
+export async function downloadAndRestoreFromGitHub(backupFileName: string): Promise<GitHubRestoreResult> {
+  const startedAt = Date.now();
+  if (!prisma) {
+    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Database not available" };
+  }
+
+  const job = await prisma.backupJob.findFirst({ where: { fileName: backupFileName }, orderBy: { createdAt: "desc" } });
+  if (!job) {
+    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup job not found" };
+  }
+  if (!job.githubSha) {
+    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup has no GitHub commit SHA" };
+  }
+
+  const { readGitHubFileAtCommit } = await import("./github-content");
+  const { formatBackupRepoPath } = await import("./github-sync");
+  const repoPath = formatBackupRepoPath(backupFileName, job.createdAt);
+  const repoPathGz = `${repoPath}.gz`;
+
+  let rawBytes: Buffer | null = null;
+
+  rawBytes = await readGitHubFileAtCommit(repoPath, job.githubSha);
+  if (!rawBytes) {
+    rawBytes = await readGitHubFileAtCommit(repoPathGz, job.githubSha);
+  }
+  if (!rawBytes) {
+    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup file not found on GitHub" };
+  }
+
+  let payload: Record<string, unknown>;
+  try {
+    const text = repoPathGz.endsWith(".gz") ? gunzipSync(rawBytes).toString("utf8") : rawBytes.toString("utf8");
+    payload = JSON.parse(text);
+  } catch (e) {
+    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: `Failed to parse backup: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const runtimeData = payload.runtimeData as Record<string, unknown[]> | undefined;
+  const uploads = payload.uploads as Array<Record<string, unknown>> | undefined;
+  if (!runtimeData || typeof runtimeData !== "object") {
+    return { ok: false, fileName: backupFileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "Backup file does not contain runtimeData" };
+  }
+
+  const steps: RestoreResult["steps"] = [];
+  try {
+    if (prisma) {
+      await prisma.$transaction(async (tx) => {
+        const deleteOrder = deleteTableOrder();
+        for (const table of deleteOrder) {
+          const data = runtimeData[table];
+          if (!data) continue;
+          const deleted = await deleteTableData(tx, table);
+          steps.push({ table, deleted, inserted: 0 });
+        }
+
+        const insertOrder = restoreTableOrder();
+        for (const table of insertOrder) {
+          const rows = runtimeData[table];
+          if (!rows || !rows.length) continue;
+          const inserted = await insertTableData(tx, table, rows);
+          const existingStep = steps.find((s) => s.table === table);
+          if (existingStep) {
+            existingStep.inserted = inserted;
+          } else {
+            steps.push({ table, deleted: 0, inserted });
+          }
+        }
+      });
+    }
+
+    let uploadsRestored = 0;
+    if (Array.isArray(uploads) && uploads.length > 0) {
+      const { writeUploadFile } = await import("./storage-provider");
+      for (const upload of uploads) {
+        const b64 = upload.base64 as string | undefined;
+        const rp = upload.relativePath as string | undefined;
+        if (!b64 || !rp) continue;
+        try {
+          const bytes = Buffer.from(b64, "base64");
+          await writeUploadFile(rp, bytes, upload.contentType as string | undefined);
+          uploadsRestored++;
+        } catch (uploadError) {
+          console.error(`[GitHub Restore] Failed to restore upload: ${rp}`, uploadError);
+        }
+      }
+    }
+
+    const itemsRestored = steps.reduce((sum, s) => sum + s.inserted, 0);
+    return { ok: true, fileName: backupFileName, itemsRestored, uploadsRestored, durationMs: Date.now() - startedAt, error: null };
+  } catch (error) {
+    return { ok: false, fileName: backupFileName, itemsRestored: steps.reduce((sum, s) => sum + s.inserted, 0), uploadsRestored: 0, durationMs: Date.now() - startedAt, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
