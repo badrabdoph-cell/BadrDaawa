@@ -239,7 +239,6 @@ async function checkPublishSystem(): Promise<SystemHealthCheck> {
 async function checkAutoRestoreReadiness(): Promise<SystemHealthCheck> {
   const enabled = (process.env.AUTO_RESTORE_FROM_GITHUB || "").trim().toLowerCase() === "true";
   const repoConfigured = Boolean((process.env.GITHUB_SYNC_REPO || "").trim() && (process.env.GITHUB_SYNC_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim());
-  const destructiveAllowed = (process.env.ALLOW_DESTRUCTIVE_RESTORE || "").trim() === "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL";
 
   if (!enabled) {
     return { key: "auto-restore", label: "Auto Restore", level: "warning", status: "معطل", detail: "AUTO_RESTORE_FROM_GITHUB غير مفعل" };
@@ -247,10 +246,7 @@ async function checkAutoRestoreReadiness(): Promise<SystemHealthCheck> {
   if (!repoConfigured) {
     return { key: "auto-restore", label: "Auto Restore", level: "error", status: "غير جاهز", detail: "GitHub غير مهيأ" };
   }
-  if (!destructiveAllowed) {
-    return { key: "auto-restore", label: "Auto Restore", level: "warning", status: "ALLOW_DESTRUCTIVE_RESTORE غير مضبوط", detail: "الاستعادة التلقائية تتطلب ALLOW_DESTRUCTIVE_RESTORE" };
-  }
-  return { key: "auto-restore", label: "Auto Restore", level: "ok", status: "جاهز", detail: "Auto Restore مفعل ومهيأ" };
+  return { key: "auto-restore", label: "Auto Restore", level: "ok", status: "جاهز", detail: "Auto Restore مفعل ومهيأ (يتم تلقائياً عند قاعدة بيانات فارغة)" };
 }
 
 async function checkBackupScheduler(): Promise<SystemHealthCheck> {

@@ -19,8 +19,6 @@ export default defineRailway((ctx) => {
       GITHUB_SYNC_REPO: "badrabdoph-cell/BadrDaawa",
 
       AUTO_RESTORE_FROM_GITHUB: "true",
-      AUTO_RESTORE_ONLY_IF_DB_EMPTY: "true",
-      ALLOW_DESTRUCTIVE_RESTORE: "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL",
 
       BACKUP_CRON_URL: domain,
 

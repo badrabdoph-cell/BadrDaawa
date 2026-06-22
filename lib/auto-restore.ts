@@ -26,17 +26,13 @@ export async function checkAndAutoRestore(): Promise<AutoRestoreResult> {
     return { executed: false, restored: false, reason: "قاعدة البيانات غير متصلة" };
   }
 
-  const onlyIfEmpty = env("AUTO_RESTORE_ONLY_IF_DB_EMPTY").toLowerCase() !== "false";
-
-  if (onlyIfEmpty) {
-    try {
-      const keysCount = await prisma.appSetting.count();
-      if (keysCount > 0) {
-        return { executed: false, restored: false, reason: `قاعدة البيانات غير فارغة (${keysCount} مفتاح)، تخطي auto-restore` };
-      }
-    } catch (error) {
-      return { executed: false, restored: false, reason: `فشل التحقق من قاعدة البيانات: ${error instanceof Error ? error.message : String(error)}` };
+  try {
+    const keysCount = await prisma.appSetting.count();
+    if (keysCount > 0) {
+      return { executed: false, restored: false, reason: `قاعدة البيانات غير فارغة (${keysCount} مفتاح)، تخطي auto-restore` };
     }
+  } catch (error) {
+    return { executed: false, restored: false, reason: `فشل التحقق من قاعدة البيانات: ${error instanceof Error ? error.message : String(error)}` };
   }
 
   let latestBackup;
@@ -48,11 +44,6 @@ export async function checkAndAutoRestore(): Promise<AutoRestoreResult> {
 
   if (!latestBackup) {
     return { executed: false, restored: false, reason: "لا توجد نسخة احتياطية على GitHub" };
-  }
-
-  const destructiveAllowed = env("ALLOW_DESTRUCTIVE_RESTORE") === "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL";
-  if (!destructiveAllowed) {
-    return { executed: false, restored: false, reason: "ALLOW_DESTRUCTIVE_RESTORE غير مضبوط" };
   }
 
   console.log(`[Auto Restore] بدء الاستعادة التلقائية من: ${latestBackup.fileName}`);
