@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getAdminInvitations, getAdminOrders } from "./admin-data";
-import { listBackupSnapshots } from "./backups";
+import { listBackupSnapshots, getScheduledBackupInfo } from "./backups";
 import { prisma } from "./db";
 import { getGitHubSyncReadiness, getSyncHistory } from "./github-sync";
 import { getSyncQueueStatus } from "./github-sync-queue";
@@ -253,10 +253,30 @@ async function checkAutoRestoreReadiness(): Promise<SystemHealthCheck> {
   return { key: "auto-restore", label: "Auto Restore", level: "ok", status: "جاهز", detail: "Auto Restore مفعل ومهيأ" };
 }
 
+async function checkBackupScheduler(): Promise<SystemHealthCheck> {
+  const hasCronSecret = Boolean((process.env.BACKUP_CRON_SECRET || "").trim());
+  try {
+    const info = await getScheduledBackupInfo();
+    const lastScheduled = info.lastScheduledSuccess || info.lastScheduled;
+    if (!hasCronSecret && !lastScheduled) {
+      return { key: "backup-scheduler", label: "جدولة النسخ", level: "warning", status: "غير مهيأ", detail: "BACKUP_CRON_SECRET غير مضبوط ولا توجد نسخ مجدولة سابقة" };
+    }
+    if (!hasCronSecret && lastScheduled) {
+      return { key: "backup-scheduler", label: "جدولة النسخ", level: "warning", status: "BACKUP_CRON_SECRET غير مضبوط", detail: `آخر نسخة مجدولة: ${lastScheduled.createdAt}` };
+    }
+    if (hasCronSecret && lastScheduled) {
+      return { key: "backup-scheduler", label: "جدولة النسخ", level: "ok", status: "يعمل", detail: `آخر نسخة مجدولة: ${lastScheduled.createdAt}` };
+    }
+    return { key: "backup-scheduler", label: "جدولة النسخ", level: "ok", status: "مهيأ", detail: "BACKUP_CRON_SECRET مضبوط، في انتظار أول تشغيل" };
+  } catch {
+    return { key: "backup-scheduler", label: "جدولة النسخ", level: "warning", status: "غير معروف", detail: "تعذر التحقق من جدولة النسخ" };
+  }
+}
+
 export async function getSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
   noStore();
 
-  const [database, storage, githubSync, backups, push, publish, autoRestore, invitationsResult, ordersResult] = await Promise.all([
+  const [database, storage, githubSync, backups, push, publish, autoRestore, scheduler, invitationsResult, ordersResult] = await Promise.all([
     checkDatabase(),
     checkStorage(),
     checkGitHubSync(),
@@ -264,6 +284,7 @@ export async function getSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
     checkPushNotifications(),
     checkPublishSystem(),
     checkAutoRestoreReadiness(),
+    checkBackupScheduler(),
     getAdminInvitations()
       .then((items) => ({ count: items.length, error: "" }))
       .catch((error) => ({ count: 0, error: toErrorMessage(error) })),
@@ -295,7 +316,7 @@ export async function getSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
   }
 
   return {
-    checks: [database, githubSync, storage.check, backups.check, push.check, publish, autoRestore, ...dataChecks],
+    checks: [database, githubSync, storage.check, backups.check, scheduler, push.check, publish, autoRestore, ...dataChecks],
     metrics: {
       filesCount: storage.files.length,
       filesSizeBytes: storage.files.reduce((sum, file) => sum + file.size, 0),

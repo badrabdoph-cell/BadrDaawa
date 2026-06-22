@@ -19,6 +19,7 @@ import { getAllGuestBookMessages } from "@/lib/guest-book";
 import { formatArabicNumber } from "@/lib/utils";
 import { getPublishMeta } from "@/lib/project-content-store";
 import { getLatestContentVersion } from "@/lib/publish-pipeline";
+import BackupDashboardWidget from "@/components/BackupDashboardWidget";
 
 function formatOrderDate(value: string) {
   const date = new Date(value);
@@ -151,6 +152,10 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             <small>{hasUnpublishedChanges ? "تغييرات غير منشورة" : "لا توجد تغييرات"}</small>
           </Link>
         </div>
+      </section>
+
+      <section className="admin-home-grid" style={{ marginTop: "1.5rem" }} aria-label="حالة النظام">
+        <BackupDashboardWidget />
       </section>
 
       <section className="admin-start-grid" aria-label="اختصارات التشغيل">

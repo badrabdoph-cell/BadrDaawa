@@ -12,36 +12,18 @@ import {
   ShieldCheck,
   ShieldAlert,
   TriangleAlert,
+  CheckCircle2,
+  XCircle,
+  BarChart3,
 } from "lucide-react";
 import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBackupSnapshots } from "@/lib/backups";
+import { formatBytes, formatDate, formatDuration, formatBackupType, formatBackupStatus, truncateSha } from "@/lib/backup-display";
 import { MarkSafeButton } from "./MarkSafeButton";
 import { VerifyBackupButton } from "./VerifyBackupButton";
 import { RestoreBackupButton } from "./RestoreBackupButton";
 import AutoBackupDashboard from "./AutoBackupDashboard";
 
 export const dynamic = "force-dynamic";
-
-function formatBytes(value: number) {
-  if (value < 1024) return `${value} B`;
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatBackupDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Africa/Cairo",
-  }).format(date);
-}
-
-function formatDuration(value: number | null) {
-  if (value === null) return "غير متاح";
-  if (value < 1000) return `${value}ms`;
-  return `${(value / 1000).toFixed(1)}s`;
-}
 
 function healthLevel(
   pg: { status: string },
@@ -290,7 +272,7 @@ export default async function BackupsPage({
           <DatabaseBackup size={20} className="metric-icon" />
           <span className="metric-label">آخر نسخة</span>
           <span className="metric-value" style={{ fontSize: "0.85rem" }}>
-            {latest ? formatBackupDate(latest.createdAt) : "لا توجد"}
+            {latest ? formatDate(latest.createdAt) : "لا توجد"}
           </span>
         </div>
         <div className="backup-metric-card">
@@ -298,7 +280,7 @@ export default async function BackupsPage({
           <span className="metric-label">النسخة القادمة</span>
           <span className="metric-value" style={{ fontSize: "0.85rem" }}>
             {runtimeStatus.nextScheduledAt
-              ? formatBackupDate(runtimeStatus.nextScheduledAt)
+              ? formatDate(runtimeStatus.nextScheduledAt)
               : "غير مجدول"}
           </span>
         </div>
@@ -327,7 +309,7 @@ export default async function BackupsPage({
             </div>
             <div className="backup-detail-row">
               <span className="backup-detail-label">تاريخ الإنشاء</span>
-              <span className="backup-detail-value">{formatBackupDate(runtimeStatus.latestSuccessful.createdAt)}</span>
+              <span className="backup-detail-value">{formatDate(runtimeStatus.latestSuccessful.createdAt)}</span>
             </div>
             <div className="backup-detail-row">
               <span className="backup-detail-label">الحجم</span>
@@ -381,7 +363,7 @@ export default async function BackupsPage({
           </span>
           <span className="error-time">
             {runtimeStatus.lastError.createdAt
-              ? formatBackupDate(runtimeStatus.lastError.createdAt)
+              ? formatDate(runtimeStatus.lastError.createdAt)
               : ""}
           </span>
         </div>
@@ -403,62 +385,80 @@ export default async function BackupsPage({
                 <th>النوع</th>
                 <th>الحالة</th>
                 <th>الحجم</th>
+                <th>السجلات</th>
                 <th>الملفات المرفوعة</th>
+                <th>GitHub</th>
                 <th>تاريخ الإنشاء</th>
                 <th>إجراءات</th>
               </tr>
             </thead>
             <tbody>
               {backups.length ? (
-                backups.map((backup) => (
-                  <tr key={backup.fileName}>
-                    <td>
-                      <span className="backup-file-name">{backup.fileName}</span>
-                    </td>
-                    <td>
-                      {backup.type === "scheduled" ? "تلقائي" : backup.type === "manual" ? "يدوي" : backup.type}
-                    </td>
-                    <td>
-                      <span className={`status ${backup.status === "SUCCESS" ? "success" : "danger"}`}>
-                        {backup.status === "SUCCESS" ? "ناجحة" : "فاشلة"}
-                      </span>
-                    </td>
-                    <td style={{ direction: "ltr", textAlign: "right" }}>{formatBytes(backup.sizeBytes)}</td>
-                    <td>
-                      {backup.uploadsCount > 0 ? (
-                        <span style={{ color: "#4caf87" }}>
-                          {backup.uploadsCount} ملف &middot; {formatBytes(backup.uploadsSizeBytes)}
+                backups.map((backup) => {
+                  const st = formatBackupStatus(backup.status);
+                  return (
+                    <tr key={backup.fileName}>
+                      <td>
+                        <span className="backup-file-name">{backup.fileName}</span>
+                      </td>
+                      <td>{formatBackupType(backup.type)}</td>
+                      <td>
+                        <span className={`status ${backup.status === "SUCCESS" ? "success" : "danger"}`} style={{ color: st.color }}>
+                          {st.label}
                         </span>
-                      ) : (
-                        <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>
-                          &#10005; لا توجد
-                        </span>
-                      )}
-                    </td>
-                    <td>{formatBackupDate(backup.createdAt)}</td>
-                    <td>
-                      <div className="button-row">
-                        <MarkSafeButton
-                          fileName={backup.fileName}
-                          isSafe={safeFileNames.has(backup.fileName)}
-                          label={safeFileNames.get(backup.fileName)?.label ?? null}
-                        />
-                        <a
-                          className="btn btn-soft btn-icon"
-                          href={`/api/admin/backups/${backup.fileName}`}
-                          title="تحميل"
-                          download
-                        >
-                          <CloudDownload size={17} />
-                        </a>
-                        <RestoreBackupButton fileName={backup.fileName} />
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td style={{ direction: "ltr", textAlign: "right" }}>{formatBytes(backup.sizeBytes)}</td>
+                      <td>
+                        {backup.items > 0 ? (
+                          <span>{backup.items.toLocaleString("ar-EG")}</span>
+                        ) : (
+                          <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        {backup.uploadsCount > 0 ? (
+                          <span style={{ color: "#4caf87" }}>
+                            {backup.uploadsCount} &middot; {formatBytes(backup.uploadsSizeBytes)}
+                          </span>
+                        ) : (
+                          <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>&#10005;</span>
+                        )}
+                      </td>
+                      <td>
+                        {backup.github?.commitSha ? (
+                          <span style={{ fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)", fontSize: "0.72rem", direction: "ltr", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            {backup.github.verified ? <CheckCircle2 size={12} color="#4caf87" /> : <XCircle size={12} color="rgba(245,234,214,0.4)" />}
+                            {truncateSha(backup.github.commitSha)}
+                          </span>
+                        ) : (
+                          <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>—</span>
+                        )}
+                      </td>
+                      <td>{formatDate(backup.createdAt)}</td>
+                      <td>
+                        <div className="button-row">
+                          <MarkSafeButton
+                            fileName={backup.fileName}
+                            isSafe={safeFileNames.has(backup.fileName)}
+                            label={safeFileNames.get(backup.fileName)?.label ?? null}
+                          />
+                          <a
+                            className="btn btn-soft btn-icon"
+                            href={`/api/admin/backups/${backup.fileName}`}
+                            title="تحميل"
+                            download
+                          >
+                            <CloudDownload size={17} />
+                          </a>
+                          <RestoreBackupButton fileName={backup.fileName} />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={9}>
                     <div className="admin-empty-state">
                       <strong>لا توجد نسخ احتياطية حتى الآن</strong>
                       <p>اضغط "إنشاء نسخة يدوية" وسيظهر الملف هنا مباشرة.</p>

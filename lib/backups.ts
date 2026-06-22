@@ -1687,7 +1687,7 @@ const BACKUP_GITHUB_MAX_BLOB_SIZE = 90 * 1024 * 1024; // 90 MB safety margin und
 function formatBackupRepoPathV2(type: BackupTypeV2, fileName: string, createdAt: Date) {
   const year = String(createdAt.getUTCFullYear());
   const month = String(createdAt.getUTCMonth() + 1).padStart(2, "0");
-  const timestamp = fileName.replace(/^(scheduled|manual|verify|storage-cleanup|storage-cleanup-orphans|storage-cleanup-duplicates)-/i, "");
+  const timestamp = fileName.replace(/^(scheduled|manual|verify|database|storage-cleanup|storage-cleanup-orphans|storage-cleanup-duplicates)-/i, "");
   switch (type) {
     case "database":
       return `backups/database/${timestamp}`;
@@ -1974,10 +1974,9 @@ async function findBackupsOnGitHubByPrefix(prefix: string) {
 }
 
 function backupTimestampFromPathV2(repoPath: string): number {
-  const match = repoPath.match(/(\d{8}T\d{6}Z)/);
+  const match = repoPath.match(/(\d{4})-?(\d{2})-?(\d{2})T(\d{2})-?(\d{2})-?(\d{2})/);
   if (!match) return 0;
-  const stamp = match[1];
-  const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
+  const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}Z`;
   const time = Date.parse(iso);
   return Number.isNaN(time) ? 0 : time;
 }
@@ -2001,11 +2000,10 @@ export async function findLatestBackupOnGitHubByType(type: BackupTypeV2): Promis
       { method: "GET" }, config.token,
     );
     const pathForMeta = type === "database" ? latest.path : latest.path.replace(/\/[^/]+$/, "/manifest.json.gz");
-    const match = pathForMeta.match(/(\d{8}T\d{6}Z)/);
-    const stamp = match?.[1];
+    const tsMatch = pathForMeta.match(/(\d{4})-?(\d{2})-?(\d{2})T(\d{2})-?(\d{2})-?(\d{2})/);
     let createdAt = new Date();
-    if (stamp) {
-      const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
+    if (tsMatch) {
+      const iso = `${tsMatch[1]}-${tsMatch[2]}-${tsMatch[3]}T${tsMatch[4]}:${tsMatch[5]}:${tsMatch[6]}Z`;
       const parsed = Date.parse(iso);
       if (!Number.isNaN(parsed)) createdAt = new Date(parsed);
     }
@@ -2120,7 +2118,10 @@ export async function restoreUploadsFromGitHub(options: { fileName?: string; com
     const baseDir = `backups/uploads/`;
     const uploadEntries = tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(baseDir));
 
-    const manifestEntry = uploadEntries.find((e) => e.path.endsWith("/manifest.json.gz"));
+    const backupDir = "repoPath" in latest && latest.repoPath
+      ? (latest.repoPath.match(/^(backups\/uploads\/\d{4}\/\d{2}\/backup-[^/]+)/)?.[1] ?? baseDir)
+      : baseDir;
+    const manifestEntry = uploadEntries.find((e) => e.path.startsWith(backupDir) && e.path.endsWith("/manifest.json.gz"));
     if (!manifestEntry?.sha) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على manifest" };
 
     const manifestBlob = await readGitHubBlobBySha(manifestEntry.sha);

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { findLatestBackupOnGitHubByType } from "@/lib/backups";
 import { V2BackupActions } from "./V2BackupActions";
+import { V2BackupTable } from "./V2BackupTable";
 
 export const dynamic = "force-dynamic";
 
@@ -162,6 +163,8 @@ export default async function V2BackupsPage() {
           </div>
         </div>
       </div>
+
+      <V2BackupTable />
     </div>
   );
 }
