@@ -129,27 +129,38 @@ function autoGenerateMissingSecrets() {
       )
     : {};
 
-  const SECRETS = {
+  const AUTO_VARS = {
     AUTH_SECRET: { gen: () => generateSecret(32) },
+    ADMIN_USERNAME: { gen: () => "admin" },
+    ADMIN_EMAIL: { gen: () => "admin@badrdaawa.com" },
+    ADMIN_PASSWORD: { gen: () => generateSecret(16) },
     ADMIN_SESSION_SECRET: { gen: () => generateSecret(32) },
-    CLIENT_ADMIN_USERNAME: { gen: () => "admin" },
+    CLIENT_ADMIN_USERNAME: { gen: () => "client" },
     CLIENT_ADMIN_PASSWORD: { gen: () => generateSecret(16) },
     CLIENT_SESSION_SECRET: { gen: () => generateSecret(32) },
     BACKUP_CRON_SECRET: { gen: () => generateSecret(32) },
+    NEXTAUTH_SECRET: { gen: () => generateSecret(32) },
+    WHATSAPP_ORDER_PHONE: { gen: () => "01000000000" },
+    SHOW_PHOTOGRAPHER_CARD: { gen: () => "true" },
+    ENABLE_LEGACY_FILE_STORE: { gen: () => "false" },
+    STORAGE_PROVIDER: { gen: () => "local" },
+    GITHUB_SYNC_REPO: { gen: () => "badrabdoph-cell/BadrDaawa" },
+    GITHUB_SYNC_BRANCH: { gen: () => "main" },
+    GITHUB_SYNC_ENABLED: { gen: () => "true" },
+    AUTO_RESTORE_FROM_GITHUB: { gen: () => "true" },
+    AUTO_RESTORE_ONLY_IF_DB_EMPTY: { gen: () => "true" },
+    ALLOW_DESTRUCTIVE_RESTORE: { gen: () => "I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL" },
+    BACKUP_GITHUB_REPO: { gen: () => "badrabdoph-cell/BadrDaawa" },
   };
 
   let changed = false;
-  for (const [key, config] of Object.entries(SECRETS)) {
+  for (const [key, config] of Object.entries(AUTO_VARS)) {
     if (process.env[key]) continue;
     if (!generated[key]) {
       generated[key] = config.gen();
       changed = true;
     }
     process.env[key] = generated[key];
-  }
-
-  if (!process.env.NEXTAUTH_SECRET) {
-    process.env.NEXTAUTH_SECRET = generated.AUTH_SECRET || process.env.AUTH_SECRET;
   }
 
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && !process.env.VAPID_PRIVATE_KEY) {
@@ -170,10 +181,14 @@ function autoGenerateMissingSecrets() {
     changed = true;
   }
 
+  if (process.env.GITHUB_SYNC_TOKEN && !generated.BACKUP_GITHUB_TOKEN) {
+    generated.BACKUP_GITHUB_TOKEN = process.env.GITHUB_SYNC_TOKEN;
+  }
+
   if (changed) {
     const lines = Object.entries(generated).map(([k, v]) => `${k}=${v}`);
     writeFileSync(secretsFile, lines.join("\n") + "\n", "utf8");
-    console.log(`[prepare] Generated and persisted ${Object.keys(SECRETS).length} missing secrets`);
+    console.log(`[prepare] Generated and persisted ${Object.keys(AUTO_VARS).length} missing secrets`);
   }
 }
 
