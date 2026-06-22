@@ -5,7 +5,7 @@ import { gzipSync, gunzipSync } from "zlib";
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "./db";
 import { getDatabaseUrl } from "./database-url";
-import { uploadRuntimeBackupToGitHub } from "./github-sync";
+import { uploadRuntimeBackupToGitHub, getSyncConfig } from "./github-sync";
 import { parseJsonFileIfSafe } from "./json-file-safety";
 import { ensureParentDirectory, ensureRuntimeDirectories, runtimeBackupDir } from "./runtime-paths";
 import { listUploadFiles, readUploadFile } from "./storage-provider";
@@ -1626,6 +1626,136 @@ export async function isBackupSafe(backupFileName: string): Promise<boolean> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// V2 Backup Schedule Helpers
+// ═══════════════════════════════════════════════════════════════════
+
+const V2_SCHEDULE: Record<BackupTypeV2, { intervalMs: number; keepCount: number }> = {
+  database: { intervalMs: 3 * 60 * 60 * 1000, keepCount: 30 },
+  uploads: { intervalMs: 3 * 24 * 60 * 60 * 1000, keepCount: 2 },
+  full: { intervalMs: 7 * 24 * 60 * 60 * 1000, keepCount: 2 },
+};
+
+export function getV2BackupSchedule(type: BackupTypeV2) {
+  return V2_SCHEDULE[type];
+}
+
+export async function getLastV2BackupTime(type: BackupTypeV2): Promise<Date | null> {
+  try {
+    const prefix = type === "database" ? "backups/database/" : type === "uploads" ? "backups/uploads/" : "backups/full/";
+    const entries = await findBackupsOnGitHubByPrefix(prefix);
+    if (!entries.length) return null;
+    const sorted = entries.sort((a, b) => backupTimestampFromPathV2(b.path) - backupTimestampFromPathV2(a.path));
+    const latest = sorted[0];
+    const ts = backupTimestampFromPathV2(latest.path);
+    if (!ts) return null;
+    return new Date(ts);
+  } catch {
+    return null;
+  }
+}
+
+export async function isV2BackupDue(type: BackupTypeV2): Promise<boolean> {
+  const lastTime = await getLastV2BackupTime(type);
+  if (!lastTime) return true;
+  const elapsed = Date.now() - lastTime.getTime();
+  return elapsed >= V2_SCHEDULE[type].intervalMs;
+}
+
+function repoContentPath(repoPath: string) {
+  return repoPath.split("/").map(encodeURIComponent).join("/");
+}
+
+export async function pruneV2Backups(type: BackupTypeV2, keepCount?: number) {
+  const config = getSyncConfig();
+  if (!config) return;
+  const { owner, repo } = config.repo;
+  const branch = config.branch;
+  const token = config.token;
+
+  const prefix = type === "database" ? "backups/database/" : type === "uploads" ? "backups/uploads/" : "backups/full/";
+  const keep = keepCount ?? V2_SCHEDULE[type].keepCount;
+
+  const ref = await githubRequest<GitHubRef>(
+    `/repos/${owner}/${repo}/git/ref/heads/${branchRefPath(branch)}`,
+    { method: "GET" }, token,
+  );
+  const headCommit = await githubRequest<GitHubCommit>(
+    `/repos/${owner}/${repo}/git/commits/${ref.object.sha}`,
+    { method: "GET" }, token,
+  );
+  const tree = await githubRequest<GitHubRecursiveTree>(
+    `/repos/${owner}/${repo}/git/trees/${headCommit.tree.sha}?recursive=1`,
+    { method: "GET" }, token,
+  );
+
+  const entries = tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(prefix));
+  if (!entries.length) return;
+
+  if (type === "database") {
+    const sorted = entries.sort((a, b) => backupTimestampFromPathV2(b.path) - backupTimestampFromPathV2(a.path));
+    const toDelete = sorted.slice(keep);
+    for (const entry of toDelete) {
+      if (!entry.sha) continue;
+      try {
+        await githubRequest(
+          `/repos/${owner}/${repo}/contents/${repoContentPath(entry.path)}`,
+          { method: "DELETE", body: JSON.stringify({
+            message: `chore(backup): prune ${type} backup ${entry.path}`.slice(0, 500),
+            sha: entry.sha,
+            branch,
+          })},
+          token,
+        );
+      } catch (e) {
+        console.error(`[Prune V2] Failed to delete ${entry.path}:`, e);
+      }
+    }
+  } else {
+    const folderMap = new Map<string, { ts: number; entries: typeof entries }>();
+    for (const entry of entries) {
+      let folder: string;
+      if (type === "uploads") {
+        const m = entry.path.match(/^(backups\/uploads\/\d{4}\/\d{2}\/backup-[^/]+)/);
+        if (!m) continue;
+        folder = m[1];
+      } else {
+        const m = entry.path.match(/^(backups\/full\/[^/]+)/);
+        if (!m) continue;
+        folder = m[1];
+      }
+      const ts = backupTimestampFromPathV2(entry.path);
+      if (!ts) continue;
+      const existing = folderMap.get(folder);
+      if (existing) {
+        existing.entries.push(entry);
+      } else {
+        folderMap.set(folder, { ts, entries: [entry] });
+      }
+    }
+    const sorted = [...folderMap.entries()].sort((a, b) => b[1].ts - a[1].ts);
+    const toDelete = sorted.slice(keep);
+    for (const [, { entries: folderEntries }] of toDelete) {
+      for (const entry of folderEntries) {
+        if (!entry.sha) continue;
+        try {
+          await githubRequest(
+            `/repos/${owner}/${repo}/contents/${repoContentPath(entry.path)}`,
+            { method: "DELETE", body: JSON.stringify({
+              message: `chore(backup): prune ${type} backup ${entry.path}`.slice(0, 500),
+              sha: entry.sha,
+              branch,
+            })},
+            token,
+          );
+        } catch (e) {
+          console.error(`[Prune V2] Failed to delete ${entry.path}:`, e);
+        }
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // NEW BACKUP SYSTEM v2 — Database / Uploads / Full (separate)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -2155,18 +2285,94 @@ export async function restoreFullFromGitHub(options: { fileName?: string; commit
   const startedAt = Date.now();
 
   try {
-    const dbResult = await restoreDatabaseFromGitHub(options);
-    const uploadsResult = await restoreUploadsFromGitHub(options);
+    const { getSyncConfig, githubRequest: ghReq, branchRefPath: brPath } = await import("./github-sync");
+    const { readGitHubBlobBySha } = await import("./github-content");
+    const config = getSyncConfig();
+    if (!config) return { ok: false, type: "full", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "GitHub sync غير مهيأ" };
+    const { owner, repo } = config.repo;
 
-    return {
-      ok: dbResult.ok && uploadsResult.ok,
-      type: "full",
-      fileName: options.fileName || "full",
-      itemsRestored: dbResult.itemsRestored,
-      uploadsRestored: uploadsResult.uploadsRestored,
-      durationMs: Date.now() - startedAt,
-      error: !dbResult.ok ? dbResult.error : !uploadsResult.ok ? uploadsResult.error : null,
-    };
+    let backupDir: string;
+    let commitSha: string;
+
+    if (options.fileName) {
+      const ts = options.fileName.replace(/^full[-\/]?/i, "");
+      backupDir = `backups/full/${ts}`;
+      commitSha = options.commitSha || "";
+    } else {
+      const latest = await findLatestBackupOnGitHubByType("full");
+      if (!latest) return { ok: false, type: "full", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على نسخة كاملة" };
+      const ts = latest.repoPath.replace(/\/[^/]+$/, "").replace(/^backups\/full\//, "");
+      backupDir = `backups/full/${ts}`;
+      commitSha = latest.commitSha;
+    }
+
+    if (!commitSha) {
+      const ref = await ghReq<GitHubRef>(`/repos/${owner}/${repo}/git/ref/heads/${brPath(config.branch)}`, { method: "GET" }, config.token);
+      commitSha = ref.object.sha;
+    }
+
+    const commit = await ghReq<GitHubCommit>(`/repos/${owner}/${repo}/git/commits/${commitSha}`, { method: "GET" }, config.token);
+    const tree = await ghReq<GitHubRecursiveTree>(`/repos/${owner}/${repo}/git/trees/${commit.tree.sha}?recursive=1`, { method: "GET" }, config.token);
+    const entries = tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(backupDir));
+
+    const manifestEntry = entries.find((e) => e.path.endsWith("/manifest.json.gz"));
+    if (!manifestEntry?.sha) return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على manifest في النسخة الكاملة" };
+
+    const manifestBuf = await readGitHubBlobBySha(manifestEntry.sha);
+    if (!manifestBuf) return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "فشل قراءة manifest" };
+
+    const manifestData = JSON.parse((await import("zlib")).gunzipSync(manifestBuf).toString("utf8"));
+    const fileBlobs = manifestData.fileBlobs as Record<string, string> | undefined;
+    if (!fileBlobs) return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "manifest لا يحتوي على fileBlobs" };
+
+    const dbBlobSha = fileBlobs["db.json.gz"];
+    if (!dbBlobSha) return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "manifest لا يحتوي على db.json.gz" };
+
+    const dbBlobBuf = await readGitHubBlobBySha(dbBlobSha);
+    if (!dbBlobBuf) return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "فشل تحميل db.json.gz" };
+
+    const dbText = (await import("zlib")).gunzipSync(dbBlobBuf).toString("utf8");
+    const dbPayload: DatabaseBackupPayload = JSON.parse(dbText);
+    if (!dbPayload.runtimeData) return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "النسخة لا تحتوي على runtimeData" };
+
+    const steps: Array<{ table: string; deleted: number; inserted: number }> = [];
+    if (prisma) {
+      await prisma.$transaction(async (tx) => {
+        for (const table of deleteTableOrder()) {
+          const data = dbPayload.runtimeData[table];
+          if (!data) continue;
+          steps.push({ table, deleted: await deleteTableData(tx, table), inserted: 0 });
+        }
+        for (const table of restoreTableOrder()) {
+          const rows = dbPayload.runtimeData[table];
+          if (!rows?.length) continue;
+          const inserted = await insertTableData(tx, table, rows);
+          const existing = steps.find((s) => s.table === table);
+          if (existing) existing.inserted = inserted;
+          else steps.push({ table, deleted: 0, inserted });
+        }
+      });
+    }
+
+    const itemsRestored = steps.reduce((sum, s) => sum + s.inserted, 0);
+
+    let uploadsRestored = 0;
+    const { writeUploadFile } = await import("./storage-provider");
+    for (const [relativePath, blobSha] of Object.entries(fileBlobs) as Array<[string, string]>) {
+      if (relativePath === "db.json.gz") continue;
+      if (!relativePath.startsWith("uploads/")) continue;
+      const uploadPath = relativePath.slice("uploads/".length);
+      try {
+        const blobBuf = await readGitHubBlobBySha(blobSha);
+        if (!blobBuf) continue;
+        await writeUploadFile(uploadPath, blobBuf);
+        uploadsRestored++;
+      } catch (e) {
+        console.error(`[Full Restore] Failed to restore upload ${uploadPath}:`, e);
+      }
+    }
+
+    return { ok: true, type: "full", fileName: options.fileName || "full", itemsRestored, uploadsRestored, durationMs: Date.now() - startedAt, error: null };
   } catch (error) {
     return { ok: false, type: "full", fileName: options.fileName || "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: error instanceof Error ? error.message : String(error) };
   }
@@ -2251,6 +2457,41 @@ export async function checkAndAutoRestoreV2(): Promise<AutoRestoreDecision> {
   }
 
   return { executed: false, restored: false, reason: "لا حاجة للاستعادة" };
+}
+
+// ── Run a single scheduled v2 backup for a given type ──
+export async function runScheduledV2Backup(type: BackupTypeV2): Promise<{ ok: boolean; fileName?: string; error?: string }> {
+  try {
+    if (type === "database") {
+      const { bytes, fileName, createdAt } = await createDatabaseBackupPayload();
+      const result = await uploadDatabaseBackupToGitHub(bytes, fileName, createdAt, "scheduled");
+      if (!result) return { ok: false, error: "فشل رفع نسخة قاعدة البيانات إلى GitHub" };
+      await pruneV2Backups("database");
+      return { ok: true, fileName };
+    }
+
+    if (type === "uploads") {
+      const { manifest, files, createdAt } = await createUploadsBackupPayload();
+      const tsFileName = createdAt.toISOString().replace(/[:.]/g, "-").replace(/[^\w-]/g, "");
+      const result = await uploadUploadsBackupToGitHub(manifest, files, tsFileName, createdAt, "scheduled");
+      if (!result) return { ok: false, error: "فشل رفع نسخة الملفات إلى GitHub" };
+      await pruneV2Backups("uploads");
+      return { ok: true, fileName: tsFileName };
+    }
+
+    if (type === "full") {
+      const { manifest, files, createdAt } = await createFullBackupPayload();
+      const tsFileName = createdAt.toISOString().replace(/[:.]/g, "-").replace(/[^\w-]/g, "");
+      const result = await uploadFullBackupToGitHub(manifest, files, tsFileName, createdAt, "scheduled");
+      if (!result) return { ok: false, error: "فشل رفع النسخة الكاملة إلى GitHub" };
+      await pruneV2Backups("full");
+      return { ok: true, fileName: tsFileName };
+    }
+
+    return { ok: false, error: `نوع نسخة غير معروف: ${type}` };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 // ── githubRequest wrapper (needed for the v2 functions) ──

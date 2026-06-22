@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { runScheduledTask } from "@/lib/task-scheduler";
+import { isV2BackupDue, runScheduledV2Backup, getV2BackupSchedule } from "@/lib/backups";
+import type { BackupTypeV2 } from "@/lib/backups";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,11 +55,45 @@ async function handleCronBackup(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const run = await runScheduledTask("backup", "automatic");
+  // Always create a v1 backup for backward compatibility (legacy auto-restore support)
+  // But also create v2 backups based on schedule
+
+  const results: Record<string, { ok: boolean; fileName?: string; error?: string; skipped?: boolean }> = {};
+
+  // Check each v2 type
+  const types: BackupTypeV2[] = ["database", "uploads", "full"];
+  for (const type of types) {
+    try {
+      const due = await isV2BackupDue(type);
+      if (!due) {
+        results[type] = { ok: true, skipped: true };
+        console.log(`[Backup Cron ${now()}] ${type} backup not due yet, skipping`);
+        continue;
+      }
+      console.log(`[Backup Cron ${now()}] ${type} backup is due, creating...`);
+      const result = await runScheduledV2Backup(type);
+      results[type] = result;
+      console.log(`[Backup Cron ${now()}] ${type} backup result: ${result.ok ? `OK (${result.fileName})` : `FAILED: ${result.error}`}`);
+    } catch (e) {
+      results[type] = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      console.error(`[Backup Cron ${now()}] ${type} backup threw:`, e);
+    }
+  }
+
+  // Also run the legacy v1 backup (for backward compatibility)
+  try {
+    const { runScheduledTask } = await import("@/lib/task-scheduler");
+    const v1Result = await runScheduledTask("backup", "automatic");
+    results["legacy"] = { ok: v1Result.status === "success", error: v1Result.status !== "success" ? v1Result.message : undefined };
+  } catch (e) {
+    results["legacy"] = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
+  const allOk = Object.values(results).every((r) => r.ok || r.skipped);
   console.log(
-    `[Backup Cron ${now()}] Completed status=${run.status} durationMs=${Date.now() - startedAt} message=${JSON.stringify(run.message)} metadata=${JSON.stringify(run.metadata || {})}`,
+    `[Backup Cron ${now()}] Completed durationMs=${Date.now() - startedAt} results=${JSON.stringify(results)}`,
   );
-  return NextResponse.json({ ok: run.status === "success", run }, { status: run.status === "success" ? 200 : 500 });
+  return NextResponse.json({ ok: allOk, results }, { status: allOk ? 200 : 500 });
 }
 
 export async function GET(request: NextRequest) {
