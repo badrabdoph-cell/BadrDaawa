@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { downloadAndRestoreFromGitHub, restoreFromBackup } from "@/lib/backups";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { downloadAndRestoreFromGitHub, restoreFromBackup, logRestoreAttempt } from "@/lib/backups";
 
 export const runtime = "nodejs";
 
@@ -19,12 +19,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "اسم ملف النسخة الاحتياطية مطلوب." }, { status: 400 });
     }
 
+    const adminEmail = await getAdminSessionUser(cookie) || "unknown";
+
     if (source === "local") {
       const result = await restoreFromBackup(fileName);
+      await logRestoreAttempt({
+        type: "local-v1",
+        status: result.ok ? "success" : "failed",
+        fileName,
+        itemsRestored: result.itemsRestored,
+        uploadsRestored: result.uploadsRestored,
+        error: result.error,
+        durationMs: result.durationMs,
+        performedBy: adminEmail,
+      });
       return NextResponse.json(result);
     }
 
     const result = await downloadAndRestoreFromGitHub(fileName);
+    await logRestoreAttempt({
+      type: "github-v1",
+      status: result.ok ? "success" : "failed",
+      fileName,
+      itemsRestored: result.itemsRestored,
+      uploadsRestored: result.uploadsRestored,
+      error: result.error,
+      durationMs: result.durationMs,
+      performedBy: adminEmail,
+    });
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "فشل" }, { status: 500 });

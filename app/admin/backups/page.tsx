@@ -17,7 +17,7 @@ import {
   BarChart3,
   AlertCircle,
 } from "lucide-react";
-import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBackupSnapshots } from "@/lib/backups";
+import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBackupSnapshots, listRestoreLogs, getRestoreStats } from "@/lib/backups";
 import { formatBytes, formatDate, formatDuration, formatBackupType, formatBackupStatus, truncateSha } from "@/lib/backup-display";
 import { MarkSafeButton } from "./MarkSafeButton";
 import { VerifyBackupButton } from "./VerifyBackupButton";
@@ -57,6 +57,10 @@ export default async function BackupsPage({
     orderBy: { createdAt: "desc" },
     take: 20,
   }).catch(() => []) ?? Promise.resolve([]));
+  const [restoreLogs, restoreStats] = await Promise.all([
+    listRestoreLogs(20),
+    getRestoreStats(),
+  ]);
   const overall = healthLevel(
     runtimeStatus.postgresDump,
     runtimeStatus.uploadsBackup,
@@ -427,6 +431,79 @@ export default async function BackupsPage({
           </div>
         </div>
       ) : null}
+
+      {/* ════════════════════════════════════════
+          RESTORE HISTORY
+      ════════════════════════════════════════ */}
+      <div className="panel" style={{ borderColor: "rgba(92, 184, 92, 0.2)" }}>
+        <div className="admin-card-head" style={{ marginBottom: 12 }}>
+          <History size={20} color="#5cb85c" />
+          <div>
+            <span className="eyebrow">Restore History</span>
+            <h2>سجل الاستعادة</h2>
+          </div>
+          <span style={{ fontSize: "0.8rem", color: "rgba(245, 234, 214, 0.5)", marginRight: "auto" }}>
+            {restoreStats.success} نجاح / {restoreStats.failed} فشل — المجموع {restoreStats.total}
+          </span>
+        </div>
+        {restoreLogs.length === 0 ? (
+          <div className="admin-empty-state" style={{ margin: "8px 0" }}>
+            <strong>لا توجد محاولات استعادة بعد</strong>
+            <p>عند استعادة نسخة احتياطية، سيظهر سجل المحاولة هنا.</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {restoreLogs.map((log) => (
+              <div key={log.id} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 14px", borderRadius: 8,
+                background: log.status === "success"
+                  ? "rgba(92, 184, 92, 0.06)"
+                  : "rgba(217, 83, 79, 0.06)",
+                border: `1px solid ${log.status === "success"
+                  ? "rgba(92, 184, 92, 0.15)"
+                  : "rgba(217, 83, 79, 0.15)"}`,
+                fontSize: "0.82rem",
+              }}>
+                <div style={{ minWidth: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {log.status === "success"
+                    ? <CheckCircle2 size={16} color="#5cb85c" />
+                    : <XCircle size={16} color="#d9534f" />
+                  }
+                </div>
+                <div style={{ minWidth: 130, color: "rgba(245, 234, 214, 0.6)", fontSize: "0.75rem" }}>
+                  {formatDate(log.createdAt.toISOString())}
+                </div>
+                <div style={{ minWidth: 100, fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.55)" }}>
+                  {log.type}
+                </div>
+                <div style={{ minWidth: 70, fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.6)", direction: "ltr" }}>
+                  {log.durationMs ? formatDuration(log.durationMs) : "—"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ color: "rgba(245, 234, 214, 0.9)", fontWeight: 600, fontSize: "0.78rem" }}>
+                    {log.fileName || "—"}
+                  </span>
+                </div>
+                {log.error ? (
+                  <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "rgba(217, 83, 79, 0.8)", fontSize: "0.78rem" }}>
+                    {log.error}
+                  </div>
+                ) : (
+                  <div style={{ minWidth: 100, fontSize: "0.72rem", color: "rgba(92, 184, 92, 0.7)" }}>
+                    {log.itemsRestored != null && `${log.itemsRestored} عنصر`}
+                    {log.itemsRestored != null && log.uploadsRestored != null ? " / " : ""}
+                    {log.uploadsRestored != null && `${log.uploadsRestored} ملف`}
+                  </div>
+                )}
+                <div style={{ minWidth: 80, fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.4)", textAlign: "left" }}>
+                  {log.performedBy || "—"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ════════════════════════════════════════
           BACKUP HISTORY

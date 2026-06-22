@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { downloadAndRestoreFromGitHub } from "@/lib/backups";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { downloadAndRestoreFromGitHub, logRestoreAttempt } from "@/lib/backups";
 import { revalidatePath } from "next/cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function isAdmin(request: NextRequest) {
-  return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+async function getAdminEmail(request: NextRequest) {
+  const session = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  return session || "unknown";
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await isAdmin(request))) {
+  if (!(await verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -31,9 +32,22 @@ export async function POST(request: NextRequest) {
   const sha: string | undefined = body.sha;
   const createdAt: string | undefined = body.createdAt;
 
+  const adminEmail = await getAdminEmail(request);
   const result = await downloadAndRestoreFromGitHub(fileName, {
     githubSha: sha,
     createdAt: createdAt ? new Date(createdAt) : undefined,
+  });
+
+  await logRestoreAttempt({
+    type: "github-v1",
+    status: result.ok ? "success" : "failed",
+    fileName,
+    commitSha: sha,
+    itemsRestored: result.itemsRestored,
+    uploadsRestored: result.uploadsRestored,
+    error: result.error,
+    durationMs: result.durationMs,
+    performedBy: adminEmail,
   });
 
   revalidatePath("/admin/backups");

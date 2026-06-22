@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { restoreDatabaseFromGitHub } from "@/lib/backups";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { restoreDatabaseFromGitHub, logRestoreAttempt } from "@/lib/backups";
 import { updateOperation, failOperation, completeOperation } from "@/lib/operation-progress";
 import { revalidatePath } from "next/cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function isAdmin(request: NextRequest) {
-  return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+async function getAdminEmail(request: NextRequest) {
+  const session = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  return session || "system";
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await isAdmin(request))) {
+  if (!(await verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,11 +29,24 @@ export async function POST(request: NextRequest) {
 
   if (operationId) updateOperation(operationId, { progress: 5, step: "بدء استعادة قاعدة البيانات", status: "in_progress" });
 
+  const adminEmail = await getAdminEmail(request);
+
   try {
     if (operationId) updateOperation(operationId, { progress: 15, step: "تحميل النسخة من GitHub" });
     const result = await restoreDatabaseFromGitHub({
       fileName: body.fileName || undefined,
       commitSha: body.sha || undefined,
+    });
+
+    await logRestoreAttempt({
+      type: "v2-database",
+      status: result.ok ? "success" : "failed",
+      fileName: result.fileName,
+      itemsRestored: result.itemsRestored,
+      uploadsRestored: result.uploadsRestored,
+      error: result.error,
+      durationMs: result.durationMs,
+      performedBy: adminEmail,
     });
 
     if (operationId) {
@@ -48,6 +62,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     if (operationId) failOperation(operationId, msg, error instanceof Error ? error.stack : undefined);
+    await logRestoreAttempt({
+      type: "v2-database",
+      status: "failed",
+      fileName: body.fileName || undefined,
+      error: msg,
+      performedBy: adminEmail,
+    });
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

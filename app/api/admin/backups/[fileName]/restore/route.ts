@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
-import { restoreFromBackup } from "@/lib/backups";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { restoreFromBackup, logRestoreAttempt } from "@/lib/backups";
 import { revalidatePath } from "next/cache";
 
 export const runtime = "nodejs";
@@ -10,12 +10,13 @@ type RouteContext = {
   params: Promise<{ fileName: string }>;
 };
 
-async function isAdmin(request: NextRequest) {
-  return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+async function getAdminEmail(request: NextRequest) {
+  const session = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  return session || "unknown";
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  if (!(await isAdmin(request))) {
+  if (!(await verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,7 +29,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 
+  const adminEmail = await getAdminEmail(request);
   const result = await restoreFromBackup(fileName);
+
+  await logRestoreAttempt({
+    type: "local-v1",
+    status: result.ok ? "success" : "failed",
+    fileName,
+    itemsRestored: result.itemsRestored,
+    uploadsRestored: result.uploadsRestored,
+    error: result.error,
+    durationMs: result.durationMs,
+    performedBy: adminEmail,
+  });
+
   revalidatePath("/admin/backups");
 
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });

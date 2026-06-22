@@ -280,6 +280,25 @@ model SyncLog {
   @@index([createdAt])
 }
 
+model RestoreLog {
+  id              String   @id @default(cuid())
+  type            String   // "local-v1", "github-v1", "v2-database", "v2-uploads", "v2-full", "v2-auto-restore", "rollback"
+  status          String   // "success", "failed"
+  fileName        String?  // backup file name
+  commitSha       String?  // GitHub commit SHA
+  itemsRestored   Int?     // number of DB items restored
+  uploadsRestored Int?     // number of upload files restored
+  error           String?  // error message if failed
+  durationMs      Int?     // duration in ms
+  details         Json?    // extra context (steps, version, etc.)
+  performedBy     String?  // admin email or "system" or "cron"
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([type, createdAt])
+}
+
 model AppSetting {
   key       String   @id
   value     Json

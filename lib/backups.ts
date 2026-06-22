@@ -1031,6 +1031,92 @@ export async function verifyBackupNow(): Promise<BackupVerificationResult> {
   }
 }
 
+// ── Restore Log ──
+export async function logRestoreAttempt(data: {
+  type: string;
+  status: "success" | "failed";
+  fileName?: string | null;
+  commitSha?: string | null;
+  itemsRestored?: number;
+  uploadsRestored?: number;
+  error?: string | null;
+  durationMs?: number;
+  details?: Record<string, unknown>;
+  performedBy?: string;
+}): Promise<void> {
+  if (!prisma) return;
+  try {
+    await prisma.restoreLog.create({
+      data: {
+        type: data.type,
+        status: data.status,
+        fileName: data.fileName || null,
+        commitSha: data.commitSha || null,
+        itemsRestored: data.itemsRestored ?? null,
+        uploadsRestored: data.uploadsRestored ?? null,
+        error: data.error || null,
+        durationMs: data.durationMs ?? null,
+        details: data.details as any,
+        performedBy: data.performedBy || null,
+      },
+    });
+  } catch (e) {
+    console.error("[RestoreLog] فشل تسجيل محاولة الاستعادة:", e);
+  }
+}
+
+export async function listRestoreLogs(limit = 50): Promise<Array<{
+  id: string;
+  type: string;
+  status: string;
+  fileName: string | null;
+  commitSha: string | null;
+  itemsRestored: number | null;
+  uploadsRestored: number | null;
+  error: string | null;
+  durationMs: number | null;
+  details: Record<string, unknown> | null;
+  performedBy: string | null;
+  createdAt: Date;
+}>> {
+  if (!prisma) return [];
+  try {
+    return await prisma.restoreLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    }) as Array<{
+      id: string;
+      type: string;
+      status: string;
+      fileName: string | null;
+      commitSha: string | null;
+      itemsRestored: number | null;
+      uploadsRestored: number | null;
+      error: string | null;
+      durationMs: number | null;
+      details: Record<string, unknown> | null;
+      performedBy: string | null;
+      createdAt: Date;
+    }>;
+  } catch {
+    return [];
+  }
+}
+
+export async function getRestoreStats() {
+  if (!prisma) return { total: 0, success: 0, failed: 0 };
+  try {
+    const [total, success, failed] = await Promise.all([
+      prisma.restoreLog.count(),
+      prisma.restoreLog.count({ where: { status: "success" } }),
+      prisma.restoreLog.count({ where: { status: "failed" } }),
+    ]);
+    return { total, success, failed };
+  } catch {
+    return { total: 0, success: 0, failed: 0 };
+  }
+}
+
 export type RestoreResult = {
   ok: boolean;
   fileName: string;
