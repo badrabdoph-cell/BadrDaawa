@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { checkAndAutoRestoreV2 } from "@/lib/backups";
+import { updateOperation, failOperation, completeOperation } from "@/lib/operation-progress";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,12 +15,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const body = await request.json().catch(() => ({}));
+  const operationId = body.operationId as string | undefined;
+
+  if (operationId) updateOperation(operationId, { progress: 5, step: "بدء Auto Restore", status: "in_progress" });
+
   try {
+    if (operationId) updateOperation(operationId, { progress: 20, step: "فحص حالة قاعدة البيانات والملفات" });
     const result = await checkAndAutoRestoreV2();
-    return NextResponse.json(result, { status: result.executed && result.restored ? 200 : 200 });
+
+    if (operationId) {
+      if (result.executed) {
+        completeOperation(operationId, result as unknown as Record<string, unknown>);
+      } else {
+        completeOperation(operationId, { ...result, autoRestoreStatus: "no_action_needed" });
+      }
+    }
+
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (operationId) failOperation(operationId, msg, error instanceof Error ? error.stack : undefined);
     return NextResponse.json(
-      { executed: false, restored: false, error: error instanceof Error ? error.message : String(error) },
+      { executed: false, restored: false, error: msg },
       { status: 500 },
     );
   }

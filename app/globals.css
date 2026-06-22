@@ -9427,6 +9427,82 @@ img {
   font-size: 0.82rem;
 }
 
+/* ── Progress Tracking ── */
+
+.progress-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar-bg {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 247, 232, 0.1);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #4a9eff, #4caf87);
+  transition: width 0.4s ease;
+}
+
+.progress-bar-fill.progress-bar-failed {
+  background: linear-gradient(90deg, #d9534f, #f5a5a2);
+}
+
+.progress-text {
+  direction: ltr;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 247, 232, 0.7);
+  min-width: 40px;
+  text-align: right;
+}
+
+.progress-step-label {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(255, 247, 232, 0.6);
+}
+
+/* ── Error Details ── */
+
+.error-details-toggle {
+  display: grid;
+  gap: 8px;
+}
+
+.error-details-box {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 247, 232, 0.7);
+  font-size: 0.75rem;
+  font-family: var(--font-jetbrains-mono, ui-monospace, monospace);
+  direction: ltr;
+  text-align: left;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
+.error-code-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(217, 83, 79, 0.2);
+  color: #f5a5a2;
+  font-size: 0.72rem;
+  font-family: var(--font-jetbrains-mono, ui-monospace, monospace);
+  direction: ltr;
+}
+
 .recent-edit-status-grid {
   margin-top: 0;
 }

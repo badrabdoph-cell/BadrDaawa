@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { restoreFullFromGitHub } from "@/lib/backups";
+import { updateOperation, failOperation, completeOperation } from "@/lib/operation-progress";
 import { revalidatePath } from "next/cache";
 
 export const runtime = "nodejs";
@@ -23,11 +24,30 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const result = await restoreFullFromGitHub({
-    fileName: body.fileName || undefined,
-    commitSha: body.sha || undefined,
-  });
+  const operationId = body.operationId as string | undefined;
 
-  revalidatePath("/admin/backups");
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+  if (operationId) updateOperation(operationId, { progress: 2, step: "بدء الاستعادة الكاملة", status: "in_progress" });
+
+  try {
+    if (operationId) updateOperation(operationId, { progress: 5, step: "تحميل النسخة من GitHub" });
+    const result = await restoreFullFromGitHub({
+      fileName: body.fileName || undefined,
+      commitSha: body.sha || undefined,
+    });
+
+    if (operationId) {
+      if (result.ok) {
+        completeOperation(operationId, result as unknown as Record<string, unknown>);
+      } else {
+        failOperation(operationId, result.error || "فشلت الاستعادة الكاملة بدون تفاصيل");
+      }
+    }
+
+    revalidatePath("/admin/backups");
+    return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (operationId) failOperation(operationId, msg, error instanceof Error ? error.stack : undefined);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
 }

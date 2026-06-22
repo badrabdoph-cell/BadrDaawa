@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { createUploadsBackupPayload, uploadUploadsBackupToGitHub } from "@/lib/backups";
+import { updateOperation, failOperation, completeOperation } from "@/lib/operation-progress";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,13 +15,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "غير مصرح." }, { status: 401 });
   }
 
+  const body = await request.json().catch(() => ({}));
+  const operationId = body.operationId as string | undefined;
+
+  if (operationId) updateOperation(operationId, { progress: 5, step: "بدء إنشاء نسخة الملفات", status: "in_progress" });
+
   try {
+    if (operationId) updateOperation(operationId, { progress: 20, step: "قراءة الملفات المرفوعة" });
     const { manifest, files, createdAt } = await createUploadsBackupPayload();
-    const result = await uploadUploadsBackupToGitHub(manifest, files, createdAt.toISOString().replace(/[:.]/g, "-").replace(/[^\w-]/g, ""), createdAt, "manual");
+
+    if (operationId) updateOperation(operationId, { progress: 50, step: "رفع إلى GitHub" });
+    const result = await uploadUploadsBackupToGitHub(
+      manifest, files,
+      createdAt.toISOString().replace(/[:.]/g, "-").replace(/[^\w-]/g, ""),
+      createdAt, "manual",
+    );
     if (!result) {
-      return NextResponse.json({ ok: false, error: "فشل رفع النسخة إلى GitHub" }, { status: 500 });
+      const msg = "فشل رفع النسخة إلى GitHub";
+      if (operationId) failOperation(operationId, msg);
+      return NextResponse.json({ ok: false, error: msg }, { status: 500 });
     }
-    return NextResponse.json({
+
+    const response = {
       ok: true,
       totalFiles: manifest.totalFiles,
       totalSizeBytes: manifest.totalSizeBytes,
@@ -28,12 +44,13 @@ export async function POST(request: NextRequest) {
       createdAt: createdAt.toISOString(),
       commitSha: result.commitSha,
       repoPath: result.repoPath,
-    });
+    };
+
+    if (operationId) completeOperation(operationId, response as unknown as Record<string, unknown>);
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("[Uploads Backup] failed", error);
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    const msg = error instanceof Error ? error.message : String(error);
+    if (operationId) failOperation(operationId, msg, error instanceof Error ? error.stack : undefined);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

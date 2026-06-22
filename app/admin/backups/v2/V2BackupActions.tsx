@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2, CheckCircle2, XCircle, AlertTriangle, History, CloudUpload, Archive, Database, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { Loader2, CheckCircle2, XCircle, AlertTriangle, History, CloudUpload, Archive, Database, RotateCcw, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { useCallback, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { OperationProgressDialog } from "@/components/OperationProgressDialog";
 
 type ActionType = "database" | "uploads" | "full" | "restore-database" | "restore-uploads" | "restore-full" | "auto-restore";
 
@@ -17,6 +18,11 @@ type RestoreResult = {
   executed?: boolean;
   restored?: boolean;
   reason?: string;
+};
+
+type OperationMeta = {
+  id: string;
+  type: ActionType;
 };
 
 const ACTION_CONFIG: Record<ActionType, {
@@ -93,29 +99,59 @@ const ACTION_CONFIG: Record<ActionType, {
   },
 };
 
-export function V2BackupActions({ type }: { type: ActionType }) {
+export function V2BackupActions({ type, overrides }: {
+  type: ActionType;
+  overrides?: { fileName?: string; commitSha?: string };
+}) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RestoreResult | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [operation, setOperation] = useState<OperationMeta | null>(null);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [copyDone, setCopyDone] = useState(false);
   const config = ACTION_CONFIG[type];
   const Icon = config.icon;
+
+  const onOperationDone = useCallback((_resultData: unknown, error: string | null) => {
+    setOperation(null);
+    setLoading(false);
+    if (error) {
+      setResult({ ok: false, error });
+    }
+  }, []);
 
   async function doAction() {
     setShowConfirm(false);
     setLoading(true);
     setResult(null);
+    setShowErrorDetails(false);
+
     try {
+      const opRes = await fetch("/api/admin/backups/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      const { operationId } = await opRes.json();
+      setOperation({ id: operationId, type });
+
+      const body: Record<string, unknown> = { operationId };
+      if (overrides?.fileName) body.fileName = overrides.fileName;
+      if (overrides?.commitSha) body.sha = overrides.commitSha;
+
       const response = await fetch(config.endpoint, {
         method: config.method,
         headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: config.method === "POST" ? "{}" : undefined,
+        body: config.method === "POST" ? JSON.stringify(body) : undefined,
       });
       const payload = (await response.json()) as RestoreResult;
+      setOperation(null);
       setResult(payload);
       if (payload.ok || payload.executed) {
         setTimeout(() => window.location.reload(), 3000);
       }
     } catch (error) {
+      setOperation(null);
       setResult({
         ok: false,
         error: error instanceof Error ? error.message : "فشل الاتصال بالخادم",
@@ -124,6 +160,18 @@ export function V2BackupActions({ type }: { type: ActionType }) {
       setLoading(false);
     }
   }
+
+  const copyError = async () => {
+    if (!result?.error) return;
+    const text = [
+      `Error: ${result.error}`,
+      `Action: ${config.label}`,
+      `Time: ${new Date().toISOString()}`,
+    ].join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopyDone(true);
+    setTimeout(() => setCopyDone(false), 2000);
+  };
 
   return (
     <>
@@ -142,7 +190,9 @@ export function V2BackupActions({ type }: { type: ActionType }) {
       <ConfirmDialog
         isOpen={showConfirm}
         title={config.confirmTitle}
-        message={config.confirmMessage}
+        message={overrides?.fileName
+          ? `${config.confirmMessage}\n\nالملف: ${overrides.fileName}`
+          : config.confirmMessage}
         confirmText="تأكيد"
         cancelText="إلغاء"
         isDangerous={config.dangerous}
@@ -150,6 +200,13 @@ export function V2BackupActions({ type }: { type: ActionType }) {
         onConfirm={doAction}
         onCancel={() => setShowConfirm(false)}
       />
+
+      {operation ? (
+        <OperationProgressDialog<RestoreResult>
+          operationId={operation.id}
+          onDone={onOperationDone}
+        />
+      ) : null}
 
       {result ? (
         <div className="restore-result-overlay" onClick={() => setResult(null)} role="dialog" aria-modal="true">
@@ -179,16 +236,33 @@ export function V2BackupActions({ type }: { type: ActionType }) {
             ) : result.error ? (
               <div className="restore-result-error">
                 <AlertTriangle size={18} />
-                <span>{result.error}</span>
+                <div style={{ flex: 1, display: "grid", gap: 8 }}>
+                  <span style={{ fontWeight: 600 }}>{result.error}</span>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <button className="btn btn-sm btn-soft" type="button" onClick={() => setShowErrorDetails(!showErrorDetails)}>
+                      {showErrorDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      <span>{showErrorDetails ? "إخفاء التفاصيل" : "عرض تفاصيل الخطأ"}</span>
+                    </button>
+                    <button className="btn btn-sm btn-soft" type="button" onClick={copyError}>
+                      <Copy size={13} />
+                      <span>{copyDone ? "تم النسخ" : "نسخ الخطأ"}</span>
+                    </button>
+                  </div>
+                  {showErrorDetails ? (
+                    <pre className="error-details-box">
+                      {JSON.stringify({ ...result, error: undefined }, null, 2)}
+                    </pre>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 
             {result.itemsRestored !== undefined || result.uploadsRestored !== undefined ? (
               <div className="restore-result-summary">
                 <span>
-                  {result.itemsRestored !== undefined && <strong>{result.itemsRestored}</strong>}
+                  {result.itemsRestored !== undefined && <strong>{result.itemsRestored.toLocaleString("ar-EG")}</strong>}
                   {result.itemsRestored !== undefined ? " سجل " : ""}
-                  {result.uploadsRestored !== undefined && <strong>{result.uploadsRestored}</strong>}
+                  {result.uploadsRestored !== undefined && <strong>{result.uploadsRestored.toLocaleString("ar-EG")}</strong>}
                   {result.uploadsRestored !== undefined ? " ملف" : ""}
                   {result.durationMs ? ` (خلال ${(result.durationMs / 1000).toFixed(1)}ث)` : ""}
                 </span>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Database, CloudUpload, Archive, CheckCircle2, XCircle, Github, Loader2 } from "lucide-react";
+import { Database, CloudUpload, Archive, CheckCircle2, XCircle, Github, Loader2, RotateCcw } from "lucide-react";
 import { formatBytes, formatDate, formatDuration, formatCompressionRatio, formatBackupType, formatBackupStatus, truncateSha, type BackupDisplayRow } from "@/lib/backup-display";
 import { BackupDetailsDrawer } from "@/components/BackupDetailsDrawer";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { OperationProgressDialog } from "@/components/OperationProgressDialog";
 
 type BackupMap = {
   database: BackupDisplayRow[];
@@ -23,6 +25,12 @@ const TYPE_COLORS: Record<string, string> = {
   full: "#d9534f",
 };
 
+const TYPE_ENDPOINT: Record<string, string> = {
+  database: "/api/admin/backups/github/restore/database",
+  uploads: "/api/admin/backups/github/restore/uploads",
+  full: "/api/admin/backups/github/restore/full",
+};
+
 function BackupTypeBadge({ type }: { type: string }) {
   const Icon = TYPE_ICONS[type] || Archive;
   const color = TYPE_COLORS[type] || "rgba(245, 234, 214, 0.5)";
@@ -40,6 +48,10 @@ export function V2BackupTable() {
   const [error, setError] = useState<string | null>(null);
   const [selectedBackup, setSelectedBackup] = useState<BackupDisplayRow | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
+  const [restoreTarget, setRestoreTarget] = useState<BackupDisplayRow | null>(null);
+  const [operationId, setOperationId] = useState<string | null>(null);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -52,6 +64,48 @@ export function V2BackupTable() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  async function confirmRestore() {
+    if (!restoreTarget) return;
+    setRestoreLoading(true);
+    setRestoreError(null);
+
+    try {
+      const opRes = await fetch("/api/admin/backups/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: `restore-${restoreTarget.type}` }),
+      });
+      const { operationId: opId } = await opRes.json();
+      setOperationId(opId);
+
+      const endpoint = TYPE_ENDPOINT[restoreTarget.type] || TYPE_ENDPOINT.database;
+      const body = {
+        operationId: opId,
+        fileName: restoreTarget.fileName,
+        sha: restoreTarget.commitSha,
+      };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      setOperationId(null);
+      setRestoreTarget(null);
+      setRestoreLoading(false);
+      if (payload.ok) {
+        setTimeout(() => window.location.reload(), 3000);
+      } else {
+        setRestoreError(payload.error || "فشلت الاستعادة");
+      }
+    } catch (err) {
+      setOperationId(null);
+      setRestoreError(err instanceof Error ? err.message : "فشل الاتصال");
+      setRestoreLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -104,7 +158,7 @@ export function V2BackupTable() {
             <span className="eyebrow">Backup History</span>
             <h3>جميع النسخ الاحتياطية v2</h3>
             <p style={{ fontSize: "0.82rem", color: "rgba(245, 234, 214, 0.5)", marginTop: 2 }}>
-              إجمالي {allRows.length} نسخة
+              إجمالي {allRows.length} نسخة — اضغط على أي صف للتفاصيل
             </p>
           </div>
         </div>
@@ -138,7 +192,7 @@ export function V2BackupTable() {
                 <th>السجلات</th>
                 <th>الملفات</th>
                 <th>GitHub SHA</th>
-                <th>المسار</th>
+                <th>استعادة</th>
               </tr>
             </thead>
             <tbody>
@@ -146,7 +200,7 @@ export function V2BackupTable() {
                 filteredRows.map((row) => {
                   const st = formatBackupStatus(row.status);
                   return (
-                    <tr key={row.id} onClick={() => setSelectedBackup(row)}>
+                    <tr key={row.id} onClick={() => setSelectedBackup(row)} style={{ cursor: "pointer" }}>
                       <td><BackupTypeBadge type={row.type} /></td>
                       <td>
                         <span style={{ color: st.color, display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -167,9 +221,23 @@ export function V2BackupTable() {
                         </span>
                       </td>
                       <td>
-                        <span style={{ fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)", fontSize: "0.7rem", color: "rgba(245,234,214,0.5)", direction: "ltr", display: "block", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {row.repoPath || "—"}
-                        </span>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          type="button"
+                          title="استعادة هذه النسخة"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRestoreTarget(row);
+                            setRestoreError(null);
+                          }}
+                          disabled={restoreLoading}
+                        >
+                          {restoreLoading && restoreTarget?.id === row.id ? (
+                            <Loader2 size={13} className="sync-spin" />
+                          ) : (
+                            <RotateCcw size={13} />
+                          )}
+                        </button>
                       </td>
                     </tr>
                   );
@@ -190,6 +258,54 @@ export function V2BackupTable() {
       </div>
 
       <BackupDetailsDrawer backup={selectedBackup} onClose={() => setSelectedBackup(null)} />
+
+      <ConfirmDialog
+        isOpen={!!restoreTarget}
+        title={`استعادة ${formatBackupType(restoreTarget?.type || "")}`}
+        message={restoreTarget ? `سيتم استعادة النسخة التالية:\n\nالملف: ${restoreTarget.fileName}\nالتاريخ: ${formatDate(restoreTarget.createdAt)}\n\n${restoreTarget.type === "full" ? "سيتم حذف جميع البيانات والملفات الحالية." : restoreTarget.type === "database" ? "سيتم حذف بيانات قاعدة البيانات الحالية." : "سيتم استبدال الملفات المرفوعة."}\nهذا الإجراء لا يمكن التراجع عنه!` : ""}
+        confirmText="تأكيد الاستعادة"
+        cancelText="إلغاء"
+        isDangerous={true}
+        isLoading={restoreLoading}
+        onConfirm={confirmRestore}
+        onCancel={() => { setRestoreTarget(null); setRestoreError(null); }}
+      />
+
+      {operationId ? (
+        <OperationProgressDialog
+          operationId={operationId}
+          onDone={(_result, error) => {
+            setOperationId(null);
+            setRestoreLoading(false);
+            setRestoreTarget(null);
+            if (!error) {
+              setTimeout(() => window.location.reload(), 3000);
+            } else {
+              setRestoreError(error);
+            }
+          }}
+        />
+      ) : null}
+
+      {restoreError ? (
+        <div className="restore-result-overlay" onClick={() => setRestoreError(null)} role="dialog" aria-modal="true">
+          <div className="restore-result-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="restore-result-header">
+              <XCircle size={28} className="restore-icon-error" />
+              <h3>فشلت الاستعادة</h3>
+              <button className="restore-result-close" type="button" onClick={() => setRestoreError(null)} aria-label="إغلاق">
+                <XCircle size={20} />
+              </button>
+            </div>
+            <div className="restore-result-error">
+              <span>{restoreError}</span>
+            </div>
+            <button className="btn btn-soft" type="button" onClick={() => setRestoreError(null)}>
+              إغلاق
+            </button>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { uploadDatabaseBackupToGitHub, createDatabaseBackupPayload } from "@/lib/backups";
+import { updateOperation, failOperation, completeOperation } from "@/lib/operation-progress";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,24 +15,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "غير مصرح." }, { status: 401 });
   }
 
+  const body = await request.json().catch(() => ({}));
+  const operationId = body.operationId as string | undefined;
+
+  if (operationId) updateOperation(operationId, { progress: 5, step: "بدء إنشاء نسخة قاعدة البيانات", status: "in_progress" });
+
   try {
+    if (operationId) updateOperation(operationId, { progress: 15, step: "قراءة بيانات الجداول" });
     const { bytes, fileName, createdAt } = await createDatabaseBackupPayload();
+
+    if (operationId) updateOperation(operationId, { progress: 50, step: "رفع إلى GitHub" });
     const result = await uploadDatabaseBackupToGitHub(bytes, fileName, createdAt, "manual");
     if (!result) {
-      return NextResponse.json({ ok: false, error: "فشل رفع النسخة إلى GitHub (التهيئة أو حجم الملف)" }, { status: 500 });
+      const msg = "فشل رفع النسخة إلى GitHub (التهيئة أو حجم الملف)";
+      if (operationId) failOperation(operationId, msg);
+      return NextResponse.json({ ok: false, error: msg }, { status: 500 });
     }
-    return NextResponse.json({
+
+    const response = {
       ok: true,
       fileName,
       createdAt: createdAt.toISOString(),
       commitSha: result.commitSha,
       repoPath: result.repoPath,
-    });
+    };
+
+    if (operationId) completeOperation(operationId, response as unknown as Record<string, unknown>);
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("[Database Backup] failed", error);
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    const msg = error instanceof Error ? error.message : String(error);
+    if (operationId) failOperation(operationId, msg, error instanceof Error ? error.stack : undefined);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
