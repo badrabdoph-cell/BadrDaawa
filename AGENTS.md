@@ -38,3 +38,6 @@ Implement Auto Restore via GitHub API discovery, Rollback, version history, and 
 - `lib/auto-restore.ts`: Updated to use `findLatestBackupOnGitHub()` via dynamic import
 - `railway-cron.json`: Cron schedule changed to every 1 hour
 - `lib/publish-rollback.ts` + `app/api/admin/publish/rollback/route.ts`: Rollback system already exists
+- `.railway/railway.ts`: Railway Infrastructure as Code — defines PostgreSQL, web service, env vars, healthcheck
+- `app/api/health/route.ts`: Healthcheck endpoint for Railway (`/api/health`)
+- `scripts/prepare-production.mjs`: Auto-generates missing secrets (AUTH_SECRET, BACKUP_CRON_SECRET, etc.) on first deploy, persisted to `data/.secrets.env`

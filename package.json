@@ -48,6 +48,7 @@
     "@types/react-dom": "^19.2.1",
     "pngjs": "^7.0.0",
     "prisma": "^5.22.0",
+    "railway": "^3.3.2",
     "tsx": "^4.19.1",
     "typescript": "5.9.3"
   },
