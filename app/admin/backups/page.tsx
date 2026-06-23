@@ -1,6 +1,5 @@
 import {
   Database,
-  CloudUpload,
   Archive,
   RotateCcw,
   Download,
@@ -26,17 +25,15 @@ function formatDate(date: Date) {
 }
 
 export default async function BackupsPage() {
-  const [db, uploads, full, schedule] = await Promise.all([
+  const [db, full, schedule] = await Promise.all([
     findLatestBackupOnGitHubByType("database").catch(() => null),
-    findLatestBackupOnGitHubByType("uploads").catch(() => null),
     findLatestBackupOnGitHubByType("full").catch(() => null),
     getScheduledBackupInfo().catch(() => null),
   ]);
 
   const createSections = [
-    { type: "database" as const, title: "قاعدة البيانات", desc: "نسخة DB فقط (تلقائي كل ساعة)", icon: Database, accent: "blue", latest: db },
-    { type: "uploads" as const, title: "الملفات", desc: "نسخة ملفات فقط (تلقائي كل 24-48 ساعة)", icon: CloudUpload, accent: "teal", latest: uploads },
-    { type: "full" as const, title: "نسخة كاملة", desc: "قاعدة بيانات + ملفات (يدوي فقط)", icon: Archive, accent: "rose", latest: full },
+    { type: "database" as const, title: "قاعدة البيانات", desc: "نسخة DB فقط (تلقائي كل 3 ساعات - آخر 30 نسخة)", icon: Database, accent: "blue", latest: db },
+    { type: "full" as const, title: "نسخة كاملة", desc: "قاعدة بيانات + ملفات (تلقائي كل 48 ساعة - آخر 5 نسخ)", icon: Archive, accent: "rose", latest: full },
   ] as const;
 
   const restoreSections = [

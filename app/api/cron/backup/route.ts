@@ -58,7 +58,7 @@ async function handleCronBackup(request: NextRequest) {
   const results: Record<string, { ok: boolean; fileName?: string; error?: string; skipped?: boolean }> = {};
 
   // Check each v2 type
-  const types: BackupTypeV2[] = ["database", "uploads", "full"];
+  const types: BackupTypeV2[] = ["database", "full"];
   for (const type of types) {
     try {
       const due = await isV2BackupDue(type);
