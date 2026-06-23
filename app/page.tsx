@@ -1,307 +1,474 @@
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
-import { BellRing, Check, Clock3, Eye, Gem, Headphones, Heart, LayoutTemplate, Link2, MessageCircle, Palette, Send, SlidersHorizontal, Smartphone, Sparkles, Star, UserCheck, UsersRound, Vote, WandSparkles, X } from "lucide-react";
-import { CountUpNumber } from "@/components/CountUpNumber";
-import { LiveVisitorsCounter } from "@/components/LiveVisitorsCounter";
+import {
+  BellRing,
+  CalendarCheck,
+  Check,
+  Clock3,
+  Eye,
+  Headphones,
+  HeartHandshake,
+  Image,
+  Link2,
+  MapPin,
+  MessageCircle,
+  Music2,
+  Palette,
+  QrCode,
+  Send,
+  ShieldCheck,
+  SlidersHorizontal,
+  Smartphone,
+  Sparkles,
+  Star,
+  UserCheck,
+  UsersRound,
+  Vote,
+  WandSparkles,
+  X,
+} from "lucide-react";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { AnnouncementBar } from "@/components/AnnouncementBar";
-import { QuickBenefits } from "@/components/QuickBenefits";
-import { HowItWorks } from "@/components/HowItWorks";
 import { getPublishedHomeContent } from "@/lib/home-content";
-import { getPublishedHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
+import { getPublishedHomePreviewSettings } from "@/lib/preview-settings";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
-import { FEATURE_ICONS } from "@/lib/feature-icons";
+import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
-const featureIcons = [Vote, Send, SlidersHorizontal, BellRing, Sparkles, Headphones, Link2, Heart, Gem, Star, Palette, UserCheck, Clock3];
 const quickBenefits = [
-  { label: "إنشاء سريع", icon: Clock3 },
-  { label: "تصاميم فاخرة", icon: LayoutTemplate },
-  { label: "إدارة الحضور", icon: UserCheck },
-  { label: "مشاركة فورية", icon: MessageCircle },
+  { title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني.", icon: Send },
+  { title: "تأكيد حضور RSVP", text: "الضيف يؤكد أو يعتذر من نفس الدعوة.", icon: UserCheck },
+  { title: "لوكيشن وQR Code", text: "كل تفاصيل الوصول محفوظة في مكان واحد.", icon: QrCode },
+  { title: "لوحة متابعة خاصة", text: "شوف الأسماء والأرقام والردود أول بأول.", icon: SlidersHorizontal },
 ];
 
-function HomeSectionDivider({ variant = "wave" }: { variant?: "wave" | "lace" | "arc" }) {
-  return (
-    <div className={`home-section-divider home-section-divider-${variant}`} aria-hidden="true">
-      {variant === "wave" ? (
-        <svg viewBox="0 0 1440 170" preserveAspectRatio="none" focusable="false">
-          <path className="home-divider-fill" d="M0 84L60 76C120 68 240 52 360 67C480 82 600 128 720 127C840 126 960 78 1080 61C1200 44 1320 58 1380 65L1440 72V170H0V84Z" />
-          <path className="home-divider-line" d="M0 84C144 63 247 54 360 67C480 82 600 128 720 127C840 126 960 78 1080 61C1200 44 1320 58 1440 72" />
-          <path className="home-divider-line soft" d="M0 116C170 92 278 96 410 108C560 122 663 147 794 132C946 115 1046 68 1202 73C1295 76 1360 91 1440 105" />
-        </svg>
-      ) : null}
-      {variant === "lace" ? (
-        <svg viewBox="0 0 1180 96" preserveAspectRatio="none" focusable="false">
-          <path className="home-divider-line" d="M40 48C166 14 280 14 386 48C492 82 608 82 714 48C820 14 936 14 1140 48" />
-          <path className="home-divider-line soft" d="M40 56C210 76 314 76 456 55C598 34 708 34 850 55C966 72 1048 70 1140 56" />
-          <circle cx="354" cy="48" r="5" />
-          <circle cx="590" cy="48" r="7" />
-          <circle cx="826" cy="48" r="5" />
-        </svg>
-      ) : null}
-      {variant === "arc" ? (
-        <svg viewBox="0 0 1180 112" preserveAspectRatio="none" focusable="false">
-          <path className="home-divider-fill" d="M76 58C244 12 396 14 530 56C665 98 794 105 930 66C1012 42 1080 36 1136 42V112H76V58Z" />
-          <path className="home-divider-line" d="M76 58C244 12 396 14 530 56C665 98 794 105 930 66C1012 42 1080 36 1136 42" />
-          <path className="home-divider-line soft" d="M126 74C278 47 404 52 542 80C684 109 798 104 920 82C998 68 1058 62 1112 66" />
-        </svg>
-      ) : null}
-    </div>
-  );
-}
+const flowSteps = [
+  { title: "اختار التصميم", text: "ابدأ من قالب قريب من ذوقكم.", icon: Palette },
+  { title: "ابعت بيانات الفرح", text: "الأسماء، المعاد، القاعة، الصور، والموسيقى.", icon: MessageCircle },
+  { title: "استلم لينك الدعوة", text: "لينك خاص جاهز للمشاركة مع QR Code.", icon: Link2 },
+  { title: "تابع الحضور", text: "كل رد من المعازيم يظهر في لوحة واحدة.", icon: Eye },
+];
+
+const guestFeatures = [
+  { title: "لينك خاص", text: "الضيف يفتح الدعوة من الموبايل بدون تحميل تطبيق.", icon: Link2 },
+  { title: "QR Code", text: "مشاركة سهلة على الشاشة أو في المطبوعات.", icon: QrCode },
+  { title: "لوكيشن القاعة", text: "العنوان والخريطة موجودين داخل الدعوة.", icon: MapPin },
+  { title: "إضافة للتقويم", text: "تنبيه قبل الفرح بدل نسيان المعاد.", icon: CalendarCheck },
+  { title: "موسيقى وصور", text: "دعوة تحس فعلا إنها تخصكم، مش صفحة عادية.", icon: Music2 },
+];
+
+const ownerFeatures = [
+  { title: "مين شاف الدعوة", text: "اعرف التفاعل الحقيقي بدل التخمين.", icon: Eye },
+  { title: "تأكيد الحضور", text: "ردود واضحة: هيحضر، مش هيحضر، أو لسه.", icon: Vote },
+  { title: "كشف أسماء وأرقام", text: "كل بيانات الضيوف مرتبة وسهلة المراجعة.", icon: UsersRound },
+  { title: "رسائل جماعية", text: "ابعت تذكير أو تنبيه لكل الضيوف مرة واحدة.", icon: BellRing },
+  { title: "تعليقات بموافقتك", text: "ذكريات وكلمات تظهر بعد اعتمادك فقط.", icon: HeartHandshake },
+];
+
+const trustItems = [
+  { title: "مناسب لكل المناسبات", text: "فرح، خطوبة، كتب كتاب، أو احتفال عائلي.", icon: Sparkles },
+  { title: "بدون تطبيق", text: "يعمل من المتصفح مباشرة على أغلب الموبايلات.", icon: Smartphone },
+  { title: "مشاركة واتساب", text: "اللينك جاهز للارسال للعيلة والصحاب.", icon: MessageCircle },
+  { title: "خصوصية وتحكم", text: "لوحة خاصة وروابط واضحة لكل دور.", icon: ShieldCheck },
+];
+
+const previewPoints = [
+  "الضيف يفتح الدعوة من اللينك مباشرة.",
+  "يشوف الصور والموسيقى واللوكيشن في نفس التجربة.",
+  "يأكد الحضور أو يعتذر بخطوة بسيطة.",
+  "صاحب الدعوة يتابع الردود والأرقام من لوحة واحدة.",
+];
+
+const faqItems = [
+  {
+    question: "هل الضيوف يحتاجون تحميل تطبيق؟",
+    answer: "لا. الدعوة تفتح من اللينك مباشرة على الموبايل أو الكمبيوتر.",
+  },
+  {
+    question: "هل أقدر أعدل الدعوة بعد الإنشاء؟",
+    answer: "نعم، تقدر تعدل البيانات والصور والتفاصيل حسب الباقة والإعدادات المتاحة.",
+  },
+  {
+    question: "هل أقدر أعرف مين شاف الدعوة؟",
+    answer: "الفكرة الأساسية إنك تتابع التفاعل والحضور من لوحة متابعة بدل ما تعتمد على التخمين.",
+  },
+  {
+    question: "هل أقدر أرسل الدعوة على واتساب؟",
+    answer: "نعم، الدعوة عبارة عن لينك خاص جاهز للمشاركة على واتساب أو أي تطبيق رسائل.",
+  },
+  {
+    question: "هل يوجد QR Code؟",
+    answer: "نعم، يمكن استخدام QR Code لتسهيل فتح الدعوة من أي موبايل.",
+  },
+  {
+    question: "هل الدعوة تعمل على كل الموبايلات؟",
+    answer: "تم تصميم التجربة لتعمل على المتصفحات الحديثة وتكون مريحة على الموبايل أولا.",
+  },
+];
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
-  const [previewSettings, content, siteSettings, platformStats] = await Promise.all([getPublishedHomePreviewSettings().catch(() => null), getPublishedHomeContent().catch(() => null), getPublishedSiteSettings().catch(() => null), getHomePlatformStats().catch(() => null)]);
+  const [previewSettings, content, siteSettings, platformStats] = await Promise.all([
+    getPublishedHomePreviewSettings().catch(() => null),
+    getPublishedHomeContent().catch(() => null),
+    getPublishedSiteSettings().catch(() => null),
+    getHomePlatformStats().catch(() => null),
+  ]);
+
   const previewTemplateSrc = `/templates/${previewSettings?.templateSlug || "featured-1"}/preview?silentPreview=1`;
   const isBroadcastMode = params.broadcast === "1";
-  const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
-  const showAnyContent = siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
-  const LIVE_STATS_BASE = [
-    { label: "دعوه منشأه", value: 116, icon: Smartphone },
-    { label: "زياره", value: 60062, icon: UsersRound },
-    { label: "تسجيل حضور", value: 8322, icon: UserCheck },
+  const showPreview = siteSettings?.homepage?.showPreview !== false;
+  const showPricing = siteSettings?.homepage?.showPricing !== false;
+  const heroMainTitle = "دعوة فرح إلكترونية تعرفك مين شافها ومين هيحضر";
+  const heroDescription = "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
+  const whatsappUrl = getWhatsAppOrderUrl("أريد طلب دعوة فرح إلكترونية من Wedding Daawa", siteSettings?.whatsappUrl);
+  const stats = [
+    { label: "قالب جاهز", value: Math.max(platformStats?.templates || 0, 6), suffix: "+", icon: Palette },
+    { label: "تأكيد حضور", value: platformStats?.confirmedRsvps || 8322, suffix: "+", icon: UserCheck },
+    { label: "تجربة موبايل", value: 100, suffix: "%", icon: Smartphone },
   ];
+  const structuredData = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: siteSettings?.siteName || "Wedding Daawa",
+    description: siteSettings?.seo?.description || "دعوات زفاف رقمية مع RSVP وQR Code ومشاركة واتساب.",
+    serviceType: "Digital wedding invitations",
+    areaServed: "Egypt",
+  });
 
   return (
-    <div className="page-shell">
+    <div className="page-shell wd-home">
       <AnnouncementBar />
       <SiteHeader />
       <main>
-        <section className="hero clean-hero hero-title-style">
-          <div className="container hero-grid hero-grid-single">
-            <div className="hero-copy">
-              <h1 className="hero-title-block">
-                <span className="hero-sticker hero-sticker-tl" aria-hidden="true">
-                  <Sparkles size={15} />
-                </span>
-                <span className="hero-sticker hero-sticker-tr" aria-hidden="true">
-                  <Heart size={13} />
-                </span>
-                <span className="hero-sticker hero-sticker-bl" aria-hidden="true">
-                  <Gem size={14} />
-                </span>
-                <span className="hero-sticker hero-sticker-br" aria-hidden="true">
-                  <Star size={12} />
-                </span>
-                <span className="hero-title-icon" aria-hidden="true">
-                  <Sparkles size={22} />
-                </span>
-                <span className="hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content?.hero?.kicker || "دعوتك الرقمية"}>
-                  {content?.hero?.kicker || "دعوتك الرقمية"}
-                </span>
-                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={"ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى"}>
-                  ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى
-                </span>
-                <span className="hero-title-divider" aria-hidden="true" />
-                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="الوصف" data-broadcast-kind="text" data-broadcast-value={"صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره."}>
-                  صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره.
-                </span>
-              </h1>
-              <div className="button-row" style={{ justifyContent: "center", marginTop: "clamp(16px, 3vw, 28px)" }}>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
+
+        <section className="wd-hero" aria-labelledby="home-hero-title">
+          <div className="container wd-hero-grid">
+            <div className="wd-hero-copy">
+              <span className="wd-kicker">
+                <Sparkles size={16} />
+                {content?.hero?.kicker || "هنا تبدأ الحكاية"}
+              </span>
+              <h1 id="home-hero-title">{heroMainTitle}</h1>
+              <p>{heroDescription}</p>
+              <div className="wd-hero-actions">
+                <Link className="btn btn-gold btn-glow wd-primary-action" href="/templates">
                   <Palette size={19} />
-                  <span>شاهد التصاميم</span>
+                  اختار التصميم
                 </Link>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-                  <Sparkles size={19} />
-                  <span>اطلب دعوتك الآن</span>
-                </Link>
+                <a className="btn btn-soft wd-secondary-action" href={whatsappUrl} target="_blank" rel="noreferrer">
+                  <MessageCircle size={19} />
+                  اطلبها على واتساب
+                </a>
+              </div>
+            </div>
+
+            <div className="wd-hero-board" aria-label="ملخص تجربة الدعوة الرقمية">
+              <div className="wd-board-header">
+                <span>Wedding Daawa OS</span>
+                <strong>يوم الفرح تحت السيطرة</strong>
+              </div>
+              <div className="wd-board-flow">
+                {[
+                  ["لينك الدعوة", "جاهز للمشاركة", Link2],
+                  ["الضيف فتح", "تمت المشاهدة", Eye],
+                  ["تأكيد الحضور", "الأسماء بتتجمع", UserCheck],
+                  ["رسالة تذكير", "واتساب في الطريق", BellRing],
+                ].map(([title, text, Icon]) => (
+                  <div className="wd-board-row" key={title as string}>
+                    <span>
+                      <Icon size={18} />
+                    </span>
+                    <div>
+                      <strong>{title as string}</strong>
+                      <small>{text as string}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="wd-board-footer">
+                <span>بدون ورق. بدون زحمة. بدون تخمين.</span>
+                <Sparkles size={16} />
               </div>
             </div>
           </div>
         </section>
 
-        <QuickBenefits />
-
-        <HowItWorks />
-
-        {showAnyContent ? (
-          <HomeSectionDivider variant="wave" />
-        ) : null}
-
-        {showAnyContent ? (
-          <section className="home-platform-stats home-platform-stats-compact home-platform-stats-after-preview" aria-label="إحصائيات المنصة">
-              <div className="home-platform-stats-inner">
-                <div className="home-platform-stats-head">
-                  <span className="eyebrow" data-broadcast-key="stats.eyebrow" data-broadcast-label="نص الإحصائيات" data-broadcast-kind="text" data-broadcast-value="آلاف الدعوات بدأت من هنا">
-                    <Sparkles size={16} />
-                    آلاف الدعوات بدأت من هنا
+        <section className="wd-value-strip" aria-label="مميزات سريعة">
+          <div className="container wd-value-grid">
+            {quickBenefits.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article className="wd-value-item" key={item.title}>
+                  <span>
+                    <Icon size={20} />
                   </span>
-                </div>
-                <div className="home-platform-stats-grid">
-                  {LIVE_STATS_BASE.map((stat, i) => {
-                    const Icon = stat.icon;
-                    const isFeatured = i === LIVE_STATS_BASE.length - 1;
-                    return (
-                      <article className={`home-platform-stat-card${isFeatured ? " home-platform-stat-card-featured" : ""}`} key={stat.label}>
-                        <span className="home-platform-stat-icon">
-                          <Icon size={22} />
-                        </span>
-                        <strong>
-                          <CountUpNumber value={stat.value} />
-                        </strong>
-                        <small>{stat.label}</small>
-                      </article>
-                    );
-                  })}
-                </div>
-                <LiveVisitorsCounter />
-              </div>
-          </section>
-        ) : null}
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.text}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
-        {siteSettings?.homepage?.showPreview ? (
-          <section className="section compact live-template-section" data-no-scroll-animation>
-            <div className="container live-template-wrap">
-              <div className="live-preview-stack">
-                <div className="live-preview-title">
-                  <span data-broadcast-key="preview.eyebrow" data-broadcast-label="نص المعاينة الصغير" data-broadcast-kind="text" data-broadcast-value={content?.preview?.eyebrow || "معاينة حية"}>
-                    {content?.preview?.eyebrow || "معاينة حية"}
-                  </span>
-                  <h2 data-broadcast-key="preview.title" data-broadcast-label="عنوان المعاينة" data-broadcast-kind="text" data-broadcast-value="شاهد كيف تعمل الدعوة">
-                    شاهد كيف تعمل الدعوة
-                  </h2>
-                </div>
-                <div className="live-phone-frame" aria-label="معاينة مباشرة لدعوة بدر و Sara" data-broadcast-key="preview.media" data-broadcast-label="ميديا المعاينة" data-broadcast-kind="media" data-broadcast-value={previewSettings?.mode === "video" ? previewSettings?.videoUrl : previewSettings?.mode === "image" ? previewSettings?.imageUrl : previewSettings?.templateSlug}>
-                  <span className="live-preview-badge" data-broadcast-key="preview.badge" data-broadcast-label="شارة المعاينة" data-broadcast-kind="text" data-broadcast-value={content?.preview?.badge || "دعوة رقمية"}>
-                    {content?.preview?.badge || "دعوة رقمية"}
-                  </span>
-                  {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
-                    <img className="live-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" loading="lazy" decoding="async" />
-                  ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
-                    <video className="live-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
-                  ) : (
-                    <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
-                  )}
-                </div>
-                <div className="button-row live-preview-actions">
-                  <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/badr-sarah-1">
-                    <Eye size={19} />
-                    <span data-broadcast-key="preview.fullInviteCta" data-broadcast-label="زر فتح الدعوة" data-broadcast-kind="text" data-broadcast-value={content?.preview?.fullInviteCta || "فتح الدعوة"}>
-                      {content?.preview?.fullInviteCta || "فتح الدعوة"}
-                    </span>
-                  </Link>
-                  <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-                    <Sparkles size={19} />
-                    <span data-broadcast-key="preview.orderCta" data-broadcast-label="زر طلب مشابه" data-broadcast-kind="text" data-broadcast-value={content?.preview?.orderCta || "اطلب مشابه"}>
-                      {content?.preview?.orderCta || "اطلب مشابه"}
-                    </span>
-                  </Link>
-                </div>
-              </div>
+        <section className="wd-section wd-flow-section" aria-labelledby="home-flow-title">
+          <div className="container">
+            <div className="wd-section-head">
+              <span className="wd-kicker">الرحلة ببساطة</span>
+              <h2 id="home-flow-title">من اختيار التصميم لحد آخر تأكيد حضور</h2>
             </div>
-          </section>
-        ) : null}
-
-        {showHomePanels ? <HomeSectionDivider variant="lace" /> : null}
-
-        {siteSettings?.homepage?.showFeatures ? (
-          <section id="features-section" className="home-features-panel home-features-panel-upgraded" aria-label="مميزات الدعوة الرقمية">
-            <div className="home-features-title-block">
-              <span className="home-features-title-icon" aria-hidden="true">
-                <Sparkles size={18} />
-              </span>
-              <h2 data-broadcast-key="features.title" data-broadcast-label="عنوان المميزات" data-broadcast-kind="text" data-broadcast-value={content?.features?.title || "المميزات ال هتاخدها في دعوت فرحك ✨"}>
-                {content?.features?.title || "المميزات ال هتاخدها في دعوت فرحك ✨"}
-              </h2>
-              <span className="home-features-title-divider" aria-hidden="true">
-                <Sparkles size={15} />
-              </span>
-            </div>
-            <div className="home-feature-points">
-              {(content?.features?.points || []).map((item, index) => {
-                const Icon = (item.icon && FEATURE_ICONS[item.icon]) || featureIcons[index] || Sparkles;
+            <div className="wd-flow-grid">
+              {flowSteps.map((step, index) => {
+                const Icon = step.icon;
                 return (
-                  <article className="home-feature-point" key={item.id}>
-                    <span>
-                      <Icon size={18} />
-                    </span>
-                    <strong data-broadcast-key={`features.points.${item.id}.text`} data-broadcast-label={`ميزة: ${item.text}`} data-broadcast-kind="text" data-broadcast-value={item.text}>
-                      {item.text}
-                    </strong>
+                  <article className="wd-flow-card" key={step.title}>
+                    <span className="wd-flow-number">{index + 1}</span>
+                    <Icon size={24} />
+                    <strong>{step.title}</strong>
+                    <p>{step.text}</p>
                   </article>
                 );
               })}
             </div>
+          </div>
+        </section>
+
+        {showPreview ? (
+          <section className="wd-section wd-preview-section" aria-labelledby="home-preview-title">
+            <div className="container wd-preview-grid">
+              <div className="wd-preview-copy">
+                <span className="wd-kicker">{content?.preview?.eyebrow || "معاينة حية"}</span>
+                <h2 id="home-preview-title">{content?.preview?.title || "شوف الدعوة وهي بتشتغل فعلا"}</h2>
+                <p>المعاينة هنا مش ديكور. دي التجربة اللي هتوصل للضيف: فتح الدعوة، شاف التفاصيل، اختار الحضور، وكل حاجة اتسجلت عندك.</p>
+                <ul className="wd-check-list">
+                  {previewPoints.map((point) => (
+                    <li key={point}>
+                      <Check size={18} />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="wd-preview-actions">
+                  <Link className="btn btn-gold btn-glow" href="/badr-sarah-1">
+                    <Eye size={18} />
+                    {content?.preview?.fullInviteCta || "معاينة الدعوة كاملة"}
+                  </Link>
+                  <Link className="btn btn-soft" href="/templates">
+                    <WandSparkles size={18} />
+                    {content?.preview?.orderCta || "استخدم هذا التصميم"}
+                  </Link>
+                </div>
+              </div>
+              <div className="wd-preview-phone" aria-label="معاينة مباشرة لقالب الدعوة">
+                <span className="wd-preview-badge">{content?.preview?.badge || "دعوة حية"}</span>
+                {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
+                  <img className="wd-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" width={360} height={640} loading="lazy" decoding="async" />
+                ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
+                  <video className="wd-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
+                ) : (
+                  <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
+                )}
+              </div>
+            </div>
           </section>
         ) : null}
 
-        <div className="home-cta-section">
-          <div className="button-row home-cta-row">
-            <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-              <WandSparkles size={19} />
-              <span>أنشئ دعوتك الآن</span>
-            </Link>
-            <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
-              <Palette size={19} />
-              <span>استعراض التصاميم</span>
-            </Link>
+        <section id="features-section" className="wd-section wd-features-section" aria-labelledby="home-features-title">
+          <div className="container">
+            <div className="wd-section-head">
+              <span className="wd-kicker">المميزات</span>
+              <h2 id="home-features-title">كل اللي الضيف يحتاجه، وكل اللي صاحب الفرح عايز يعرفه</h2>
+            </div>
+            <div className="wd-feature-groups">
+              <FeatureGroup title="للضيوف" description="دعوة سهلة، واضحة، وبتفتح من أي موبايل." items={guestFeatures} />
+              <FeatureGroup title="لصاحب الفرح" description="متابعة وتنظيم بدل الورق والأسئلة المتكررة." items={ownerFeatures} featured />
+            </div>
           </div>
-        </div>
+        </section>
 
-        {siteSettings?.homepage?.showPricing ? (
-          <>
-            <div className="pricing-offer-bar">
-              🎁 جميع الباقات مجانية حالياً لفترة محدودة أثناء المرحلة التجريبية.
-            </div>
-            <div className="home-pricing-panel" aria-label="باقات الأسعار">
-              <div className="home-pricing-head">
-                <span data-broadcast-key="pricing.eyebrow" data-broadcast-label="نص الباقات الصغير" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.eyebrow || "الباقات"}>
-                  {content?.pricing?.eyebrow || "الباقات"}
-                </span>
-                <h2 data-broadcast-key="pricing.title" data-broadcast-label="عنوان الباقات" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.title || "اختر باقتك"}>
-                  {content?.pricing?.title || "اختر باقتك"}
-                </h2>
+        <section className="wd-section wd-trust-section" aria-label="أسباب الثقة">
+          <div className="container wd-trust-grid">
+            {trustItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article className="wd-trust-item" key={item.title}>
+                  <Icon size={22} />
+                  <strong>{item.title}</strong>
+                  <p>{item.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="wd-section wd-stats-band" aria-label="ملخص سريع">
+          <div className="container wd-stats-grid">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <article className="wd-stat" key={stat.label}>
+                  <Icon size={22} />
+                  <strong>
+                    {stat.value}
+                    {stat.suffix}
+                  </strong>
+                  <span>{stat.label}</span>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        {showPricing ? (
+          <section id="pricing-section" className="wd-section wd-pricing-section" aria-labelledby="home-pricing-title">
+            <div className="container">
+              <div className="wd-section-head">
+                <span className="wd-kicker">{content?.pricing?.eyebrow || "الباقات"}</span>
+                <h2 id="home-pricing-title">{content?.pricing?.title || "اختار الباقة المناسبة"}</h2>
+                <p>جميع الباقات مجانية حاليًا لفترة محدودة أثناء الإطلاق التجريبي.</p>
               </div>
-              <div className="home-pricing-table" role="table" aria-label="مقارنة باقات الدعوة">
-                <div className="home-pricing-row home-pricing-table-head" role="row">
-                  <div className="home-pricing-feature-head" role="columnheader">الميزة</div>
-                  <div className="home-pricing-plan-head" role="columnheader">
-                    <span data-broadcast-key="pricing.invitationPlanName" data-broadcast-label="اسم الباقة الأولى" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.invitationPlanName || "الباقة الأساسية"}>
-                      {content?.pricing?.invitationPlanName || "الباقة الأساسية"}
-                    </span>
-                    <strong data-broadcast-key="pricing.invitationPrice" data-broadcast-label="سعر الباقة الأولى" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.invitationPrice || "---"}>
-                      <span className="home-pricing-slashed">{content?.pricing?.invitationPrice || "---"}</span>
-                      <span className="home-pricing-free">مجاناً الآن</span>
-                    </strong>
-                  </div>
-                  <div className="home-pricing-plan-head home-pricing-plan-head-featured" role="columnheader">
-                    <span data-broadcast-key="pricing.plusPlanName" data-broadcast-label="اسم الباقة الثانية" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.plusPlanName || "الباقة الماسية"}>
-                      {content?.pricing?.plusPlanName || "الباقة الماسية"}
-                    </span>
-                    <strong data-broadcast-key="pricing.plusPrice" data-broadcast-label="سعر الباقة الثانية" data-broadcast-kind="text" data-broadcast-value={content?.pricing?.plusPrice || "---"}>
-                      <span className="home-pricing-slashed">{content?.pricing?.plusPrice || "---"}</span>
-                      <span className="home-pricing-free">مجاناً الآن</span>
-                    </strong>
-                  </div>
-                </div>
-                {(content?.pricing?.rows || []).map((row) => (
-                  <div className="home-pricing-row" role="row" key={row.id}>
-                    <div className="home-pricing-feature" role="cell" data-broadcast-key={`pricing.rows.${row.id}.feature`} data-broadcast-label={`ميزة باقة: ${row.feature}`} data-broadcast-kind="text" data-broadcast-value={row.feature}>
-                      {row.feature}
-                    </div>
-                    <div className="home-pricing-state" role="cell" aria-label={row.invitation ? "متاح" : "غير متاح"}>
-                      {row.invitation ? <Check size={20} /> : <X size={20} />}
-                    </div>
-                    <div className="home-pricing-state home-pricing-state-featured" role="cell" aria-label={row.plus ? "متاح" : "غير متاح"}>
-                      {row.plus ? <Check size={20} /> : <X size={20} />}
-                    </div>
-                  </div>
-                ))}
+              <div className="wd-pricing-grid">
+                <PricingCard
+                  title={content?.pricing?.invitationPlanName || "الباقة الأساسية"}
+                  price={content?.pricing?.invitationPrice || "100 ج"}
+                  description="اختيار مناسب لو محتاج دعوة واضحة وسريعة."
+                  rows={(content?.pricing?.rows || []).filter((row) => row.invitation).slice(0, 6)}
+                />
+                <PricingCard
+                  title={content?.pricing?.plusPlanName || "الباقة الكاملة"}
+                  price={content?.pricing?.plusPrice || "300 ج"}
+                  description="الأفضل لو عايز متابعة ورسائل ومميزات كاملة."
+                  rows={(content?.pricing?.rows || []).filter((row) => row.plus).slice(0, 8)}
+                  featured
+                />
               </div>
             </div>
-          </>
+          </section>
         ) : null}
+
+        <section className="wd-section wd-faq-section" aria-labelledby="home-faq-title">
+          <div className="container wd-faq-grid">
+            <div className="wd-faq-intro">
+              <span className="wd-kicker">أسئلة قبل الطلب</span>
+              <h2 id="home-faq-title">كل سؤال طبيعي قبل ما تبعت الدعوة للمعازيم</h2>
+              <p>الهدف إن التجربة تبقى واضحة لك وللضيف من أول لينك.</p>
+            </div>
+            <div className="wd-faq-list">
+              {faqItems.map((item) => (
+                <details className="wd-faq-item" key={item.question}>
+                  <summary>{item.question}</summary>
+                  <p>{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="wd-final-cta" aria-labelledby="home-final-cta-title">
+          <div className="container wd-final-cta-inner">
+            <span className="wd-kicker">الخطوة الجاية</span>
+            <h2 id="home-final-cta-title">جاهز تبعت دعوة فرح تليق بيومك؟</h2>
+            <p>ابدأ من التصميم، أو ابعتلنا على واتساب ونرتب لك الدعوة من أولها لآخرها.</p>
+            <div className="wd-hero-actions">
+              <Link className="btn btn-gold btn-glow wd-primary-action" href="/templates">
+                <Palette size={19} />
+                اختار التصميم
+              </Link>
+              <a className="btn btn-soft wd-secondary-action" href={whatsappUrl} target="_blank" rel="noreferrer">
+                <MessageCircle size={19} />
+                كلّمنا على واتساب
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
       <SiteFooter />
       {isBroadcastMode ? <BroadcastAnnotator /> : null}
     </div>
+  );
+}
+
+function FeatureGroup({
+  title,
+  description,
+  items,
+  featured = false,
+}: {
+  title: string;
+  description: string;
+  items: Array<{ title: string; text: string; icon: typeof Link2 }>;
+  featured?: boolean;
+}) {
+  return (
+    <article className={`wd-feature-group${featured ? " wd-feature-group-featured" : ""}`}>
+      <div className="wd-feature-group-head">
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      <div className="wd-feature-list">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div className="wd-feature-item" key={item.title}>
+              <span>
+                <Icon size={18} />
+              </span>
+              <div>
+                <strong>{item.title}</strong>
+                <p>{item.text}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </article>
+  );
+}
+
+function PricingCard({
+  title,
+  price,
+  description,
+  rows,
+  featured = false,
+}: {
+  title: string;
+  price: string;
+  description: string;
+  rows: Array<{ id: string; feature: string }>;
+  featured?: boolean;
+}) {
+  return (
+    <article className={`wd-pricing-card${featured ? " wd-pricing-card-featured" : ""}`}>
+      {featured ? <span className="wd-recommended">الأكثر اكتمالًا</span> : null}
+      <div className="wd-pricing-card-head">
+        <strong>{title}</strong>
+        <p>{description}</p>
+        <div>
+          <span className="wd-old-price">{price}</span>
+          <b>مجانًا الآن</b>
+        </div>
+      </div>
+      <ul>
+        {rows.map((row) => (
+          <li key={row.id}>
+            <Check size={17} />
+            <span>{row.feature}</span>
+          </li>
+        ))}
+      </ul>
+      <Link className={`btn ${featured ? "btn-gold btn-glow" : "btn-soft"}`} href="/templates">
+        {featured ? <Star size={18} /> : <Sparkles size={18} />}
+        ابدأ من هذه الباقة
+      </Link>
+    </article>
   );
 }

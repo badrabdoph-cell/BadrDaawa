@@ -121,6 +121,9 @@ export default async function BackupsPage() {
       {/* ── Restore ── */}
       <div className="dashboard-section">
         <h2>الاستعادة</h2>
+        <div className="admin-card" style={{ border: "1px solid rgba(245, 190, 100, 0.25)", borderRadius: 12, padding: "10px 16px", marginBottom: 12, fontSize: "0.82rem", background: "rgba(245, 190, 100, 0.06)" }}>
+          <strong>⚠️ ملاحظة:</strong> الاستعادة لا تشمل بيانات محتوى الموقع (إعدادات الموقع، محتوى الصفحة الرئيسية، مكتبة الموسيقى، القوالب، إلخ). هذه البيانات تُدار عبر نظام النشر (<strong>GitHub Publish</strong>) وتُستعاد تلقائياً من ملفات المشروع عند الحاجة.
+        </div>
         <div className="admin-card-grid">
           {restoreSections.map((s) => (
             <div key={s.type} className={`admin-card admin-accent-${s.accent}`}>

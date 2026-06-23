@@ -97,14 +97,9 @@ export async function readProjectContentSetting<T>(
     console.warn(`[Project Content] Database error for ${key}: ${error instanceof Error ? error.message : String(error)}`);
   }
   if (saved !== null) {
-    console.log(`[Project Content] ${key} loaded from database`);
     return normalize(saved);
   }
-  if (process.env.NODE_ENV === "production") {
-    console.log(`[Project Content] ${key} not in database, using defaults`);
-    return normalize(fallback);
-  }
-  console.log(`[Project Content] ${key} loading from legacy file: ${definition.repoPath}`);
+  console.log(`[Project Content] ${key} loading from file: ${definition.repoPath}`);
   const legacy = await readLegacyJson<T>(definition.legacyPath, fallback);
   return normalize(legacy);
 }
@@ -198,15 +193,9 @@ export async function readPublishedContent<T>(key: ProjectContentKey, fallback: 
     console.warn(`[Project Content Published] Database error for ${key}: ${error instanceof Error ? error.message : String(error)}`);
   }
   if (saved !== null) {
-    console.log(`[Project Content Published] ${key} loaded from database`);
     return normalize(saved);
   }
-  // If published doesn't exist, fall back to legacy
-  if (process.env.NODE_ENV === "production") {
-    console.log(`[Project Content Published] ${key} not in database, using defaults`);
-    return normalize(fallback);
-  }
-  console.log(`[Project Content Published] ${key} loading from legacy file: ${definition.repoPath}`);
+  console.log(`[Project Content Published] ${key} loading from file: ${definition.repoPath}`);
   const legacy = await readLegacyJson<T>(definition.legacyPath, fallback);
   return normalize(legacy);
 }

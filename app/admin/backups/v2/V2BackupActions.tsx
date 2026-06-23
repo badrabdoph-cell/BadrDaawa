@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { OperationProgressDialog } from "@/components/OperationProgressDialog";
 
-type ActionType = "database" | "uploads" | "full" | "restore-database" | "restore-uploads" | "restore-full" | "auto-restore";
+type ActionType = "database" | "full" | "restore-database" | "restore-uploads" | "restore-full" | "auto-restore";
 
 type RestoreResult = {
   ok: boolean;
@@ -40,15 +40,6 @@ const ACTION_CONFIG: Record<ActionType, {
     confirmTitle: "نسخ قاعدة البيانات",
     confirmMessage: "سيتم إنشاء نسخة احتياطية من قاعدة البيانات ورفعها إلى GitHub.",
     endpoint: "/api/admin/backups/database",
-    method: "POST",
-    dangerous: false,
-  },
-  uploads: {
-    icon: CloudUpload,
-    label: "إنشاء نسخة ملفات",
-    confirmTitle: "نسخ الملفات المرفوعة",
-    confirmMessage: "سيتم إنشاء نسخة احتياطية من جميع الملفات المرفوعة ورفعها إلى GitHub.",
-    endpoint: "/api/admin/backups/uploads",
     method: "POST",
     dangerous: false,
   },

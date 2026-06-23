@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Crown, Headphones, Send } from "lucide-react";
+import { Crown, Headphones } from "lucide-react";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 
 const navLinks = [
   { href: "/templates", label: "التصاميم" },
+  { href: "/#features-section", label: "المميزات" },
+  { href: "/#pricing-section", label: "الأسعار" },
 ];
 
 export async function SiteHeader() {
@@ -36,10 +38,6 @@ export async function SiteHeader() {
             </svg>
             <Headphones size={18} aria-hidden="true" />
           </a>
-          <Link className="btn btn-gold btn-glow" href="/templates">
-            <Send size={18} />
-            صمّم دعوتك الآن
-          </Link>
         </div>
       </div>
     </header>
