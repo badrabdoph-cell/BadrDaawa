@@ -3,31 +3,22 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
   {
-    id: "overview",
-    title: "الدعوات",
-    description: "إنشاء ومتابعة الدعوات والطلبات",
+    id: "contacts",
+    title: "جهات الاتصال",
+    description: "الدعوات والعملاء والتواصل",
     accent: "gold",
-    icon: Archive,
+    icon: UsersRound,
     links: [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
       { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
-    ],
-  },
-  {
-    id: "customers",
-    title: "العملاء",
-    description: "حسابات العملاء والتواصل",
-    accent: "teal",
-    icon: UsersRound,
-    links: [
-      { href: "/admin/customers", label: "العملاء", icon: UsersRound },
+      { href: "/admin/invitations-customers", label: "العملاء", icon: UsersRound },
       { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
       { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
       { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
@@ -35,8 +26,8 @@ const adminSections = [
   },
   {
     id: "content",
-    title: "المحتوى",
-    description: "القوالب والوسائط والصفحات",
+    title: "المحتوى ومساحة العمل",
+    description: "القوالب والوسائط والصفحات والبحث",
     accent: "rose",
     icon: Palette,
     links: [
@@ -47,6 +38,8 @@ const adminSections = [
       { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
       { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
       { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
+      { href: "/admin/search", label: "البحث العام", icon: Search },
+      { href: "/admin/favorites", label: "المفضلة", icon: Star },
     ],
   },
   {
@@ -64,35 +57,25 @@ const adminSections = [
   },
   {
     id: "publishing",
-    title: "النشر",
-    description: "إدارة النشر وسجل الإصدارات",
+    title: "النشر والإصدارات",
+    description: "نشر التغييرات وإدارة الإصدارات",
     accent: "gold",
     icon: Upload,
     links: [
-      { href: "/admin/publish", label: "إدارة النشر", icon: Upload },
-      { href: "/admin/versions", label: "سجل الإصدارات", icon: History },
-    ],
-  },
-  {
-    id: "backups",
-    title: "النسخ الاحتياطي",
-    description: "إنشاء واستعادة النسخ الاحتياطية",
-    accent: "violet",
-    icon: DatabaseBackup,
-    links: [
-      { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
+      { href: "/admin/publish", label: "النشر والإصدارات", icon: Upload },
     ],
   },
   {
     id: "system",
-    title: "النظام",
-    description: "الإعدادات والمراقبة والسجلات",
+    title: "النظام والنسخ الاحتياطي",
+    description: "الإعدادات والمراقبة والنسخ الاحتياطي",
     accent: "slate",
     icon: Settings,
     links: [
       { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
       { href: "/admin/photographer-logo", label: "شعار المصور", icon: Camera },
       { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
+      { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
       { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
       { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
@@ -101,21 +84,10 @@ const adminSections = [
       { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
     ],
   },
-  {
-    id: "workspace",
-    title: "مساحة العمل",
-    description: "بحث ومفضلة",
-    accent: "green",
-    icon: Search,
-    links: [
-      { href: "/admin/search", label: "البحث العام", icon: Search },
-      { href: "/admin/favorites", label: "المفضلة", icon: Star },
-    ],
-  },
 ];
 
 const allAdminLinks = adminSections.flatMap((group) => group.links);
-const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications", "/admin/publish"]);
+const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications", "/admin/publish", "/admin/templates"]);
 const mobilePrimaryLinks = allAdminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
 const pendingAdminActionKey = "badr-admin-pending-action";
 
