@@ -5651,7 +5651,8 @@ img {
   display: grid;
   gap: 8px;
   min-height: 0;
-  overflow-y: auto;
+  flex: 1;
+  overflow: hidden;
   overscroll-behavior: contain;
   padding-inline-end: 4px;
   scroll-padding-block: 12px;
@@ -6112,7 +6113,7 @@ img {
 
 .dashboard-section-nav {
   grid-template-columns: 124px minmax(0, 1fr);
-  align-items: start;
+  grid-template-rows: 1fr;
   gap: 10px;
 }
 
@@ -6124,6 +6125,7 @@ img {
 .dashboard-primary-sections {
   display: grid;
   gap: 7px;
+  align-self: start;
 }
 
 .dashboard-primary-sections button {
@@ -6248,13 +6250,30 @@ img {
   background:
     linear-gradient(180deg, var(--admin-section-soft, rgba(243, 207, 115, 0.1)), rgba(255, 255, 255, 0.035)),
     rgba(255, 255, 255, 0.025);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 207, 115, 0.35) transparent;
+}
+
+.dashboard-secondary-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dashboard-secondary-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(243, 207, 115, 0.35);
 }
 
 .dashboard-secondary-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: grid;
   gap: 4px;
   padding: 3px 3px 7px;
   border-bottom: 1px solid rgba(245, 234, 214, 0.08);
+  background: rgba(18, 20, 27, 0.97);
 }
 
 .dashboard-secondary-head h2 {
@@ -28448,7 +28467,10 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   }
 
   .dashboard-nav {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    overflow-y: auto;
   }
 
   .noir-gallery {
@@ -28496,7 +28518,11 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   }
 
   .admin-dark-shell .dashboard-nav {
+    display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: none;
+    gap: 6px;
+    overflow-y: auto;
   }
 
   .publish-card-metrics {

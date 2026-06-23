@@ -109,7 +109,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [routeBusy, setRouteBusy] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const routeBusyTimerRef = useRef<number | null>(null);
+  const secondaryPanelRef = useRef<HTMLElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    secondaryPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [selectedSectionId]);
   const pendingKeys = useRef<string[]>([]);
 
   useEffect(() => {
@@ -438,7 +443,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                     data-accent={section.accent}
                     type="button"
                     key={section.id}
-                    onClick={() => setSelectedSectionId(section.id)}
+                    onClick={() => {
+                      setSelectedSectionId(section.id);
+                      const firstHref = section.links[0].href;
+                      if (firstHref !== window.location.pathname) router.push(firstHref);
+                    }}
                     aria-pressed={isSelected}
                   >
                     <span>
@@ -450,7 +459,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 );
               })}
             </div>
-            <section className="dashboard-secondary-panel" data-accent={selectedSection.accent} aria-label={selectedSection.title}>
+            <section ref={secondaryPanelRef} className="dashboard-secondary-panel" data-accent={selectedSection.accent} aria-label={selectedSection.title}>
               <div className="dashboard-secondary-head">
                 <span className="eyebrow">القسم الفرعي</span>
                 <h2>{selectedSection.title}</h2>
