@@ -120,6 +120,35 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   <span>{heroSecondaryCta}</span>
                 </a>
               </div>
+              <div className="hero-product-stage" aria-label="معاينة سريعة للدعوة الرقمية ولوحة الحضور">
+                <div className="hero-product-signal hero-product-signal-rsvp">
+                  <span>
+                    <UserCheck size={18} />
+                  </span>
+                  <strong>الحضور واضح</strong>
+                  <small>شاهد، أكد، أو اعتذر</small>
+                </div>
+                <div className="hero-product-phone" data-broadcast-key="hero.productPreview" data-broadcast-label="معاينة الهيرو" data-broadcast-kind="media" data-broadcast-value={previewSettings?.mode === "video" ? previewSettings?.videoUrl : previewSettings?.mode === "image" ? previewSettings?.imageUrl : previewSettings?.templateSlug}>
+                  <span className="hero-product-badge">
+                    <Sparkles size={14} />
+                    دعوة حية
+                  </span>
+                  {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
+                    <img className="hero-product-media" src={previewSettings.imageUrl} alt="لقطة من الدعوة الرقمية" width={300} height={430} loading="eager" decoding="async" />
+                  ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
+                    <video className="hero-product-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay preload="metadata" />
+                  ) : (
+                    <iframe src={previewTemplateSrc} title="لقطة حية من الدعوة الرقمية" loading="eager" sandbox="allow-scripts allow-same-origin" />
+                  )}
+                </div>
+                <div className="hero-product-signal hero-product-signal-link">
+                  <span>
+                    <Link2 size={18} />
+                  </span>
+                  <strong>لينك خاص</strong>
+                  <small>واتساب، QR، ولوكيشن</small>
+                </div>
+              </div>
             </div>
           </div>
         </section>
