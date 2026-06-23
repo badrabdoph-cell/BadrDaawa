@@ -13,6 +13,7 @@ import { getPublishedHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { FEATURE_ICONS } from "@/lib/feature-icons";
+import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
@@ -63,6 +64,11 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
   const showAnyContent = siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
+  const heroMainTitle = content?.hero?.mainTitle || "دعوة فرح إلكترونية تعرفك مين شافها ومين هيحضر";
+  const heroAccentTitle = content?.hero?.accentTitle || "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
+  const heroPrimaryCta = content?.hero?.primaryCta || "اختار التصميم";
+  const heroSecondaryCta = content?.hero?.secondaryCta || "اطلبها على واتساب";
+  const heroWhatsAppUrl = getWhatsAppOrderUrl("أريد طلب دعوة فرح إلكترونية من Wedding Daawa", siteSettings?.whatsappUrl);
   const LIVE_STATS_BASE = [
     { label: "دعوه منشأه", value: 116, icon: Smartphone },
     { label: "زياره", value: 60062, icon: UsersRound },
@@ -96,23 +102,23 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 <span className="hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content?.hero?.kicker || "دعوتك الرقمية"}>
                   {content?.hero?.kicker || "دعوتك الرقمية"}
                 </span>
-                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={"ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى"}>
-                  ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى
+                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={heroMainTitle}>
+                  {heroMainTitle}
                 </span>
                 <span className="hero-title-divider" aria-hidden="true" />
-                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="الوصف" data-broadcast-kind="text" data-broadcast-value={"صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره."}>
-                  صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره.
+                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="الوصف" data-broadcast-kind="text" data-broadcast-value={heroAccentTitle}>
+                  {heroAccentTitle}
                 </span>
               </h1>
               <div className="button-row" style={{ justifyContent: "center", marginTop: "clamp(16px, 3vw, 28px)" }}>
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <Palette size={19} />
-                  <span>شاهد التصاميم</span>
+                  <span>{heroPrimaryCta}</span>
                 </Link>
-                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
+                <a className="btn btn-gold btn-glow home-cta home-cta-primary" href={heroWhatsAppUrl} target="_blank" rel="noreferrer">
                   <Sparkles size={19} />
-                  <span>اطلب دعوتك الآن</span>
-                </Link>
+                  <span>{heroSecondaryCta}</span>
+                </a>
               </div>
             </div>
           </div>
