@@ -2044,7 +2044,7 @@ export async function createFullBackupPayload(): Promise<{
     uploadsLargest = Math.max(uploadsLargest, bytes.length);
     files.push({ relativePath: `uploads/${file.key}`, bytes, contentType: file.contentType || "application/octet-stream", sha256: createHash("sha256").update(bytes).digest("hex") });
   }
-  const manifest: FullBackupManifest = { version: 1, createdAt: createdAt.toISOString(), type: "full", db: { sizeBytes: dbBytes.length }, uploads: { totalFiles: uploadFiles.length, totalSizeBytes: uploadsTotalBytes, largestFileBytes: uploadsLargest } };
+  const manifest: FullBackupManifest = { version: 1, createdAt: createdAt.toISOString(), type: "full", db: { sizeBytes: dbBytes.length }, uploads: { totalFiles: files.length - 1, totalSizeBytes: uploadsTotalBytes, largestFileBytes: uploadsLargest } };
   return { manifest, files, createdAt };
 }
 
@@ -2066,10 +2066,12 @@ async function uploadMultiBlobBackupToGitHub(
 
   const fileBlobs: Record<string, string> = {};
   const treeEntries: Array<{ path: string; mode: string; type: string; sha: string }> = [];
+  let skippedCount = 0;
 
   for (const file of files) {
     if (file.bytes.length > BACKUP_GITHUB_MAX_BLOB_SIZE) {
       console.warn(`[MultiBlobUpload] Skipping ${file.relativePath} (${file.bytes.length} bytes exceeds 90 MB limit)`);
+      skippedCount++;
       continue;
     }
     const blob = await githubRequest<GitHubBlob>(
@@ -2082,7 +2084,7 @@ async function uploadMultiBlobBackupToGitHub(
     treeEntries.push({ path: entryPath, mode: "100644", type: "blob", sha: blob.sha });
   }
 
-  const manifestWithBlobs = { ...manifest, fileBlobs };
+  const manifestWithBlobs = { ...manifest, fileBlobs, skippedFiles: skippedCount };
   const manifestBytes = gzipSync(Buffer.from(JSON.stringify(manifestWithBlobs), "utf8"), { level: 9 });
 
   const manifestBlob = await githubRequest<GitHubBlob>(
@@ -2263,8 +2265,17 @@ export async function findLatestBackupOnGitHubByType(type: BackupTypeV2): Promis
       const parsed = Date.parse(iso);
       if (!Number.isNaN(parsed)) createdAt = new Date(parsed);
     }
-    const pathParts = latest.path.replace(/\.gz$/, "").split("/");
-    const fileName = pathParts[pathParts.length - 1];
+    let fileName: string;
+    if (type === "database") {
+      const m = latest.path.match(/backups\/database\/([^/]+?)(?:\.json)?\.gz$/);
+      fileName = m?.[1] ?? path.basename(latest.path).replace(/\.gz$/, "");
+    } else if (type === "uploads") {
+      const m = latest.path.match(/backups\/uploads\/\d{4}\/\d{2}\/(backup-[^/]+)/);
+      fileName = m?.[1] ?? path.basename(latest.path).replace(/\.gz$/, "");
+    } else {
+      const m = latest.path.match(/backups\/full\/([^/]+)/);
+      fileName = m?.[1] ?? path.basename(latest.path).replace(/\.gz$/, "");
+    }
     return { fileName, commitSha: ref.object.sha, repoPath: latest.path, createdAt, type };
   } catch {
     return null;
@@ -2374,9 +2385,19 @@ export async function restoreUploadsFromGitHub(options: { fileName?: string; com
     const baseDir = `backups/uploads/`;
     const uploadEntries = tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(baseDir));
 
-    const backupDir = "repoPath" in latest && latest.repoPath
-      ? (latest.repoPath.match(/^(backups\/uploads\/\d{4}\/\d{2}\/backup-[^/]+)/)?.[1] ?? baseDir)
-      : baseDir;
+    let backupDir: string;
+    if ("repoPath" in latest && latest.repoPath) {
+      const m = latest.repoPath.match(/^(backups\/uploads\/\d{4}\/\d{2}\/backup-[^/]+)/);
+      backupDir = m?.[1] ?? baseDir;
+    } else if (options.fileName) {
+      const raw = options.fileName;
+      const ts = raw.startsWith("backup-") ? raw.slice("backup-".length) : raw;
+      const year = ts.slice(0, 4);
+      const month = ts.slice(5, 7);
+      backupDir = `backups/uploads/${year}/${month}/backup-${ts}`;
+    } else {
+      backupDir = baseDir;
+    }
     const manifestEntry = uploadEntries.find((e) => e.path.startsWith(backupDir) && e.path.endsWith("/manifest.json.gz"));
     if (!manifestEntry?.sha) return { ok: false, type: "uploads", fileName: latest.fileName, itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على manifest" };
 
@@ -2427,8 +2448,9 @@ export async function restoreFullFromGitHub(options: { fileName?: string; commit
     } else {
       const latest = await findLatestBackupOnGitHubByType("full");
       if (!latest) return { ok: false, type: "full", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على نسخة كاملة" };
-      const ts = latest.repoPath.replace(/\/[^/]+$/, "").replace(/^backups\/full\//, "");
-      backupDir = `backups/full/${ts}`;
+      const m = latest.repoPath.match(/^backups\/full\/([^/]+)/);
+      if (!m) return { ok: false, type: "full", fileName: "", itemsRestored: 0, uploadsRestored: 0, durationMs: Date.now() - startedAt, error: "لم يتم العثور على مسار النسخة" };
+      backupDir = `backups/full/${m[1]}`;
       commitSha = latest.commitSha;
     }
 
