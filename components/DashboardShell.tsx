@@ -76,15 +76,11 @@ const adminSections = [
   {
     id: "backups",
     title: "النسخ الاحتياطي",
-    description: "النسخ والاستعادة والمزامنة",
+    description: "إنشاء واستعادة النسخ الاحتياطية",
     accent: "violet",
     icon: DatabaseBackup,
     links: [
-      { href: "/admin/sync", label: "مركز النسخ", icon: DatabaseBackup },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
-      { href: "/admin/backups/restore", label: "الاستعادة والطوارئ", icon: TriangleAlert },
-      { href: "/admin/sync-settings", label: "GitHub", icon: Github },
-      { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
     ],
   },
   {
@@ -101,6 +97,8 @@ const adminSections = [
       { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
       { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
       { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
+      { href: "/admin/sync-settings", label: "GitHub", icon: Github },
+      { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
     ],
   },
   {

@@ -1,656 +1,170 @@
 import {
-  Archive,
-  Clock,
-  CloudDownload,
   Database,
-  DatabaseBackup,
-  FileArchive,
-  FileJson,
-  Github,
+  CloudUpload,
+  Archive,
+  RotateCcw,
+  Download,
   HardDrive,
-  History,
-  ShieldCheck,
-  ShieldAlert,
-  TriangleAlert,
+  Github,
   CheckCircle2,
   XCircle,
-  BarChart3,
-  AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { getBackupRuntimeStatus, getSafeBackups, getScheduledBackupInfo, listBackupSnapshots, listRestoreLogs, getRestoreStats } from "@/lib/backups";
-import { formatBytes, formatDate, formatDuration, formatBackupType, formatBackupStatus, truncateSha } from "@/lib/backup-display";
-import { MarkSafeButton } from "./MarkSafeButton";
-import { VerifyBackupButton } from "./VerifyBackupButton";
-import { RestoreBackupButton } from "./RestoreBackupButton";
-import AutoBackupDashboard from "./AutoBackupDashboard";
-import { prisma } from "@/lib/db";
+import { findLatestBackupOnGitHubByType } from "@/lib/backups";
+import { V2BackupActions } from "./v2/V2BackupActions";
+import { V2BackupTable } from "./v2/V2BackupTable";
 
 export const dynamic = "force-dynamic";
 
-function healthLevel(
-  pg: { status: string },
-  uploads: { status: string },
-  github: { status: string },
-): "ok" | "warning" | "error" {
-  if (pg.status === "unknown" || uploads.status === "missing" || github.status === "failed") return "error";
-  if (uploads.status === "unknown" || github.status === "not_configured") return "warning";
-  return "ok";
+function formatDate(date: Date) {
+  if (Number.isNaN(date.getTime())) return "غير متاح";
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Africa/Cairo",
+  }).format(date);
 }
 
-export default async function BackupsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ created?: string; error?: string }>;
-}) {
-  const [params, backups, runtimeStatus, scheduledInfo] = await Promise.all([
-    searchParams,
-    listBackupSnapshots(),
-    getBackupRuntimeStatus(),
-    getScheduledBackupInfo(),
+export default async function V2BackupsPage() {
+  const [db, uploads, full] = await Promise.all([
+    findLatestBackupOnGitHubByType("database").catch(() => null),
+    findLatestBackupOnGitHubByType("uploads").catch(() => null),
+    findLatestBackupOnGitHubByType("full").catch(() => null),
   ]);
-  const safeBackups = await getSafeBackups();
-  const safeFileNames = new Map(safeBackups.map((s) => [s.backupFileName, s]));
-  const latest = backups[0];
-  const totalSize = backups.reduce((sum, backup) => sum + backup.sizeBytes, 0);
-  const failedJobs = await (prisma?.backupJob.findMany({
-    where: { status: "FAILED" },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  }).catch(() => []) ?? Promise.resolve([]));
-  const [restoreLogs, restoreStats] = await Promise.all([
-    listRestoreLogs(20),
-    getRestoreStats(),
-  ]);
-  const overall = healthLevel(
-    runtimeStatus.postgresDump,
-    runtimeStatus.uploadsBackup,
-    runtimeStatus.githubBackup,
-  );
+
+  const sections = [
+    {
+      type: "database" as const,
+      title: "قاعدة البيانات",
+      description: "نسخة احتياطية لقاعدة البيانات فقط (كل ساعة أو 3 ساعات)",
+      icon: Database,
+      accent: "blue",
+      latest: db,
+    },
+    {
+      type: "uploads" as const,
+      title: "الملفات المرفوعة",
+      description: "نسخة احتياطية للملفات فقط (كل 24-48 ساعة)",
+      icon: CloudUpload,
+      accent: "teal",
+      latest: uploads,
+    },
+    {
+      type: "full" as const,
+      title: "نسخة كاملة",
+      description: "نسخة احتياطية كاملة (قاعدة بيانات + ملفات) — يدوي فقط",
+      icon: Archive,
+      accent: "rose",
+      latest: full,
+    },
+  ] as const;
 
   return (
-    <>
-      {/* ════════════════════════════════════════
-          HEADER
-      ════════════════════════════════════════ */}
+    <div>
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Backup & Recovery</span>
+          <span className="eyebrow">Backup v2</span>
           <h1>النسخ الاحتياطي</h1>
-          <p>مراقبة وإدارة النسخ الاحتياطية لقاعدة البيانات والملفات و GitHub</p>
-        </div>
-        <span
-          className={`admin-health-pill ${overall === "ok" ? "good" : overall === "error" ? "danger" : "pending"}`}
-        >
-          {overall === "ok" ? (
-            <ShieldCheck size={16} />
-          ) : (
-            <ShieldAlert size={16} />
-          )}
-          {overall === "ok"
-            ? "كل الأنظمة سليمة"
-            : overall === "warning"
-              ? "توجد تحذيرات"
-              : "توجد أخطاء"}
-        </span>
-      </div>
-
-      {/* ════════════════════════════════════════
-          NOTIFICATIONS
-      ════════════════════════════════════════ */}
-      {params.created ? (
-        <div className="notice success">
-          <ShieldCheck size={18} />
-          تم إنشاء النسخة: <strong>{params.created}</strong>
-        </div>
-      ) : null}
-      {params.error === "create" ? (
-        <div className="notice danger">
-          <TriangleAlert size={18} />
-          فشل إنشاء النسخة. راجع سجلات BackupJob وتأكد من توفر DATABASE_URL وإمكانية الوصول إلى Storage.
-        </div>
-      ) : null}
-
-      {/* ════════════════════════════════════════
-          AUTO BACKUP SCHEDULE
-      ════════════════════════════════════════ */}
-      <AutoBackupDashboard
-        lastScheduledAt={scheduledInfo.lastScheduled?.createdAt ?? null}
-        lastScheduledSuccessAt={scheduledInfo.lastScheduledSuccess?.createdAt ?? null}
-        nextScheduledAt={scheduledInfo.nextScheduledAt}
-        recentScheduled={scheduledInfo.recentScheduled}
-      />
-
-      <hr className="backup-section-divider" />
-
-      {/* ════════════════════════════════════════
-          SUBSYSTEM HEALTH
-      ════════════════════════════════════════ */}
-      <div className="backup-health-grid">
-        <article
-          className={`panel backup-health-card backup-health-card--${
-            runtimeStatus.postgresDump.status === "unknown" ? "error" : "ok"
-          }`}
-        >
-          <div className="backup-health-header">
-            <Database size={22} />
-            <span
-              className={`admin-health-pill ${
-                runtimeStatus.postgresDump.status === "unknown" ? "danger" : "good"
-              }`}
-            >
-              {runtimeStatus.postgresDump.status === "unknown" ? "خطأ" : "سليم"}
-            </span>
-          </div>
-          <h2>PostgreSQL Dump</h2>
-          <strong>{runtimeStatus.postgresDump.status}</strong>
-          <p>{runtimeStatus.postgresDump.detail}</p>
-        </article>
-
-        <article
-          className={`panel backup-health-card backup-health-card--${
-            runtimeStatus.uploadsBackup.status === "ok"
-              ? "ok"
-              : runtimeStatus.uploadsBackup.status === "missing"
-                ? "error"
-                : "warning"
-          }`}
-        >
-          <div className="backup-health-header">
-            <HardDrive size={22} />
-            <span
-              className={`admin-health-pill ${
-                runtimeStatus.uploadsBackup.status === "ok"
-                  ? "good"
-                  : runtimeStatus.uploadsBackup.status === "missing"
-                    ? "danger"
-                    : "pending"
-              }`}
-            >
-              {runtimeStatus.uploadsBackup.status === "ok"
-                ? "سليم"
-                : runtimeStatus.uploadsBackup.status === "missing"
-                  ? "مفقود"
-                  : "تحذير"}
-            </span>
-          </div>
-          <h2>Uploads Backup</h2>
-          <strong>
-            {runtimeStatus.uploadsBackup.files !== null
-              ? `${runtimeStatus.uploadsBackup.files} ملف`
-              : runtimeStatus.uploadsBackup.status}
-          </strong>
-          <p>{runtimeStatus.uploadsBackup.detail}</p>
-        </article>
-
-        <article
-          className={`panel backup-health-card backup-health-card--${
-            runtimeStatus.githubBackup.status === "ok"
-              ? "ok"
-              : runtimeStatus.githubBackup.status === "failed"
-                ? "error"
-                : "warning"
-          }`}
-        >
-          <div className="backup-health-header">
-            <Github size={22} />
-            <span
-              className={`admin-health-pill ${
-                runtimeStatus.githubBackup.status === "ok"
-                  ? "good"
-                  : runtimeStatus.githubBackup.status === "failed"
-                    ? "danger"
-                    : "pending"
-              }`}
-            >
-              {runtimeStatus.githubBackup.status === "ok"
-                ? "سليم"
-                : runtimeStatus.githubBackup.status === "failed"
-                  ? "فشل"
-                  : "غير مهيأ"}
-            </span>
-          </div>
-          <h2>GitHub Backup</h2>
-          <strong>{runtimeStatus.githubBackup.status}</strong>
-          <p>{runtimeStatus.githubBackup.detail}</p>
-          {runtimeStatus.githubBackup.commitSha ? (
-            <p style={{ fontSize: "0.78rem", direction: "ltr", textAlign: "left", color: "rgba(245,234,214,0.5)", fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)" }}>
-              SHA: {runtimeStatus.githubBackup.commitSha}
-            </p>
-          ) : null}
-          {runtimeStatus.githubBackup.githubFileUrl ? (
-            <a
-              href={runtimeStatus.githubBackup.githubFileUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{ fontSize: "0.78rem", color: "#f3cf73", textDecoration: "underline", textUnderlineOffset: 2 }}
-            >
-              عرض على GitHub
-            </a>
-          ) : null}
-        </article>
-      </div>
-
-      <hr className="backup-section-divider" />
-
-      {/* ════════════════════════════════════════
-          QUICK ACTIONS
-      ════════════════════════════════════════ */}
-      <div className="panel" style={{ marginBottom: 18 }}>
-        <div className="admin-card-head">
-          <DatabaseBackup size={20} />
-          <div>
-            <span className="eyebrow">Quick Actions</span>
-            <h2>إجراءات سريعة</h2>
-          </div>
-        </div>
-        <div className="backup-action-menu" style={{ marginTop: 14 }}>
-          <form action="/api/admin/backups" method="post">
-            <button className="btn btn-gold btn-glow" type="submit">
-              <DatabaseBackup size={17} />
-              إنشاء نسخة يدوية
-            </button>
-          </form>
-          <span className="backup-action-divider" />
-          <VerifyBackupButton />
-          <span className="backup-action-divider" />
-          <a className="btn btn-soft" href="/admin/diagnostics">
-            Diagnostics
-          </a>
-          <a className="btn btn-soft" href="/admin/sync-settings">
-            الإعدادات
-          </a>
-          <span className="backup-action-meta">
-            {backups.length} نسخة · {formatBytes(totalSize)}
-          </span>
+          <p>أنواع منفصلة: قاعدة البيانات، الملفات، أو كامل</p>
         </div>
       </div>
 
-      {/* ════════════════════════════════════════
-          METRICS
-      ════════════════════════════════════════ */}
-      <div className="backup-metrics-grid">
-        <div className="backup-metric-card">
-          <Archive size={20} className="metric-icon" />
-          <span className="metric-label">عدد النسخ</span>
-          <span className="metric-value">{backups.length}</span>
-        </div>
-        <div className="backup-metric-card">
-          <FileJson size={20} className="metric-icon" />
-          <span className="metric-label">إجمالي الحجم</span>
-          <span className="metric-value">{formatBytes(totalSize)}</span>
-        </div>
-        <div className="backup-metric-card">
-          <DatabaseBackup size={20} className="metric-icon" />
-          <span className="metric-label">آخر نسخة</span>
-          <span className="metric-value" style={{ fontSize: "0.85rem" }}>
-            {latest ? formatDate(latest.createdAt) : "لا توجد"}
-          </span>
-        </div>
-        <div className="backup-metric-card">
-          <Clock size={20} className="metric-icon" />
-          <span className="metric-label">النسخة القادمة</span>
-          <span className="metric-value" style={{ fontSize: "0.85rem" }}>
-            {runtimeStatus.nextScheduledAt
-              ? formatDate(runtimeStatus.nextScheduledAt)
-              : "غير مجدول"}
-          </span>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════
-          LATEST BACKUP DETAIL
-      ════════════════════════════════════════ */}
-      {runtimeStatus.latestSuccessful ? (
-        <div className="panel backup-detail-panel" style={{ marginBottom: 18 }}>
-          <div className="admin-card-head">
-            <FileArchive size={22} />
-            <div>
-              <span className="eyebrow">Latest Successful Backup</span>
-              <h2>آخر نسخة ناجحة</h2>
-            </div>
-          </div>
-          <div className="backup-detail-grid" style={{ marginTop: 14 }}>
-            <div className="backup-detail-row">
-              <span className="backup-detail-label">الملف</span>
-              <span className="backup-detail-value">{runtimeStatus.latestSuccessful.fileName}</span>
-            </div>
-            <div className="backup-detail-row">
-              <span className="backup-detail-label">النوع</span>
-              <span className="backup-detail-value">{runtimeStatus.latestSuccessful.type}</span>
-            </div>
-            <div className="backup-detail-row">
-              <span className="backup-detail-label">تاريخ الإنشاء</span>
-              <span className="backup-detail-value">{formatDate(runtimeStatus.latestSuccessful.createdAt)}</span>
-            </div>
-            <div className="backup-detail-row">
-              <span className="backup-detail-label">الحجم</span>
-              <span className="backup-detail-value">{formatBytes(runtimeStatus.latestSuccessful.sizeBytes)}</span>
-            </div>
-            <div className="backup-detail-row">
-              <span className="backup-detail-label">المدة</span>
-              <span className="backup-detail-value">{formatDuration(runtimeStatus.latestSuccessful.durationMs)}</span>
-            </div>
-            <div className="backup-detail-row">
-              <span className="backup-detail-label">الملف المحلي</span>
-              <span className="backup-detail-value">
-                {runtimeStatus.latestSuccessful.localFileExists ? (
-                  <span style={{ color: "#4caf87" }}>موجود</span>
-                ) : (
-                  <span style={{ color: "#d9534f" }}>غير موجود</span>
-                )}
-              </span>
-            </div>
-            {runtimeStatus.latestSuccessful.commitSha ? (
-              <div className="backup-detail-row">
-                <span className="backup-detail-label">Commit SHA</span>
-                <span className="backup-detail-value" style={{ fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)", fontSize: "0.78rem" }}>
-                  {runtimeStatus.latestSuccessful.commitSha}
-                </span>
+      <div className="admin-card-grid">
+        {sections.map((section) => (
+          <div key={section.type} className={`admin-card admin-accent-${section.accent}`}>
+            <div className="admin-card-header">
+              <section.icon size={24} />
+              <div>
+                <h3>{section.title}</h3>
+                <p>{section.description}</p>
               </div>
-            ) : null}
-            {runtimeStatus.latestSuccessful.githubFileUrl ? (
-              <div className="backup-detail-row">
-                <span className="backup-detail-label">GitHub URL</span>
-                <span className="backup-detail-value">
-                  <a href={runtimeStatus.latestSuccessful.githubFileUrl} target="_blank" rel="noreferrer">
-                    {runtimeStatus.latestSuccessful.githubFileUrl}
-                  </a>
-                </span>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {/* ════════════════════════════════════════
-          LAST ERROR
-      ════════════════════════════════════════ */}
-      {runtimeStatus.lastError ? (
-        <div className="backup-error-card">
-          <TriangleAlert size={16} />
-          <span className="error-text">
-            {runtimeStatus.lastError.message}
-            {runtimeStatus.lastError.type ? ` (${runtimeStatus.lastError.type})` : ""}
-          </span>
-          <span className="error-time">
-            {runtimeStatus.lastError.createdAt
-              ? formatDate(runtimeStatus.lastError.createdAt)
-              : ""}
-          </span>
-        </div>
-      ) : null}
-
-      {/* ════════════════════════════════════════
-          RECENT FAILED ATTEMPTS
-      ════════════════════════════════════════ */}
-      {failedJobs.length > 0 ? (
-        <div className="panel" style={{ borderColor: "rgba(217, 83, 79, 0.3)" }}>
-          <div className="admin-card-head" style={{ marginBottom: 12 }}>
-            <AlertCircle size={20} color="#d9534f" />
-            <div>
-              <span className="eyebrow">Failed Backups</span>
-              <h2>محاولات فاشلة</h2>
             </div>
-            <span style={{ fontSize: "0.8rem", color: "rgba(245, 234, 214, 0.5)", marginRight: "auto" }}>
-              آخر {failedJobs.length} محاولة
-            </span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {failedJobs.map((job) => (
-              <div key={job.id} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 14px", borderRadius: 8,
-                background: "rgba(217, 83, 79, 0.06)",
-                border: "1px solid rgba(217, 83, 79, 0.15)",
-                fontSize: "0.82rem",
-              }}>
-                <div style={{ minWidth: 140, color: "rgba(245, 234, 214, 0.6)", fontSize: "0.75rem" }}>
-                  {job.createdAt ? formatDate(job.createdAt.toISOString()) : "—"}
-                </div>
-                <div style={{ minWidth: 80, fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)", fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.5)" }}>
-                  {job.stage || "—"}
-                </div>
-                <div style={{ minWidth: 70, color: job.durationMs && job.durationMs > 30000 ? "#d9534f" : "rgba(245, 234, 214, 0.6)", fontSize: "0.72rem", direction: "ltr" }}>
-                  {job.durationMs ? formatDuration(job.durationMs) : "—"}
-                </div>
-                <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <span style={{ color: "rgba(245, 234, 214, 0.9)", fontWeight: 600 }}>
-                    {job.attemptedFileName || job.fileName || "—"}
-                  </span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "rgba(217, 83, 79, 0.8)", fontSize: "0.78rem" }}>
-                  {job.error || "—"}
-                </div>
-                {job.githubMessage ? (
-                  <span style={{ fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.4)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {job.githubMessage}
-                  </span>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
-      {/* ════════════════════════════════════════
-          RESTORE HISTORY
-      ════════════════════════════════════════ */}
-      <div className="panel" style={{ borderColor: "rgba(92, 184, 92, 0.2)" }}>
-        <div className="admin-card-head" style={{ marginBottom: 12 }}>
-          <History size={20} color="#5cb85c" />
-          <div>
-            <span className="eyebrow">Restore History</span>
-            <h2>سجل الاستعادة</h2>
-          </div>
-          <span style={{ fontSize: "0.8rem", color: "rgba(245, 234, 214, 0.5)", marginRight: "auto" }}>
-            {restoreStats.success} نجاح / {restoreStats.failed} فشل — المجموع {restoreStats.total}
-          </span>
-        </div>
-        {restoreLogs.length === 0 ? (
-          <div className="admin-empty-state" style={{ margin: "8px 0" }}>
-            <strong>لا توجد محاولات استعادة بعد</strong>
-            <p>عند استعادة نسخة احتياطية، سيظهر سجل المحاولة هنا.</p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {restoreLogs.map((log) => (
-              <div key={log.id} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 14px", borderRadius: 8,
-                background: log.status === "success"
-                  ? "rgba(92, 184, 92, 0.06)"
-                  : "rgba(217, 83, 79, 0.06)",
-                border: `1px solid ${log.status === "success"
-                  ? "rgba(92, 184, 92, 0.15)"
-                  : "rgba(217, 83, 79, 0.15)"}`,
-                fontSize: "0.82rem",
-              }}>
-                <div style={{ minWidth: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {log.status === "success"
-                    ? <CheckCircle2 size={16} color="#5cb85c" />
-                    : <XCircle size={16} color="#d9534f" />
-                  }
+            <div className="admin-card-body">
+              {section.latest ? (
+                <div className="backup-info">
+                  <Github size={14} />
+                  <span>{section.latest.fileName}</span>
+                  <br />
+                  <small>{formatDate(section.latest.createdAt)}</small>
                 </div>
-                <div style={{ minWidth: 130, color: "rgba(245, 234, 214, 0.6)", fontSize: "0.75rem" }}>
-                  {formatDate(log.createdAt.toISOString())}
-                </div>
-                <div style={{ minWidth: 100, fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.55)" }}>
-                  {log.type}
-                </div>
-                <div style={{ minWidth: 70, fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.6)", direction: "ltr" }}>
-                  {log.durationMs ? formatDuration(log.durationMs) : "—"}
-                </div>
-                <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <span style={{ color: "rgba(245, 234, 214, 0.9)", fontWeight: 600, fontSize: "0.78rem" }}>
-                    {log.fileName || "—"}
-                  </span>
-                </div>
-                {log.error ? (
-                  <div style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "rgba(217, 83, 79, 0.8)", fontSize: "0.78rem" }}>
-                    {log.error}
-                  </div>
-                ) : (
-                  <div style={{ minWidth: 100, fontSize: "0.72rem", color: "rgba(92, 184, 92, 0.7)" }}>
-                    {log.itemsRestored != null && `${log.itemsRestored} عنصر`}
-                    {log.itemsRestored != null && log.uploadsRestored != null ? " / " : ""}
-                    {log.uploadsRestored != null && `${log.uploadsRestored} ملف`}
-                  </div>
-                )}
-                <div style={{ minWidth: 80, fontSize: "0.72rem", color: "rgba(245, 234, 214, 0.4)", textAlign: "left" }}>
-                  {log.performedBy || "—"}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ════════════════════════════════════════
-          BACKUP HISTORY
-      ════════════════════════════════════════ */}
-      <div className="backup-table-wrapper">
-        <div className="backup-table-header">
-          <h3>سجل النسخ</h3>
-          <span className="table-count">إجمالي {backups.length} نسخة</span>
-        </div>
-        <div className="table-shell">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>الملف</th>
-                <th>النوع</th>
-                <th>الحالة</th>
-                <th>الحجم</th>
-                <th>السجلات</th>
-                <th>الملفات المرفوعة</th>
-                <th>GitHub</th>
-                <th>تاريخ الإنشاء</th>
-                <th>إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {backups.length ? (
-                backups.map((backup) => {
-                  const st = formatBackupStatus(backup.status);
-                  return (
-                    <tr key={backup.fileName}>
-                      <td>
-                        <span className="backup-file-name">{backup.fileName}</span>
-                      </td>
-                      <td>{formatBackupType(backup.type)}</td>
-                      <td>
-                        <span className={`status ${backup.status === "SUCCESS" ? "success" : "danger"}`} style={{ color: st.color }}>
-                          {st.label}
-                        </span>
-                      </td>
-                      <td style={{ direction: "ltr", textAlign: "right" }}>{formatBytes(backup.sizeBytes)}</td>
-                      <td>
-                        {backup.items > 0 ? (
-                          <span>{backup.items.toLocaleString("ar-EG")}</span>
-                        ) : (
-                          <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>—</span>
-                        )}
-                      </td>
-                      <td>
-                        {backup.uploadsCount > 0 ? (
-                          <span style={{ color: "#4caf87" }}>
-                            {backup.uploadsCount} &middot; {formatBytes(backup.uploadsSizeBytes)}
-                          </span>
-                        ) : (
-                          <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>&#10005;</span>
-                        )}
-                      </td>
-                      <td>
-                        {backup.github?.commitSha ? (
-                          <span style={{ fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)", fontSize: "0.72rem", direction: "ltr", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                            {backup.github.verified ? <CheckCircle2 size={12} color="#4caf87" /> : <XCircle size={12} color="rgba(245,234,214,0.4)" />}
-                            {truncateSha(backup.github.commitSha)}
-                          </span>
-                        ) : (
-                          <span style={{ color: "rgba(245, 234, 214, 0.4)" }}>—</span>
-                        )}
-                      </td>
-                      <td>{formatDate(backup.createdAt)}</td>
-                      <td>
-                        <div className="button-row">
-                          <MarkSafeButton
-                            fileName={backup.fileName}
-                            isSafe={safeFileNames.has(backup.fileName)}
-                            label={safeFileNames.get(backup.fileName)?.label ?? null}
-                          />
-                          <a
-                            className="btn btn-soft btn-icon"
-                            href={`/api/admin/backups/${backup.fileName}`}
-                            title="تحميل"
-                            download
-                          >
-                            <CloudDownload size={17} />
-                          </a>
-                          <RestoreBackupButton fileName={backup.fileName} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
               ) : (
-                <tr>
-                  <td colSpan={9}>
-                    <div className="admin-empty-state">
-                      <strong>لا توجد نسخ احتياطية حتى الآن</strong>
-                      <p>اضغط "إنشاء نسخة يدوية" وسيظهر الملف هنا مباشرة.</p>
-                    </div>
-                  </td>
-                </tr>
+                <div className="backup-info muted">
+                  <HardDrive size={14} />
+                  <span>لا توجد نسخة سابقة</span>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+
+            <div className="admin-card-footer">
+              <V2BackupActions type={section.type} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dashboard-section" style={{ marginTop: "2rem" }}>
+        <h2>الاستعادة</h2>
+        <p>اختر نوع الاستعادة المناسب لحالتك:</p>
+
+        <div className="admin-card-grid">
+          <div className="admin-card admin-accent-blue">
+            <div className="admin-card-header">
+              <RotateCcw size={24} />
+              <div>
+                <h3>استعادة قاعدة البيانات</h3>
+                <p>استعادة جداول قاعدة البيانات من آخر نسخة (لا تؤثر على الملفات)</p>
+              </div>
+            </div>
+            <div className="admin-card-footer">
+              <V2BackupActions type="restore-database" />
+            </div>
+          </div>
+
+          <div className="admin-card admin-accent-teal">
+            <div className="admin-card-header">
+              <Download size={24} />
+              <div>
+                <h3>استعادة الملفات المرفوعة</h3>
+                <p>استعادة الملفات من آخر نسخة (لا تؤثر على قاعدة البيانات)</p>
+              </div>
+            </div>
+            <div className="admin-card-footer">
+              <V2BackupActions type="restore-uploads" />
+            </div>
+          </div>
+
+          <div className="admin-card admin-accent-rose">
+            <div className="admin-card-header">
+              <Archive size={24} />
+              <div>
+                <h3>استعادة كاملة</h3>
+                <p>استعادة قاعدة البيانات والملفات معاً من آخر نسخة كاملة</p>
+              </div>
+            </div>
+            <div className="admin-card-footer">
+              <V2BackupActions type="restore-full" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ════════════════════════════════════════
-          RESTORE CENTER
-      ════════════════════════════════════════ */}
-      <div className="panel backup-restore-panel">
-        <div className="admin-card-head">
-          <History size={22} />
-          <div>
-            <span className="eyebrow">Restore Center</span>
-            <h2>مركز الاستعادة</h2>
+      <div className="dashboard-section" style={{ marginTop: "2rem" }}>
+        <div className="admin-card admin-accent-amber">
+          <div className="admin-card-header">
+            <RotateCcw size={24} />
+            <div>
+              <h3>Auto Restore الذكي</h3>
+              <p>يكتشف تلقائياً إذا كانت قاعدة البيانات فارغة أو الملفات مفقودة ويستعيد النوع المناسب</p>
+            </div>
+          </div>
+          <div className="admin-card-footer">
+            <V2BackupActions type="auto-restore" />
           </div>
         </div>
-        <div className="backup-sync-note">
-          <ShieldAlert size={18} />
-          <span>
-            اختر نسخة من الجدول أعلاه واضغط على زر الاستعادة. سيتم حذف جميع البيانات الحالية واستبدالها ببيانات النسخة. هذا الإجراء لا يمكن التراجع عنه.
-          </span>
-        </div>
-        {process.env.ALLOW_DESTRUCTIVE_RESTORE ? (
-          <span className="backup-restore-env set">
-            <ShieldCheck size={15} />
-            متغير البيئة ALLOW_DESTRUCTIVE_RESTORE مُهيأ — الاستعادة مفعلة
-          </span>
-        ) : (
-          <span className="backup-restore-env unset">
-            <ShieldAlert size={15} />
-            متغير البيئة ALLOW_DESTRUCTIVE_RESTORE غير مُهيأ — الاستعادة غير مفعلة
-          </span>
-        )}
-        <p style={{ margin: "10px 0 0", color: "rgba(245, 234, 214, 0.6)", fontWeight: 850, lineHeight: 1.65, fontSize: "0.82rem" }}>
-          لتفعيل الاستعادة، يجب تعيين المتغير البيئي{" "}
-          <code
-            style={{
-              direction: "ltr",
-              display: "inline-block",
-              background: "rgba(245, 234, 214, 0.08)",
-              padding: "2px 8px",
-              borderRadius: 6,
-              fontSize: "0.75rem",
-            }}
-          >
-            ALLOW_DESTRUCTIVE_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_POSTGRESQL
-          </code>
-        </p>
       </div>
-    </>
+
+      <V2BackupTable />
+    </div>
   );
 }
