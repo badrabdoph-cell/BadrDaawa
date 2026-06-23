@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, FileImage, FilePenLine, FileText, Gauge, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -71,6 +71,21 @@ const adminSections = [
     ],
   },
   {
+    id: "cleanup",
+    title: "التنظيف والصيانة",
+    description: "تنظيف الوسائط والملفات والبيانات",
+    accent: "rose",
+    icon: Trash2,
+    links: [
+      { href: "/admin/cleanup", label: "لوحة التنظيف", icon: Trash2 },
+      { href: "/admin/cleanup/media", label: "الوسائط", icon: FileImage },
+      { href: "/admin/cleanup/backups", label: "النسخ", icon: DatabaseBackup },
+      { href: "/admin/cleanup/scan", label: "الفحص", icon: Activity },
+      { href: "/admin/cleanup/optimization", label: "التحسين", icon: Gauge },
+      { href: "/admin/cleanup/database", label: "قاعدة البيانات", icon: Database },
+    ],
+  },
+  {
     id: "system",
     title: "النظام والنسخ الاحتياطي",
     description: "الإعدادات والمراقبة والنسخ",
@@ -84,7 +99,6 @@ const adminSections = [
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
       { href: "/admin/monitoring", label: "المراقبة", icon: Activity },
       { href: "/admin/diagnostics", label: "التشخيص", icon: Bug },
-      { href: "/admin/cleanup", label: "التنظيف", icon: Trash2 },
       { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
       { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
       { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
