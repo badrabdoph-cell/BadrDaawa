@@ -38,6 +38,11 @@ export type SitePhotographerSettings = {
   defaultLogoUrl: string;
 };
 
+export type SiteMaintenanceSettings = {
+  enabled: boolean;
+  message: string;
+};
+
 export type SiteSettings = {
   siteName: string;
   logoUrl: string;
@@ -50,6 +55,8 @@ export type SiteSettings = {
   homepage: SiteHomepageSettings;
   photographer: SitePhotographerSettings;
   order: SiteOrderSettings;
+  maintenance: SiteMaintenanceSettings;
+  customHeadHtml: string;
   updatedAt: string;
 };
 
@@ -91,6 +98,11 @@ export const defaultSiteSettings: SiteSettings = {
     defaultFacebookUrl: "https://www.facebook.com/badrabdophoto",
     defaultLogoUrl: "",
   },
+  maintenance: {
+    enabled: false,
+    message: "الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج.",
+  },
+  customHeadHtml: "",
   updatedAt: "2026-06-21T23:28:38.701Z",
 };
 
@@ -177,6 +189,11 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       defaultFacebookUrl: cleanUrl(input.photographer?.defaultFacebookUrl, fallback.photographer.defaultFacebookUrl),
       defaultLogoUrl: typeof input.photographer?.defaultLogoUrl === "string" ? input.photographer.defaultLogoUrl.trim() : "",
     },
+    maintenance: {
+      enabled: normalizeBoolean(input.maintenance?.enabled, fallback.maintenance.enabled),
+      message: cleanText(input.maintenance?.message, fallback.maintenance.message).slice(0, 500),
+    },
+    customHeadHtml: typeof input.customHeadHtml === "string" ? input.customHeadHtml.trim() : "",
     updatedAt: cleanOptionalText(input.updatedAt),
   };
 }
@@ -217,6 +234,7 @@ export async function updateSiteSettingsDraft(input: Partial<SiteSettings>) {
     homepage: { ...current.homepage, ...input.homepage },
     order: { ...current.order, ...input.order },
     photographer: { ...current.photographer, ...input.photographer },
+    maintenance: { ...current.maintenance, ...input.maintenance },
     updatedAt: new Date().toISOString(),
   });
 

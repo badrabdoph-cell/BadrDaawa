@@ -8,6 +8,8 @@ import {
   FileText,
   MessageCircleHeart,
   Plus,
+  Settings,
+  ShieldAlert,
   Sparkles,
   Upload,
   UserCheck,
@@ -16,6 +18,7 @@ import {
 import { getAdminCustomers, getAdminGuests, getAdminInvitations, getAdminOrders } from "@/lib/admin-data";
 import { hasDatabaseConfig } from "@/lib/database-url";
 import { getAllGuestBookMessages } from "@/lib/guest-book";
+import { getDraftSiteSettings } from "@/lib/site-settings";
 import { formatArabicNumber } from "@/lib/utils";
 import { getPublishMeta } from "@/lib/project-content-store";
 import { getLatestContentVersion } from "@/lib/publish-pipeline";
@@ -42,7 +45,7 @@ function statusLabel(status: string) {
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams?: Promise<{ sync?: string; syncMessage?: string }> }) {
   const params = await searchParams;
-  const [invitations, orders, guests, customers, guestBookMessages, publishMeta, latestVersion] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => []), getPublishMeta(), getLatestContentVersion()]);
+  const [invitations, orders, guests, customers, guestBookMessages, publishMeta, latestVersion, settings] = await Promise.all([getAdminInvitations().catch(() => []), getAdminOrders().catch(() => []), getAdminGuests().catch(() => []), getAdminCustomers().catch(() => []), getAllGuestBookMessages().catch(() => []), getPublishMeta(), getLatestContentVersion(), getDraftSiteSettings().catch(() => null)]);
   const newOrders = orders.filter((order) => order.status === "new");
   const openOrders = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status));
   const recentOrders = orders.slice(0, 4);
@@ -78,6 +81,16 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
       {!hasDatabase ? (
         <div className="notice danger">
           قاعدة البيانات غير متصلة. اربط DATABASE_URL عشان الطلبات والدعوات تظهر من قاعدة البيانات الحقيقية.
+        </div>
+      ) : null}
+
+      {settings?.maintenance?.enabled ? (
+        <div className="notice danger">
+          <span>
+            <strong>وضع الصيانة نشط</strong> — الموقع لا يظهر للزوار حاليًا.
+            {' '}
+            <Link href="/admin/settings" style={{ textDecoration: "underline" }}>إعدادات الصيانة</Link>
+          </span>
         </div>
       ) : null}
 

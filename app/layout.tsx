@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
+import { CustomHeadInjector } from "@/components/CustomHeadInjector";
+import { verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
+const ADMIN_SESSION_COOKIE = "bd_admin_session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublishedSiteSettings();
@@ -34,10 +38,43 @@ export const viewport: Viewport = {
   themeColor: "#fbf7ef",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [settings, requestHeaders] = await Promise.all([getPublishedSiteSettings(), headers()]);
+
+  const isAdmin = await verifyAdminSessionCookie(requestHeaders.get("cookie") || "");
+  const isMaintenanceActive = settings.maintenance.enabled && !isAdmin;
+
+  if (isMaintenanceActive) {
+    return (
+      <html lang="ar" dir="rtl">
+        <body>
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100dvh",
+            padding: "24px",
+            textAlign: "center",
+            background: "linear-gradient(145deg, #1a1b1e, #0d0e12)",
+            color: "#f5ead6",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+          }}>
+            <div style={{ fontSize: "4rem", marginBottom: "8px" }}>🔧</div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 800, margin: "0 0 12px" }}>الموقع تحت الصيانة</h1>
+            <p style={{ fontSize: "1.1rem", opacity: 0.8, maxWidth: "480px", lineHeight: 1.6, margin: 0 }}>
+              {settings.maintenance.message}
+            </p>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="ar" dir="rtl">
       <body>
+        <CustomHeadInjector html={settings.customHeadHtml} />
         <ScrollToTopOnRouteChange />
         <ScrollReveal />
         <GlobalNotifications />

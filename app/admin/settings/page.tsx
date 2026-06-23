@@ -224,6 +224,47 @@ export default async function AdminSiteSettingsPage({
           </div>
         </article>
 
+        <article className="panel site-settings-card">
+          <div className="admin-card-head">
+            <Settings size={22} />
+            <div>
+              <span className="eyebrow">Maintenance</span>
+              <h2>وضع الصيانة</h2>
+              <p>عند تفعيل وضع الصيانة، يرى الزوار رسالة الصيانة ولا يمكنهم الوصول للموقع. أنت كأدمن تستمر في رؤية الموقع طبيعي.</p>
+            </div>
+          </div>
+          <div className="site-settings-toggles">
+            <label className="admin-toggle-row template-inline-toggle">
+              <input name="maintenanceEnabled" type="checkbox" defaultChecked={settings.maintenance.enabled} />
+              تفعيل وضع الصيانة
+            </label>
+          </div>
+          <div className="admin-form-grid">
+            <label className="field full">
+              <span>رسالة الصيانة</span>
+              <textarea name="maintenanceMessage" defaultValue={settings.maintenance.message} rows={3} maxLength={500} placeholder="الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج." />
+            </label>
+          </div>
+        </article>
+
+        <article className="panel site-settings-card">
+          <div className="admin-card-head">
+            <Settings size={22} />
+            <div>
+              <span className="eyebrow">Custom Head</span>
+              <h2>حقن أكواد مخصصة في HEAD</h2>
+              <p>أضف أي كود HTML يتم حقنه في وسم &lt;head&gt; في كل صفحات الموقع. مناسب لإضافة Google Analytics, Facebook Pixel, أكواد تتبع, CSS مخصص, أو أي سكريبتات خارجية.</p>
+            </div>
+          </div>
+          <div className="admin-form-grid">
+            <label className="field full">
+              <span>كود HEAD المخصص</span>
+              <textarea name="customHeadHtml" defaultValue={settings.customHeadHtml} rows={8} placeholder={'<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXX"></script>\n<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag("js", new Date());\n  gtag("config", "G-XXXXX");\n</script>'} dir="ltr" className="code-textarea" />
+              <small>سيتم حقن هذا الكود في وسم &lt;head&gt; قبل الإغلاق. يمكنك استخدامه لـ Google Analytics، Pixel، CSS مخصص، إلخ.</small>
+            </label>
+          </div>
+        </article>
+
         <div className="site-settings-sticky-actions">
           <span>
             <Mail size={16} />

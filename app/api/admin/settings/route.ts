@@ -7,7 +7,7 @@ import { getDraftHomeContent, updateHomeContentDraft } from "@/lib/home-content"
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { getDraftHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
-import { getSiteSettings, updateSiteSettingsDraft } from "@/lib/site-settings";
+import { getSiteSettings, updateSiteSettingsDraft, type SiteMaintenanceSettings } from "@/lib/site-settings";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -94,6 +94,11 @@ export async function POST(request: NextRequest) {
       order: {
         showPaymentMethods: formData.has("showPaymentMethods"),
       },
+      maintenance: {
+        enabled: formData.has("maintenanceEnabled"),
+        message: text(formData, "maintenanceMessage"),
+      },
+      customHeadHtml: text(formData, "customHeadHtml"),
     });
 
     await updateHomeContentDraft({
