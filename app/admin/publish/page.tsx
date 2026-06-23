@@ -4,7 +4,8 @@ import { getAdminSessionUser, ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
 import { getCommitUrl } from "@/lib/github-url";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { ShieldCheck, Upload, History, Settings2, Activity } from "lucide-react";
+import { VersionHistorySection } from "./VersionHistorySection";
 
 export const dynamic = "force-dynamic";
 
@@ -12,19 +13,10 @@ async function handlePublish(formData: FormData) {
   "use server";
   const cookieStore = await cookies();
   const username = await getAdminSessionUser(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
-  
-  if (!username) {
-    redirect("/admin/publish?error=Unauthorized");
-  }
-
+  if (!username) redirect("/admin/publish?error=Unauthorized");
   const result = await publishAllChanges(username);
-  
-  if (result.success) {
-    const keysCount = result.publishedKeys.length;
-    redirect(`/admin/publish?published=true&count=${keysCount}`);
-  } else {
-    redirect(`/admin/publish?error=${encodeURIComponent(result.message)}`);
-  }
+  if (result.success) redirect(`/admin/publish?published=true&count=${result.publishedKeys.length}`);
+  else redirect(`/admin/publish?error=${encodeURIComponent(result.message)}`);
 }
 
 async function handleDiscard(formData: FormData) {
@@ -37,13 +29,11 @@ async function handleToggleAutoPublish(formData: FormData) {
   "use server";
   const enabled = formData.get("enabled") === "true";
   const interval = parseInt(formData.get("interval") as string, 10);
-  
   const { updatePublishMeta } = await import("@/lib/project-content-store");
   await updatePublishMeta({
     autoPublishEnabled: enabled,
     autoPublishIntervalMinutes: interval,
   });
-  
   redirect("/admin/publish?updated=true");
 }
 
@@ -54,24 +44,18 @@ export default async function AdminPublishPage({
 }) {
   const params = await searchParams;
   const [meta, latestVersion] = await Promise.all([getPublishMeta(), getLatestContentVersion()]);
-  
   const pendingChanges = meta.pendingChanges || {};
   const pendingChangeKeys = Object.keys(pendingChanges) as Array<string>;
-  const hasUnpublishedChanges = meta.hasUnpublishedChanges;
-  const lastPublishedAt = meta.lastPublishedAt;
-  const lastPublishedBy = meta.lastPublishedBy;
-  const autoPublishEnabled = meta.autoPublishEnabled;
-  const autoPublishIntervalMinutes = meta.autoPublishIntervalMinutes;
+  const hasChanges = meta.hasUnpublishedChanges;
   const publishedCount = params.count ? parseInt(params.count, 10) : pendingChangeKeys.length;
-  const allVersions = await getAllContentVersions(10);
 
   return (
-    <section className="admin-command-center publish-admin">
+    <div>
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Publish System</span>
-          <h1>إدارة النشر</h1>
-          <p>نشر التغييرات من المسودات إلى المحتوى المنشور على الموقع العام</p>
+          <h1>النشر والإصدارات</h1>
+          <p>نشر التغييرات من المسودات، إدارة الإصدارات، واستعادة الإصدارات السابقة</p>
         </div>
       </div>
 
@@ -80,201 +64,128 @@ export default async function AdminPublishPage({
       {params.updated && <div className="notice success">تم تحديث إعدادات النشر التلقائي.</div>}
       {params.error && <div className="notice danger">{params.error}</div>}
 
-      <div className="publish-status-grid">
-        <article className="panel publish-status-card">
-          <div className="admin-card-head">
+      {/* ── Status + Actions inline ── */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14, alignItems: "stretch" }}>
+        <div className="admin-card" style={{ flex: "1 1 260px", border: "1px solid rgba(245,234,214,0.1)", borderRadius: 12 }}>
+          <div className="admin-card-header">
+            <Activity size={22} />
             <div>
-              <span className="eyebrow">Status</span>
-              <h2>حالة النشر</h2>
+              <h3>حالة النشر</h3>
             </div>
           </div>
-          <div className="publish-status-content">
-            <div className="status-item">
-              <span className="label">التغييرات غير المنشورة:</span>
-              <span className={`value ${hasUnpublishedChanges ? "pending" : "clean"}`}>
-                {hasUnpublishedChanges ? `${pendingChangeKeys.length} عنصر` : "لا توجد تغييرات"}
-              </span>
+          <div className="admin-card-body" style={{ paddingTop: 8, fontSize: "0.85rem", display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ opacity: 0.6, fontWeight: 800 }}>التغييرات:</span>
+              <strong style={{ color: hasChanges ? "#f3cf73" : "#4caf87" }}>
+                {hasChanges ? `${pendingChangeKeys.length} مسودة` : "لا توجد تغييرات"}
+              </strong>
             </div>
-            {lastPublishedAt && (
-              <div className="status-item">
-                <span className="label">آخر نشر:</span>
-                <span className="value">{new Date(lastPublishedAt).toLocaleString("ar-EG")}</span>
-              </div>
-            )}
-            {lastPublishedBy && (
-              <div className="status-item">
-                <span className="label">تم النشر بواسطة:</span>
-                <span className="value">{lastPublishedBy}</span>
+            {meta.lastPublishedAt && (
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ opacity: 0.6, fontWeight: 800 }}>آخر نشر:</span>
+                <span>{new Date(meta.lastPublishedAt).toLocaleString("ar-EG")}</span>
               </div>
             )}
           </div>
-        </article>
+        </div>
 
-        {latestVersion && (
-          <article className="panel publish-version-card">
-            <div className="admin-card-head">
-              <div>
-                <span className="eyebrow">Version</span>
-                <h2>الإصدار الحالي</h2>
-              </div>
-            </div>
-            <div className="publish-status-content">
-              <div className="status-item">
-                <span className="label">رقم الإصدار:</span>
-                <span className="value">#{latestVersion.version}</span>
-              </div>
-              <div className="status-item">
-                <span className="label">آخر نشر:</span>
-                <span className="value">{new Date(latestVersion.publishedAt).toLocaleString("ar-EG")}</span>
-              </div>
-              {latestVersion.publishedBy && (
-                <div className="status-item">
-                  <span className="label">تم النشر بواسطة:</span>
-                  <span className="value">{latestVersion.publishedBy}</span>
-                </div>
-              )}
-              {latestVersion.commitSha && (
-                <div className="status-item">
-                  <span className="label">Commit SHA:</span>
-                  <span className="value" style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{latestVersion.commitSha.slice(0, 12)}</span>
-                </div>
-              )}
-            </div>
-          </article>
-        )}
-
-        <article className="panel publish-actions-card">
-          <div className="admin-card-head">
+        <div className="admin-card" style={{ flex: "1 1 260px", border: "1px solid rgba(245,234,214,0.1)", borderRadius: 12 }}>
+          <div className="admin-card-header">
+            <ShieldCheck size={22} />
             <div>
-              <span className="eyebrow">Actions</span>
-              <h2>إجراءات النشر</h2>
+              <h3>الإصدار الحالي</h3>
             </div>
           </div>
-          <div className="publish-actions-content">
-            <form action={handlePublish} className="publish-form">
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-                disabled={!hasUnpublishedChanges}
-              >
-                نشر التغييرات الآن
+          <div className="admin-card-body" style={{ paddingTop: 8, fontSize: "0.85rem", display: "flex", flexDirection: "column", gap: 6 }}>
+            {latestVersion ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ opacity: 0.6, fontWeight: 800 }}>رقم الإصدار:</span>
+                  <strong>#{latestVersion.version}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ opacity: 0.6, fontWeight: 800 }}>الناشر:</span>
+                  <span>{latestVersion.publishedBy}</span>
+                </div>
+                {latestVersion.commitSha && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ opacity: 0.6, fontWeight: 800 }}>Commit:</span>
+                    <code style={{ fontSize: "0.78rem", opacity: 0.7 }}>{latestVersion.commitSha.slice(0, 12)}</code>
+                  </div>
+                )}
+              </>
+            ) : (
+              <span style={{ opacity: 0.5 }}>لم ينشر بعد</span>
+            )}
+          </div>
+        </div>
+
+        <div className="admin-card" style={{ flex: "1 1 240px", border: "1px solid rgba(245,234,214,0.1)", borderRadius: 12 }}>
+          <div className="admin-card-header">
+            <Upload size={22} />
+            <div>
+              <h3>إجراءات</h3>
+            </div>
+          </div>
+          <div className="admin-card-footer" style={{ paddingTop: 10, gap: 8 }}>
+            <form action={handlePublish}>
+              <button type="submit" className="btn btn-gold" disabled={!hasChanges} style={{ fontSize: "0.85rem", minHeight: 36, padding: "6px 14px" }}>
+                نشر التغييرات
               </button>
             </form>
-            <form action={handleDiscard} className="publish-form">
-              <button 
-                type="submit" 
-                className="btn btn-soft"
-                disabled={!hasUnpublishedChanges}
-              >
+            <form action={handleDiscard}>
+              <button type="submit" className="btn btn-soft" disabled={!hasChanges} style={{ fontSize: "0.85rem", minHeight: 36, padding: "6px 14px" }}>
                 إلغاء المسودات
               </button>
             </form>
           </div>
-        </article>
+        </div>
       </div>
 
-      {hasUnpublishedChanges && pendingChangeKeys.length > 0 && (
-        <article className="panel pending-changes-card">
-          <div className="admin-card-head">
-            <div>
-              <span className="eyebrow">Pending Changes</span>
-              <h2>التغييرات المعلقة</h2>
-            </div>
-          </div>
-          <div className="pending-changes-list">
+      {/* ── Pending Changes ── */}
+      {hasChanges && pendingChangeKeys.length > 0 && (
+        <div className="admin-card" style={{ border: "1px solid rgba(245,234,214,0.1)", borderRadius: 12, marginBottom: 14 }}>
+          <div style={{ padding: "12px 18px", fontSize: "0.85rem", display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
+            <span style={{ opacity: 0.6, fontWeight: 800 }}>التغييرات المعلقة:</span>
             {pendingChangeKeys.map((key) => (
-              <div key={key} className="pending-change-item">
-                <span className="change-key">{key}</span>
-              </div>
+              <span key={key} style={{ background: "rgba(243,207,115,0.1)", border: "1px solid rgba(243,207,115,0.2)", borderRadius: 6, padding: "2px 8px", fontSize: "0.8rem" }}>
+                {key}
+              </span>
             ))}
           </div>
-        </article>
+        </div>
       )}
 
-      <article className="panel version-history-card">
-        <div className="admin-card-head">
+      {/* ── Auto Publish ── */}
+      <div className="admin-card" style={{ border: "1px solid rgba(245,234,214,0.1)", borderRadius: 12, marginBottom: 14 }}>
+        <div className="admin-card-header">
+          <Settings2 size={22} />
           <div>
-            <span className="eyebrow">Version History</span>
-            <h2>سجل الإصدارات</h2>
-          </div>
-          <Link href="/admin/versions" className="btn btn-soft btn-sm">عرض الكل</Link>
-        </div>
-        <div style={{ overflowX: "auto" }}>
-          <table className="version-history-table">
-            <thead>
-              <tr>
-                <th>الإصدار</th>
-                <th>التاريخ</th>
-                <th>الناشر</th>
-                <th>Commit</th>
-                <th>المفاتيح</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allVersions.length === 0 ? (
-                <tr><td colSpan={5} style={{ textAlign: "center", padding: "24px", color: "var(--text-muted)" }}>لا توجد إصدارات بعد</td></tr>
-              ) : allVersions.map((v) => {
-                const commitUrl = v.commitSha ? getCommitUrl(v.commitSha) : null;
-                return (
-                  <tr key={v.id}>
-                    <td><strong>#{v.version}</strong></td>
-                    <td>{new Date(v.publishedAt).toLocaleString("ar-EG")}</td>
-                    <td>{v.publishedBy}</td>
-                    <td>
-                      {commitUrl ? (
-                        <a href={commitUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "monospace", fontSize: "0.85em", color: "var(--gold)" }}>
-                          {v.commitSha ? v.commitSha.slice(0, 12) : "—"}
-                        </a>
-                      ) : (
-                        <span style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{v.commitSha ? v.commitSha.slice(0, 12) : "—"}</span>
-                      )}
-                    </td>
-                    <td style={{ fontSize: "0.85em", color: "var(--text-muted)" }}>{(v.changedKeys as string[]).join(", ")}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </article>
-
-      <article className="panel auto-publish-card">
-        <div className="admin-card-head">
-          <div>
-            <span className="eyebrow">Auto Publish</span>
-            <h2>النشر التلقائي</h2>
+            <h3>النشر التلقائي</h3>
           </div>
         </div>
-        <form action={handleToggleAutoPublish} className="auto-publish-form">
-          <div className="form-row">
-            <label className="field">
-              <span className="field-label">تفعيل النشر التلقائي</span>
-              <select 
-                name="enabled" 
-                className="input"
-                defaultValue={autoPublishEnabled ? "true" : "false"}
-              >
+        <div className="admin-card-body" style={{ paddingTop: 8 }}>
+          <form action={handleToggleAutoPublish} style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
+            <label className="field" style={{ flex: "0 0 auto", minWidth: 0 }}>
+              <span className="field-label" style={{ fontSize: "0.82rem", marginBottom: 4 }}>تفعيل</span>
+              <select name="enabled" className="input" defaultValue={meta.autoPublishEnabled ? "true" : "false"} style={{ minHeight: 36, fontSize: "0.85rem" }}>
                 <option value="true">مفعّل</option>
                 <option value="false">معطّل</option>
               </select>
             </label>
-            <label className="field">
-              <span className="field-label">الفاصل الزمني (دقائق)</span>
-              <input 
-                type="number" 
-                name="interval" 
-                className="input"
-                defaultValue={autoPublishIntervalMinutes}
-                min="5"
-                max="1440"
-              />
+            <label className="field" style={{ flex: "0 0 auto", minWidth: 0 }}>
+              <span className="field-label" style={{ fontSize: "0.82rem", marginBottom: 4 }}>الفاصل (دقائق)</span>
+              <input type="number" name="interval" className="input" defaultValue={meta.autoPublishIntervalMinutes} min="5" max="1440" style={{ minHeight: 36, fontSize: "0.85rem", width: 100 }} />
             </label>
-          </div>
-          <button type="submit" className="btn btn-soft">
-            حفظ الإعدادات
-          </button>
-        </form>
-      </article>
-    </section>
+            <button type="submit" className="btn btn-soft" style={{ fontSize: "0.85rem", minHeight: 36, padding: "6px 14px" }}>
+              حفظ
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* ── Version History (Client Component) ── */}
+      <VersionHistorySection />
+    </div>
   );
 }
