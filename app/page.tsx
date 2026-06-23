@@ -13,7 +13,6 @@ import { getPublishedHomePreviewSettings } from "@/lib/preview-settings";
 import { getHomePlatformStats } from "@/lib/home-stats";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { FEATURE_ICONS } from "@/lib/feature-icons";
-import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
@@ -64,11 +63,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const isBroadcastMode = params.broadcast === "1";
   const showHomePanels = siteSettings?.homepage?.showFeatures || siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
   const showAnyContent = siteSettings?.homepage?.showPreview || siteSettings?.homepage?.showPricing;
-  const heroMainTitle = content?.hero?.mainTitle || "دعوة فرح إلكترونية تعرفك مين شافها ومين هيحضر";
-  const heroAccentTitle = content?.hero?.accentTitle || "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
-  const heroPrimaryCta = content?.hero?.primaryCta || "اختار التصميم";
-  const heroSecondaryCta = content?.hero?.secondaryCta || "اطلبها على واتساب";
-  const heroWhatsAppUrl = getWhatsAppOrderUrl("أريد طلب دعوة فرح إلكترونية من Wedding Daawa", siteSettings?.whatsappUrl);
   const LIVE_STATS_BASE = [
     { label: "دعوه منشأه", value: 116, icon: Smartphone },
     { label: "زياره", value: 60062, icon: UsersRound },
@@ -102,52 +96,23 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 <span className="hero-title-kicker" data-broadcast-key="hero.kicker" data-broadcast-label="النص العلوي" data-broadcast-kind="text" data-broadcast-value={content?.hero?.kicker || "دعوتك الرقمية"}>
                   {content?.hero?.kicker || "دعوتك الرقمية"}
                 </span>
-                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={heroMainTitle}>
-                  {heroMainTitle}
+                <span className="hero-title-main" data-broadcast-key="hero.mainTitle" data-broadcast-label="العنوان الرئيسي" data-broadcast-kind="text" data-broadcast-value={"ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى"}>
+                  ودّع الدعوات الورقية والزحمة… وادعُ ضيوفك بطريقة أذكى
                 </span>
                 <span className="hero-title-divider" aria-hidden="true" />
-                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="الوصف" data-broadcast-kind="text" data-broadcast-value={heroAccentTitle}>
-                  {heroAccentTitle}
+                <span className="hero-title-accent" data-broadcast-key="hero.accentTitle" data-broadcast-label="الوصف" data-broadcast-kind="text" data-broadcast-value={"صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره."}>
+                  صمم دعوة زفاف إلكترونية فخمة خلال دقائق، وتابع الحضور لحظة بلحظة، واعرف بالضبط مين شاف الدعوة ومين أكد حضوره.
                 </span>
               </h1>
               <div className="button-row" style={{ justifyContent: "center", marginTop: "clamp(16px, 3vw, 28px)" }}>
                 <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <Palette size={19} />
-                  <span>{heroPrimaryCta}</span>
+                  <span>شاهد التصاميم</span>
                 </Link>
-                <a className="btn btn-gold btn-glow home-cta home-cta-primary" href={heroWhatsAppUrl} target="_blank" rel="noreferrer">
+                <Link className="btn btn-gold btn-glow home-cta home-cta-primary" href="/templates">
                   <Sparkles size={19} />
-                  <span>{heroSecondaryCta}</span>
-                </a>
-              </div>
-              <div className="hero-product-stage" aria-label="معاينة سريعة للدعوة الرقمية ولوحة الحضور">
-                <div className="hero-product-signal hero-product-signal-rsvp">
-                  <span>
-                    <UserCheck size={18} />
-                  </span>
-                  <strong>الحضور واضح</strong>
-                  <small>شاهد، أكد، أو اعتذر</small>
-                </div>
-                <div className="hero-product-phone" data-broadcast-key="hero.productPreview" data-broadcast-label="معاينة الهيرو" data-broadcast-kind="media" data-broadcast-value={previewSettings?.mode === "video" ? previewSettings?.videoUrl : previewSettings?.mode === "image" ? previewSettings?.imageUrl : previewSettings?.templateSlug}>
-                  <span className="hero-product-badge">
-                    <Sparkles size={14} />
-                    دعوة حية
-                  </span>
-                  {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
-                    <img className="hero-product-media" src={previewSettings.imageUrl} alt="لقطة من الدعوة الرقمية" width={300} height={430} loading="eager" decoding="async" />
-                  ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
-                    <video className="hero-product-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay preload="metadata" />
-                  ) : (
-                    <iframe src={previewTemplateSrc} title="لقطة حية من الدعوة الرقمية" loading="eager" sandbox="allow-scripts allow-same-origin" />
-                  )}
-                </div>
-                <div className="hero-product-signal hero-product-signal-link">
-                  <span>
-                    <Link2 size={18} />
-                  </span>
-                  <strong>لينك خاص</strong>
-                  <small>واتساب، QR، ولوكيشن</small>
-                </div>
+                  <span>اطلب دعوتك الآن</span>
+                </Link>
               </div>
             </div>
           </div>
