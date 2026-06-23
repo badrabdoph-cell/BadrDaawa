@@ -5786,7 +5786,7 @@ img {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 20px;
+  gap: 12px;
   padding: 18px;
   border-inline-end: 1px solid rgba(245, 234, 214, 0.12);
   background: linear-gradient(180deg, rgba(15, 17, 23, 0.96), rgba(10, 12, 17, 0.98));
@@ -5795,12 +5795,12 @@ img {
 .admin-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 56px;
-  margin-bottom: 18px;
-  padding: 10px;
+  gap: 10px;
+  min-height: 48px;
+  margin-bottom: 12px;
+  padding: 8px;
   border: 1px solid rgba(245, 234, 214, 0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -5881,10 +5881,10 @@ img {
 
 .admin-dark-shell .dashboard-nav a {
   position: relative;
-  min-height: 48px;
-  padding: 11px 12px;
+  min-height: 40px;
+  padding: 8px 10px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px;
   color: rgba(255, 248, 234, 0.78);
 }
 
@@ -6104,17 +6104,17 @@ img {
 
 /* Admin information architecture refresh */
 .admin-dark-shell .dashboard-layout {
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: 310px minmax(0, 1fr);
 }
 
 .admin-dark-shell .dashboard-sidebar {
-  padding: 16px;
+  padding: 12px;
 }
 
 .dashboard-section-nav {
-  grid-template-columns: 124px minmax(0, 1fr);
+  grid-template-columns: 120px minmax(0, 1fr);
   grid-template-rows: 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .dashboard-primary-sections,
@@ -6124,19 +6124,19 @@ img {
 
 .dashboard-primary-sections {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   align-self: start;
 }
 
 .dashboard-primary-sections button {
   position: relative;
   display: grid;
-  gap: 5px;
-  min-height: 94px;
-  padding: 10px;
+  gap: 4px;
+  min-height: 82px;
+  padding: 8px;
   overflow: hidden;
   border: 1px solid rgba(245, 234, 214, 0.08);
-  border-radius: 14px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.035);
   color: rgba(255, 248, 234, 0.72);
   cursor: pointer;
@@ -6200,9 +6200,9 @@ img {
 .dashboard-primary-sections button > span {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 11px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
   background: var(--admin-section-soft, rgba(243, 207, 115, 0.12));
   color: var(--admin-section-accent, #f3cf73);
 }
@@ -6243,10 +6243,10 @@ img {
 
 .dashboard-secondary-panel {
   display: grid;
-  gap: 10px;
-  padding: 11px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid rgba(245, 234, 214, 0.08);
-  border-radius: 16px;
+  border-radius: 14px;
   background:
     linear-gradient(180deg, var(--admin-section-soft, rgba(243, 207, 115, 0.1)), rgba(255, 255, 255, 0.035)),
     rgba(255, 255, 255, 0.025);
@@ -36944,12 +36944,12 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 .sidebar-search-link {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  margin-bottom: 12px;
-  padding: 10px 12px;
+  gap: 8px;
+  min-height: 36px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
   border: 1px solid rgba(245, 234, 214, 0.1);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.045);
   color: rgba(255, 248, 234, 0.72);
   font-weight: 900;

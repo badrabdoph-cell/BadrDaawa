@@ -10,7 +10,7 @@ const adminSections = [
   {
     id: "contacts",
     title: "جهات الاتصال",
-    description: "الدعوات والعملاء والتواصل",
+    description: "الدعوات والعملاء",
     accent: "gold",
     icon: UsersRound,
     links: [
@@ -27,7 +27,7 @@ const adminSections = [
   {
     id: "content",
     title: "المحتوى ومساحة العمل",
-    description: "القوالب والوسائط والصفحات والبحث",
+    description: "القوالب والوسائط والصفحات",
     accent: "rose",
     icon: Palette,
     links: [
@@ -45,7 +45,7 @@ const adminSections = [
   {
     id: "events",
     title: "الفعاليات",
-    description: "الحضور والتحليلات وتشغيل يوم الفرح",
+    description: "الحضور والتحليلات والبث",
     accent: "blue",
     icon: ClipboardList,
     links: [
@@ -58,7 +58,7 @@ const adminSections = [
   {
     id: "publishing",
     title: "النشر والإصدارات",
-    description: "نشر التغييرات وإدارة الإصدارات",
+    description: "نشر وإدارة الإصدارات",
     accent: "gold",
     icon: Upload,
     links: [
@@ -68,7 +68,7 @@ const adminSections = [
   {
     id: "system",
     title: "النظام والنسخ الاحتياطي",
-    description: "الإعدادات والمراقبة والنسخ الاحتياطي",
+    description: "الإعدادات والمراقبة والنسخ",
     accent: "slate",
     icon: Settings,
     links: [
@@ -416,14 +416,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <small>Control Center</small>
             </span>
           </Link>
-
-          <div className="admin-system-card">
-            <ShieldCheck size={20} />
-            <div>
-              <strong>Super Admin</strong>
-              <span>جلسة آمنة ومفعلة</span>
-            </div>
-          </div>
 
           <Link href="/admin/search" className="sidebar-search-link">
             <Search size={16} />
