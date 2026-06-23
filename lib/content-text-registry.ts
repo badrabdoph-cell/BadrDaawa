@@ -326,8 +326,8 @@ export async function updateContentText(id: string, value: string): Promise<bool
 
   switch (source) {
     case "site-settings": {
-      const { getSiteSettings, updateSiteSettings } = await import("./site-settings");
-      const current = await getSiteSettings();
+      const { getDraftSiteSettings, updateSiteSettingsDraft } = await import("./site-settings");
+      const current = await getDraftSiteSettings();
       const setNestedPath = (obj: Record<string, unknown>, p: string, val: string) => {
         const keys = p.split(".");
         let currentObj = obj;
@@ -341,12 +341,12 @@ export async function updateContentText(id: string, value: string): Promise<bool
       };
       const update = JSON.parse(JSON.stringify(current));
       setNestedPath(update, path, value);
-      await updateSiteSettings(update as Parameters<typeof updateSiteSettings>[0]);
+      await updateSiteSettingsDraft(update as Parameters<typeof updateSiteSettingsDraft>[0]);
       return true;
     }
     case "home-content": {
-      const { getHomeContent, updateHomeContent } = await import("./home-content");
-      const current = await getHomeContent();
+      const { getDraftHomeContent, updateHomeContentDraft } = await import("./home-content");
+      const current = await getDraftHomeContent();
       const setNestedPath = (obj: Record<string, unknown>, p: string, val: string) => {
         const keys = p.split(".");
         let currentObj = obj;
@@ -360,26 +360,26 @@ export async function updateContentText(id: string, value: string): Promise<bool
       };
       const update = JSON.parse(JSON.stringify(current));
       setNestedPath(update, path, value);
-      await updateHomeContent(update as Parameters<typeof updateHomeContent>[0]);
+      await updateHomeContentDraft(update as Parameters<typeof updateHomeContentDraft>[0]);
       return true;
     }
     case "legal-pages": {
-      const { updateLegalPage } = await import("./legal-pages");
+      const { updateLegalPageDraft } = await import("./legal-pages");
       const pathParts = path.split(".");
       const slug = pathParts[0];
       const field = pathParts[1] as "title" | "description" | "content";
-      await updateLegalPage(slug as Parameters<typeof updateLegalPage>[0], { [field]: value });
+      await updateLegalPageDraft(slug as Parameters<typeof updateLegalPageDraft>[0], { [field]: value });
       return true;
     }
     case "content-presets": {
-      const { getContentPresets, updateContentPreset } = await import("./content-presets");
-      const presets = await getContentPresets();
+      const { getDraftContentPresets, updateContentPresetDraft } = await import("./content-presets");
+      const presets = await getDraftContentPresets();
       const parts = path.split(".");
       const presetId = parts[0];
       const field = parts[1] as "title" | "content" | "secondaryContent";
       const preset = presets.find((p) => p.id === presetId);
       if (!preset) return false;
-      await updateContentPreset(presetId, {
+      await updateContentPresetDraft(presetId, {
         kind: preset.kind,
         title: preset.title,
         content: preset.content,
@@ -389,14 +389,14 @@ export async function updateContentText(id: string, value: string): Promise<bool
       return true;
     }
     case "message-templates": {
-      const { getMessageTemplates, updateMessageTemplate } = await import("./message-templates");
-      const templates = await getMessageTemplates();
+      const { getDraftMessageTemplates, updateMessageTemplateDraft } = await import("./message-templates");
+      const templates = await getDraftMessageTemplates();
       const parts = path.split(".");
       const templateId = parts[0];
       const field = parts[1] as "title" | "content";
       const template = templates.find((t) => t.id === templateId);
       if (!template) return false;
-      await updateMessageTemplate(templateId, {
+      await updateMessageTemplateDraft(templateId, {
         kind: template.kind,
         title: template.title,
         content: template.content,
@@ -405,8 +405,8 @@ export async function updateContentText(id: string, value: string): Promise<bool
       return true;
     }
     case "template-preview-info": {
-      const { getTemplatePreviewInfo, updateTemplatePreviewInfo } = await import("./template-preview-info");
-      const current = await getTemplatePreviewInfo();
+      const { getDraftTemplatePreviewInfo, updateTemplatePreviewInfoDraft } = await import("./template-preview-info");
+      const current = await getDraftTemplatePreviewInfo();
       const setNestedPath = (obj: Record<string, unknown>, p: string, val: string) => {
         const keys = p.split(".");
         let currentObj = obj;
@@ -420,7 +420,7 @@ export async function updateContentText(id: string, value: string): Promise<bool
       };
       const update = JSON.parse(JSON.stringify(current));
       setNestedPath(update, path, value);
-      await updateTemplatePreviewInfo(update as Parameters<typeof updateTemplatePreviewInfo>[0]);
+      await updateTemplatePreviewInfoDraft(update as Parameters<typeof updateTemplatePreviewInfoDraft>[0]);
       return true;
     }
     case "admin-ui": {

@@ -259,23 +259,7 @@ export async function getPublishedTemplatePreviewInfo() {
 }
 
 export async function updateTemplatePreviewInfo(input: Partial<TemplatePreviewInfo>) {
-  const current = await getTemplatePreviewInfo();
-  const next = normalizeTemplatePreviewInfo({
-    ...current,
-    ...input,
-    texts: {
-      ...current.texts,
-      ...input.texts,
-    },
-    photographer: {
-      ...current.photographer,
-      ...input.photographer,
-    },
-    updatedAt: new Date().toISOString(),
-  });
-
-  await writeProjectContentSetting("template-preview-info", next);
-  return next;
+  return updateTemplatePreviewInfoDraft(input);
 }
 
 export async function updateTemplatePreviewInfoDraft(input: Partial<TemplatePreviewInfo>) {

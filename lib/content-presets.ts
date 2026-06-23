@@ -135,46 +135,15 @@ export async function getPublishedContentPresets() {
 }
 
 export async function createContentPreset(input: { kind: unknown; title: unknown; content: unknown; secondaryContent?: unknown }) {
-  const preset = normalizePreset({
-    id: createPresetId(),
-    kind: normalizeKind(input.kind),
-    title: input.title,
-    content: input.content,
-    secondaryContent: input.secondaryContent,
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-  });
-  if (!preset) return null;
-  const presets = await readPresetsRaw();
-  await writePresets([preset, ...presets]);
-  return preset;
+  return createContentPresetDraft(input);
 }
 
 export async function updateContentPreset(id: string, input: { kind: unknown; title: unknown; content: unknown; secondaryContent?: unknown }) {
-  const presets = await readPresetsRaw();
-  const index = presets.findIndex((preset) => preset.id === id);
-  if (index === -1) return null;
-  const updated = normalizePreset({
-    ...presets[index],
-    kind: normalizeKind(input.kind),
-    title: input.title,
-    content: input.content,
-    secondaryContent: input.secondaryContent,
-    updatedAt: nowIso(),
-  });
-  if (!updated) return null;
-  const next = presets.slice();
-  next[index] = updated;
-  await writePresets(next);
-  return updated;
+  return updateContentPresetDraft(id, input);
 }
 
 export async function deleteContentPreset(id: string) {
-  const presets = await readPresetsRaw();
-  const next = presets.filter((preset) => preset.id !== id);
-  if (next.length === presets.length) return false;
-  await writePresets(next);
-  return true;
+  return deleteContentPresetDraft(id);
 }
 
 // Draft/Publish System Functions

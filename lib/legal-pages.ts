@@ -122,15 +122,7 @@ export async function getLegalPage(slug: LegalPageSlug) {
 }
 
 export async function updateLegalPage(slug: LegalPageSlug, input: { title?: unknown; description?: unknown; content?: unknown }) {
-  const pages = await readLegalPagesFile();
-  pages[slug] = normalizePage(slug, {
-    title: input.title,
-    description: input.description,
-    content: input.content,
-    updatedAt: new Date().toISOString(),
-  });
-  await writeLegalPages(pages);
-  return pages[slug];
+  return updateLegalPageDraft(slug, input);
 }
 
 export async function updateLegalPageDraft(slug: LegalPageSlug, input: { title?: unknown; description?: unknown; content?: unknown }) {

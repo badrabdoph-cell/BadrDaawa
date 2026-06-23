@@ -137,41 +137,7 @@ export async function createCustomTemplateFromHtml({
   concept?: string;
   musicUrl?: string;
 }) {
-  const cleanedHtml = cleanHtml(html);
-  if (!cleanedHtml || cleanedHtml.length < 20) return { ok: false as const, reason: "empty" };
-
-  const storedTemplates = await readStoredCustomTemplates();
-  const title = name?.trim() || extractHtmlTitle(cleanedHtml);
-  const baseSlug = slugify(slug || title);
-  const takenSlugs = new Set([...invitationTemplates.map((template) => template.slug), ...storedTemplates.map((template) => template.slug)]);
-  let finalSlug = baseSlug;
-  let index = 2;
-
-  while (takenSlugs.has(finalSlug) && !getTemplateBySlug(finalSlug)) {
-    finalSlug = `${baseSlug}-${index}`;
-    index += 1;
-  }
-
-  if (getTemplateBySlug(finalSlug)) {
-    finalSlug = `${baseSlug}-${Date.now().toString(36)}`;
-  }
-
-  const now = new Date().toISOString();
-  const template: StoredCustomTemplate = {
-    id: `tpl_custom_${finalSlug.replace(/-/g, "_")}`,
-    slug: finalSlug,
-    name: title,
-    arabicName: title,
-    category: category?.trim() || "قالب مخصص",
-    concept: concept?.trim() || "قالب تم إنشاؤه تلقائيًا من كود HTML داخل لوحة الأدمن.",
-    html: cleanedHtml,
-    musicUrl: musicUrl?.trim() || defaultTemplateMusicUrl,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await writeStoredCustomTemplates([template, ...storedTemplates]);
-  return { ok: true as const, template: toTemplateDefinition(template) };
+  return createCustomTemplateFromHtmlDraft({ html, name, slug, category, concept, musicUrl });
 }
 
 export async function createCustomTemplateFromHtmlDraft({

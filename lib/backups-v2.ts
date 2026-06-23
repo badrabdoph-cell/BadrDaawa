@@ -106,9 +106,17 @@ function prismaModelForTable(tx: TxClient, table: string) {
   return map[table];
 }
 
+function filterContentFromAppSettingsRows(rows: unknown[]): unknown[] {
+  return (rows as Array<{ key: string }>).filter((r) => !r.key.startsWith("project-content:"));
+}
+
 async function deleteTableData(tx: TxClient, table: string): Promise<number> {
-  const model = prismaModelForTable(tx, table) as { deleteMany: () => Promise<{ count: number }> } | undefined;
+  const model = prismaModelForTable(tx, table) as { deleteMany: (args?: unknown) => Promise<{ count: number }> } | undefined;
   if (!model?.deleteMany) return 0;
+  if (table === "appSettings") {
+    const result = await model.deleteMany({ where: { key: { not: { startsWith: "project-content:" } } } });
+    return result.count;
+  }
   const result = await model.deleteMany();
   return result.count;
 }
@@ -117,10 +125,12 @@ async function insertTableData(tx: TxClient, table: string, rows: unknown[]): Pr
   if (!rows.length) return 0;
   const model = prismaModelForTable(tx, table) as { createMany: (args: { data: unknown[] }) => Promise<{ count: number }> } | undefined;
   if (!model?.createMany) return 0;
+  const data = table === "appSettings" ? filterContentFromAppSettingsRows(rows) : rows;
+  if (!data.length) return 0;
   const BATCH_SIZE = 500;
   let inserted = 0;
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
     const result = await model.createMany({ data: batch });
     inserted += result.count;
   }
@@ -288,6 +298,9 @@ async function collectRuntimeData(): Promise<Record<string, unknown[]>> {
     } catch {
       runtimeData[table] = [];
     }
+  }
+  if (runtimeData.appSettings) {
+    runtimeData.appSettings = filterContentFromAppSettingsRows(runtimeData.appSettings);
   }
   return runtimeData;
 }

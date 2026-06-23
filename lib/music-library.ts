@@ -289,42 +289,7 @@ export function resolveInvitationMusic({
 }
 
 export async function saveMusicSlot(input: { id?: string; name: string; url: string; enabled: boolean; source?: MusicSourceKind; durationSeconds?: number }) {
-  const library = await getMusicLibrary();
-  const cleanedName = cleanText(input.name, defaultMusicSlot.name);
-  const cleanedUrl = input.source === "url" ? cleanNewDirectAudioUrl(input.url) : cleanPlayableAudioUrl(input.url);
-  if (!cleanedUrl) return null;
-
-  const existingIndex = input.id ? library.slots.findIndex((slot) => slot.id === input.id) : -1;
-  const existingSameNameIndex = library.slots.findIndex((slot) => slot.name.trim().toLowerCase() === cleanedName.toLowerCase());
-  const slotIndex = existingIndex >= 0 ? existingIndex : existingSameNameIndex;
-  const existingIds = library.slots.map((slot) => slot.id);
-  const existing = slotIndex >= 0 ? library.slots[slotIndex] : null;
-  const extension = extensionFromUrl(cleanedUrl);
-  const now = new Date().toISOString();
-  const nextSlot: MusicSlot = {
-    id: existing?.id || makeTrackId(cleanedName, existingIds),
-    name: cleanedName,
-    url: cleanedUrl,
-    enabled: input.enabled,
-    applyToAll: true,
-    templateSlugs: [],
-    updatedAt: now,
-    createdAt: existing?.createdAt || now,
-    source: input.source || sourceFromUrl(cleanedUrl),
-    sizeBytes: existing?.url === cleanedUrl ? existing.sizeBytes : undefined,
-    mimeType: mimeFromExtension(extension),
-    extension,
-    durationSeconds: input.durationSeconds || existing?.durationSeconds,
-  };
-
-  const nextSlots = slotIndex >= 0 ? library.slots.map((slot, index) => (index === slotIndex ? nextSlot : slot)) : [nextSlot, ...library.slots.filter((slot) => slot.url)];
-  await writeMusicLibrary({
-    slots: nextSlots.map((slot) => ({
-      ...slot,
-      enabled: input.enabled ? slot.id === nextSlot.id : slot.enabled && slot.id !== nextSlot.id,
-    })),
-  });
-  return nextSlot;
+  return saveMusicSlotDraft(input);
 }
 
 export async function saveMusicSlotDraft(input: { id?: string; name: string; url: string; enabled: boolean; source?: MusicSourceKind; durationSeconds?: number }) {
@@ -367,12 +332,7 @@ export async function saveMusicSlotDraft(input: { id?: string; name: string; url
 }
 
 export async function renameMusicSlot(id: string, name: string) {
-  const library = await getMusicLibrary();
-  const slot = library.slots.find((item) => item.id === id);
-  if (!slot) return null;
-  const slots = library.slots.map((item) => (item.id === id ? { ...item, name: cleanText(name, item.name), updatedAt: new Date().toISOString() } : item));
-  await writeMusicLibrary({ slots });
-  return slots.find((item) => item.id === id) || null;
+  return renameMusicSlotDraft(id, name);
 }
 
 export async function renameMusicSlotDraft(id: string, name: string) {
@@ -385,16 +345,7 @@ export async function renameMusicSlotDraft(id: string, name: string) {
 }
 
 export async function setMusicSlotEnabled(id: string, enabled: boolean) {
-  const library = await getMusicLibrary();
-  const slot = library.slots.find((item) => item.id === id);
-  if (!slot?.url) return null;
-  const slots = library.slots.map((item) => ({
-    ...item,
-    enabled: enabled ? item.id === id : item.id === id ? false : item.enabled,
-    updatedAt: item.id === id ? new Date().toISOString() : item.updatedAt,
-  }));
-  await writeMusicLibrary({ slots });
-  return slots.find((item) => item.id === id) || null;
+  return setMusicSlotEnabledDraft(id, enabled);
 }
 
 export async function setMusicSlotEnabledDraft(id: string, enabled: boolean) {
@@ -411,11 +362,7 @@ export async function setMusicSlotEnabledDraft(id: string, enabled: boolean) {
 }
 
 export async function deleteMusicSlot(id: string) {
-  const library = await getMusicLibrary();
-  const slot = library.slots.find((item) => item.id === id);
-  if (!slot) return null;
-  await writeMusicLibrary({ slots: library.slots.filter((item) => item.id !== id) });
-  return slot;
+  return deleteMusicSlotDraft(id);
 }
 
 export async function deleteMusicSlotDraft(id: string) {

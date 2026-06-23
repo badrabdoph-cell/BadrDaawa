@@ -234,7 +234,7 @@ async function readDatabaseMetadata() {
 async function readRuntimeDataSnapshot() {
   if (!prisma) throw new Error("DATABASE_URL is required to create a Runtime Data backup.");
 
-  const [appSettings, customers, invitations, guestRsvps, orderRequests, analyticsEvents, guestBookMessages, coupleMessagesSettings, clientMessages, invitationCheckIns, weddingLiveModes, internalNotes, auditLogs, backupJobs, syncLogs, dynamicPages, weddingTemplates] = await Promise.all([
+  const [allAppSettings, customers, invitations, guestRsvps, orderRequests, analyticsEvents, guestBookMessages, coupleMessagesSettings, clientMessages, invitationCheckIns, weddingLiveModes, internalNotes, auditLogs, backupJobs, syncLogs, dynamicPages, weddingTemplates] = await Promise.all([
     prisma.appSetting.findMany({ orderBy: { key: "asc" } }),
     prisma.customer.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.invitation.findMany({ orderBy: { createdAt: "asc" } }),
@@ -253,6 +253,7 @@ async function readRuntimeDataSnapshot() {
     prisma.dynamicPage.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.weddingTemplate.findMany({ orderBy: { createdAt: "asc" } }),
   ]);
+  const appSettings = allAppSettings.filter((as) => !as.key.startsWith("project-content:"));
 
   return {
     customers,
@@ -1192,9 +1193,17 @@ function prismaModelForTable(tx: TxClient, table: string) {
   return map[table];
 }
 
+function filterContentFromAppSettingsRows(rows: unknown[]): unknown[] {
+  return (rows as Array<{ key: string }>).filter((r) => !r.key.startsWith("project-content:"));
+}
+
 async function deleteTableData(tx: TxClient, table: string): Promise<number> {
-  const model = prismaModelForTable(tx, table) as { deleteMany: () => Promise<{ count: number }> } | undefined;
+  const model = prismaModelForTable(tx, table) as { deleteMany: (args?: unknown) => Promise<{ count: number }> } | undefined;
   if (!model?.deleteMany) return 0;
+  if (table === "appSettings") {
+    const result = await model.deleteMany({ where: { key: { not: { startsWith: "project-content:" } } } });
+    return result.count;
+  }
   const result = await model.deleteMany();
   return result.count;
 }
@@ -1203,10 +1212,12 @@ async function insertTableData(tx: TxClient, table: string, rows: unknown[]): Pr
   if (!rows.length) return 0;
   const model = prismaModelForTable(tx, table) as { createMany: (args: { data: unknown[] }) => Promise<{ count: number }> } | undefined;
   if (!model?.createMany) return 0;
+  const data = table === "appSettings" ? filterContentFromAppSettingsRows(rows) : rows;
+  if (!data.length) return 0;
   const BATCH_SIZE = 500;
   let inserted = 0;
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
     const result = await model.createMany({ data: batch });
     inserted += result.count;
   }

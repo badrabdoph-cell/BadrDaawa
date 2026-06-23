@@ -224,7 +224,5 @@ export async function updateHomeContentDraft(input: Partial<HomeContent>) {
 }
 
 export async function updateHomeContent(input: Partial<HomeContent>) {
-  const next = normalizeContent(input);
-  await writeProjectContentSetting("home-content", next);
-  return next;
+  return updateHomeContentDraft(input);
 }

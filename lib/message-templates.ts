@@ -136,44 +136,15 @@ export async function getPublishedMessageTemplates() {
 }
 
 export async function createMessageTemplate(input: { kind: unknown; title: unknown; content: unknown }) {
-  const template = normalizeTemplate({
-    id: createTemplateId(),
-    kind: input.kind,
-    title: input.title,
-    content: input.content,
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-  });
-  if (!template) return null;
-  const templates = await readTemplatesRaw();
-  await writeTemplates([template, ...templates]);
-  return template;
+  return createMessageTemplateDraft(input);
 }
 
 export async function updateMessageTemplate(id: string, input: { kind: unknown; title: unknown; content: unknown }) {
-  const templates = await readTemplatesRaw();
-  const index = templates.findIndex((template) => template.id === id);
-  if (index === -1) return null;
-  const updated = normalizeTemplate({
-    ...templates[index],
-    kind: input.kind,
-    title: input.title,
-    content: input.content,
-    updatedAt: nowIso(),
-  });
-  if (!updated) return null;
-  const next = templates.slice();
-  next[index] = updated;
-  await writeTemplates(next);
-  return updated;
+  return updateMessageTemplateDraft(id, input);
 }
 
 export async function deleteMessageTemplate(id: string) {
-  const templates = await readTemplatesRaw();
-  const next = templates.filter((template) => template.id !== id);
-  if (next.length === templates.length) return false;
-  await writeTemplates(next);
-  return true;
+  return deleteMessageTemplateDraft(id);
 }
 
 // Draft/Publish System Functions

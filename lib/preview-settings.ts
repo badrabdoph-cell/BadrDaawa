@@ -104,31 +104,7 @@ export async function updateHomePreviewSettings(input: {
   videoUrl: string;
   uploadedVideoUrl?: string;
 }) {
-  const mode = isHomePreviewMode(input.mode) ? input.mode : defaultHomePreviewSettings.mode;
-  const template = await getTemplateWithSettings(input.templateSlug);
-  const templateSlug = template?.slug || defaultHomePreviewSettings.templateSlug;
-  const uploadedMediaUrl = cleanMediaUrl(input.uploadedMediaUrl || "");
-  const unifiedMediaUrl = uploadedMediaUrl || cleanMediaUrl(input.mediaUrl || "", true);
-  const uploadedImageUrl = cleanMediaUrl(input.uploadedImageUrl || "", true);
-  const legacyImageUrl = uploadedImageUrl || cleanMediaUrl(input.imageUrl, true);
-  const uploadedVideoUrl = cleanMediaUrl(input.uploadedVideoUrl || "");
-  const legacyVideoUrl = uploadedVideoUrl || cleanMediaUrl(input.videoUrl);
-  const inferredMode = isHomePreviewMode(input.uploadedMediaMode || "")
-    ? (input.uploadedMediaMode as HomePreviewMode)
-    : inferMediaMode(unifiedMediaUrl) || (uploadedImageUrl ? "image" : uploadedVideoUrl ? "video" : "");
-  const finalMode = inferredMode || mode;
-  const imageUrl = finalMode === "image" ? unifiedMediaUrl || legacyImageUrl : legacyImageUrl;
-  const videoUrl = finalMode === "video" ? unifiedMediaUrl || legacyVideoUrl : legacyVideoUrl;
-
-  const nextSettings: HomePreviewSettings = {
-    mode: finalMode,
-    templateSlug,
-    imageUrl,
-    videoUrl,
-  };
-
-  await writeProjectContentSetting("home-preview-settings", nextSettings);
-  return nextSettings;
+  return updateHomePreviewSettingsDraft(input);
 }
 
 export async function updateHomePreviewSettingsDraft(input: {

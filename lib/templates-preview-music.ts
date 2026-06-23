@@ -52,13 +52,7 @@ export async function getPublishedTemplatesPreviewMusicSettings() {
 }
 
 export async function updateTemplatesPreviewMusicSettings(input: { enabled: boolean; trackId?: string }) {
-  const settings = normalizeSettings({
-    enabled: input.enabled,
-    trackId: input.enabled ? input.trackId || "" : "",
-    updatedAt: new Date().toISOString(),
-  });
-  await writeSettings(settings);
-  return settings;
+  return updateTemplatesPreviewMusicSettingsDraft(input);
 }
 
 export async function updateTemplatesPreviewMusicSettingsDraft(input: { enabled: boolean; trackId?: string }) {
@@ -72,9 +66,9 @@ export async function updateTemplatesPreviewMusicSettingsDraft(input: { enabled:
 }
 
 export async function clearTemplatesPreviewMusicIfTrackDeleted(trackId: string) {
-  const settings = await getTemplatesPreviewMusicSettings();
+  const settings = await getDraftTemplatesPreviewMusicSettings();
   if (settings.trackId !== trackId) return false;
-  await writeSettings({ enabled: false, trackId: "", updatedAt: new Date().toISOString() });
+  await writeDraftSettings({ enabled: false, trackId: "", updatedAt: new Date().toISOString() });
   return true;
 }
 

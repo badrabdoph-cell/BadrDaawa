@@ -233,28 +233,7 @@ export async function updateSiteSettingsDraft(input: Partial<SiteSettings>) {
 }
 
 export async function updateSiteSettings(input: Partial<SiteSettings>) {
-  const current = await getSiteSettings();
-  const next = normalizeSettings({
-    ...current,
-    ...input,
-    socialLinks: { ...current.socialLinks, ...input.socialLinks },
-    seo: { ...current.seo, ...input.seo },
-    homepage: { ...current.homepage, ...input.homepage },
-    order: { ...current.order, ...input.order },
-    photographer: { ...current.photographer, ...input.photographer },
-    updatedAt: new Date().toISOString(),
-  });
-
-  console.log("[Site Settings] Updating photographer to:", {
-    name: next.photographer.defaultName,
-    instagram: next.photographer.defaultInstagramUrl,
-    facebook: next.photographer.defaultFacebookUrl,
-    logoUrl: next.photographer.defaultLogoUrl,
-  });
-
-  await writeProjectContentSetting("site-settings", next);
-  console.log("[Site Settings] Successfully saved to database/storage");
-  return next;
+  return updateSiteSettingsDraft(input);
 }
 
 export function shouldShowPhotographerCard() {
