@@ -55,9 +55,6 @@ async function handleCronBackup(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  // Always create a v1 backup for backward compatibility (legacy auto-restore support)
-  // But also create v2 backups based on schedule
-
   const results: Record<string, { ok: boolean; fileName?: string; error?: string; skipped?: boolean }> = {};
 
   // Check each v2 type
@@ -79,16 +76,6 @@ async function handleCronBackup(request: NextRequest) {
       console.error(`[Backup Cron ${now()}] ${type} backup threw:`, e);
     }
   }
-
-  // Also run the legacy v1 backup (for backward compatibility)
-  try {
-    const { runScheduledTask } = await import("@/lib/task-scheduler");
-    const v1Result = await runScheduledTask("backup", "automatic");
-    results["legacy"] = { ok: v1Result.status === "success", error: v1Result.status !== "success" ? v1Result.message : undefined };
-  } catch (e) {
-    results["legacy"] = { ok: false, error: e instanceof Error ? e.message : String(e) };
-  }
-
   const allOk = Object.values(results).every((r) => r.ok || r.skipped);
   console.log(
     `[Backup Cron ${now()}] Completed durationMs=${Date.now() - startedAt} results=${JSON.stringify(results)}`,
