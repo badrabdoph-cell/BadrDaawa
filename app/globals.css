@@ -3034,6 +3034,9 @@ img {
 
 .preview-admin-form-card,
 .preview-admin-live-card {
+  position: sticky;
+  top: 94px;
+  align-self: start;
   display: grid;
   gap: 18px;
 }
@@ -12338,7 +12341,7 @@ img {
 .orders-queue-panel,
 .orders-live-preview {
   position: sticky;
-  top: 18px;
+  top: 94px;
 }
 
 .orders-queue-panel {
@@ -18598,7 +18601,8 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
 .template-live-preview-pane {
   position: sticky;
-  top: 82px;
+  top: 94px;
+  align-self: start;
   display: grid;
   gap: 12px;
 }
@@ -33020,6 +33024,13 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
     flex: 1 1 150px;
   }
 
+  .admin-dark-shell .stats-grid,
+  .admin-dark-shell .music-stats-grid,
+  .admin-dark-shell .media-stats-grid,
+  .admin-dark-shell .audit-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
   .admin-dark-shell .admin-metrics-grid,
   .admin-dark-shell .admin-health-grid,
   .admin-dark-shell .admin-home-grid,
@@ -33043,7 +33054,6 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   .admin-dark-shell .backup-latest-grid,
   .admin-dark-shell .template-match-grid,
   .admin-dark-shell .recent-edit-card,
-  .admin-dark-shell .music-stats-grid,
   .admin-dark-shell .music-default-card,
   .admin-dark-shell .music-simple-form,
   .admin-dark-shell .orders-editor-grid,
@@ -34978,11 +34988,14 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
 @media (max-width: 640px) {
   .invitation-card-grid,
-  .invitation-detail-grid,
   .invitation-card-metrics,
   .invitation-guest-list,
   .invitation-message-list {
     grid-template-columns: 1fr;
+  }
+
+  .invitation-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .invitation-card,
