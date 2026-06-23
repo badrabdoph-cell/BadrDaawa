@@ -59,7 +59,6 @@ export async function POST(request: NextRequest) {
       metadata: { source: "admin-template-text-search", fieldId: id },
     });
 
-    console.log(`[Templates Text] Successfully updated: ${id}`);
     return NextResponse.json({ ok: true, previewInfo: next });
   } catch (error) {
     console.error("[Templates Text] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));

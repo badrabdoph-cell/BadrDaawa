@@ -66,7 +66,6 @@ export async function POST(request: NextRequest) {
         newValues: { mediaUrl },
         metadata: { requestId, source: "template-content-media" },
       });
-      console.log(`[Template Media ${requestId}] Saved video ${mediaUrl} in ${Date.now() - startedAt}ms.`);
       return NextResponse.json({ ok: true, mediaUrl });
     }
 
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest) {
       newValues: { imageUrls },
       metadata: { requestId, source: "template-content-media" },
     });
-    console.log(`[Template Media ${requestId}] Saved ${imageUrls.length} image(s) in ${Date.now() - startedAt}ms.`, imageUrls);
     return NextResponse.json({ ok: true, imageUrls });
   } catch (error) {
     console.error(`[Template Media ${requestId}] Unexpected upload failure after ${Date.now() - startedAt}ms.`, error);

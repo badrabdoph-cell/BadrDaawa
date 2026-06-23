@@ -180,7 +180,6 @@ export async function POST(request: NextRequest) {
       metadata: { source: "templates-content-editor", mode, deletedUploads },
     });
 
-    console.log("[Templates Content] Successfully updated and saved");
     return NextResponse.json(responsePayload(next, templates));
   } catch (error) {
     console.error("[Templates Content] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));

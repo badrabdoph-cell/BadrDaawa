@@ -44,7 +44,6 @@ function loadImageElement(url: string) {
 async function compressBrowserImage(file: File): Promise<OptimizedUploadFile> {
   const sourceUrl = URL.createObjectURL(file);
   try {
-    console.log(`[Browser Image Upload] Compress start name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`);
     let width = 0;
     let height = 0;
     let drawable: CanvasImageSource;
@@ -113,10 +112,6 @@ async function prepareUploadFile(file: File): Promise<OptimizedUploadFile> {
     return await compressBrowserImage(file);
   } catch (error) {
     if (file.size <= maxDirectServerImageBytes) {
-      console.log(
-        `[Browser Image Upload] Compression failed; uploading original fallback name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`,
-        error,
-      );
       return {
         file,
         originalBytes: file.size,

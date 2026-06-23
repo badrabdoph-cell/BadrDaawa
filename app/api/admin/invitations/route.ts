@@ -80,7 +80,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRedirectUrl("/admin/invitations?error=music", request.headers, request.nextUrl.origin), 303);
   }
   const gallery = savedGallery.length ? savedGallery : fallbackInvitationGallery;
-  console.log(`[Admin Invitation] Creating invitation with gallery (${gallery.length}):`, gallery);
   const baseSlug = buildInvitationBaseSlug(groomEnglish, brideEnglish);
   const actor = await getAuditActorFromAdminRequest(request);
 
@@ -181,8 +180,6 @@ export async function POST(request: NextRequest) {
         existingCodes.add(code);
       }
     }
-    console.log(`[Admin Invitation] Database invitation ${code} saved with heroPhoto=${gallery[0]}.`);
-
     const managePath = await getInvitationManagePath(code);
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);

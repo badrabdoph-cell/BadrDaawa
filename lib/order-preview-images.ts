@@ -47,9 +47,6 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
     const startedAt = Date.now();
     const detectedExtension = imageExtensionFromBytes(bytes);
     const finalExtension = extension || detectedExtension;
-    console.log(
-      `[Order Images ${requestId}] Optimizing ${sourceLabel} (${bytes.length} bytes, extension=${extension || "unknown"}, detected=${detectedExtension || "unknown"}) for ${folder}.`,
-    );
     if (!finalExtension) {
       console.error(`[Order Images ${requestId}] Rejected ${sourceLabel}: unsupported image bytes.`);
       return "";
@@ -75,9 +72,6 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
       const bytes = Buffer.from(await image.arrayBuffer());
       const detectedExtension = imageExtensionFromBytes(bytes);
       const extension = imageExtensionFromMime(image.type) || imageExtensionFromName(image.name) || detectedExtension;
-      console.log(
-        `[Order Images ${requestId}] File input ${image.name || "unnamed"} type=${image.type || "unknown"} size=${image.size} extension=${extension || "unknown"} detected=${detectedExtension || "unknown"}.`,
-      );
       if (!extension) {
         console.error(`[Order Images ${requestId}] Uploaded preview image skipped for ${folder}: unsupported file (${image.type || "empty"} / ${image.name || "unnamed"}).`);
         continue;
@@ -104,9 +98,6 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
 
       const detectedExtension = imageExtensionFromBytes(bytes);
       const extension = imageExtensionFromDataMime(dataUrl.mime) || imageExtensionFromMime(type) || imageExtensionFromName(name) || detectedExtension;
-      console.log(
-        `[Order Images ${requestId}] Data URL input name=${name || "unnamed"} mime=${dataUrl.mime || type || "unknown"} size=${bytes.length} extension=${extension || "unknown"} detected=${detectedExtension || "unknown"}.`,
-      );
       if (!extension) {
         console.error(`[Order Images ${requestId}] Preview image skipped for ${folder}: unsupported MIME/name (${dataUrl.mime || "empty"} / ${type || "empty"} / ${name || "unnamed"}).`);
         continue;
@@ -136,6 +127,5 @@ export async function saveOrderPreviewImages(images: PreviewImageInput[], folder
     }
   }
 
-  console.log(`[Order Images ${requestId}] Received ${images.length}, saved ${savedUrls.length} in ${folder}.`, savedUrls);
   return savedUrls;
 }

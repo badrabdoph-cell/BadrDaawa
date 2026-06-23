@@ -112,7 +112,6 @@ export async function saveInvitationGalleryImages(images: Array<string | File>) 
     if (saved) savedUrls.push(saved);
   }
 
-  console.log(`[Invitation Images] Received ${images.length}, saved ${savedUrls.length}.`, savedUrls);
   return savedUrls;
 }
 

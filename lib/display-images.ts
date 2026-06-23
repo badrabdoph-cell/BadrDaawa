@@ -36,10 +36,6 @@ async function convertHeicToJpeg(bytes: Buffer, sourceLabel: string, reason: str
         : Buffer.from(output.buffer, output.byteOffset, output.byteLength);
     if (!converted.length) throw new Error("HEIC conversion produced an empty file.");
 
-    console.log(
-      `[Image Conversion] ${sourceLabel}: converted HEIC/HEIF to jpg after sharp failure (${bytes.length} -> ${converted.length} bytes). Sharp reason: ${reason}`,
-    );
-
     return {
       bytes: converted,
       extension: "jpg",
@@ -88,10 +84,6 @@ export async function normalizeImageForDisplay(bytes: Buffer, extension: string,
     if (!converted.length) {
       throw new Error("Image conversion produced an empty file.");
     }
-
-    console.log(
-      `[Image Conversion] ${sourceLabel}: optimized ${originalExtension} to webp (${bytes.length} -> ${converted.length} bytes).`,
-    );
 
     return {
       bytes: converted,

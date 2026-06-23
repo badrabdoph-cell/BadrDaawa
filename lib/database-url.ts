@@ -65,7 +65,6 @@ export function getDatabaseUrl() {
   const source = urlResult.source || partsResult.source;
 
   if (result) {
-    console.log(`[DB] DATABASE_URL source: ${source} -> ${maskUrl(result)}`);
   } else {
     console.warn("[DB] No DATABASE_URL found via any source.");
   }

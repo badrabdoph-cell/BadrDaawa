@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, DatabaseBackup, FileImage, FilePenLine, FileText, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -18,7 +18,8 @@ const adminSections = [
       { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
-      { href: "/admin/invitations-customers", label: "العملاء", icon: UsersRound },
+      { href: "/admin/invitations-customers", label: "عملاء الدعوات", icon: UsersRound },
+      { href: "/admin/customers", label: "كل العملاء", icon: UsersRound },
       { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
       { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
       { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
@@ -39,6 +40,8 @@ const adminSections = [
       { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
       { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
       { href: "/admin/search", label: "البحث العام", icon: Search },
+      { href: "/admin/texts", label: "النصوص", icon: FileText },
+      { href: "/admin/recent-edits", label: "آخر التعديلات", icon: FilePenLine },
       { href: "/admin/favorites", label: "المفضلة", icon: Star },
     ],
   },
@@ -52,6 +55,7 @@ const adminSections = [
       { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
       { href: "/admin/check-ins", label: "تسجيل الوصول", icon: MapPinCheckInside },
       { href: "/admin/live-mode", label: "البث المباشر", icon: RadioTower },
+      { href: "/admin/broadcast", label: "بث الموقع", icon: RadioTower },
       { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
     ],
   },
@@ -63,6 +67,7 @@ const adminSections = [
     icon: Upload,
     links: [
       { href: "/admin/publish", label: "النشر والإصدارات", icon: Upload },
+      { href: "/admin/versions", label: "الإصدارات والاسترجاع", icon: ScrollText },
     ],
   },
   {
@@ -77,10 +82,15 @@ const adminSections = [
       { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+      { href: "/admin/monitoring", label: "المراقبة", icon: Activity },
+      { href: "/admin/diagnostics", label: "التشخيص", icon: Bug },
+      { href: "/admin/cleanup", label: "التنظيف", icon: Trash2 },
       { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
       { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
       { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
-      { href: "/admin/sync-settings", label: "GitHub", icon: Github },
+      { href: "/admin/sync-settings", label: "إعدادات GitHub", icon: Github },
+      { href: "/admin/sync", label: "المزامنة", icon: RefreshCw },
+      { href: "/admin/sync-history", label: "سجل المزامنة", icon: History },
       { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
     ],
   },
@@ -353,6 +363,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       U: "/admin/invitations-customers",
       T: "/admin/templates",
       S: "/admin/settings",
+      M: "/admin/monitoring",
+      D: "/admin/diagnostics",
+      V: "/admin/versions",
+      B: "/admin/broadcast",
+      X: "/admin/texts",
+      R: "/admin/recent-edits",
+      L: "/admin/cleanup",
+      Y: "/admin/sync",
+      H: "/admin/sync-history",
     };
 
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
@@ -678,6 +697,42 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>S</kbd></span>
                 <span>الإعدادات</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>V</kbd></span>
+                <span>الإصدارات والاسترجاع</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>B</kbd></span>
+                <span>بث الموقع</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>M</kbd></span>
+                <span>المراقبة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>D</kbd></span>
+                <span>التشخيص</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>X</kbd></span>
+                <span>النصوص</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>R</kbd></span>
+                <span>آخر التعديلات</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>L</kbd></span>
+                <span>التنظيف</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>Y</kbd></span>
+                <span>المزامنة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>H</kbd></span>
+                <span>سجل المزامنة</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><kbd style={kbdStyle}>?</kbd></span>

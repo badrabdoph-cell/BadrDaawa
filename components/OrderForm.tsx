@@ -207,7 +207,6 @@ function loadImageElement(url: string) {
 async function compressImageForUpload(file: File) {
   const sourceUrl = URL.createObjectURL(file);
   try {
-    console.log(`[Order Upload] Compress start name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`);
     let width = 0;
     let height = 0;
     let drawable: CanvasImageSource;
@@ -1100,10 +1099,6 @@ export function OrderForm({
         setImageUpload(index, { phase: "compressing", progress: 18, message: "جاري ضغط الصورة داخل المتصفح", error: "" });
         const optimized = await compressImageForUpload(file).catch((error) => {
           if (file.size <= maxDirectServerImageBytes) {
-            console.log(
-              `[Order Upload] Compression failed; uploading original fallback name=${file.name || "unnamed"} type=${file.type || "unknown"} size=${file.size}.`,
-              error,
-            );
             return {
               file,
               originalBytes: file.size,

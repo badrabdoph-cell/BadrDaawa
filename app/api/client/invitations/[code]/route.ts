@@ -292,7 +292,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=images-error`, request.url), 303);
   }
   if (savedGallery.length) {
-    console.log(`[Client Invitation] ${code} gallery saved (${savedGallery.length}):`, savedGallery);
   }
 
   const data: Record<string, unknown> = {};
@@ -377,7 +376,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data });
       if (!result.count) throw new Error("Invitation is deleted or missing.");
       if (savedGallery.length) {
-        console.log(`[Client Invitation] Database invitation ${code} updated with heroPhoto=${savedGallery[0]}.`);
       }
     }
     revalidatePath(`/${code}`);

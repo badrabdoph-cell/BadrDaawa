@@ -120,7 +120,6 @@ export async function POST(request: NextRequest) {
 
     ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
 
-    console.log("[Admin Settings] Successfully saved");
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);
   } catch (error) {
     console.error("[Admin Settings] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));

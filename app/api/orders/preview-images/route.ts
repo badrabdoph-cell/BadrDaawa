@@ -42,10 +42,6 @@ export async function POST(request: NextRequest) {
   const referer = request.headers.get("referer") || "";
   let images: PreviewImageInput[] = [];
 
-  console.log(
-    `[Preview Images ${requestId}] Start contentType=${contentType || "unknown"} contentLength=${contentLength || "unknown"} referer=${referer || "unknown"}.`,
-  );
-
   if (contentLength > maxPreviewRequestBytes) {
     console.error(`[Preview Images ${requestId}] Rejected large request: ${contentLength} bytes.`);
     return NextResponse.json(
@@ -69,8 +65,6 @@ export async function POST(request: NextRequest) {
       images = Array.isArray(body?.images) ? body.images.filter(isPreviewImageInput) : [];
     }
 
-    console.log(`[Preview Images ${requestId}] Parsed ${images.length} image(s).`);
-
     if (!images.length) {
       return NextResponse.json({ ok: false, error: "لم تصل أي صورة صالحة للخادم. اختار صورة JPG/PNG/WebP وحاول مرة أخرى." }, { status: 400 });
     }
@@ -93,7 +87,6 @@ export async function POST(request: NextRequest) {
       newValues: { imageUrls },
       metadata: { requestId, referer },
     });
-    console.log(`[Preview Images ${requestId}] Done in ${Date.now() - startedAt}ms.`, imageUrls);
     return NextResponse.json({ ok: true, imageUrls });
   } catch (error) {
     console.error(`[Preview Images ${requestId}] Unexpected upload failure after ${Date.now() - startedAt}ms.`, error);

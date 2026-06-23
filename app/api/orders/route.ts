@@ -22,7 +22,6 @@ const maxOrderRequestBytes = 36 * 1024 * 1024;
 
 async function saveOrderImages(images: string[], request: Request) {
   const requestId = `order-${Date.now().toString(36)}`;
-  console.log(`[Order API ${requestId}] Saving ${images.length} order image(s) for ${request.url}.`);
   return saveOrderPreviewImages(images, "order-requests", requestId);
 }
 
