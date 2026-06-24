@@ -154,18 +154,18 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         <section className="wd-hero" aria-labelledby="home-hero-title">
           <div className="container wd-hero-grid">
             <div className="wd-hero-copy">
-              <span className="wd-kicker">
+              <span className="wd-kicker" data-broadcast-id="home-content.hero.kicker">
                 <Sparkles size={16} />
                 {content?.hero?.kicker || "هنا تبدأ الحكاية"}
               </span>
-              <h1 id="home-hero-title">{heroMainTitle}</h1>
-              <p>{heroDescription}</p>
+              <h1 id="home-hero-title" data-broadcast-id="home-content.hero.mainTitle">{heroMainTitle}</h1>
+              <p data-broadcast-id="home-content.hero.description">{heroDescription}</p>
               <div className="wd-hero-actions">
-                <Link className="btn btn-gold btn-glow wd-primary-action" href="/templates">
+                <Link className="btn btn-gold btn-glow wd-primary-action" href="/templates" data-broadcast-id="home-content.hero.primaryCta">
                   <Palette size={19} />
                   {content?.hero?.primaryCta || "اختار التصميم"}
                 </Link>
-                <a className="btn btn-soft wd-secondary-action" href={whatsappUrl} target="_blank" rel="noreferrer">
+                <a className="btn btn-soft wd-secondary-action" href={whatsappUrl} target="_blank" rel="noreferrer" data-broadcast-id="home-content.hero.secondaryCta">
                   <MessageCircle size={19} />
                   {content?.hero?.secondaryCta || "اطلبها على واتساب"}
                 </a>
@@ -248,8 +248,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           <section className="wd-section wd-preview-section" aria-labelledby="home-preview-title">
             <div className="container wd-preview-grid">
               <div className="wd-preview-copy">
-                <span className="wd-kicker">{content?.preview?.eyebrow || "معاينة حية"}</span>
-                <h2 id="home-preview-title">{content?.preview?.title || "شوف الدعوة وهي بتشتغل فعلا"}</h2>
+                <span className="wd-kicker" data-broadcast-id="home-content.preview.eyebrow">{content?.preview?.eyebrow || "معاينة حية"}</span>
+                <h2 id="home-preview-title" data-broadcast-id="home-content.preview.title">{content?.preview?.title || "شوف الدعوة وهي بتشتغل فعلا"}</h2>
                 <p>المعاينة هنا مش ديكور. دي التجربة اللي هتوصل للضيف: فتح الدعوة، شاف التفاصيل، اختار الحضور، وكل حاجة اتسجلت عندك.</p>
                 <ul className="wd-check-list">
                   {previewPoints.map((point) => (
@@ -260,18 +260,18 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                   ))}
                 </ul>
                 <div className="wd-preview-actions">
-                  <Link className="btn btn-gold btn-glow" href="/badr-sarah-1">
+                  <Link className="btn btn-gold btn-glow" href="/badr-sarah-1" data-broadcast-id="home-content.preview.fullInviteCta">
                     <Eye size={18} />
                     {content?.preview?.fullInviteCta || "معاينة الدعوة كاملة"}
                   </Link>
-                  <Link className="btn btn-soft" href="/templates">
+                  <Link className="btn btn-soft" href="/templates" data-broadcast-id="home-content.preview.orderCta">
                     <WandSparkles size={18} />
                     {content?.preview?.orderCta || "استخدم هذا التصميم"}
                   </Link>
                 </div>
               </div>
               <div className="wd-preview-phone" aria-label="معاينة مباشرة لقالب الدعوة">
-                <span className="wd-preview-badge">{content?.preview?.badge || "دعوة حية"}</span>
+                <span className="wd-preview-badge" data-broadcast-id="home-content.preview.badge">{content?.preview?.badge || "دعوة حية"}</span>
                 {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
                   <img className="wd-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" width={360} height={640} loading="lazy" decoding="async" />
                 ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
@@ -288,7 +288,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           <div className="container">
             <div className="wd-section-head">
               <span className="wd-kicker">المميزات</span>
-              <h2 id="home-features-title">كل اللي الضيف يحتاجه، وكل اللي صاحب الفرح عايز يعرفه</h2>
+              <h2 id="home-features-title" data-broadcast-id="home-content.features.title">{content?.features?.title || "كل اللي الضيف يحتاجه، وكل اللي صاحب الفرح عايز يعرفه"}</h2>
             </div>
             <div className="wd-feature-groups">
               <FeatureGroup title="للضيوف" description="دعوة سهلة، واضحة، وبتفتح من أي موبايل." items={guestFeatures} />
@@ -335,8 +335,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           <section id="pricing-section" className="wd-section wd-pricing-section" aria-labelledby="home-pricing-title">
             <div className="container">
               <div className="wd-section-head">
-                <span className="wd-kicker">{content?.pricing?.eyebrow || "الباقات"}</span>
-                <h2 id="home-pricing-title">{content?.pricing?.title || "اختار الباقة المناسبة"}</h2>
+                <span className="wd-kicker" data-broadcast-id="home-content.pricing.eyebrow">{content?.pricing?.eyebrow || "الباقات"}</span>
+                <h2 id="home-pricing-title" data-broadcast-id="home-content.pricing.title">{content?.pricing?.title || "اختار الباقة المناسبة"}</h2>
                 <p>جميع الباقات مجانية حاليًا لفترة محدودة أثناء الإطلاق التجريبي.</p>
               </div>
               <PricingComparison
@@ -459,24 +459,24 @@ function PricingComparison({
         <div className="wd-pricing-row wd-pricing-row-head" role="row">
           <div role="columnheader">الميزة</div>
           <div role="columnheader">
-            <strong>{invitationPlanName}</strong>
+            <strong data-broadcast-id="home-content.pricing.invitationPlanName">{invitationPlanName}</strong>
             <span>
-              <s>{invitationPrice}</s>
+              <s data-broadcast-id="home-content.pricing.invitationPrice">{invitationPrice}</s>
               مجانًا
             </span>
           </div>
           <div role="columnheader">
             <em>الأفضل</em>
-            <strong>{plusPlanName}</strong>
+            <strong data-broadcast-id="home-content.pricing.plusPlanName">{plusPlanName}</strong>
             <span>
-              <s>{plusPrice}</s>
+              <s data-broadcast-id="home-content.pricing.plusPrice">{plusPrice}</s>
               مجانًا
             </span>
           </div>
         </div>
         {comparisonRows.map((row) => (
           <div className="wd-pricing-row" role="row" key={row.id}>
-            <div role="cell">{row.feature}</div>
+            <div role="cell" data-broadcast-id={`home-content.pricing.rows.${row.id}.feature`}>{row.feature}</div>
             <div role="cell" aria-label={row.invitation ? "متاح" : "غير متاح"}>
               {row.invitation ? <Check size={18} /> : <X size={18} />}
             </div>

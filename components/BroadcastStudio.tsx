@@ -140,6 +140,8 @@ export function BroadcastStudio({
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
+  const [frameNavInput, setFrameNavInput] = useState("");
+  const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewSrc = `${framePath}${framePath.includes("?") ? "&" : "?"}broadcast=1&v=${reloadKey}`;
 
   const fields = useMemo<StudioField[]>(() => {
@@ -328,6 +330,15 @@ export function BroadcastStudio({
     setSelectedKey(key);
   }
 
+  useEffect(() => {
+    if (!status) return;
+    if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+    statusTimeoutRef.current = setTimeout(() => setStatus(""), 5000);
+    return () => {
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+    };
+  }, [status]);
+
   function handleFrameLoad() {
     const iframeWindow = iframeRef.current?.contentWindow;
     try {
@@ -335,10 +346,19 @@ export function BroadcastStudio({
       const url = new URL(iframeWindow.location.href);
       if (url.origin !== window.location.origin) return;
       const nextPath = stripBroadcastParams(url);
-      if (nextPath !== framePath) setFramePath(nextPath);
+      if (nextPath !== framePath) {
+        setFramePath(nextPath);
+        setFrameNavInput(nextPath);
+      }
     } catch {
       // Cross-origin navigations are opened separately by normal browser rules.
     }
+  }
+
+  function navigateFrame(path: string) {
+    const clean = path.startsWith("/") ? path : `/${path}`;
+    setFramePath(clean);
+    setFrameNavInput(clean);
   }
 
   return (
@@ -372,8 +392,21 @@ export function BroadcastStudio({
           <div className="panel broadcast-stage">
             <div className="broadcast-frame-topbar">
               <span>{viewport === "mobile" ? "Phone" : "Desktop"}</span>
-              <strong>{framePath || "/"}</strong>
-              <button className="btn btn-soft btn-icon" type="button" title="العودة للرئيسية داخل البث" onClick={() => setFramePath("/")}>
+              <form
+                className="broadcast-frame-nav"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  navigateFrame(frameNavInput);
+                }}
+              >
+                <input
+                  value={frameNavInput}
+                  onChange={(e) => setFrameNavInput(e.target.value)}
+                  placeholder="أدخل رابط الصفحة (مثال: / أو /templates)"
+                  dir="ltr"
+                />
+              </form>
+              <button className="btn btn-soft btn-icon" type="button" title="العودة للرئيسية داخل البث" onClick={() => navigateFrame("/")}>
                 <RefreshCw size={16} />
               </button>
             </div>

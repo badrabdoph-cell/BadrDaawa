@@ -1,7 +1,7 @@
 "use client";
 
-import { Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Edit3, Pencil } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
 
 type Marker = {
@@ -13,6 +13,8 @@ type Marker = {
   href?: string;
   top: number;
   left: number;
+  right: number;
+  width: number;
 };
 
 type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
@@ -27,6 +29,7 @@ const ignoredSelector = [
   "select",
   "option",
   "[contenteditable='true']",
+  "[data-broadcast-ignore]",
 ].join(",");
 
 function normalizeText(value: string) {
@@ -101,14 +104,19 @@ function readMarker(element: HTMLElement, entry: RegistryEntry): Marker | null {
     value: entry.text,
     sourceLabel: entry.sourceLabel,
     href: entry.href,
-    top: Math.max(10, rect.top + Math.min(10, rect.height / 3)),
-    left: Math.min(window.innerWidth - 50, Math.max(10, rect.right - 38)),
+    top: Math.max(8, rect.top),
+    left: Math.max(4, rect.right - 38),
+    right: rect.right,
+    width: rect.width,
   };
 }
 
 export function BroadcastAnnotator() {
   const [marker, setMarker] = useState<Marker | null>(null);
   const [entries, setEntries] = useState<RegistryEntry[]>([]);
+  const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
+  const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties | null>(null);
+  const prevMarkerRef = useRef<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -132,9 +140,21 @@ export function BroadcastAnnotator() {
 
     const selectFromTarget = (target: EventTarget | null) => {
       const element = findReadableElement(target);
-      if (!element) return;
+      if (!element) {
+        setHoveredElement(null);
+        setOverlayStyle(null);
+        setMarker(null);
+        return;
+      }
       const entry = findEntry(element, entries);
-      if (entry) setMarker(readMarker(element, entry));
+      if (entry) {
+        setHoveredElement(element);
+        setMarker(readMarker(element, entry));
+      } else {
+        setHoveredElement(null);
+        setOverlayStyle(null);
+        setMarker(null);
+      }
     };
 
     const refresh = () => {
@@ -142,7 +162,10 @@ export function BroadcastAnnotator() {
       if (!key) return;
       const explicit = document.querySelector<HTMLElement>(`[data-broadcast-id="${CSS.escape(key)}"], [data-broadcast-key="${CSS.escape(key)}"]`);
       const entry = entries.find((item) => item.id === key);
-      if (explicit && entry) setMarker(readMarker(explicit, entry));
+      if (explicit && entry) {
+        setMarker(readMarker(explicit, entry));
+        setHoveredElement(explicit);
+      }
     };
 
     const onMove = (event: MouseEvent) => selectFromTarget(event.target);
@@ -179,8 +202,29 @@ export function BroadcastAnnotator() {
     };
   }, [entries, marker?.key]);
 
+  useEffect(() => {
+    if (!hoveredElement || !marker) {
+      setOverlayStyle(null);
+      return;
+    }
+    const rect = hoveredElement.getBoundingClientRect();
+    setOverlayStyle({
+      position: "fixed",
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      boxShadow: "inset 0 0 0 2px rgba(243, 207, 115, 0.5)",
+      borderRadius: "4px",
+      pointerEvents: "none",
+      zIndex: 9998,
+      transition: "box-shadow 0.15s ease",
+    });
+  }, [hoveredElement, marker?.key]);
+
   return (
     <div className="broadcast-markers" aria-label="أزرار تعديل شاشة بث الموقع">
+      {overlayStyle ? <div style={overlayStyle} className="broadcast-hover-overlay" /> : null}
       {marker ? (
         <button
           className="broadcast-marker-button"
@@ -189,10 +233,14 @@ export function BroadcastAnnotator() {
           type="button"
           title={marker.label}
           onClick={() => {
-            window.parent.postMessage({ source: "badr-broadcast", type: "edit", marker }, window.location.origin);
+            window.parent.postMessage(
+              { source: "badr-broadcast", type: "edit", marker },
+              window.location.origin,
+            );
           }}
         >
-          <Pencil size={15} />
+          <Edit3 size={14} />
+          <span className="broadcast-marker-label">{marker.label}</span>
         </button>
       ) : null}
     </div>
