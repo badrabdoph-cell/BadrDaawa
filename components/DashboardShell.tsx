@@ -3,25 +3,126 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Bell, Crown, Home, Keyboard, LogOut, Menu, Palette, Search, Star, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, FileImage, FilePenLine, FileText, Gauge, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import {
-  adminSections,
-  allAdminLinks,
-  findActiveAdminLink,
-  findAdminSectionForHref,
-  mobilePrimaryLinks,
-  shortcutHrefByKey,
-} from "@/lib/admin-navigation";
 
-const shortcutLinks = allAdminLinks.filter((link) => link.shortcutKey);
+const adminSections = [
+  {
+    id: "contacts",
+    title: "جهات الاتصال",
+    description: "الدعوات والعملاء",
+    accent: "gold",
+    icon: UsersRound,
+    links: [
+      { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
+      { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
+      { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
+      { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
+      { href: "/admin/invitations-customers", label: "عملاء الدعوات", icon: UsersRound },
+      { href: "/admin/customers", label: "كل العملاء", icon: UsersRound },
+      { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
+      { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
+      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
+    ],
+  },
+  {
+    id: "content",
+    title: "المحتوى ومساحة العمل",
+    description: "القوالب والوسائط والصفحات",
+    accent: "rose",
+    icon: Palette,
+    links: [
+      { href: "/admin/templates", label: "القوالب", icon: Palette },
+      { href: "/admin/music", label: "الموسيقى", icon: Music2 },
+      { href: "/admin/media", label: "الوسائط", icon: FileImage },
+      { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
+      { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
+      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
+      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
+      { href: "/admin/search", label: "البحث العام", icon: Search },
+      { href: "/admin/texts", label: "النصوص", icon: FileText },
+      { href: "/admin/recent-edits", label: "آخر التعديلات", icon: FilePenLine },
+      { href: "/admin/favorites", label: "المفضلة", icon: Star },
+    ],
+  },
+  {
+    id: "events",
+    title: "الفعاليات",
+    description: "الحضور والتحليلات والبث",
+    accent: "blue",
+    icon: ClipboardList,
+    links: [
+      { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
+      { href: "/admin/check-ins", label: "تسجيل الوصول", icon: MapPinCheckInside },
+      { href: "/admin/live-mode", label: "البث المباشر", icon: RadioTower },
+      { href: "/admin/broadcast", label: "بث الموقع", icon: RadioTower },
+      { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
+    ],
+  },
+  {
+    id: "publishing",
+    title: "النشر والإصدارات",
+    description: "نشر وإدارة الإصدارات",
+    accent: "gold",
+    icon: Upload,
+    links: [
+      { href: "/admin/publish", label: "النشر والإصدارات", icon: Upload },
+      { href: "/admin/versions", label: "الإصدارات والاسترجاع", icon: ScrollText },
+    ],
+  },
+  {
+    id: "cleanup",
+    title: "التنظيف والصيانة",
+    description: "تنظيف الوسائط والملفات والبيانات",
+    accent: "rose",
+    icon: Trash2,
+    links: [
+      { href: "/admin/cleanup", label: "لوحة التنظيف", icon: Trash2 },
+      { href: "/admin/cleanup/media", label: "الوسائط", icon: FileImage },
+      { href: "/admin/cleanup/backups", label: "النسخ", icon: DatabaseBackup },
+      { href: "/admin/cleanup/scan", label: "الفحص", icon: Activity },
+      { href: "/admin/cleanup/optimization", label: "التحسين", icon: Gauge },
+      { href: "/admin/cleanup/database", label: "قاعدة البيانات", icon: Database },
+    ],
+  },
+  {
+    id: "system",
+    title: "النظام والنسخ الاحتياطي",
+    description: "الإعدادات والمراقبة والنسخ",
+    accent: "slate",
+    icon: Settings,
+    links: [
+      { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
+      { href: "/admin/photographer-logo", label: "شعار المصور", icon: Camera },
+      { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
+      { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
+      { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
+      { href: "/admin/monitoring", label: "المراقبة", icon: Activity },
+      { href: "/admin/diagnostics", label: "التشخيص", icon: Bug },
+      { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
+      { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
+      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
+      { href: "/admin/sync-settings", label: "إعدادات GitHub", icon: Github },
+      { href: "/admin/sync", label: "المزامنة", icon: RefreshCw },
+      { href: "/admin/sync-history", label: "سجل المزامنة", icon: History },
+      { href: "/admin/tasks", label: "المهام المجدولة", icon: CalendarClock },
+    ],
+  },
+];
+
+const allAdminLinks = adminSections.flatMap((group) => group.links);
+const mobilePrimaryHrefs = new Set(["/admin", "/admin/new-invitation", "/admin/invitations", "/admin/orders", "/admin/notifications", "/admin/publish", "/admin/templates"]);
+const mobilePrimaryLinks = allAdminLinks.filter((link) => mobilePrimaryHrefs.has(link.href));
 const pendingAdminActionKey = "badr-admin-pending-action";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeLink = findActiveAdminLink(pathname);
-  const activeSection = findAdminSectionForHref(activeLink.href);
+  const activeLink =
+    allAdminLinks
+      .filter((link) => (link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href)))
+      .sort((a, b) => b.href.length - a.href.length)[0] || allAdminLinks[0];
+  const activeSection = adminSections.find((section) => section.links.some((link) => activeLink.href === link.href)) || adminSections[0];
   const [selectedSectionId, setSelectedSectionId] = useState(activeSection.id);
   const selectedSection = adminSections.find((section) => section.id === selectedSectionId) || activeSection;
   const [ordersBadge, setOrdersBadge] = useState(0);
@@ -268,6 +369,25 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }, []);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    const map: Record<string, string> = {
+      I: "/admin/invitations",
+      O: "/admin/orders",
+      C: "/admin/customers",
+      P: "/admin/publish",
+      U: "/admin/invitations-customers",
+      T: "/admin/templates",
+      S: "/admin/settings",
+      M: "/admin/monitoring",
+      D: "/admin/diagnostics",
+      V: "/admin/versions",
+      B: "/admin/broadcast",
+      X: "/admin/texts",
+      R: "/admin/recent-edits",
+      L: "/admin/cleanup",
+      Y: "/admin/sync",
+      H: "/admin/sync-history",
+    };
+
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
       pendingKeys.current = [];
       return;
@@ -293,10 +413,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (pendingKeys.current.length === 1 && pendingKeys.current[0] === "G" && shortcutHrefByKey[eventKey]) {
+    if (pendingKeys.current.length === 1 && pendingKeys.current[0] === "G" && map[eventKey]) {
       event.preventDefault();
       pendingKeys.current = [];
-      const href = shortcutHrefByKey[eventKey];
+      const href = map[eventKey];
       if (href && href !== window.location.pathname) {
         window.sessionStorage.setItem(
           pendingAdminActionKey,
@@ -377,10 +497,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                     return (
                       <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
                         <Icon size={18} />
-                        <span className="dashboard-nav-link-copy">
-                          <strong>{link.label}</strong>
-                          <small>{link.helper}</small>
-                        </span>
+                        <span>{link.label}</span>
                         {badgeFor(link) ? <strong className="dashboard-nav-badge">{badgeFor(link)}</strong> : null}
                         {link.href === "/admin/publish" && publishStatus ? (
                           <strong className={`dashboard-nav-badge publish-badge${publishStatus.hasUnpublishedChanges ? "" : " clean"}`}>
@@ -428,7 +545,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               )}
             </nav>
             <h1>{activeLink.label}</h1>
-            <p className="dashboard-topbar-helper">{activeLink.helper}</p>
           </div>
           <form className="dashboard-global-search" action="/admin/search" method="get">
             <Search size={17} />
@@ -514,10 +630,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                     return (
                       <Link className={isActive ? "active" : ""} href={link.href} key={link.href} aria-current={isActive ? "page" : undefined}>
                         <LinkIcon size={18} />
-                        <span>
-                          <strong>{link.label}</strong>
-                          <small>{link.helper}</small>
-                        </span>
+                        <span>{link.label}</span>
                         {badge ? <strong className="dashboard-nav-badge">{badge}</strong> : null}
                         {link.href === "/admin/publish" && publishStatus ? (
                           <strong className={`dashboard-nav-badge publish-badge${publishStatus.hasUnpublishedChanges ? "" : " clean"}`}>
@@ -574,13 +687,67 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <h2>اختصارات لوحة الإدارة</h2>
               </div>
             </div>
-            <div style={{ display: "grid", gap: "10px", maxHeight: "52vh", overflow: "auto", paddingInlineEnd: "4px" }}>
-              {shortcutLinks.map((link) => (
-                <div key={link.href} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px" }}>
-                  <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>{link.shortcutKey}</kbd></span>
-                  <span>{link.label}</span>
-                </div>
-              ))}
+            <div style={{ display: "grid", gap: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>I</kbd></span>
+                <span>الدعوات المنشورة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>O</kbd></span>
+                <span>الدعوات المعلقة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>C</kbd></span>
+                <span>العملاء</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>T</kbd></span>
+                <span>القوالب</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>P</kbd></span>
+                <span>إدارة النشر</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>S</kbd></span>
+                <span>الإعدادات</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>V</kbd></span>
+                <span>الإصدارات والاسترجاع</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>B</kbd></span>
+                <span>بث الموقع</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>M</kbd></span>
+                <span>المراقبة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>D</kbd></span>
+                <span>التشخيص</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>X</kbd></span>
+                <span>النصوص</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>R</kbd></span>
+                <span>آخر التعديلات</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>L</kbd></span>
+                <span>التنظيف</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>Y</kbd></span>
+                <span>المزامنة</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><kbd style={kbdStyle}>G</kbd> ثم <kbd style={kbdStyle}>H</kbd></span>
+                <span>سجل المزامنة</span>
+              </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><kbd style={kbdStyle}>?</kbd></span>
                 <span>عرض الاختصارات</span>
