@@ -1,5 +1,5 @@
 import Link from "next/link";
-import nextDynamic from "next/dynamic";
+import { cookies } from "next/headers";
 import {
   BellRing,
   CalendarCheck,
@@ -31,13 +31,12 @@ import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { LiveVisitorNumber } from "@/components/LiveVisitorNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getPublishedHomeContent } from "@/lib/home-content";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { getDraftHomeContent, getPublishedHomeContent } from "@/lib/home-content";
 import { getHomePlatformStats } from "@/lib/home-stats";
-import { getPublishedHomePreviewSettings } from "@/lib/preview-settings";
+import { getDraftHomePreviewSettings, getPublishedHomePreviewSettings } from "@/lib/preview-settings";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
-
-const BroadcastAnnotator = nextDynamic(() => import("@/components/BroadcastAnnotator").then((mod) => mod.BroadcastAnnotator));
 
 const quickBenefits = [
   { title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني.", icon: Send },
@@ -114,19 +113,20 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams?: Promise<{ broadcast?: string }> }) {
   const params = searchParams ? await searchParams : {};
+  const cookieStore = await cookies();
+  const isAdminBroadcast = params.broadcast === "1" && (await verifyAdminSessionCookie(cookieStore.get(ADMIN_SESSION_COOKIE)?.value));
   const [previewSettings, content, siteSettings, platformStats] = await Promise.all([
-    getPublishedHomePreviewSettings().catch(() => null),
-    getPublishedHomeContent().catch(() => null),
+    (isAdminBroadcast ? getDraftHomePreviewSettings() : getPublishedHomePreviewSettings()).catch(() => null),
+    (isAdminBroadcast ? getDraftHomeContent() : getPublishedHomeContent()).catch(() => null),
     getPublishedSiteSettings().catch(() => null),
     getHomePlatformStats().catch(() => null),
   ]);
 
   const previewTemplateSrc = `/templates/${previewSettings?.templateSlug || "featured-1"}/preview?silentPreview=1`;
-  const isBroadcastMode = params.broadcast === "1";
   const showPreview = siteSettings?.homepage?.showPreview !== false;
   const showPricing = siteSettings?.homepage?.showPricing !== false;
-  const heroMainTitle = "دعوة فرح إلكترونية تعرفك مين شافها ومين هيحضر";
-  const heroDescription = "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
+  const heroMainTitle = content?.hero?.mainTitle || "دعوة فرح إلكترونية تعرفك مين شافها ومين هيحضر";
+  const heroDescription = content?.hero?.description || "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
   const whatsappUrl = getWhatsAppOrderUrl("أريد طلب دعوة فرح إلكترونية من Wedding Daawa", siteSettings?.whatsappUrl);
   const stats = [
     { label: "دعوة منشأة", value: platformStats?.invitations || 116, suffix: "", icon: Palette },
@@ -163,11 +163,11 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               <div className="wd-hero-actions">
                 <Link className="btn btn-gold btn-glow wd-primary-action" href="/templates">
                   <Palette size={19} />
-                  اختار التصميم
+                  {content?.hero?.primaryCta || "اختار التصميم"}
                 </Link>
                 <a className="btn btn-soft wd-secondary-action" href={whatsappUrl} target="_blank" rel="noreferrer">
                   <MessageCircle size={19} />
-                  اطلبها على واتساب
+                  {content?.hero?.secondaryCta || "اطلبها على واتساب"}
                 </a>
               </div>
             </div>
@@ -387,7 +387,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
         </section>
       </main>
       <SiteFooter />
-      {isBroadcastMode ? <BroadcastAnnotator /> : null}
     </div>
   );
 }

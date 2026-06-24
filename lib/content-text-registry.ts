@@ -1,10 +1,11 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { getSiteSettings } from "./site-settings";
-import { getHomeContent } from "./home-content";
-import { getTemplatePreviewInfo } from "./template-preview-info";
-import { getContentPresets } from "./content-presets";
-import { getMessageTemplates } from "./message-templates";
-import { getLegalPages } from "./legal-pages";
+import { getDraftSiteSettings } from "./site-settings";
+import { getDraftHomeContent } from "./home-content";
+import { getDraftTemplatePreviewInfo } from "./template-preview-info";
+import { getDraftContentPresets } from "./content-presets";
+import { getDraftMessageTemplates } from "./message-templates";
+import { getDraftLegalPages } from "./legal-pages";
+import { getDynamicPages } from "./dynamic-pages";
 import { getAdminUiTexts, type AdminUiTextEntry } from "./admin-ui-texts";
 import { dictionaries } from "./i18n";
 
@@ -12,6 +13,7 @@ export type TextSource =
   | "site-settings"
   | "home-content"
   | "legal-pages"
+  | "dynamic-pages"
   | "content-presets"
   | "message-templates"
   | "template-preview-info"
@@ -35,6 +37,7 @@ const sourceLabels: Record<TextSource, string> = {
   "site-settings": "إعدادات الموقع",
   "home-content": "محتوى الصفحة الرئيسية",
   "legal-pages": "الصفحات القانونية",
+  "dynamic-pages": "صفحات الموقع",
   "content-presets": "النصوص الجاهزة",
   "message-templates": "قوالب الرسائل",
   "template-preview-info": "معلومات المعاينة",
@@ -68,7 +71,7 @@ export function textMatchesSearch(text: string, queryTokens: string[]): boolean 
 }
 
 async function collectSiteSettingsEntries(): Promise<ContentTextEntry[]> {
-  const settings = await getSiteSettings();
+  const settings = await getDraftSiteSettings();
   const entries: ContentTextEntry[] = [];
   const baseHref = "/admin/settings";
 
@@ -87,7 +90,7 @@ async function collectSiteSettingsEntries(): Promise<ContentTextEntry[]> {
 }
 
 async function collectHomeContentEntries(): Promise<ContentTextEntry[]> {
-  const content = await getHomeContent();
+  const content = await getDraftHomeContent();
   const entries: ContentTextEntry[] = [];
   const baseHref = "/admin/settings";
 
@@ -122,7 +125,7 @@ async function collectHomeContentEntries(): Promise<ContentTextEntry[]> {
 }
 
 async function collectLegalPagesEntries(): Promise<ContentTextEntry[]> {
-  const pages = await getLegalPages();
+  const pages = await getDraftLegalPages();
   const entries: ContentTextEntry[] = [];
   const baseHref = "/admin/legal";
 
@@ -137,14 +140,28 @@ async function collectLegalPagesEntries(): Promise<ContentTextEntry[]> {
 
     entries.push({ id: `legal-pages.${slug}.title`, source: "legal-pages", sourceLabel: sourceLabels["legal-pages"], group: slugLabel[slug] || slug, groupLabel: slugLabel[slug] || slug, path: `${slug}.title`, title: `عنوان ${slugLabel[slug] || slug}`, text: page.title, href: `${baseHref}?page=${slug}`, editable: true });
     entries.push({ id: `legal-pages.${slug}.description`, source: "legal-pages", sourceLabel: sourceLabels["legal-pages"], group: slugLabel[slug] || slug, groupLabel: slugLabel[slug] || slug, path: `${slug}.description`, title: `وصف ${slugLabel[slug] || slug}`, text: page.description, href: `${baseHref}?page=${slug}`, editable: true });
-    entries.push({ id: `legal-pages.${slug}.content`, source: "legal-pages", sourceLabel: sourceLabels["legal-pages"], group: slugLabel[slug] || slug, groupLabel: slugLabel[slug] || slug, path: `${slug}.content`, title: `محتوى ${slugLabel[slug] || slug}`, text: page.content.slice(0, 500), href: `${baseHref}?page=${slug}`, editable: true });
+    entries.push({ id: `legal-pages.${slug}.content`, source: "legal-pages", sourceLabel: sourceLabels["legal-pages"], group: slugLabel[slug] || slug, groupLabel: slugLabel[slug] || slug, path: `${slug}.content`, title: `محتوى ${slugLabel[slug] || slug}`, text: page.content, href: `${baseHref}?page=${slug}`, editable: true });
+  }
+
+  return entries;
+}
+
+async function collectDynamicPageEntries(): Promise<ContentTextEntry[]> {
+  const pages = await getDynamicPages();
+  const entries: ContentTextEntry[] = [];
+  const baseHref = "/admin/pages";
+
+  for (const page of pages) {
+    entries.push({ id: `dynamic-pages.${page.id}.title`, source: "dynamic-pages", sourceLabel: sourceLabels["dynamic-pages"], group: page.title, groupLabel: page.title, path: `${page.id}.title`, title: `عنوان صفحة: ${page.title}`, text: page.title, href: `${baseHref}?edit=${page.id}`, editable: true });
+    entries.push({ id: `dynamic-pages.${page.id}.description`, source: "dynamic-pages", sourceLabel: sourceLabels["dynamic-pages"], group: page.title, groupLabel: page.title, path: `${page.id}.description`, title: `وصف صفحة: ${page.title}`, text: page.description, href: `${baseHref}?edit=${page.id}`, editable: true });
+    entries.push({ id: `dynamic-pages.${page.id}.content`, source: "dynamic-pages", sourceLabel: sourceLabels["dynamic-pages"], group: page.title, groupLabel: page.title, path: `${page.id}.content`, title: `محتوى صفحة: ${page.title}`, text: page.content, href: `${baseHref}?edit=${page.id}`, editable: true });
   }
 
   return entries;
 }
 
 async function collectContentPresetsEntries(): Promise<ContentTextEntry[]> {
-  const presets = await getContentPresets();
+  const presets = await getDraftContentPresets();
   const entries: ContentTextEntry[] = [];
   const baseHref = "/admin/content-presets";
 
@@ -160,7 +177,7 @@ async function collectContentPresetsEntries(): Promise<ContentTextEntry[]> {
 }
 
 async function collectMessageTemplatesEntries(): Promise<ContentTextEntry[]> {
-  const templates = await getMessageTemplates();
+  const templates = await getDraftMessageTemplates();
   const entries: ContentTextEntry[] = [];
   const baseHref = "/admin/message-templates";
 
@@ -173,35 +190,35 @@ async function collectMessageTemplatesEntries(): Promise<ContentTextEntry[]> {
 }
 
 async function collectTemplatePreviewEntries(): Promise<ContentTextEntry[]> {
-  const info = await getTemplatePreviewInfo();
+  const info = await getDraftTemplatePreviewInfo();
   const entries: ContentTextEntry[] = [];
   const baseHref = "/admin/templates";
 
-  entries.push({ id: "template-preview.groomName", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "groomName", title: "اسم العريس", text: info.groomName, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.brideName", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "brideName", title: "اسم العروس", text: info.brideName, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.venue", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "venue", title: "القاعة", text: info.venue, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.city", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "city", title: "المدينة", text: info.city, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.texts.inviteMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.inviteMessage", title: "رسالة الدعوة", text: info.texts.inviteMessage, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.texts.inviteMessageSecondary", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.inviteMessageSecondary", title: "رسالة الدعوة الثانوية", text: info.texts.inviteMessageSecondary, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.texts.rsvpQuestion", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpQuestion", title: "سؤال RSVP", text: info.texts.rsvpQuestion, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.texts.rsvpDeclinedMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpDeclinedMessage", title: "رسالة اعتذار RSVP", text: info.texts.rsvpDeclinedMessage, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.texts.rsvpConfirmedSuccessMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpConfirmedSuccessMessage", title: "رسالة تأكيد الحضور", text: info.texts.rsvpConfirmedSuccessMessage, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.texts.rsvpDeclinedSuccessMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpDeclinedSuccessMessage", title: "رسالة تأكيد الاعتذار", text: info.texts.rsvpDeclinedSuccessMessage, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.photographer.name", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المصور", groupLabel: "المصور", path: "photographer.name", title: "اسم المصور", text: info.photographer.name, href: baseHref, editable: true });
-  entries.push({ id: "template-preview.photographer.description", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المصور", groupLabel: "المصور", path: "photographer.description", title: "وصف المصور", text: info.photographer.description, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.groomName", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "groomName", title: "اسم العريس", text: info.groomName, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.brideName", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "brideName", title: "اسم العروس", text: info.brideName, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.venue", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "venue", title: "القاعة", text: info.venue, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.city", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "city", title: "المدينة", text: info.city, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.texts.inviteMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.inviteMessage", title: "رسالة الدعوة", text: info.texts.inviteMessage, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.texts.inviteMessageSecondary", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.inviteMessageSecondary", title: "رسالة الدعوة الثانوية", text: info.texts.inviteMessageSecondary, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.texts.rsvpQuestion", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpQuestion", title: "سؤال RSVP", text: info.texts.rsvpQuestion, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.texts.rsvpDeclinedMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpDeclinedMessage", title: "رسالة اعتذار RSVP", text: info.texts.rsvpDeclinedMessage, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.texts.rsvpConfirmedSuccessMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpConfirmedSuccessMessage", title: "رسالة تأكيد الحضور", text: info.texts.rsvpConfirmedSuccessMessage, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.texts.rsvpDeclinedSuccessMessage", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المعاينة", groupLabel: "المعاينة", path: "texts.rsvpDeclinedSuccessMessage", title: "رسالة تأكيد الاعتذار", text: info.texts.rsvpDeclinedSuccessMessage, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.photographer.name", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المصور", groupLabel: "المصور", path: "photographer.name", title: "اسم المصور", text: info.photographer.name, href: baseHref, editable: true });
+  entries.push({ id: "template-preview-info.photographer.description", source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "المصور", groupLabel: "المصور", path: "photographer.description", title: "وصف المصور", text: info.photographer.description, href: baseHref, editable: true });
 
   for (const story of info.texts.story) {
     if (story.title) {
-      entries.push({ id: `template-preview.story.${story.id}.title`, source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "قصة العروسين", groupLabel: "قصة العروسين", path: `story.${story.id}.title`, title: `عنوان القصة`, text: story.title, href: baseHref, editable: true });
+      entries.push({ id: `template-preview-info.story.${story.id}.title`, source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "قصة العروسين", groupLabel: "قصة العروسين", path: `story.${story.id}.title`, title: `عنوان القصة`, text: story.title, href: baseHref, editable: true });
     }
     if (story.description) {
-      entries.push({ id: `template-preview.story.${story.id}.description`, source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "قصة العروسين", groupLabel: "قصة العروسين", path: `story.${story.id}.description`, title: `وصف القصة`, text: story.description, href: baseHref, editable: true });
+      entries.push({ id: `template-preview-info.story.${story.id}.description`, source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "قصة العروسين", groupLabel: "قصة العروسين", path: `story.${story.id}.description`, title: `وصف القصة`, text: story.description, href: baseHref, editable: true });
     }
   }
 
   for (const gs of info.texts.galleryStories) {
     if (gs.title) {
-      entries.push({ id: `template-preview.galleryStories.${gs.title}`, source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "قصة الألبوم", groupLabel: "قصة الألبوم", path: "galleryStories.title", title: `عنوان الألبوم`, text: gs.title, href: baseHref, editable: true });
+      entries.push({ id: `template-preview-info.galleryStories.${gs.title}`, source: "template-preview-info", sourceLabel: sourceLabels["template-preview-info"], group: "قصة الألبوم", groupLabel: "قصة الألبوم", path: "galleryStories.title", title: `عنوان الألبوم`, text: gs.title, href: baseHref, editable: true });
     }
   }
 
@@ -258,6 +275,7 @@ export async function collectAllTextEntries(): Promise<ContentTextEntry[]> {
     collectSiteSettingsEntries(),
     collectHomeContentEntries(),
     collectLegalPagesEntries(),
+    collectDynamicPageEntries(),
     collectContentPresetsEntries(),
     collectMessageTemplatesEntries(),
     collectTemplatePreviewEntries(),
@@ -319,6 +337,41 @@ export type TextUpdateRequest = {
   value: string;
 };
 
+function setNestedPath(obj: Record<string, unknown>, p: string, val: string) {
+  const keys = p.split(".");
+  let currentObj = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!currentObj[keys[i]] || typeof currentObj[keys[i]] !== "object") {
+      currentObj[keys[i]] = {};
+    }
+    currentObj = currentObj[keys[i]] as Record<string, unknown>;
+  }
+  currentObj[keys[keys.length - 1]] = val;
+}
+
+function setHomeContentPath(obj: Record<string, unknown>, p: string, val: string) {
+  const featureMatch = p.match(/^features\.points\.([^.]+)(?:\.text)?$/);
+  if (featureMatch) {
+    const features = obj.features as { points?: Array<{ id?: string; text?: string }> } | undefined;
+    const point = features?.points?.find((item) => item.id === featureMatch[1]);
+    if (!point) return false;
+    point.text = val;
+    return true;
+  }
+
+  const pricingMatch = p.match(/^pricing\.rows\.([^.]+)\.feature$/);
+  if (pricingMatch) {
+    const pricing = obj.pricing as { rows?: Array<{ id?: string; feature?: string }> } | undefined;
+    const row = pricing?.rows?.find((item) => item.id === pricingMatch[1]);
+    if (!row) return false;
+    row.feature = val;
+    return true;
+  }
+
+  setNestedPath(obj, p, val);
+  return true;
+}
+
 export async function updateContentText(id: string, value: string): Promise<boolean> {
   const parts = id.split(".");
   const source = parts[0] as TextSource;
@@ -328,17 +381,6 @@ export async function updateContentText(id: string, value: string): Promise<bool
     case "site-settings": {
       const { getDraftSiteSettings, updateSiteSettingsDraft } = await import("./site-settings");
       const current = await getDraftSiteSettings();
-      const setNestedPath = (obj: Record<string, unknown>, p: string, val: string) => {
-        const keys = p.split(".");
-        let currentObj = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (!currentObj[keys[i]] || typeof currentObj[keys[i]] !== "object") {
-            currentObj[keys[i]] = {};
-          }
-          currentObj = currentObj[keys[i]] as Record<string, unknown>;
-        }
-        currentObj[keys[keys.length - 1]] = val;
-      };
       const update = JSON.parse(JSON.stringify(current));
       setNestedPath(update, path, value);
       await updateSiteSettingsDraft(update as Parameters<typeof updateSiteSettingsDraft>[0]);
@@ -347,21 +389,30 @@ export async function updateContentText(id: string, value: string): Promise<bool
     case "home-content": {
       const { getDraftHomeContent, updateHomeContentDraft } = await import("./home-content");
       const current = await getDraftHomeContent();
-      const setNestedPath = (obj: Record<string, unknown>, p: string, val: string) => {
-        const keys = p.split(".");
-        let currentObj = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (!currentObj[keys[i]] || typeof currentObj[keys[i]] !== "object") {
-            currentObj[keys[i]] = {};
-          }
-          currentObj = currentObj[keys[i]] as Record<string, unknown>;
-        }
-        currentObj[keys[keys.length - 1]] = val;
-      };
       const update = JSON.parse(JSON.stringify(current));
-      setNestedPath(update, path, value);
+      if (!setHomeContentPath(update, path, value)) return false;
       await updateHomeContentDraft(update as Parameters<typeof updateHomeContentDraft>[0]);
       return true;
+    }
+    case "dynamic-pages": {
+      const { getDynamicPages, upsertDynamicPage } = await import("./dynamic-pages");
+      const pathParts = path.split(".");
+      const pageId = pathParts[0];
+      const field = pathParts[1] as "title" | "description" | "content";
+      if (!pageId || !["title", "description", "content"].includes(field)) return false;
+      const pages = await getDynamicPages();
+      const page = pages.find((item) => item.id === pageId);
+      if (!page) return false;
+      const result = await upsertDynamicPage({
+        id: page.id,
+        slug: page.slug,
+        title: field === "title" ? value : page.title,
+        description: field === "description" ? value : page.description,
+        content: field === "content" ? value : page.content,
+        coverImageUrl: page.coverImageUrl || "",
+        isPublished: page.isPublished,
+      });
+      return !!result.page;
     }
     case "legal-pages": {
       const { updateLegalPageDraft } = await import("./legal-pages");
@@ -407,17 +458,6 @@ export async function updateContentText(id: string, value: string): Promise<bool
     case "template-preview-info": {
       const { getDraftTemplatePreviewInfo, updateTemplatePreviewInfoDraft } = await import("./template-preview-info");
       const current = await getDraftTemplatePreviewInfo();
-      const setNestedPath = (obj: Record<string, unknown>, p: string, val: string) => {
-        const keys = p.split(".");
-        let currentObj = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (!currentObj[keys[i]] || typeof currentObj[keys[i]] !== "object") {
-            currentObj[keys[i]] = {};
-          }
-          currentObj = currentObj[keys[i]] as Record<string, unknown>;
-        }
-        currentObj[keys[keys.length - 1]] = val;
-      };
       const update = JSON.parse(JSON.stringify(current));
       setNestedPath(update, path, value);
       await updateTemplatePreviewInfoDraft(update as Parameters<typeof updateTemplatePreviewInfoDraft>[0]);

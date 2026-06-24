@@ -2,12 +2,19 @@
 
 import { Check, ChevronDown, ChevronUp, CircleX, ExternalLink, Laptop, Pencil, Plus, RefreshCw, Save, Search, Smartphone, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { buildBroadcastFields, getBroadcastPreviewValue, type BroadcastField } from "@/lib/broadcast-fields";
+import { getBroadcastPreviewValue, type BroadcastField } from "@/lib/broadcast-fields";
+import type { ContentTextEntry } from "@/lib/content-text-registry";
 import type { HomeContent } from "@/lib/home-content";
 import type { HomePreviewSettings } from "@/lib/preview-settings";
 import { FEATURE_ICONS, FEATURE_ICON_NAMES } from "@/lib/feature-icons";
 
-type BroadcastMarker = BroadcastField & {
+type StudioField = BroadcastField & {
+  sourceLabel?: string;
+  groupLabel?: string;
+  href?: string;
+};
+
+type BroadcastMarker = StudioField & {
   top?: number;
   left?: number;
 };
@@ -27,11 +34,17 @@ type BroadcastMutation =
 const searchStorageKey = "badr-broadcast-search";
 const selectedStorageKey = "badr-broadcast-selected";
 
-function getFieldGroup(field: BroadcastField) {
+function getFieldGroup(field: StudioField) {
+  if ("groupLabel" in field && field.groupLabel) return field.groupLabel;
+  if ("sourceLabel" in field && field.sourceLabel) return field.sourceLabel;
   if (field.key.startsWith("hero.")) return "واجهة البداية";
+  if (field.key.startsWith("home-content.hero.")) return "واجهة البداية";
   if (field.key.startsWith("features.")) return "المميزات";
+  if (field.key.startsWith("home-content.features.")) return "المميزات";
   if (field.key.startsWith("preview.")) return "المعاينة";
+  if (field.key.startsWith("home-content.preview.")) return "المعاينة";
   if (field.key.startsWith("pricing.")) return "الباقات والأسعار";
+  if (field.key.startsWith("home-content.pricing.")) return "الباقات والأسعار";
   return field.kind === "media" ? "الميديا" : "نصوص أخرى";
 }
 
@@ -49,7 +62,7 @@ function normalizeSearch(value: string) {
     .replace(/\s+/g, " ");
 }
 
-function fieldMatchesQuery(field: BroadcastField, query: string) {
+function fieldMatchesQuery(field: StudioField, query: string) {
   const words = normalizeSearch(query).split(" ").filter(Boolean);
   if (!words.length) return true;
   const haystack = normalizeSearch(`${field.label} ${field.value} ${field.key} ${getFieldGroup(field)}`);
@@ -62,25 +75,56 @@ function getPreviewUrl(settings: HomePreviewSettings) {
   return "";
 }
 
+function entryToField(entry: ContentTextEntry): StudioField {
+  return {
+    key: entry.id,
+    label: entry.title,
+    kind: "text",
+    value: entry.text,
+    sourceLabel: entry.sourceLabel,
+    groupLabel: entry.groupLabel,
+    href: entry.href,
+  };
+}
+
+function stripBroadcastParams(url: URL) {
+  url.searchParams.delete("broadcast");
+  url.searchParams.delete("v");
+  const path = `${url.pathname}${url.search}${url.hash}`;
+  return path || "/";
+}
+
+type BroadcastStateResponse = {
+  ok?: boolean;
+  content?: HomeContent;
+  previewSettings?: HomePreviewSettings;
+  fields?: ContentTextEntry[];
+  error?: string;
+};
+
 export function BroadcastStudio({
   fields: initialFields,
   initialContent,
   initialPreviewSettings,
   previewTemplateSlug,
   templates,
+  textEntries,
 }: {
   fields: BroadcastField[];
   initialContent: HomeContent;
   initialPreviewSettings: HomePreviewSettings;
   previewTemplateSlug: string;
   templates: { slug: string; arabicName: string }[];
+  textEntries: ContentTextEntry[];
 }) {
   const [content, setContent] = useState(initialContent);
   const [previewSettings, setPreviewSettings] = useState(initialPreviewSettings);
-  const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
-  const [selectedKey, setSelectedKey] = useState(initialFields[0]?.key || "");
+  const [registryEntries, setRegistryEntries] = useState(textEntries);
+  const [viewport, setViewport] = useState<"desktop" | "mobile">("mobile");
+  const [selectedKey, setSelectedKey] = useState(textEntries[0]?.id || initialFields[0]?.key || "");
   const [query, setQuery] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [framePath, setFramePath] = useState("/");
   const [draftValue, setDraftValue] = useState("");
   const [mediaMode, setMediaMode] = useState<HomePreviewSettings["mode"]>(initialPreviewSettings.mode);
   const [mediaUrl, setMediaUrl] = useState(getPreviewUrl(initialPreviewSettings));
@@ -92,12 +136,19 @@ export function BroadcastStudio({
   const [newPricingPlus, setNewPricingPlus] = useState(true);
   const [iconDropdown, setIconDropdown] = useState<{ id: string; currentIcon: string; top: number; left: number } | null>(null);
   const iconDropdownRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
-  const previewSrc = `/?broadcast=1&v=${reloadKey}`;
+  const previewSrc = `${framePath}${framePath.includes("?") ? "&" : "?"}broadcast=1&v=${reloadKey}`;
 
-  const fields = useMemo(() => buildBroadcastFields(content, getBroadcastPreviewValue(previewSettings)), [content, previewSettings]);
+  const fields = useMemo<StudioField[]>(() => {
+    const registryFields = registryEntries.filter((entry) => entry.editable).map(entryToField);
+    return [
+      ...registryFields,
+      { key: "preview.media", label: "ميديا المعاينة", kind: "media", value: getBroadcastPreviewValue(previewSettings), sourceLabel: "محتوى الصفحة الرئيسية", groupLabel: "المعاينة" },
+    ];
+  }, [registryEntries, previewSettings]);
   const selectedField = fields.find((field) => field.key === selectedKey) || fields[0];
   const selectedGroup = selectedField ? getFieldGroup(selectedField) : "";
 
@@ -159,13 +210,25 @@ export function BroadcastStudio({
 
   const filteredGroups = useMemo(() => {
     const matches = fields.filter((field) => fieldMatchesQuery(field, query));
-    const groups = new Map<string, BroadcastField[]>();
+    const groups = new Map<string, StudioField[]>();
     for (const field of matches) {
       const group = getFieldGroup(field);
       groups.set(group, [...(groups.get(group) || []), field]);
     }
     return Array.from(groups.entries());
   }, [fields, query]);
+
+  async function refreshBroadcastState() {
+    const response = await fetch("/api/admin/broadcast", { credentials: "same-origin", cache: "no-store" });
+    const data = (await response.json()) as BroadcastStateResponse;
+    if (!response.ok || !data.ok || !data.content || !data.previewSettings || !data.fields) {
+      throw new Error(data.error || "تعذر تحديث بيانات شاشة البث");
+    }
+    setContent(data.content);
+    setPreviewSettings(data.previewSettings);
+    setRegistryEntries(data.fields);
+    return data;
+  }
 
   async function runMutation(payload: BroadcastMutation, successMessage: string) {
     setIsSaving(true);
@@ -183,12 +246,14 @@ export function BroadcastStudio({
       if (!contentType.includes("application/json")) {
         throw new Error(response.redirected || response.url.includes("/admin/login") ? "جلسة الأدمن انتهت. سجل دخول مرة أخرى." : "رد الحفظ غير صالح. أعد تحميل الصفحة وجرب مرة أخرى.");
       }
-      const data = (await response.json()) as { ok?: boolean; error?: string; content?: HomeContent; previewSettings?: HomePreviewSettings };
+      const data = (await response.json()) as BroadcastStateResponse;
       if (!response.ok || !data.ok || !data.content || !data.previewSettings) {
         throw new Error(data.error || "تعذر حفظ التعديل");
       }
       setContent(data.content);
       setPreviewSettings(data.previewSettings);
+      if (data.fields) setRegistryEntries(data.fields);
+      await refreshBroadcastState();
       setReloadKey((value) => value + 1);
       setStatusType("success");
       setStatus(successMessage);
@@ -202,6 +267,34 @@ export function BroadcastStudio({
     }
   }
 
+  async function runTextEdit(key: string, value: string, successMessage: string) {
+    setIsSaving(true);
+    setStatus("");
+    setStatusType("success");
+    try {
+      const response = await fetch("/api/admin/text-edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify({ id: key, value }),
+      });
+      const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
+      await refreshBroadcastState();
+      setReloadKey((value) => value + 1);
+      setStatusType("success");
+      setStatus(successMessage);
+      return true;
+    } catch (error) {
+      setStatusType("error");
+      setStatus(error instanceof Error ? error.message : "تعذر حفظ النص");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function saveSelected(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedField) return;
@@ -209,7 +302,7 @@ export function BroadcastStudio({
       await runMutation({ action: "media", mediaMode, mediaUrl, templateSlug }, "تم حفظ الميديا وتحديث المعاينة.");
       return;
     }
-    await runMutation({ action: "text", key: selectedField.key, kind: "text", value: draftValue }, "تم حفظ النص وتحديث الموقع.");
+    await runTextEdit(selectedField.key, draftValue, "تم حفظ النص وتحديث شاشة البث.");
   }
 
   async function addFeature(event: FormEvent<HTMLFormElement>) {
@@ -233,6 +326,19 @@ export function BroadcastStudio({
 
   function selectField(key: string) {
     setSelectedKey(key);
+  }
+
+  function handleFrameLoad() {
+    const iframeWindow = iframeRef.current?.contentWindow;
+    try {
+      if (!iframeWindow?.location.href) return;
+      const url = new URL(iframeWindow.location.href);
+      if (url.origin !== window.location.origin) return;
+      const nextPath = stripBroadcastParams(url);
+      if (nextPath !== framePath) setFramePath(nextPath);
+    } catch {
+      // Cross-origin navigations are opened separately by normal browser rules.
+    }
   }
 
   return (
@@ -264,8 +370,15 @@ export function BroadcastStudio({
       <div className="broadcast-workspace">
         <div className="broadcast-stage-stack">
           <div className="panel broadcast-stage">
+            <div className="broadcast-frame-topbar">
+              <span>{viewport === "mobile" ? "Phone" : "Desktop"}</span>
+              <strong>{framePath || "/"}</strong>
+              <button className="btn btn-soft btn-icon" type="button" title="العودة للرئيسية داخل البث" onClick={() => setFramePath("/")}>
+                <RefreshCw size={16} />
+              </button>
+            </div>
             <div className={viewport === "mobile" ? "broadcast-frame mobile" : "broadcast-frame desktop"}>
-              <iframe key={reloadKey} src={previewSrc} title="شاشة بث الموقع" loading="eager" />
+              <iframe ref={iframeRef} key={`${framePath}:${reloadKey}`} src={previewSrc} title="شاشة بث الموقع" loading="eager" onLoad={handleFrameLoad} />
             </div>
           </div>
 
@@ -313,7 +426,7 @@ export function BroadcastStudio({
                       >
                         <CurrentIcon size={16} />
                       </button>
-                      <button type="button" onClick={() => selectField(`features.points.${point.id}.text`)}>
+                      <button type="button" onClick={() => selectField(`home-content.features.points.${point.id}`)}>
                         {point.text}
                       </button>
                       <button
@@ -389,7 +502,7 @@ export function BroadcastStudio({
                 </div>
                 {content.pricing.rows.map((row) => (
                   <div className="broadcast-pricing-row" role="row" key={row.id}>
-                    <button type="button" onClick={() => selectField(`pricing.rows.${row.id}.feature`)}>
+                    <button type="button" onClick={() => selectField(`home-content.pricing.rows.${row.id}.feature`)}>
                       {row.feature}
                     </button>
                     <button
@@ -451,7 +564,7 @@ export function BroadcastStudio({
 
             <label className="broadcast-search">
               <Search size={17} />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث في كل نصوص الصفحة الرئيسية" />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث في نصوص الموقع والصفحات" />
               {query ? (
                 <button className="broadcast-clear-search" type="button" title="مسح البحث" onClick={() => setQuery("")}>
                   <X size={16} />

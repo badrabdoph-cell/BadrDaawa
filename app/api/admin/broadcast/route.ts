@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { collectAllTextEntries } from "@/lib/content-text-registry";
 import { getDraftHomeContent, updateHomeContentDraft, type HomeContent } from "@/lib/home-content";
 import { getDraftHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { getRedirectUrl } from "@/lib/utils";
@@ -213,6 +214,31 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
 
+async function getBroadcastState() {
+  const [content, previewSettings, fields] = await Promise.all([
+    getDraftHomeContent(),
+    getDraftHomePreviewSettings(),
+    collectAllTextEntries(),
+  ]);
+  return {
+    content,
+    previewSettings,
+    fields: fields.filter((field) => field.editable),
+  };
+}
+
+export async function GET(request: NextRequest) {
+  if (!(await isAdmin(request))) {
+    return jsonError("unauthorized", 401);
+  }
+
+  try {
+    return NextResponse.json({ ok: true, ...(await getBroadcastState()) });
+  } catch (error) {
+    return jsonError(error instanceof Error ? error.message : "failed");
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return jsonError("unauthorized", 401);
@@ -221,7 +247,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const payload = (await request.json()) as BroadcastMutation;
     const result = await applyBroadcastMutation(payload);
-    return NextResponse.json({ ok: true, ...result });
+    const fields = (await collectAllTextEntries()).filter((field) => field.editable);
+    return NextResponse.json({ ok: true, ...result, fields });
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "failed");
   }

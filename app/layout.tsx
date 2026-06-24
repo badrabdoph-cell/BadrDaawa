@@ -4,6 +4,7 @@ import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
 import { CustomHeadInjector } from "@/components/CustomHeadInjector";
+import { BroadcastModeGate } from "@/components/BroadcastModeGate";
 import { verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getMetadataBaseUrl } from "@/lib/utils";
@@ -79,6 +80,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ScrollReveal />
         <GlobalNotifications />
         {children}
+        <BroadcastModeGate />
       </body>
     </html>
   );
