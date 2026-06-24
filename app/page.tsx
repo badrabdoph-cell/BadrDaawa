@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { LiveVisitorNumber } from "@/components/LiveVisitorNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getPublishedHomeContent } from "@/lib/home-content";
@@ -128,10 +129,12 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const heroDescription = "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
   const whatsappUrl = getWhatsAppOrderUrl("أريد طلب دعوة فرح إلكترونية من Wedding Daawa", siteSettings?.whatsappUrl);
   const stats = [
-    { label: "قالب جاهز", value: Math.max(platformStats?.templates || 0, 6), suffix: "+", icon: Palette },
-    { label: "تأكيد حضور", value: platformStats?.confirmedRsvps || 8322, suffix: "+", icon: UserCheck },
-    { label: "تجربة موبايل", value: 100, suffix: "%", icon: Smartphone },
+    { label: "دعوة منشأة", value: platformStats?.invitations || 116, suffix: "", icon: Palette },
+    { label: "زيارة", value: platformStats?.views || 60062, suffix: "", icon: Eye },
+    { label: "تسجيل حضور", value: platformStats?.confirmedRsvps || 8322, suffix: "", icon: UserCheck },
+    { label: "Live", value: platformStats?.activeNow || 10, suffix: "", icon: Clock3, hint: "عدد الزوار في الوقت الحالي", live: true },
   ];
+  const pricingRows = content?.pricing?.rows || [];
   const structuredData = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Service",
@@ -317,10 +320,11 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 <article className="wd-stat" key={stat.label}>
                   <Icon size={22} />
                   <strong>
-                    {stat.value}
+                    {"live" in stat ? <LiveVisitorNumber initial={stat.value} /> : stat.value.toLocaleString("en-US")}
                     {stat.suffix}
                   </strong>
                   <span>{stat.label}</span>
+                  {"hint" in stat ? <small>{stat.hint}</small> : null}
                 </article>
               );
             })}
@@ -335,21 +339,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
                 <h2 id="home-pricing-title">{content?.pricing?.title || "اختار الباقة المناسبة"}</h2>
                 <p>جميع الباقات مجانية حاليًا لفترة محدودة أثناء الإطلاق التجريبي.</p>
               </div>
-              <div className="wd-pricing-grid">
-                <PricingCard
-                  title={content?.pricing?.invitationPlanName || "الباقة الأساسية"}
-                  price={content?.pricing?.invitationPrice || "100 ج"}
-                  description="اختيار مناسب لو محتاج دعوة واضحة وسريعة."
-                  rows={(content?.pricing?.rows || []).filter((row) => row.invitation).slice(0, 6)}
-                />
-                <PricingCard
-                  title={content?.pricing?.plusPlanName || "الباقة الكاملة"}
-                  price={content?.pricing?.plusPrice || "300 ج"}
-                  description="الأفضل لو عايز متابعة ورسائل ومميزات كاملة."
-                  rows={(content?.pricing?.rows || []).filter((row) => row.plus).slice(0, 8)}
-                  featured
-                />
-              </div>
+              <PricingComparison
+                invitationPlanName={content?.pricing?.invitationPlanName || "الباقة الأساسية"}
+                invitationPrice={content?.pricing?.invitationPrice || "100 ج"}
+                plusPlanName={content?.pricing?.plusPlanName || "الباقة الكاملة"}
+                plusPrice={content?.pricing?.plusPrice || "300 ج"}
+                rows={pricingRows}
+              />
             </div>
           </section>
         ) : null}
@@ -433,42 +429,74 @@ function FeatureGroup({
   );
 }
 
-function PricingCard({
-  title,
-  price,
-  description,
+function PricingComparison({
+  invitationPlanName,
+  invitationPrice,
+  plusPlanName,
+  plusPrice,
   rows,
-  featured = false,
 }: {
-  title: string;
-  price: string;
-  description: string;
-  rows: Array<{ id: string; feature: string }>;
-  featured?: boolean;
+  invitationPlanName: string;
+  invitationPrice: string;
+  plusPlanName: string;
+  plusPrice: string;
+  rows: Array<{ id: string; feature: string; invitation: boolean; plus: boolean }>;
 }) {
+  const comparisonRows =
+    rows.length > 0
+      ? rows
+      : [
+          { id: "design", feature: "تصميم دعوة إلكترونية", invitation: true, plus: true },
+          { id: "rsvp", feature: "تأكيد حضور RSVP", invitation: true, plus: true },
+          { id: "qr", feature: "QR Code للمشاركة", invitation: true, plus: true },
+          { id: "dashboard", feature: "لوحة متابعة خاصة", invitation: false, plus: true },
+          { id: "broadcast", feature: "رسائل وتذكيرات واتساب", invitation: false, plus: true },
+          { id: "analytics", feature: "إحصائيات المشاهدة والحضور", invitation: false, plus: true },
+        ];
+
   return (
-    <article className={`wd-pricing-card${featured ? " wd-pricing-card-featured" : ""}`}>
-      {featured ? <span className="wd-recommended">الأكثر اكتمالًا</span> : null}
-      <div className="wd-pricing-card-head">
-        <strong>{title}</strong>
-        <p>{description}</p>
-        <div>
-          <span className="wd-old-price">{price}</span>
-          <b>مجانًا الآن</b>
+    <div className="wd-pricing-table-wrap">
+      <div className="wd-pricing-table" role="table" aria-label="مقارنة الباقات">
+        <div className="wd-pricing-row wd-pricing-row-head" role="row">
+          <div role="columnheader">الميزة</div>
+          <div role="columnheader">
+            <strong>{invitationPlanName}</strong>
+            <span>
+              <s>{invitationPrice}</s>
+              مجانًا
+            </span>
+          </div>
+          <div role="columnheader">
+            <em>الأفضل</em>
+            <strong>{plusPlanName}</strong>
+            <span>
+              <s>{plusPrice}</s>
+              مجانًا
+            </span>
+          </div>
         </div>
-      </div>
-      <ul>
-        {rows.map((row) => (
-          <li key={row.id}>
-            <Check size={17} />
-            <span>{row.feature}</span>
-          </li>
+        {comparisonRows.map((row) => (
+          <div className="wd-pricing-row" role="row" key={row.id}>
+            <div role="cell">{row.feature}</div>
+            <div role="cell" aria-label={row.invitation ? "متاح" : "غير متاح"}>
+              {row.invitation ? <Check size={18} /> : <X size={18} />}
+            </div>
+            <div role="cell" aria-label={row.plus ? "متاح" : "غير متاح"}>
+              {row.plus ? <Check size={18} /> : <X size={18} />}
+            </div>
+          </div>
         ))}
-      </ul>
-      <Link className={`btn ${featured ? "btn-gold btn-glow" : "btn-soft"}`} href="/templates">
-        {featured ? <Star size={18} /> : <Sparkles size={18} />}
-        ابدأ من هذه الباقة
-      </Link>
-    </article>
+      </div>
+      <div className="wd-pricing-actions">
+        <Link className="btn btn-soft" href="/templates">
+          <Sparkles size={18} />
+          ابدأ بالأساسية
+        </Link>
+        <Link className="btn btn-gold btn-glow" href="/templates">
+          <Star size={18} />
+          اختار الكاملة
+        </Link>
+      </div>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ export type HomePlatformStats = {
   customers: number;
   templates: number;
   confirmedRsvps: number;
+  views: number;
+  activeNow: number;
 };
 
 export async function getHomePlatformStats(): Promise<HomePlatformStats> {
@@ -20,11 +22,13 @@ export async function getHomePlatformStats(): Promise<HomePlatformStats> {
       customers: 0,
       templates: templates.length,
       confirmedRsvps: 0,
+      views: 0,
+      activeNow: 0,
     };
   }
 
   try {
-    const [invitations, customers, templates, confirmedRsvps] = await Promise.all([
+    const [invitations, customers, templates, confirmedRsvps, invitationViews] = await Promise.all([
       prisma.invitation.count({ where: { deletedAt: null } }),
       prisma.customer.count({ where: { deletedAt: null } }),
       templatesPromise,
@@ -34,6 +38,10 @@ export async function getHomePlatformStats(): Promise<HomePlatformStats> {
           invitation: { deletedAt: null },
         },
       }),
+      prisma.invitation.aggregate({
+        where: { deletedAt: null },
+        _sum: { viewCount: true },
+      }),
     ]);
 
     return {
@@ -41,6 +49,8 @@ export async function getHomePlatformStats(): Promise<HomePlatformStats> {
       customers,
       templates: templates.length,
       confirmedRsvps,
+      views: invitationViews._sum.viewCount || 0,
+      activeNow: 10,
     };
   } catch (error) {
     console.error("Failed to load home platform stats", error);
@@ -50,6 +60,8 @@ export async function getHomePlatformStats(): Promise<HomePlatformStats> {
       customers: 0,
       templates: templates.length,
       confirmedRsvps: 0,
+      views: 0,
+      activeNow: 0,
     };
   }
 }
