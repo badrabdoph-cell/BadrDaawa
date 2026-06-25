@@ -118,7 +118,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const [previewSettings, content, siteSettings, platformStats] = await Promise.all([
     (isAdminBroadcast ? getDraftHomePreviewSettings() : getPublishedHomePreviewSettings()).catch(() => null),
     (isAdminBroadcast ? getDraftHomeContent() : getPublishedHomeContent()).catch(() => null),
-    getPublishedSiteSettings().catch(() => null),
+    (isAdminBroadcast ? getDraftSiteSettings() : getPublishedSiteSettings()).catch(() => null),
     getHomePlatformStats().catch(() => null),
   ]);
 
