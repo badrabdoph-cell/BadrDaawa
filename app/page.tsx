@@ -40,6 +40,58 @@ import { getDraftSiteSettings, getPublishedSiteSettings } from "@/lib/site-setti
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 import { DEFAULT_SECTION_ORDER } from "@/lib/home-sections";
 
+const quickBenefits = [
+  { title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني.", icon: Send },
+  { title: "تأكيد حضور RSVP", text: "الضيف يؤكد أو يعتذر من نفس الدعوة.", icon: UserCheck },
+  { title: "لوكيشن وQR Code", text: "كل تفاصيل الوصول محفوظة في مكان واحد.", icon: QrCode },
+  { title: "لوحة متابعة خاصة", text: "شوف الأسماء والأرقام والردود أول بأول.", icon: SlidersHorizontal },
+];
+
+const flowSteps = [
+  { title: "اختار التصميم", text: "ابدأ من قالب قريب من ذوقكم.", icon: Palette },
+  { title: "ابعت بيانات الفرح", text: "الأسماء، المعاد، القاعة، الصور، والموسيقى.", icon: MessageCircle },
+  { title: "استلم لينك الدعوة", text: "لينك خاص جاهز للمشاركة مع QR Code.", icon: Link2 },
+  { title: "تابع الحضور", text: "كل رد من المعازيم يظهر في لوحة واحدة.", icon: Eye },
+];
+
+const guestFeatures = [
+  { title: "لينك خاص", text: "الضيف يفتح الدعوة من الموبايل بدون تحميل تطبيق.", icon: Link2 },
+  { title: "QR Code", text: "مشاركة سهلة على الشاشة أو في المطبوعات.", icon: QrCode },
+  { title: "لوكيشن القاعة", text: "العنوان والخريطة موجودين داخل الدعوة.", icon: MapPin },
+  { title: "إضافة للتقويم", text: "تنبيه قبل الفرح بدل نسيان المعاد.", icon: CalendarCheck },
+  { title: "موسيقى وصور", text: "دعوة تحس فعلا إنها تخصكم، مش صفحة عادية.", icon: Music2 },
+];
+
+const ownerFeatures = [
+  { title: "مين شاف الدعوة", text: "اعرف التفاعل الحقيقي بدل التخمين.", icon: Eye },
+  { title: "تأكيد الحضور", text: "ردود واضحة: هيحضر، مش هيحضر، أو لسه.", icon: Vote },
+  { title: "كشف أسماء وأرقام", text: "كل بيانات الضيوف مرتبة وسهلة المراجعة.", icon: UsersRound },
+  { title: "رسائل جماعية", text: "ابعت تذكير أو تنبيه لكل الضيوف مرة واحدة.", icon: BellRing },
+  { title: "تعليقات بموافقتك", text: "ذكريات وكلمات تظهر بعد اعتمادك فقط.", icon: HeartHandshake },
+];
+
+const trustItems = [
+  { title: "مناسب لكل المناسبات", text: "فرح، خطوبة، كتب كتاب، أو احتفال عائلي.", icon: Sparkles },
+  { title: "بدون تطبيق", text: "يعمل من المتصفح مباشرة على أغلب الموبايلات.", icon: Smartphone },
+  { title: "مشاركة واتساب", text: "اللينك جاهز للارسال للعيلة والصحاب.", icon: MessageCircle },
+  { title: "خصوصية وتحكم", text: "لوحة خاصة وروابط واضحة لكل دور.", icon: ShieldCheck },
+];
+
+const previewPoints = [
+  "الضيف يفتح الدعوة من اللينك مباشرة.",
+  "يشوف الصور والموسيقى واللوكيشن في نفس التجربة.",
+  "يأكد الحضور أو يعتذر بخطوة بسيطة.",
+  "صاحب الدعوة يتابع الردود والأرقام من لوحة واحدة.",
+];
+
+const faqItems = [
+  { question: "هل الضيوف يحتاجون تحميل تطبيق؟", answer: "لا. الدعوة تفتح من اللينك مباشرة على الموبايل أو الكمبيوتر." },
+  { question: "هل أقدر أعدل الدعوة بعد الإنشاء؟", answer: "نعم، تقدر تعدل البيانات والصور والتفاصيل حسب الباقة والإعدادات المتاحة." },
+  { question: "هل أقدر أعرف مين شاف الدعوة؟", answer: "الفكرة الأساسية إنك تتابع التفاعل والحضور من لوحة متابعة بدل ما تعتمد على التخمين." },
+  { question: "هل أقدر أرسل الدعوة على واتساب؟", answer: "نعم، الدعوة عبارة عن لينك خاص جاهز للمشاركة على واتساب أو أي تطبيق رسائل." },
+  { question: "هل يوجد QR Code؟", answer: "نعم، يمكن استخدام QR Code لتسهيل فتح الدعوة من أي موبايل." },
+  { question: "هل الدعوة تعمل على كل الموبايلات؟", answer: "تم تصميم التجربة لتعمل على المتصفحات الحديثة وتكون مريحة على الموبايل أولا." },
+];
 
 export const dynamic = "force-dynamic";
 
@@ -134,21 +186,16 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
     "quick-benefits": () => (
       <section className="wd-value-strip" aria-label="مميزات سريعة" data-home-section="quick-benefits">
         <div className="container wd-value-grid">
-          {(content?.quickBenefits || [
-            { id: "quick-1", title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني." },
-            { id: "quick-2", title: "تأكيد حضور RSVP", text: "الضيف يؤكد أو يعتذر من نفس الدعوة." },
-            { id: "quick-3", title: "لوكيشن وQR Code", text: "كل تفاصيل الوصول محفوظة في مكان واحد." },
-            { id: "quick-4", title: "لوحة متابعة خاصة", text: "شوف الأسماء والأرقام والردود أول بأول." },
-          ]).map((item) => {
-            const Icon = Send;
+          {quickBenefits.map((item) => {
+            const Icon = item.icon;
             return (
-              <article className="wd-value-item" key={item.id}>
+              <article className="wd-value-item" key={item.title}>
                 <span>
                   <Icon size={20} />
                 </span>
                 <div>
-                  <strong data-broadcast-id={`home-content.quickBenefits.${item.id}.title`}>{item.title}</strong>
-                  <p data-broadcast-id={`home-content.quickBenefits.${item.id}.text`}>{item.text}</p>
+                  <strong>{item.title}</strong>
+                  <p>{item.text}</p>
                 </div>
               </article>
             );
@@ -164,19 +211,14 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <h2 id="home-flow-title">من اختيار التصميم لحد آخر تأكيد حضور</h2>
           </div>
           <div className="wd-flow-grid">
-            {(content?.flowSteps || [
-              { id: "flow-1", title: "اختار التصميم", text: "ابدأ من قالب قريب من ذوقكم." },
-              { id: "flow-2", title: "ابعت بيانات الفرح", text: "الأسماء، المعاد، القاعة، الصور، والموسيقى." },
-              { id: "flow-3", title: "استلم لينك الدعوة", text: "لينك خاص جاهز للمشاركة مع QR Code." },
-              { id: "flow-4", title: "تابع الحضور", text: "كل رد من المعازيم يظهر في لوحة واحدة." },
-            ]).map((step, index) => {
-              const Icon = Palette;
+            {flowSteps.map((step, index) => {
+              const Icon = step.icon;
               return (
-                <article className="wd-flow-card" key={step.id}>
+                <article className="wd-flow-card" key={step.title}>
                   <span className="wd-flow-number">{index + 1}</span>
                   <Icon size={24} />
-                  <strong data-broadcast-id={`home-content.flowSteps.${step.id}.title`}>{step.title}</strong>
-                  <p data-broadcast-id={`home-content.flowSteps.${step.id}.text`}>{step.text}</p>
+                  <strong>{step.title}</strong>
+                  <p>{step.text}</p>
                 </article>
               );
             })}
@@ -192,15 +234,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <h2 id="home-preview-title" data-broadcast-id="home-content.preview.title">{content?.preview?.title || "شوف الدعوة وهي بتشتغل فعلا"}</h2>
             <p>المعاينة هنا مش ديكور. دي التجربة اللي هتوصل للضيف: فتح الدعوة، شاف التفاصيل، اختار الحضور، وكل حاجة اتسجلت عندك.</p>
             <ul className="wd-check-list">
-              {(content?.previewPoints || [
-                "الضيف يفتح الدعوة من اللينك مباشرة.",
-                "يشوف الصور والموسيقى واللوكيشن في نفس التجربة.",
-                "يأكد الحضور أو يعتذر بخطوة بسيطة.",
-                "صاحب الدعوة يتابع الردود والأرقام من لوحة واحدة.",
-              ]).map((point, index) => (
+              {previewPoints.map((point, index) => (
                 <li key={index}>
                   <Check size={18} />
-                  <span data-broadcast-id={`home-content.previewPoints.${index}`}>{point}</span>
+                  <span>{point}</span>
                 </li>
               ))}
             </ul>
@@ -236,20 +273,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <h2 id="home-features-title" data-broadcast-id="home-content.features.title">{content?.features?.title || "كل اللي الضيف يحتاجه، وكل اللي صاحب الفرح عايز يعرفه"}</h2>
           </div>
           <div className="wd-feature-groups">
-            <FeatureGroup title="للضيوف" description="دعوة سهلة، واضحة، وبتفتح من أي موبايل." items={content?.guestFeatures || [
-              { id: "guest-1", title: "لينك خاص", text: "الضيف يفتح الدعوة من الموبايل بدون تحميل تطبيق." },
-              { id: "guest-2", title: "QR Code", text: "مشاركة سهلة على الشاشة أو في المطبوعات." },
-              { id: "guest-3", title: "لوكيشن القاعة", text: "العنوان والخريطة موجودين داخل الدعوة." },
-              { id: "guest-4", title: "إضافة للتقويم", text: "تنبيه قبل الفرح بدل نسيان المعاد." },
-              { id: "guest-5", title: "موسيقى وصور", text: "دعوة تحس فعلا إنها تخصكم، مش صفحة عادية." },
-            ]} />
-            <FeatureGroup title="لصاحب الفرح" description="متابعة وتنظيم بدل الورق والأسئلة المتكررة." items={content?.ownerFeatures || [
-              { id: "owner-1", title: "مين شاف الدعوة", text: "اعرف التفاعل الحقيقي بدل التخمين." },
-              { id: "owner-2", title: "تأكيد الحضور", text: "ردود واضحة: هيحضر، مش هيحضر، أو لسه." },
-              { id: "owner-3", title: "كشف أسماء وأرقام", text: "كل بيانات الضيوف مرتبة وسهلة المراجعة." },
-              { id: "owner-4", title: "رسائل جماعية", text: "ابعت تذكير أو تنبيه لكل الضيوف مرة واحدة." },
-              { id: "owner-5", title: "تعليقات بموافقتك", text: "ذكريات وكلمات تظهر بعد اعتمادك فقط." },
-            ]} featured />
+            <FeatureGroup title="للضيوف" description="دعوة سهلة، واضحة، وبتفتح من أي موبايل." items={guestFeatures} />
+            <FeatureGroup title="لصاحب الفرح" description="متابعة وتنظيم بدل الورق والأسئلة المتكررة." items={ownerFeatures} featured />
           </div>
         </div>
       </section>
