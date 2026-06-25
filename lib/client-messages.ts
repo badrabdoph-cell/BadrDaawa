@@ -53,6 +53,13 @@ export async function getClientUnreadMessageCount(invitationCode: string) {
 }
 
 export async function getTotalUnreadClientMessages() {
+  if (prisma) {
+    try {
+      return await prisma.clientMessage.count({ where: { readAt: null } });
+    } catch (error) {
+      console.error("Failed to count unread client messages from PostgreSQL", error);
+    }
+  }
   const messages = await getAllClientMessages();
   return messages.filter((message) => !message.readAt).length;
 }

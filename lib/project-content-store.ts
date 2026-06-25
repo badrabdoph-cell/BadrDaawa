@@ -266,15 +266,17 @@ export async function clearPendingChanges(): Promise<void> {
 }
 
 export async function getPublishMeta(): Promise<PublishMeta> {
-  const pendingChanges = await readAppSetting<PendingChanges>(PUBLISH_META_KEYS.pendingChanges) || {};
-  const lastPublishedAt = await readAppSetting<string | null>(PUBLISH_META_KEYS.lastPublishedAt);
-  const lastPublishedBy = await readAppSetting<string | null>(PUBLISH_META_KEYS.lastPublishedBy);
-  const hasUnpublishedChanges = await readAppSetting<boolean>(PUBLISH_META_KEYS.hasUnpublishedChanges) || false;
-  const autoPublishEnabled = await readAppSetting<boolean>(PUBLISH_META_KEYS.autoPublishEnabled) || false;
-  const autoPublishIntervalMinutes = await readAppSetting<number>(PUBLISH_META_KEYS.autoPublishIntervalMinutes) || 30;
-  
+  const [pendingChanges, lastPublishedAt, lastPublishedBy, hasUnpublishedChanges, autoPublishEnabled, autoPublishIntervalMinutes] = await Promise.all([
+    readAppSetting<PendingChanges>(PUBLISH_META_KEYS.pendingChanges).then((v) => v || {}),
+    readAppSetting<string | null>(PUBLISH_META_KEYS.lastPublishedAt),
+    readAppSetting<string | null>(PUBLISH_META_KEYS.lastPublishedBy),
+    readAppSetting<boolean>(PUBLISH_META_KEYS.hasUnpublishedChanges).then((v) => v || false),
+    readAppSetting<boolean>(PUBLISH_META_KEYS.autoPublishEnabled).then((v) => v || false),
+    readAppSetting<number>(PUBLISH_META_KEYS.autoPublishIntervalMinutes).then((v) => v || 30),
+  ]);
+
   return {
-    pendingChanges,
+    pendingChanges: pendingChanges as PendingChanges,
     lastPublishedAt,
     lastPublishedBy,
     hasUnpublishedChanges,

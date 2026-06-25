@@ -13,5 +13,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ count: 0 }, { status: 401 });
   }
 
-  return NextResponse.json({ count: await getTotalUnreadClientMessages() }, { headers: { "Cache-Control": "no-store" } });
+  try {
+    const count = await Promise.race([
+      getTotalUnreadClientMessages(),
+      new Promise<number>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+    ]);
+    return NextResponse.json({ count }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ count: 0 }, { headers: { "Cache-Control": "no-store" } });
+  }
 }

@@ -16,21 +16,28 @@ export async function GET(request: NextRequest) {
 
   if (prisma) {
     try {
-      const count = await prisma.orderRequest.count({
-        where: {
-          deletedAt: null,
-          status: {
-            in: ["NEW", "REVIEWING", "EDITED", "ACCEPTED"] as never,
+      const count = await Promise.race([
+        prisma.orderRequest.count({
+          where: {
+            deletedAt: null,
+            status: {
+              in: ["NEW", "REVIEWING", "EDITED", "ACCEPTED"] as never,
+            },
           },
-        },
-      });
+        }),
+        new Promise<number>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
       return NextResponse.json({ count });
     } catch (error) {
       console.error("Failed to count admin order requests from database", error);
     }
   }
 
-  const orders = await getAdminOrders();
-  const count = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
-  return NextResponse.json({ count });
+  try {
+    const orders = await getAdminOrders();
+    const count = orders.filter((order) => !["published", "converted", "rejected"].includes(order.status)).length;
+    return NextResponse.json({ count });
+  } catch {
+    return NextResponse.json({ count: 0 });
+  }
 }
