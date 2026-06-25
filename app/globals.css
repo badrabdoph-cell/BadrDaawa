@@ -12012,63 +12012,91 @@ img {
   z-index: 9999;
 }
 
-.broadcast-hover-overlay {
-  pointer-events: none;
-  animation: broadcast-overlay-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes broadcast-overlay-pulse {
-  0%, 100% { box-shadow: inset 0 0 0 2px rgba(243, 207, 115, 0.5); }
-  50% { box-shadow: inset 0 0 0 3px rgba(243, 207, 115, 0.8), 0 0 16px rgba(243, 207, 115, 0.15); }
-}
-
-.broadcast-marker-button {
-  pointer-events: auto;
-  position: fixed;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 10px 0 8px;
-  border: 1px solid rgba(255, 240, 181, 0.72);
-  border-radius: 999px;
-  background: linear-gradient(135deg, #9f742b, #f3cf73);
-  color: #17120a;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(47, 30, 8, 0.35);
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-  z-index: 10000;
-  direction: rtl;
-}
-
-.broadcast-marker-button:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 12px 30px rgba(47, 30, 8, 0.42);
-}
-
-.broadcast-marker-button .broadcast-marker-label {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .broadcast-edit-mode * {
   cursor: default;
 }
 
 .broadcast-edit-mode a,
-.broadcast-edit-mode button {
+.broadcast-edit-mode button,
+.broadcast-edit-mode [contenteditable="true"] {
   cursor: pointer;
+}
+
+.broadcast-edit-mode [contenteditable="true"] {
+  cursor: text;
+  caret-color: #f3cf73;
 }
 
 .broadcast-edit-mode [data-broadcast-id]:hover,
 .broadcast-edit-mode [data-broadcast-key]:hover {
   outline: none;
+}
+
+.broadcast-edit-toolbar {
+  pointer-events: auto;
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 240, 181, 0.25);
+  border-radius: 10px;
+  background: rgba(23, 18, 10, 0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 10001;
+  direction: rtl;
+}
+
+.broadcast-toolbar-save {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #9f742b, #f3cf73);
+  color: #17120a;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.broadcast-toolbar-save:hover {
+  opacity: 0.85;
+}
+
+.broadcast-toolbar-cancel {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 240, 181, 0.7);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.broadcast-toolbar-cancel:hover {
+  color: #f5e6c4;
+}
+
+.broadcast-toolbar-hint {
+  color: rgba(255, 240, 181, 0.3);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0 4px;
+  direction: ltr;
 }
 
 .admin-empty-state {
