@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Home, Sparkles, X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { InvitationExperience } from "@/components/InvitationExperience";
 import { LiveInvitationPreview } from "@/components/LiveInvitationPreview";
 import { cleanPlayableAudioUrl } from "@/lib/audio-files";
@@ -250,22 +250,6 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
         <Link className="template-preview-close-fab" href="/templates" aria-label="العودة إلى معرض التصاميم">
           <X size={20} />
         </Link>
-      ) : null}
-      {!hidePreviewActions ? (
-        <nav className="template-preview-floating-actions" aria-label="اختيارات القالب">
-          <Link className="template-preview-action template-preview-action-soft" href="/">
-            <Home size={17} />
-            الصفحة الرئيسية
-          </Link>
-          <Link className="template-preview-action template-preview-action-soft" href="/templates">
-            <ArrowRight size={17} />
-            اختر تصميمًا آخر
-          </Link>
-          <Link className="template-preview-action template-preview-action-gold" href={`/order?template=${template.slug}`}>
-            <Sparkles size={17} />
-            استخدم هذا التصميم
-          </Link>
-        </nav>
       ) : null}
       {showFloatingStart ? (
         <Link className="wd-floating-start template-floating-start" href={`/order?template=${template.slug}`} aria-label="ابدأ الآن واطلب هذا التصميم">

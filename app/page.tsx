@@ -262,7 +262,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               ))}
             </ul>
             <div className="wd-preview-actions">
-              <Link className="btn btn-soft" href="/templates" data-broadcast-id="home-content.preview.orderCta">
+              <Link className="btn btn-gold btn-glow wd-primary-action" href="/templates" data-broadcast-id="home-content.preview.orderCta">
                 <WandSparkles size={18} />
                 شاهد باقي التصاميم
               </Link>
