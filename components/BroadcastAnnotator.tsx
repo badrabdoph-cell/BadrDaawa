@@ -12,6 +12,11 @@ type Marker = {
   sourceLabel?: string;
 };
 
+type LivePreview = {
+  key: string;
+  value: string;
+};
+
 const ignoredSelector = [
   ".broadcast-markers",
   "script", "style", "noscript",
@@ -51,17 +56,75 @@ export function BroadcastAnnotator() {
   const entriesRef = useRef<RegistryEntry[]>([]);
   const fetchedRef = useRef(false);
   const hoveredRef = useRef<HTMLElement | null>(null);
+  const livePreviewRef = useRef<Map<string, string>>(new Map());
 
   entriesRef.current = entries;
+
+  function applyLivePreview(key: string, value: string) {
+    // Find all elements that match this entry and update their text
+    const allElements = document.querySelectorAll("*");
+    for (const element of allElements) {
+      if (!(element instanceof HTMLElement)) continue;
+      if (element.matches(ignoredSelector)) continue;
+
+      const text = elementText(element);
+      if (!text) continue;
+
+      // Check if this element matches any entry with the given key
+      const match = entriesRef.current.find((e: RegistryEntry) => e.id === key);
+      if (match && normalizeText(text) === normalizeText(match.text)) {
+        // Store original text if not already stored
+        if (!element.dataset.broadcastOriginal) {
+          element.dataset.broadcastOriginal = element.textContent || "";
+        }
+        element.textContent = value;
+      }
+    }
+  }
+
+  function restoreOriginalText(key: string) {
+    const allElements = document.querySelectorAll("*");
+    for (const element of allElements) {
+      if (!(element instanceof HTMLElement)) continue;
+      if (element.dataset.broadcastOriginal) {
+        // Find the updated entry with this key and use its new text
+        const match = entriesRef.current.find((e: RegistryEntry) => e.id === key);
+        if (match) {
+          element.textContent = match.text;
+        } else {
+          element.textContent = element.dataset.broadcastOriginal;
+        }
+        delete element.dataset.broadcastOriginal;
+      }
+    }
+  }
 
   useEffect(() => {
     let alive = true;
 
     function onParentMessage(event: MessageEvent) {
-      if (event.data?.source === "badr-broadcast-parent" && Array.isArray(event.data.entries)) {
+      if (event.data?.source === "badr-broadcast-parent") {
         if (!alive) return;
-        fetchedRef.current = true;
-        setEntries(event.data.entries.filter((e: RegistryEntry) => e.editable && e.text.trim()));
+
+        if (Array.isArray(event.data.entries)) {
+          fetchedRef.current = true;
+          setEntries(event.data.entries.filter((e: RegistryEntry) => e.editable && e.text.trim()));
+        }
+
+        if (event.data.livePreview) {
+          const preview = event.data.livePreview as LivePreview;
+          if (preview.key && preview.value !== undefined) {
+            livePreviewRef.current.set(preview.key, preview.value);
+            applyLivePreview(preview.key, preview.value);
+          }
+        }
+
+        // Clear live preview when saved
+        if (event.data.clearPreview) {
+          const key = event.data.clearPreview as string;
+          livePreviewRef.current.delete(key);
+          restoreOriginalText(key);
+        }
       }
     }
 
@@ -106,7 +169,7 @@ export function BroadcastAnnotator() {
 
     const ancestors: HTMLElement[] = [];
     let current: HTMLElement | null = element;
-    while (current && current !== document.body && ancestors.length < 10) {
+    while (current && current !== document.body && ancestors.length < 15) {
       if (current.matches(ignoredSelector)) break;
       const text = elementText(current);
       const normalized = normalizeText(text);
@@ -116,13 +179,15 @@ export function BroadcastAnnotator() {
       current = current.parentElement;
     }
 
+    // First, try to find exact match starting from smallest element (closest to click)
     for (const candidate of ancestors) {
       const exact = exactMatchEntry(candidate, entriesRef.current);
       if (exact) { highlightElement(candidate); return; }
     }
 
+    // If no exact match, select the smallest element with text
     if (ancestors.length > 0) {
-      highlightElement(ancestors[0]);
+      highlightElement(ancestors[ancestors.length - 1]);
     } else {
       clearHighlight();
     }

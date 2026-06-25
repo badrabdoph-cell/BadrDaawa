@@ -146,6 +146,22 @@ export function BroadcastStudio({
       setReloadKey((value) => value + 1);
       setStatusType("success");
       setStatus("تم حفظ النص وتحديث شاشة البث.");
+
+      // Send updated entries to iframe and clear live preview
+      const iframeWindow = iframeRef.current?.contentWindow;
+      if (iframeWindow) {
+        try {
+          // First send updated entries
+          setTimeout(() => sendEntriesToIframe(), 100);
+          // Then clear live preview
+          iframeWindow.postMessage(
+            { source: "badr-broadcast-parent", clearPreview: saveKey },
+            window.location.origin,
+          );
+        } catch {
+          // ignore cross-origin errors
+        }
+      }
     } catch (error) {
       setStatusType("error");
       setStatus(error instanceof Error ? error.message : "تعذر حفظ النص");
@@ -167,7 +183,7 @@ export function BroadcastStudio({
     } catch {
       return false;
     }
-  }, [entries, initialEntries]);
+  }, [entries, initialEntries, inlineEntries]);
 
   useEffect(() => {
     if (!allEntries.length) return;
@@ -181,6 +197,24 @@ export function BroadcastStudio({
     };
     trySend();
   }, [allEntries.length, sendEntriesToIframe, inlineEntries.length]);
+
+  // Live preview: send draft changes to iframe in real-time
+  useEffect(() => {
+    if (!selectedEntry || !draftValue || draftValue === selectedEntry.text) return;
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+    try {
+      iframeWindow.postMessage(
+        {
+          source: "badr-broadcast-parent",
+          livePreview: { key: selectedEntry.id, value: draftValue },
+        },
+        window.location.origin,
+      );
+    } catch {
+      // ignore cross-origin errors
+    }
+  }, [draftValue, selectedEntry?.id]);
 
   useEffect(() => {
     if (!status) return;
