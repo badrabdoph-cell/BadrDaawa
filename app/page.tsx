@@ -35,7 +35,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getDraftHomeContent, getPublishedHomeContent } from "@/lib/home-content";
 import { getHomePlatformStats } from "@/lib/home-stats";
 import { getDraftHomePreviewSettings, getPublishedHomePreviewSettings } from "@/lib/preview-settings";
-import { getPublishedSiteSettings } from "@/lib/site-settings";
+import { getDraftSiteSettings, getPublishedSiteSettings } from "@/lib/site-settings";
 import { getWhatsAppOrderUrl } from "@/lib/utils";
 
 const quickBenefits = [
