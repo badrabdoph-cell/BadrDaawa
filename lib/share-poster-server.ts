@@ -105,7 +105,7 @@ function posterSvg(input: ServerSharePosterInput, qrDataUrl: string, coverDataUr
   <rect x="480" y="954" width="3" height="392" fill="#000"/>
   <text x="744" y="1008" font-family="Georgia" font-size="58" font-weight="900" text-anchor="middle" fill="#000">Save the date</text>
   <rect x="566" y="1025" width="356" height="4" fill="#000"/>
-  <rect x="588" y="1082" width="430" height="246" fill="rgba(255,250,241,.82)" stroke="#16120f" stroke-width="3"/>
+  <rect x="588" y="1082" width="430" height="246" fill="#fffaf1" opacity=".82" stroke="#16120f" stroke-width="3"/>
   <rect x="595" y="1089" width="416" height="232" fill="none" stroke="#16120f" stroke-width="2"/>
   <text x="802" y="1142" font-family="Georgia" font-size="54" text-anchor="middle" fill="#000">${escapeXml(date.month)}</text>
   <text x="802" y="1194" font-family="Arial" font-size="28" font-weight="900" text-anchor="middle" fill="#000">„${escapeXml(venue.toUpperCase())}„</text>
