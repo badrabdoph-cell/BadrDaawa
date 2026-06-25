@@ -22,6 +22,19 @@ const ignoredSelector = [
   "br", "hr",
 ].join(",");
 
+const layoutContainerTags = new Set([
+  "div", "section", "article", "main", "aside", "header", "footer", "nav",
+  "body", "html", "form", "fieldset", "figure", "dialog", "template", "slot",
+]);
+
+const textElementTags = new Set([
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "p", "span", "a", "button", "label", "li", "dt", "dd",
+  "figcaption", "cite", "q", "blockquote", "strong", "em",
+  "b", "i", "u", "small", "time", "address", "pre", "code",
+  "td", "th", "caption", "legend", "summary", "figcaption",
+]);
+
 function normalizeText(value: string) {
   return value
     .trim()
@@ -123,37 +136,54 @@ export function BroadcastAnnotator() {
     return entries.find((entry) => normalizeText(entry.text) === text) || null;
   }
 
+  function isTextElement(el: HTMLElement): boolean {
+    return textElementTags.has(el.tagName.toLowerCase());
+  }
+
+  function isLayoutContainer(el: HTMLElement): boolean {
+    return layoutContainerTags.has(el.tagName.toLowerCase());
+  }
+
   function selectFromTarget(target: EventTarget | null) {
     let element = target instanceof HTMLElement ? target : null;
     if (!element || element.closest(".broadcast-markers")) { clearHighlight(); return; }
 
-    const ancestors: HTMLElement[] = [];
+    const textCandidates: HTMLElement[] = [];
+    const layoutCandidates: HTMLElement[] = [];
     let current: HTMLElement | null = element;
-    while (current && current !== document.body && ancestors.length < 10) {
+    while (current && current !== document.body && (textCandidates.length + layoutCandidates.length) < 10) {
       if (current.matches(ignoredSelector)) break;
       const text = elementText(current);
       const normalized = normalizeText(text);
       if (normalized.length >= 2 && normalized.length <= 500) {
-        ancestors.push(current);
+        if (isTextElement(current)) {
+          textCandidates.push(current);
+        } else if (!isLayoutContainer(current)) {
+          textCandidates.push(current);
+        } else {
+          layoutCandidates.push(current);
+        }
       }
       current = current.parentElement;
     }
 
-    // deep first → أكثر عنصر تحديداً
-    for (const candidate of ancestors) {
+    // Check text elements first (deepest first)
+    const allCandidates = [...textCandidates, ...layoutCandidates];
+
+    for (const candidate of allCandidates) {
       const exact = findExactEntry(candidate, entriesRef.current);
       if (exact) { highlightElement(candidate); return; }
     }
 
-    for (const candidate of ancestors) {
+    for (const candidate of allCandidates) {
       const text = normalizeText(elementText(candidate));
       if (text.length < 8) continue;
       const partial = findEntry(candidate, entriesRef.current);
       if (partial) { highlightElement(candidate); return; }
     }
 
-    if (ancestors.length > 0) {
-      highlightElement(ancestors[0]);
+    if (allCandidates.length > 0) {
+      highlightElement(allCandidates[0]);
     } else {
       clearHighlight();
     }
