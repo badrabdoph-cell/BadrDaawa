@@ -32,6 +32,7 @@ export const orderRequestSchema = z.object({
   musicUrl: z.string().trim().max(500).optional().default(""),
   orderMusic: z.string().max(48 * 1024 * 1024).optional().default(""),
   idempotencyKey: z.string().trim().max(120).optional().default(""),
+  selectedShareTemplate: z.enum(["classic", "classic-news", "classic-romantic"]).optional().default("classic"),
   templateSlug: z.string().trim().min(2),
   language: z.enum(["ar", "en"]).optional().default("ar"),
 });
