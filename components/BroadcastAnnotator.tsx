@@ -117,18 +117,46 @@ export function BroadcastAnnotator() {
     element.style.transition = "box-shadow 0.12s ease";
   }
 
+  function findExactEntry(element: HTMLElement, entries: RegistryEntry[]) {
+    const text = normalizeText(elementText(element));
+    if (!text || text.length < 2) return null;
+    return entries.find((entry) => normalizeText(entry.text) === text) || null;
+  }
+
   function selectFromTarget(target: EventTarget | null) {
     let element = target instanceof HTMLElement ? target : null;
-    while (element && element !== document.body) {
-      if (element.matches(ignoredSelector)) { element = null; break; }
-      if (element.closest(".broadcast-markers")) { element = null; break; }
-      const text = elementText(element);
+    if (!element || element.closest(".broadcast-markers")) { clearHighlight(); return; }
+
+    const ancestors: HTMLElement[] = [];
+    let current: HTMLElement | null = element;
+    while (current && current !== document.body && ancestors.length < 10) {
+      if (current.matches(ignoredSelector)) break;
+      const text = elementText(current);
       const normalized = normalizeText(text);
-      if (normalized.length >= 2 && normalized.length <= 500) break;
-      element = element.parentElement;
+      if (normalized.length >= 2 && normalized.length <= 500) {
+        ancestors.push(current);
+      }
+      current = current.parentElement;
     }
-    if (element) highlightElement(element);
-    else clearHighlight();
+
+    // deep first → أكثر عنصر تحديداً
+    for (const candidate of ancestors) {
+      const exact = findExactEntry(candidate, entriesRef.current);
+      if (exact) { highlightElement(candidate); return; }
+    }
+
+    for (const candidate of ancestors) {
+      const text = normalizeText(elementText(candidate));
+      if (text.length < 8) continue;
+      const partial = findEntry(candidate, entriesRef.current);
+      if (partial) { highlightElement(candidate); return; }
+    }
+
+    if (ancestors.length > 0) {
+      highlightElement(ancestors[0]);
+    } else {
+      clearHighlight();
+    }
   }
 
   useEffect(() => {
