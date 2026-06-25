@@ -1,15 +1,10 @@
 import { BroadcastStudio } from "@/components/BroadcastStudio";
-import { buildBroadcastFields, getBroadcastPreviewValue } from "@/lib/broadcast-fields";
 import { collectAllTextEntries } from "@/lib/content-text-registry";
-import { getDraftHomeContent } from "@/lib/home-content";
-import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
-import { getTemplatesWithSettings } from "@/lib/template-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBroadcastPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
-  const [params, content, previewSettings, templates, textEntries] = await Promise.all([searchParams, getDraftHomeContent(), getDraftHomePreviewSettings(), getTemplatesWithSettings(), collectAllTextEntries()]);
-  const fields = buildBroadcastFields(content, getBroadcastPreviewValue(previewSettings));
+  const [params, textEntries] = await Promise.all([searchParams, collectAllTextEntries()]);
 
   return (
     <>
@@ -17,7 +12,7 @@ export default async function AdminBroadcastPage({ searchParams }: { searchParam
         <div>
           <span className="eyebrow">Broadcast Studio</span>
           <h1>شاشة بث الموقع</h1>
-          <p>الموقع الحقيقي داخل لوحة الأدمن. اختار شكل الهاتف أو الكمبيوتر، واضغط علامة القلم بجانب أي عنصر لتعديله مباشرة.</p>
+          <p>الموقع الحقيقي داخل لوحة الأدمن. تصفح جميع الصفحات واضغط على علامة القلم بجانب أي نص لتعديله مباشرة.</p>
         </div>
       </div>
 
@@ -25,11 +20,6 @@ export default async function AdminBroadcastPage({ searchParams }: { searchParam
       {params.error ? <div className="notice danger">تعذر حفظ التعديل. اختر عنصرًا صالحًا وحاول مرة أخرى.</div> : null}
 
       <BroadcastStudio
-        fields={fields}
-        initialContent={content}
-        initialPreviewSettings={previewSettings}
-        previewTemplateSlug={previewSettings.templateSlug}
-        templates={templates.filter((template) => template.enabled).map((template) => ({ slug: template.slug, arabicName: template.arabicName }))}
         textEntries={textEntries.filter((entry) => entry.editable)}
       />
     </>
