@@ -19,7 +19,11 @@
     "secondaryCtaLabel": "استعرض التصاميم"
   },
   "siteName": "Wedding Daawa",
-  "updatedAt": "2026-06-21T23:28:38.701Z",
+  "updatedAt": "2026-06-25T15:06:42.414Z",
+  "maintenance": {
+    "enabled": false,
+    "message": "الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج."
+  },
   "socialLinks": {
     "tiktok": "",
     "youtube": "",
@@ -28,6 +32,12 @@
     "instagram": ""
   },
   "whatsappUrl": "https://wa.me/201038434472",
+  "announcement": {
+    "text": "مجاني ✨ الإطلاق التجريبي",
+    "ctaUrl": "/templates",
+    "enabled": true,
+    "ctaLabel": "ابدأ الآن"
+  },
   "photographer": {
     "defaultName": "Photographer",
     "defaultLogoUrl": "",
@@ -38,5 +48,6 @@
   "contactPhones": [
     "01038434472"
   ],
+  "customHeadHtml": "",
   "siteDescription": "اصنع دعوتك بنفسك بشكل حديث وكريتف . اعرف عدد ال هيجضرو فرحك والمهتمين ليومك❤️"
 }

@@ -1,11 +1,24 @@
 {
   "hero": {
+    "flow": {
+      "rsvpText": "الأسماء بتتجمع",
+      "rsvpTitle": "تأكيد الحضور",
+      "reminderText": "واتساب في الطريق",
+      "reminderTitle": "رسالة تذكير",
+      "linkInviteText": "جاهز للمشاركة",
+      "guestOpenedText": "تمت المشاهدة",
+      "linkInviteTitle": "لينك",
+      "guestOpenedTitle": "الضيف فتح"
+    },
     "kicker": "هنا تبدأ الحكاية ❤️",
     "mainTitle": "اعرف مين هيحضر فرحك",
+    "boardTitle": "Wedding Daawa OS",
     "primaryCta": "ابدأ تصميم دعوتك",
     "accentTitle": "ودّع الورق والزحمه دعوتك دلوقتي الكترونيه",
+    "boardFooter": "بدون ورق. بدون زحمة. بدون تخمين.",
     "description": "كل تفاصيل فرحكم في رابط واحد ❤️\nمن الصور والتاريخ والعد التنازلي، إلى الموقع على الخريطة، تأكيد الحضور، ورسائل المعازيم وروابط السوشيال.",
-    "secondaryCta": "او كلم الدعم ع واتساب"
+    "secondaryCta": "استعرض التصاميم",
+    "boardSubtitle": "يوم الفرح تحت السيطرة"
   },
   "preview": {
     "badge": "معاينة",
