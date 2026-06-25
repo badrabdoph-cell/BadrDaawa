@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+
+export const dynamic = "force-dynamic";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { deleteUploadUrlIfUnused } from "@/lib/media-cleanup";
 import {
