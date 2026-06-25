@@ -406,7 +406,21 @@ function setNestedPath(obj: Record<string, unknown>, p: string, val: string) {
   currentObj[keys[keys.length - 1]] = val;
 }
 
-function setHomeContentPath(obj: Record<string, unknown>, p: string, val: string) {
+function setArrayItemField(
+  obj: Record<string, unknown>,
+  collectionKey: string,
+  itemId: string,
+  field: string,
+  val: string,
+) {
+  const collection = obj[collectionKey] as Array<Record<string, unknown>> | undefined;
+  const item = collection?.find((entry) => entry.id === itemId);
+  if (!item) return false;
+  item[field] = val;
+  return true;
+}
+
+export function applyHomeContentTextUpdate(obj: Record<string, unknown>, p: string, val: string) {
   const featureMatch = p.match(/^features\.points\.([^.]+)(?:\.text)?$/);
   if (featureMatch) {
     const features = obj.features as { points?: Array<{ id?: string; text?: string }> } | undefined;
@@ -422,6 +436,25 @@ function setHomeContentPath(obj: Record<string, unknown>, p: string, val: string
     const row = pricing?.rows?.find((item) => item.id === pricingMatch[1]);
     if (!row) return false;
     row.feature = val;
+    return true;
+  }
+
+  const benefitMatch = p.match(/^(quickBenefits|flowSteps|guestFeatures|ownerFeatures|trustItems)\.([^.]+)\.(title|text)$/);
+  if (benefitMatch) {
+    return setArrayItemField(obj, benefitMatch[1], benefitMatch[2], benefitMatch[3], val);
+  }
+
+  const faqMatch = p.match(/^faqItems\.([^.]+)\.(question|answer)$/);
+  if (faqMatch) {
+    return setArrayItemField(obj, "faqItems", faqMatch[1], faqMatch[2], val);
+  }
+
+  const previewPointMatch = p.match(/^previewPoints\.(\d+)$/);
+  if (previewPointMatch) {
+    const points = obj.previewPoints as string[] | undefined;
+    const index = Number(previewPointMatch[1]);
+    if (!Array.isArray(points) || !Number.isInteger(index) || index < 0 || index >= points.length) return false;
+    points[index] = val;
     return true;
   }
 
@@ -453,7 +486,7 @@ export async function updateContentText(id: string, value: string): Promise<bool
       const { getDraftHomeContent, updateHomeContentDraft } = await import("./home-content");
       const current = await getDraftHomeContent();
       const update = JSON.parse(JSON.stringify(current));
-      if (!setHomeContentPath(update, path, value)) return false;
+      if (!applyHomeContentTextUpdate(update, path, value)) return false;
       await updateHomeContentDraft(update as Parameters<typeof updateHomeContentDraft>[0]);
       return true;
     }

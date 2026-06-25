@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
+import { matchBroadcastEntry, normalizeBroadcastText } from "@/lib/broadcast-editing";
 
 type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
 
@@ -27,20 +28,6 @@ const ignoredSelector = [
   "br", "hr",
 ].join(",");
 
-function normalizeText(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u064B-\u065F\u0670]/g, "")
-    .replace(/\u0640/g, "")
-    .replace(/[إأآا]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
-    .replace(/\s+/g, " ");
-}
-
 function elementText(element: HTMLElement) {
   // Get only the text from this specific element, not from children
   // This is crucial for table cells where we want individual text items
@@ -64,65 +51,28 @@ function getElementTextOnly(element: HTMLElement): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
-function findTextLeaf(element: HTMLElement): HTMLElement | null {
-  // Find the leaf element that actually contains the text
-  // This helps with nested elements like <td><span>text</span></td>
-  let current: HTMLElement | null = element;
-  while (current) {
-    const directText = getElementTextOnly(current);
-    if (directText && directText.trim().length >= 2) {
-      // This element has direct text, use it
-      return current;
-    }
-    // Move to first child element
-    const firstChild = Array.from(current.children).find(
-      (child) => child instanceof HTMLElement
-    ) as HTMLElement | null;
-    if (firstChild) {
-      current = firstChild;
-    } else {
-      break;
-    }
-  }
-  return element;
-}
-
-function findSmallestTextElement(element: HTMLElement): HTMLElement | null {
-  // Find the smallest element that has direct text content
-  let current: HTMLElement | null = element;
-  let smallest: HTMLElement | null = null;
-
-  while (current) {
-    const text = elementText(current);
-    if (text && text.trim().length >= 2) {
-      smallest = current;
-      // Check if this element has child elements with text
-      const hasTextChildren = Array.from(current.children).some(
-        (child) => child instanceof HTMLElement && elementText(child).trim().length >= 2
-      );
-      if (!hasTextChildren) {
-        // This is a leaf element with text, use it
-        return smallest;
-      }
-    }
-    // Move to first child element if exists
-    const firstChild = Array.from(current.children).find(
-      (child) => child instanceof HTMLElement
-    ) as HTMLElement | null;
-    if (firstChild) {
-      current = firstChild;
-    } else {
-      break;
-    }
-  }
-
-  return smallest || element;
-}
-
 function exactMatchEntry(element: HTMLElement, entries: RegistryEntry[]) {
-  const text = normalizeText(getElementTextOnly(element));
-  if (!text || text.length < 2) return null;
-  return entries.find((entry) => normalizeText(entry.text) === text) || null;
+  return matchBroadcastEntry(
+    { broadcastId: element.dataset.broadcastId, text: getElementTextOnly(element) || elementText(element) },
+    entries,
+  );
+}
+
+function findBroadcastElement(element: HTMLElement): HTMLElement | null {
+  const direct = element.closest("[data-broadcast-id]");
+  if (direct instanceof HTMLElement && !direct.matches(ignoredSelector)) return direct;
+  return null;
+}
+
+function setElementTextPreservingChildren(element: HTMLElement, value: string) {
+  const textNodes = Array.from(element.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE);
+  if (!textNodes.length) {
+    element.textContent = value;
+    return;
+  }
+  textNodes.forEach((node, index) => {
+    node.textContent = index === 0 ? value : "";
+  });
 }
 
 export function BroadcastAnnotator() {
@@ -135,24 +85,23 @@ export function BroadcastAnnotator() {
   entriesRef.current = entries;
 
   function applyLivePreview(key: string, value: string) {
-    // Find all elements that match this entry and update their text
-    const allElements = document.querySelectorAll("*");
-    for (const element of allElements) {
+    const escapedKey = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(key) : key.replace(/"/g, '\\"');
+    const keyedElements = Array.from(document.querySelectorAll(`[data-broadcast-id="${escapedKey}"]`));
+    const targetElements = keyedElements.length
+      ? keyedElements
+      : Array.from(document.querySelectorAll("*")).filter((element) => {
+          if (!(element instanceof HTMLElement)) return false;
+          if (element.matches(ignoredSelector)) return false;
+          return exactMatchEntry(element, entriesRef.current)?.id === key;
+        });
+
+    for (const element of targetElements) {
       if (!(element instanceof HTMLElement)) continue;
-      if (element.matches(ignoredSelector)) continue;
-
-      const text = elementText(element);
-      if (!text) continue;
-
-      // Check if this element matches any entry with the given key
-      const match = entriesRef.current.find((e: RegistryEntry) => e.id === key);
-      if (match && normalizeText(text) === normalizeText(match.text)) {
-        // Store original text if not already stored
-        if (!element.dataset.broadcastOriginal) {
-          element.dataset.broadcastOriginal = element.textContent || "";
-        }
-        element.textContent = value;
+      if (!element.dataset.broadcastOriginal) {
+        element.dataset.broadcastOriginal = getElementTextOnly(element) || element.textContent || "";
       }
+      element.dataset.broadcastPreviewKey = key;
+      setElementTextPreservingChildren(element, value);
     }
   }
 
@@ -160,15 +109,12 @@ export function BroadcastAnnotator() {
     const allElements = document.querySelectorAll("*");
     for (const element of allElements) {
       if (!(element instanceof HTMLElement)) continue;
-      if (element.dataset.broadcastOriginal) {
+      if (element.dataset.broadcastOriginal && element.dataset.broadcastPreviewKey === key) {
         // Find the updated entry with this key and use its new text
         const match = entriesRef.current.find((e: RegistryEntry) => e.id === key);
-        if (match) {
-          element.textContent = match.text;
-        } else {
-          element.textContent = element.dataset.broadcastOriginal;
-        }
+        setElementTextPreservingChildren(element, match?.text || element.dataset.broadcastOriginal);
         delete element.dataset.broadcastOriginal;
+        delete element.dataset.broadcastPreviewKey;
       }
     }
   }
@@ -241,17 +187,10 @@ export function BroadcastAnnotator() {
     let element = target instanceof HTMLElement ? target : null;
     if (!element || element.closest(".broadcast-markers")) { clearHighlight(); return; }
 
-    // Find the leaf element that contains the actual text
-    const leaf = findTextLeaf(element);
-    if (leaf) {
-      const text = getElementTextOnly(leaf);
-      if (text && text.length >= 2) {
-        const exact = exactMatchEntry(leaf, entriesRef.current);
-        if (exact) {
-          highlightElement(leaf);
-          return;
-        }
-      }
+    const broadcastElement = findBroadcastElement(element);
+    if (broadcastElement) {
+      highlightElement(broadcastElement);
+      return;
     }
 
     // For tables, prioritize the specific cell (td/th) or the direct text container
@@ -283,7 +222,7 @@ export function BroadcastAnnotator() {
     while (current && current !== document.body && ancestors.length < 15) {
       if (current.matches(ignoredSelector)) break;
       const text = getElementTextOnly(current);
-      const normalized = normalizeText(text);
+      const normalized = normalizeBroadcastText(text);
       if (normalized.length >= 2 && normalized.length <= 500) {
         ancestors.push(current);
       }
@@ -296,12 +235,7 @@ export function BroadcastAnnotator() {
       if (exact) { highlightElement(candidate); return; }
     }
 
-    // If no exact match, select the smallest element with text
-    if (ancestors.length > 0) {
-      highlightElement(ancestors[ancestors.length - 1]);
-    } else {
-      clearHighlight();
-    }
+    clearHighlight();
   }
 
   useEffect(() => {
@@ -334,13 +268,13 @@ export function BroadcastAnnotator() {
       event.preventDefault();
       event.stopPropagation();
 
-      const text = elementText(element);
+      const text = getElementTextOnly(element) || elementText(element);
       if (!text || text.length < 2) return;
 
       const match = exactMatchEntry(element, entriesRef.current);
 
       const marker: Marker = {
-        key: match?.id || `inline.${normalizeText(text).slice(0, 40)}`,
+        key: match?.id || `inline.${normalizeBroadcastText(text).slice(0, 40)}`,
         label: match?.title || "تعديل النص",
         value: match ? match.text : text,
         sourceLabel: match?.sourceLabel,

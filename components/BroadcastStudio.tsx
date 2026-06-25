@@ -132,7 +132,6 @@ export function BroadcastStudio({
         setInlineEntries((prev) =>
           prev.map((e) => (e.id === saveKey ? { ...e, text: saveValue } : e)),
         );
-        setReloadKey((value) => value + 1);
         setStatusType("success");
         setStatus("تم حفظ النص محلياً.");
         setIsSaving(false);
@@ -147,26 +146,10 @@ export function BroadcastStudio({
       });
       const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
       if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
+      setEntries((prev) => prev.map((entry) => (entry.id === saveKey ? { ...entry, text: saveValue } : entry)));
       await refreshEntries();
-      setReloadKey((value) => value + 1);
       setStatusType("success");
       setStatus("تم حفظ النص وتحديث شاشة البث.");
-
-      // Send updated entries to iframe and clear live preview
-      const iframeWindow = iframeRef.current?.contentWindow;
-      if (iframeWindow) {
-        try {
-          // First send updated entries
-          setTimeout(() => sendEntriesToIframe(), 100);
-          // Then clear live preview
-          iframeWindow.postMessage(
-            { source: "badr-broadcast-parent", clearPreview: saveKey },
-            window.location.origin,
-          );
-        } catch {
-          // ignore cross-origin errors
-        }
-      }
     } catch (error) {
       setStatusType("error");
       setStatus(error instanceof Error ? error.message : "تعذر حفظ النص");
@@ -205,7 +188,7 @@ export function BroadcastStudio({
 
   // Live preview: send draft changes to iframe in real-time
   useEffect(() => {
-    if (!selectedEntry || !draftValue || draftValue === selectedEntry.text) return;
+    if (!selectedEntry || draftValue === selectedEntry.text) return;
     const iframeWindow = iframeRef.current?.contentWindow;
     if (!iframeWindow) return;
     try {

@@ -41,40 +41,40 @@ import { getWhatsAppOrderUrl } from "@/lib/utils";
 import { DEFAULT_SECTION_ORDER } from "@/lib/home-sections";
 
 const quickBenefits = [
-  { title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني.", icon: Send },
-  { title: "تأكيد حضور RSVP", text: "الضيف يؤكد أو يعتذر من نفس الدعوة.", icon: UserCheck },
-  { title: "لوكيشن وQR Code", text: "كل تفاصيل الوصول محفوظة في مكان واحد.", icon: QrCode },
-  { title: "لوحة متابعة خاصة", text: "شوف الأسماء والأرقام والردود أول بأول.", icon: SlidersHorizontal },
+  { id: "quick-1", title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني.", icon: Send },
+  { id: "quick-2", title: "تأكيد حضور RSVP", text: "الضيف يؤكد أو يعتذر من نفس الدعوة.", icon: UserCheck },
+  { id: "quick-3", title: "لوكيشن وQR Code", text: "كل تفاصيل الوصول محفوظة في مكان واحد.", icon: QrCode },
+  { id: "quick-4", title: "لوحة متابعة خاصة", text: "شوف الأسماء والأرقام والردود أول بأول.", icon: SlidersHorizontal },
 ];
 
 const flowSteps = [
-  { title: "اختار التصميم", text: "ابدأ من قالب قريب من ذوقكم.", icon: Palette },
-  { title: "ابعت بيانات الفرح", text: "الأسماء، المعاد، القاعة، الصور، والموسيقى.", icon: MessageCircle },
-  { title: "استلم لينك الدعوة", text: "لينك خاص جاهز للمشاركة مع QR Code.", icon: Link2 },
-  { title: "تابع الحضور", text: "كل رد من المعازيم يظهر في لوحة واحدة.", icon: Eye },
+  { id: "flow-1", title: "اختار التصميم", text: "ابدأ من قالب قريب من ذوقكم.", icon: Palette },
+  { id: "flow-2", title: "ابعت بيانات الفرح", text: "الأسماء، المعاد، القاعة، الصور، والموسيقى.", icon: MessageCircle },
+  { id: "flow-3", title: "استلم لينك الدعوة", text: "لينك خاص جاهز للمشاركة مع QR Code.", icon: Link2 },
+  { id: "flow-4", title: "تابع الحضور", text: "كل رد من المعازيم يظهر في لوحة واحدة.", icon: Eye },
 ];
 
 const guestFeatures = [
-  { title: "لينك خاص", text: "الضيف يفتح الدعوة من الموبايل بدون تحميل تطبيق.", icon: Link2 },
-  { title: "QR Code", text: "مشاركة سهلة على الشاشة أو في المطبوعات.", icon: QrCode },
-  { title: "لوكيشن القاعة", text: "العنوان والخريطة موجودين داخل الدعوة.", icon: MapPin },
-  { title: "إضافة للتقويم", text: "تنبيه قبل الفرح بدل نسيان المعاد.", icon: CalendarCheck },
-  { title: "موسيقى وصور", text: "دعوة تحس فعلا إنها تخصكم، مش صفحة عادية.", icon: Music2 },
+  { id: "guest-1", title: "لينك خاص", text: "الضيف يفتح الدعوة من الموبايل بدون تحميل تطبيق.", icon: Link2 },
+  { id: "guest-2", title: "QR Code", text: "مشاركة سهلة على الشاشة أو في المطبوعات.", icon: QrCode },
+  { id: "guest-3", title: "لوكيشن القاعة", text: "العنوان والخريطة موجودين داخل الدعوة.", icon: MapPin },
+  { id: "guest-4", title: "إضافة للتقويم", text: "تنبيه قبل الفرح بدل نسيان المعاد.", icon: CalendarCheck },
+  { id: "guest-5", title: "موسيقى وصور", text: "دعوة تحس فعلا إنها تخصكم، مش صفحة عادية.", icon: Music2 },
 ];
 
 const ownerFeatures = [
-  { title: "مين شاف الدعوة", text: "اعرف التفاعل الحقيقي بدل التخمين.", icon: Eye },
-  { title: "تأكيد الحضور", text: "ردود واضحة: هيحضر، مش هيحضر، أو لسه.", icon: Vote },
-  { title: "كشف أسماء وأرقام", text: "كل بيانات الضيوف مرتبة وسهلة المراجعة.", icon: UsersRound },
-  { title: "رسائل جماعية", text: "ابعت تذكير أو تنبيه لكل الضيوف مرة واحدة.", icon: BellRing },
-  { title: "تعليقات بموافقتك", text: "ذكريات وكلمات تظهر بعد اعتمادك فقط.", icon: HeartHandshake },
+  { id: "owner-1", title: "مين شاف الدعوة", text: "اعرف التفاعل الحقيقي بدل التخمين.", icon: Eye },
+  { id: "owner-2", title: "تأكيد الحضور", text: "ردود واضحة: هيحضر، مش هيحضر، أو لسه.", icon: Vote },
+  { id: "owner-3", title: "كشف أسماء وأرقام", text: "كل بيانات الضيوف مرتبة وسهلة المراجعة.", icon: UsersRound },
+  { id: "owner-4", title: "رسائل جماعية", text: "ابعت تذكير أو تنبيه لكل الضيوف مرة واحدة.", icon: BellRing },
+  { id: "owner-5", title: "تعليقات بموافقتك", text: "ذكريات وكلمات تظهر بعد اعتمادك فقط.", icon: HeartHandshake },
 ];
 
 const trustItems = [
-  { title: "مناسب لكل المناسبات", text: "فرح، خطوبة، كتب كتاب، أو احتفال عائلي.", icon: Sparkles },
-  { title: "بدون تطبيق", text: "يعمل من المتصفح مباشرة على أغلب الموبايلات.", icon: Smartphone },
-  { title: "مشاركة واتساب", text: "اللينك جاهز للارسال للعيلة والصحاب.", icon: MessageCircle },
-  { title: "خصوصية وتحكم", text: "لوحة خاصة وروابط واضحة لكل دور.", icon: ShieldCheck },
+  { id: "trust-1", title: "مناسب لكل المناسبات", text: "فرح، خطوبة، كتب كتاب، أو احتفال عائلي.", icon: Sparkles },
+  { id: "trust-2", title: "بدون تطبيق", text: "يعمل من المتصفح مباشرة على أغلب الموبايلات.", icon: Smartphone },
+  { id: "trust-3", title: "مشاركة واتساب", text: "اللينك جاهز للارسال للعيلة والصحاب.", icon: MessageCircle },
+  { id: "trust-4", title: "خصوصية وتحكم", text: "لوحة خاصة وروابط واضحة لكل دور.", icon: ShieldCheck },
 ];
 
 const previewPoints = [
@@ -85,13 +85,24 @@ const previewPoints = [
 ];
 
 const faqItems = [
-  { question: "هل الضيوف يحتاجون تحميل تطبيق؟", answer: "لا. الدعوة تفتح من اللينك مباشرة على الموبايل أو الكمبيوتر." },
-  { question: "هل أقدر أعدل الدعوة بعد الإنشاء؟", answer: "نعم، تقدر تعدل البيانات والصور والتفاصيل حسب الباقة والإعدادات المتاحة." },
-  { question: "هل أقدر أعرف مين شاف الدعوة؟", answer: "الفكرة الأساسية إنك تتابع التفاعل والحضور من لوحة متابعة بدل ما تعتمد على التخمين." },
-  { question: "هل أقدر أرسل الدعوة على واتساب؟", answer: "نعم، الدعوة عبارة عن لينك خاص جاهز للمشاركة على واتساب أو أي تطبيق رسائل." },
-  { question: "هل يوجد QR Code؟", answer: "نعم، يمكن استخدام QR Code لتسهيل فتح الدعوة من أي موبايل." },
-  { question: "هل الدعوة تعمل على كل الموبايلات؟", answer: "تم تصميم التجربة لتعمل على المتصفحات الحديثة وتكون مريحة على الموبايل أولا." },
+  { id: "faq-1", question: "هل الضيوف يحتاجون تحميل تطبيق؟", answer: "لا. الدعوة تفتح من اللينك مباشرة على الموبايل أو الكمبيوتر." },
+  { id: "faq-2", question: "هل أقدر أعدل الدعوة بعد الإنشاء؟", answer: "نعم، تقدر تعدل البيانات والصور والتفاصيل حسب الباقة والإعدادات المتاحة." },
+  { id: "faq-3", question: "هل أقدر أعرف مين شاف الدعوة؟", answer: "الفكرة الأساسية إنك تتابع التفاعل والحضور من لوحة متابعة بدل ما تعتمد على التخمين." },
+  { id: "faq-4", question: "هل أقدر أرسل الدعوة على واتساب؟", answer: "نعم، الدعوة عبارة عن لينك خاص جاهز للمشاركة على واتساب أو أي تطبيق رسائل." },
+  { id: "faq-5", question: "هل يوجد QR Code؟", answer: "نعم، يمكن استخدام QR Code لتسهيل فتح الدعوة من أي موبايل." },
+  { id: "faq-6", question: "هل الدعوة تعمل على كل الموبايلات؟", answer: "تم تصميم التجربة لتعمل على المتصفحات الحديثة وتكون مريحة على الموبايل أولا." },
 ];
+
+function withFallbackIcons<T extends { id?: string; icon?: typeof Link2 }>(
+  source: T[] | undefined,
+  fallback: Array<T & { icon: typeof Link2 }>,
+) {
+  const items = source?.length ? source : fallback;
+  return items.map((item, index) => {
+    const fallbackItem = fallback.find((candidate) => candidate.id && item.id && candidate.id === item.id) || fallback[index];
+    return { ...item, icon: item.icon || fallbackItem?.icon || Link2 };
+  });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +124,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
   const heroMainTitle = content?.hero?.mainTitle || "دعوة فرح إلكترونية تعرفك مين شافها ومين هيحضر";
   const heroDescription = content?.hero?.description || "اختار تصميمك، ابعت اللينك للمعازيم، وتابع الحضور والرسائل واللوكيشن من لوحة واحدة.";
   const whatsappUrl = getWhatsAppOrderUrl("أريد طلب دعوة فرح إلكترونية من Wedding Daawa", siteSettings?.whatsappUrl);
+  const quickBenefitItems = withFallbackIcons(content?.quickBenefits, quickBenefits);
+  const flowStepItems = withFallbackIcons(content?.flowSteps, flowSteps);
+  const guestFeatureItems = withFallbackIcons(content?.guestFeatures, guestFeatures);
+  const ownerFeatureItems = withFallbackIcons(content?.ownerFeatures, ownerFeatures);
+  const trustContentItems = withFallbackIcons(content?.trustItems, trustItems);
+  const previewPointItems = content?.previewPoints?.length ? content.previewPoints : previewPoints;
+  const faqContentItems = content?.faqItems?.length ? content.faqItems : faqItems;
   const stats = [
     { label: "دعوة منشأة", value: platformStats?.invitations || 116, suffix: "", icon: Palette },
     { label: "زيارة", value: platformStats?.views || 60062, suffix: "", icon: Eye },
@@ -186,16 +204,16 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
     "quick-benefits": () => (
       <section className="wd-value-strip" aria-label="مميزات سريعة" data-home-section="quick-benefits">
         <div className="container wd-value-grid">
-          {quickBenefits.map((item) => {
+          {quickBenefitItems.map((item) => {
             const Icon = item.icon;
             return (
-              <article className="wd-value-item" key={item.title}>
+              <article className="wd-value-item" key={item.id || item.title}>
                 <span>
                   <Icon size={20} />
                 </span>
                 <div>
-                  <strong>{item.title}</strong>
-                  <p>{item.text}</p>
+                  <strong data-broadcast-id={item.id ? `home-content.quickBenefits.${item.id}.title` : undefined}>{item.title}</strong>
+                  <p data-broadcast-id={item.id ? `home-content.quickBenefits.${item.id}.text` : undefined}>{item.text}</p>
                 </div>
               </article>
             );
@@ -211,14 +229,14 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <h2 id="home-flow-title">من اختيار التصميم لحد آخر تأكيد حضور</h2>
           </div>
           <div className="wd-flow-grid">
-            {flowSteps.map((step, index) => {
+            {flowStepItems.map((step, index) => {
               const Icon = step.icon;
               return (
-                <article className="wd-flow-card" key={step.title}>
+                <article className="wd-flow-card" key={step.id || step.title}>
                   <span className="wd-flow-number">{index + 1}</span>
                   <Icon size={24} />
-                  <strong>{step.title}</strong>
-                  <p>{step.text}</p>
+                  <strong data-broadcast-id={step.id ? `home-content.flowSteps.${step.id}.title` : undefined}>{step.title}</strong>
+                  <p data-broadcast-id={step.id ? `home-content.flowSteps.${step.id}.text` : undefined}>{step.text}</p>
                 </article>
               );
             })}
@@ -234,10 +252,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <h2 id="home-preview-title" data-broadcast-id="home-content.preview.title">{content?.preview?.title || "شوف الدعوة وهي بتشتغل فعلا"}</h2>
             <p>المعاينة هنا مش ديكور. دي التجربة اللي هتوصل للضيف: فتح الدعوة، شاف التفاصيل، اختار الحضور، وكل حاجة اتسجلت عندك.</p>
             <ul className="wd-check-list">
-              {previewPoints.map((point, index) => (
+              {previewPointItems.map((point, index) => (
                 <li key={index}>
                   <Check size={18} />
-                  <span>{point}</span>
+                  <span data-broadcast-id={`home-content.previewPoints.${index}`}>{point}</span>
                 </li>
               ))}
             </ul>
@@ -273,8 +291,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <h2 id="home-features-title" data-broadcast-id="home-content.features.title">{content?.features?.title || "كل اللي الضيف يحتاجه، وكل اللي صاحب الفرح عايز يعرفه"}</h2>
           </div>
           <div className="wd-feature-groups">
-            <FeatureGroup title="للضيوف" description="دعوة سهلة، واضحة، وبتفتح من أي موبايل." items={guestFeatures} />
-            <FeatureGroup title="لصاحب الفرح" description="متابعة وتنظيم بدل الورق والأسئلة المتكررة." items={ownerFeatures} featured />
+            <FeatureGroup title="للضيوف" description="دعوة سهلة، واضحة، وبتفتح من أي موبايل." items={guestFeatureItems} sourcePath="guestFeatures" />
+            <FeatureGroup title="لصاحب الفرح" description="متابعة وتنظيم بدل الورق والأسئلة المتكررة." items={ownerFeatureItems} sourcePath="ownerFeatures" featured />
           </div>
         </div>
       </section>
@@ -282,13 +300,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
     "trust": () => (
       <section className="wd-section wd-trust-section" aria-label="أسباب الثقة" data-home-section="trust">
         <div className="container wd-trust-grid">
-          {trustItems.map((item) => {
+          {trustContentItems.map((item) => {
             const Icon = item.icon;
             return (
-              <article className="wd-trust-item" key={item.title}>
+              <article className="wd-trust-item" key={item.id || item.title}>
                 <Icon size={22} />
-                <strong>{item.title}</strong>
-                <p>{item.text}</p>
+                <strong data-broadcast-id={item.id ? `home-content.trustItems.${item.id}.title` : undefined}>{item.title}</strong>
+                <p data-broadcast-id={item.id ? `home-content.trustItems.${item.id}.text` : undefined}>{item.text}</p>
               </article>
             );
           })}
@@ -342,10 +360,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
             <p>الهدف إن التجربة تبقى واضحة لك وللضيف من أول لينك.</p>
           </div>
           <div className="wd-faq-list">
-            {faqItems.map((item) => (
-              <details className="wd-faq-item" key={item.question}>
-                <summary>{item.question}</summary>
-                <p>{item.answer}</p>
+            {faqContentItems.map((item) => (
+              <details className="wd-faq-item" key={item.id || item.question}>
+                <summary data-broadcast-id={item.id ? `home-content.faqItems.${item.id}.question` : undefined}>{item.question}</summary>
+                <p data-broadcast-id={item.id ? `home-content.faqItems.${item.id}.answer` : undefined}>{item.answer}</p>
               </details>
             ))}
           </div>
@@ -399,11 +417,13 @@ function FeatureGroup({
   title,
   description,
   items,
+  sourcePath,
   featured = false,
 }: {
   title: string;
   description: string;
   items: Array<{ title: string; text: string; icon?: typeof Link2; id?: string }>;
+  sourcePath: "guestFeatures" | "ownerFeatures";
   featured?: boolean;
 }) {
   return (
@@ -421,8 +441,8 @@ function FeatureGroup({
                 <Icon size={18} />
               </span>
               <div>
-                <strong data-broadcast-id={item.id ? `home-content.guestFeatures.${item.id}.title` : undefined}>{item.title}</strong>
-                <p data-broadcast-id={item.id ? `home-content.guestFeatures.${item.id}.text` : undefined}>{item.text}</p>
+                <strong data-broadcast-id={item.id ? `home-content.${sourcePath}.${item.id}.title` : undefined}>{item.title}</strong>
+                <p data-broadcast-id={item.id ? `home-content.${sourcePath}.${item.id}.text` : undefined}>{item.text}</p>
               </div>
             </div>
           );
