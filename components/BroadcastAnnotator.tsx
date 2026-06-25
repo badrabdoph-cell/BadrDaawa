@@ -42,11 +42,85 @@ function normalizeText(value: string) {
 }
 
 function elementText(element: HTMLElement) {
-  return (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
+  // Get only the text from this specific element, not from children
+  // This is crucial for table cells where we want individual text items
+  let text = "";
+  for (const node of element.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent || "";
+    }
+  }
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function getElementTextOnly(element: HTMLElement): string {
+  // Get text only from this element, ignoring all child elements
+  let text = "";
+  for (const node of element.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent || "";
+    }
+  }
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function findTextLeaf(element: HTMLElement): HTMLElement | null {
+  // Find the leaf element that actually contains the text
+  // This helps with nested elements like <td><span>text</span></td>
+  let current: HTMLElement | null = element;
+  while (current) {
+    const directText = getElementTextOnly(current);
+    if (directText && directText.trim().length >= 2) {
+      // This element has direct text, use it
+      return current;
+    }
+    // Move to first child element
+    const firstChild = Array.from(current.children).find(
+      (child) => child instanceof HTMLElement
+    ) as HTMLElement | null;
+    if (firstChild) {
+      current = firstChild;
+    } else {
+      break;
+    }
+  }
+  return element;
+}
+
+function findSmallestTextElement(element: HTMLElement): HTMLElement | null {
+  // Find the smallest element that has direct text content
+  let current: HTMLElement | null = element;
+  let smallest: HTMLElement | null = null;
+
+  while (current) {
+    const text = elementText(current);
+    if (text && text.trim().length >= 2) {
+      smallest = current;
+      // Check if this element has child elements with text
+      const hasTextChildren = Array.from(current.children).some(
+        (child) => child instanceof HTMLElement && elementText(child).trim().length >= 2
+      );
+      if (!hasTextChildren) {
+        // This is a leaf element with text, use it
+        return smallest;
+      }
+    }
+    // Move to first child element if exists
+    const firstChild = Array.from(current.children).find(
+      (child) => child instanceof HTMLElement
+    ) as HTMLElement | null;
+    if (firstChild) {
+      current = firstChild;
+    } else {
+      break;
+    }
+  }
+
+  return smallest || element;
 }
 
 function exactMatchEntry(element: HTMLElement, entries: RegistryEntry[]) {
-  const text = normalizeText(elementText(element));
+  const text = normalizeText(getElementTextOnly(element));
   if (!text || text.length < 2) return null;
   return entries.find((entry) => normalizeText(entry.text) === text) || null;
 }
@@ -167,11 +241,48 @@ export function BroadcastAnnotator() {
     let element = target instanceof HTMLElement ? target : null;
     if (!element || element.closest(".broadcast-markers")) { clearHighlight(); return; }
 
+    // Find the leaf element that contains the actual text
+    const leaf = findTextLeaf(element);
+    if (leaf) {
+      const text = getElementTextOnly(leaf);
+      if (text && text.length >= 2) {
+        const exact = exactMatchEntry(leaf, entriesRef.current);
+        if (exact) {
+          highlightElement(leaf);
+          return;
+        }
+      }
+    }
+
+    // For tables, prioritize the specific cell (td/th) or the direct text container
+    const tableCell = element.closest("td, th") as HTMLElement | null;
+    if (tableCell) {
+      // Try to find the specific text node within the cell
+      let textContainer: HTMLElement | null = element;
+      while (textContainer && textContainer !== tableCell) {
+        const text = getElementTextOnly(textContainer);
+        if (text && text.length >= 2) {
+          const exact = exactMatchEntry(textContainer, entriesRef.current);
+          if (exact) { highlightElement(textContainer); return; }
+        }
+        textContainer = textContainer.parentElement;
+      }
+      // If no match found in children, try the cell itself
+      const cellText = getElementTextOnly(tableCell);
+      if (cellText && cellText.length >= 2) {
+        const exact = exactMatchEntry(tableCell, entriesRef.current);
+        if (exact) { highlightElement(tableCell); return; }
+      }
+      // If still no match, highlight the cell anyway for inline editing
+      highlightElement(tableCell);
+      return;
+    }
+
     const ancestors: HTMLElement[] = [];
     let current: HTMLElement | null = element;
     while (current && current !== document.body && ancestors.length < 15) {
       if (current.matches(ignoredSelector)) break;
-      const text = elementText(current);
+      const text = getElementTextOnly(current);
       const normalized = normalizeText(text);
       if (normalized.length >= 2 && normalized.length <= 500) {
         ancestors.push(current);

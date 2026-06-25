@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Home, Image, Mail, Phone, Save, Search, Settings } from "lucide-react";
+import { ExternalLink, Home, Image, Mail, Megaphone, Phone, Save, Search, Settings } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
 import { getDraftSiteSettings } from "@/lib/site-settings";
@@ -243,6 +243,37 @@ export default async function AdminSiteSettingsPage({
             <label className="field full">
               <span>رسالة الصيانة</span>
               <textarea name="maintenanceMessage" defaultValue={settings.maintenance.message} rows={3} maxLength={500} placeholder="الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج." />
+            </label>
+          </div>
+        </article>
+
+        <article className="panel site-settings-card">
+          <div className="admin-card-head">
+            <Megaphone size={22} />
+            <div>
+              <span className="eyebrow">Announcement Bar</span>
+              <h2>الشريط الإعلاني العلوي</h2>
+              <p>التحكم في الشريط الذهبي الذي يظهر في أعلى الصفحة الرئيسية للترويج للإطلاق التجريبي.</p>
+            </div>
+          </div>
+          <div className="site-settings-toggles">
+            <label className="admin-toggle-row template-inline-toggle">
+              <input name="announcementEnabled" type="checkbox" defaultChecked={settings.announcement.enabled} />
+              إظهار الشريط الإعلاني
+            </label>
+          </div>
+          <div className="admin-form-grid">
+            <label className="field">
+              <span>نص الإعلان</span>
+              <input name="announcementText" defaultValue={settings.announcement.text} maxLength={200} />
+            </label>
+            <label className="field">
+              <span>نص الزر</span>
+              <input name="announcementCtaLabel" defaultValue={settings.announcement.ctaLabel} maxLength={60} />
+            </label>
+            <label className="field">
+              <span>رابط الزر</span>
+              <input name="announcementCtaUrl" defaultValue={settings.announcement.ctaUrl} maxLength={200} placeholder="/templates" />
             </label>
           </div>
         </article>

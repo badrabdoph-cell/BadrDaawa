@@ -43,6 +43,13 @@ export type SiteMaintenanceSettings = {
   message: string;
 };
 
+export type SiteAnnouncementSettings = {
+  enabled: boolean;
+  text: string;
+  ctaLabel: string;
+  ctaUrl: string;
+};
+
 export type SiteSettings = {
   siteName: string;
   logoUrl: string;
@@ -56,6 +63,7 @@ export type SiteSettings = {
   photographer: SitePhotographerSettings;
   order: SiteOrderSettings;
   maintenance: SiteMaintenanceSettings;
+  announcement: SiteAnnouncementSettings;
   customHeadHtml: string;
   updatedAt: string;
 };
@@ -101,6 +109,12 @@ export const defaultSiteSettings: SiteSettings = {
   maintenance: {
     enabled: false,
     message: "الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج.",
+  },
+  announcement: {
+    enabled: true,
+    text: "مجاني لفترة محدودة أثناء الإطلاق التجريبي",
+    ctaLabel: "ابدأ الآن",
+    ctaUrl: "/templates",
   },
   customHeadHtml: "",
   updatedAt: "2026-06-21T23:28:38.701Z",
@@ -193,6 +207,12 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       enabled: normalizeBoolean(input.maintenance?.enabled, fallback.maintenance.enabled),
       message: cleanText(input.maintenance?.message, fallback.maintenance.message).slice(0, 500),
     },
+    announcement: {
+      enabled: normalizeBoolean(input.announcement?.enabled, fallback.announcement.enabled),
+      text: cleanText(input.announcement?.text, fallback.announcement.text).slice(0, 200),
+      ctaLabel: cleanText(input.announcement?.ctaLabel, fallback.announcement.ctaLabel).slice(0, 60),
+      ctaUrl: cleanText(input.announcement?.ctaUrl, fallback.announcement.ctaUrl).slice(0, 200),
+    },
     customHeadHtml: typeof input.customHeadHtml === "string" ? input.customHeadHtml.trim() : "",
     updatedAt: cleanOptionalText(input.updatedAt),
   };
@@ -235,6 +255,7 @@ export async function updateSiteSettingsDraft(input: Partial<SiteSettings>) {
     order: { ...current.order, ...input.order },
     photographer: { ...current.photographer, ...input.photographer },
     maintenance: { ...current.maintenance, ...input.maintenance },
+    announcement: { ...current.announcement, ...input.announcement },
     updatedAt: new Date().toISOString(),
   });
 

@@ -99,6 +99,12 @@ export async function POST(request: NextRequest) {
         enabled: formData.has("maintenanceEnabled"),
         message: text(formData, "maintenanceMessage"),
       },
+      announcement: {
+        enabled: formData.has("announcementEnabled"),
+        text: text(formData, "announcementText"),
+        ctaLabel: text(formData, "announcementCtaLabel"),
+        ctaUrl: text(formData, "announcementCtaUrl"),
+      },
       customHeadHtml: text(formData, "customHeadHtml"),
     });
 
@@ -121,7 +127,7 @@ export async function POST(request: NextRequest) {
       videoUrl: currentPreview.videoUrl,
     });
 
-    ["/", "/templates", "/admin/settings", "/admin/preview"].forEach((path) => revalidatePath(path));
+    ["/", "/templates", "/admin/settings", "/admin/preview", "/api/admin/settings"].forEach((path) => revalidatePath(path));
 
     return NextResponse.redirect(getRedirectUrl("/admin/settings?saved=1", request.headers, request.nextUrl.origin), 303);
   } catch (error) {

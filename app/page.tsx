@@ -146,7 +146,13 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
   return (
     <div className="page-shell wd-home">
-      <AnnouncementBar />
+      {siteSettings?.announcement?.enabled !== false && (
+        <AnnouncementBar
+          text={siteSettings?.announcement?.text}
+          ctaLabel={siteSettings?.announcement?.ctaLabel}
+          ctaUrl={siteSettings?.announcement?.ctaUrl}
+        />
+      )}
       <SiteHeader />
       <main>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
