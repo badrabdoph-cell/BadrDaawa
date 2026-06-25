@@ -337,7 +337,12 @@ export function BroadcastStudio({
             </label>
           </div>
 
-          {status ? <div className={statusType === "error" ? "broadcast-save-status error" : "broadcast-save-status"}>{status}</div> : null}
+          {status ? <div className={statusType === "error" ? "broadcast-save-status error" : "broadcast-save-status"}>
+            {status}
+            {statusType === "success" ? <span style={{ display: "block", marginTop: 6, fontSize: "0.78rem", opacity: 0.9 }}>
+              <a href="/admin/publish" style={{ color: "inherit", textDecoration: "underline" }}>← اذهب للنشر</a> لتطبيق التغييرات على الموقع
+            </span> : null}
+          </div> : null}
 
           {selectedEntry ? (
             <form className="broadcast-edit-form" onSubmit={saveSelected}>
