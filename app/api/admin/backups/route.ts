@@ -5,6 +5,7 @@ import { createBackupSnapshot, listBackupSnapshots } from "@/lib/backups";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);

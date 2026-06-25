@@ -5,6 +5,8 @@ import * as XLSX from "xlsx";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { analyticsReportToRows, analyticsSummaryRows, getAdminAnalyticsReport } from "@/lib/admin-analytics";
+
+export const dynamic = "force-dynamic";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";

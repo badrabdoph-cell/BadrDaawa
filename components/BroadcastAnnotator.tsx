@@ -1,19 +1,9 @@
 "use client";
 
-import { Edit3 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
 
 type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
-
-type Marker = {
-  key: string;
-  label: string;
-  value: string;
-  sourceLabel?: string;
-  top: number;
-  left: number;
-};
 
 const ignoredSelector = [
   ".broadcast-markers",
@@ -66,12 +56,13 @@ function findEntry(element: HTMLElement, entries: RegistryEntry[]) {
 }
 
 export function BroadcastAnnotator() {
-  const [marker, setMarker] = useState<Marker | null>(null);
   const [entries, setEntries] = useState<RegistryEntry[]>([]);
-  const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
-  const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties | null>(null);
   const entriesRef = useRef<RegistryEntry[]>([]);
   const fetchedRef = useRef(false);
+  const hoveredRef = useRef<HTMLElement | null>(null);
+  const editingRef = useRef<HTMLElement | null>(null);
+  const originalTextRef = useRef<string>("");
+  const [, forceRender] = useState(0);
 
   entriesRef.current = entries;
 
@@ -94,74 +85,124 @@ export function BroadcastAnnotator() {
         .then((r) => (r.ok ? r.json() : null))
         .then((data: { fields?: RegistryEntry[] } | null) => {
           if (!alive) return;
+          if (!data?.fields?.length) { fetchedRef.current = true; return; }
           fetchedRef.current = true;
-          setEntries((data?.fields || []).filter((e) => e.editable && e.text.trim()));
+          setEntries(data.fields.filter((e) => e.editable && e.text.trim()));
         })
-        .catch(() => {
-          if (alive) fetchedRef.current = true;
-        });
+        .catch(() => { if (alive) fetchedRef.current = true; });
     }, 500);
 
-    return () => {
-      alive = false;
-      window.removeEventListener("message", onParentMessage);
-    };
+    return () => { alive = false; window.removeEventListener("message", onParentMessage); };
   }, []);
 
-  const selectFromTarget = useCallback(
-    (target: EventTarget | null) => {
-      let element = target instanceof HTMLElement ? target : null;
-      while (element && element !== document.body) {
-        if (element.matches(ignoredSelector)) { element = null; break; }
-        if (element.closest(".broadcast-markers")) { element = null; break; }
-        const text = elementText(element);
-        const normalized = normalizeText(text);
-        if (normalized.length >= 2 && normalized.length <= 500) break;
-        element = element.parentElement;
-      }
+  function selectFromTarget(target: EventTarget | null) {
+    if (editingRef.current) return;
 
-      if (!element) {
-        setHoveredElement(null);
-        setOverlayStyle(null);
-        setMarker(null);
-        return;
-      }
-
-      const entry = findEntry(element, entriesRef.current);
-      const rect = element.getBoundingClientRect();
-      if (!rect.width || !rect.height) {
-        setHoveredElement(null);
-        setOverlayStyle(null);
-        setMarker(null);
-        return;
-      }
-
-      setHoveredElement(element);
-      setOverlayStyle({
-        position: "fixed" as const,
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-        boxShadow: "inset 0 0 0 2px rgba(243, 207, 115, 0.6)",
-        borderRadius: "4px",
-        pointerEvents: "none" as const,
-        zIndex: 9998,
-        transition: "box-shadow 0.15s ease",
-      });
-
+    let element = target instanceof HTMLElement ? target : null;
+    while (element && element !== document.body) {
+      if (element.matches(ignoredSelector)) { element = null; break; }
+      if (element.closest(".broadcast-markers")) { element = null; break; }
       const text = elementText(element);
-      setMarker({
-        key: entry?.id || `inline.${normalizeText(text).slice(0, 40)}`,
-        label: entry?.title || "تعديل النص",
-        value: text,
-        sourceLabel: entry?.sourceLabel,
-        top: Math.max(8, rect.top),
-        left: Math.max(4, rect.right - 38),
-      });
-    },
-    [],
-  );
+      const normalized = normalizeText(text);
+      if (normalized.length >= 2 && normalized.length <= 500) break;
+      element = element.parentElement;
+    }
+
+    if (hoveredRef.current && hoveredRef.current !== element) {
+      hoveredRef.current.style.removeProperty("box-shadow");
+      hoveredRef.current.style.removeProperty("border-radius");
+    }
+
+    hoveredRef.current = element || null;
+
+    if (element) {
+      element.style.boxShadow = "inset 0 0 0 2px rgba(243, 207, 115, 0.7)";
+      element.style.borderRadius = "4px";
+      element.style.transition = "box-shadow 0.15s ease";
+    }
+  }
+
+  function beginEdit(element: HTMLElement) {
+    const text = elementText(element);
+    if (!text || text.length < 2) return;
+
+    const entry = findEntry(element, entriesRef.current);
+
+    originalTextRef.current = text;
+    editingRef.current = element;
+
+    element.contentEditable = "true";
+    element.style.boxShadow = "inset 0 0 0 2px #f3cf73, 0 0 0 4px rgba(243, 207, 115, 0.15)";
+    element.style.borderRadius = "4px";
+    element.style.backgroundColor = "rgba(243, 207, 115, 0.06)";
+    element.style.outline = "none";
+    element.focus();
+
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    forceRender((n) => n + 1);
+  }
+
+  function saveEdit() {
+    const element = editingRef.current;
+    if (!element) return;
+
+    const newText = elementText(element);
+    const originalText = originalTextRef.current;
+    if (newText === originalText || !newText) {
+      cancelEdit();
+      return;
+    }
+
+    const entry = findEntry(element, entriesRef.current);
+    const key = entry?.id || `inline.${normalizeText(originalText).slice(0, 40)}`;
+
+    window.parent.postMessage(
+      {
+        source: "badr-broadcast",
+        type: "save",
+        marker: {
+          key,
+          value: newText,
+          label: entry?.title || "تعديل النص",
+          sourceLabel: entry?.sourceLabel,
+        },
+      },
+      window.location.origin,
+    );
+
+    element.contentEditable = "false";
+    element.style.boxShadow = "inset 0 0 0 2px rgba(74, 222, 128, 0.6)";
+    element.style.backgroundColor = "rgba(74, 222, 128, 0.04)";
+    setTimeout(() => {
+      element.style.removeProperty("box-shadow");
+      element.style.removeProperty("background-color");
+      element.style.removeProperty("border-radius");
+    }, 1200);
+
+    editingRef.current = null;
+    originalTextRef.current = "";
+    forceRender((n) => n + 1);
+  }
+
+  function cancelEdit() {
+    const element = editingRef.current;
+    if (!element) return;
+
+    element.contentEditable = "false";
+    element.style.removeProperty("box-shadow");
+    element.style.removeProperty("background-color");
+    element.style.removeProperty("border-radius");
+    editingRef.current = null;
+    originalTextRef.current = "";
+    forceRender((n) => n + 1);
+  }
 
   useEffect(() => {
     document.body.classList.add("broadcast-edit-mode");
@@ -169,68 +210,94 @@ export function BroadcastAnnotator() {
     const onMove = (event: MouseEvent) => selectFromTarget(event.target);
     const onFocus = (event: FocusEvent) => selectFromTarget(event.target);
 
-    const refresh = () => {
-      if (!marker?.key) return;
-      const explicit = document.querySelector<HTMLElement>(
-        `[data-broadcast-id="${CSS.escape(marker.key)}"], [data-broadcast-key="${CSS.escape(marker.key)}"]`,
-      );
-      if (explicit) selectFromTarget(explicit);
-    };
-
     const onClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const link = target?.closest("a[href]") as HTMLAnchorElement | null;
-      if (!link || link.target || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-
-      const url = new URL(link.href, window.location.origin);
-      if (url.origin !== window.location.origin || url.pathname.startsWith("/admin")) return;
-      url.searchParams.set("broadcast", "1");
-      if (url.href !== link.href) {
-        event.preventDefault();
-        window.location.href = url.toString();
-        window.dispatchEvent(new CustomEvent("broadcast-mode-location-change"));
+      if (link && !event.defaultPrevented && !event.metaKey && !event.ctrlKey) {
+        const url = new URL(link.href, window.location.origin);
+        if (url.origin === window.location.origin && !url.pathname.startsWith("/admin")) {
+          url.searchParams.set("broadcast", "1");
+          if (url.href !== link.href) {
+            event.preventDefault();
+            window.location.href = url.toString();
+            window.dispatchEvent(new CustomEvent("broadcast-mode-location-change"));
+            return;
+          }
+        }
       }
+
+      if (editingRef.current) return;
+
+      const element = hoveredRef.current;
+      if (!element) return;
+      if (target && !element.contains(target as Node)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      beginEdit(element);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!editingRef.current) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEdit();
+      } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        saveEdit();
+      }
+    };
+
+    const onBlur = (event: FocusEvent) => {
+      if (!editingRef.current) return;
+      const related = event.relatedTarget as Node | null;
+      if (related && editingRef.current.contains(related)) return;
+      if (related && (related as HTMLElement)?.closest?.(".broadcast-edit-toolbar")) return;
+      setTimeout(() => {
+        if (document.activeElement === editingRef.current) return;
+        saveEdit();
+      }, 200);
     };
 
     document.addEventListener("mouseover", onMove);
     document.addEventListener("focusin", onFocus);
     document.addEventListener("click", onClick, true);
-    window.addEventListener("resize", refresh);
-    window.addEventListener("scroll", refresh, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("blur", onBlur, true);
 
     return () => {
       document.body.classList.remove("broadcast-edit-mode");
       document.removeEventListener("mouseover", onMove);
       document.removeEventListener("focusin", onFocus);
       document.removeEventListener("click", onClick, true);
-      window.removeEventListener("resize", refresh);
-      window.removeEventListener("scroll", refresh, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("blur", onBlur, true);
     };
-  }, [selectFromTarget, marker?.key]);
+  }, []);
 
-  function handlePencilClick() {
-    if (!marker) return;
-    window.parent.postMessage(
-      { source: "badr-broadcast", type: "edit", marker },
-      window.location.origin,
-    );
-  }
+  const isEditing = editingRef.current !== null;
+  const editingKey = isEditing ? (() => {
+    const element = editingRef.current!;
+    const entry = findEntry(element, entriesRef.current);
+    return entry?.id || `inline.${normalizeText(elementText(element)).slice(0, 40)}`;
+  })() : null;
 
   return (
-    <div className="broadcast-markers" aria-label="أزرار تعديل شاشة بث الموقع">
-      {overlayStyle ? <div style={overlayStyle} className="broadcast-hover-overlay" /> : null}
-      {marker ? (
-        <button
-          className="broadcast-marker-button"
-          key={marker.key}
-          style={{ top: marker.top, left: marker.left }}
-          type="button"
-          title={marker.label}
-          onClick={handlePencilClick}
+    <div className="broadcast-markers" aria-label="تعديل النصوص">
+      {isEditing ? (
+        <div
+          className="broadcast-edit-toolbar"
+          key={editingKey}
+          onMouseDown={(e) => e.preventDefault()}
         >
-          <Edit3 size={14} />
-          <span className="broadcast-marker-label">{marker.label}</span>
-        </button>
+          <button className="broadcast-toolbar-save" type="button" onClick={saveEdit}>
+            حفظ
+          </button>
+          <button className="broadcast-toolbar-cancel" type="button" onClick={cancelEdit}>
+            إلغاء
+          </button>
+          <span className="broadcast-toolbar-hint">Ctrl+Enter ↵</span>
+        </div>
       ) : null}
     </div>
   );

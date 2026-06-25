@@ -4,22 +4,20 @@ import { Check, ExternalLink, Laptop, Pencil, RefreshCw, Save, Search, Smartphon
 import { useCallback, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
 
-type TextEditEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "source" | "sourceLabel" | "group" | "groupLabel" | "href">;
-
 type EditableEntry = {
   id: string;
   title: string;
   text: string;
   sourceLabel: string;
   groupLabel: string;
+  editable: true;
+  href: string;
 };
 
-type InlineEditEntry = EditableEntry;
-
-type BroadcastMarker = {
+type BroadcastSaveMessage = {
   key: string;
-  label: string;
   value: string;
+  label?: string;
   sourceLabel?: string;
 };
 
@@ -54,6 +52,10 @@ function stripBroadcastParams(url: URL) {
   return path || "/";
 }
 
+function mapForIframe(entry: EditableEntry) {
+  return { id: entry.id, title: entry.title, text: entry.text, sourceLabel: entry.sourceLabel, editable: true as const, href: entry.href || "" };
+}
+
 export function BroadcastStudio({
   textEntries: initialEntries,
 }: {
@@ -77,8 +79,6 @@ export function BroadcastStudio({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewSrc = `${framePath}${framePath.includes("?") ? "&" : "?"}broadcast=1&v=${reloadKey}`;
-
-
 
   const filteredGroups = useMemo(() => {
     const matches = allEntries.filter((entry) => entryMatchesQuery(entry, query));
@@ -118,55 +118,69 @@ export function BroadcastStudio({
     setSelectedKey(allEntries[0]?.id || "");
   }, [allEntries, selectedKey]);
 
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.source !== "badr-broadcast" || event.data?.type !== "edit") return;
-      const marker = event.data.marker as BroadcastMarker;
-      if (!marker?.key) return;
-      const exists = allEntries.some((e) => e.id === marker.key);
-      if (exists) {
-        setSelectedKey(marker.key);
-      } else {
-        const inline: EditableEntry = {
-          id: marker.key,
-          title: marker.label || "نص حر",
-          text: marker.value,
-          sourceLabel: marker.sourceLabel || "النص المحدد",
-          groupLabel: "تعديل سريع",
-        };
-        setInlineEntries((prev) => {
-          if (prev.some((e) => e.id === marker.key)) return prev;
-          return [inline, ...prev];
-        });
-        setSelectedKey(marker.key);
+  const saveViaApi = useCallback(async (saveKey: string, saveValue: string) => {
+    setIsSaving(true);
+    setStatus("");
+    setStatusType("success");
+    try {
+      if (saveKey.startsWith("inline.")) {
+        setInlineEntries((prev) =>
+          prev.map((e) => (e.id === saveKey ? { ...e, text: saveValue } : e)),
+        );
+        setReloadKey((value) => value + 1);
+        setStatusType("success");
+        setStatus("تم حفظ النص محلياً.");
+        setIsSaving(false);
+        return;
       }
+      const response = await fetch("/api/admin/text-edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify({ id: saveKey, value: saveValue }),
+      });
+      const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
+      await refreshEntries();
+      setReloadKey((value) => value + 1);
+      setStatusType("success");
+      setStatus("تم حفظ النص وتحديث شاشة البث.");
+    } catch (error) {
+      setStatusType("error");
+      setStatus(error instanceof Error ? error.message : "تعذر حفظ النص");
+    } finally {
+      setIsSaving(false);
     }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [allEntries]);
+  }, []);
 
   const sendEntriesToIframe = useCallback(() => {
     const iframeWindow = iframeRef.current?.contentWindow;
-    if (!iframeWindow) return;
+    if (!iframeWindow) return false;
     try {
+      const mapped = (entries.length ? entries : initialEntries).map(mapForIframe);
       iframeWindow.postMessage(
-        { source: "badr-broadcast-parent", entries },
+        { source: "badr-broadcast-parent", entries: mapped },
         window.location.origin,
       );
+      return true;
     } catch {
-      // iframe not ready
+      return false;
     }
-  }, [entries]);
+  }, [entries, initialEntries]);
 
   useEffect(() => {
-    if (!entries.length) return;
-    const timer = setInterval(() => {
-      sendEntriesToIframe();
-    }, 300);
-    setTimeout(() => clearInterval(timer), 3000);
-    return () => clearInterval(timer);
-  }, [entries, sendEntriesToIframe]);
+    if (!allEntries.length) return;
+    let attempts = 0;
+    const maxAttempts = 10;
+    const trySend = () => {
+      attempts++;
+      const sent = sendEntriesToIframe();
+      if (sent || attempts >= maxAttempts) return;
+      setTimeout(trySend, 300);
+    };
+    trySend();
+  }, [allEntries.length, sendEntriesToIframe, inlineEntries.length]);
 
   useEffect(() => {
     if (!status) return;
@@ -176,6 +190,47 @@ export function BroadcastStudio({
       if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
     };
   }, [status]);
+
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.source !== "badr-broadcast") return;
+
+      const msg = event.data;
+      const marker = msg.marker as BroadcastSaveMessage;
+      if (!marker?.key) return;
+
+      if (msg.type === "edit") {
+        const exists = allEntries.some((e) => e.id === marker.key);
+        if (exists) {
+          setSelectedKey(marker.key);
+        } else {
+          const inline: EditableEntry = {
+            id: marker.key,
+            title: marker.label || "نص حر",
+            text: marker.value,
+            sourceLabel: marker.sourceLabel || "النص المحدد",
+            groupLabel: "تعديل سريع",
+            editable: true,
+            href: "",
+          };
+          setInlineEntries((prev) => {
+            if (prev.some((e) => e.id === marker.key)) return prev;
+            return [inline, ...prev];
+          });
+          setSelectedKey(marker.key);
+        }
+        return;
+      }
+
+      if (msg.type === "save") {
+        saveViaApi(marker.key, marker.value);
+        return;
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [allEntries, saveViaApi]);
 
   function handleFrameLoad() {
     const iframeWindow = iframeRef.current?.contentWindow;
@@ -191,6 +246,7 @@ export function BroadcastStudio({
     } catch {
       // cross-origin
     }
+    setTimeout(() => sendEntriesToIframe(), 200);
   }
 
   function navigateFrame(path: string) {
@@ -209,38 +265,7 @@ export function BroadcastStudio({
   async function saveSelected(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedEntry) return;
-    setIsSaving(true);
-    setStatus("");
-    setStatusType("success");
-    try {
-      if (selectedEntry.id.startsWith("inline.")) {
-        setInlineEntries((prev) =>
-          prev.map((e) => (e.id === selectedEntry.id ? { ...e, text: draftValue } : e)),
-        );
-        setReloadKey((value) => value + 1);
-        setStatusType("success");
-        setStatus("تم حفظ النص محلياً.");
-        return;
-      }
-      const response = await fetch("/api/admin/text-edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        cache: "no-store",
-        body: JSON.stringify({ id: selectedEntry.id, value: draftValue }),
-      });
-      const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
-      if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
-      await refreshEntries();
-      setReloadKey((value) => value + 1);
-      setStatusType("success");
-      setStatus("تم حفظ النص وتحديث شاشة البث.");
-    } catch (error) {
-      setStatusType("error");
-      setStatus(error instanceof Error ? error.message : "تعذر حفظ النص");
-    } finally {
-      setIsSaving(false);
-    }
+    saveViaApi(selectedEntry.id, draftValue);
   }
 
   return (
@@ -249,7 +274,7 @@ export function BroadcastStudio({
         <div>
           <span className="eyebrow">Live Site Broadcast</span>
           <h2>معاينة وتعديل الموقع الحقيقي</h2>
-          <p>تصفح جميع صفحات الموقع واضغط على علامة القلم بجانب أي نص لتعديله مباشرة.</p>
+          <p>تصفح الموقع واضغط على أي نص لتعديله مباشرة داخل الشاشة.</p>
         </div>
         <div className="broadcast-toolbar-actions">
           <button className={viewport === "desktop" ? "btn btn-gold btn-glow" : "btn btn-soft"} type="button" onClick={() => setViewport("desktop")}>
@@ -294,7 +319,7 @@ export function BroadcastStudio({
               <div>
                 <span className="eyebrow">Quick Edit</span>
                 <h2>تحرير النصوص</h2>
-                <p>اختر نصاً من القائمة أو اضغط على قلم في شاشة البث</p>
+                <p>اختر نصاً من القائمة أو اضغط على أي نص في شاشة البث</p>
               </div>
             </div>
 
@@ -308,6 +333,8 @@ export function BroadcastStudio({
               ) : null}
             </label>
           </div>
+
+          {status ? <div className={statusType === "error" ? "broadcast-save-status error" : "broadcast-save-status"}>{status}</div> : null}
 
           {selectedEntry ? (
             <form className="broadcast-edit-form" onSubmit={saveSelected}>
@@ -327,12 +354,11 @@ export function BroadcastStudio({
                 <Save size={18} />
                 {isSaving ? "جار الحفظ..." : "حفظ بدون ريفرش"}
               </button>
-              {status ? <div className={statusType === "error" ? "broadcast-save-status error" : "broadcast-save-status"}>{status}</div> : null}
             </form>
           ) : (
             <div className="admin-empty-state">
               <strong>اختر عنصراً للتعديل</strong>
-              <p>اضغط علامة القلم داخل شاشة البث أو اختر عنصراً من قائمة المحتوى أدناه.</p>
+              <p>اضغط على أي نص داخل شاشة البث أو اختر عنصراً من قائمة المحتوى أدناه.</p>
             </div>
           )}
 
@@ -340,7 +366,7 @@ export function BroadcastStudio({
             <div className="broadcast-list-head">
               <div>
                 <strong>محتوى الموقع</strong>
-                <small>{filteredGroups.reduce((total, [, items]) => total + items.length, 0)} من {entries.length} نص</small>
+                <small>{filteredGroups.reduce((total, [, items]) => total + items.length, 0)} من {allEntries.length} نص</small>
               </div>
             </div>
 
