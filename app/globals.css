@@ -364,6 +364,7 @@ html {
 
 body {
   margin: 0;
+  white-space: pre-line;
   background:
     radial-gradient(circle at 20% 10%, rgba(189, 143, 63, 0.13), transparent 28rem),
     linear-gradient(135deg, #fffaf2 0%, #f6efe4 42%, #edf4ef 100%);
@@ -12013,6 +12014,10 @@ img {
 
 .broadcast-edit-mode * {
   cursor: default;
+}
+
+.broadcast-edit-mode {
+  white-space: pre-line;
 }
 
 .broadcast-edit-mode a,
