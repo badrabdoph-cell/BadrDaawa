@@ -1,18 +1,26 @@
 "use client";
 
 import { Check, ExternalLink, Laptop, Pencil, RefreshCw, Save, Search, Smartphone, X } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
 
 type TextEditEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "source" | "sourceLabel" | "group" | "groupLabel" | "href">;
 
+type EditableEntry = {
+  id: string;
+  title: string;
+  text: string;
+  sourceLabel: string;
+  groupLabel: string;
+};
+
+type InlineEditEntry = EditableEntry;
+
 type BroadcastMarker = {
   key: string;
   label: string;
-  kind: string;
   value: string;
   sourceLabel?: string;
-  href?: string;
 };
 
 const searchStorageKey = "badr-broadcast-search";
@@ -32,7 +40,7 @@ function normalizeSearch(value: string) {
     .replace(/\s+/g, " ");
 }
 
-function entryMatchesQuery(entry: TextEditEntry, query: string) {
+function entryMatchesQuery(entry: EditableEntry, query: string) {
   const words = normalizeSearch(query).split(" ").filter(Boolean);
   if (!words.length) return true;
   const haystack = normalizeSearch(`${entry.title} ${entry.text} ${entry.id} ${entry.sourceLabel} ${entry.groupLabel}`);
@@ -49,11 +57,15 @@ function stripBroadcastParams(url: URL) {
 export function BroadcastStudio({
   textEntries: initialEntries,
 }: {
-  textEntries: TextEditEntry[];
+  textEntries: EditableEntry[];
 }) {
   const [entries, setEntries] = useState(initialEntries);
+  const [inlineEntries, setInlineEntries] = useState<EditableEntry[]>([]);
   const [viewport, setViewport] = useState<"desktop" | "mobile">("mobile");
   const [selectedKey, setSelectedKey] = useState(initialEntries[0]?.id || "");
+
+  const allEntries = useMemo(() => [...entries, ...inlineEntries], [entries, inlineEntries]);
+  const selectedEntry = allEntries.find((e) => e.id === selectedKey) || null;
   const [query, setQuery] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [framePath, setFramePath] = useState("/");
@@ -66,23 +78,23 @@ export function BroadcastStudio({
   const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewSrc = `${framePath}${framePath.includes("?") ? "&" : "?"}broadcast=1&v=${reloadKey}`;
 
-  const selectedEntry = entries.find((e) => e.id === selectedKey) || null;
+
 
   const filteredGroups = useMemo(() => {
-    const matches = entries.filter((entry) => entryMatchesQuery(entry, query));
-    const groups = new Map<string, TextEditEntry[]>();
+    const matches = allEntries.filter((entry) => entryMatchesQuery(entry, query));
+    const groups = new Map<string, EditableEntry[]>();
     for (const entry of matches) {
       const group = entry.sourceLabel || "أخرى";
       groups.set(group, [...(groups.get(group) || []), entry]);
     }
     return Array.from(groups.entries());
-  }, [entries, query]);
+  }, [allEntries, query]);
 
   useEffect(() => {
     const storedQuery = window.localStorage.getItem(searchStorageKey) || "";
     const storedSelected = window.localStorage.getItem(selectedStorageKey) || "";
     if (storedQuery) setQuery(storedQuery);
-    if (storedSelected && entries.some((e) => e.id === storedSelected)) {
+    if (storedSelected && allEntries.some((e) => e.id === storedSelected)) {
       setSelectedKey(storedSelected);
     }
   }, []);
@@ -102,20 +114,59 @@ export function BroadcastStudio({
   }, [selectedEntry?.id]);
 
   useEffect(() => {
-    if (selectedKey && entries.some((e) => e.id === selectedKey)) return;
-    setSelectedKey(entries[0]?.id || "");
-  }, [entries, selectedKey]);
+    if (selectedKey && allEntries.some((e) => e.id === selectedKey)) return;
+    setSelectedKey(allEntries[0]?.id || "");
+  }, [allEntries, selectedKey]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
       if (event.data?.source !== "badr-broadcast" || event.data?.type !== "edit") return;
       const marker = event.data.marker as BroadcastMarker;
-      if (marker?.key) setSelectedKey(marker.key);
+      if (!marker?.key) return;
+      const exists = allEntries.some((e) => e.id === marker.key);
+      if (exists) {
+        setSelectedKey(marker.key);
+      } else {
+        const inline: EditableEntry = {
+          id: marker.key,
+          title: marker.label || "نص حر",
+          text: marker.value,
+          sourceLabel: marker.sourceLabel || "النص المحدد",
+          groupLabel: "تعديل سريع",
+        };
+        setInlineEntries((prev) => {
+          if (prev.some((e) => e.id === marker.key)) return prev;
+          return [inline, ...prev];
+        });
+        setSelectedKey(marker.key);
+      }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [allEntries]);
+
+  const sendEntriesToIframe = useCallback(() => {
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+    try {
+      iframeWindow.postMessage(
+        { source: "badr-broadcast-parent", entries },
+        window.location.origin,
+      );
+    } catch {
+      // iframe not ready
+    }
+  }, [entries]);
+
+  useEffect(() => {
+    if (!entries.length) return;
+    const timer = setInterval(() => {
+      sendEntriesToIframe();
+    }, 300);
+    setTimeout(() => clearInterval(timer), 3000);
+    return () => clearInterval(timer);
+  }, [entries, sendEntriesToIframe]);
 
   useEffect(() => {
     if (!status) return;
@@ -151,7 +202,7 @@ export function BroadcastStudio({
   async function refreshEntries() {
     const response = await fetch("/api/admin/broadcast", { credentials: "same-origin", cache: "no-store" });
     if (!response.ok) return;
-    const data = (await response.json()) as { fields?: TextEditEntry[] };
+    const data = (await response.json()) as { fields?: EditableEntry[] };
     if (data.fields) setEntries(data.fields);
   }
 
@@ -162,6 +213,15 @@ export function BroadcastStudio({
     setStatus("");
     setStatusType("success");
     try {
+      if (selectedEntry.id.startsWith("inline.")) {
+        setInlineEntries((prev) =>
+          prev.map((e) => (e.id === selectedEntry.id ? { ...e, text: draftValue } : e)),
+        );
+        setReloadKey((value) => value + 1);
+        setStatusType("success");
+        setStatus("تم حفظ النص محلياً.");
+        return;
+      }
       const response = await fetch("/api/admin/text-edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -1,35 +1,28 @@
 "use client";
 
-import { Edit3, Pencil } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Edit3 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
+
+type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
 
 type Marker = {
   key: string;
   label: string;
-  kind: string;
   value: string;
   sourceLabel?: string;
-  href?: string;
   top: number;
   left: number;
-  right: number;
-  width: number;
 };
-
-type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
 
 const ignoredSelector = [
   ".broadcast-markers",
-  "script",
-  "style",
-  "noscript",
-  "input",
-  "textarea",
-  "select",
-  "option",
+  "script", "style", "noscript",
+  "input", "textarea", "select", "option",
   "[contenteditable='true']",
   "[data-broadcast-ignore]",
+  "img", "svg", "video", "audio", "canvas",
+  "br", "hr",
 ].join(",");
 
 function normalizeText(value: string) {
@@ -46,30 +39,8 @@ function normalizeText(value: string) {
     .replace(/\s+/g, " ");
 }
 
-function directText(element: HTMLElement) {
-  return Array.from(element.childNodes)
-    .filter((node) => node.nodeType === Node.TEXT_NODE)
-    .map((node) => node.textContent || "")
-    .join(" ")
-    .trim();
-}
-
 function elementText(element: HTMLElement) {
-  return (directText(element) || element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
-}
-
-function findReadableElement(target: EventTarget | null) {
-  let element = target instanceof HTMLElement ? target : null;
-  while (element && element !== document.body) {
-    if (element.matches(ignoredSelector)) return null;
-    if (element.closest(".broadcast-markers")) return null;
-    const explicitId = element.dataset.broadcastId || element.dataset.broadcastKey;
-    const text = elementText(element);
-    const normalized = normalizeText(text);
-    if (explicitId || (normalized.length >= 2 && normalized.length <= 450)) return element;
-    element = element.parentElement;
-  }
-  return null;
+  return (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
 }
 
 function findEntry(element: HTMLElement, entries: RegistryEntry[]) {
@@ -77,38 +48,21 @@ function findEntry(element: HTMLElement, entries: RegistryEntry[]) {
   if (explicitId) return entries.find((entry) => entry.id === explicitId);
 
   const text = normalizeText(elementText(element));
-  if (!text) return null;
+  if (!text || text.length < 2) return null;
 
   const exact = entries.find((entry) => normalizeText(entry.text) === text);
   if (exact) return exact;
 
-  if (text.length < 12) return null;
+  if (text.length < 8) return null;
 
-  return (
-    entries
-      .filter((entry) => {
-        const entryText = normalizeText(entry.text);
-        return entryText.length >= text.length && entryText.includes(text);
-      })
-      .sort((a, b) => normalizeText(a.text).length - normalizeText(b.text).length)[0] || null
-  );
-}
+  const best = entries
+    .filter((entry) => {
+      const entryText = normalizeText(entry.text);
+      return text.includes(entryText) || entryText.includes(text);
+    })
+    .sort((a, b) => Math.abs(b.text.length - text.length) - Math.abs(a.text.length - text.length))[0];
 
-function readMarker(element: HTMLElement, entry: RegistryEntry): Marker | null {
-  const rect = element.getBoundingClientRect();
-  if (!rect.width || !rect.height) return null;
-  return {
-    key: entry.id,
-    label: entry.title || "تعديل النص",
-    kind: "text",
-    value: entry.text,
-    sourceLabel: entry.sourceLabel,
-    href: entry.href,
-    top: Math.max(8, rect.top),
-    left: Math.max(4, rect.right - 38),
-    right: rect.right,
-    width: rect.width,
-  };
+  return best || null;
 }
 
 export function BroadcastAnnotator() {
@@ -116,60 +70,113 @@ export function BroadcastAnnotator() {
   const [entries, setEntries] = useState<RegistryEntry[]>([]);
   const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
   const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties | null>(null);
-  const prevMarkerRef = useRef<string | null>(null);
+  const entriesRef = useRef<RegistryEntry[]>([]);
+  const fetchedRef = useRef(false);
+
+  entriesRef.current = entries;
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/admin/broadcast", { credentials: "same-origin", cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { fields?: RegistryEntry[] } | null) => {
+
+    function onParentMessage(event: MessageEvent) {
+      if (event.data?.source === "badr-broadcast-parent" && Array.isArray(event.data.entries)) {
         if (!alive) return;
-        setEntries((data?.fields || []).filter((entry) => entry.editable && entry.text.trim()));
-      })
-      .catch(() => {
-        if (alive) setEntries([]);
-      });
+        fetchedRef.current = true;
+        setEntries(event.data.entries.filter((e: RegistryEntry) => e.editable && e.text.trim()));
+      }
+    }
+
+    window.addEventListener("message", onParentMessage);
+
+    setTimeout(() => {
+      if (!alive || fetchedRef.current) return;
+      fetch("/api/admin/broadcast", { credentials: "same-origin", cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { fields?: RegistryEntry[] } | null) => {
+          if (!alive) return;
+          fetchedRef.current = true;
+          setEntries((data?.fields || []).filter((e) => e.editable && e.text.trim()));
+        })
+        .catch(() => {
+          if (alive) fetchedRef.current = true;
+        });
+    }, 500);
 
     return () => {
       alive = false;
+      window.removeEventListener("message", onParentMessage);
     };
   }, []);
 
-  useEffect(() => {
-    document.body.classList.add("broadcast-edit-mode");
+  const selectFromTarget = useCallback(
+    (target: EventTarget | null) => {
+      let element = target instanceof HTMLElement ? target : null;
+      while (element && element !== document.body) {
+        if (element.matches(ignoredSelector)) { element = null; break; }
+        if (element.closest(".broadcast-markers")) { element = null; break; }
+        const text = elementText(element);
+        const normalized = normalizeText(text);
+        if (normalized.length >= 2 && normalized.length <= 500) break;
+        element = element.parentElement;
+      }
 
-    const selectFromTarget = (target: EventTarget | null) => {
-      const element = findReadableElement(target);
       if (!element) {
         setHoveredElement(null);
         setOverlayStyle(null);
         setMarker(null);
         return;
       }
-      const entry = findEntry(element, entries);
-      if (entry) {
-        setHoveredElement(element);
-        setMarker(readMarker(element, entry));
-      } else {
+
+      const entry = findEntry(element, entriesRef.current);
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
         setHoveredElement(null);
         setOverlayStyle(null);
         setMarker(null);
+        return;
       }
-    };
 
-    const refresh = () => {
-      const key = marker?.key;
-      if (!key) return;
-      const explicit = document.querySelector<HTMLElement>(`[data-broadcast-id="${CSS.escape(key)}"], [data-broadcast-key="${CSS.escape(key)}"]`);
-      const entry = entries.find((item) => item.id === key);
-      if (explicit && entry) {
-        setMarker(readMarker(explicit, entry));
-        setHoveredElement(explicit);
-      }
-    };
+      setHoveredElement(element);
+      setOverlayStyle({
+        position: "fixed" as const,
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        boxShadow: "inset 0 0 0 2px rgba(243, 207, 115, 0.6)",
+        borderRadius: "4px",
+        pointerEvents: "none" as const,
+        zIndex: 9998,
+        transition: "box-shadow 0.15s ease",
+      });
+
+      const text = elementText(element);
+      setMarker({
+        key: entry?.id || `inline.${normalizeText(text).slice(0, 40)}`,
+        label: entry?.title || "تعديل النص",
+        value: text,
+        sourceLabel: entry?.sourceLabel,
+        top: Math.max(8, rect.top),
+        left: Math.max(4, rect.right - 38),
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    document.body.classList.add("broadcast-edit-mode");
 
     const onMove = (event: MouseEvent) => selectFromTarget(event.target);
     const onFocus = (event: FocusEvent) => selectFromTarget(event.target);
+
+    const refresh = () => {
+      if (!marker?.key) return;
+      const explicit = document.querySelector<HTMLElement>(
+        `[data-broadcast-id="${CSS.escape(marker.key)}"], [data-broadcast-key="${CSS.escape(marker.key)}"]`,
+      );
+      if (explicit) selectFromTarget(explicit);
+    };
+
     const onClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const link = target?.closest("a[href]") as HTMLAnchorElement | null;
@@ -188,7 +195,6 @@ export function BroadcastAnnotator() {
     document.addEventListener("mouseover", onMove);
     document.addEventListener("focusin", onFocus);
     document.addEventListener("click", onClick, true);
-
     window.addEventListener("resize", refresh);
     window.addEventListener("scroll", refresh, true);
 
@@ -200,27 +206,15 @@ export function BroadcastAnnotator() {
       window.removeEventListener("resize", refresh);
       window.removeEventListener("scroll", refresh, true);
     };
-  }, [entries, marker?.key]);
+  }, [selectFromTarget, marker?.key]);
 
-  useEffect(() => {
-    if (!hoveredElement || !marker) {
-      setOverlayStyle(null);
-      return;
-    }
-    const rect = hoveredElement.getBoundingClientRect();
-    setOverlayStyle({
-      position: "fixed",
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-      boxShadow: "inset 0 0 0 2px rgba(243, 207, 115, 0.5)",
-      borderRadius: "4px",
-      pointerEvents: "none",
-      zIndex: 9998,
-      transition: "box-shadow 0.15s ease",
-    });
-  }, [hoveredElement, marker?.key]);
+  function handlePencilClick() {
+    if (!marker) return;
+    window.parent.postMessage(
+      { source: "badr-broadcast", type: "edit", marker },
+      window.location.origin,
+    );
+  }
 
   return (
     <div className="broadcast-markers" aria-label="أزرار تعديل شاشة بث الموقع">
@@ -232,12 +226,7 @@ export function BroadcastAnnotator() {
           style={{ top: marker.top, left: marker.left }}
           type="button"
           title={marker.label}
-          onClick={() => {
-            window.parent.postMessage(
-              { source: "badr-broadcast", type: "edit", marker },
-              window.location.origin,
-            );
-          }}
+          onClick={handlePencilClick}
         >
           <Edit3 size={14} />
           <span className="broadcast-marker-label">{marker.label}</span>

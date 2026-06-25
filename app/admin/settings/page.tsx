@@ -186,7 +186,7 @@ export default async function AdminSiteSettingsPage({
             </label>
             <label className="admin-toggle-row template-inline-toggle">
               <input name="showPricing" type="checkbox" defaultChecked={settings.homepage.showPricing} />
-              عرض الأسعار
+              إظهار قسم الباقات والأسعار في الصفحة الرئيسية
             </label>
           </div>
           <div className="admin-form-grid">

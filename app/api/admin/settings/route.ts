@@ -8,6 +8,7 @@ import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile 
 import { getDraftHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettingsDraft, type SiteMaintenanceSettings } from "@/lib/site-settings";
+import { promoteDraftToPublished } from "@/lib/project-content-store";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -100,6 +101,8 @@ export async function POST(request: NextRequest) {
       },
       customHeadHtml: text(formData, "customHeadHtml"),
     });
+
+    await promoteDraftToPublished("site-settings");
 
     await updateHomeContentDraft({
       ...currentContent,
