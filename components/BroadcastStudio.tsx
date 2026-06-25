@@ -10,7 +10,7 @@ type EditableEntry = {
   text: string;
   sourceLabel: string;
   groupLabel: string;
-  editable: true;
+  editable: boolean;
   href: string;
 };
 
@@ -53,7 +53,7 @@ function stripBroadcastParams(url: URL) {
 }
 
 function mapForIframe(entry: EditableEntry) {
-  return { id: entry.id, title: entry.title, text: entry.text, sourceLabel: entry.sourceLabel, editable: true as const, href: entry.href || "" };
+  return { id: entry.id, title: entry.title, text: entry.text, sourceLabel: entry.sourceLabel, editable: true, href: entry.href || "" };
 }
 
 export function BroadcastStudio({
@@ -211,7 +211,7 @@ export function BroadcastStudio({
             text: marker.value,
             sourceLabel: marker.sourceLabel || "النص المحدد",
             groupLabel: "تعديل سريع",
-            editable: true,
+            editable: true as boolean,
             href: "",
           };
           setInlineEntries((prev) => {
