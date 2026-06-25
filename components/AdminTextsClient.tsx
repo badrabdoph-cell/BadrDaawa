@@ -13,6 +13,7 @@ const sourceIcons: Record<TextSource, typeof FileText> = {
   "content-presets": FileText,
   "message-templates": MessageSquare,
   "template-preview-info": Palette,
+  "site-text-overrides": FileText,
   i18n: Monitor,
   "admin-ui": PenLine,
 };
@@ -25,6 +26,7 @@ const sourceColors: Record<TextSource, string> = {
   "content-presets": "rose",
   "message-templates": "violet",
   "template-preview-info": "amber",
+  "site-text-overrides": "blue",
   i18n: "slate",
   "admin-ui": "green",
 };

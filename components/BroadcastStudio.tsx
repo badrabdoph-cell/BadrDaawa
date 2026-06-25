@@ -14,6 +14,9 @@ type EditableEntry = {
   groupLabel: string;
   editable: boolean;
   href: string;
+  overridePath?: string;
+  originalText?: string;
+  occurrence?: number;
 };
 
 type BroadcastSaveMessage = {
@@ -21,6 +24,9 @@ type BroadcastSaveMessage = {
   value: string;
   label?: string;
   sourceLabel?: string;
+  path?: string;
+  originalText?: string;
+  occurrence?: number;
 };
 
 const searchStorageKey = "badr-broadcast-search";
@@ -128,12 +134,19 @@ export function BroadcastStudio({
       return;
     }
 
+    const entry = allEntries.find((item) => item.id === saveKey);
     const response = await fetch("/api/admin/text-edit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
       cache: "no-store",
-      body: JSON.stringify({ id: saveKey, value: saveValue }),
+      body: JSON.stringify({
+        id: saveKey,
+        value: saveValue,
+        path: entry?.overridePath,
+        originalText: entry?.originalText,
+        occurrence: entry?.occurrence,
+      }),
     });
     const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
     if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
@@ -243,6 +256,9 @@ export function BroadcastStudio({
             groupLabel: "تعديل سريع",
             editable: true as boolean,
             href: "",
+            overridePath: marker.path,
+            originalText: marker.originalText,
+            occurrence: marker.occurrence,
           };
           setInlineEntries((prev) => {
             if (prev.some((e) => e.id === marker.key)) return prev;

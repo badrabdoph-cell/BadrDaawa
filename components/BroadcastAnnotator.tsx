@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
-import { matchBroadcastEntry, normalizeBroadcastText } from "@/lib/broadcast-editing";
+import { createSiteTextOverrideId, matchBroadcastEntry, normalizeBroadcastText } from "@/lib/broadcast-editing";
 
 type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
 
@@ -11,6 +11,9 @@ type Marker = {
   label: string;
   value: string;
   sourceLabel?: string;
+  path?: string;
+  originalText?: string;
+  occurrence?: number;
 };
 
 type LivePreview = {
@@ -73,6 +76,25 @@ function setElementTextPreservingChildren(element: HTMLElement, value: string) {
   textNodes.forEach((node, index) => {
     node.textContent = index === 0 ? value : "";
   });
+}
+
+function getCleanPagePath() {
+  return window.location.pathname || "/";
+}
+
+function getTextOccurrence(element: HTMLElement, text: string) {
+  const normalized = normalizeBroadcastText(text);
+  if (!normalized) return 0;
+  let occurrence = 0;
+  const elements = Array.from(document.querySelectorAll("*"));
+  for (const candidate of elements) {
+    if (!(candidate instanceof HTMLElement)) continue;
+    if (candidate.matches(ignoredSelector)) continue;
+    if (normalizeBroadcastText(getElementTextOnly(candidate)) !== normalized) continue;
+    if (candidate === element) return occurrence;
+    occurrence++;
+  }
+  return 0;
 }
 
 export function BroadcastAnnotator() {
@@ -235,6 +257,11 @@ export function BroadcastAnnotator() {
       if (exact) { highlightElement(candidate); return; }
     }
 
+    if (ancestors.length > 0) {
+      highlightElement(ancestors[0]);
+      return;
+    }
+
     clearHighlight();
   }
 
@@ -249,20 +276,6 @@ export function BroadcastAnnotator() {
 
       const target = event.target instanceof Element ? event.target : null;
 
-      const link = target?.closest("a[href]") as HTMLAnchorElement | null;
-      if (link && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
-        const url = new URL(link.href, window.location.origin);
-        if (url.origin === window.location.origin && !url.pathname.startsWith("/admin")) {
-          url.searchParams.set("broadcast", "1");
-          if (url.href !== link.href) {
-            event.preventDefault();
-            window.location.href = url.toString();
-            window.dispatchEvent(new CustomEvent("broadcast-mode-location-change"));
-            return;
-          }
-        }
-      }
-
       if (target && !element.contains(target)) return;
 
       event.preventDefault();
@@ -272,12 +285,20 @@ export function BroadcastAnnotator() {
       if (!text || text.length < 2) return;
 
       const match = exactMatchEntry(element, entriesRef.current);
+      const occurrence = getTextOccurrence(element, text);
+      const overrideKey = createSiteTextOverrideId(getCleanPagePath(), text, occurrence);
+      if (!match) {
+        element.dataset.broadcastId = overrideKey;
+      }
 
       const marker: Marker = {
-        key: match?.id || `inline.${normalizeBroadcastText(text).slice(0, 40)}`,
+        key: match?.id || overrideKey,
         label: match?.title || "تعديل النص",
         value: match ? match.text : text,
-        sourceLabel: match?.sourceLabel,
+        sourceLabel: match?.sourceLabel || "نص ثابت في الصفحة",
+        path: match ? undefined : getCleanPagePath(),
+        originalText: match ? undefined : text,
+        occurrence: match ? undefined : occurrence,
       };
 
       window.parent.postMessage(

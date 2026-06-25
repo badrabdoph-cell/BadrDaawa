@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { defaultHomeContent } from "../lib/home-content";
 import { applyHomeContentTextUpdate } from "../lib/content-text-registry";
-import { matchBroadcastEntry } from "../lib/broadcast-editing";
+import { createSiteTextOverrideId, matchBroadcastEntry } from "../lib/broadcast-editing";
 import { collectDirtyBroadcastDrafts, updateBroadcastDraft } from "../lib/broadcast-drafts";
 
 const content = JSON.parse(JSON.stringify(defaultHomeContent));
@@ -27,6 +27,14 @@ const entries = [
 assert.equal(matchBroadcastEntry({ broadcastId: "home-content.quickBenefits.quick-1.title", text: "ابدأ" }, entries)?.id, "home-content.quickBenefits.quick-1.title");
 assert.equal(matchBroadcastEntry({ text: "ابدأ" }, entries), null);
 assert.equal(matchBroadcastEntry({ text: "نص فريد" }, [{ ...entries[0], text: "نص فريد" }])?.id, "home-content.hero.primaryCta");
+assert.equal(
+  createSiteTextOverrideId("/templates?broadcast=1", "اختار التصميم اللي يشبه فرحتكم 🤍", 0),
+  createSiteTextOverrideId("/templates", "اختار التصميم اللي يشبه فرحتكم 🤍", 0),
+);
+assert.notEqual(
+  createSiteTextOverrideId("/templates", "اختار التصميم اللي يشبه فرحتكم 🤍", 0),
+  createSiteTextOverrideId("/templates", "اختار التصميم اللي يشبه فرحتكم 🤍", 1),
+);
 
 const draftEntries = [
   { id: "first", text: "النص الأول" },

@@ -13,7 +13,8 @@ export type ProjectContentKey =
   | "legal-pages"
   | "message-templates"
   | "content-presets"
-  | "custom-templates";
+  | "custom-templates"
+  | "site-text-overrides";
 
 export type ProjectContentDefinition = {
   key: ProjectContentKey;
@@ -36,6 +37,7 @@ const definitions: ProjectContentDefinition[] = [
   "message-templates",
   "content-presets",
   "custom-templates",
+  "site-text-overrides",
 ].map((key) => ({
   key: key as ProjectContentKey,
   appSettingKey: `project-content:${key}`,

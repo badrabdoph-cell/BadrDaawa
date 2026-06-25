@@ -5,8 +5,10 @@ import { ScrollReveal } from "@/components/ScrollReveal";
 import { ScrollToTopOnRouteChange } from "@/components/ScrollToTopOnRouteChange";
 import { CustomHeadInjector } from "@/components/CustomHeadInjector";
 import { BroadcastModeGate } from "@/components/BroadcastModeGate";
+import { SiteTextOverrideApplier } from "@/components/SiteTextOverrideApplier";
 import { verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
+import { getPublishedSiteTextOverrides } from "@/lib/site-text-overrides";
 import { getMetadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
@@ -40,7 +42,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [settings, requestHeaders] = await Promise.all([getPublishedSiteSettings(), headers()]);
+  const [settings, textOverrides, requestHeaders] = await Promise.all([
+    getPublishedSiteSettings(),
+    getPublishedSiteTextOverrides().catch(() => ({})),
+    headers(),
+  ]);
 
   const isAdmin = await verifyAdminSessionCookie(requestHeaders.get("cookie") || "");
   const isMaintenanceActive = settings.maintenance.enabled && !isAdmin;
@@ -79,6 +85,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ScrollToTopOnRouteChange />
         <ScrollReveal />
         <GlobalNotifications />
+        <SiteTextOverrideApplier overrides={Object.values(textOverrides)} />
         {children}
         <BroadcastModeGate />
       </body>

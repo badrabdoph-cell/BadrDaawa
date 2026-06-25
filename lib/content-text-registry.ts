@@ -17,6 +17,7 @@ export type TextSource =
   | "content-presets"
   | "message-templates"
   | "template-preview-info"
+  | "site-text-overrides"
   | "i18n"
   | "admin-ui";
 
@@ -41,6 +42,7 @@ const sourceLabels: Record<TextSource, string> = {
   "content-presets": "النصوص الجاهزة",
   "message-templates": "قوالب الرسائل",
   "template-preview-info": "معلومات المعاينة",
+  "site-text-overrides": "نصوص ثابتة من الموقع",
   i18n: "ترجمة الواجهة",
   "admin-ui": "نصوص لوحة الإدارة",
 };
@@ -282,6 +284,23 @@ async function collectTemplatePreviewEntries(): Promise<ContentTextEntry[]> {
   return entries;
 }
 
+async function collectSiteTextOverrideEntries(): Promise<ContentTextEntry[]> {
+  const { getDraftSiteTextOverrides } = await import("./site-text-overrides");
+  const overrides = await getDraftSiteTextOverrides();
+  return Object.values(overrides).map((override): ContentTextEntry => ({
+    id: `site-text-overrides.${override.id}`,
+    source: "site-text-overrides",
+    sourceLabel: sourceLabels["site-text-overrides"],
+    group: override.path,
+    groupLabel: override.path,
+    path: override.id,
+    title: override.originalText.slice(0, 60) || "نص ثابت",
+    text: override.text,
+    href: `/admin/broadcast?path=${encodeURIComponent(override.path)}`,
+    editable: true,
+  }));
+}
+
 function collectI18nEntries(): ContentTextEntry[] {
   const entries: ContentTextEntry[] = [];
   const ar = dictionaries.ar;
@@ -336,6 +355,7 @@ export async function collectAllTextEntries(): Promise<ContentTextEntry[]> {
     collectContentPresetsEntries(),
     collectMessageTemplatesEntries(),
     collectTemplatePreviewEntries(),
+    collectSiteTextOverrideEntries(),
     getAdminUiTexts().then((uiTexts) =>
       uiTexts.map(
         (t): ContentTextEntry => ({
@@ -557,6 +577,14 @@ export async function updateContentText(id: string, value: string): Promise<bool
       const update = JSON.parse(JSON.stringify(current));
       setNestedPath(update, path, value);
       await updateTemplatePreviewInfoDraft(update as Parameters<typeof updateTemplatePreviewInfoDraft>[0]);
+      return true;
+    }
+    case "site-text-overrides": {
+      const { getDraftSiteTextOverrides, updateSiteTextOverrideDraft } = await import("./site-text-overrides");
+      const current = await getDraftSiteTextOverrides();
+      const override = current[path];
+      if (!override) return false;
+      await updateSiteTextOverrideDraft({ ...override, text: value });
       return true;
     }
     case "admin-ui": {
