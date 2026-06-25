@@ -144,6 +144,8 @@ export function OrderSharePosterExperience() {
         return;
       }
       if (!activeStepText().includes("إضافات مهمة")) return;
+      const stepTabs = document.querySelectorAll<HTMLElement>(".order-step-tabs button strong");
+      if (Array.from(stepTabs).some((tab) => tab.textContent?.includes("صورة المشاركة"))) return;
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
