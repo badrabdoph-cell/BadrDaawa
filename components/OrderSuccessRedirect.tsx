@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock, Headphones, MessageCircle, PartyPopper, Share2 } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Download, ExternalLink, Headphones, MessageCircle, PartyPopper, QrCode, Share2 } from "lucide-react";
 
 type OrderSuccessPayload = {
   whatsappUrl: string;
@@ -16,6 +16,10 @@ type OrderSuccessPayload = {
   musicChoice?: string;
   photographerEnabled?: boolean;
   storyEnabled?: boolean;
+  selectedShareTemplate?: string;
+  publicUrl?: string;
+  sharePosterUrl?: string;
+  qrCodeUrl?: string;
 };
 
 type OrderSuccessRedirectProps = {
@@ -25,6 +29,7 @@ type OrderSuccessRedirectProps = {
 };
 
 const storageKey = "badrdaawa-order-success";
+const extraStorageKey = "badrdaawa-order-success-extra";
 const fallbackWhatsappUrl = "https://wa.me/";
 const redirectCountdownSeconds = 10;
 
@@ -37,24 +42,39 @@ function cleanWhatsAppUrl(value?: string) {
   return fallbackWhatsappUrl;
 }
 
+function cleanPublicUrl(value?: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.protocol === "http:" || url.protocol === "https:") return url.toString();
+  } catch {}
+  return "";
+}
+
 function readStoredPayload(): Partial<OrderSuccessPayload> {
   try {
     const raw = window.sessionStorage?.getItem(storageKey);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Partial<OrderSuccessPayload>;
+    const extraRaw = window.sessionStorage?.getItem(extraStorageKey);
+    const parsed = raw ? (JSON.parse(raw) as Partial<OrderSuccessPayload>) : {};
+    const extra = extraRaw ? (JSON.parse(extraRaw) as Partial<OrderSuccessPayload>) : {};
+    const merged = { ...parsed, ...extra };
     return {
-      whatsappUrl: cleanWhatsAppUrl(parsed.whatsappUrl),
-      orderNumber: typeof parsed.orderNumber === "string" ? parsed.orderNumber : "",
-      invitationCode: typeof parsed.invitationCode === "string" ? parsed.invitationCode : "",
-      groomName: typeof parsed.groomName === "string" ? parsed.groomName : "",
-      brideName: typeof parsed.brideName === "string" ? parsed.brideName : "",
-      weddingDate: typeof parsed.weddingDate === "string" ? parsed.weddingDate : "",
-      venue: typeof parsed.venue === "string" ? parsed.venue : "",
-      templateName: typeof parsed.templateName === "string" ? parsed.templateName : "",
-      paymentMethod: typeof parsed.paymentMethod === "string" ? parsed.paymentMethod : "",
-      musicChoice: typeof parsed.musicChoice === "string" ? parsed.musicChoice : "",
-      photographerEnabled: typeof parsed.photographerEnabled === "boolean" ? parsed.photographerEnabled : false,
-      storyEnabled: typeof parsed.storyEnabled === "boolean" ? parsed.storyEnabled : false,
+      whatsappUrl: cleanWhatsAppUrl(merged.whatsappUrl),
+      orderNumber: typeof merged.orderNumber === "string" ? merged.orderNumber : "",
+      invitationCode: typeof merged.invitationCode === "string" ? merged.invitationCode : "",
+      groomName: typeof merged.groomName === "string" ? merged.groomName : "",
+      brideName: typeof merged.brideName === "string" ? merged.brideName : "",
+      weddingDate: typeof merged.weddingDate === "string" ? merged.weddingDate : "",
+      venue: typeof merged.venue === "string" ? merged.venue : "",
+      templateName: typeof merged.templateName === "string" ? merged.templateName : "",
+      paymentMethod: typeof merged.paymentMethod === "string" ? merged.paymentMethod : "",
+      musicChoice: typeof merged.musicChoice === "string" ? merged.musicChoice : "",
+      photographerEnabled: typeof merged.photographerEnabled === "boolean" ? merged.photographerEnabled : false,
+      storyEnabled: typeof merged.storyEnabled === "boolean" ? merged.storyEnabled : false,
+      selectedShareTemplate: typeof merged.selectedShareTemplate === "string" ? merged.selectedShareTemplate : "",
+      publicUrl: cleanPublicUrl(merged.publicUrl),
+      sharePosterUrl: cleanPublicUrl(merged.sharePosterUrl),
+      qrCodeUrl: cleanPublicUrl(merged.qrCodeUrl),
     };
   } catch {
     return {};
@@ -65,6 +85,17 @@ function paymentMethodLabel(method?: string) {
   if (method === "bank") return "تحويل بنكي";
   if (method === "ewallet") return "محفظة إلكترونية";
   return "الدفع عند الاستلام";
+}
+
+function downloadUrl(url?: string) {
+  if (!url) return;
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = url.includes("qr") ? "badrdaawa-qr-code.png" : "badrdaawa-share-poster.png";
+  anchor.target = "_blank";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNumber, invitationCode }: OrderSuccessRedirectProps) {
@@ -78,6 +109,7 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
   );
   const [payload, setPayload] = useState<OrderSuccessPayload>(initialPayload);
   const [seconds, setSeconds] = useState(redirectCountdownSeconds);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const storedPayload = readStoredPayload();
@@ -99,10 +131,21 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
 
   function shareWhatsApp() {
     const paymentLine = payload.paymentMethod ? `\nطريقة الدفع: ${paymentMethodLabel(payload.paymentMethod)}` : "";
-    const text = `*طلب دعوة زفاف*\n\nالرقم: ${payload.orderNumber || "غير محدد"}\nالعروسان: ${payload.groomName || ""} و ${payload.brideName || ""}\nالتاريخ: ${payload.weddingDate || "غير محدد"}\nالقاعة: ${payload.venue || "غير محدد"}${paymentLine}\n\nتم إرسال الطلب بنجاح ✅`;
+    const posterLine = payload.sharePosterUrl ? `\nصورة المشاركة: ${payload.sharePosterUrl}` : "";
+    const publicLine = payload.publicUrl ? `\nرابط الدعوة: ${payload.publicUrl}` : "";
+    const text = `*طلب دعوة زفاف*\n\nالرقم: ${payload.orderNumber || "غير محدد"}\nالعروسان: ${payload.groomName || ""} و ${payload.brideName || ""}\nالتاريخ: ${payload.weddingDate || "غير محدد"}\nالقاعة: ${payload.venue || "غير محدد"}${paymentLine}${publicLine}${posterLine}\n\nتم إرسال الطلب بنجاح ✅`;
     const encoded = encodeURIComponent(text);
     const waUrl = `https://wa.me/?text=${encoded}`;
     window.open(waUrl, "_blank");
+  }
+
+  async function copyInvitationUrl() {
+    if (!payload.publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(payload.publicUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {}
   }
 
   return (
@@ -165,8 +208,46 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
                 <strong>{payload.venue}</strong>
               </div>
             ) : null}
+            {payload.selectedShareTemplate ? (
+              <div className="order-success-detail-row">
+                <span>صورة المشاركة</span>
+                <strong>{payload.selectedShareTemplate}</strong>
+              </div>
+            ) : null}
           </div>
         </div>
+
+        {payload.sharePosterUrl || payload.publicUrl || payload.qrCodeUrl ? (
+          <div className="order-success-details">
+            <h3>ملفات المشاركة</h3>
+            <div className="order-success-actions">
+              {payload.sharePosterUrl ? (
+                <button className="order-success-action" type="button" onClick={() => downloadUrl(payload.sharePosterUrl)}>
+                  <Download size={20} />
+                  <span>تحميل صورة المشاركة</span>
+                </button>
+              ) : null}
+              {payload.publicUrl ? (
+                <button className="order-success-action secondary" type="button" onClick={copyInvitationUrl}>
+                  <Copy size={18} />
+                  <span>{copied ? "تم نسخ الرابط" : "نسخ رابط الدعوة"}</span>
+                </button>
+              ) : null}
+              {payload.publicUrl ? (
+                <button className="order-success-action secondary" type="button" onClick={() => window.open(payload.publicUrl, "_blank") }>
+                  <ExternalLink size={18} />
+                  <span>فتح الدعوة</span>
+                </button>
+              ) : null}
+              {payload.qrCodeUrl ? (
+                <button className="order-success-action secondary" type="button" onClick={() => downloadUrl(payload.qrCodeUrl)}>
+                  <QrCode size={18} />
+                  <span>تحميل QR Code</span>
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         <div className="order-success-info">
           <div className="order-success-info-item">
