@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 import { isLegalPageSlug, updateLegalPageDraft } from "@/lib/legal-pages";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
     description: formData.get("description"),
     content: formData.get("content"),
   });
+  const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+  await publishSingleContentToGitHub("legal-pages", username);
   revalidateLegalPages();
   return NextResponse.redirect(getRedirectUrl(`/admin/legal?saved=${page.slug}`, request.headers, request.nextUrl.origin), 303);
 }

@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 import { createContentPresetDraft, deleteContentPresetDraft, updateContentPresetDraft } from "@/lib/content-presets";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -22,6 +23,11 @@ function revalidatePresetConsumers() {
   revalidatePath("/admin/orders");
 }
 
+async function publishPresets(request: NextRequest) {
+  const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+  await publishSingleContentToGitHub("content-presets", username);
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
@@ -35,6 +41,7 @@ export async function POST(request: NextRequest) {
     if (!id) return redirectPresets(request, { error: "id" });
     const deleted = await deleteContentPresetDraft(id);
     if (!deleted) return redirectPresets(request, { error: "id" });
+    await publishPresets(request);
     revalidatePresetConsumers();
     return redirectPresets(request, { saved: "deleted" });
   }
@@ -54,12 +61,14 @@ export async function POST(request: NextRequest) {
     if (!id) return redirectPresets(request, { error: "id" });
     const updated = await updateContentPresetDraft(id, input);
     if (!updated) return redirectPresets(request, { error: "id" });
+    await publishPresets(request);
     revalidatePresetConsumers();
     return redirectPresets(request, { saved: "updated" });
   }
 
   const created = await createContentPresetDraft(input);
   if (!created) return redirectPresets(request, { error: "required" });
+  await publishPresets(request);
   revalidatePresetConsumers();
   return redirectPresets(request, { saved: "created" });
 }

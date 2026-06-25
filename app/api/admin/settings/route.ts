@@ -1,14 +1,14 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { getDraftHomeContent, updateHomeContentDraft } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { getDraftHomePreviewSettings, updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettingsDraft, type SiteMaintenanceSettings } from "@/lib/site-settings";
-import { promoteDraftToPublished } from "@/lib/project-content-store";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     const currentPreview = await getDraftHomePreviewSettings();
     const primaryCtaLabel = text(formData, "primaryCtaLabel");
     const secondaryCtaLabel = text(formData, "secondaryCtaLabel");
+    const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
 
     await updateSiteSettingsDraft({
       siteName: text(formData, "siteName"),
@@ -109,8 +110,6 @@ export async function POST(request: NextRequest) {
       customHeadHtml: text(formData, "customHeadHtml"),
     });
 
-    await promoteDraftToPublished("site-settings");
-
     await updateHomeContentDraft({
       ...currentContent,
       hero: {
@@ -127,6 +126,13 @@ export async function POST(request: NextRequest) {
       imageUrl: currentPreview.imageUrl,
       videoUrl: currentPreview.videoUrl,
     });
+
+    // Auto-publish to GitHub + record version
+    await Promise.allSettled([
+      publishSingleContentToGitHub("site-settings", username),
+      publishSingleContentToGitHub("home-content", username),
+      publishSingleContentToGitHub("home-preview-settings", username),
+    ]);
 
     ["/", "/templates", "/admin/settings", "/admin/preview", "/api/admin/settings"].forEach((path) => revalidatePath(path));
 

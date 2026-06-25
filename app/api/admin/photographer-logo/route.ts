@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/db";
@@ -163,6 +164,12 @@ export async function POST(request: NextRequest) {
         templateOverrides: currentPreview.templateOverrides,
         adminScope: currentPreview.adminScope,
       });
+
+      const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+      await Promise.allSettled([
+        publishSingleContentToGitHub("site-settings", username),
+        publishSingleContentToGitHub("template-preview-info", username),
+      ]);
 
       revalidatePath("/admin/photographer-logo");
       revalidatePath("/admin/templates");

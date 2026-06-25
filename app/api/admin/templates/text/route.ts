@@ -1,9 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { getDraftTemplatePreviewInfo, updateTemplatePreviewInfoDraft } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 
 export const runtime = "nodejs";
 
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
       newValues: next,
       metadata: { source: "admin-template-text-search", fieldId: id },
     });
+
+    const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+    await publishSingleContentToGitHub("template-preview-info", username);
 
     return NextResponse.json({ ok: true, previewInfo: next });
   } catch (error) {

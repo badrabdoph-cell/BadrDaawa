@@ -25,7 +25,7 @@ export function VersionHistorySection() {
   const [rollbackId, setRollbackId] = useState<number | null>(null);
   const [rolling, setRolling] = useState(false);
   const [result, setResult] = useState<RollbackResult | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);

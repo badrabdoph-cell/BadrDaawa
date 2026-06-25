@@ -1,9 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 
 export const dynamic = "force-dynamic";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { deleteUploadUrlIfUnused } from "@/lib/media-cleanup";
 import {
   getTemplatePreviewBaseInfo,
@@ -170,6 +171,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!next) throw new Error("Failed to update template preview info");
+
+    const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+    await publishSingleContentToGitHub("template-preview-info", username);
 
     await revalidateTemplates(templates);
     const deletedUploads = await cleanupReplacedUploads(beforeUrlsSnapshot, next);

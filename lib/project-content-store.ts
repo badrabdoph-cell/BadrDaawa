@@ -203,14 +203,15 @@ export async function readPublishedContent<T>(key: ProjectContentKey, fallback: 
 export async function writeDraftContent<T>(key: ProjectContentKey, value: T): Promise<T> {
   const definition = getDefinition(key);
   try {
+    // Write to all three keys simultaneously so content is live immediately
     await writeAppSetting(definition.draftAppSettingKey, value);
-    console.log(`[Project Content Draft] ${key} saved to database`);
-    // Update pending changes
-    await updatePendingChanges(key);
+    await writeAppSetting(definition.publishedAppSettingKey, value);
+    await writeAppSetting(definition.appSettingKey, value);
+    console.log(`[Project Content Live] ${key} saved to draft + published + live`);
     return value;
   } catch (dbError) {
     if (process.env.NODE_ENV === "production") throw dbError;
-    console.warn(`[Project Content Draft] Database write failed for ${key}: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+    console.warn(`[Project Content Live] Database write failed for ${key}: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
     throw dbError;
   }
 }

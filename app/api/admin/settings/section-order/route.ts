@@ -1,14 +1,15 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, getAdminSessionUser } from "@/lib/admin-session";
 import { getDraftSiteSettings, updateSiteSettingsDraft } from "@/lib/site-settings";
-import { promoteDraftToPublished } from "@/lib/project-content-store";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value))) {
+  const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  if (!username) {
     return NextResponse.json({ ok: false, error: "غير مصرح." }, { status: 401 });
   }
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await promoteDraftToPublished("site-settings");
+    await publishSingleContentToGitHub("site-settings", username);
 
     revalidatePath("/");
     revalidatePath("/admin/settings");

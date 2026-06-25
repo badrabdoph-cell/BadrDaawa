@@ -1,13 +1,19 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 import { createMessageTemplateDraft, deleteMessageTemplateDraft, updateMessageTemplateDraft } from "@/lib/message-templates";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+}
+
+async function publishTemplates(request: NextRequest) {
+  const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+  await publishSingleContentToGitHub("message-templates", username);
 }
 
 function redirectTemplates(request: NextRequest, params: Record<string, string>) {
@@ -35,6 +41,7 @@ export async function POST(request: NextRequest) {
     if (!id) return redirectTemplates(request, { error: "id" });
     const deleted = await deleteMessageTemplateDraft(id);
     if (!deleted) return redirectTemplates(request, { error: "id" });
+    await publishTemplates(request);
     revalidateConsumers();
     return redirectTemplates(request, { saved: "deleted" });
   }
@@ -53,12 +60,14 @@ export async function POST(request: NextRequest) {
     if (!id) return redirectTemplates(request, { error: "id" });
     const updated = await updateMessageTemplateDraft(id, input);
     if (!updated) return redirectTemplates(request, { error: "id" });
+    await publishTemplates(request);
     revalidateConsumers();
     return redirectTemplates(request, { saved: "updated" });
   }
 
   const created = await createMessageTemplateDraft(input);
   if (!created) return redirectTemplates(request, { error: "required" });
+  await publishTemplates(request);
   revalidateConsumers();
   return redirectTemplates(request, { saved: "created" });
 }

@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { cleanNewDirectAudioUrl, deleteProjectMusicFile, deleteUploadedMusicFile, isBlockedMusicPageUrl, saveProjectAudioFile } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
@@ -55,6 +56,15 @@ function redirectWith(request: NextRequest, params: Record<string, string>) {
   return NextResponse.redirect(url, 303);
 }
 
+async function publishMusicContent(request: NextRequest) {
+  const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+  await Promise.allSettled([
+    publishSingleContentToGitHub("music-library", username),
+    publishSingleContentToGitHub("templates-preview-music", username),
+    publishSingleContentToGitHub("template-settings", username),
+  ]);
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
     return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
@@ -75,6 +85,7 @@ export async function POST(request: NextRequest) {
     const selectedTrack = library.slots.find((slot) => slot.id === requestedTrackId && slot.url);
     if (enabled && !selectedTrack) return redirectWith(request, { error: "templates-preview-track" });
     const settings = await updateTemplatesPreviewMusicSettingsDraft({ enabled, trackId: selectedTrack?.id || "" });
+    await publishMusicContent(request);
     revalidateTemplatesPreviewPages(allTemplateSlugs);
     return redirectWith(request, { saved: "templates-preview" });
   }
@@ -87,6 +98,7 @@ export async function POST(request: NextRequest) {
     const name = String(formData.get("trackName") || "").trim();
     if (!name) return redirectWith(request, { error: "name" });
     const saved = await renameMusicSlotDraft(slotId, name);
+    await publishMusicContent(request);
     await revalidateMusicPages(allTemplateSlugs);
     return redirectWith(request, saved ? { saved: "renamed" } : { error: "slot" });
   }
@@ -94,12 +106,14 @@ export async function POST(request: NextRequest) {
   if (action === "enable" || action === "default") {
     if (!currentSlot?.url) return redirectWith(request, { error: "audio" });
     const saved = await setMusicSlotEnabledDraft(slotId, true);
+    await publishMusicContent(request);
     await revalidateMusicPages(allTemplateSlugs);
     return redirectWith(request, { saved: "default", count: String(allTemplateSlugs.length) });
   }
 
   if (action === "disable") {
     const saved = await setMusicSlotEnabledDraft(slotId, false);
+    await publishMusicContent(request);
     await revalidateMusicPages(allTemplateSlugs);
     return redirectWith(request, { saved: "disabled" });
   }
@@ -117,6 +131,7 @@ export async function POST(request: NextRequest) {
       await deleteProjectMusicFile(deleted.url);
       await deleteUploadedMusicFile(deleted.url);
     }
+    await publishMusicContent(request);
     await revalidateMusicPages(allTemplateSlugs);
     return redirectWith(request, deleted ? { saved: "deleted", converted: String(converted) } : { error: "slot" });
   }
@@ -160,6 +175,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!savedSlot) return redirectWith(request, { error: "slot" });
+  await publishMusicContent(request);
   await revalidateMusicPages(allTemplateSlugs);
   return redirectWith(request, { saved: enabled ? "default" : "saved", count: String(allTemplateSlugs.length) });
 }

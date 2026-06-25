@@ -9,6 +9,7 @@ import {
   acquirePublishLock,
   releasePublishLock,
   getProjectContentDefinitions,
+  readAppSetting,
   type ProjectContentKey,
 } from "./project-content-store";
 import { recordAuditLog, getSystemAuditActor } from "./audit-log";
@@ -19,6 +20,14 @@ type PublishResult = {
   commitSha: string | null;
   commitUrl: string | null;
   publishedKeys: ProjectContentKey[];
+  error?: string;
+};
+
+type SinglePublishResult = {
+  success: boolean;
+  message: string;
+  commitSha: string | null;
+  commitUrl: string | null;
   error?: string;
 };
 
@@ -244,6 +253,109 @@ export async function getAllContentVersions(limit = 50) {
     });
   } catch {
     return [];
+  }
+}
+
+export async function publishSingleContentToGitHub(
+  key: ProjectContentKey,
+  publishedBy: string,
+): Promise<SinglePublishResult> {
+  try {
+    console.log(`[Publish Single] Publishing ${key} by ${publishedBy}`);
+
+    // Read the published content and generate file
+    const definition = getProjectContentDefinitions().find((d) => d.key === key);
+    if (!definition) {
+      return { success: false, message: `Key ${key} not found in definitions`, commitSha: null, commitUrl: null, error: "Unknown key" };
+    }
+
+    const content = await readAppSetting<unknown>(definition.publishedAppSettingKey);
+    if (content === null || content === undefined) {
+      return { success: false, message: `No published content found for ${key}`, commitSha: null, commitUrl: null, error: "No content" };
+    }
+
+    const jsonContent = JSON.stringify(content, null, 2);
+    const contentFiles: Array<{ repoPath: string; bytes: Buffer }> = [
+      { repoPath: definition.repoPath, bytes: Buffer.from(`${jsonContent}\n`, "utf8") },
+    ];
+
+    // Commit to GitHub
+    const commitMessage = `chore(content): auto-publish ${key}\n\nPublished by: ${publishedBy}`;
+    const githubResult = await commitContentFiles(contentFiles, commitMessage);
+
+    if (!githubResult.success) {
+      // Non-fatal: content is live in DB even if GitHub fails
+      console.warn(`[Publish Single] GitHub commit failed for ${key}: ${githubResult.message}`);
+    } else {
+      console.log(`[Publish Single] GitHub commit successful: ${githubResult.commitSha}`);
+    }
+
+    // Record ContentVersion
+    if (prisma) {
+      try {
+        const latestVersion = await prisma.contentVersion.findFirst({ orderBy: { version: "desc" } });
+        const nextVersion = (latestVersion?.version ?? 0) + 1;
+        await prisma.contentVersion.create({
+          data: {
+            version: nextVersion,
+            commitSha: githubResult.commitSha || null,
+            publishedBy,
+            changedKeys: [key],
+          },
+        });
+        console.log(`[Publish Single] ContentVersion #${nextVersion} recorded for ${key}`);
+      } catch (dbError) {
+        console.warn(`[Publish Single] Failed to record ContentVersion: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+      }
+    }
+
+    // Revalidate all pages
+    revalidatePath("/");
+    revalidatePath("/templates");
+    revalidatePath("/order");
+    revalidatePath("/privacy-policy");
+    revalidatePath("/terms");
+    revalidatePath("/refund-policy");
+    revalidatePath("/usage-policy");
+    revalidatePath("/admin");
+    revalidatePath("/admin/publish");
+    revalidatePath("/admin/broadcast");
+    revalidatePath("/admin/texts");
+    revalidatePath("/admin/settings");
+    console.log(`[Publish Single] Revalidated all pages for ${key}`);
+
+    // Audit log
+    await recordAuditLog({
+      actor: getSystemAuditActor(publishedBy),
+      action: "content.publish",
+      entity: { type: "ContentPublish", id: githubResult.commitSha || key, label: `Auto-publish ${key}` },
+      newValues: {
+        commitSha: githubResult.commitSha,
+        commitUrl: githubResult.commitUrl,
+        publishedKeys: [key],
+        publishedBy,
+      },
+      metadata: {
+        keys: [key],
+        commitMessage,
+      },
+    });
+
+    return {
+      success: true,
+      message: `تم نشر ${key} بنجاح`,
+      commitSha: githubResult.commitSha || null,
+      commitUrl: githubResult.commitUrl || null,
+    };
+  } catch (error) {
+    console.error(`[Publish Single] Error publishing ${key}:`, error);
+    return {
+      success: false,
+      message: `فشل نشر ${key}: ${error instanceof Error ? error.message : "Unknown error"}`,
+      commitSha: null,
+      commitUrl: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 

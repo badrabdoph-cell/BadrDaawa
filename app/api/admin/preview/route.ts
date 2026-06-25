@@ -1,11 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { updateHomePreviewSettingsDraft } from "@/lib/preview-settings";
 import { writeProjectAssetFile } from "@/lib/project-assets";
+import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -67,6 +68,9 @@ export async function POST(request: NextRequest) {
     uploadedImageUrl,
     videoUrl,
   });
+
+  const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
+  await publishSingleContentToGitHub("home-preview-settings", username);
 
   revalidatePath("/");
   revalidatePath("/admin/preview");

@@ -61,12 +61,12 @@ const adminSections = [
   },
   {
     id: "publishing",
-    title: "النشر والإصدارات",
+    title: "التغيرات والإصدارات",
     description: "نشر وإدارة الإصدارات",
     accent: "gold",
     icon: Upload,
     links: [
-      { href: "/admin/publish", label: "النشر والإصدارات", icon: Upload },
+      { href: "/admin/publish", label: "التغيرات والإصدارات", icon: Upload },
       { href: "/admin/versions", label: "الإصدارات والاسترجاع", icon: ScrollText },
     ],
   },
