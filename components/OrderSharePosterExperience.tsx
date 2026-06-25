@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Download, Images, QrCode, Share2 } from "lucide-react";
+import { Check } from "lucide-react";
 import PosterRenderer from "./social-posters/PosterRenderer";
 import { SHARE_POSTER_TEMPLATES, type SharePosterTemplateId } from "./social-posters/poster-templates";
 
@@ -19,6 +19,13 @@ type PosterSnapshot = {
   venueAddress: string;
   weddingTime: string;
   invitationUrl: string;
+};
+
+type OrderResponseExtra = {
+  publicUrl?: string;
+  sharePosterUrl?: string;
+  qrCodeUrl?: string;
+  invitationCode?: string;
 };
 
 function textInputValue(name: string) {
@@ -51,16 +58,7 @@ function getPosterSnapshot(): PosterSnapshot {
   const venueAddress = textInputValue("mapUrl") || "";
   const invitationUrl = `${window.location.origin}/invitation/${slugify(`${groomName}-${brideName}`)}`;
 
-  return {
-    groomName,
-    brideName,
-    coverImage: getCoverImage(),
-    weddingDate,
-    venueName,
-    venueAddress,
-    weddingTime,
-    invitationUrl,
-  };
+  return { groomName, brideName, coverImage: getCoverImage(), weddingDate, venueName, venueAddress, weddingTime, invitationUrl };
 }
 
 function readSelectedTemplate(): SharePosterTemplateId {
@@ -76,6 +74,21 @@ function saveSelectedTemplate(value: SharePosterTemplateId) {
   try {
     window.sessionStorage?.setItem(storageKey, value);
     window.localStorage?.setItem(storageKey, value);
+  } catch {}
+}
+
+function saveOrderResponseExtra(data: OrderResponseExtra, selectedShareTemplate: SharePosterTemplateId) {
+  try {
+    window.sessionStorage?.setItem(
+      successExtraStorageKey,
+      JSON.stringify({
+        selectedShareTemplate,
+        publicUrl: data.publicUrl || "",
+        sharePosterUrl: data.sharePosterUrl || "",
+        qrCodeUrl: data.qrCodeUrl || "",
+        invitationCode: data.invitationCode || "",
+      }),
+    );
   } catch {}
 }
 
@@ -142,9 +155,7 @@ export function OrderSharePosterExperience() {
     function continueToReview() {
       allowNextOnce = true;
       setShareStepOpen(false);
-      window.setTimeout(() => {
-        document.querySelector<HTMLButtonElement>(".order-wizard-actions button.btn-gold:not(.order-submit)")?.click();
-      }, 80);
+      window.setTimeout(() => document.querySelector<HTMLButtonElement>(".order-wizard-actions button.btn-gold:not(.order-submit)")?.click(), 80);
     }
 
     (window as unknown as { __continueSharePosterToReview?: () => void }).__continueSharePosterToReview = continueToReview;
@@ -168,24 +179,12 @@ export function OrderSharePosterExperience() {
       }
       const response = await originalFetch(input, init);
       if (url.includes("/api/orders")) {
-        response
-          .clone()
-          .json()
-          .then((data: { publicUrl?: string; sharePosterUrl?: string; qrCodeUrl?: string; invitationCode?: string }) => {
-            try {
-              window.sessionStorage?.setItem(
-                successExtraStorageKey,
-                JSON.stringify({
-                  selectedShareTemplate,
-                  publicUrl: data.publicUrl || "",
-                  sharePosterUrl: data.sharePosterUrl || "",
-                  qrCodeUrl: data.qrCodeUrl || "",
-                  invitationCode: data.invitationCode || "",
-                }),
-              );
-            } catch {}
-          })
-          .catch(() => {});
+        const originalJson = response.json.bind(response);
+        (response as Response & { json: () => Promise<unknown> }).json = async () => {
+          const data = (await originalJson()) as OrderResponseExtra;
+          saveOrderResponseExtra(data, selectedShareTemplate);
+          return data;
+        };
       }
       return response;
     };
