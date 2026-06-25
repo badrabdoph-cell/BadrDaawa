@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
 
 type RegistryEntry = Pick<ContentTextEntry, "id" | "title" | "text" | "href" | "sourceLabel" | "editable">;
@@ -22,19 +22,6 @@ const ignoredSelector = [
   "br", "hr",
 ].join(",");
 
-const layoutContainerTags = new Set([
-  "div", "section", "article", "main", "aside", "header", "footer", "nav",
-  "body", "html", "form", "fieldset", "figure", "dialog", "template", "slot",
-]);
-
-const textElementTags = new Set([
-  "h1", "h2", "h3", "h4", "h5", "h6",
-  "p", "span", "a", "button", "label", "li", "dt", "dd",
-  "figcaption", "cite", "q", "blockquote", "strong", "em",
-  "b", "i", "u", "small", "time", "address", "pre", "code",
-  "td", "th", "caption", "legend", "summary", "figcaption",
-]);
-
 function normalizeText(value: string) {
   return value
     .trim()
@@ -53,26 +40,10 @@ function elementText(element: HTMLElement) {
   return (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
 }
 
-function findEntry(element: HTMLElement, entries: RegistryEntry[]) {
-  const explicitId = element.dataset.broadcastId || element.dataset.broadcastKey;
-  if (explicitId) return entries.find((entry) => entry.id === explicitId);
-
+function exactMatchEntry(element: HTMLElement, entries: RegistryEntry[]) {
   const text = normalizeText(elementText(element));
   if (!text || text.length < 2) return null;
-
-  const exact = entries.find((entry) => normalizeText(entry.text) === text);
-  if (exact) return exact;
-
-  if (text.length < 8) return null;
-
-  const best = entries
-    .filter((entry) => {
-      const entryText = normalizeText(entry.text);
-      return text.includes(entryText) || entryText.includes(text);
-    })
-    .sort((a, b) => Math.abs(b.text.length - text.length) - Math.abs(a.text.length - text.length))[0];
-
-  return best || null;
+  return entries.find((entry) => normalizeText(entry.text) === text) || null;
 }
 
 export function BroadcastAnnotator() {
@@ -80,7 +51,6 @@ export function BroadcastAnnotator() {
   const entriesRef = useRef<RegistryEntry[]>([]);
   const fetchedRef = useRef(false);
   const hoveredRef = useRef<HTMLElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   entriesRef.current = entries;
 
@@ -130,60 +100,29 @@ export function BroadcastAnnotator() {
     element.style.transition = "box-shadow 0.12s ease";
   }
 
-  function findExactEntry(element: HTMLElement, entries: RegistryEntry[]) {
-    const text = normalizeText(elementText(element));
-    if (!text || text.length < 2) return null;
-    return entries.find((entry) => normalizeText(entry.text) === text) || null;
-  }
-
-  function isTextElement(el: HTMLElement): boolean {
-    return textElementTags.has(el.tagName.toLowerCase());
-  }
-
-  function isLayoutContainer(el: HTMLElement): boolean {
-    return layoutContainerTags.has(el.tagName.toLowerCase());
-  }
-
   function selectFromTarget(target: EventTarget | null) {
     let element = target instanceof HTMLElement ? target : null;
     if (!element || element.closest(".broadcast-markers")) { clearHighlight(); return; }
 
-    const textCandidates: HTMLElement[] = [];
-    const layoutCandidates: HTMLElement[] = [];
+    const ancestors: HTMLElement[] = [];
     let current: HTMLElement | null = element;
-    while (current && current !== document.body && (textCandidates.length + layoutCandidates.length) < 10) {
+    while (current && current !== document.body && ancestors.length < 10) {
       if (current.matches(ignoredSelector)) break;
       const text = elementText(current);
       const normalized = normalizeText(text);
       if (normalized.length >= 2 && normalized.length <= 500) {
-        if (isTextElement(current)) {
-          textCandidates.push(current);
-        } else if (!isLayoutContainer(current)) {
-          textCandidates.push(current);
-        } else {
-          layoutCandidates.push(current);
-        }
+        ancestors.push(current);
       }
       current = current.parentElement;
     }
 
-    // Check text elements first (deepest first)
-    const allCandidates = [...textCandidates, ...layoutCandidates];
-
-    for (const candidate of allCandidates) {
-      const exact = findExactEntry(candidate, entriesRef.current);
+    for (const candidate of ancestors) {
+      const exact = exactMatchEntry(candidate, entriesRef.current);
       if (exact) { highlightElement(candidate); return; }
     }
 
-    for (const candidate of allCandidates) {
-      const text = normalizeText(elementText(candidate));
-      if (text.length < 8) continue;
-      const partial = findEntry(candidate, entriesRef.current);
-      if (partial) { highlightElement(candidate); return; }
-    }
-
-    if (allCandidates.length > 0) {
-      highlightElement(allCandidates[0]);
+    if (ancestors.length > 0) {
+      highlightElement(ancestors[0]);
     } else {
       clearHighlight();
     }
@@ -200,7 +139,6 @@ export function BroadcastAnnotator() {
 
       const target = event.target instanceof Element ? event.target : null;
 
-      // If clicking a link, navigate with broadcast=1 preserved
       const link = target?.closest("a[href]") as HTMLAnchorElement | null;
       if (link && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
         const url = new URL(link.href, window.location.origin);
@@ -215,7 +153,6 @@ export function BroadcastAnnotator() {
         }
       }
 
-      // If the click is not on the hovered element or its child, ignore
       if (target && !element.contains(target)) return;
 
       event.preventDefault();
@@ -224,13 +161,13 @@ export function BroadcastAnnotator() {
       const text = elementText(element);
       if (!text || text.length < 2) return;
 
-      const entry = findEntry(element, entriesRef.current);
+      const match = exactMatchEntry(element, entriesRef.current);
 
       const marker: Marker = {
-        key: entry?.id || `inline.${normalizeText(text).slice(0, 40)}`,
-        label: entry?.title || "تعديل النص",
-        value: text,
-        sourceLabel: entry?.sourceLabel,
+        key: match?.id || `inline.${normalizeText(text).slice(0, 40)}`,
+        label: match?.title || "تعديل النص",
+        value: match ? match.text : text,
+        sourceLabel: match?.sourceLabel,
       };
 
       window.parent.postMessage(
