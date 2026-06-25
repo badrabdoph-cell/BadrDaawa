@@ -1,8 +1,10 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { collectAllTextEntries, updateContentText } from "@/lib/content-text-registry";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -41,6 +43,10 @@ export async function PATCH(request: NextRequest) {
     if (!success) {
       return jsonError("لم يتم العثور على النص", 404);
     }
+    revalidatePath("/");
+    revalidatePath("/admin/broadcast");
+    revalidatePath("/admin/texts");
+    revalidatePath("/admin/settings");
     const fields = (await collectAllTextEntries()).filter((field) => field.editable);
     return NextResponse.json({ ok: true, fields });
   } catch (error) {

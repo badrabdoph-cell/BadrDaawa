@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
@@ -24,6 +25,8 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const action = String(formData.get("action") || "");
   const url = String(formData.get("url") || "");
+
+  revalidatePath("/admin/media");
 
   if (action === "delete") {
     const result = await deleteMediaFile(url);

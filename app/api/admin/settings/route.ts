@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+
+export const dynamic = "force-dynamic";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { normalizeImageForDisplay } from "@/lib/display-images";
 import { getDraftHomeContent, updateHomeContentDraft } from "@/lib/home-content";

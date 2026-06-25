@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  revalidatePath("/admin/media");
+  revalidatePath("/admin/cleanup");
+  revalidatePath("/admin/backups");
   url.searchParams.set("deleted", String(result.deletedFiles.length + result.deletedBackups.length));
   url.searchParams.set("deletedFiles", String(result.deletedFiles.length));
   url.searchParams.set("deletedBackups", String(result.deletedBackups.length));

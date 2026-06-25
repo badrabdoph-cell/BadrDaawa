@@ -114,7 +114,7 @@ export async function publishAllChanges(publishedBy: string): Promise<PublishRes
     // Step 6: Clear pending changes
     await clearPendingChanges();
 
-    // Step 7: Revalidate public pages
+    // Step 7: Revalidate all pages
     revalidatePath("/");
     revalidatePath("/templates");
     revalidatePath("/order");
@@ -122,7 +122,12 @@ export async function publishAllChanges(publishedBy: string): Promise<PublishRes
     revalidatePath("/terms");
     revalidatePath("/refund-policy");
     revalidatePath("/usage-policy");
-    console.log(`[Publish Pipeline] Revalidated public pages`);
+    revalidatePath("/admin");
+    revalidatePath("/admin/publish");
+    revalidatePath("/admin/broadcast");
+    revalidatePath("/admin/texts");
+    revalidatePath("/admin/settings");
+    console.log(`[Publish Pipeline] Revalidated all pages`);
 
     // Step 8: Update metadata
     await updatePublishMeta({

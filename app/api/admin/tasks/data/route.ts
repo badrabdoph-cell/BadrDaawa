@@ -3,6 +3,8 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getTaskExecutionLog, listScheduledTasks } from "@/lib/task-scheduler";
 import { getRedirectUrl } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }

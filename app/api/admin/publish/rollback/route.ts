@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { rollbackToVersion } from "@/lib/publish-rollback";
@@ -22,6 +23,14 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json({ ok: false, error: result.message, rollbackVersion: result.rollbackVersion, rolledBackToSha: result.rolledBackToSha, restoredKeys: result.restoredKeys }, { status: 400 });
     }
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath("/admin/publish");
+    revalidatePath("/admin/versions");
+    revalidatePath("/admin/broadcast");
+    revalidatePath("/admin/texts");
+    revalidatePath("/admin/settings");
 
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
