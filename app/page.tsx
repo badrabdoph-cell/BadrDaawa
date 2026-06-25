@@ -260,25 +260,27 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               ))}
             </ul>
             <div className="wd-preview-actions">
-              <Link className="btn btn-gold btn-glow" href="/badr-sarah-1" data-broadcast-id="home-content.preview.fullInviteCta">
-                <Eye size={18} />
-                {content?.preview?.fullInviteCta || "معاينة الدعوة كاملة"}
-              </Link>
-              <Link className="btn btn-soft" href="/templates" data-broadcast-id="home-content.preview.orderCta">
+              <Link className="btn btn-soft wd-designs-glow" href="/templates" data-broadcast-id="home-content.preview.orderCta">
                 <WandSparkles size={18} />
-                {content?.preview?.orderCta || "استخدم هذا التصميم"}
+                شاهد باقي التصاميم
               </Link>
             </div>
           </div>
-          <div className="wd-preview-phone" aria-label="معاينة مباشرة لقالب الدعوة">
-            <span className="wd-preview-badge" data-broadcast-id="home-content.preview.badge">{content?.preview?.badge || "دعوة حية"}</span>
-            {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
-              <img className="wd-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" width={360} height={640} loading="lazy" decoding="async" />
-            ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
-              <video className="wd-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
-            ) : (
-              <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
-            )}
+          <div className="wd-preview-stage">
+            <div className="wd-preview-phone" aria-label="معاينة مباشرة لقالب الدعوة">
+              <span className="wd-preview-badge" data-broadcast-id="home-content.preview.badge">{content?.preview?.badge || "دعوة حية"}</span>
+              {previewSettings?.mode === "image" && previewSettings?.imageUrl ? (
+                <img className="wd-preview-media" src={previewSettings.imageUrl} alt="معاينة صورة الدعوة" width={360} height={640} loading="lazy" decoding="async" />
+              ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
+                <video className="wd-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
+              ) : (
+                <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
+              )}
+            </div>
+            <Link className="btn btn-gold btn-glow wd-preview-full-action" href="/badr-sarah-1" data-broadcast-id="home-content.preview.fullInviteCta">
+              <Eye size={18} />
+              {content?.preview?.fullInviteCta || "معاينة الدعوة كاملة"}
+            </Link>
           </div>
         </div>
       </section>
@@ -408,6 +410,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
           return render ? <React.Fragment key={id}>{render()}</React.Fragment> : null;
         })}
       </main>
+      <Link className="wd-floating-start" href="/order" aria-label="ابدأ الآن واطلب دعوة">
+        <Sparkles size={18} />
+        <span>أبدأ الآن</span>
+      </Link>
       <SiteFooter />
     </div>
   );

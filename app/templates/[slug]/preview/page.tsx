@@ -266,6 +266,10 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           </Link>
         </nav>
       ) : null}
+      <Link className="wd-floating-start template-floating-start" href={`/order?template=${template.slug}`} aria-label="ابدأ الآن واطلب هذا التصميم">
+        <Sparkles size={18} />
+        <span>أبدأ الآن</span>
+      </Link>
     </div>
   );
 }
