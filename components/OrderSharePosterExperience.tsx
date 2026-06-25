@@ -92,7 +92,7 @@ function saveOrderResponseExtra(data: OrderResponseExtra, selectedShareTemplate:
   } catch {}
 }
 
-function scaledPoster(snapshot: PosterSnapshot, selectedShareTemplate: SharePosterTemplateId, scaleClass: string) {
+function scaledPoster(snapshot: PosterSnapshot & { headline?: string }, selectedShareTemplate: SharePosterTemplateId, scaleClass: string) {
   return (
     <div className={`share-poster-scale ${scaleClass}`}>
       <PosterRenderer {...snapshot} selectedShareTemplate={selectedShareTemplate} />
