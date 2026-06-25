@@ -22,6 +22,19 @@ export type HomeContent = {
     description: string;
     primaryCta: string;
     secondaryCta: string;
+    boardTitle?: string;
+    boardSubtitle?: string;
+    boardFooter?: string;
+    flow?: {
+      linkInviteTitle?: string;
+      linkInviteText?: string;
+      guestOpenedTitle?: string;
+      guestOpenedText?: string;
+      rsvpTitle?: string;
+      rsvpText?: string;
+      reminderTitle?: string;
+      reminderText?: string;
+    };
   };
   features: {
     title: string;
@@ -53,6 +66,19 @@ export const defaultHomeContent: HomeContent = {
     description: "شاركوا لحظاتكم الجميلة مع أحبائكم بطريقه حديثه",
     primaryCta: "ابدأ تصميم دعوتك",
     secondaryCta: "استعرض التصاميم",
+    boardTitle: "Wedding Daawa OS",
+    boardSubtitle: "يوم الفرح تحت السيطرة",
+    boardFooter: "بدون ورق. بدون زحمة. بدون تخمين.",
+    flow: {
+      linkInviteTitle: "لينك الدعوة",
+      linkInviteText: "جاهز للمشاركة",
+      guestOpenedTitle: "الضيف فتح",
+      guestOpenedText: "تمت المشاهدة",
+      rsvpTitle: "تأكيد الحضور",
+      rsvpText: "الأسماء بتتجمع",
+      reminderTitle: "رسالة تذكير",
+      reminderText: "واتساب في الطريق",
+    },
   },
   features: {
     title: "كل ما تحتاجه دعوتك في مكان واحد",
@@ -176,6 +202,19 @@ function normalizeContent(input: Partial<HomeContent>): HomeContent {
       description: cleanText(input.hero?.description, fallback.hero.description),
       primaryCta: cleanText(input.hero?.primaryCta, fallback.hero.primaryCta),
       secondaryCta: cleanText(input.hero?.secondaryCta, fallback.hero.secondaryCta),
+      boardTitle: cleanText(input.hero?.boardTitle, fallback.hero.boardTitle || ""),
+      boardSubtitle: cleanText(input.hero?.boardSubtitle, fallback.hero.boardSubtitle || ""),
+      boardFooter: cleanText(input.hero?.boardFooter, fallback.hero.boardFooter || ""),
+      flow: {
+        linkInviteTitle: cleanText(input.hero?.flow?.linkInviteTitle, fallback.hero.flow?.linkInviteTitle || ""),
+        linkInviteText: cleanText(input.hero?.flow?.linkInviteText, fallback.hero.flow?.linkInviteText || ""),
+        guestOpenedTitle: cleanText(input.hero?.flow?.guestOpenedTitle, fallback.hero.flow?.guestOpenedTitle || ""),
+        guestOpenedText: cleanText(input.hero?.flow?.guestOpenedText, fallback.hero.flow?.guestOpenedText || ""),
+        rsvpTitle: cleanText(input.hero?.flow?.rsvpTitle, fallback.hero.flow?.rsvpTitle || ""),
+        rsvpText: cleanText(input.hero?.flow?.rsvpText, fallback.hero.flow?.rsvpText || ""),
+        reminderTitle: cleanText(input.hero?.flow?.reminderTitle, fallback.hero.flow?.reminderTitle || ""),
+        reminderText: cleanText(input.hero?.flow?.reminderText, fallback.hero.flow?.reminderText || ""),
+      },
     },
     features: {
       title: cleanText(input.features?.title, fallback.features.title),

@@ -100,6 +100,22 @@ async function collectHomeContentEntries(): Promise<ContentTextEntry[]> {
   entries.push({ id: "home-content.hero.description", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.description", title: "الوصف", text: content.hero.description, href: baseHref, editable: true });
   entries.push({ id: "home-content.hero.primaryCta", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.primaryCta", title: "زر CTA أساسي", text: content.hero.primaryCta, href: baseHref, editable: true });
   entries.push({ id: "home-content.hero.secondaryCta", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.secondaryCta", title: "زر CTA ثانوي", text: content.hero.secondaryCta, href: baseHref, editable: true });
+
+  // Hero board texts
+  entries.push({ id: "home-content.hero.boardTitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.boardTitle", title: "عنوان البورد", text: content.hero.boardTitle || "Wedding Daawa OS", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.boardSubtitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.boardSubtitle", title: "عنوان فرعي البورد", text: content.hero.boardSubtitle || "يوم الفرح تحت السيطرة", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.boardFooter", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.boardFooter", title: "نص أسفل البورد", text: content.hero.boardFooter || "بدون ورق. بدون زحمة. بدون تخمين.", href: baseHref, editable: true });
+
+  // Hero board flow items
+  entries.push({ id: "home-content.hero.flow.linkInviteTitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.linkInviteTitle", title: "لينك الدعوة - عنوان", text: content.hero.flow?.linkInviteTitle || "لينك الدعوة", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.linkInviteText", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.linkInviteText", title: "لينك الدعوة - نص", text: content.hero.flow?.linkInviteText || "جاهز للمشاركة", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.guestOpenedTitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.guestOpenedTitle", title: "الضيف فتح - عنوان", text: content.hero.flow?.guestOpenedTitle || "الضيف فتح", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.guestOpenedText", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.guestOpenedText", title: "الضيف فتح - نص", text: content.hero.flow?.guestOpenedText || "تمت المشاهدة", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.rsvpTitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.rsvpTitle", title: "تأكيد الحضور - عنوان", text: content.hero.flow?.rsvpTitle || "تأكيد الحضور", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.rsvpText", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.rsvpText", title: "تأكيد الحضور - نص", text: content.hero.flow?.rsvpText || "الأسماء بتتجمع", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.reminderTitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.reminderTitle", title: "رسالة تذكير - عنوان", text: content.hero.flow?.reminderTitle || "رسالة تذكير", href: baseHref, editable: true });
+  entries.push({ id: "home-content.hero.flow.reminderText", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.reminderText", title: "رسالة تذكير - نص", text: content.hero.flow?.reminderText || "واتساب في الطريق", href: baseHref, editable: true });
+
   entries.push({ id: "home-content.features.title", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المميزات", groupLabel: "المميزات", path: "features.title", title: "عنوان المميزات", text: content.features.title, href: baseHref, editable: true });
   entries.push({ id: "home-content.preview.eyebrow", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المعاينة", groupLabel: "المعاينة", path: "preview.eyebrow", title: "شعار المعاينة", text: content.preview.eyebrow, href: baseHref, editable: true });
   entries.push({ id: "home-content.preview.title", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المعاينة", groupLabel: "المعاينة", path: "preview.title", title: "عنوان المعاينة", text: content.preview.title, href: baseHref, editable: true });
@@ -365,6 +381,12 @@ function setHomeContentPath(obj: Record<string, unknown>, p: string, val: string
     const row = pricing?.rows?.find((item) => item.id === pricingMatch[1]);
     if (!row) return false;
     row.feature = val;
+    return true;
+  }
+
+  // Handle hero board and flow fields
+  if (p.startsWith("hero.board") || p.startsWith("hero.flow")) {
+    setNestedPath(obj, p, val);
     return true;
   }
 

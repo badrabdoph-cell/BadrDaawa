@@ -180,29 +180,29 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
 
             <div className="wd-hero-board" aria-label="ملخص تجربة الدعوة الرقمية">
               <div className="wd-board-header">
-                <span>Wedding Daawa OS</span>
-                <strong>يوم الفرح تحت السيطرة</strong>
+                <span data-broadcast-id="home-content.hero.boardTitle">{content?.hero?.boardTitle || "Wedding Daawa OS"}</span>
+                <strong data-broadcast-id="home-content.hero.boardSubtitle">{content?.hero?.boardSubtitle || "يوم الفرح تحت السيطرة"}</strong>
               </div>
               <div className="wd-board-flow">
                 {[
-                  ["لينك الدعوة", "جاهز للمشاركة", Link2],
-                  ["الضيف فتح", "تمت المشاهدة", Eye],
-                  ["تأكيد الحضور", "الأسماء بتتجمع", UserCheck],
-                  ["رسالة تذكير", "واتساب في الطريق", BellRing],
-                ].map(([title, text, Icon]) => (
-                  <div className="wd-board-row" key={title as string}>
+                  [content?.hero?.flow?.linkInviteTitle || "لينك الدعوة", content?.hero?.flow?.linkInviteText || "جاهز للمشاركة", Link2, "home-content.hero.flow.linkInviteTitle", "home-content.hero.flow.linkInviteText"],
+                  [content?.hero?.flow?.guestOpenedTitle || "الضيف فتح", content?.hero?.flow?.guestOpenedText || "تمت المشاهدة", Eye, "home-content.hero.flow.guestOpenedTitle", "home-content.hero.flow.guestOpenedText"],
+                  [content?.hero?.flow?.rsvpTitle || "تأكيد الحضور", content?.hero?.flow?.rsvpText || "الأسماء بتتجمع", UserCheck, "home-content.hero.flow.rsvpTitle", "home-content.hero.flow.rsvpText"],
+                  [content?.hero?.flow?.reminderTitle || "رسالة تذكير", content?.hero?.flow?.reminderText || "واتساب في الطريق", BellRing, "home-content.hero.flow.reminderTitle", "home-content.hero.flow.reminderText"],
+                ].map(([title, text, Icon, titleId, textId]) => (
+                  <div className="wd-board-row" key={titleId as string}>
                     <span>
                       <Icon size={18} />
                     </span>
                     <div>
-                      <strong>{title as string}</strong>
-                      <small>{text as string}</small>
+                      <strong data-broadcast-id={titleId as string}>{title as string}</strong>
+                      <small data-broadcast-id={textId as string}>{text as string}</small>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="wd-board-footer">
-                <span>بدون ورق. بدون زحمة. بدون تخمين.</span>
+                <span data-broadcast-id="home-content.hero.boardFooter">{content?.hero?.boardFooter || "بدون ورق. بدون زحمة. بدون تخمين."}</span>
                 <Sparkles size={16} />
               </div>
             </div>
