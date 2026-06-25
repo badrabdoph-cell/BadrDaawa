@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { ExternalLink, Home, Image, Mail, Megaphone, Phone, Save, Search, Settings } from "lucide-react";
+import { ExternalLink, Home, Image, LayoutList, Mail, Megaphone, Phone, Save, Search, Settings } from "lucide-react";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
 import { getDraftSiteSettings } from "@/lib/site-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
+import { HOME_SECTION_DEFINITIONS } from "@/lib/home-sections";
+import { SectionOrderEditor } from "@/components/SectionOrderEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -222,6 +224,18 @@ export default async function AdminSiteSettingsPage({
               <small>يمكنك استخدام صفحة المعاينة المتخصصة لرفع صورة أو فيديو جديد.</small>
             </label>
           </div>
+          <div className="admin-card-separator">
+            <LayoutList size={18} />
+            <span>ترتيب أقسام الصفحة الرئيسية</span>
+          </div>
+          <p className="field-hint" style={{ padding: "0 1.25rem 0.75rem", fontSize: "0.85rem", opacity: 0.8 }}>
+            اسحب أو استخدم الأسهم لترتيب الأقسام. التغييرات تنعكس فوراً على الموقع بعد الحفظ.
+          </p>
+          <SectionOrderEditor
+            sections={HOME_SECTION_DEFINITIONS.map((s) => ({ id: s.id, label: s.label }))}
+            initialOrder={settings.homepage.sectionOrder || []}
+            inputName="sectionOrder"
+          />
         </article>
 
         <article className="panel site-settings-card">

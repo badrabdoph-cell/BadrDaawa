@@ -1,10 +1,12 @@
 import { BroadcastStudio } from "@/components/BroadcastStudio";
 import { collectAllTextEntries } from "@/lib/content-text-registry";
+import { getDraftSiteSettings } from "@/lib/site-settings";
+import { HOME_SECTION_DEFINITIONS } from "@/lib/home-sections";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBroadcastPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
-  const [params, textEntries] = await Promise.all([searchParams, collectAllTextEntries()]);
+  const [params, textEntries, settings] = await Promise.all([searchParams, collectAllTextEntries(), getDraftSiteSettings().catch(() => null)]);
 
   return (
     <>
@@ -21,6 +23,8 @@ export default async function AdminBroadcastPage({ searchParams }: { searchParam
 
       <BroadcastStudio
         textEntries={textEntries.filter((entry) => entry.editable)}
+        sectionDefs={HOME_SECTION_DEFINITIONS.map((s) => ({ id: s.id, label: s.label }))}
+        initialSectionOrder={settings?.homepage?.sectionOrder}
       />
     </>
   );

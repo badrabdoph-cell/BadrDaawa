@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import { normalizePhoneForWhatsApp } from "./utils";
+import { DEFAULT_SECTION_ORDER, HOMEPAGE_SECTION_IDS } from "./home-sections";
 
 export type SiteSocialLinks = {
   facebook: string;
@@ -24,6 +25,7 @@ export type SiteHomepageSettings = {
   showPricing: boolean;
   primaryCtaLabel: string;
   secondaryCtaLabel: string;
+  sectionOrder: string[];
 };
 
 export type SiteOrderSettings = {
@@ -95,6 +97,7 @@ export const defaultSiteSettings: SiteSettings = {
     showPricing: true,
     primaryCtaLabel: "ابدأ تصميم دعوتك",
     secondaryCtaLabel: "استعرض التصاميم",
+    sectionOrder: DEFAULT_SECTION_ORDER,
   },
   order: {
     showPaymentMethods: false,
@@ -155,6 +158,14 @@ function normalizeBoolean(value: unknown, fallback: boolean) {
   return typeof value === "boolean" ? value : fallback;
 }
 
+function normalizeSectionOrder(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return fallback;
+  const valid = value.filter((id) => typeof id === "string" && HOMEPAGE_SECTION_IDS.includes(id));
+  if (!valid.length) return fallback;
+  const missing = HOMEPAGE_SECTION_IDS.filter((id) => !valid.includes(id));
+  return [...valid, ...missing];
+}
+
 function normalizeSocialLinks(input: Partial<SiteSocialLinks> | undefined): SiteSocialLinks {
   return {
     facebook: cleanUrl(input?.facebook, ""),
@@ -192,6 +203,7 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       showPricing: normalizeBoolean(input.homepage?.showPricing, fallback.homepage.showPricing),
       primaryCtaLabel: cleanText(input.homepage?.primaryCtaLabel, fallback.homepage.primaryCtaLabel).slice(0, 80),
       secondaryCtaLabel: cleanText(input.homepage?.secondaryCtaLabel, fallback.homepage.secondaryCtaLabel).slice(0, 80),
+      sectionOrder: normalizeSectionOrder(input.homepage?.sectionOrder, fallback.homepage.sectionOrder),
     },
     order: {
       showPaymentMethods: normalizeBoolean(input.order?.showPaymentMethods, fallback.order.showPaymentMethods),

@@ -116,6 +116,47 @@ async function collectHomeContentEntries(): Promise<ContentTextEntry[]> {
   entries.push({ id: "home-content.hero.flow.reminderTitle", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.reminderTitle", title: "رسالة تذكير - عنوان", text: content.hero.flow?.reminderTitle || "رسالة تذكير", href: baseHref, editable: true });
   entries.push({ id: "home-content.hero.flow.reminderText", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "القسم العلوي", groupLabel: "القسم العلوي", path: "hero.flow.reminderText", title: "رسالة تذكير - نص", text: content.hero.flow?.reminderText || "واتساب في الطريق", href: baseHref, editable: true });
 
+  // Quick benefits
+  for (const benefit of content.quickBenefits || []) {
+    entries.push({ id: `home-content.quickBenefits.${benefit.id}.title`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المميزات السريعة", groupLabel: "المميزات السريعة", path: `quickBenefits.${benefit.id}.title`, title: `ميزة: ${benefit.title}`, text: benefit.title, href: baseHref, editable: true });
+    entries.push({ id: `home-content.quickBenefits.${benefit.id}.text`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المميزات السريعة", groupLabel: "المميزات السريعة", path: `quickBenefits.${benefit.id}.text`, title: `وصف: ${benefit.title}`, text: benefit.text, href: baseHref, editable: true });
+  }
+
+  // Flow steps
+  for (const step of content.flowSteps || []) {
+    entries.push({ id: `home-content.flowSteps.${step.id}.title`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "خطوات العملية", groupLabel: "خطوات العملية", path: `flowSteps.${step.id}.title`, title: `خطوة: ${step.title}`, text: step.title, href: baseHref, editable: true });
+    entries.push({ id: `home-content.flowSteps.${step.id}.text`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "خطوات العملية", groupLabel: "خطوات العملية", path: `flowSteps.${step.id}.text`, title: `وصف: ${step.title}`, text: step.text, href: baseHref, editable: true });
+  }
+
+  // Guest features
+  for (const feature of content.guestFeatures || []) {
+    entries.push({ id: `home-content.guestFeatures.${feature.id}.title`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "مميزات الضيوف", groupLabel: "مميزات الضيوف", path: `guestFeatures.${feature.id}.title`, title: `ميزة: ${feature.title}`, text: feature.title, href: baseHref, editable: true });
+    entries.push({ id: `home-content.guestFeatures.${feature.id}.text`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "مميزات الضيوف", groupLabel: "مميزات الضيوف", path: `guestFeatures.${feature.id}.text`, title: `وصف: ${feature.title}`, text: feature.text, href: baseHref, editable: true });
+  }
+
+  // Owner features
+  for (const feature of content.ownerFeatures || []) {
+    entries.push({ id: `home-content.ownerFeatures.${feature.id}.title`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "مميزات صاحب الفرح", groupLabel: "مميزات صاحب الفرح", path: `ownerFeatures.${feature.id}.title`, title: `ميزة: ${feature.title}`, text: feature.title, href: baseHref, editable: true });
+    entries.push({ id: `home-content.ownerFeatures.${feature.id}.text`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "مميزات صاحب الفرح", groupLabel: "مميزات صاحب الفرح", path: `ownerFeatures.${feature.id}.text`, title: `وصف: ${feature.title}`, text: feature.text, href: baseHref, editable: true });
+  }
+
+  // Trust items
+  for (const item of content.trustItems || []) {
+    entries.push({ id: `home-content.trustItems.${item.id}.title`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "عناصر الثقة", groupLabel: "عناصر الثقة", path: `trustItems.${item.id}.title`, title: `عنصر: ${item.title}`, text: item.title, href: baseHref, editable: true });
+    entries.push({ id: `home-content.trustItems.${item.id}.text`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "عناصر الثقة", groupLabel: "عناصر الثقة", path: `trustItems.${item.id}.text`, title: `وصف: ${item.title}`, text: item.text, href: baseHref, editable: true });
+  }
+
+  // Preview points
+  for (let i = 0; i < (content.previewPoints || []).length; i++) {
+    entries.push({ id: `home-content.previewPoints.${i}`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "نقاط المعاينة", groupLabel: "نقاط المعاينة", path: `previewPoints.${i}`, title: `نقطة معاينة ${i + 1}`, text: content.previewPoints![i], href: baseHref, editable: true });
+  }
+
+  // FAQ items
+  for (const faq of content.faqItems || []) {
+    entries.push({ id: `home-content.faqItems.${faq.id}.question`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "الأسئلة الشائعة", groupLabel: "الأسئلة الشائعة", path: `faqItems.${faq.id}.question`, title: `سؤال: ${faq.question.slice(0, 40)}`, text: faq.question, href: baseHref, editable: true });
+    entries.push({ id: `home-content.faqItems.${faq.id}.answer`, source: "home-content", sourceLabel: sourceLabels["home-content"], group: "الأسئلة الشائعة", groupLabel: "الأسئلة الشائعة", path: `faqItems.${faq.id}.answer`, title: `إجابة: ${faq.question.slice(0, 40)}`, text: faq.answer, href: baseHref, editable: true });
+  }
+
   entries.push({ id: "home-content.features.title", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المميزات", groupLabel: "المميزات", path: "features.title", title: "عنوان المميزات", text: content.features.title, href: baseHref, editable: true });
   entries.push({ id: "home-content.preview.eyebrow", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المعاينة", groupLabel: "المعاينة", path: "preview.eyebrow", title: "شعار المعاينة", text: content.preview.eyebrow, href: baseHref, editable: true });
   entries.push({ id: "home-content.preview.title", source: "home-content", sourceLabel: sourceLabels["home-content"], group: "المعاينة", groupLabel: "المعاينة", path: "preview.title", title: "عنوان المعاينة", text: content.preview.title, href: baseHref, editable: true });

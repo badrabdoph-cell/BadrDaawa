@@ -14,6 +14,24 @@ export type HomePricingRow = {
   plus: boolean;
 };
 
+export type BenefitItem = {
+  id: string;
+  title: string;
+  text: string;
+};
+
+export type FlowStep = {
+  id: string;
+  title: string;
+  text: string;
+};
+
+export type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 export type HomeContent = {
   hero: {
     kicker: string;
@@ -36,6 +54,13 @@ export type HomeContent = {
       reminderText?: string;
     };
   };
+  quickBenefits?: BenefitItem[];
+  flowSteps?: FlowStep[];
+  guestFeatures?: BenefitItem[];
+  ownerFeatures?: BenefitItem[];
+  trustItems?: BenefitItem[];
+  previewPoints?: string[];
+  faqItems?: FaqItem[];
   features: {
     title: string;
     points: HomeFeaturePoint[];
@@ -80,6 +105,76 @@ export const defaultHomeContent: HomeContent = {
       reminderText: "واتساب في الطريق",
     },
   },
+  quickBenefits: [
+    { id: "quick-1", title: "دعوة جاهزة للمشاركة", text: "لينك أنيق يتبعت على واتساب في ثواني." },
+    { id: "quick-2", title: "تأكيد حضور RSVP", text: "الضيف يؤكد أو يعتذر من نفس الدعوة." },
+    { id: "quick-3", title: "لوكيشن وQR Code", text: "كل تفاصيل الوصول محفوظة في مكان واحد." },
+    { id: "quick-4", title: "لوحة متابعة خاصة", text: "شوف الأسماء والأرقام والردود أول بأول." },
+  ],
+  flowSteps: [
+    { id: "flow-1", title: "اختار التصميم", text: "ابدأ من قالب قريب من ذوقكم." },
+    { id: "flow-2", title: "ابعت بيانات الفرح", text: "الأسماء، المعاد، القاعة، الصور، والموسيقى." },
+    { id: "flow-3", title: "استلم لينك الدعوة", text: "لينك خاص جاهز للمشاركة مع QR Code." },
+    { id: "flow-4", title: "تابع الحضور", text: "كل رد من المعازيم يظهر في لوحة واحدة." },
+  ],
+  guestFeatures: [
+    { id: "guest-1", title: "لينك خاص", text: "الضيف يفتح الدعوة من الموبايل بدون تحميل تطبيق." },
+    { id: "guest-2", title: "QR Code", text: "مشاركة سهلة على الشاشة أو في المطبوعات." },
+    { id: "guest-3", title: "لوكيشن القاعة", text: "العنوان والخريطة موجودين داخل الدعوة." },
+    { id: "guest-4", title: "إضافة للتقويم", text: "تنبيه قبل الفرح بدل نسيان المعاد." },
+    { id: "guest-5", title: "موسيقى وصور", text: "دعوة تحس فعلا إنها تخصكم، مش صفحة عادية." },
+  ],
+  ownerFeatures: [
+    { id: "owner-1", title: "مين شاف الدعوة", text: "اعرف التفاعل الحقيقي بدل التخمين." },
+    { id: "owner-2", title: "تأكيد الحضور", text: "ردود واضحة: هيحضر، مش هيحضر، أو لسه." },
+    { id: "owner-3", title: "كشف أسماء وأرقام", text: "كل بيانات الضيوف مرتبة وسهلة المراجعة." },
+    { id: "owner-4", title: "رسائل جماعية", text: "ابعت تذكير أو تنبيه لكل الضيوف مرة واحدة." },
+    { id: "owner-5", title: "تعليقات بموافقتك", text: "ذكريات وكلمات تظهر بعد اعتمادك فقط." },
+  ],
+  trustItems: [
+    { id: "trust-1", title: "مناسب لكل المناسبات", text: "فرح، خطوبة، كتب كتاب، أو احتفال عائلي." },
+    { id: "trust-2", title: "بدون تطبيق", text: "يعمل من المتصفح مباشرة على أغلب الموبايلات." },
+    { id: "trust-3", title: "مشاركة واتساب", text: "اللينك جاهز للارسال للعيلة والصحاب." },
+    { id: "trust-4", title: "خصوصية وتحكم", text: "لوحة خاصة وروابط واضحة لكل دور." },
+  ],
+  previewPoints: [
+    "الضيف يفتح الدعوة من اللينك مباشرة.",
+    "يشوف الصور والموسيقى واللوكيشن في نفس التجربة.",
+    "يأكد الحضور أو يعتذر بخطوة بسيطة.",
+    "صاحب الدعوة يتابع الردود والأرقام من لوحة واحدة.",
+  ],
+  faqItems: [
+    {
+      id: "faq-1",
+      question: "هل الضيوف يحتاجون تحميل تطبيق؟",
+      answer: "لا. الدعوة تفتح من اللينك مباشرة على الموبايل أو الكمبيوتر.",
+    },
+    {
+      id: "faq-2",
+      question: "هل أقدر أعدل الدعوة بعد الإنشاء؟",
+      answer: "نعم، تقدر تعدل البيانات والصور والتفاصيل حسب الباقة والإعدادات المتاحة.",
+    },
+    {
+      id: "faq-3",
+      question: "هل أقدر أعرف مين شاف الدعوة؟",
+      answer: "الفكرة الأساسية إنك تتابع التفاعل والحضور من لوحة متابعة بدل ما تعتمد على التخمين.",
+    },
+    {
+      id: "faq-4",
+      question: "هل أقدر أرسل الدعوة على واتساب؟",
+      answer: "نعم، الدعوة عبارة عن لينك خاص جاهز للمشاركة على واتساب أو أي تطبيق رسائل.",
+    },
+    {
+      id: "faq-5",
+      question: "هل يوجد QR Code؟",
+      answer: "نعم، يمكن استخدام QR Code لتسهيل فتح الدعوة من أي موبايل.",
+    },
+    {
+      id: "faq-6",
+      question: "هل الدعوة تعمل على كل الموبايلات؟",
+      answer: "تم تصميم التجربة لتعمل على المتصفحات الحديثة وتكون مريحة على الموبايل أولا.",
+    },
+  ],
   features: {
     title: "كل ما تحتاجه دعوتك في مكان واحد",
     points: [
@@ -216,6 +311,13 @@ function normalizeContent(input: Partial<HomeContent>): HomeContent {
         reminderText: cleanText(input.hero?.flow?.reminderText, fallback.hero.flow?.reminderText || ""),
       },
     },
+    quickBenefits: input.quickBenefits || fallback.quickBenefits,
+    flowSteps: input.flowSteps || fallback.flowSteps,
+    guestFeatures: input.guestFeatures || fallback.guestFeatures,
+    ownerFeatures: input.ownerFeatures || fallback.ownerFeatures,
+    trustItems: input.trustItems || fallback.trustItems,
+    previewPoints: input.previewPoints || fallback.previewPoints,
+    faqItems: input.faqItems || fallback.faqItems,
     features: {
       title: cleanText(input.features?.title, fallback.features.title),
       points: normalizeFeaturePoints(input.features?.points, fallback.features.points),

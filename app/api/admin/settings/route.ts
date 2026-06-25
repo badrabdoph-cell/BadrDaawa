@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
         showPricing: formData.has("showPricing"),
         primaryCtaLabel,
         secondaryCtaLabel,
+        sectionOrder: JSON.parse(text(formData, "sectionOrder") || "null"),
       },
       order: {
         showPaymentMethods: formData.has("showPaymentMethods"),

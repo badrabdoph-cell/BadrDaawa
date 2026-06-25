@@ -3,6 +3,7 @@
 import { Check, ExternalLink, Laptop, Pencil, RefreshCw, Save, Search, Smartphone, X } from "lucide-react";
 import { useCallback, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
+import { BroadcastSectionOrder } from "@/components/BroadcastSectionOrder";
 
 type EditableEntry = {
   id: string;
@@ -58,8 +59,12 @@ function mapForIframe(entry: EditableEntry) {
 
 export function BroadcastStudio({
   textEntries: initialEntries,
+  sectionDefs,
+  initialSectionOrder,
 }: {
   textEntries: EditableEntry[];
+  sectionDefs?: { id: string; label: string }[];
+  initialSectionOrder?: string[];
 }) {
   const [entries, setEntries] = useState(initialEntries);
   const [inlineEntries, setInlineEntries] = useState<EditableEntry[]>([]);
@@ -434,6 +439,18 @@ export function BroadcastStudio({
               </div>
             )}
           </div>
+
+          {viewport === "desktop" && sectionDefs && initialSectionOrder ? (
+            <div className="broadcast-section-order-wrap">
+              <BroadcastSectionOrder
+                sections={sectionDefs}
+                initialOrder={initialSectionOrder}
+                onReorder={() => {
+                  setReloadKey((k) => k + 1);
+                }}
+              />
+            </div>
+          ) : null}
         </aside>
       </div>
     </section>
