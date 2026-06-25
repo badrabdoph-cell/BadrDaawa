@@ -1,9 +1,10 @@
 "use client";
 
 import { Check, ExternalLink, Laptop, Pencil, RefreshCw, Save, Search, Smartphone, X } from "lucide-react";
-import { useCallback, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentTextEntry } from "@/lib/content-text-registry";
 import { BroadcastSectionOrder } from "@/components/BroadcastSectionOrder";
+import { collectDirtyBroadcastDrafts, getBroadcastDraftValue, updateBroadcastDraft, type BroadcastDraftMap } from "@/lib/broadcast-drafts";
 
 type EditableEntry = {
   id: string;
@@ -70,13 +71,15 @@ export function BroadcastStudio({
   const [inlineEntries, setInlineEntries] = useState<EditableEntry[]>([]);
   const [viewport, setViewport] = useState<"desktop" | "mobile">("mobile");
   const [selectedKey, setSelectedKey] = useState(initialEntries[0]?.id || "");
+  const [draftValues, setDraftValues] = useState<BroadcastDraftMap>({});
 
   const allEntries = useMemo(() => [...entries, ...inlineEntries], [entries, inlineEntries]);
   const selectedEntry = allEntries.find((e) => e.id === selectedKey) || null;
+  const selectedDraftValue = getBroadcastDraftValue(selectedEntry, draftValues);
+  const dirtyDrafts = useMemo(() => collectDirtyBroadcastDrafts(allEntries, draftValues), [allEntries, draftValues]);
   const [query, setQuery] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [framePath, setFramePath] = useState("/");
-  const [draftValue, setDraftValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
@@ -113,50 +116,55 @@ export function BroadcastStudio({
   }, [selectedKey]);
 
   useEffect(() => {
-    if (selectedEntry) {
-      setDraftValue(selectedEntry.text);
-    }
-  }, [selectedEntry?.id]);
-
-  useEffect(() => {
     if (selectedKey && allEntries.some((e) => e.id === selectedKey)) return;
     setSelectedKey(allEntries[0]?.id || "");
   }, [allEntries, selectedKey]);
 
-  const saveViaApi = useCallback(async (saveKey: string, saveValue: string) => {
+  async function saveOneDraft(saveKey: string, saveValue: string) {
+    if (saveKey.startsWith("inline.")) {
+      setInlineEntries((prev) =>
+        prev.map((e) => (e.id === saveKey ? { ...e, text: saveValue } : e)),
+      );
+      return;
+    }
+
+    const response = await fetch("/api/admin/text-edit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: JSON.stringify({ id: saveKey, value: saveValue }),
+    });
+    const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+    if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
+    setEntries((prev) => prev.map((entry) => (entry.id === saveKey ? { ...entry, text: saveValue } : entry)));
+  }
+
+  const saveAllDrafts = useCallback(async () => {
+    const draftsToSave = collectDirtyBroadcastDrafts(allEntries, draftValues);
+    if (!draftsToSave.length) return;
     setIsSaving(true);
     setStatus("");
     setStatusType("success");
     try {
-      if (saveKey.startsWith("inline.")) {
-        setInlineEntries((prev) =>
-          prev.map((e) => (e.id === saveKey ? { ...e, text: saveValue } : e)),
-        );
-        setStatusType("success");
-        setStatus("تم حفظ النص محلياً.");
-        setIsSaving(false);
-        return;
+      for (const draft of draftsToSave) {
+        await saveOneDraft(draft.id, draft.value);
       }
-      const response = await fetch("/api/admin/text-edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        cache: "no-store",
-        body: JSON.stringify({ id: saveKey, value: saveValue }),
-      });
-      const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
-      if (!response.ok || !data?.success) throw new Error(data?.error || "تعذر حفظ النص");
-      setEntries((prev) => prev.map((entry) => (entry.id === saveKey ? { ...entry, text: saveValue } : entry)));
       await refreshEntries();
+      setDraftValues((prev) => {
+        const next = { ...prev };
+        for (const draft of draftsToSave) delete next[draft.id];
+        return next;
+      });
       setStatusType("success");
-      setStatus("تم حفظ النص وتحديث شاشة البث.");
+      setStatus(draftsToSave.length === 1 ? "تم حفظ التعديل وتحديث شاشة البث." : `تم حفظ ${draftsToSave.length} تعديلات وتحديث شاشة البث.`);
     } catch (error) {
       setStatusType("error");
       setStatus(error instanceof Error ? error.message : "تعذر حفظ النص");
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [allEntries, draftValues]);
 
   const sendEntriesToIframe = useCallback(() => {
     const iframeWindow = iframeRef.current?.contentWindow;
@@ -188,21 +196,21 @@ export function BroadcastStudio({
 
   // Live preview: send draft changes to iframe in real-time
   useEffect(() => {
-    if (!selectedEntry || draftValue === selectedEntry.text) return;
+    if (!selectedEntry || selectedDraftValue === selectedEntry.text) return;
     const iframeWindow = iframeRef.current?.contentWindow;
     if (!iframeWindow) return;
     try {
       iframeWindow.postMessage(
         {
           source: "badr-broadcast-parent",
-          livePreview: { key: selectedEntry.id, value: draftValue },
+          livePreview: { key: selectedEntry.id, value: selectedDraftValue },
         },
         window.location.origin,
       );
     } catch {
       // ignore cross-origin errors
     }
-  }, [draftValue, selectedEntry?.id]);
+  }, [selectedDraftValue, selectedEntry?.id]);
 
   useEffect(() => {
     if (!status) return;
@@ -246,13 +254,13 @@ export function BroadcastStudio({
       }
 
       if (msg.type === "save") {
-        saveViaApi(marker.key, marker.value);
+        setDraftValues((prev) => updateBroadcastDraft(prev, marker.key, marker.value, allEntries.find((entry) => entry.id === marker.key)?.text || ""));
         return;
       }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [allEntries, saveViaApi]);
+  }, [allEntries]);
 
   function handleFrameLoad() {
     const iframeWindow = iframeRef.current?.contentWindow;
@@ -282,12 +290,6 @@ export function BroadcastStudio({
     if (!response.ok) return;
     const data = (await response.json()) as { fields?: EditableEntry[] };
     if (data.fields) setEntries(data.fields);
-  }
-
-  async function saveSelected(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedEntry) return;
-    saveViaApi(selectedEntry.id, draftValue);
   }
 
   return (
@@ -367,22 +369,21 @@ export function BroadcastStudio({
           </div> : null}
 
           {selectedEntry ? (
-            <form className="broadcast-edit-form" onSubmit={saveSelected}>
-              <label className="field">
-                <span>العنصر المحدد</span>
-                <input value={selectedEntry.title} readOnly />
-              </label>
-              <label className="field">
-                <span>المصدر</span>
-                <input value={selectedEntry.sourceLabel} readOnly />
-              </label>
+            <form className="broadcast-edit-form" onSubmit={(event) => { event.preventDefault(); saveAllDrafts(); }}>
               <label className="field">
                 <span>النص</span>
-                <textarea value={draftValue} onChange={(event) => setDraftValue(event.target.value)} rows={5} />
+                <textarea
+                  value={selectedDraftValue}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setDraftValues((prev) => updateBroadcastDraft(prev, selectedEntry.id, nextValue, selectedEntry.text));
+                  }}
+                  rows={7}
+                />
               </label>
-              <button className="btn btn-gold btn-glow" type="submit" disabled={isSaving || draftValue === selectedEntry.text}>
+              <button className="btn btn-gold btn-glow" type="submit" disabled={isSaving || dirtyDrafts.length === 0}>
                 <Save size={18} />
-                {isSaving ? "جار الحفظ..." : "حفظ بدون ريفرش"}
+                {isSaving ? "جار الحفظ..." : dirtyDrafts.length > 1 ? `حفظ ${dirtyDrafts.length} تعديلات` : "حفظ التعديل"}
               </button>
             </form>
           ) : (

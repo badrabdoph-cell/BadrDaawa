@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { defaultHomeContent } from "../lib/home-content";
 import { applyHomeContentTextUpdate } from "../lib/content-text-registry";
 import { matchBroadcastEntry } from "../lib/broadcast-editing";
+import { collectDirtyBroadcastDrafts, updateBroadcastDraft } from "../lib/broadcast-drafts";
 
 const content = JSON.parse(JSON.stringify(defaultHomeContent));
 
@@ -26,5 +27,20 @@ const entries = [
 assert.equal(matchBroadcastEntry({ broadcastId: "home-content.quickBenefits.quick-1.title", text: "ابدأ" }, entries)?.id, "home-content.quickBenefits.quick-1.title");
 assert.equal(matchBroadcastEntry({ text: "ابدأ" }, entries), null);
 assert.equal(matchBroadcastEntry({ text: "نص فريد" }, [{ ...entries[0], text: "نص فريد" }])?.id, "home-content.hero.primaryCta");
+
+const draftEntries = [
+  { id: "first", text: "النص الأول" },
+  { id: "second", text: "النص الثاني" },
+];
+let drafts = updateBroadcastDraft({}, "first", "تعديل أول", "النص الأول");
+drafts = updateBroadcastDraft(drafts, "second", "تعديل ثاني", "النص الثاني");
+assert.deepEqual(collectDirtyBroadcastDrafts(draftEntries, drafts), [
+  { id: "first", value: "تعديل أول" },
+  { id: "second", value: "تعديل ثاني" },
+]);
+drafts = updateBroadcastDraft(drafts, "first", "النص الأول", "النص الأول");
+assert.deepEqual(collectDirtyBroadcastDrafts(draftEntries, drafts), [
+  { id: "second", value: "تعديل ثاني" },
+]);
 
 console.log("broadcast editing helpers passed");
