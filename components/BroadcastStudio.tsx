@@ -291,6 +291,9 @@ export function BroadcastStudio({
           <a className="btn btn-soft btn-icon" href="/" target="_blank" title="فتح الموقع">
             <ExternalLink size={17} />
           </a>
+          <a className="btn btn-gold btn-glow" href="/admin/publish" target="_blank">
+            نشر التغييرات
+          </a>
         </div>
       </div>
 
