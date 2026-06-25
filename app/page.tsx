@@ -117,7 +117,9 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
     getHomePlatformStats().catch(() => null),
   ]);
 
-  const previewTemplateSrc = `/templates/${previewSettings?.templateSlug || "featured-1"}/preview?silentPreview=1`;
+  const previewTemplateSlug = previewSettings?.templateSlug || "featured-1";
+  const previewTemplateSrc = `/templates/${previewTemplateSlug}/preview?hidePreviewChrome=1&homePreview=1`;
+  const previewTemplateFullHref = `/templates/${previewTemplateSlug}/preview`;
   const showPreview = siteSettings?.homepage?.showPreview !== false;
   const showPricing = siteSettings?.homepage?.showPricing !== false;
   const sectionOrder = siteSettings?.homepage?.sectionOrder?.length ? siteSettings.homepage.sectionOrder : DEFAULT_SECTION_ORDER;
@@ -260,7 +262,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               ))}
             </ul>
             <div className="wd-preview-actions">
-              <Link className="btn btn-soft wd-designs-glow" href="/templates" data-broadcast-id="home-content.preview.orderCta">
+              <Link className="btn btn-soft" href="/templates" data-broadcast-id="home-content.preview.orderCta">
                 <WandSparkles size={18} />
                 شاهد باقي التصاميم
               </Link>
@@ -274,10 +276,10 @@ export default async function HomePage({ searchParams }: { searchParams?: Promis
               ) : previewSettings?.mode === "video" && previewSettings?.videoUrl ? (
                 <video className="wd-preview-media" src={previewSettings.videoUrl} muted loop playsInline autoPlay controls preload="metadata" />
               ) : (
-                <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" />
+                <iframe src={previewTemplateSrc} title="معاينة مباشرة لقالب الدعوة" loading="lazy" sandbox="allow-scripts allow-same-origin" allow="autoplay; encrypted-media" />
               )}
             </div>
-            <Link className="btn btn-gold btn-glow wd-preview-full-action" href="/badr-sarah-1" data-broadcast-id="home-content.preview.fullInviteCta">
+            <Link className="btn btn-gold btn-glow wd-preview-full-action" href={previewTemplateFullHref} data-broadcast-id="home-content.preview.fullInviteCta">
               <Eye size={18} />
               {content?.preview?.fullInviteCta || "معاينة الدعوة كاملة"}
             </Link>

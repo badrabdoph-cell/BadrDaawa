@@ -34707,6 +34707,8 @@ html.scroll-animations-disabled [data-scroll-reveal="true"] {
 }
 
 .wd-preview-stage {
+  position: relative;
+  z-index: 90;
   display: grid;
   justify-items: center;
   gap: 14px;
@@ -34768,68 +34770,51 @@ html.scroll-animations-disabled [data-scroll-reveal="true"] {
   border-radius: 999px;
 }
 
-.wd-designs-glow {
-  position: relative;
-  overflow: hidden;
-  border-color: rgba(243, 207, 115, 0.54);
-  background:
-    linear-gradient(135deg, rgba(255, 253, 248, 0.9), rgba(255, 239, 184, 0.9)),
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.92), transparent 4rem);
-  color: #5f4213;
-  box-shadow:
-    0 0 0 1px rgba(243, 207, 115, 0.2),
-    0 16px 38px rgba(180, 123, 31, 0.18),
-    0 0 28px rgba(243, 207, 115, 0.24);
-}
-
-.wd-designs-glow::after {
-  position: absolute;
-  inset: 0 auto 0 -48%;
-  width: 38%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.66), transparent);
-  content: "";
-  transform: skewX(-18deg);
-  animation: wd-button-shine 3.8s ease-in-out infinite;
-}
-
 .wd-floating-start {
   position: fixed;
-  left: max(18px, env(safe-area-inset-left));
-  bottom: max(18px, env(safe-area-inset-bottom));
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(14px, env(safe-area-inset-bottom));
   z-index: 80;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 138px;
-  min-height: 50px;
-  padding: 12px 18px;
+  gap: 6px;
+  min-width: 108px;
+  min-height: 42px;
+  padding: 9px 13px;
   overflow: hidden;
-  border: 1px solid rgba(255, 241, 184, 0.78);
+  border: 1px solid rgba(189, 143, 63, 0.44);
   border-radius: 999px;
   background:
-    linear-gradient(135deg, #5f3c0d 0%, #b98128 36%, #f3cf73 62%, #fff0ad 100%),
-    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.95), transparent 4rem);
-  color: #1d1407;
-  font-weight: 1000;
+    linear-gradient(135deg, rgba(255, 253, 248, 0.94), rgba(255, 244, 218, 0.9)),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.78), transparent 4rem);
+  color: #6f4d17;
+  font-size: 0.9rem;
+  font-weight: 950;
   line-height: 1;
   text-decoration: none;
   box-shadow:
-    0 0 0 6px rgba(243, 207, 115, 0.14),
-    0 18px 44px rgba(93, 59, 10, 0.28),
-    0 0 34px rgba(243, 207, 115, 0.42),
+    0 12px 28px rgba(84, 58, 24, 0.14),
+    0 0 0 1px rgba(255, 253, 248, 0.68),
     inset 0 1px 0 rgba(255, 255, 255, 0.62);
-  animation: wd-floating-start-pulse 2.8s ease-in-out infinite;
+  backdrop-filter: blur(12px);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
 .wd-floating-start::before {
   position: absolute;
-  inset: 0 auto 0 -55%;
-  width: 42%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.76), transparent);
+  inset: 0 auto 0 -52%;
+  width: 36%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.56), transparent);
   content: "";
   transform: skewX(-18deg);
-  animation: shine-pass 3.2s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.wd-floating-start svg {
+  width: 16px;
+  height: 16px;
 }
 
 .wd-floating-start svg,
@@ -34839,12 +34824,20 @@ html.scroll-animations-disabled [data-scroll-reveal="true"] {
 }
 
 .wd-floating-start:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px);
+  border-color: rgba(189, 143, 63, 0.68);
+  background:
+    linear-gradient(135deg, rgba(255, 250, 239, 0.98), rgba(255, 239, 198, 0.94)),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.84), transparent 4rem);
   box-shadow:
-    0 0 0 7px rgba(243, 207, 115, 0.18),
-    0 22px 54px rgba(93, 59, 10, 0.34),
-    0 0 42px rgba(243, 207, 115, 0.52),
+    0 15px 34px rgba(84, 58, 24, 0.18),
+    0 0 0 1px rgba(255, 253, 248, 0.76),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.wd-floating-start:hover::before {
+  opacity: 1;
+  animation: shine-pass 1.5s ease-in-out;
 }
 
 body:has(.template-preview-floating-actions) .template-floating-start {
@@ -35155,17 +35148,6 @@ body:has(.template-preview-floating-actions) .template-floating-start {
   100% {
     transform: translateX(420%) skewX(-16deg);
     opacity: 0;
-  }
-}
-
-@keyframes wd-floating-start-pulse {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-
-  50% {
-    filter: brightness(1.12);
   }
 }
 

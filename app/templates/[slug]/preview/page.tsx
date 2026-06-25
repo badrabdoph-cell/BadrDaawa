@@ -211,6 +211,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
   const isSilentPreview = query?.silentPreview === "1" || query?.embed === "1";
   const hidePreviewActions = isSilentPreview || query?.builderPreview === "1" || isOrderRequestPreview || query?.hidePreviewChrome === "1" || query?.orderFullPreview === "1";
   const showGalleryClose = hidePreviewActions && query?.galleryPreview === "1";
+  const showFloatingStart = !hidePreviewActions || query?.galleryPreview === "1";
 
   return (
     <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>
@@ -266,10 +267,12 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           </Link>
         </nav>
       ) : null}
-      <Link className="wd-floating-start template-floating-start" href={`/order?template=${template.slug}`} aria-label="ابدأ الآن واطلب هذا التصميم">
-        <Sparkles size={18} />
-        <span>أبدأ الآن</span>
-      </Link>
+      {showFloatingStart ? (
+        <Link className="wd-floating-start template-floating-start" href={`/order?template=${template.slug}`} aria-label="ابدأ الآن واطلب هذا التصميم">
+          <Sparkles size={18} />
+          <span>أبدأ الآن</span>
+        </Link>
+      ) : null}
     </div>
   );
 }
