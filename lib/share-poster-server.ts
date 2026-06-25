@@ -37,9 +37,7 @@ function parseWeddingDate(value: string) {
   };
 }
 
-function headlineFor(template?: string) {
-  if (template === "classic-news") return "فرحنا قرب!!";
-  if (template === "classic-romantic") return "موعدنا قرب!!";
+function headlineFor(_template?: string) {
   return "خبر عاجل!!!";
 }
 
