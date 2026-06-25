@@ -9,9 +9,9 @@ import {
   acquirePublishLock,
   releasePublishLock,
   getProjectContentDefinitions,
-  readAppSetting,
   type ProjectContentKey,
 } from "./project-content-store";
+import { readAppSetting } from "./app-settings";
 import { recordAuditLog, getSystemAuditActor } from "./audit-log";
 
 type PublishResult = {
