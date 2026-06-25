@@ -37817,6 +37817,369 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   box-shadow: var(--order-premium-shadow-sm);
 }
 
+/* Order request mobile UX refresh */
+:root {
+  --sat: env(safe-area-inset-bottom);
+}
+
+.order-wizard-flow {
+  --order-keyboard-inset: 0px;
+  scroll-padding-bottom: calc(150px + var(--order-keyboard-inset, 0px) + env(safe-area-inset-bottom));
+}
+
+.order-wizard-flow.is-keyboard-open {
+  padding-bottom: calc(112px + var(--order-keyboard-inset, 0px) + env(safe-area-inset-bottom));
+}
+
+.order-wizard-flow .field input,
+.order-wizard-flow .field select,
+.order-wizard-flow .field textarea {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.order-wizard-flow.has-focused-field .field:focus-within input,
+.order-wizard-flow.has-focused-field .field:focus-within select,
+.order-wizard-flow.has-focused-field .field:focus-within textarea {
+  border-color: rgba(38, 118, 108, 0.52);
+  background: linear-gradient(180deg, #ffffff, #f3fffb);
+  box-shadow:
+    0 0 0 4px rgba(38, 118, 108, 0.13),
+    0 12px 28px rgba(26, 72, 68, 0.08);
+}
+
+.order-wizard-actions {
+  bottom: calc(var(--order-keyboard-inset, 0px));
+}
+
+.order-wizard-flow.is-keyboard-open .order-wizard-actions {
+  gap: 8px;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.72), rgba(255, 253, 248, 0.98));
+  box-shadow: 0 -10px 24px rgba(30, 22, 14, 0.13);
+}
+
+.order-wizard-flow.is-keyboard-open .order-wizard-actions .btn {
+  min-height: 44px;
+  padding-inline: 14px;
+  font-size: 0.9rem;
+}
+
+.order-wizard-actions .btn,
+.order-extra-card,
+.order-music-choice-grid button,
+.order-review-item,
+.order-story-stage-tabs button,
+.order-story-preset-bubbles button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.order-wizard-actions .btn {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.order-wizard-actions .btn::after,
+.order-extra-card::after,
+.order-story-preset-bubbles button::after {
+  position: absolute;
+  inset-block: -40%;
+  inset-inline-start: -55%;
+  width: 42%;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.52), transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  transition: opacity 180ms ease, inset-inline-start 480ms ease;
+}
+
+.order-wizard-actions .btn:hover::after,
+.order-wizard-actions .btn:focus-visible::after,
+.order-extra-card:hover::after,
+.order-extra-card:focus-visible::after,
+.order-story-preset-bubbles button:hover::after,
+.order-story-preset-bubbles button:focus-visible::after {
+  inset-inline-start: 112%;
+  opacity: 1;
+}
+
+.order-wizard-actions .btn:active,
+.order-extra-card:active,
+.order-music-choice-grid button:active,
+.order-review-item:active,
+.order-story-preset-bubbles button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.order-submit[aria-disabled="true"] {
+  cursor: wait;
+  filter: saturate(0.92);
+}
+
+.order-submit[aria-disabled="true"]::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #fff4c7;
+  box-shadow: 0 0 0 5px rgba(255, 244, 199, 0.18);
+}
+
+.order-extra-card,
+.order-review-item,
+.order-music-choice-grid button {
+  isolation: isolate;
+}
+
+.order-extra-card {
+  background:
+    linear-gradient(180deg, rgba(255, 254, 250, 0.98), rgba(255, 246, 236, 0.9));
+}
+
+.order-extra-card.is-added {
+  border-color: rgba(38, 118, 108, 0.36);
+  background:
+    linear-gradient(180deg, rgba(255, 254, 250, 0.99), rgba(235, 252, 247, 0.86));
+}
+
+.order-extra-card.is-added em {
+  border-color: rgba(38, 118, 108, 0.24);
+  background: rgba(38, 118, 108, 0.1);
+  color: #1e695f;
+}
+
+.order-story-stage-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 5px;
+  overflow-x: auto;
+  border: 1px solid rgba(118, 88, 45, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 250, 242, 0.72);
+}
+
+.order-story-stage-tabs button {
+  flex: 0 0 auto;
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  max-width: 180px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: #715f4d;
+  cursor: pointer;
+}
+
+.order-story-stage-tabs button span {
+  display: inline-grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 999px;
+  background: rgba(118, 88, 45, 0.1);
+  color: #533915;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.order-story-stage-tabs button strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.order-story-stage-tabs button.active {
+  border-color: rgba(38, 118, 108, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(235, 252, 247, 0.84));
+  color: #1c6259;
+}
+
+.order-story-stage-tabs button.active span {
+  background: linear-gradient(135deg, #26766c, #5ea698);
+  color: #ffffff;
+}
+
+.order-story-item {
+  position: relative;
+}
+
+.order-story-item.is-active-story {
+  border-color: rgba(38, 118, 108, 0.3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.76));
+}
+
+.order-story-preset-bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  grid-column: 1 / -1;
+}
+
+.order-story-preset-bubbles button {
+  position: relative;
+  min-height: 34px;
+  padding: 7px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(159, 63, 84, 0.18);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 248, 250, 0.96), rgba(255, 241, 245, 0.78));
+  color: #7d2d43;
+  font-size: 0.8rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.order-story-preset-bubbles button:hover,
+.order-story-preset-bubbles button:focus-visible {
+  border-color: rgba(159, 63, 84, 0.34);
+  box-shadow: 0 8px 18px rgba(159, 63, 84, 0.1);
+}
+
+.order-story-mobile-actions {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.order-review-confidence span {
+  position: relative;
+  overflow: hidden;
+}
+
+.order-review-confidence span:nth-child(2) {
+  border-color: rgba(38, 118, 108, 0.2);
+  background: rgba(239, 252, 248, 0.78);
+  color: #215f57;
+}
+
+.order-review-confidence span:nth-child(3) {
+  border-color: rgba(159, 63, 84, 0.18);
+  background: rgba(255, 244, 247, 0.76);
+  color: #713047;
+}
+
+.order-review-photos-warning {
+  border-color: rgba(185, 82, 47, 0.48) !important;
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(255, 235, 224, 0.76)) !important;
+  box-shadow: 0 12px 28px rgba(185, 82, 47, 0.14) !important;
+}
+
+.order-review-photos-warning span,
+.order-review-photos-warning strong {
+  color: #7d341d !important;
+}
+
+@media (max-width: 720px) {
+  .order-wizard-flow {
+    padding-bottom: calc(126px + var(--order-keyboard-inset, 0px) + env(safe-area-inset-bottom));
+  }
+
+  .order-wizard-card {
+    padding-bottom: 18px;
+  }
+
+  .order-wizard-header {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    margin: -12px -12px 0;
+    padding: 12px;
+    border-radius: 18px 18px 12px 12px;
+    background: rgba(255, 253, 248, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .order-wizard-flow.is-keyboard-open .order-wizard-header {
+    position: static;
+  }
+
+  .order-wizard-flow.is-keyboard-open .order-wizard-trust-note {
+    display: none;
+  }
+
+  .order-wizard-flow.is-keyboard-open .order-wizard-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .order-story-list {
+    display: grid;
+  }
+
+  .order-story-list .order-story-item {
+    display: none;
+  }
+
+  .order-story-list .order-story-item.is-active-story {
+    display: grid;
+  }
+
+  .order-story-mobile-actions {
+    display: grid;
+  }
+
+  .order-story-preset-bubbles {
+    flex-wrap: nowrap;
+    margin-inline: -2px;
+    padding-bottom: 2px;
+    overflow-x: auto;
+  }
+
+  .order-story-preset-bubbles button {
+    flex: 0 0 auto;
+  }
+
+  .order-wizard-actions.order-review-actions {
+    grid-template-columns: 1fr 1.2fr;
+  }
+
+  .order-wizard-actions.order-review-actions .btn:last-child {
+    grid-column: 1 / -1;
+    min-height: 40px;
+  }
+
+  .order-wizard-flow.is-keyboard-open .order-wizard-actions.order-review-actions .btn:last-child,
+  .order-wizard-flow.is-keyboard-open .order-preview-action {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .order-wizard-actions {
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  }
+
+  .order-wizard-actions .btn {
+    min-height: 52px;
+    padding-inline: 10px;
+    font-size: 0.9rem;
+  }
+
+  .order-wizard-flow.is-keyboard-open .order-wizard-actions .btn {
+    min-height: 42px;
+    font-size: 0.82rem;
+  }
+
+  .order-review-item {
+    grid-template-columns: 1fr;
+    text-align: start;
+  }
+}
+
 .order-review-final-note {
   border: 1px solid rgba(185, 137, 61, 0.24);
   border-radius: 18px;
@@ -39600,5 +39963,57 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   }
   .unified-invitation-table td.cell-actions {
     padding-top: 8px;
+  }
+}
+
+/* Final order-request mobile overrides: keep these at EOF. */
+.order-wizard-flow {
+  scroll-padding-bottom: calc(150px + var(--order-keyboard-inset, 0px) + env(safe-area-inset-bottom));
+}
+
+.order-wizard-flow .order-wizard-actions {
+  bottom: var(--order-keyboard-inset, 0px);
+}
+
+.order-wizard-flow.is-keyboard-open .order-wizard-actions {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+.order-story-stage-tabs,
+.order-story-preset-bubbles,
+.order-story-mobile-actions {
+  box-sizing: border-box;
+}
+
+.order-story-preset-bubbles button,
+.order-story-stage-tabs button {
+  font-family: inherit;
+}
+
+.order-submit[aria-disabled="true"] {
+  cursor: wait;
+}
+
+@media (max-width: 720px) {
+  .order-wizard-flow {
+    padding-bottom: calc(126px + var(--order-keyboard-inset, 0px) + env(safe-area-inset-bottom));
+  }
+
+  .order-wizard-flow.is-keyboard-open .order-wizard-trust-note,
+  .order-wizard-flow.is-keyboard-open .order-preview-action,
+  .order-wizard-flow.is-keyboard-open .order-wizard-actions.order-review-actions .btn:last-child {
+    display: none;
+  }
+
+  .order-story-list .order-story-item {
+    display: none;
+  }
+
+  .order-story-list .order-story-item.is-active-story {
+    display: grid;
+  }
+
+  .order-story-mobile-actions {
+    display: grid;
   }
 }

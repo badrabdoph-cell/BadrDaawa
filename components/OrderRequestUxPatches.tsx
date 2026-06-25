@@ -22,25 +22,11 @@ function hasUploadWaitHint() {
 function syncUploadReviewState() {
   const waiting = hasUploadWaitHint();
   const photoCard = findPhotoReviewCard();
-  const submitButton = document.querySelector<HTMLButtonElement>(".order-review-actions .order-submit");
 
   if (photoCard) {
     photoCard.classList.toggle("order-review-photos-warning", waiting);
     if (waiting) photoCard.setAttribute("aria-invalid", "true");
     else photoCard.removeAttribute("aria-invalid");
-  }
-
-  if (!submitButton) return;
-
-  if (waiting && submitButton.disabled && !getText(submitButton).includes("جاري")) {
-    submitButton.disabled = false;
-    submitButton.removeAttribute("disabled");
-    submitButton.dataset.uploadWaitOverride = "true";
-    return;
-  }
-
-  if (!waiting && submitButton.dataset.uploadWaitOverride === "true") {
-    delete submitButton.dataset.uploadWaitOverride;
   }
 }
 
@@ -91,7 +77,7 @@ export function OrderRequestUxPatches() {
         if (label.includes("رابط أغنية")) window.setTimeout(() => document.querySelector<HTMLInputElement>("#musicUrl")?.focus(), 130);
       }
 
-      const submitButton = target.closest<HTMLButtonElement>(".order-review-actions .order-submit[data-upload-wait-override='true']");
+      const submitButton = target.closest<HTMLButtonElement>(".order-review-actions .order-submit[aria-disabled='true']");
       if (submitButton && hasUploadWaitHint()) {
         window.setTimeout(() => {
           const alert = document.querySelector<HTMLElement>(".order-alert.danger");

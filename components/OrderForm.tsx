@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,6 +24,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
+import { calculateKeyboardInset, orderStoryPresets } from "@/lib/order-mobile-ux";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { LocationPickerModal } from "./LocationPickerModal";
@@ -564,6 +565,9 @@ export function OrderForm({
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; placeName: string; city: string; governorate: string; googleMapsUrl: string } | null>(null);
   const [draftReady, setDraftReady] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [focusedFieldName, setFocusedFieldName] = useState("");
+  const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const finalConfirmIntentAtRef = useRef(0);
@@ -588,6 +592,8 @@ export function OrderForm({
   const isFirstStep = activeStepIndex === 0 || (skipTemplateStep && activeStepIndex === 1);
   const isLastStep = activeStepIndex === orderWizardSteps.length - 1;
   const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
+  const storyItems = ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages);
+  const visibleStoryIndex = Math.min(activeStoryIndex, Math.max(0, storyItems.length - 1));
   const previewImageUrls = draftImageUrls.filter(Boolean);
   const orderPreviewSrc = useMemo(() => {
     const params = new URLSearchParams();
@@ -632,6 +638,40 @@ export function OrderForm({
   useEffect(() => {
     mapPickerOpenRef.current = mapPickerOpen;
   }, [mapPickerOpen]);
+
+  useEffect(() => {
+    function readSafeAreaBottom() {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue("--sat") || "0";
+      const parsed = Number.parseInt(raw, 10);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function syncKeyboardInset() {
+      const viewport = window.visualViewport;
+      if (!viewport) {
+        setKeyboardInset(0);
+        return;
+      }
+      setKeyboardInset(
+        calculateKeyboardInset({
+          innerHeight: window.innerHeight,
+          viewportHeight: viewport.height,
+          viewportOffsetTop: viewport.offsetTop,
+          safeAreaBottom: readSafeAreaBottom(),
+        }),
+      );
+    }
+
+    syncKeyboardInset();
+    window.visualViewport?.addEventListener("resize", syncKeyboardInset);
+    window.visualViewport?.addEventListener("scroll", syncKeyboardInset);
+    window.addEventListener("orientationchange", syncKeyboardInset);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", syncKeyboardInset);
+      window.visualViewport?.removeEventListener("scroll", syncKeyboardInset);
+      window.removeEventListener("orientationchange", syncKeyboardInset);
+    };
+  }, []);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -998,12 +1038,23 @@ export function OrderForm({
     updateStoryItem(index, { [field]: value });
   }
 
+  function applyStoryPreset(index: number, presetId: string) {
+    const preset = orderStoryPresets.find((item) => item.id === presetId);
+    if (!preset) return;
+    updateStoryItem(index, {
+      date: preset.date,
+      title: preset.title,
+      description: preset.description,
+    });
+  }
+
   function removeStoryItem(index: number) {
     setForm((current) => {
       const currentValues = getCurrentFormFromDom();
       const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
       return nextStory.length ? { ...current, ...currentValues, story: nextStory, storyEnabled: current.storyEnabled } : { ...current, ...currentValues, story: [], storyEnabled: false };
     });
+    setActiveStoryIndex((current) => Math.max(0, Math.min(current, cleanOrderStory(form.story).length - 2)));
     setStoryErrors({});
     if (message) setMessage("");
   }
@@ -1626,16 +1677,16 @@ export function OrderForm({
         </div>
         <div className="field">
           <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
-          <input id="photographerName" name="photographerName" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
+          <input id="photographerName" name="photographerName" autoComplete="name" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
         </div>
         <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
           <label htmlFor="photographerFacebookUrl">رابط Facebook</label>
-          <input id="photographerFacebookUrl" name="photographerFacebookUrl" inputMode="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
+          <input id="photographerFacebookUrl" name="photographerFacebookUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
           {errors.photographerFacebookUrl ? <small className="field-error">{errors.photographerFacebookUrl}</small> : null}
         </div>
         <div className={`field ${errors.photographerInstagramUrl ? "has-error" : ""}`}>
           <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
-          <input id="photographerInstagramUrl" name="photographerInstagramUrl" inputMode="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
+          <input id="photographerInstagramUrl" name="photographerInstagramUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
           {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
         </div>
       </div>
@@ -1646,28 +1697,50 @@ export function OrderForm({
     return (
       <div className="order-story-fields order-customization-fields">
         <div className="order-story-head">
-          <p>اكتب مرحلتين على الأقل، ويمكنك إضافة حتى 4 مراحل فقط.</p>
+          <p>اكتب مرحلتين على الأقل. على الهاتف ركّز في مرحلة واحدة كل مرة، والباقي محفوظ تحت.</p>
           <button className="btn btn-soft order-story-cancel-button" type="button" onClick={cancelOrderStory}>
             إلغاء
           </button>
         </div>
+        <div className="order-story-stage-tabs" role="tablist" aria-label="مراحل قصة العروسين">
+          {storyItems.map((item, index) => (
+            <button
+              className={index === visibleStoryIndex ? "active" : ""}
+              key={item.id || index}
+              type="button"
+              role="tab"
+              aria-selected={index === visibleStoryIndex}
+              onClick={() => setActiveStoryIndex(index)}
+            >
+              <span>{index + 1}</span>
+              <strong>{item.title || `مرحلة ${index + 1}`}</strong>
+            </button>
+          ))}
+        </div>
         <div className="order-story-list">
-          {ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages).map((item, index) => {
+          {storyItems.map((item, index) => {
             const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
             const dateError = storyErrors[storyFieldErrorKey(index, "date")];
             const titleError = storyErrors[storyFieldErrorKey(index, "title")];
             const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
             return (
-              <article className="order-story-item" key={item.id || index}>
+              <article className={`order-story-item ${index === visibleStoryIndex ? "is-active-story" : ""}`} key={item.id || index}>
                 <div className="order-story-item-head">
-                  <strong>مرحلة {index + 1}</strong>
+                  <strong>مرحلة {index + 1} من {storyItems.length}</strong>
                   <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
                     <Trash2 size={16} />
                   </button>
                 </div>
+                <div className="order-story-preset-bubbles" aria-label={`اقتراحات جاهزة لمرحلة ${index + 1}`}>
+                  {orderStoryPresets.map((preset) => (
+                    <button key={preset.id} type="button" onClick={() => applyStoryPreset(index, preset.id)}>
+                      {preset.title}
+                    </button>
+                  ))}
+                </div>
                 <div className="field">
-                  <label htmlFor={`storyDate-${index}`}>التاريخ</label>
-                  <input id={`storyDate-${index}`} name={`storyDate-${index}`} type="date" value={item.date || ""} onChange={(event) => updateStoryText(index, "date", event.target.value)} aria-invalid={Boolean(dateError)} />
+                  <label htmlFor={`storyDate-${index}`}>التاريخ أو اسم اللحظة</label>
+                  <input id={`storyDate-${index}`} name={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryText(index, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
                   {dateError ? <small className="field-error">{dateError}</small> : null}
                 </div>
                 <div className="field">
@@ -1680,12 +1753,23 @@ export function OrderForm({
                   <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
                   {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
                 </div>
+                <div className="order-story-mobile-actions">
+                  <button className="btn btn-glass" type="button" onClick={() => setActiveStoryIndex(Math.max(0, index - 1))} disabled={index === 0}>
+                    السابق
+                  </button>
+                  <button className="btn btn-soft" type="button" onClick={() => setActiveStoryIndex(Math.min(storyItems.length - 1, index + 1))} disabled={index >= storyItems.length - 1}>
+                    المرحلة التالية
+                  </button>
+                </div>
               </article>
             );
           })}
         </div>
-        {ensureMinimumOrderStoryItems(form.story).length < maximumOrderStoryStages ? (
-          <button className="btn btn-soft order-story-add-button" type="button" onClick={addStoryItem}>
+        {storyItems.length < maximumOrderStoryStages ? (
+          <button className="btn btn-soft order-story-add-button" type="button" onClick={() => {
+            addStoryItem();
+            setActiveStoryIndex(storyItems.length);
+          }}>
             <Plus size={16} />
             إضافة مرحلة
           </button>
@@ -1697,7 +1781,12 @@ export function OrderForm({
   }
 
   return (
-    <div className="order-flow order-wizard-flow">
+    <div
+      className={`order-flow order-wizard-flow ${keyboardInset > 0 ? "is-keyboard-open" : ""} ${focusedFieldName ? "has-focused-field" : ""}`}
+      style={{
+        "--order-keyboard-inset": `${keyboardInset}px`,
+      } as CSSProperties}
+    >
       {hasMediaUploadInProgress ? (
         <div className="order-upload-floating-warning" role="status" aria-live="polite">
           <Loader2 size={18} className="animate-float" />
@@ -1707,7 +1796,26 @@ export function OrderForm({
       ) : null}
 
       <div className="order-wizard-layout">
-        <form className="form-panel details-form order-simple-form order-wizard-card" onSubmit={submitOrder} onInput={persistCurrentDomDraft} ref={formRef} noValidate>
+        <form
+          className="form-panel details-form order-simple-form order-wizard-card"
+          onSubmit={submitOrder}
+          onInput={persistCurrentDomDraft}
+          onFocusCapture={(event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+            setFocusedFieldName(target.name || target.id || "field");
+            window.setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "center" }), 90);
+          }}
+          onBlurCapture={() => {
+            window.setTimeout(() => {
+              const active = document.activeElement;
+              if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement) return;
+              setFocusedFieldName("");
+            }, 80);
+          }}
+          ref={formRef}
+          noValidate
+        >
           <header className="order-wizard-header">
             <div>
               <span>خطوة {activeStepIndex + 1} من {orderWizardSteps.length}</span>
@@ -1795,7 +1903,7 @@ export function OrderForm({
                   <UserRound size={16} />
                   اسم العريس
                 </label>
-                <input id="groomName" name="groomName" placeholder="مثال: محمد" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
+                <input id="groomName" name="groomName" autoComplete="given-name" placeholder="مثال: محمد" value={form.groomName} onChange={(event) => updateField("groomName", event.target.value)} required aria-invalid={Boolean(errors.groomName)} aria-describedby={errors.groomName ? "groomName-error" : undefined} />
                 {errors.groomName ? <small className="field-error" id="groomName-error">{errors.groomName}</small> : null}
               </div>
 
@@ -1804,7 +1912,7 @@ export function OrderForm({
                   <UserRound size={16} />
                   اسم العروس
                 </label>
-                <input id="brideName" name="brideName" placeholder="مثال: ندي" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
+                <input id="brideName" name="brideName" autoComplete="given-name" placeholder="مثال: ندي" value={form.brideName} onChange={(event) => updateField("brideName", event.target.value)} required aria-invalid={Boolean(errors.brideName)} aria-describedby={errors.brideName ? "brideName-error" : undefined} />
                 {errors.brideName ? <small className="field-error" id="brideName-error">{errors.brideName}</small> : null}
               </div>
 
@@ -1855,7 +1963,7 @@ export function OrderForm({
                   <Phone size={16} />
                   رقم الهاتف
                 </label>
-                <input id="phone" name="phone" inputMode="tel" placeholder="مثال: 01000000000" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined} />
+                <input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="مثال: 01000000000" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined} />
                 <small className="field-preview">يساعدنا على متابعة الطلب والتأكيد.</small>
                 {errors.phone ? <small className="field-error" id="phone-error">{errors.phone}</small> : null}
               </div>
@@ -1878,7 +1986,7 @@ export function OrderForm({
                   <Link2 size={16} />
                   رابط اللوكيشن <span className="field-optional-badge">اختياري</span>
                 </label>
-                <input id="mapUrl" name="mapUrl" inputMode="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
+                <input id="mapUrl" name="mapUrl" type="url" inputMode="url" autoComplete="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
                 <small className="field-preview" id="mapUrl-hint">إضافة موقع القاعة تساعد الضيوف على الوصول بسهولة، ويمكنك إضافته لاحقاً أثناء تجهيز الدعوة.</small>
                 {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
               </div>
@@ -1997,7 +2105,7 @@ export function OrderForm({
                       {form.musicEnabled && form.musicChoice === "url" ? (
                         <div className={`field ${errors.musicUrl ? "has-error" : ""}`}>
                           <label htmlFor="musicUrl">رابط أغنية مباشر</label>
-                          <input id="musicUrl" name="musicUrl" inputMode="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
+                          <input id="musicUrl" name="musicUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://example.com/song.mp3" value={form.musicUrl} onChange={(event) => updateField("musicUrl", event.target.value)} aria-invalid={Boolean(errors.musicUrl)} />
                           {errors.musicUrl ? <small className="field-error">{errors.musicUrl}</small> : <small className="order-music-url-hint">ليس رابط فيديو بل موسيقى فقط</small>}
                         </div>
                       ) : null}
@@ -2068,7 +2176,7 @@ export function OrderForm({
                   : form.musicChoice === "video" ? "صوت من فيديو"
                   : "رابط أغنية";
                 const imagesIncomplete = previewImageUrls.length < 2;
-                const imageLabel = imagesIncomplete ? `⚠️ ${previewImageUrls.length} من 3` : `${previewImageUrls.length} من 3`;
+                const imageLabel = hasMediaUploadInProgress ? "جاري حفظ الملفات" : imagesIncomplete ? `⚠️ ${previewImageUrls.length} من 3` : `${previewImageUrls.length} من 3`;
                 return [
                   ["القالب", selectedTemplate.arabicName, 0],
                   ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
@@ -2079,11 +2187,12 @@ export function OrderForm({
                   ["الصور", imageLabel, 4],
                   ["الموسيقى", musicLabel, 5],
                 ].map(([label, value, step]) => (
-                  <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && imagesIncomplete ? "order-review-location-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
+                  <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress) ? "order-review-location-warning order-review-photos-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
                     <span>✓ {label}</span>
                     <strong>{value}</strong>
                     {label === "موقع القاعة" && !form.mapUrl.trim() ? <small>إضافة الموقع تساعد الضيوف، ويمكن إضافته لاحقاً.</small> : null}
-                    {label === "الصور" && imagesIncomplete ? <small>يمكن إضافة المزيد من الصورة من مرحلة الصور.</small> : null}
+                    {label === "الصور" && hasMediaUploadInProgress ? <small>الصور أو الموسيقى مازالت قيد الحفظ. انتظر لحظة ثم أكد الدعوة.</small> : null}
+                    {label === "الصور" && imagesIncomplete && !hasMediaUploadInProgress ? <small>صورتان مطلوبة والثالثة اختيارية.</small> : null}
                   </button>
                 ));
               })()}
@@ -2170,7 +2279,8 @@ export function OrderForm({
                   className="btn btn-gold btn-glow order-submit"
                   type="submit"
                   data-order-confirm="true"
-                  disabled={state === "loading" || hasMediaUploadInProgress}
+                  disabled={state === "loading"}
+                  aria-disabled={hasMediaUploadInProgress}
                   aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}
                   onPointerDown={() => {
                     finalConfirmIntentAtRef.current = Date.now();
