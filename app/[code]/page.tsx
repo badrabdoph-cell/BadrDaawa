@@ -77,7 +77,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
   if (!invitation) {
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
-      return <PendingInvitationNotice code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
+      return <PendingInvitationNotice code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} submittedAt={pendingOrder.submittedAt} />;
     }
     const rejectedOrder = await getRejectedOrderByInvitationCode(code);
     if (rejectedOrder) {

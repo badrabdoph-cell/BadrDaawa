@@ -72,7 +72,7 @@ export default async function CustomerAdminPage({
     const pendingOrder = await getPendingOrderByInvitationCode(code);
     if (pendingOrder) {
       const siteSettings = await getPublishedSiteSettings();
-      return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} />;
+      return <PendingInvitationNotice variant="admin" code={pendingOrder.code} groomName={pendingOrder.groomName} brideName={pendingOrder.brideName} whatsappUrl={siteSettings.whatsappUrl} submittedAt={pendingOrder.submittedAt} />;
     }
     notFound();
   }

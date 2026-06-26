@@ -9,6 +9,7 @@ type PendingOrderSummary = {
   groomName: string;
   brideName: string;
   status: OrderRequest["status"];
+  submittedAt?: string;
 };
 
 type RejectedOrderSummary = PendingOrderSummary & {
@@ -120,6 +121,7 @@ export async function getPendingOrderByManageToken(token: string): Promise<Pendi
           brideName: true,
           status: true,
           publishedInvitationCode: true,
+          submittedAt: true,
         },
       });
       if (order?.publishedInvitationCode) {
@@ -129,6 +131,7 @@ export async function getPendingOrderByManageToken(token: string): Promise<Pendi
           groomName: order.groomName,
           brideName: order.brideName,
           status: normalizeOrderStatus(String(order.status)),
+          submittedAt: order.submittedAt?.toISOString(),
         };
       }
     } catch (error) {
@@ -157,6 +160,7 @@ export async function getPendingOrderByInvitationCode(code: string): Promise<Pen
           brideName: true,
           status: true,
           publishedInvitationCode: true,
+          submittedAt: true,
         },
       });
       if (order?.publishedInvitationCode) {
@@ -166,6 +170,7 @@ export async function getPendingOrderByInvitationCode(code: string): Promise<Pen
           groomName: order.groomName,
           brideName: order.brideName,
           status: normalizeOrderStatus(String(order.status)),
+          submittedAt: order.submittedAt?.toISOString(),
         };
       }
     } catch (error) {
