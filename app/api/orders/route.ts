@@ -78,6 +78,7 @@ function buildOrderWhatsAppMessage(input: {
   adminUrl: string;
   sharePosterUrl?: string;
 }) {
+  console.log("[WhatsApp Order] Building message with share poster:", { hasSharePoster: !!input.sharePosterUrl, sharePosterUrl: input.sharePosterUrl });
   return [
     "تم تأكيد طلبك ❤️",
     "",
@@ -93,7 +94,7 @@ function buildOrderWhatsAppMessage(input: {
     "",
     input.publicUrl,
     "",
-    input.sharePosterUrl ? "صورة المشاركة الجاهزة للتحميل:" : "",
+    input.sharePosterUrl ? "📸 صورة المشاركة الجاهزة للتحميل والمشاركة:" : "",
     input.sharePosterUrl || "",
     input.sharePosterUrl ? "" : "",
     "وهذا رابط الإدارة الخاص بالدعوة والذي يمكنك من خلاله:",
