@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock, Headphones, MessageCircle, PartyPopper, Share2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type OrderSuccessPayload = {
   whatsappUrl: string;
@@ -25,16 +24,29 @@ type OrderSuccessRedirectProps = {
 };
 
 const storageKey = "badrdaawa-order-success";
-const fallbackWhatsappUrl = "https://wa.me/";
-const redirectCountdownSeconds = 10;
+const fallbackWhatsapp = "https://wa.me/";
+const redirectCountdownSeconds = 20;
+const entranceDelay = 180;
 
 function cleanWhatsAppUrl(value?: string) {
-  if (!value) return fallbackWhatsappUrl;
+  if (!value) return fallbackWhatsapp;
   try {
     const url = new URL(value);
     if (url.protocol === "https:" && (url.hostname === "wa.me" || url.hostname.endsWith(".whatsapp.com"))) return url.toString();
   } catch {}
-  return fallbackWhatsappUrl;
+  return fallbackWhatsapp;
+}
+
+function extractPhoneFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname.replace(/^\//, "");
+    if (!path) return "";
+    if (path.startsWith("20") && path.length >= 11) return "0" + path.slice(2);
+    return path;
+  } catch {
+    return "";
+  }
 }
 
 function readStoredPayload(): Partial<OrderSuccessPayload> {
@@ -61,11 +73,7 @@ function readStoredPayload(): Partial<OrderSuccessPayload> {
   }
 }
 
-function paymentMethodLabel(method?: string) {
-  if (method === "bank") return "تحويل بنكي";
-  if (method === "ewallet") return "محفظة إلكترونية";
-  return "الدفع عند الاستلام";
-}
+const confettiColors = ["#bd8f3f", "#ffffff", "#7dbf7d", "#c8a96e", "#e8f5e9", "#d4af37"];
 
 export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNumber, invitationCode }: OrderSuccessRedirectProps) {
   const initialPayload = useMemo<OrderSuccessPayload>(
@@ -78,6 +86,21 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
   );
   const [payload, setPayload] = useState<OrderSuccessPayload>(initialPayload);
   const [seconds, setSeconds] = useState(redirectCountdownSeconds);
+  const [isCancelled, setIsCancelled] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const cancelledRef = useRef(false);
+  const countdownStartedRef = useRef(false);
+
+  const progressPercent = useMemo(() => {
+    if (isCancelled) return 0;
+    return (seconds / redirectCountdownSeconds) * 100;
+  }, [seconds, isCancelled]);
+
+  const displayPhone = useMemo(() => extractPhoneFromUrl(payload.whatsappUrl), [payload.whatsappUrl]);
 
   useEffect(() => {
     const storedPayload = readStoredPayload();
@@ -85,125 +108,216 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
   }, [fallbackUrl]);
 
   useEffect(() => {
-    if (seconds <= 0) {
-      window.location.assign(payload.whatsappUrl);
+    setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+
+  const entranceItems = useMemo(() => ["checkmark", "title", "description", "order-number", "details", "countdown", "button", "cancel"], []);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setVisibleItems(new Set(entranceItems));
+      setShowConfetti(true);
       return;
     }
-    const timeoutId = window.setTimeout(() => setSeconds((current) => Math.max(0, current - 1)), 1000);
-    return () => window.clearTimeout(timeoutId);
-  }, [payload.whatsappUrl, seconds]);
+    entranceItems.forEach((item, i) => {
+      setTimeout(() => {
+        setVisibleItems((prev) => new Set(prev).add(item));
+      }, i * entranceDelay);
+    });
+    setTimeout(() => setShowConfetti(true), entranceDelay * 1 + 600);
+  }, [entranceItems, reducedMotion]);
 
-  function sendNow() {
-    window.location.assign(payload.whatsappUrl);
-  }
+  useEffect(() => {
+    if (!payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
+    if (countdownStartedRef.current || isCancelled) return;
+    countdownStartedRef.current = true;
+  }, [payload.whatsappUrl, isCancelled]);
 
-  function shareWhatsApp() {
-    const paymentLine = payload.paymentMethod ? `\nطريقة الدفع: ${paymentMethodLabel(payload.paymentMethod)}` : "";
-    const text = `*طلب دعوة زفاف*\n\nالرقم: ${payload.orderNumber || "غير محدد"}\nالعروسان: ${payload.groomName || ""} و ${payload.brideName || ""}\nالتاريخ: ${payload.weddingDate || "غير محدد"}\nالقاعة: ${payload.venue || "غير محدد"}${paymentLine}\n\nتم إرسال الطلب بنجاح ✅`;
-    const encoded = encodeURIComponent(text);
-    const waUrl = `https://wa.me/?text=${encoded}`;
-    window.open(waUrl, "_blank");
-  }
+  useEffect(() => {
+    if (isCancelled || isRedirecting || !payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
+    if (seconds > 0) {
+      const id = setTimeout(() => setSeconds((s) => s - 1), 1000);
+      return () => clearTimeout(id);
+    }
+    setIsRedirecting(true);
+    const redirectTimeout = setTimeout(() => {
+      window.location.assign(payload.whatsappUrl);
+    }, 500);
+    return () => clearTimeout(redirectTimeout);
+  }, [seconds, isCancelled, isRedirecting, payload.whatsappUrl]);
+
+  const sendNow = useCallback(() => {
+    if (!payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
+    setIsCancelled(true);
+    cancelledRef.current = true;
+    setIsRedirecting(true);
+    setTimeout(() => {
+      window.location.assign(payload.whatsappUrl);
+    }, 350);
+  }, [payload.whatsappUrl]);
+
+  const cancelRedirect = useCallback(() => {
+    setIsCancelled(true);
+    cancelledRef.current = true;
+  }, []);
+
+  const copyOrderNumber = useCallback(async () => {
+    if (!payload.orderNumber) return;
+    try {
+      await navigator.clipboard.writeText(payload.orderNumber);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = payload.orderNumber;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  }, [payload.orderNumber]);
+
+  const showItem = (item: string) => reducedMotion || visibleItems.has(item);
+  const showLast10 = seconds <= 10 && !isCancelled;
 
   return (
     <main className="order-success-page" dir="rtl">
-      <div className="order-success-confetti" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
+      {showConfetti && !reducedMotion ? (
+        <div className="success-confetti" aria-hidden="true">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span
+              key={i}
+              className="success-confetti-particle"
+              style={{
+                left: `${6 + Math.random() * 88}%`,
+                background: confettiColors[i % confettiColors.length],
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${2.5 + Math.random() * 2}s`,
+                width: `${5 + Math.random() * 6}px`,
+                height: `${10 + Math.random() * 10}px`,
+                borderRadius: `${Math.random() > 0.5 ? "50%" : "2px"}`,
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
 
-      <section className="order-success-card" aria-labelledby="order-success-title">
-        <div className="order-success-icon" aria-hidden="true">
-          <span>
-            <CheckCircle2 size={54} strokeWidth={2.4} />
-          </span>
-          <PartyPopper size={30} />
+      {copied ? <div className="success-toast">✅ تم نسخ رقم الطلب.</div> : null}
+
+      <div className={`success-card ${isRedirecting ? "is-redirecting" : ""}`}>
+        {/* 1. Success Animation */}
+        <div className={`success-section success-checkmark-section ${showItem("checkmark") ? "visible" : ""}`}>
+          <svg className="success-svg" viewBox="0 0 80 80" aria-hidden="true">
+            <circle className={`success-circle ${showLast10 ? "success-circle-warning" : ""}`} cx="40" cy="40" r="36" />
+            <path className="success-check" d="M22 40 L36 54 L58 28" />
+          </svg>
         </div>
 
-        <div className="order-success-copy">
-          <p className="order-success-kicker">تم استلام الطلب</p>
-          <h1 id="order-success-title">تم استلام طلبكم بنجاح ❤️</h1>
-          <p>هيتم تحويلك علي واتساب خدمه العملاء</p>
-          <p>ابعتله نص الايصال ال هتلاقيه جاهز فالشات ✨</p>
+        {/* 2. Title */}
+        <div className={`success-section success-title-section ${showItem("title") ? "visible" : ""}`}>
+          <h1 className="success-title">تم استلام طلبك بنجاح ❤️</h1>
         </div>
 
+        {/* 3. Description */}
+        <div className={`success-section success-desc-section ${showItem("description") ? "visible" : ""}`}>
+          <p className="success-desc">
+            تم استلام طلبك بنجاح، وسيتم تحويلك تلقائياً إلى واتساب خدمة العملاء لإكمال إجراءات الدعوة.
+          </p>
+        </div>
+
+        {/* 4. Order Number Card */}
         {payload.orderNumber ? (
-          <div className="order-success-badge">
-            <span>رقم الطلب</span>
-            <strong>{payload.orderNumber}</strong>
+          <div className={`success-section success-number-section ${showItem("order-number") ? "visible" : ""}`}>
+            <div className="success-number-card">
+              <span className="success-number-label">رقم الطلب</span>
+              <strong className="success-number-value">{payload.orderNumber}</strong>
+              <button className="success-copy-btn" type="button" onClick={copyOrderNumber}>
+                📋 نسخ رقم الطلب
+              </button>
+            </div>
           </div>
         ) : null}
 
-        <div className="order-success-details">
-          <h3>تفاصيل الطلب</h3>
-          <div className="order-success-details-grid">
-            {payload.groomName || payload.brideName ? (
-              <div className="order-success-detail-row">
-                <span>العروسان</span>
-                <strong>{payload.groomName} و {payload.brideName}</strong>
-              </div>
-            ) : null}
-            {payload.templateName ? (
-              <div className="order-success-detail-row">
-                <span>القالب</span>
-                <strong>{payload.templateName}</strong>
-              </div>
-            ) : null}
-            {payload.weddingDate ? (
-              <div className="order-success-detail-row">
-                <span>تاريخ المناسبة</span>
-                <strong>{payload.weddingDate}</strong>
-              </div>
-            ) : null}
-            {payload.venue ? (
-              <div className="order-success-detail-row">
-                <span>القاعة</span>
-                <strong>{payload.venue}</strong>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="order-success-info">
-          <div className="order-success-info-item">
-            <Clock size={16} />
-            <span>مدة المعالجة المتوقعة: <strong>24-48 ساعة</strong></span>
-          </div>
-          <div className="order-success-info-item">
-            <Headphones size={16} />
-            <span>للاستفسار: <strong>واتساب 01000000000</strong></span>
-          </div>
-        </div>
-
-        <div className="order-success-countdown" role="timer" aria-live="polite">
-          <span>سيتم التحويل إلى واتساب خلال:</span>
-          <strong>{seconds || 1}</strong>
-        </div>
-
-        <div className="order-success-actions">
-          <button className="order-success-action" type="button" onClick={sendNow}>
-            <MessageCircle size={21} />
-            <span>إرسال الآن عبر واتساب</span>
-          </button>
-          <button className="order-success-action secondary" type="button" onClick={shareWhatsApp}>
-            <Share2 size={18} />
-            <span>مشاركة ملخص الطلب</span>
-          </button>
-        </div>
-
-        <p className="order-success-hint">إذا لم يتم فتح واتساب تلقائياً، اضغط على الزر لإعادة المحاولة.</p>
-
-        {payload.orderNumber || payload.invitationCode ? (
-          <div className="order-success-meta" aria-label="بيانات الطلب">
-            {payload.orderNumber ? <span>رقم الطلب: {payload.orderNumber}</span> : null}
-            {payload.invitationCode ? <span>كود الدعوة: {payload.invitationCode}</span> : null}
+        {/* 5. Order Details */}
+        {payload.groomName || payload.brideName || payload.weddingDate || payload.venue ? (
+          <div className={`success-section success-details-section ${showItem("details") ? "visible" : ""}`}>
+            <div className="success-details">
+              {payload.groomName || payload.brideName ? (
+                <div className="success-detail-row">
+                  <span>👰 أسماء العروسين</span>
+                  <strong>{payload.groomName} و {payload.brideName}</strong>
+                </div>
+              ) : null}
+              {payload.weddingDate ? (
+                <div className="success-detail-row">
+                  <span>📅 تاريخ المناسبة</span>
+                  <strong>{payload.weddingDate}</strong>
+                </div>
+              ) : null}
+              {payload.venue ? (
+                <div className="success-detail-row">
+                  <span>📍 اسم القاعة</span>
+                  <strong>{payload.venue}</strong>
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : null}
-      </section>
+
+        {/* 6. Countdown */}
+        <div className={`success-section success-countdown-section ${showItem("countdown") ? "visible" : ""}`}>
+          {!isCancelled && !isRedirecting ? (
+            <>
+              <p className="success-countdown-label">سيتم تحويلك إلى واتساب خلال</p>
+              <div className="success-countdown-timer" role="timer" aria-live="polite" aria-label={`التحويل خلال ${Math.floor(seconds / 60)} دقيقة و ${seconds % 60} ثانية`}>
+                <span className={`success-countdown-digits ${showLast10 ? "countdown-warning" : ""}`}>
+                  {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
+                </span>
+              </div>
+              <div className="success-progress-track">
+                <div
+                  className={`success-progress-fill ${showLast10 ? "progress-warning" : ""}`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </>
+          ) : null}
+          {isRedirecting ? (
+            <p className="success-redirecting-text">جاري تحويلك إلى واتساب…</p>
+          ) : null}
+          {isCancelled && !isRedirecting ? (
+            <p className="success-cancelled-text">تم إلغاء التحويل التلقائي. يمكنك الضغط على الزر أدناه للتواصل.</p>
+          ) : null}
+        </div>
+
+        {/* 7. WhatsApp Button */}
+        <div className={`success-section success-whatsapp-section ${showItem("button") ? "visible" : ""}`}>
+          <button
+            className={`success-whatsapp-btn ${showLast10 && !isCancelled ? "btn-pulse" : ""}`}
+            type="button"
+            onClick={sendNow}
+            disabled={isRedirecting || !payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp}
+          >
+            💬 فتح واتساب الآن
+          </button>
+        </div>
+
+        {/* 8. Cancel link */}
+        {!isCancelled && !isRedirecting ? (
+          <div className={`success-section success-cancel-section ${showItem("cancel") ? "visible" : ""}`}>
+            <button className="success-cancel-btn" type="button" onClick={cancelRedirect}>
+              إلغاء التحويل التلقائي
+            </button>
+          </div>
+        ) : null}
+
+        {/* Phone footer */}
+        {displayPhone && !isRedirecting ? (
+          <p className="success-phone-footer">
+            للاستفسار: واتساب <strong>{displayPhone}</strong>
+          </p>
+        ) : null}
+      </div>
     </main>
   );
 }
