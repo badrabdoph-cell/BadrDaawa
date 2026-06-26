@@ -2073,7 +2073,7 @@ export function OrderForm({
           <section className={`order-wizard-step ${activeStep.id === "photographer" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photographer"}>
             <div className="partner-section">
               <h2>شركاء الحفل (اختياري)</h2>
-              <p className="partner-desc">أضف معلومات المصور أو القاعة أو الميكب آرتيست أو أي مقدم خدمة ليظهر داخل الدعوة.</p>
+              <p className="partner-desc">اختر مقدم خدمة لإضافته إلى الدعوة.</p>
 
               {!form.photographerEnabled ? (
                 /* ── service selection cards ── */
@@ -2089,6 +2089,7 @@ export function OrderForm({
                     <button key={label} className="partner-card-btn" type="button" onClick={() => {
                       setPartnerServiceType(label);
                       enablePhotographer();
+                      setPhotographerSaved(false);
                     }}>
                       <span className="partner-card-icon">{icon}</span>
                       <span className="partner-card-label">{label}</span>
@@ -2098,7 +2099,7 @@ export function OrderForm({
               ) : (
                 /* ── form or saved card ── */
                 <div className="partner-screen">
-                  {!form.photographerName.trim() ? (
+                  {!photographerSaved ? (
                     /* form */
                     <div className="partner-form-box">
                       <div className="partner-form-head">
@@ -2113,12 +2114,20 @@ export function OrderForm({
                         <strong>{partnerServiceType || "مقدم الخدمة"}</strong>
                       </div>
                       {renderPhotographerFields(partnerServiceType || "مقدم الخدمة")}
-                      <button className="btn btn-soft" type="button" onClick={() => {
-                        updateField("photographerEnabled", false);
-                        setPartnerServiceType("");
-                      }}>
-                        رجوع للاختيارات
-                      </button>
+                      <div className="partner-form-buttons">
+                        <button className="btn btn-gold" type="button" onClick={() => {
+                          setPhotographerSaved(true);
+                        }}>
+                          حفظ
+                        </button>
+                        <button className="btn btn-glass" type="button" onClick={() => {
+                          updateField("photographerEnabled", false);
+                          setPartnerServiceType("");
+                          setPhotographerSaved(false);
+                        }}>
+                          إلغاء
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     /* saved card */
@@ -2133,7 +2142,7 @@ export function OrderForm({
                            "➕"}
                         </span>
                         <div className="partner-saved-info">
-                          <strong className="partner-saved-name">{form.photographerName}</strong>
+                          <strong className="partner-saved-name">{form.photographerName || "شريك"}</strong>
                           <small className="partner-saved-type">{partnerServiceType || "شريك"}</small>
                         </div>
                       </div>
@@ -2149,9 +2158,7 @@ export function OrderForm({
                       ) : null}
                       <div className="partner-saved-actions">
                         <button className="btn btn-soft" type="button" onClick={() => {
-                          updateField("photographerName", "");
-                          updateField("photographerFacebookUrl", "");
-                          updateField("photographerInstagramUrl", "");
+                          setPhotographerSaved(false);
                         }}>
                           تعديل
                         </button>
@@ -2161,6 +2168,7 @@ export function OrderForm({
                           updateField("photographerFacebookUrl", "");
                           updateField("photographerInstagramUrl", "");
                           setPartnerServiceType("");
+                          setPhotographerSaved(false);
                         }}>
                           حذف
                         </button>
@@ -2171,6 +2179,7 @@ export function OrderForm({
                         updateField("photographerFacebookUrl", "");
                         updateField("photographerInstagramUrl", "");
                         setPartnerServiceType("");
+                        setPhotographerSaved(false);
                       }}>
                         ➕ إضافة شريك آخر
                       </button>

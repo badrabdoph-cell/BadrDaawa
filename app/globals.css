@@ -4175,14 +4175,14 @@ img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 18px 12px;
-  border: 1px solid rgba(180, 139, 57, 0.2);
+  gap: 5px;
+  padding: 12px 8px;
+  border: 1px solid rgba(180, 139, 57, 0.18);
   border-radius: 10px;
   background: rgba(255, 253, 248, 0.86);
   cursor: pointer;
   transition: all 0.15s;
-  min-height: 90px;
+  min-height: 72px;
 }
 
 .partner-card-btn:hover {
@@ -4193,12 +4193,12 @@ img {
 }
 
 .partner-card-icon {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   line-height: 1;
 }
 
 .partner-card-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #333;
   text-align: center;
@@ -4234,6 +4234,17 @@ img {
 
 .partner-form-head strong {
   font-size: 0.95rem;
+}
+
+.partner-form-buttons {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.partner-form-buttons .btn {
+  flex: 1;
+  min-height: 44px;
 }
 
 .partner-saved-card {
@@ -40230,8 +40241,8 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   }
 
   .partner-card-btn {
-    padding: 14px 10px;
-    min-height: 80px;
+    padding: 10px 6px;
+    min-height: 64px;
   }
 
   .photographer-fields {
