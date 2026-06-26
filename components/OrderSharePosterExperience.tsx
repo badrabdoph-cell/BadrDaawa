@@ -102,9 +102,18 @@ function saveOrderResponseExtra(data: OrderResponseExtra, selectedShareTemplate:
 }
 
 function scaledPoster(snapshot: PosterSnapshot & { headline?: string }, selectedShareTemplate: SharePosterTemplateId, scaleClass: string) {
+  const scaleMap = {
+    thumb: { width: 230, height: 288 },
+    large: { width: 346, height: 432 },
+    review: { width: 220, height: 275 },
+  };
+  const size = scaleMap[scaleClass as keyof typeof scaleMap] || scaleMap.thumb;
+  
   return (
-    <div className={`share-poster-scale ${scaleClass}`}>
-      <PosterRenderer {...snapshot} selectedShareTemplate={selectedShareTemplate} />
+    <div style={{ width: `${size.width}px`, height: `${size.height}px`, overflow: "hidden", borderRadius: "16px", background: "#f8efe3" }}>
+      <div style={{ width: "1080px", height: "1350px", transform: `scale(${size.width / 1080})`, transformOrigin: "top left" }}>
+        <PosterRenderer {...snapshot} selectedShareTemplate={selectedShareTemplate} />
+      </div>
     </div>
   );
 }

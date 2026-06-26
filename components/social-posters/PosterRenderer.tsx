@@ -7,9 +7,9 @@ import WeddingSharePosterClassic, { type WeddingSharePosterProps } from "./Weddi
 import { buildClassicPosterProps, getSharePosterTemplate, type SharePosterTemplateId } from "./poster-templates";
 
 const POSTER_COMPONENTS: Record<string, React.ComponentType<ClassicPosterProps | WeddingSharePosterProps>> = {
-  classic: ClassicPoster,
-  simple: SimplePoster,
-  news: WeddingPoster,
+  classic: WeddingSharePosterClassic,
+  simple: WeddingSharePosterClassic,
+  news: WeddingSharePosterClassic,
   wedding: WeddingSharePosterClassic,
 };
 

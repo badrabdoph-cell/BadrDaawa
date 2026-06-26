@@ -36,7 +36,7 @@ function shortUrl(url: string) {
 
 function PaperTexture() {
   return (
-    <svg className="absolute inset-0 w-full h-full opacity-12" xmlns="http://www.w3.org/2000/svg">
+    <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0.12 }} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="paperPattern" width="320" height="260" patternUnits="userSpaceOnUse">
           <g fill="#4a3526" fontFamily="Georgia" fontSize="15" opacity="0.12">
@@ -59,51 +59,51 @@ function PaperTexture() {
 
 function Header({ date }: { date: ReturnType<typeof parseWeddingDate> }) {
   return (
-    <div className="flex justify-between items-center px-[92px] pt-[74px]">
-      <span className="text-[31px] font-black text-[#120d09] font-georgia">Wedding invitation</span>
-      <span className="text-[38px] font-black text-[#4c2b11]">♥</span>
-      <span className="text-[32px] font-black text-[#120d09] text-right">{date.formattedDate}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "74px 92px 0" }}>
+      <span style={{ fontSize: "31px", fontWeight: "900", color: "#120d09", fontFamily: "Georgia" }}>Wedding invitation</span>
+      <span style={{ fontSize: "38px", fontWeight: "900", color: "#4c2b11" }}>♥</span>
+      <span style={{ fontSize: "32px", fontWeight: "900", color: "#120d09", textAlign: "right" }}>{date.formattedDate}</span>
     </div>
   );
 }
 
 function Headline({ headline }: { headline: string }) {
   return (
-    <div className="text-center mt-[38px]">
-      <div className="w-[856px] h-[5px] bg-black mx-auto" />
-      <h2 className="text-[98px] font-black text-[#e73539] mt-[30px] leading-none" dir="rtl">
+    <div style={{ textAlign: "center", marginTop: "38px" }}>
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "0 auto" }} />
+      <h2 style={{ fontSize: "98px", fontWeight: "900", color: "#e73539", marginTop: "30px", lineHeight: 1, marginBottom: 0 }} dir="rtl">
         {headline}
       </h2>
-      <div className="w-[856px] h-[5px] bg-black mx-auto mt-[26px]" />
-      <div className="w-[856px] h-[5px] bg-black mx-auto mt-[13px]" />
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "26px auto 0" }} />
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "13px auto 0" }} />
     </div>
   );
 }
 
 function CoupleNames({ groomName, brideName }: { groomName: string; brideName: string }) {
   return (
-    <div className="text-center mt-[116px]">
-      <h3 className="text-[76px] font-black text-[#4b2b10] leading-none" dir="rtl">
+    <div style={{ textAlign: "center", marginTop: "116px" }}>
+      <h3 style={{ fontSize: "76px", fontWeight: "900", color: "#4b2b10", lineHeight: 1, marginBottom: 0 }} dir="rtl">
         {groomName} {brideName}
       </h3>
-      <div className="w-[856px] h-[5px] bg-black mx-auto mt-[25px]" />
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "25px auto 0" }} />
     </div>
   );
 }
 
 function PhotoFrame({ coverImage }: { coverImage: string }) {
   return (
-    <div className="flex justify-center mt-[40px]">
-      <div className="w-[716px] h-[442px] rounded-[26px] overflow-hidden border-4 border-black">
+    <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
+      <div style={{ width: "716px", height: "442px", borderRadius: "26px", overflow: "hidden", border: "4px solid black" }}>
         {coverImage ? (
           <img
             src={coverImage}
             alt="Wedding photo"
-            className="w-full h-full object-cover"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#f8efe3] to-[#efe0cc] flex items-center justify-center">
-            <svg className="w-24 h-24 text-[#4a3526] opacity-30" fill="currentColor" viewBox="0 0 24 24">
+          <div style={{ width: "100%", height: "100%", background: "linear-gradient(to bottom right, #f8efe3, #efe0cc)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg style={{ width: "96px", height: "96px", color: "#4a3526", opacity: 0.3 }} fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
             </svg>
           </div>
@@ -115,7 +115,7 @@ function PhotoFrame({ coverImage }: { coverImage: string }) {
 
 function DateCard({ date }: { date: ReturnType<typeof parseWeddingDate> }) {
   return (
-    <div className="absolute left-[84px] top-[972px] w-[322px] h-[310px]">
+    <div style={{ position: "absolute", left: "84px", top: "972px", width: "322px", height: "310px" }}>
       <svg width="322" height="310" viewBox="0 0 322 310">
         <defs>
           <clipPath id="dateCardClip">
@@ -138,27 +138,27 @@ function SaveTheDateCard({ date, venueName, weddingTime, invitationUrl }: { date
   const shortInvitationUrl = shortUrl(invitationUrl);
   
   return (
-    <div className="absolute right-[112px] top-[954px]">
-      <div className="w-[430px]">
-        <h4 className="text-[58px] font-black text-black text-center mb-[25px] font-georgia">Save the date</h4>
-        <div className="w-[356px] h-[4px] bg-black mx-auto" />
-        <div className="mt-[57px] bg-[#fffaf1] opacity-[0.82] border-[3px] border-[#16120f] rounded-sm p-4 relative">
-          <div className="border-2 border-[#16120f] p-4">
-            <div className="text-center mb-4">
-              <svg className="w-16 h-16 mx-auto text-[#4a3526]" viewBox="0 0 64 64" fill="currentColor">
+    <div style={{ position: "absolute", right: "112px", top: "954px" }}>
+      <div style={{ width: "430px" }}>
+        <h4 style={{ fontSize: "58px", fontWeight: "900", color: "black", textAlign: "center", marginBottom: "25px", fontFamily: "Georgia" }}>Save the date</h4>
+        <div style={{ width: "356px", height: "4px", backgroundColor: "black", margin: "0 auto" }} />
+        <div style={{ marginTop: "57px", backgroundColor: "#fffaf1", opacity: 0.82, border: "3px solid #16120f", borderRadius: "2px", padding: "16px", position: "relative" }}>
+          <div style={{ border: "2px solid #16120f", padding: "16px" }}>
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
+              <svg style={{ width: "64px", height: "64px", margin: "0 auto", color: "#4a3526" }} viewBox="0 0 64 64" fill="currentColor">
                 <path d="M32 4c-4.4 0-8 3.6-8 8v4h-4c-2.2 0-4 1.8-4 4v32c0 2.2 1.8 4 4 4h24c2.2 0 4-1.8 4-4v-32c0-2.2-1.8-4-4-4h-4v-4c0-4.4-3.6-8-8-8zm0 4c2.2 0 4 1.8 4 4v4h-8v-4c0-2.2 1.8-4 4-4zm-12 12h24v32h-24v-32z" />
               </svg>
             </div>
-            <div className="text-center mb-4">
-              <span className="text-[54px] font-black text-black font-georgia">{date.month}</span>
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
+              <span style={{ fontSize: "54px", fontWeight: "900", color: "black", fontFamily: "Georgia" }}>{date.month}</span>
             </div>
-            <div className="text-center mb-4">
-              <span className="text-[28px] font-black text-black" dir="rtl">{venueName}</span>
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
+              <span style={{ fontSize: "28px", fontWeight: "900", color: "black" }} dir="rtl">{venueName}</span>
             </div>
-            <div className="text-center mb-4">
-              <span className="text-[34px] font-black text-black font-georgia">At {weddingTime || "8 pm"}</span>
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
+              <span style={{ fontSize: "34px", fontWeight: "900", color: "black", fontFamily: "Georgia" }}>At {weddingTime || "8 pm"}</span>
             </div>
-            <div className="flex justify-center mt-4">
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }}>
               <QRCodeSVG
                 value={invitationUrl}
                 size={116}
@@ -170,9 +170,9 @@ function SaveTheDateCard({ date, venueName, weddingTime, invitationUrl }: { date
             </div>
           </div>
         </div>
-        <div className="mt-4 text-center">
-          <p className="text-[15px] font-black text-[#20140d] mb-2" dir="rtl">امسح الكود لمشاهدة الدعوة الكاملة</p>
-          <p className="text-[20px] font-black text-[#13100d] font-georgia">{shortInvitationUrl}</p>
+        <div style={{ marginTop: "16px", textAlign: "center" }}>
+          <p style={{ fontSize: "15px", fontWeight: "900", color: "#20140d", marginBottom: "8px" }} dir="rtl">امسح الكود لمشاهدة الدعوة الكاملة</p>
+          <p style={{ fontSize: "20px", fontWeight: "900", color: "#13100d", fontFamily: "Georgia" }}>{shortInvitationUrl}</p>
         </div>
       </div>
     </div>
@@ -195,33 +195,35 @@ export default function WeddingSharePosterClassic({
   return (
     <article
       dir="ltr"
-      className="relative w-[1080px] h-[1350px] overflow-hidden bg-[#f7eddf]"
       style={{
-        fontFamily: "Georgia, 'Times New Roman', var(--font-arabic), 'Cairo', 'Tajawal', serif",
+        width: "1080px",
+        height: "1350px",
+        position: "relative",
+        overflow: "hidden",
+        backgroundColor: "#f7eddf",
+        fontFamily: "Georgia, 'Times New Roman', 'Cairo', 'Tajawal', serif",
       }}
     >
       {/* Background Gradient */}
-      <div className="absolute inset-0">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="bgGradient" cx="50%" cy="18%" r="80%">
-              <stop offset="0%" stopColor="#fffaf2" />
-              <stop offset="62%" stopColor="#f8efe3" />
-              <stop offset="100%" stopColor="#efe0cc" />
-            </radialGradient>
-          </defs>
-          <rect width="1080" height="1350" fill="url(#bgGradient)" />
-        </svg>
-      </div>
+      <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bgGradient" cx="50%" cy="18%" r="80%">
+            <stop offset="0%" stopColor="#fffaf2" />
+            <stop offset="62%" stopColor="#f8efe3" />
+            <stop offset="100%" stopColor="#efe0cc" />
+          </radialGradient>
+        </defs>
+        <rect width="1080" height="1350" fill="url(#bgGradient)" />
+      </svg>
 
       {/* Paper Texture */}
       <PaperTexture />
 
       {/* Decorative Side Panels */}
-      <div className="absolute -left-[70px] -top-[10px] w-[310px] h-[1400px] opacity-[0.42] transform -rotate-8">
+      <div style={{ position: "absolute", left: "-70px", top: "-10px", width: "310px", height: "1400px", opacity: 0.42, transform: "rotate(-8deg)" }}>
         <PaperTexture />
       </div>
-      <div className="absolute right-[830px] -top-[50px] w-[320px] h-[1450px] opacity-[0.42] transform rotate-12">
+      <div style={{ position: "absolute", right: "-70px", top: "-50px", width: "320px", height: "1450px", opacity: 0.42, transform: "rotate(12deg)" }}>
         <PaperTexture />
       </div>
 
@@ -229,7 +231,7 @@ export default function WeddingSharePosterClassic({
       <Header date={date} />
 
       {/* Divider */}
-      <div className="w-[856px] h-[5px] bg-black mx-auto mt-[18px]" />
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "18px auto 0" }} />
 
       {/* Headline */}
       <Headline headline={headline} />
@@ -238,19 +240,19 @@ export default function WeddingSharePosterClassic({
       <CoupleNames groomName={groomName} brideName={brideName} />
 
       {/* Divider */}
-      <div className="w-[856px] h-[5px] bg-black mx-auto mt-[25px]" />
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "25px auto 0" }} />
 
       {/* Photo Frame */}
       <PhotoFrame coverImage={coverImage} />
 
       {/* Divider */}
-      <div className="w-[856px] h-[5px] bg-black mx-auto mt-[68px]" />
+      <div style={{ width: "856px", height: "5px", backgroundColor: "black", margin: "68px auto 0" }} />
 
       {/* Date Card */}
       <DateCard date={date} />
 
       {/* Vertical Divider */}
-      <div className="absolute left-[480px] top-[954px] w-[3px] h-[392px] bg-black" />
+      <div style={{ position: "absolute", left: "480px", top: "954px", width: "3px", height: "392px", backgroundColor: "black" }} />
 
       {/* Save The Date Card */}
       <SaveTheDateCard date={date} venueName={venueName} weddingTime={weddingTime} invitationUrl={invitationUrl} />
