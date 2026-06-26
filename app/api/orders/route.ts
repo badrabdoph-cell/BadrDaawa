@@ -8,7 +8,6 @@ import { buildReservedInvitationLinks, createReservedInvitationCode, createReser
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublicPublishedTemplateWithSettings, getPublishedTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
-import { generateSharePosterPng, generateShareQrPng } from "@/lib/share-poster-server";
 import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
@@ -76,7 +75,6 @@ function buildOrderWhatsAppMessage(input: {
   brideName: string;
   publicUrl: string;
   adminUrl: string;
-  sharePosterUrl?: string;
 }) {
   return [
     "تم تأكيد طلبك ❤️",
@@ -93,9 +91,6 @@ function buildOrderWhatsAppMessage(input: {
     "",
     input.publicUrl,
     "",
-    input.sharePosterUrl ? "📸 صورة المشاركة الجاهزة للتحميل والمشاركة:" : "",
-    input.sharePosterUrl || "",
-    input.sharePosterUrl ? "" : "",
     "وهذا رابط الإدارة الخاص بالدعوة والذي يمكنك من خلاله:",
     "",
     "- متابعة الحضور.",
@@ -104,52 +99,7 @@ function buildOrderWhatsAppMessage(input: {
     "- مراجعة الرسائل والتهاني والتعليقات قبل ظهورها داخل الدعوة.",
     "",
     input.adminUrl,
-  ].filter((line, index, array) => line || array[index - 1]).join("\n");
-}
-
-const POSTER_HEADLINES: Record<string, string> = {
-  classic: "خبر عاجل!!!",
-  simple: "خبر عاجل !!!",
-  news: "خبر عاجل !!!",
-};
-
-function getPosterHeadline(templateId: string): string {
-  return POSTER_HEADLINES[templateId] || POSTER_HEADLINES.classic;
-}
-
-async function createShareAssets(input: {
-  selectedShareTemplate: string;
-  groomName: string;
-  brideName: string;
-  weddingDate: string;
-  weddingTime?: string;
-  venue: string;
-  mapUrl: string;
-  imageUrls: string[];
-  publicUrl: string;
-}) {
-  try {
-    const headline = getPosterHeadline(input.selectedShareTemplate);
-    const [sharePosterUrl, qrCodeUrl] = await Promise.all([
-      generateSharePosterPng({
-        selectedShareTemplate: input.selectedShareTemplate,
-        headline,
-        groomName: input.groomName,
-        brideName: input.brideName,
-        coverImage: input.imageUrls[0] || "",
-        weddingDate: input.weddingDate,
-        weddingTime: input.weddingTime || "8 pm",
-        venueName: input.venue,
-        venueAddress: input.mapUrl,
-        invitationUrl: input.publicUrl,
-      }),
-      generateShareQrPng(input.publicUrl),
-    ]);
-    return { sharePosterUrl, qrCodeUrl };
-  } catch (error) {
-    console.error("Failed to generate share poster assets", error);
-    return { sharePosterUrl: "", qrCodeUrl: "" };
-  }
+  ].join("\n");
 }
 
 export async function POST(request: NextRequest) {
@@ -230,7 +180,6 @@ export async function POST(request: NextRequest) {
   const mapUrl = cleanExternalUrl(parsed.data.mapUrl);
   const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
   const mapNotes = mapUrl ? `رابط موقع القاعه:\n${mapUrl}` : "";
-  const sharePosterNotes = `صورة المشاركة:\nالقالب المختار: ${parsed.data.selectedShareTemplate}`;
   const musicNotes = effectiveMusicEnabled
     ? ["موسيقى الدعوة:", effectiveMusicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", effectiveMusicChoice === "library" ? "اختار العميل مقطعًا من مكتبة الموقع." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
     : "";
@@ -239,7 +188,7 @@ export async function POST(request: NextRequest) {
     : "";
   const storyNotes = story.length ? ["قصة العروسين:", ...story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
   const openingNotes = openingText ? `نص الافتتاح السينمائي:\n${openingText}` : "";
-  const notes = [parsed.data.notes, mapNotes, sharePosterNotes, openingNotes, photographerNotes, musicNotes, storyNotes, imageNotes].filter(Boolean).join("\n\n");
+  const notes = [parsed.data.notes, mapNotes, openingNotes, photographerNotes, musicNotes, storyNotes, imageNotes].filter(Boolean).join("\n\n");
   let orderId = "";
   let effectiveOrderNumber = orderNumber;
   let effectiveInvitationCode = reservedInvitationCode;
@@ -299,24 +248,12 @@ export async function POST(request: NextRequest) {
           });
         }
         const links = buildReservedInvitationLinks(siteUrl, duplicateInvitationCode, duplicateManageToken);
-        const shareAssets = await createShareAssets({
-          selectedShareTemplate: parsed.data.selectedShareTemplate,
-          groomName: parsed.data.groomName,
-          brideName: parsed.data.brideName,
-          weddingDate: parsed.data.weddingDate,
-          weddingTime: parsed.data.weddingTime,
-          venue: parsed.data.venue,
-          mapUrl,
-          imageUrls,
-          publicUrl: links.publicUrl,
-        });
         const message = buildOrderWhatsAppMessage({
           invitationCode: duplicateInvitationCode,
           groomName: parsed.data.groomName,
           brideName: parsed.data.brideName,
           publicUrl: links.publicUrl,
           adminUrl: links.adminUrl,
-          sharePosterUrl: shareAssets.sharePosterUrl,
         });
         return NextResponse.json({
           ok: true,
@@ -326,9 +263,6 @@ export async function POST(request: NextRequest) {
           invitationCode: duplicateInvitationCode,
           imageUrls,
           musicUrl: music.musicUrl,
-          selectedShareTemplate: parsed.data.selectedShareTemplate,
-          sharePosterUrl: shareAssets.sharePosterUrl,
-          qrCodeUrl: shareAssets.qrCodeUrl,
           whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient),
           ...links,
         });
@@ -373,24 +307,12 @@ export async function POST(request: NextRequest) {
   }
 
   const links = buildReservedInvitationLinks(siteUrl, effectiveInvitationCode, effectiveManageToken);
-  const shareAssets = await createShareAssets({
-    selectedShareTemplate: parsed.data.selectedShareTemplate,
-    groomName: parsed.data.groomName,
-    brideName: parsed.data.brideName,
-    weddingDate: parsed.data.weddingDate,
-    weddingTime: parsed.data.weddingTime,
-    venue: parsed.data.venue,
-    mapUrl,
-    imageUrls,
-    publicUrl: links.publicUrl,
-  });
   const message = buildOrderWhatsAppMessage({
     invitationCode: effectiveInvitationCode,
     groomName: parsed.data.groomName,
     brideName: parsed.data.brideName,
     publicUrl: links.publicUrl,
     adminUrl: links.adminUrl,
-    sharePosterUrl: shareAssets.sharePosterUrl,
   });
   await recordAuditLog({
     actor: getPublicAuditActor(parsed.data.phone || parsed.data.groomName || "Public order"),
@@ -408,9 +330,6 @@ export async function POST(request: NextRequest) {
       venue: parsed.data.venue,
       mapUrl,
       templateSlug: selectedTemplate.slug,
-      selectedShareTemplate: parsed.data.selectedShareTemplate,
-      sharePosterUrl: shareAssets.sharePosterUrl,
-      qrCodeUrl: shareAssets.qrCodeUrl,
       imageUrls,
       musicEnabled: effectiveMusicEnabled,
       musicChoice: effectiveMusicChoice,
@@ -421,5 +340,5 @@ export async function POST(request: NextRequest) {
     },
     metadata: { source: "public-order-form" },
   });
-  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, invitationCode: effectiveInvitationCode, imageUrls, musicUrl: music.musicUrl, selectedShareTemplate: parsed.data.selectedShareTemplate, sharePosterUrl: shareAssets.sharePosterUrl, qrCodeUrl: shareAssets.qrCodeUrl, whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient), ...links });
+  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, invitationCode: effectiveInvitationCode, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient), ...links });
 }

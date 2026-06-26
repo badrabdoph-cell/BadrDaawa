@@ -28,8 +28,6 @@ import { calculateKeyboardInset, orderStoryPresets } from "@/lib/order-mobile-ux
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { LocationPickerModal } from "./LocationPickerModal";
-import PosterRenderer from "./social-posters/PosterRenderer";
-import { SHARE_POSTER_TEMPLATES, type SharePosterTemplateId } from "./social-posters/poster-templates";
 
 type FormState = {
   groomName: string;
@@ -53,7 +51,6 @@ type FormState = {
   musicChoice: MusicChoice;
   musicUrl: string;
   paymentMethod: "cod" | "bank" | "ewallet";
-  selectedShareTemplate: SharePosterTemplateId;
 };
 
 type MusicChoice = "default" | "upload" | "video" | "url";
@@ -149,7 +146,6 @@ const orderWizardSteps = [
   { id: "photos", title: "الصور" },
   { id: "music", title: "الموسيقى" },
   { id: "extras", title: "إضافات مهمة" },
-  { id: "share-poster", title: "📸 صورة المشاركة" },
   { id: "review", title: "مراجعة الطلب" },
 ] as const;
 
@@ -548,7 +544,6 @@ export function OrderForm({
     musicChoice: initialDraft?.musicChoice || "default",
     musicUrl: initialDraft?.musicUrl || "",
     paymentMethod: "cod",
-    selectedShareTemplate: "classic" as SharePosterTemplateId,
   });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -573,7 +568,6 @@ export function OrderForm({
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [focusedFieldName, setFocusedFieldName] = useState("");
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
-  const [mounted, setMounted] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const finalConfirmIntentAtRef = useRef(0);
@@ -629,10 +623,6 @@ export function OrderForm({
     if (previewImageUrls.length) params.set("gallery", previewImageUrls.join(","));
     return `/templates/${encodeURIComponent(selectedTemplate.slug)}/preview?${params.toString()}`;
   }, [form, previewImageUrls, selectedTemplate.slug]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     setActiveStepIndex((current) => {
@@ -757,16 +747,16 @@ export function OrderForm({
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
     if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
+    if (stepId === "photos") {
+      const savedImages = draftImageUrls.filter((url) => url).length;
+      if (savedImages < 2) {
+        setState("error");
+        setMessage(`ارفع صورتين على الأقل للمتابعة (${savedImages} من 2).`);
+        return false;
+      }
+    }
     setForm((current) => ({ ...current, ...currentValues }));
     return true;
-  }
-
-  function validateImagesBeforeAction(savedCount: number): boolean {
-    if (savedCount >= 2) return true;
-    setState("error");
-    setMessage(`ارفع صورتين على الأقل للدعوة (${savedCount} من 2).`);
-    goToStep(4);
-    return false;
   }
 
   function goNext() {
@@ -781,13 +771,6 @@ export function OrderForm({
   }
 
   function openOrderPreview() {
-    const savedImagesBeforePreview = draftImageUrls.filter((url) => url).length;
-    if (savedImagesBeforePreview < 2) {
-      setState("error");
-      setMessage(`ارفع صورتين على الأقل للدعوة قبل فتح المعاينة (${savedImagesBeforePreview} من 2).`);
-      goToStep(4);
-      return;
-    }
     if (hasMediaUploadInProgress) {
       setState("error");
       setMessage("انتظر حتى يكتمل حفظ الصور والموسيقى قبل فتح المعاينة.");
@@ -840,7 +823,6 @@ export function OrderForm({
       musicEnabled: params.has("musicEnabled") ? params.get("musicEnabled") === "1" : undefined,
       musicChoice: isOrderMusicChoice(params.get("musicChoice")) ? (params.get("musicChoice") as MusicChoice) : undefined,
       musicUrl: params.get("musicUrl") || undefined,
-      selectedShareTemplate: SHARE_POSTER_TEMPLATES.some((t) => t.id === params.get("selectedShareTemplate")) ? (params.get("selectedShareTemplate") as SharePosterTemplateId) : undefined,
       imageUrls,
     };
   }
@@ -877,7 +859,6 @@ export function OrderForm({
       if (nextForm.musicEnabled) params.set("musicChoice", nextForm.musicChoice || "default");
     }
     if (nextImageUrls.length) params.set("gallery", nextImageUrls.join(","));
-    if (nextForm.selectedShareTemplate) params.set("selectedShareTemplate", nextForm.selectedShareTemplate);
     const url = `/order?${params.toString()}`;
     if (url === lastDraftUrlRef.current) return;
     lastDraftUrlRef.current = url;
@@ -957,7 +938,6 @@ export function OrderForm({
         musicEnabled: typeof draft.musicEnabled === "boolean" ? draft.musicEnabled : current.musicEnabled,
         musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
         musicUrl: typeof draft.musicUrl === "string" ? draft.musicUrl : current.musicUrl,
-        selectedShareTemplate: SHARE_POSTER_TEMPLATES.some((t) => t.id === draft.selectedShareTemplate) ? (draft.selectedShareTemplate as SharePosterTemplateId) : current.selectedShareTemplate,
       }));
       const restoredImages = cleanOrderDraftImageUrls(draft.imageUrls);
       setDraftImageUrls(restoredImages);
@@ -1287,11 +1267,6 @@ export function OrderForm({
 
   const normalizedDate = normalizeWeddingDate(form.weddingDate);
   const readableDate = normalizedDate ? displayWeddingDate(normalizedDate) : "";
-  const invitationSlug = useMemo(() => {
-    const groom = (form.groomName || "invitation").trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "") || "invitation";
-    const bride = form.brideName ? `-${form.brideName.trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "")}` : "";
-    return `${groom}${bride}`;
-  }, [form.groomName, form.brideName]);
 
   function getCurrentFormFromDom(): OrderFormValues {
     const formData = new FormData(formRef.current || undefined);
@@ -1583,7 +1558,6 @@ export function OrderForm({
       if (orderImages.length < 2) {
         setState("error");
         setMessage(`ارفع صورتين على الأقل للدعوة (${orderImages.length} من 2).`);
-        goToStep(4);
         return;
       }
       if (selectedRawImageCount(formData) > orderImages.length) {
@@ -1609,7 +1583,6 @@ export function OrderForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...effectiveForm,
-          selectedShareTemplate: form.selectedShareTemplate,
           story,
           notes: [photographerNotes, clientMusicNotes, storyNotes].filter(Boolean).join("\n\n"),
           orderImages,
@@ -2175,82 +2148,6 @@ export function OrderForm({
 
             {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
             {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
-          </section>
-
-          <section className={`order-wizard-step ${activeStep.id === "share-poster" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "share-poster"}>
-            <style>{`
-              .share-poster-wiz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
-              .share-poster-wiz-card{position:relative;display:grid;gap:10px;padding:12px;border:1.5px solid rgba(116,82,38,.18);border-radius:22px;background:#fffefb;box-shadow:0 14px 34px rgba(46,33,21,.09);cursor:pointer;text-align:right;transition:border-color .2s,box-shadow .2s}
-              .share-poster-wiz-card.active{border-color:rgba(185,137,61,.68);box-shadow:0 0 0 4px rgba(185,137,61,.1)}
-              .share-poster-wiz-card:hover{border-color:rgba(185,137,61,.4)}
-              .share-poster-wiz-thumb{height:180px;overflow:hidden;border-radius:14px;background:#eee0cd}
-              .share-poster-wiz-name{color:#22150e;font-weight:950;font-size:.95rem}
-              .share-poster-wiz-desc{color:#75685c;font-weight:800;font-size:.8rem;line-height:1.5}
-              .share-poster-wiz-check{position:absolute;top:10px;left:10px;display:grid;width:28px;height:28px;place-items:center;border-radius:999px;background:#111;color:#fff}
-              .share-poster-wiz-preview{margin-top:6px;display:grid;justify-items:center;gap:12px;padding:18px;border-radius:20px;background:rgba(255,255,255,.5);border:1px solid rgba(116,82,38,.12)}
-              .share-poster-wiz-preview h4{margin:0;color:#22150e;font-size:1.1rem;font-weight:950}
-              .share-poster-wiz-frame{width:320px;height:400px;overflow:hidden;border-radius:16px;background:#f8efe3;box-shadow:0 14px 34px rgba(46,33,21,.12)}
-              .share-poster-wiz-scale{width:1080px;height:1350px;transform-origin:top left;pointer-events:none}
-              .share-poster-wiz-scale.thumb{transform:scale(.167)}
-              .share-poster-wiz-scale.large{transform:scale(.296)}
-            `}</style>
-            <div className="order-step-copy">
-              <p>اختر تصميماً جاهزاً لمشاركة دعوتك على واتساب وإنستجرام وفيسبوك. سيتم إنشاء الصورة تلقائياً باستخدام بيانات دعوتك.</p>
-            </div>
-            <div className="share-poster-wiz-grid">
-              {SHARE_POSTER_TEMPLATES.map((template) => {
-                const posterProps = {
-                  groomName: form.groomName || "أحمد",
-                  brideName: form.brideName || "نور",
-                  coverImage: draftImageUrls[0] || "/assets/templates/featured-1.svg",
-                  weddingDate: form.weddingDate || new Date().toISOString().slice(0, 10),
-                  weddingTime: form.weddingTime || "8 pm",
-                  venueName: form.venue || "LALIT ELOMR HALL",
-                  venueAddress: form.mapUrl || "",
-                  invitationUrl: mounted ? `${window.location.origin}/invitation/${invitationSlug}` : "",
-                  headline: template.headline,
-                };
-                return (
-                  <button
-                    type="button"
-                    key={template.id}
-                    className={`share-poster-wiz-card ${form.selectedShareTemplate === template.id ? "active" : ""}`}
-                    onClick={() => {
-                      updateField("selectedShareTemplate", template.id);
-                      try { window.sessionStorage?.setItem("badrdaawa-selected-share-template", template.id); } catch {}
-                    }}
-                  >
-                    {form.selectedShareTemplate === template.id ? <span className="share-poster-wiz-check"><Check size={15} /></span> : null}
-                    <div className="share-poster-wiz-thumb">
-                      <div className="share-poster-wiz-scale thumb"><PosterRenderer {...posterProps} selectedShareTemplate={template.id} /></div>
-                    </div>
-                    <strong className="share-poster-wiz-name">{template.name}</strong>
-                    <small className="share-poster-wiz-desc">{template.description}</small>
-                  </button>
-                );
-              })}
-            </div>
-            {(() => {
-              const selectedTemplateInfo = SHARE_POSTER_TEMPLATES.find((t) => t.id === form.selectedShareTemplate) || SHARE_POSTER_TEMPLATES[0];
-              const largePosterProps = {
-                groomName: form.groomName || "أحمد",
-                brideName: form.brideName || "نور",
-                coverImage: draftImageUrls[0] || "/assets/templates/featured-1.svg",
-                weddingDate: form.weddingDate || new Date().toISOString().slice(0, 10),
-                weddingTime: form.weddingTime || "8 pm",
-                venueName: form.venue || "LALIT ELOMR HALL",
-                venueAddress: form.mapUrl || "",
-                invitationUrl: mounted ? `${window.location.origin}/invitation/${invitationSlug}` : "",
-              };
-              return (
-                <div className="share-poster-wiz-preview">
-                  <h4>📸 {selectedTemplateInfo.name}</h4>
-                  <div className="share-poster-wiz-frame">
-                    <div className="share-poster-wiz-scale large"><PosterRenderer {...largePosterProps} selectedShareTemplate={form.selectedShareTemplate} /></div>
-                  </div>
-                </div>
-              );
-            })()}
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>

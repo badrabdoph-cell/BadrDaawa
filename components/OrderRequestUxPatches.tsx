@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { OrderSharePosterExperience } from "./OrderSharePosterExperience";
 
 type LeafletLike = {
   tileLayer?: (url: string, options?: Record<string, unknown>) => unknown;
@@ -113,5 +112,5 @@ export function OrderRequestUxPatches() {
     };
   }, []);
 
-  return <OrderSharePosterExperience />;
+  return null;
 }
