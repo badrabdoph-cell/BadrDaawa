@@ -235,7 +235,17 @@ export function LocationPickerModal({
           setLocation(info);
           setGeoStatus("ready");
         } catch {
-          if (mountedRef.current) setGeoStatus("error");
+          if (!mountedRef.current) return;
+          setGeoStatus("error");
+          const c = map.getCenter();
+          setLocation({
+            lat: Number(c.lat.toFixed(6)),
+            lng: Number(c.lng.toFixed(6)),
+            placeName: `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`,
+            city: "",
+            governorate: "",
+            googleMapsUrl: `https://maps.google.com/?q=${c.lat.toFixed(6)},${c.lng.toFixed(6)}`,
+          });
         }
       }, GEOCODE_DEBOUNCE_MS);
     }
@@ -252,7 +262,16 @@ export function LocationPickerModal({
         setGeoStatus("ready");
       })
       .catch(() => {
-        if (mountedRef.current) setGeoStatus("error");
+        if (!mountedRef.current) return;
+        setGeoStatus("error");
+        setLocation({
+          lat: Number(startCenter[0].toFixed(6)),
+          lng: Number(startCenter[1].toFixed(6)),
+          placeName: `${startCenter[0].toFixed(6)}, ${startCenter[1].toFixed(6)}`,
+          city: "",
+          governorate: "",
+          googleMapsUrl: `https://maps.google.com/?q=${startCenter[0].toFixed(6)},${startCenter[1].toFixed(6)}`,
+        });
       });
   }, [loadStatus, open]);
 
@@ -343,12 +362,7 @@ export function LocationPickerModal({
 
               {/* location details panel */}
               <div className="location-picker-details">
-                {geoStatus === "error" ? (
-                  <div className="location-picker-details-row location-picker-details-error">
-                    <Navigation size={16} />
-                    <span>تعذر تحديد العنوان. حرّك الخريطة وحاول مجدداً.</span>
-                  </div>
-                ) : geoStatus === "locating" ? (
+                {geoStatus === "locating" ? (
                   <div className="location-picker-details-row">
                     <Loader2 size={16} className="animate-float" />
                     <span>جاري تحديد الموقع...</span>
@@ -368,6 +382,12 @@ export function LocationPickerModal({
                     <div className="location-picker-details-coords">
                       {location.lat}، {location.lng}
                     </div>
+                    {geoStatus === "error" ? (
+                      <div className="location-picker-details-row location-picker-details-error">
+                        <Navigation size={16} />
+                        <span>تعذر تحديد اسم المكان. يمكنك تأكيد الموقع بالإحداثيات الظاهرة.</span>
+                      </div>
+                    ) : null}
                   </>
                 ) : null}
               </div>
@@ -384,7 +404,7 @@ export function LocationPickerModal({
             </button>
             <div className="location-picker-actions-right">
               <button className="btn btn-gold btn-glow" type="button" onClick={handleConfirm}
-                disabled={geoStatus !== "ready" || !location}>
+                disabled={!location}>
                 تأكيد الموقع
               </button>
               <button className="btn btn-soft" type="button" onClick={handleCancel}>إلغاء</button>

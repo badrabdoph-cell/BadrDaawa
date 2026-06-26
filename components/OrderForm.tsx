@@ -146,6 +146,7 @@ const orderWizardSteps = [
   { id: "photos", title: "الصور" },
   { id: "music", title: "الموسيقى" },
   { id: "extras", title: "إضافات مهمة" },
+  { id: "photographer", title: "المصور الفوتوغرافي أو القاعة أو الميكب ارتيست" },
   { id: "review", title: "مراجعة الطلب" },
 ] as const;
 
@@ -559,7 +560,6 @@ export function OrderForm({
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
   const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
-  const [photographerFieldsOpen, setPhotographerFieldsOpen] = useState(false);
   const [storyFieldsOpen, setStoryFieldsOpen] = useState(false);
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
@@ -701,7 +701,6 @@ export function OrderForm({
     }
     const nextIndex = Math.min(Math.max(skipTemplateStep ? Math.max(index, 1) : index, 0), orderWizardSteps.length - 1);
     if (orderWizardSteps[nextIndex]?.id === "review") {
-      setPhotographerFieldsOpen(false);
       setStoryFieldsOpen(false);
       reviewEnteredAtRef.current = Date.now();
       finalConfirmIntentAtRef.current = 0;
@@ -735,7 +734,7 @@ export function OrderForm({
       if (allErrors.mapUrl) nextErrors.mapUrl = allErrors.mapUrl;
     }
     if (stepId === "music" && allErrors.musicUrl) nextErrors.musicUrl = allErrors.musicUrl;
-    if (stepId === "extras" || stepId === "review") {
+    if (stepId === "photographer" || stepId === "extras" || stepId === "review") {
       if (allErrors.photographerFacebookUrl) nextErrors.photographerFacebookUrl = allErrors.photographerFacebookUrl;
       if (allErrors.photographerInstagramUrl) nextErrors.photographerInstagramUrl = allErrors.photographerInstagramUrl;
     }
@@ -747,15 +746,9 @@ export function OrderForm({
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
     if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
-    if (stepId === "photos") {
-      const savedImages = draftImageUrls.filter((url) => url).length;
-      if (savedImages < 2) {
-        setState("error");
-        setMessage(`ارفع صورتين على الأقل للمتابعة (${savedImages} من 2).`);
-        return false;
-      }
-    }
     setForm((current) => ({ ...current, ...currentValues }));
+    setState("idle");
+    setMessage("");
     return true;
   }
 
@@ -775,6 +768,13 @@ export function OrderForm({
       setState("error");
       setMessage("انتظر حتى يكتمل حفظ الصور والموسيقى قبل فتح المعاينة.");
       formRef.current?.querySelector<HTMLElement>(".order-upload-floating-warning")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const savedImages = draftImageUrls.filter((url) => url).length;
+    if (savedImages < 2) {
+      setState("error");
+      setMessage(`ارفع صورتين على الأقل للمعاينة (${savedImages} من 2).`);
+      goToStep(4);
       return;
     }
     const currentValues = getCurrentFormFromDom();
@@ -976,10 +976,9 @@ export function OrderForm({
     if (message) setMessage("");
   }
 
-  function togglePhotographerFields() {
+  function enablePhotographer() {
     const currentValues = getCurrentFormFromDom();
     setForm((current) => ({ ...current, ...currentValues, photographerEnabled: true }));
-    setPhotographerFieldsOpen((current) => !current || !form.photographerEnabled);
     if (message) setMessage("");
   }
 
@@ -1221,7 +1220,8 @@ export function OrderForm({
   }
 
   function handleOrderImageSelected(index: number, file: File) {
-    if (message) setMessage("");
+    setState("idle");
+    setMessage("");
     uploadOrderImage(index, file).catch(() => {
       setState("error");
       setMessage("في صورة لم يتم حفظها. راجع حالة الصور قبل المعاينة أو التأكيد.");
@@ -1526,6 +1526,15 @@ export function OrderForm({
       formRef.current?.querySelector<HTMLElement>(".order-upload-floating-warning")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    if (activeStep.id === "review") {
+      const savedImages = draftImageUrls.filter((url) => url).length;
+      if (savedImages < 2) {
+        setState("error");
+        setMessage(`ارفع صورتين على الأقل للدعوة (${savedImages} من 2).`);
+        goToStep(4);
+        return;
+      }
+    }
     if (!orderSubmitKeyRef.current) {
       orderSubmitKeyRef.current = `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     }
@@ -1663,20 +1672,8 @@ export function OrderForm({
   function renderPhotographerFields() {
     return (
       <div className="photographer-fields order-customization-fields">
-        <div className="order-fields-toolbar">
-          <strong>معلومات الفوتوغرافي</strong>
-          <button
-            type="button"
-            onClick={() => {
-              updateField("photographerEnabled", false);
-              setPhotographerFieldsOpen(false);
-            }}
-          >
-            إلغاء
-          </button>
-        </div>
         <div className="field">
-          <label htmlFor="photographerName">اسم المصور الفوتوغرافي</label>
+          <label htmlFor="photographerName">اسم المصور أو القاعة أو الميكب ارتيست</label>
           <input id="photographerName" name="photographerName" autoComplete="name" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
         </div>
         <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
@@ -2128,14 +2125,6 @@ export function OrderForm({
 
           <section className={`order-wizard-step ${activeStep.id === "extras" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "extras"}>
             <div className="order-extras-grid">
-              <button className={`order-extra-card ${form.photographerEnabled ? "is-added" : ""} ${photographerFieldsOpen ? "is-open" : ""}`} type="button" onClick={togglePhotographerFields} aria-expanded={photographerFieldsOpen}>
-                <Camera size={20} />
-                <span>
-                  <strong>معلومات الفوتوغرافي</strong>
-                  <small>{form.photographerEnabled ? fieldValue(form.photographerName, "تمت إضافته") : "اختياري"}</small>
-                </span>
-              </button>
-
               <button className={`order-extra-card order-extra-story-card ${form.storyEnabled ? "is-added" : ""} ${storyFieldsOpen ? "is-open" : ""}`} type="button" onClick={toggleStoryFields} aria-expanded={storyFieldsOpen}>
                 <Heart size={20} />
                 <span>
@@ -2146,8 +2135,30 @@ export function OrderForm({
               </button>
             </div>
 
-            {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
             {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
+          </section>
+
+          <section className={`order-wizard-step ${activeStep.id === "photographer" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photographer"}>
+            <div className="photographer-section">
+              <div className="photographer-header">
+                <Camera size={22} />
+                <h2>المصور الفوتوغرافي أو القاعة أو الميكب ارتيست</h2>
+              </div>
+              <p className="field-preview">أضف معلومات المصور الفوتوغرافي أو منسق القاعة أو الميكب ارتيست لتظهر في الدعوة (اختياري).</p>
+              {form.photographerEnabled ? (
+                <>
+                  {renderPhotographerFields()}
+                  <button className="btn btn-soft" type="button" onClick={() => { updateField("photographerEnabled", false); }}>
+                    إلغاء وإزالة المعلومات
+                  </button>
+                </>
+              ) : (
+                <button className="btn btn-glass" type="button" onClick={enablePhotographer}>
+                  <Camera size={17} />
+                  إضافة معلومات المصور أو القاعة أو الميكب ارتيست
+                </button>
+              )}
+            </div>
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
@@ -2177,6 +2188,9 @@ export function OrderForm({
                   : "رابط أغنية";
                 const imagesIncomplete = previewImageUrls.length < 2;
                 const imageLabel = hasMediaUploadInProgress ? "جاري حفظ الملفات" : imagesIncomplete ? `⚠️ ${previewImageUrls.length} من 3` : `${previewImageUrls.length} من 3`;
+                const photographerLabel = !form.photographerEnabled ? "غير مضاف"
+                  : form.photographerName.trim() ? form.photographerName.trim()
+                  : "تمت إضافته";
                 return [
                   ["القالب", selectedTemplate.arabicName, 0],
                   ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
@@ -2186,6 +2200,7 @@ export function OrderForm({
                   ["موقع القاعة", form.mapUrl.trim() ? "تمت إضافته" : "⚠️ لم يتم إضافة موقع القاعة بعد", 3],
                   ["الصور", imageLabel, 4],
                   ["الموسيقى", musicLabel, 5],
+                  ["المصور أو القاعة أو الميكب ارتيست", photographerLabel, 7],
                 ].map(([label, value, step]) => (
                   <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress) ? "order-review-location-warning order-review-photos-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
                     <span>✓ {label}</span>
@@ -2220,22 +2235,6 @@ export function OrderForm({
               </button>
               {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
 
-              <button
-                className="order-review-item order-review-item-optional"
-                type="button"
-                onClick={() => {
-                  if (form.photographerEnabled) {
-                    setPhotographerFieldsOpen((current) => !current);
-                    return;
-                  }
-                  goToStep(6);
-                }}
-                aria-expanded={photographerFieldsOpen && form.photographerEnabled}
-              >
-                <span>♡ بيانات المصور</span>
-                <strong>{form.photographerEnabled ? fieldValue(form.photographerName, "تمت إضافته") : "غير مضافة"}</strong>
-              </button>
-              {photographerFieldsOpen && form.photographerEnabled ? renderPhotographerFields() : null}
             </div>
 
             {showPaymentMethods ? (
@@ -2350,7 +2349,7 @@ export function OrderForm({
                 <strong>{form.storyEnabled ? "مضافة" : "غير مضافة"}</strong>
               </div>
               <div className="order-summary-row">
-                <span>المصور</span>
+                <span>المصور أو القاعة أو الميكب ارتيست</span>
                 <strong>{form.photographerEnabled ? "مضاف" : "غير مضاف"}</strong>
               </div>
             </div>
