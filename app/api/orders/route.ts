@@ -107,6 +107,16 @@ function buildOrderWhatsAppMessage(input: {
   ].filter((line, index, array) => line || array[index - 1]).join("\n");
 }
 
+const POSTER_HEADLINES: Record<string, string> = {
+  classic: "خبر عاجل!!!",
+  simple: "خبر عاجل !!!",
+  news: "خبر عاجل !!!",
+};
+
+function getPosterHeadline(templateId: string): string {
+  return POSTER_HEADLINES[templateId] || POSTER_HEADLINES.classic;
+}
+
 async function createShareAssets(input: {
   selectedShareTemplate: string;
   groomName: string;
@@ -119,9 +129,11 @@ async function createShareAssets(input: {
   publicUrl: string;
 }) {
   try {
+    const headline = getPosterHeadline(input.selectedShareTemplate);
     const [sharePosterUrl, qrCodeUrl] = await Promise.all([
       generateSharePosterPng({
         selectedShareTemplate: input.selectedShareTemplate,
+        headline,
         groomName: input.groomName,
         brideName: input.brideName,
         coverImage: input.imageUrls[0] || "",
