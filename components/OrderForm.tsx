@@ -144,7 +144,7 @@ const orderWizardSteps = [
   { id: "photos", title: "الصور" },
   { id: "music", title: "الموسيقى" },
   { id: "story", title: "قصة العروسين" },
-  { id: "photographer", title: "المصور الفوتوغرافي أو القاعة أو الميكب ارتيست" },
+  { id: "photographer", title: "شركاء الحفل" },
   { id: "review", title: "مراجعة الطلب" },
 ] as const;
 
@@ -566,6 +566,7 @@ export function OrderForm({
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [focusedFieldName, setFocusedFieldName] = useState("");
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+  const [photographerSaved, setPhotographerSaved] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const finalConfirmIntentAtRef = useRef(0);
