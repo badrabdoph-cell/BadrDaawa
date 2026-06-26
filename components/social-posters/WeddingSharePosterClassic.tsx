@@ -15,13 +15,20 @@ export interface WeddingSharePosterProps {
   headline?: string;
 }
 
-function parseWeddingDate(dateStr: string) {
-  const date = new Date(dateStr);
-  const day = date.getDate();
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
-  const formattedDate = date.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+function parseWeddingDate(value: string) {
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const clean = (value || "").trim();
+  let date: Date | null = null;
+  const iso = clean.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  const dmy = clean.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (iso) date = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  else if (dmy) date = new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
+  else { const n = new Date(clean); if (!Number.isNaN(n.getTime())) date = n; }
+  if (!date || Number.isNaN(date.getTime())) date = new Date();
+  const day = String(date.getDate());
+  const month = MONTHS[date.getMonth()] || "";
+  const year = String(date.getFullYear());
+  const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   return { day, month, year, formattedDate };
 }
 

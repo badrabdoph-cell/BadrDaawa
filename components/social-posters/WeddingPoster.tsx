@@ -304,7 +304,7 @@ export default function WeddingPoster({ groomName, brideName, coverImage, weddin
         امسح الكود لمشاهدة الدعوة كاملة
       </div>
       <div className="absolute left-[600px] top-[1294px] w-[420px] text-center text-[30px] font-normal leading-none text-[#111]" style={{ fontFamily: "Arial, sans-serif" }}>
-        {invitationUrl ? new URL(invitationUrl).host + "/invitation" : "badrdaawa.com/invitation"}
+        {invitationUrl ? (() => { try { return new URL(invitationUrl).host + "/invitation"; } catch { return "badrdaawa.com/invitation"; } })() : "badrdaawa.com/invitation"}
       </div>
     </section>
   );
