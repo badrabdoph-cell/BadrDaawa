@@ -566,6 +566,7 @@ export function OrderForm({
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [focusedFieldName, setFocusedFieldName] = useState("");
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+  const [storyAIFilled, setStoryAIFilled] = useState<boolean[]>([false, false, false]);
   const [photographerSaved, setPhotographerSaved] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
@@ -1027,6 +1028,24 @@ export function OrderForm({
       title: preset.title,
       description: preset.description,
     });
+  }
+
+  function toggleStoryPreset(index: number, presetId: string) {
+    if (storyAIFilled[index]) {
+      updateStoryItem(index, { date: "", title: "", description: "" });
+      setStoryAIFilled((current) => {
+        const next = [...current];
+        next[index] = false;
+        return next;
+      });
+    } else {
+      applyStoryPreset(index, presetId);
+      setStoryAIFilled((current) => {
+        const next = [...current];
+        next[index] = true;
+        return next;
+      });
+    }
   }
 
   function setImageUpload(index: number, update: Partial<ImageUploadState>) {
@@ -1721,10 +1740,10 @@ export function OrderForm({
           </div>
           <button
             type="button"
-            className="btn btn-gold order-story-ai-btn"
-            onClick={() => { if (activePreset) applyStoryPreset(visibleStoryIndex, activePreset.id); }}
+            className={`btn btn-gold order-story-ai-btn${storyAIFilled[visibleStoryIndex] ? " is-filled" : ""}`}
+            onClick={() => { if (activePreset) toggleStoryPreset(visibleStoryIndex, activePreset.id); }}
           >
-            ✨ كتابة القصة بالذكاء الاصطناعي
+            {storyAIFilled[visibleStoryIndex] ? "إلغاء الكتابة" : "✨ كتابة القصة بالذكاء الاصطناعي"}
           </button>
         </div>
       </div>
