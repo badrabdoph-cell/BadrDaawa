@@ -37,7 +37,18 @@ function activeStepText() {
 }
 
 function getCoverImage() {
-  return document.querySelector<HTMLImageElement>(".compact-image-slot.has-image img")?.src || fallbackCover;
+  const img = document.querySelector<HTMLImageElement>(".compact-image-slot.has-image img");
+  const src = img?.src;
+  if (src && src.startsWith("data:")) {
+    console.log("[Share Poster] Using data URL for cover image");
+    return src;
+  }
+  if (src && (src.startsWith("http://") || src.startsWith("https://"))) {
+    console.log("[Share Poster] Using external URL for cover image:", src);
+    return src;
+  }
+  console.log("[Share Poster] No cover image found, using fallback");
+  return fallbackCover;
 }
 
 function slugify(value: string) {
@@ -57,8 +68,11 @@ function getPosterSnapshot(): PosterSnapshot {
   const weddingTime = textInputValue("weddingTime") || "8 pm";
   const venueAddress = textInputValue("mapUrl") || "";
   const invitationUrl = `${window.location.origin}/invitation/${slugify(`${groomName}-${brideName}`)}`;
+  const coverImage = getCoverImage();
 
-  return { groomName, brideName, coverImage: getCoverImage(), weddingDate, venueName, venueAddress, weddingTime, invitationUrl };
+  console.log("[Share Poster] Snapshot data:", { groomName, brideName, weddingDate, venueName, weddingTime, hasCoverImage: !!coverImage });
+
+  return { groomName, brideName, coverImage, weddingDate, venueName, venueAddress, weddingTime, invitationUrl };
 }
 
 function readSelectedTemplate(): SharePosterTemplateId {
@@ -93,6 +107,7 @@ function saveOrderResponseExtra(data: OrderResponseExtra, selectedShareTemplate:
 }
 
 function scaledPoster(snapshot: PosterSnapshot & { headline?: string }, selectedShareTemplate: SharePosterTemplateId, scaleClass: string) {
+  console.log("[Share Poster] Rendering scaled poster:", { scaleClass, selectedShareTemplate, hasSnapshot: !!snapshot, snapshotKeys: snapshot ? Object.keys(snapshot) : [] });
   return (
     <div className={`share-poster-scale ${scaleClass}`}>
       <PosterRenderer {...snapshot} selectedShareTemplate={selectedShareTemplate} />

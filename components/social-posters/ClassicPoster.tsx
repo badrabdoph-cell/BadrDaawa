@@ -394,6 +394,7 @@ export default function ClassicPoster({
   invitationUrl,
   headline = "خبر عاجل!!!",
 }: ClassicPosterProps) {
+  console.log("[ClassicPoster] Props received:", { groomName, brideName, hasCoverImage: !!coverImage, weddingDate, venueName, weddingTime, headline });
   const date = parseWeddingDate(weddingDate);
 
   return (
