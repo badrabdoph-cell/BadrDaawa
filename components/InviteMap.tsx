@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { LocateFixed, MapPin, Navigation, Route, Share2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { MapPin, Route, Share2 } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
@@ -10,7 +10,6 @@ type Coordinates = {
   lng: number;
 };
 
-type LocationState = "idle" | "locating" | "ready" | "unavailable";
 type ShareState = "idle" | "copied";
 
 function getSearchDestination(venue: string, city: string) {
@@ -58,7 +57,7 @@ function getGoogleSearchUrl(destination: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
 }
 
-function getGoogleCoordinatesUrl(coordinates: Coordinates, zoom = 13) {
+function getGoogleCoordinatesUrl(coordinates: Coordinates, zoom = 15) {
   return `https://www.google.com/maps/@${coordinates.lat},${coordinates.lng},${zoom}z/data=!3m1!1e3`;
 }
 
@@ -66,84 +65,36 @@ function getDirectionsDestination(destination: string, coordinates: Coordinates 
   return coordinates ? `${coordinates.lat},${coordinates.lng}` : destination;
 }
 
-function withSatelliteMapType(url: string, zoom = "13") {
-  try {
-    const parsed = new URL(url);
-    if (!parsed.hostname.includes("google.") && !parsed.hostname.includes("maps.google.")) return url;
-    if (parsed.pathname.includes("/maps/embed/v1/")) {
-      parsed.searchParams.set("maptype", "satellite");
-      parsed.searchParams.set("zoom", parsed.searchParams.get("zoom") || zoom);
-    } else {
-      parsed.searchParams.set("t", "k");
-      parsed.searchParams.set("z", zoom);
-    }
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
-
-function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null, hasVenueLink: boolean) {
+function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, hasVenueLink: boolean) {
   if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
-    return withSatelliteMapType(mapUrl, "13");
-  }
-  if (!hasVenueLink && userCoordinates) {
-    return withSatelliteMapType(`https://maps.google.com/maps?q=${userCoordinates.lat},${userCoordinates.lng}&z=13&output=embed`, "13");
+    return mapUrl;
   }
   if (coordinates) {
-    return withSatelliteMapType(`https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=13&output=embed`, "13");
+    return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=15&output=embed&hl=${document.documentElement.lang || "ar"}`;
   }
-  return withSatelliteMapType(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=13&output=embed`, "13");
+  return `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed&hl=${document.documentElement.lang || "ar"}`;
 }
 
-function getLocationUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null, hasVenueLink: boolean) {
-  if (!hasVenueLink && userCoordinates) return getGoogleCoordinatesUrl(userCoordinates);
+function getLocationUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, hasVenueLink: boolean) {
   if (coordinates) return getGoogleCoordinatesUrl(coordinates);
-  if (mapUrl && !mapUrl.includes("/maps/embed") && !mapUrl.includes("output=embed")) return mapUrl;
+  if (hasVenueLink && !mapUrl.includes("/maps/embed") && !mapUrl.includes("output=embed")) return mapUrl;
   return getGoogleSearchUrl(destination);
 }
 
-function getDirectionsUrl(destination: string, coordinates: Coordinates | null, userCoordinates: Coordinates | null) {
-  if (userCoordinates) {
-    return `https://www.google.com/maps/dir/?api=1&origin=${userCoordinates.lat},${userCoordinates.lng}&destination=${encodeURIComponent(getDirectionsDestination(destination, coordinates))}`;
-  }
+function getDirectionsUrl(destination: string, coordinates: Coordinates | null) {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(getDirectionsDestination(destination, coordinates))}`;
 }
 
 export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: string; city: string; mapUrl: string; locale?: Language }) {
   const t = getInvitationTranslator(resolveLocale(locale));
-  const [userCoordinates, setUserCoordinates] = useState<Coordinates | null>(null);
-  const [locationState, setLocationState] = useState<LocationState>("idle");
   const [shareState, setShareState] = useState<ShareState>("idle");
-  const locationRequestedRef = useRef(false);
   const hasVenueLink = Boolean(mapUrl.trim());
   const fallbackDestination = useMemo(() => getSearchDestination(venue, city), [city, venue]);
   const coordinates = useMemo(() => extractCoordinates(mapUrl), [mapUrl]);
   const destination = useMemo(() => getMapDestination(mapUrl, fallbackDestination), [fallbackDestination, mapUrl]);
-  const mapEmbed = useMemo(() => getEmbedUrl(mapUrl, destination, coordinates, userCoordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl, userCoordinates]);
-  const locationUrl = useMemo(() => getLocationUrl(mapUrl, destination, coordinates, userCoordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl, userCoordinates]);
-  const directionsUrl = useMemo(() => getDirectionsUrl(destination, coordinates, userCoordinates), [coordinates, destination, userCoordinates]);
-
-  const requestUserLocation = useCallback((force = false) => {
-    if (!("geolocation" in navigator)) {
-      setLocationState("unavailable");
-      return;
-    }
-    if (locationRequestedRef.current && !force) return;
-    locationRequestedRef.current = true;
-    setLocationState("locating");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserCoordinates({
-          lat: Number(position.coords.latitude.toFixed(6)),
-          lng: Number(position.coords.longitude.toFixed(6)),
-        });
-        setLocationState("ready");
-      },
-      () => setLocationState("unavailable"),
-      { enableHighAccuracy: true, maximumAge: 90000, timeout: 9000 },
-    );
-  }, []);
+  const mapEmbed = useMemo(() => getEmbedUrl(mapUrl, destination, coordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl]);
+  const locationUrl = useMemo(() => getLocationUrl(mapUrl, destination, coordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl]);
+  const directionsUrl = useMemo(() => getDirectionsUrl(destination, coordinates), [coordinates, destination]);
 
   async function shareLocation() {
     setShareState("idle");
@@ -165,57 +116,166 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
     }
   }
 
+  if (!hasVenueLink) return null;
+
   return (
-    <div className={`map-frame route-map is-clean-map ${hasVenueLink ? "" : "is-missing-venue-link"} ${userCoordinates ? "has-user-location" : ""}`}>
-      <div className="map-visual-fallback" aria-hidden="true">
-        <span className="map-road map-road-main" />
-        <span className="map-road map-road-soft map-road-one" />
-        <span className="map-road map-road-soft map-road-two" />
-        <span className="map-road map-road-soft map-road-three" />
-        <span className="map-fallback-pin venue">
-          <MapPin size={18} />
-        </span>
-        {userCoordinates ? (
-          <span className="map-fallback-pin visitor">
-            <LocateFixed size={16} />
-          </span>
-        ) : null}
-      </div>
-      <iframe src={mapEmbed} title={t("invitation.map.iframeTitle")} loading="lazy" />
+    <div className="map-frame route-map is-clean-map">
+      <iframe
+        src={mapEmbed}
+        title={t("invitation.map.iframeTitle")}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
       <span className="map-luxury-marker" aria-hidden="true">
-        <MapPin size={23} />
+        <MapPin size={15} />
       </span>
-      {!hasVenueLink ? (
-        <div className="map-missing-link-badge">
-          <span>{t("invitation.map.locationSoon")}</span>
-        </div>
-      ) : null}
-      {userCoordinates ? (
-        <div className="map-user-location-badge">
-          <LocateFixed size={13} />
-          <span>{t("invitation.map.visitorLocation")}</span>
-        </div>
-      ) : null}
-      {!userCoordinates ? (
-        <button className="map-locate-action" type="button" onClick={() => requestUserLocation(true)} disabled={locationState === "locating"}>
-          <LocateFixed size={17} />
-          <span>{locationState === "locating" ? t("invitation.map.locating") : t("invitation.map.useMyLocation")}</span>
-        </button>
-      ) : null}
       <div className="map-actions" aria-label={t("invitation.map.actionsLabel")}>
         <a className="map-action recommended" href={locationUrl} target="_blank" rel="noreferrer">
-          <MapPin size={17} />
+          <MapPin size={16} />
           <span>{t("invitation.map.openLocation")}</span>
         </a>
         <a className="map-action" href={directionsUrl} target="_blank" rel="noreferrer">
-          <Route size={17} />
+          <Route size={16} />
           <span>{t("invitation.map.directions")}</span>
         </a>
         <button className="map-action map-action-share" type="button" onClick={shareLocation}>
-          <Share2 size={17} />
+          <Share2 size={16} />
           <span>{shareState === "copied" ? t("invitation.map.copied") : t("invitation.map.share")}</span>
         </button>
       </div>
+      <style>{`
+        .map-frame {
+          position: relative;
+          overflow: hidden;
+          border-radius: 16px;
+          background: #f0ebe2;
+          min-height: 200px;
+          border: 0;
+          box-shadow: none;
+        }
+        .map-frame iframe {
+          width: 100%;
+          height: 100%;
+          min-height: 200px;
+          display: block;
+          border: 0;
+          filter: saturate(0.92) contrast(1.04);
+          opacity: 1;
+          transition: opacity 320ms ease;
+        }
+        .map-luxury-marker {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          z-index: 9;
+          display: grid;
+          place-items: center;
+          width: 40px;
+          height: 40px;
+          margin-top: -44px;
+          border-radius: 50% 50% 50% 8px;
+          border: 0;
+          background: #fff;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.22), 0 0 0 5px rgba(255,255,255,0.48);
+          pointer-events: none;
+          animation: map-marker-drop 600ms cubic-bezier(0.2, 0.82, 0.2, 1.18) both;
+          transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        .map-luxury-marker svg {
+          width: 18px;
+          height: 18px;
+          color: #b8873b;
+          filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+          transform: rotate(45deg);
+        }
+        @keyframes map-marker-drop {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -50%) translateY(-18px) rotate(-45deg);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, -50%) rotate(-45deg);
+          }
+        }
+        .map-actions {
+          position: relative;
+          inset: auto;
+          z-index: auto;
+          display: flex !important;
+          gap: 8px;
+          padding: 12px 16px 16px;
+          grid-template-columns: none;
+        }
+        .map-action {
+          flex: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          min-height: 40px;
+          padding: 8px 10px;
+          border: 1px solid rgba(189, 143, 63, 0.2);
+          border-radius: 12px;
+          background: rgba(255, 250, 241, 0.92);
+          color: #2f2418;
+          font: inherit;
+          font-size: 0.78rem;
+          font-weight: 850;
+          cursor: pointer;
+          appearance: none;
+          text-decoration: none;
+          box-shadow: 0 4px 12px rgba(46, 31, 11, 0.1);
+          transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+          white-space: nowrap;
+        }
+        .map-action:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(46, 31, 11, 0.16);
+        }
+        .map-action:active {
+          transform: scale(0.97);
+        }
+        .map-action.recommended {
+          border-color: rgba(212, 175, 55, 0.42);
+          background: linear-gradient(135deg, #f5e6c0, #f0dba8);
+          color: #241708;
+        }
+        .map-action.recommended:active {
+          box-shadow: 0 2px 6px rgba(38, 24, 4, 0.1);
+        }
+        .map-action-share {
+          background: rgba(255, 250, 241, 0.96);
+        }
+        .map-action span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .map-action svg {
+          flex: 0 0 auto;
+        }
+        @media (max-width: 420px) {
+          .map-actions {
+            gap: 6px;
+            padding: 10px 12px 14px;
+          }
+          .map-action {
+            min-height: 36px;
+            font-size: 0.72rem;
+            padding: 6px 8px;
+          }
+          .map-luxury-marker {
+            width: 34px;
+            height: 34px;
+            margin-top: -38px;
+          }
+          .map-luxury-marker svg {
+            width: 15px;
+            height: 15px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
