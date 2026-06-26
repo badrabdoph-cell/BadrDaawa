@@ -592,6 +592,19 @@ export function OrderForm({
   const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
   const storyItems = ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages);
   const visibleStoryIndex = Math.min(activeStoryIndex, Math.max(0, storyItems.length - 1));
+
+  useEffect(() => {
+    if (activeStep.id !== "story") return;
+    const stage = requiredOrderStoryStages[activeStoryIndex];
+    const preset = orderStoryPresets[activeStoryIndex];
+    if (!stage || !preset) return;
+    const item = storyItems[activeStoryIndex];
+    if (!item) return;
+    const patch: Partial<CoupleStoryItem> = {};
+    if (!item.title?.trim()) patch.title = stage.label;
+    if (!item.date?.trim()) patch.date = preset.date;
+    if (Object.keys(patch).length) updateStoryItem(activeStoryIndex, patch);
+  }, [activeStoryIndex, activeStep.id]);
   const previewImageUrls = draftImageUrls.filter(Boolean);
   const orderPreviewSrc = useMemo(() => {
     const params = new URLSearchParams();
@@ -752,12 +765,20 @@ export function OrderForm({
 
   function goNext() {
     if (isLastStep) return;
+    if (activeStep.id === "story" && activeStoryIndex < storyItems.length - 1) {
+      setActiveStoryIndex(activeStoryIndex + 1);
+      return;
+    }
     if (!canLeaveStep(activeStep.id)) return;
     goToStep(activeStepIndex + 1);
   }
 
   function goBack() {
     if (isFirstStep) return;
+    if (activeStep.id === "story" && activeStoryIndex > 0) {
+      setActiveStoryIndex(activeStoryIndex - 1);
+      return;
+    }
     goToStep(activeStepIndex - 1);
   }
 
@@ -1667,83 +1688,52 @@ export function OrderForm({
   }
 
   function renderStoryFields() {
+    const activeStage = requiredOrderStoryStages[visibleStoryIndex];
+    const activePreset = orderStoryPresets[visibleStoryIndex];
+    const activeItem = storyItems[visibleStoryIndex] || createOrderStoryItem();
+    const descriptionError = storyErrors[storyFieldErrorKey(visibleStoryIndex, "description")];
+    const placeholders: Record<string, string> = {
+      "first-meeting": "احكِ كيف كانت أول مقابلة بينكما…",
+      "middle-road": "احكِ أجمل المواقف التي مررتما بها…",
+      "wedding-day": "اكتب رسالة قصيرة عن شعوركما قبل هذا اليوم…",
+    };
     return (
-      <div className="order-story-fields order-customization-fields">
-        <div className="order-story-head">
-          <div>
-            <strong>قصة العروسين داخل الدعوة</strong>
-            <p>ثلاث محطات مطلوبة قبل التأكيد النهائي. يمكنك تخطيها الآن لو لم تبدأ كتابتها.</p>
-          </div>
-          <span className="order-story-required-badge">مطلوبة</span>
-        </div>
+      <div className="order-story-fields-new">
         <div className="order-story-stage-tabs" role="tablist" aria-label="مراحل قصة العروسين">
-          {storyItems.map((item, index) => {
-            const stage = requiredOrderStoryStages[index];
-            const hasStageError = Boolean(storyErrors[storyFieldErrorKey(index, "date")] || storyErrors[storyFieldErrorKey(index, "title")] || storyErrors[storyFieldErrorKey(index, "description")]);
-            const isComplete = Boolean(item.date.trim() && item.title.trim() && item.description.trim());
-            return (
-              <button
-                className={`${index === visibleStoryIndex ? "active" : ""} ${hasStageError ? "has-error" : ""} ${isComplete ? "is-complete" : ""}`}
-                key={stage?.id || item.id || index}
-                type="button"
-                role="tab"
-                aria-selected={index === visibleStoryIndex}
-                onClick={() => setActiveStoryIndex(index)}
-              >
-                <span>{isComplete ? <Check size={13} /> : index + 1}</span>
-                <strong>{stage?.label || item.title || `مرحلة ${index + 1}`}</strong>
-              </button>
-            );
-          })}
+          {requiredOrderStoryStages.map((stage, index) => (
+            <button
+              key={stage.id}
+              type="button"
+              role="tab"
+              aria-selected={index === visibleStoryIndex}
+              className={index === visibleStoryIndex ? "active" : ""}
+              onClick={() => setActiveStoryIndex(index)}
+            >
+              <span>{index === 0 ? "❤️" : index === 1 ? "💍" : "🤍"}</span>
+              <strong>{stage.label}</strong>
+            </button>
+          ))}
         </div>
-        <div className="order-story-list">
-          {storyItems.map((item, index) => {
-            const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
-            const stage = requiredOrderStoryStages[index];
-            const preset = orderStoryPresets[index];
-            const dateError = storyErrors[storyFieldErrorKey(index, "date")];
-            const titleError = storyErrors[storyFieldErrorKey(index, "title")];
-            const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
-            return (
-              <article className={`order-story-item ${index === visibleStoryIndex ? "is-active-story" : ""}`} key={item.id || index}>
-                <div className="order-story-item-head">
-                  <div>
-                    <span>{index + 1} من {storyItems.length}</span>
-                    <strong>{stage?.label || `مرحلة ${index + 1}`}</strong>
-                    <small>{stage?.helper}</small>
-                  </div>
-                  {preset ? (
-                    <button className="btn btn-soft order-story-suggest-button" type="button" onClick={() => applyStoryPreset(index, preset.id)}>
-                      ملء اقتراح
-                    </button>
-                  ) : null}
-                </div>
-                <div className={`field ${dateError ? "has-error" : ""}`}>
-                  <label htmlFor={`storyDate-${index}`}>التاريخ أو وقت المحطة</label>
-                  <input id={`storyDate-${index}`} name={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryText(index, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
-                  {dateError ? <small className="field-error">{dateError}</small> : null}
-                </div>
-                <div className={`field ${titleError ? "has-error" : ""}`}>
-                  <label htmlFor={`storyTitle-${index}`}>عنوان {stage?.label || "المحطة"}</label>
-                  <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryText(index, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
-                  {titleError ? <small className="field-error">{titleError}</small> : null}
-                </div>
-                <div className={`field full ${descriptionError ? "has-error" : ""}`}>
-                  <label htmlFor={`storyDescription-${index}`}>وصف قصير</label>
-                  <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
-                  {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
-                </div>
-                <div className="order-story-mobile-actions">
-                  <button className="btn btn-glass" type="button" onClick={() => setActiveStoryIndex(Math.max(0, index - 1))} disabled={index === 0}>
-                    السابق
-                  </button>
-                  <button className="btn btn-gold" type="button" onClick={() => setActiveStoryIndex(Math.min(storyItems.length - 1, index + 1))} disabled={index >= storyItems.length - 1}>
-                    المحطة التالية
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+        <div className="order-story-tab-content">
+          <h3 className="order-story-tab-title">{activeStage?.label}</h3>
+          <div className={`field ${descriptionError ? "has-error" : ""}`}>
+            <textarea
+              className="order-story-textarea"
+              rows={5}
+              value={activeItem.description}
+              onChange={(event) => updateStoryText(visibleStoryIndex, "description", event.target.value)}
+              placeholder={placeholders[activeStage?.id || ""] || "اكتب قصتك هنا…"}
+              aria-invalid={Boolean(descriptionError)}
+            />
+            {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
+          </div>
+          <button
+            type="button"
+            className="btn btn-gold order-story-ai-btn"
+            onClick={() => { if (activePreset) applyStoryPreset(visibleStoryIndex, activePreset.id); }}
+          >
+            ✨ كتابة القصة بالذكاء الاصطناعي
+          </button>
         </div>
       </div>
     );
@@ -2076,9 +2066,6 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "story" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "story"}>
-            <div className="order-step-copy order-story-step-copy">
-              <p>اكتب قصة العروسين كما ستظهر داخل الدعوة. لو لسه مش جاهزة، سيبها فاضية وكمل، وقبل التأكيد النهائي هنرجعك لها.</p>
-            </div>
             {renderStoryFields()}
           </section>
 

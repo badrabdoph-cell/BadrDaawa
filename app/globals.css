@@ -38169,46 +38169,36 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   display: flex;
   gap: 8px;
   padding: 5px;
-  overflow-x: auto;
   border: 1px solid rgba(118, 88, 45, 0.12);
   border-radius: 16px;
   background: rgba(255, 250, 242, 0.72);
 }
 
 .order-story-stage-tabs button {
-  flex: 0 0 auto;
-  display: inline-grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 7px;
-  min-height: 42px;
-  max-width: 180px;
-  padding: 7px 10px;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  min-height: 48px;
+  padding: 8px 6px;
   border: 1px solid transparent;
   border-radius: 13px;
   background: transparent;
   color: #715f4d;
   cursor: pointer;
+  font-family: inherit;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .order-story-stage-tabs button span {
-  display: inline-grid;
-  place-items: center;
-  width: 25px;
-  height: 25px;
-  border-radius: 999px;
-  background: rgba(118, 88, 45, 0.1);
-  color: #533915;
-  font-size: 0.76rem;
-  font-weight: 950;
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .order-story-stage-tabs button strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 850;
+  line-height: 1.2;
 }
 
 .order-story-stage-tabs button.active {
@@ -38217,19 +38207,9 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   color: #1c6259;
 }
 
-.order-story-stage-tabs button.active span {
-  background: linear-gradient(135deg, #26766c, #5ea698);
-  color: #ffffff;
-}
-
 .order-story-stage-tabs button.is-complete {
   border-color: rgba(38, 118, 108, 0.2);
   background: rgba(239, 252, 248, 0.8);
-  color: #1d6259;
-}
-
-.order-story-stage-tabs button.is-complete span {
-  background: rgba(38, 118, 108, 0.14);
   color: #1d6259;
 }
 
@@ -38238,11 +38218,6 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   background: linear-gradient(180deg, rgba(255, 249, 250, 0.98), rgba(255, 232, 237, 0.78));
   color: #8a2438;
   box-shadow: 0 10px 20px rgba(173, 51, 69, 0.1);
-}
-
-.order-story-stage-tabs button.has-error span {
-  background: #ad3345;
-  color: #ffffff;
 }
 
 .order-story-item {
@@ -38383,21 +38358,6 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   .order-story-suggest-button {
     justify-self: start;
     width: fit-content;
-  }
-
-  .order-story-mobile-actions {
-    display: grid;
-  }
-
-  .order-story-preset-bubbles {
-    flex-wrap: nowrap;
-    margin-inline: -2px;
-    padding-bottom: 2px;
-    overflow-x: auto;
-  }
-
-  .order-story-preset-bubbles button {
-    flex: 0 0 auto;
   }
 
   .order-wizard-actions.order-review-actions {
@@ -40236,9 +40196,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
 
-.order-story-stage-tabs,
-.order-story-preset-bubbles,
-.order-story-mobile-actions {
+.order-story-stage-tabs {
   box-sizing: border-box;
 }
 
@@ -40262,16 +40220,8 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
     display: none;
   }
 
-  .order-story-list .order-story-item {
-    display: none;
-  }
-
-  .order-story-list .order-story-item.is-active-story {
-    display: grid;
-  }
-
-  .order-story-mobile-actions {
-    display: grid;
+  .order-story-textarea {
+    min-height: 120px;
   }
 
   .partner-cards-grid {
@@ -40293,3 +40243,72 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
     padding: 12px;
   }
 }
+
+/* ── redesigned story step ── */
+.order-story-fields-new {
+  display: grid;
+  gap: 14px;
+}
+
+.order-story-tab-content {
+  display: grid;
+  gap: 12px;
+}
+
+.order-story-tab-title {
+  margin: 0;
+  color: #3a2e1f;
+  font-size: 1.05rem;
+  font-weight: 950;
+  line-height: 1.4;
+}
+
+.order-story-textarea {
+  min-height: 140px;
+  padding: 14px;
+  border: 1px solid rgba(180, 139, 57, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  resize: vertical;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.order-story-textarea:focus {
+  border-color: rgba(38, 118, 108, 0.4);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(38, 118, 108, 0.1), 0 8px 20px rgba(26, 72, 68, 0.06);
+}
+
+.order-story-textarea::placeholder {
+  color: rgba(117, 104, 92, 0.55);
+  font-weight: 800;
+}
+
+.order-story-ai-btn {
+  width: 100%;
+  min-height: 48px;
+  font-size: 0.95rem;
+}
+
+.has-error .order-story-textarea {
+  border-color: rgba(173, 51, 69, 0.5);
+  box-shadow: 0 0 0 3px rgba(173, 51, 69, 0.08);
+}
+
+@media (max-width: 720px) {
+  .order-story-stage-tabs button span {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .order-story-textarea {
+    min-height: 120px;
+    font-size: 0.92rem;
+  }
+}
+
+/* end redesigned story step */
