@@ -10,11 +10,6 @@ type OrderSuccessPayload = {
   brideName?: string;
   weddingDate?: string;
   venue?: string;
-  templateName?: string;
-  paymentMethod?: string;
-  musicChoice?: string;
-  photographerEnabled?: boolean;
-  storyEnabled?: boolean;
 };
 
 type OrderSuccessRedirectProps = {
@@ -62,11 +57,6 @@ function readStoredPayload(): Partial<OrderSuccessPayload> {
       brideName: typeof parsed.brideName === "string" ? parsed.brideName : "",
       weddingDate: typeof parsed.weddingDate === "string" ? parsed.weddingDate : "",
       venue: typeof parsed.venue === "string" ? parsed.venue : "",
-      templateName: typeof parsed.templateName === "string" ? parsed.templateName : "",
-      paymentMethod: typeof parsed.paymentMethod === "string" ? parsed.paymentMethod : "",
-      musicChoice: typeof parsed.musicChoice === "string" ? parsed.musicChoice : "",
-      photographerEnabled: typeof parsed.photographerEnabled === "boolean" ? parsed.photographerEnabled : false,
-      storyEnabled: typeof parsed.storyEnabled === "boolean" ? parsed.storyEnabled : false,
     };
   } catch {
     return {};
@@ -87,13 +77,15 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
   const [payload, setPayload] = useState<OrderSuccessPayload>(initialPayload);
   const [seconds, setSeconds] = useState(redirectCountdownSeconds);
   const [isCancelled, setIsCancelled] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
   const [showConfetti, setShowConfetti] = useState(false);
+  const [redirectFailed, setRedirectFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const redirectAttemptedRef = useRef(false);
   const cancelledRef = useRef(false);
-  const countdownStartedRef = useRef(false);
+
+  const countdownDone = seconds <= 0 && !isCancelled;
 
   const progressPercent = useMemo(() => {
     if (isCancelled) return 0;
@@ -124,37 +116,46 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
         setVisibleItems((prev) => new Set(prev).add(item));
       }, i * entranceDelay);
     });
-    setTimeout(() => setShowConfetti(true), entranceDelay * 1 + 600);
+    setTimeout(() => setShowConfetti(true), entranceDelay + 600);
+    const confettiTimer = setTimeout(() => setShowConfetti(false), 4600);
+    return () => clearTimeout(confettiTimer);
   }, [entranceItems, reducedMotion]);
 
+  /* countdown */
   useEffect(() => {
-    if (!payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
-    if (countdownStartedRef.current || isCancelled) return;
-    countdownStartedRef.current = true;
-  }, [payload.whatsappUrl, isCancelled]);
+    if (isCancelled || seconds <= 0) return;
+    const id = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [seconds, isCancelled]);
 
+  /* auto-redirect when countdown hits 0 */
   useEffect(() => {
-    if (isCancelled || isRedirecting || !payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
-    if (seconds > 0) {
-      const id = setTimeout(() => setSeconds((s) => s - 1), 1000);
-      return () => clearTimeout(id);
-    }
-    setIsRedirecting(true);
-    const redirectTimeout = setTimeout(() => {
+    if (!countdownDone) return;
+    if (redirectAttemptedRef.current) return;
+    redirectAttemptedRef.current = true;
+    doRedirect();
+  }, [countdownDone]);
+
+  const doRedirect = useCallback(() => {
+    if (!payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
+    try {
       window.location.assign(payload.whatsappUrl);
-    }, 500);
-    return () => clearTimeout(redirectTimeout);
-  }, [seconds, isCancelled, isRedirecting, payload.whatsappUrl]);
+    } catch {
+      setRedirectFailed(true);
+    }
+    setTimeout(() => {
+      if (!redirectAttemptedRef.current) return;
+      setRedirectFailed(true);
+    }, 3000);
+  }, [payload.whatsappUrl]);
 
   const sendNow = useCallback(() => {
-    if (!payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp) return;
     setIsCancelled(true);
     cancelledRef.current = true;
-    setIsRedirecting(true);
-    setTimeout(() => {
-      window.location.assign(payload.whatsappUrl);
-    }, 350);
-  }, [payload.whatsappUrl]);
+    if (redirectAttemptedRef.current) return;
+    redirectAttemptedRef.current = true;
+    doRedirect();
+  }, [doRedirect]);
 
   const cancelRedirect = useCallback(() => {
     setIsCancelled(true);
@@ -178,23 +179,23 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
   }, [payload.orderNumber]);
 
   const showItem = (item: string) => reducedMotion || visibleItems.has(item);
-  const showLast10 = seconds <= 10 && !isCancelled;
+  const showLast10 = seconds <= 10 && !isCancelled && seconds > 0;
 
   return (
     <main className="order-success-page" dir="rtl">
       {showConfetti && !reducedMotion ? (
         <div className="success-confetti" aria-hidden="true">
-          {Array.from({ length: 18 }).map((_, i) => (
+          {Array.from({ length: 24 }).map((_, i) => (
             <span
               key={i}
               className="success-confetti-particle"
               style={{
-                left: `${6 + Math.random() * 88}%`,
+                left: `${4 + Math.random() * 92}%`,
                 background: confettiColors[i % confettiColors.length],
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2.5 + Math.random() * 2}s`,
-                width: `${5 + Math.random() * 6}px`,
-                height: `${10 + Math.random() * 10}px`,
+                animationDelay: `${Math.random() * 1.2}s`,
+                animationDuration: `${2 + Math.random() * 1.5}s`,
+                width: `${4 + Math.random() * 5}px`,
+                height: `${8 + Math.random() * 8}px`,
                 borderRadius: `${Math.random() > 0.5 ? "50%" : "2px"}`,
               }}
             />
@@ -204,12 +205,12 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
 
       {copied ? <div className="success-toast">✅ تم نسخ رقم الطلب.</div> : null}
 
-      <div className={`success-card ${isRedirecting ? "is-redirecting" : ""}`}>
+      <div className="success-card">
         {/* 1. Success Animation */}
         <div className={`success-section success-checkmark-section ${showItem("checkmark") ? "visible" : ""}`}>
-          <svg className="success-svg" viewBox="0 0 80 80" aria-hidden="true">
-            <circle className={`success-circle ${showLast10 ? "success-circle-warning" : ""}`} cx="40" cy="40" r="36" />
-            <path className="success-check" d="M22 40 L36 54 L58 28" />
+          <svg className="success-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <circle className="success-circle" cx="50" cy="50" r="44" />
+            <path className="success-check" d="M28 50 L46 68 L74 36" />
           </svg>
         </div>
 
@@ -232,7 +233,7 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
               <span className="success-number-label">رقم الطلب</span>
               <strong className="success-number-value">{payload.orderNumber}</strong>
               <button className="success-copy-btn" type="button" onClick={copyOrderNumber}>
-                📋 نسخ رقم الطلب
+                📋 نسخ
               </button>
             </div>
           </div>
@@ -265,45 +266,49 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
         ) : null}
 
         {/* 6. Countdown */}
-        <div className={`success-section success-countdown-section ${showItem("countdown") ? "visible" : ""}`}>
-          {!isCancelled && !isRedirecting ? (
-            <>
-              <p className="success-countdown-label">سيتم تحويلك إلى واتساب خلال</p>
-              <div className="success-countdown-timer" role="timer" aria-live="polite" aria-label={`التحويل خلال ${Math.floor(seconds / 60)} دقيقة و ${seconds % 60} ثانية`}>
-                <span className={`success-countdown-digits ${showLast10 ? "countdown-warning" : ""}`}>
-                  {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
-                </span>
-              </div>
-              <div className="success-progress-track">
-                <div
-                  className={`success-progress-fill ${showLast10 ? "progress-warning" : ""}`}
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </>
-          ) : null}
-          {isRedirecting ? (
-            <p className="success-redirecting-text">جاري تحويلك إلى واتساب…</p>
-          ) : null}
-          {isCancelled && !isRedirecting ? (
-            <p className="success-cancelled-text">تم إلغاء التحويل التلقائي. يمكنك الضغط على الزر أدناه للتواصل.</p>
-          ) : null}
-        </div>
+        {!isCancelled ? (
+          <div className={`success-section success-countdown-section ${showItem("countdown") ? "visible" : ""}`}>
+            {!countdownDone ? (
+              <>
+                <p className="success-countdown-label">سيتم تحويلك إلى واتساب خلال</p>
+                <div className="success-countdown-timer" role="timer" aria-live="polite" aria-label={`التحويل خلال ${Math.floor(seconds / 60)} دقيقة و ${seconds % 60} ثانية`}>
+                  <span className={`success-countdown-digits ${showLast10 ? "countdown-warning" : ""}`}>
+                    {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="success-progress-track">
+                  <div
+                    className={`success-progress-fill ${showLast10 ? "progress-warning" : ""}`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </>
+            ) : null}
+            {countdownDone && !redirectFailed ? (
+              <p className="success-redirecting-text">جاري تحويلك إلى واتساب…</p>
+            ) : null}
+            {redirectFailed || (countdownDone && !redirectAttemptedRef.current) ? (
+              <p className="success-failed-text">
+                تعذر التحويل التلقائي، يمكنك الضغط على الزر بالأسفل.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* 7. WhatsApp Button */}
         <div className={`success-section success-whatsapp-section ${showItem("button") ? "visible" : ""}`}>
           <button
-            className={`success-whatsapp-btn ${showLast10 && !isCancelled ? "btn-pulse" : ""}`}
+            className={`success-whatsapp-btn ${!isCancelled && !countdownDone ? "btn-pulse" : ""}`}
             type="button"
             onClick={sendNow}
-            disabled={isRedirecting || !payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp}
+            disabled={!payload.whatsappUrl || payload.whatsappUrl === fallbackWhatsapp}
           >
             💬 فتح واتساب الآن
           </button>
         </div>
 
         {/* 8. Cancel link */}
-        {!isCancelled && !isRedirecting ? (
+        {!isCancelled && !countdownDone ? (
           <div className={`success-section success-cancel-section ${showItem("cancel") ? "visible" : ""}`}>
             <button className="success-cancel-btn" type="button" onClick={cancelRedirect}>
               إلغاء التحويل التلقائي
@@ -312,7 +317,7 @@ export function OrderSuccessRedirect({ fallbackWhatsappUrl: fallbackUrl, orderNu
         ) : null}
 
         {/* Phone footer */}
-        {displayPhone && !isRedirecting ? (
+        {displayPhone ? (
           <p className="success-phone-footer">
             للاستفسار: واتساب <strong>{displayPhone}</strong>
           </p>

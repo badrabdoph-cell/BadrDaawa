@@ -20898,20 +20898,15 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 .success-card {
   display: grid;
   width: min(100%, 440px);
-  gap: 16px;
+  gap: 18px;
   justify-items: center;
-  padding: 36px 28px 28px;
+  padding: 40px 28px 28px;
   border: 1px solid rgba(38, 117, 73, 0.12);
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.85);
   box-shadow: 0 24px 64px rgba(31, 72, 47, 0.12);
   text-align: center;
   backdrop-filter: blur(14px);
-  transition: opacity 0.3s ease;
-}
-
-.success-card.is-redirecting {
-  opacity: 0.7;
 }
 
 /* === Staggered Entrance === */
@@ -20933,8 +20928,8 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 }
 
 .success-svg {
-  width: 80px;
-  height: 80px;
+  width: 96px;
+  height: 96px;
   display: block;
 }
 
@@ -20944,8 +20939,8 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 226;
-  stroke-dashoffset: 226;
+  stroke-dasharray: 277;
+  stroke-dashoffset: 277;
   transition: stroke 0.3s ease;
 }
 
@@ -20960,16 +20955,12 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 48;
-  stroke-dashoffset: 48;
+  stroke-dasharray: 66;
+  stroke-dashoffset: 66;
 }
 
 .success-section.visible .success-check {
-  animation: success-draw-check 0.35s ease 0.5s forwards;
-}
-
-.success-circle-warning {
-  stroke: #d97706 !important;
+  animation: success-draw-check 0.4s ease 0.5s forwards;
 }
 
 @keyframes success-draw-circle {
@@ -21097,9 +21088,9 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 /* === Order Details === */
 .success-details {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 18px;
   border: 1px solid rgba(38, 117, 73, 0.08);
   border-radius: 14px;
   background: rgba(237, 248, 241, 0.35);
@@ -21178,22 +21169,22 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 .success-whatsapp-btn {
   display: flex;
   width: 100%;
-  min-height: 50px;
+  min-height: 54px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 20px;
+  gap: 10px;
+  padding: 0 24px;
   border: 0;
   border-radius: 14px;
   color: #fff;
-  background: linear-gradient(135deg, #128146, #0d6d37);
-  box-shadow: 0 8px 24px rgba(18, 129, 70, 0.3);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 950;
   line-height: 1;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  background: linear-gradient(135deg, #128146, #0a5e2e);
+  box-shadow: 0 10px 32px rgba(18, 129, 70, 0.35);
 }
 
 .success-whatsapp-btn:hover:not(:disabled) {
@@ -21219,8 +21210,8 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 }
 
 @keyframes success-pulse {
-  0%, 100% { box-shadow: 0 8px 24px rgba(18, 129, 70, 0.3); }
-  50% { box-shadow: 0 8px 44px rgba(18, 129, 70, 0.52); }
+  0%, 100% { box-shadow: 0 10px 32px rgba(18, 129, 70, 0.35); }
+  50% { box-shadow: 0 10px 52px rgba(18, 129, 70, 0.55); }
 }
 
 /* === Cancel Button === */
@@ -21240,7 +21231,7 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   color: #476354;
 }
 
-/* === Redirecting / Cancelled Text === */
+/* === Redirecting / Failed Text === */
 .success-redirecting-text {
   margin: 0;
   color: #128146;
@@ -21249,10 +21240,10 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   animation: success-ellipsis 1.2s steps(3) infinite;
 }
 
-.success-cancelled-text {
+.success-failed-text {
   margin: 0;
-  color: #7a8b80;
-  font-size: 0.8rem;
+  color: #b45309;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
@@ -21324,13 +21315,13 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
 
   .success-card {
     padding: 28px 18px 24px;
-    gap: 14px;
+    gap: 16px;
     border-radius: 20px;
   }
 
   .success-svg {
-    width: 68px;
-    height: 68px;
+    width: 80px;
+    height: 80px;
   }
 
   .success-title {
