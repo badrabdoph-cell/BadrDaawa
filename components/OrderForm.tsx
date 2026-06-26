@@ -10,7 +10,6 @@ import {
   Clock,
   Eye,
   FileVideo,
-  Heart,
   ImagePlus,
   LayoutTemplate,
   Link2,
@@ -561,6 +560,7 @@ export function OrderForm({
   const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [partnerServiceType, setPartnerServiceType] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; placeName: string; city: string; governorate: string; googleMapsUrl: string } | null>(null);
   const [draftReady, setDraftReady] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
@@ -1645,11 +1645,11 @@ export function OrderForm({
     );
   }
 
-  function renderPhotographerFields() {
+  function renderPhotographerFields(serviceType = "مقدم الخدمة") {
     return (
       <div className="photographer-fields order-customization-fields">
         <div className="field">
-          <label htmlFor="photographerName">اسم المصور أو القاعة أو الميكب ارتيست</label>
+          <label htmlFor="photographerName">اسم {serviceType}</label>
           <input id="photographerName" name="photographerName" autoComplete="name" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
         </div>
         <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
@@ -1718,17 +1718,17 @@ export function OrderForm({
                     </button>
                   ) : null}
                 </div>
-                <div className="field">
+                <div className={`field ${dateError ? "has-error" : ""}`}>
                   <label htmlFor={`storyDate-${index}`}>التاريخ أو وقت المحطة</label>
                   <input id={`storyDate-${index}`} name={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryText(index, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
                   {dateError ? <small className="field-error">{dateError}</small> : null}
                 </div>
-                <div className="field">
+                <div className={`field ${titleError ? "has-error" : ""}`}>
                   <label htmlFor={`storyTitle-${index}`}>عنوان {stage?.label || "المحطة"}</label>
                   <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryText(index, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
                   {titleError ? <small className="field-error">{titleError}</small> : null}
                 </div>
-                <div className="field full">
+                <div className={`field full ${descriptionError ? "has-error" : ""}`}>
                   <label htmlFor={`storyDescription-${index}`}>وصف قصير</label>
                   <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
                   {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
@@ -2095,40 +2095,120 @@ export function OrderForm({
             </section>
           </section>
 
-          <section className={`order-wizard-step ${activeStep.id === "extras" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "extras"}>
-            <div className="order-extras-grid">
-              <button className={`order-extra-card order-extra-story-card ${form.storyEnabled ? "is-added" : ""} ${storyFieldsOpen ? "is-open" : ""}`} type="button" onClick={toggleStoryFields} aria-expanded={storyFieldsOpen}>
-                <Heart size={20} />
-                <span>
-                  <strong>حكايتكم الخاصة</strong>
-                  <small>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "اختيارية"}</small>
-                </span>
-                <em>مهم ولكن اختياري</em>
-              </button>
+          <section className={`order-wizard-step ${activeStep.id === "story" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "story"}>
+            <div className="order-step-copy order-story-step-copy">
+              <p>اكتب قصة العروسين كما ستظهر داخل الدعوة. لو لسه مش جاهزة، سيبها فاضية وكمل، وقبل التأكيد النهائي هنرجعك لها.</p>
             </div>
-
-            {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
+            {renderStoryFields()}
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "photographer" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photographer"}>
-            <div className="photographer-section">
-              <div className="photographer-header">
-                <Camera size={22} />
-                <h2>المصور الفوتوغرافي أو القاعة أو الميكب ارتيست</h2>
-              </div>
-              <p className="field-preview">أضف معلومات المصور الفوتوغرافي أو منسق القاعة أو الميكب ارتيست لتظهر في الدعوة (اختياري).</p>
-              {form.photographerEnabled ? (
-                <>
-                  {renderPhotographerFields()}
-                  <button className="btn btn-soft" type="button" onClick={() => { updateField("photographerEnabled", false); }}>
-                    إلغاء وإزالة المعلومات
-                  </button>
-                </>
+            <div className="partner-section">
+              <h2>شركاء الحفل (اختياري)</h2>
+              <p className="partner-desc">أضف معلومات المصور أو القاعة أو الميكب آرتيست أو أي مقدم خدمة ليظهر داخل الدعوة.</p>
+
+              {!form.photographerEnabled ? (
+                /* ── service selection cards ── */
+                <div className="partner-cards-grid">
+                  {[
+                    ["📷", "مصور فوتوغرافي"],
+                    ["🏛️", "قاعة"],
+                    ["💄", "ميكب آرتيست"],
+                    ["🎤", "DJ"],
+                    ["🎀", "منظم حفلات"],
+                    ["➕", "خدمة أخرى"],
+                  ].map(([icon, label]) => (
+                    <button key={label} className="partner-card-btn" type="button" onClick={() => {
+                      setPartnerServiceType(label);
+                      enablePhotographer();
+                    }}>
+                      <span className="partner-card-icon">{icon}</span>
+                      <span className="partner-card-label">{label}</span>
+                    </button>
+                  ))}
+                </div>
               ) : (
-                <button className="btn btn-glass" type="button" onClick={enablePhotographer}>
-                  <Camera size={17} />
-                  إضافة معلومات المصور أو القاعة أو الميكب ارتيست
-                </button>
+                /* ── form or saved card ── */
+                <div className="partner-screen">
+                  {!form.photographerName.trim() ? (
+                    /* form */
+                    <div className="partner-form-box">
+                      <div className="partner-form-head">
+                        <span className="partner-form-icon">
+                          {partnerServiceType === "مصور فوتوغرافي" ? "📷" :
+                           partnerServiceType === "قاعة" ? "🏛️" :
+                           partnerServiceType === "ميكب آرتيست" ? "💄" :
+                           partnerServiceType === "DJ" ? "🎤" :
+                           partnerServiceType === "منظم حفلات" ? "🎀" :
+                           "➕"}
+                        </span>
+                        <strong>{partnerServiceType || "مقدم الخدمة"}</strong>
+                      </div>
+                      {renderPhotographerFields(partnerServiceType || "مقدم الخدمة")}
+                      <button className="btn btn-soft" type="button" onClick={() => {
+                        updateField("photographerEnabled", false);
+                        setPartnerServiceType("");
+                      }}>
+                        رجوع للاختيارات
+                      </button>
+                    </div>
+                  ) : (
+                    /* saved card */
+                    <div className="partner-saved-card">
+                      <div className="partner-saved-head">
+                        <span className="partner-saved-icon">
+                          {partnerServiceType === "مصور فوتوغرافي" ? "📷" :
+                           partnerServiceType === "قاعة" ? "🏛️" :
+                           partnerServiceType === "ميكب آرتيست" ? "💄" :
+                           partnerServiceType === "DJ" ? "🎤" :
+                           partnerServiceType === "منظم حفلات" ? "🎀" :
+                           "➕"}
+                        </span>
+                        <div className="partner-saved-info">
+                          <strong className="partner-saved-name">{form.photographerName}</strong>
+                          <small className="partner-saved-type">{partnerServiceType || "شريك"}</small>
+                        </div>
+                      </div>
+                      {(form.photographerFacebookUrl || form.photographerInstagramUrl) ? (
+                        <div className="partner-saved-links">
+                          {form.photographerFacebookUrl ? (
+                            <a href={form.photographerFacebookUrl} target="_blank" rel="noopener noreferrer">Facebook</a>
+                          ) : null}
+                          {form.photographerInstagramUrl ? (
+                            <a href={form.photographerInstagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      <div className="partner-saved-actions">
+                        <button className="btn btn-soft" type="button" onClick={() => {
+                          updateField("photographerName", "");
+                          updateField("photographerFacebookUrl", "");
+                          updateField("photographerInstagramUrl", "");
+                        }}>
+                          تعديل
+                        </button>
+                        <button className="btn btn-glass" type="button" onClick={() => {
+                          updateField("photographerEnabled", false);
+                          updateField("photographerName", "");
+                          updateField("photographerFacebookUrl", "");
+                          updateField("photographerInstagramUrl", "");
+                          setPartnerServiceType("");
+                        }}>
+                          حذف
+                        </button>
+                      </div>
+                      <button className="btn btn-glass partner-add-another" type="button" onClick={() => {
+                        updateField("photographerEnabled", false);
+                        updateField("photographerName", "");
+                        updateField("photographerFacebookUrl", "");
+                        updateField("photographerInstagramUrl", "");
+                        setPartnerServiceType("");
+                      }}>
+                        ➕ إضافة شريك آخر
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </section>
@@ -2172,14 +2252,16 @@ export function OrderForm({
                   ["موقع القاعة", form.mapUrl.trim() ? "تمت إضافته" : "⚠️ لم يتم إضافة موقع القاعة بعد", 3],
                   ["الصور", imageLabel, 4],
                   ["الموسيقى", musicLabel, 5],
-                  ["المصور أو القاعة أو الميكب ارتيست", photographerLabel, 7],
+                  ["قصة العروسين", filledOrderStory(form.story).length >= minimumOrderStoryStages ? "مكتملة" : "مطلوبة قبل التأكيد", 6],
+                  ["شركاء الحفل", photographerLabel, 7],
                 ].map(([label, value, step]) => (
-                  <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress) ? "order-review-location-warning order-review-photos-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
+                  <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress) ? "order-review-location-warning order-review-photos-warning" : ""} ${label === "قصة العروسين" && filledOrderStory(form.story).length < minimumOrderStoryStages ? "order-review-location-warning order-review-story-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
                     <span>✓ {label}</span>
                     <strong>{value}</strong>
                     {label === "موقع القاعة" && !form.mapUrl.trim() ? <small>إضافة الموقع تساعد الضيوف، ويمكن إضافته لاحقاً.</small> : null}
                     {label === "الصور" && hasMediaUploadInProgress ? <small>الصور أو الموسيقى مازالت قيد الحفظ. انتظر لحظة ثم أكد الدعوة.</small> : null}
                     {label === "الصور" && imagesIncomplete && !hasMediaUploadInProgress ? <small>صورتان مطلوبة والثالثة اختيارية.</small> : null}
+                    {label === "قصة العروسين" && filledOrderStory(form.story).length < minimumOrderStoryStages ? <small>مطلوب إكمال أول لقاء، منتصف الطريق، ويوم الزفاف.</small> : null}
                   </button>
                 ));
               })()}
@@ -2189,23 +2271,6 @@ export function OrderForm({
                 <strong>{form.openingText.trim() ? "تمت إضافته" : "غير مضاف"}</strong>
               </button>
               {openingTextOpen ? renderOpeningTextFields() : null}
-
-              <button
-                className="order-review-item order-review-item-optional"
-                type="button"
-                onClick={() => {
-                  if (form.storyEnabled) {
-                    setStoryFieldsOpen((current) => !current);
-                    return;
-                  }
-                  goToStep(6);
-                }}
-                aria-expanded={storyFieldsOpen && form.storyEnabled}
-              >
-                <span>♡ قصة العروسين</span>
-                <strong>{form.storyEnabled ? `${filledOrderStory(form.story).length || minimumOrderStoryStages} مراحل` : "غير مضافة"}</strong>
-              </button>
-              {storyFieldsOpen && form.storyEnabled ? renderStoryFields() : null}
 
             </div>
 
@@ -2277,6 +2342,11 @@ export function OrderForm({
                   <ArrowRight size={17} />
                   رجوع
                 </button>
+                {activeStep.id === "photographer" ? (
+                  <button key="wizard-skip" className="btn btn-soft" type="button" onClick={goNext}>
+                    ⏭️ تخطي هذه المرحلة
+                  </button>
+                ) : null}
                 <button key="wizard-next" className="btn btn-gold btn-glow" type="button" onClick={goNext}>
                   التالي
                   <ArrowLeft size={17} />
@@ -2318,10 +2388,10 @@ export function OrderForm({
               </div>
               <div className="order-summary-row">
                 <span>قصة العروسين</span>
-                <strong>{form.storyEnabled ? "مضافة" : "غير مضافة"}</strong>
+                <strong>{filledOrderStory(form.story).length >= minimumOrderStoryStages ? "مكتملة" : "مطلوبة"}</strong>
               </div>
               <div className="order-summary-row">
-                <span>المصور أو القاعة أو الميكب ارتيست</span>
+                <span>شركاء الحفل</span>
                 <strong>{form.photographerEnabled ? "مضاف" : "غير مضاف"}</strong>
               </div>
             </div>
