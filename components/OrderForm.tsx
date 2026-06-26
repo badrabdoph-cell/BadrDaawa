@@ -2218,48 +2218,61 @@ export function OrderForm({
                 الطلب لن يتوقف إذا لم تضف رابط الموقع الآن
               </span>
             </div>
-            <div className="order-review-grid">
-              {(() => {
-                const musicLabel = !form.musicEnabled ? "بدون موسيقى"
-                  : form.musicChoice === "default" || !form.musicUrl ? "الموسيقى الأساسية"
-                  : form.musicChoice === "upload" ? "ملف MP3"
-                  : form.musicChoice === "video" ? "صوت من فيديو"
-                  : "رابط أغنية";
-                const imagesIncomplete = previewImageUrls.length < 2;
-                const imageLabel = hasMediaUploadInProgress ? "جاري حفظ الملفات" : imagesIncomplete ? `⚠️ ${previewImageUrls.length} من 3` : `${previewImageUrls.length} من 3`;
-                const photographerLabel = !form.photographerEnabled ? "غير مضاف"
-                  : form.photographerName.trim() ? form.photographerName.trim()
-                  : "تمت إضافته";
-                return [
-                  ["القالب", selectedTemplate.arabicName, 0],
-                  ["الأسماء", `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, 1],
-                  ["التاريخ", readableDate || "لم يحدد بعد", 2],
-                  ["الهاتف", fieldValue(form.phone), 2],
-                  ["مكان الحفل", form.venue.trim() ? "تمت إضافته" : "غير مضاف", 3],
-                  ["موقع القاعة", form.mapUrl.trim() ? "تمت إضافته" : "⚠️ لم يتم إضافة موقع القاعة بعد", 3],
-                  ["الصور", imageLabel, 4],
-                  ["الموسيقى", musicLabel, 5],
-                  ["قصة العروسين", filledOrderStory(form.story).length >= minimumOrderStoryStages ? "مكتملة" : "مطلوبة قبل التأكيد", 6],
-                  ["شركاء الحفل", photographerLabel, 7],
-                ].map(([label, value, step]) => (
-                  <button className={`order-review-item ${label === "موقع القاعة" && !form.mapUrl.trim() ? "order-review-location-warning" : ""} ${label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress) ? "order-review-location-warning order-review-photos-warning" : ""} ${label === "قصة العروسين" && filledOrderStory(form.story).length < minimumOrderStoryStages ? "order-review-location-warning order-review-story-warning" : ""}`} key={String(label)} type="button" onClick={() => goToStep(Number(step))}>
-                    <span>✓ {label}</span>
-                    <strong>{value}</strong>
-                    {label === "موقع القاعة" && !form.mapUrl.trim() ? <small>إضافة الموقع تساعد الضيوف، ويمكن إضافته لاحقاً.</small> : null}
-                    {label === "الصور" && hasMediaUploadInProgress ? <small>الصور أو الموسيقى مازالت قيد الحفظ. انتظر لحظة ثم أكد الدعوة.</small> : null}
-                    {label === "الصور" && imagesIncomplete && !hasMediaUploadInProgress ? <small>صورتان مطلوبة والثالثة اختيارية.</small> : null}
-                    {label === "قصة العروسين" && filledOrderStory(form.story).length < minimumOrderStoryStages ? <small>مطلوب إكمال أول لقاء، منتصف الطريق، ويوم الزفاف.</small> : null}
-                  </button>
-                ));
-              })()}
+            <div className="order-summary-card order-summary-main">
+              <h3>📋 ملخص الطلب</h3>
+              <div className="order-summary-items">
+                {(() => {
+                  const musicValue = !form.musicEnabled ? "بدون موسيقى"
+                    : form.musicChoice === "default" || !form.musicUrl ? "🎵 الموسيقى الأساسية"
+                    : form.musicChoice === "upload" ? "🎵 ملف MP3"
+                    : form.musicChoice === "video" ? "🎵 صوت من فيديو"
+                    : "🎵 رابط أغنية";
+                  const imagesIncomplete = previewImageUrls.length < 2;
+                  const imageValue = hasMediaUploadInProgress ? "⏳ جاري رفع الصور..."
+                    : previewImageUrls.length === 0 ? "❌ لم يتم رفع أي صور"
+                    : previewImageUrls.length === 1 ? "⚠️ تم رفع صورة واحدة (مطلوب 2)"
+                    : previewImageUrls.length === 3 ? "✅ تم رفع 3 صور"
+                    : `✅ تم رفع ${previewImageUrls.length} صور`;
+                  const storyComplete = filledOrderStory(form.story).length >= minimumOrderStoryStages;
+                  const storyValue = storyComplete ? "✅ مكتملة" : "❌ غير مكتملة";
+                  const partnerValue = !form.photographerEnabled ? "لم تتم إضافة شركاء"
+                    : form.photographerName.trim() ? `📷 ${form.photographerName.trim()}`
+                    : "تمت إضافة شريك";
+                  const openingValue = form.openingText.trim() ? "تمت إضافة نص افتتاح" : "سيتم استخدام النص الافتراضي";
 
-              <button className="order-review-item order-review-item-optional" type="button" onClick={() => setOpeningTextOpen((current) => !current)}>
-                <span>♡ نص الافتتاح</span>
-                <strong>{form.openingText.trim() ? "تمت إضافته" : "غير مضاف"}</strong>
-              </button>
-              {openingTextOpen ? renderOpeningTextFields() : null}
-
+                  return (
+                    <>
+                      {[
+                        { icon: "👰", label: "أسماء العروسين", value: `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, step: 1 },
+                        { icon: "📅", label: "تاريخ المناسبة", value: readableDate || "لم يحدد", step: 2 },
+                        { icon: "📍", label: "القاعة", value: form.venue || "لم يحدد", step: 3 },
+                        { icon: "🌍", label: "الموقع", value: form.mapUrl.trim() ? "✅ تم تحديد الموقع" : "لم يتم تحديد الموقع (اختياري)", step: 3 },
+                        { icon: "🖼", label: "الصور", value: imageValue, step: 4 },
+                        { icon: "🎵", label: "الموسيقى", value: musicValue, step: 5 },
+                        { icon: "❤️", label: "قصة العروسين", value: storyValue, step: 6 },
+                        { icon: "📷", label: "شركاء الحفل", value: partnerValue, step: 7 },
+                      ].map((row) => {
+                        const isWarning = (row.label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress))
+                          || (row.label === "قصة العروسين" && !storyComplete);
+                        return (
+                          <button key={row.label} className={`order-summary-item ${isWarning ? "order-summary-item-warning" : ""}`} type="button" onClick={() => goToStep(row.step)}>
+                            <span className="order-summary-item-label"><span className="order-summary-item-icon">{row.icon}</span> {row.label}</span>
+                            <span className="order-summary-item-value">{row.value}</span>
+                            <ArrowLeft size={14} className="order-summary-item-arrow" />
+                          </button>
+                        );
+                      })}
+                      <button className={`order-summary-item order-summary-item-toggle ${!form.openingText.trim() ? "order-summary-item-empty" : ""}`} type="button" onClick={() => setOpeningTextOpen((c) => !c)}>
+                        <span className="order-summary-item-label"><span className="order-summary-item-icon">✨</span> نص الافتتاح</span>
+                        <span className="order-summary-item-value">{openingValue}</span>
+                        <ArrowLeft size={14} className="order-summary-item-arrow" />
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
+            {openingTextOpen ? renderOpeningTextFields() : null}
 
             {showPaymentMethods ? (
             <div className="order-review-payment">
@@ -2285,7 +2298,7 @@ export function OrderForm({
             ) : null}
 
             <p className="order-review-submit-note" id="confirm-order">
-              اضغط على أي بطاقة لتعديلها، أو افتح المعاينة قبل تأكيد الدعوة.
+              اضغط على أي عنصر لتعديله، أو افتح المعاينة قبل تأكيد الدعوة.
             </p>
             {hasMediaUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل</p> : null}
           </section>
@@ -2342,48 +2355,6 @@ export function OrderForm({
             )}
           </div>
         </form>
-        <aside className="order-summary-sidebar">
-          <div className="order-summary-card">
-            <h3>ملخص الطلب</h3>
-            <div className="order-summary-template">
-              <img src={selectedTemplate.previewImage} alt="" />
-              <div>
-                <strong>{selectedTemplate.arabicName}</strong>
-                <small>{selectedTemplate.name}</small>
-              </div>
-            </div>
-            <div className="order-summary-options">
-              <div className="order-summary-row">
-                <span>الإسمين</span>
-                <strong>{form.groomName || "..."} و {form.brideName || "..."}</strong>
-              </div>
-              <div className="order-summary-row">
-                <span>تاريخ المناسبة</span>
-                <strong>{readableDate || "لم يحدد"}</strong>
-              </div>
-              <div className="order-summary-row">
-                <span>القاعة</span>
-                <strong>{form.venue || "لم يحدد"}</strong>
-              </div>
-              <div className="order-summary-row">
-                <span>الصور</span>
-                <strong>{previewImageUrls.length ? `${previewImageUrls.length} صور` : "لم ترفع بعد"}</strong>
-              </div>
-              <div className="order-summary-row">
-                <span>الموسيقى</span>
-                <strong>{!form.musicEnabled ? "بدون موسيقى" : form.musicChoice === "default" ? "الموسيقى الأساسية" : "مخصصة"}</strong>
-              </div>
-              <div className="order-summary-row">
-                <span>قصة العروسين</span>
-                <strong>{filledOrderStory(form.story).length >= minimumOrderStoryStages ? "مكتملة" : "مطلوبة"}</strong>
-              </div>
-              <div className="order-summary-row">
-                <span>شركاء الحفل</span>
-                <strong>{form.photographerEnabled ? "مضاف" : "غير مضاف"}</strong>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
 
       {orderPreviewOpen ? (

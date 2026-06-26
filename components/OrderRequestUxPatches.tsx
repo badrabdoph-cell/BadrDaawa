@@ -12,7 +12,7 @@ function getText(element: Element | null) {
 }
 
 function findPhotoReviewCard() {
-  return Array.from(document.querySelectorAll<HTMLElement>(".order-review-item")).find((item) => getText(item).includes("الصور")) || null;
+  return Array.from(document.querySelectorAll<HTMLElement>(".order-summary-item")).find((item) => getText(item).includes("الصور")) || null;
 }
 
 function hasUploadWaitHint() {
@@ -24,7 +24,7 @@ function syncUploadReviewState() {
   const photoCard = findPhotoReviewCard();
 
   if (photoCard) {
-    photoCard.classList.toggle("order-review-photos-warning", waiting);
+    photoCard.classList.toggle("order-summary-item-warning", waiting);
     if (waiting) photoCard.setAttribute("aria-invalid", "true");
     else photoCard.removeAttribute("aria-invalid");
   }
