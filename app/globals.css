@@ -40274,6 +40274,14 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   line-height: 1.4;
 }
 
+.order-story-tab-helper {
+  margin: -6px 0 0;
+  color: rgba(81, 67, 55, 0.7);
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
 .order-story-textarea {
   min-height: 140px;
   padding: 14px;

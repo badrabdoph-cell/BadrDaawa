@@ -593,19 +593,6 @@ export function OrderForm({
   const progressPercent = Math.round(((activeStepIndex + 1) / orderWizardSteps.length) * 100);
   const storyItems = ensureMinimumOrderStoryItems(form.story).slice(0, maximumOrderStoryStages);
   const visibleStoryIndex = Math.min(activeStoryIndex, Math.max(0, storyItems.length - 1));
-
-  useEffect(() => {
-    if (activeStep.id !== "story") return;
-    const stage = requiredOrderStoryStages[activeStoryIndex];
-    const preset = orderStoryPresets[activeStoryIndex];
-    if (!stage || !preset) return;
-    const item = storyItems[activeStoryIndex];
-    if (!item) return;
-    const patch: Partial<CoupleStoryItem> = {};
-    if (!item.title?.trim()) patch.title = stage.label;
-    if (!item.date?.trim()) patch.date = preset.date;
-    if (Object.keys(patch).length) updateStoryItem(activeStoryIndex, patch);
-  }, [activeStoryIndex, activeStep.id]);
   const previewImageUrls = draftImageUrls.filter(Boolean);
   const orderPreviewSrc = useMemo(() => {
     const params = new URLSearchParams();
@@ -1692,12 +1679,11 @@ export function OrderForm({
     const activeStage = requiredOrderStoryStages[visibleStoryIndex];
     const activePreset = orderStoryPresets[visibleStoryIndex];
     const activeItem = storyItems[visibleStoryIndex] || createOrderStoryItem();
+    const example = orderStoryExamples[visibleStoryIndex] || orderStoryExamples[orderStoryExamples.length - 1];
+    const dateError = storyErrors[storyFieldErrorKey(visibleStoryIndex, "date")];
+    const titleError = storyErrors[storyFieldErrorKey(visibleStoryIndex, "title")];
     const descriptionError = storyErrors[storyFieldErrorKey(visibleStoryIndex, "description")];
-    const placeholders: Record<string, string> = {
-      "first-meeting": "احكِ كيف كانت أول مقابلة بينكما…",
-      "middle-road": "احكِ أجمل المواقف التي مررتما بها…",
-      "wedding-day": "اكتب رسالة قصيرة عن شعوركما قبل هذا اليوم…",
-    };
+    const stageHelper = activeStage?.helper;
     return (
       <div className="order-story-fields-new">
         <div className="order-story-stage-tabs" role="tablist" aria-label="مراحل قصة العروسين">
@@ -1717,15 +1703,20 @@ export function OrderForm({
         </div>
         <div className="order-story-tab-content">
           <h3 className="order-story-tab-title">{activeStage?.label}</h3>
-          <div className={`field ${descriptionError ? "has-error" : ""}`}>
-            <textarea
-              className="order-story-textarea"
-              rows={5}
-              value={activeItem.description}
-              onChange={(event) => updateStoryText(visibleStoryIndex, "description", event.target.value)}
-              placeholder={placeholders[activeStage?.id || ""] || "اكتب قصتك هنا…"}
-              aria-invalid={Boolean(descriptionError)}
-            />
+          {stageHelper ? <p className="order-story-tab-helper">{stageHelper}</p> : null}
+          <div className={`field ${dateError ? "has-error" : ""}`}>
+            <label htmlFor={`storyDate-${visibleStoryIndex}`}>التاريخ أو وقت المحطة</label>
+            <input id={`storyDate-${visibleStoryIndex}`} name={`storyDate-${visibleStoryIndex}`} value={activeItem.date || ""} onChange={(event) => updateStoryText(visibleStoryIndex, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
+            {dateError ? <small className="field-error">{dateError}</small> : null}
+          </div>
+          <div className={`field ${titleError ? "has-error" : ""}`}>
+            <label htmlFor={`storyTitle-${visibleStoryIndex}`}>عنوان {activeStage?.label || "المحطة"}</label>
+            <input id={`storyTitle-${visibleStoryIndex}`} name={`storyTitle-${visibleStoryIndex}`} value={activeItem.title} onChange={(event) => updateStoryText(visibleStoryIndex, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
+            {titleError ? <small className="field-error">{titleError}</small> : null}
+          </div>
+          <div className={`field full ${descriptionError ? "has-error" : ""}`}>
+            <label htmlFor={`storyDescription-${visibleStoryIndex}`}>وصف قصير</label>
+            <textarea id={`storyDescription-${visibleStoryIndex}`} name={`storyDescription-${visibleStoryIndex}`} rows={3} value={activeItem.description} aria-invalid={Boolean(descriptionError)} onChange={(event) => updateStoryText(visibleStoryIndex, "description", event.target.value)} placeholder={example.description} />
             {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
           </div>
           <button
