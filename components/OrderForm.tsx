@@ -757,16 +757,16 @@ export function OrderForm({
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
     if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
-    if (stepId === "photos") {
-      const savedImages = draftImageUrls.filter((url) => url).length;
-      if (savedImages < 2) {
-        setState("error");
-        setMessage(`ارفع صورتين على الأقل للمتابعة (${savedImages} من 2).`);
-        return false;
-      }
-    }
     setForm((current) => ({ ...current, ...currentValues }));
     return true;
+  }
+
+  function validateImagesBeforeAction(savedCount: number): boolean {
+    if (savedCount >= 2) return true;
+    setState("error");
+    setMessage(`ارفع صورتين على الأقل للدعوة (${savedCount} من 2).`);
+    goToStep(4);
+    return false;
   }
 
   function goNext() {
@@ -781,6 +781,13 @@ export function OrderForm({
   }
 
   function openOrderPreview() {
+    const savedImagesBeforePreview = draftImageUrls.filter((url) => url).length;
+    if (savedImagesBeforePreview < 2) {
+      setState("error");
+      setMessage(`ارفع صورتين على الأقل للدعوة قبل فتح المعاينة (${savedImagesBeforePreview} من 2).`);
+      goToStep(4);
+      return;
+    }
     if (hasMediaUploadInProgress) {
       setState("error");
       setMessage("انتظر حتى يكتمل حفظ الصور والموسيقى قبل فتح المعاينة.");
@@ -1576,6 +1583,7 @@ export function OrderForm({
       if (orderImages.length < 2) {
         setState("error");
         setMessage(`ارفع صورتين على الأقل للدعوة (${orderImages.length} من 2).`);
+        goToStep(4);
         return;
       }
       if (selectedRawImageCount(formData) > orderImages.length) {
