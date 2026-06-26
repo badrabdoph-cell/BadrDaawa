@@ -18,5 +18,7 @@ export interface PosterRendererProps extends ClassicPosterProps {
 export default function PosterRenderer({ selectedShareTemplate = "classic", ...data }: PosterRendererProps) {
   const template = getSharePosterTemplate(selectedShareTemplate);
   const PosterComponent = POSTER_COMPONENTS[template.id] || ClassicPoster;
-  return <PosterComponent {...buildClassicPosterProps({ ...data, headline: data.headline || template.headline }, template.id)} />;
+  const props = buildClassicPosterProps({ ...data, headline: data.headline || template.headline }, template.id);
+  console.log("[PosterRenderer] Rendering:", { selectedShareTemplate, templateId: template.id, component: PosterComponent.name, propsKeys: Object.keys(props) });
+  return <PosterComponent {...props} />;
 }
