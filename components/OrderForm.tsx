@@ -573,7 +573,6 @@ export function OrderForm({
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [storyAIFilled, setStoryAIFilled] = useState<boolean[]>([false, false, false]);
   const [photographerSaved, setPhotographerSaved] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const finalConfirmIntentAtRef = useRef(0);
@@ -651,10 +650,8 @@ export function OrderForm({
     if (!container) return;
     const activeButton = container.querySelector<HTMLButtonElement>("button.active");
     if (!activeButton) return;
-    const isOverflowing = container.scrollWidth > container.clientWidth;
-    if (!isOverflowing) return;
-    const scrollTarget = activeButton.offsetLeft - (container.clientWidth / 2) + (activeButton.offsetWidth / 2);
-    container.scrollTo({ left: Math.max(0, scrollTarget), behavior: "smooth" });
+    if (container.scrollWidth <= container.clientWidth) return;
+    activeButton.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [activeStepIndex]);
 
   useEffect(() => {
@@ -2306,13 +2303,6 @@ export function OrderForm({
             {hasMediaUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل</p> : null}
           </section>
 
-          {isLastStep ? (
-            <label className="order-confirm-checkbox">
-              <input type="checkbox" checked={confirmed} onChange={() => setConfirmed((c) => !c)} />
-              <span>أؤكد أن جميع البيانات صحيحة وأوافق على إرسال الطلب للمراجعة.</span>
-            </label>
-          ) : null}
-
           <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
               <>
@@ -2325,7 +2315,7 @@ export function OrderForm({
                   className="btn btn-gold btn-glow order-submit"
                   type="submit"
                   data-order-confirm="true"
-                  disabled={state === "loading" || !confirmed}
+                  disabled={state === "loading"}
                   aria-disabled={hasMediaUploadInProgress}
                   aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}
                   onPointerDown={() => {
@@ -2392,37 +2382,6 @@ export function OrderForm({
       />
 
       <style>{`
-        .order-confirm-checkbox {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          margin: 16px 0 10px;
-          padding: 14px 16px;
-          border-radius: 14px;
-          background: rgba(255, 250, 241, 0.82);
-          cursor: pointer;
-          transition: background 180ms ease, box-shadow 180ms ease;
-          user-select: none;
-        }
-        .order-confirm-checkbox:hover {
-          background: rgba(255, 247, 235, 0.94);
-          box-shadow: 0 4px 16px rgba(150, 104, 42, 0.08);
-        }
-        .order-confirm-checkbox input[type="checkbox"] {
-          flex: 0 0 20px;
-          width: 20px;
-          height: 20px;
-          margin-top: 1px;
-          accent-color: #b8873b;
-          cursor: pointer;
-        }
-        .order-confirm-checkbox span {
-          color: #5f421b;
-          font-size: 0.9rem;
-          font-weight: 800;
-          line-height: 1.6;
-        }
-
         .order-summary-item {
           transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
         }
