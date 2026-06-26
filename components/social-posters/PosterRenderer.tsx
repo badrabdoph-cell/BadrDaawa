@@ -1,7 +1,13 @@
 "use client";
 
 import ClassicPoster, { type ClassicPosterProps } from "./ClassicPoster";
+import SimplePoster from "./SimplePoster";
 import { buildClassicPosterProps, getSharePosterTemplate, type SharePosterTemplateId } from "./poster-templates";
+
+const POSTER_COMPONENTS: Record<string, React.ComponentType<ClassicPosterProps>> = {
+  classic: ClassicPoster,
+  simple: SimplePoster,
+};
 
 export interface PosterRendererProps extends ClassicPosterProps {
   selectedShareTemplate?: SharePosterTemplateId | string;
@@ -9,5 +15,6 @@ export interface PosterRendererProps extends ClassicPosterProps {
 
 export default function PosterRenderer({ selectedShareTemplate = "classic", ...data }: PosterRendererProps) {
   const template = getSharePosterTemplate(selectedShareTemplate);
-  return <ClassicPoster {...buildClassicPosterProps({ ...data, headline: data.headline || template.headline }, template.id)} />;
+  const PosterComponent = POSTER_COMPONENTS[template.id] || ClassicPoster;
+  return <PosterComponent {...buildClassicPosterProps({ ...data, headline: data.headline || template.headline }, template.id)} />;
 }
