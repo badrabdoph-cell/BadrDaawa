@@ -78,7 +78,6 @@ function buildOrderWhatsAppMessage(input: {
   adminUrl: string;
   sharePosterUrl?: string;
 }) {
-  console.log("[WhatsApp Order] Building message with share poster:", { hasSharePoster: !!input.sharePosterUrl, sharePosterUrl: input.sharePosterUrl });
   return [
     "تم تأكيد طلبك ❤️",
     "",

@@ -3,12 +3,14 @@
 import ClassicPoster, { type ClassicPosterProps } from "./ClassicPoster";
 import SimplePoster from "./SimplePoster";
 import WeddingPoster from "./WeddingPoster";
+import WeddingSharePosterClassic, { type WeddingSharePosterProps } from "./WeddingSharePosterClassic";
 import { buildClassicPosterProps, getSharePosterTemplate, type SharePosterTemplateId } from "./poster-templates";
 
-const POSTER_COMPONENTS: Record<string, React.ComponentType<ClassicPosterProps>> = {
+const POSTER_COMPONENTS: Record<string, React.ComponentType<ClassicPosterProps | WeddingSharePosterProps>> = {
   classic: ClassicPoster,
   simple: SimplePoster,
   news: WeddingPoster,
+  wedding: WeddingSharePosterClassic,
 };
 
 export interface PosterRendererProps extends ClassicPosterProps {
@@ -19,6 +21,5 @@ export default function PosterRenderer({ selectedShareTemplate = "classic", ...d
   const template = getSharePosterTemplate(selectedShareTemplate);
   const PosterComponent = POSTER_COMPONENTS[template.id] || ClassicPoster;
   const props = buildClassicPosterProps({ ...data, headline: data.headline || template.headline }, template.id);
-  console.log("[PosterRenderer] Rendering:", { selectedShareTemplate, templateId: template.id, component: PosterComponent.name, propsKeys: Object.keys(props) });
   return <PosterComponent {...props} />;
 }
