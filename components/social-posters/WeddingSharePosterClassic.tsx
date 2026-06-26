@@ -160,7 +160,7 @@ function SaveTheDateCard({ date, venueName, weddingTime, invitationUrl }: { date
             </div>
             <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }}>
               <QRCodeSVG
-                value={invitationUrl}
+                value={invitationUrl || "https://badrdaawa.com"}
                 size={116}
                 level="H"
                 includeMargin={false}
