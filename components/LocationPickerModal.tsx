@@ -7,7 +7,7 @@ const FALLBACK_LAT = 30.0444;
 const FALLBACK_LNG = 31.2357;
 const GEO_OK_ZOOM = 16;
 const FLY_ZOOM = 17;
-const GEOCODE_DEBOUNCE_MS = 800;
+const GEOCODE_DEBOUNCE_MS = 300;
 
 type GeocodeResult = {
   lat: number;
@@ -264,13 +264,14 @@ export function LocationPickerModal({
       .catch(() => {
         if (!mountedRef.current) return;
         setGeoStatus("error");
+        const c = map.getCenter();
         setLocation({
-          lat: Number(startCenter[0].toFixed(6)),
-          lng: Number(startCenter[1].toFixed(6)),
-          placeName: `${startCenter[0].toFixed(6)}, ${startCenter[1].toFixed(6)}`,
+          lat: Number(c.lat.toFixed(6)),
+          lng: Number(c.lng.toFixed(6)),
+          placeName: `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`,
           city: "",
           governorate: "",
-          googleMapsUrl: `https://maps.google.com/?q=${startCenter[0].toFixed(6)},${startCenter[1].toFixed(6)}`,
+          googleMapsUrl: `https://maps.google.com/?q=${c.lat.toFixed(6)},${c.lng.toFixed(6)}`,
         });
       });
   }, [loadStatus, open]);
@@ -294,8 +295,19 @@ export function LocationPickerModal({
 
   /* ========== confirm / cancel ========== */
   function handleConfirm() {
-    if (!location) return;
-    onConfirm(location);
+    const map = mapRef.current;
+    if (!map) return;
+    const c = map.getCenter();
+    const lat = Number(c.lat.toFixed(6));
+    const lng = Number(c.lng.toFixed(6));
+    onConfirm({
+      lat,
+      lng,
+      placeName: location?.placeName || `${lat}, ${lng}`,
+      city: location?.city || "",
+      governorate: location?.governorate || "",
+      googleMapsUrl: `https://maps.google.com/?q=${lat},${lng}`,
+    });
   }
 
   function handleCancel() {
@@ -403,8 +415,7 @@ export function LocationPickerModal({
               {locating ? "جلب الموقع..." : "استخدام موقعي الحالي"}
             </button>
             <div className="location-picker-actions-right">
-              <button className="btn btn-gold btn-glow" type="button" onClick={handleConfirm}
-                disabled={!location}>
+              <button className="btn btn-gold btn-glow" type="button" onClick={handleConfirm}>
                 تأكيد الموقع
               </button>
               <button className="btn btn-soft" type="button" onClick={handleCancel}>إلغاء</button>
