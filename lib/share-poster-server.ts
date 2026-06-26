@@ -85,9 +85,8 @@ function posterSvg(input: ServerSharePosterInput, qrDataUrl: string, coverDataUr
   const arabicFont = "'Noto Naskh Arabic', 'Arial', sans-serif";
   const englishFont = "Georgia, 'Times New Roman', serif";
 
-  return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
-  <defs>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+  <defs>
     <radialGradient id="bg" cx="50%" cy="18%" r="80%"><stop offset="0%" stop-color="#fffaf2"/><stop offset="62%" stop-color="#f8efe3"/><stop offset="100%" stop-color="#efe0cc"/></radialGradient>
     <pattern id="paper" width="320" height="260" patternUnits="userSpaceOnUse"><g opacity=".12" fill="#4a3526" font-family="Georgia" font-size="15"><text x="4" y="18">The beautiful glamour</text><text x="4" y="42">Wedding invitation template</text><text x="4" y="66">Love story and celebration</text><text x="4" y="90">Save the date and venue</text></g><g opacity=".08" stroke="#4a3526"><line x1="0" y1="176" x2="220" y2="176"/><line x1="0" y1="194" x2="250" y2="194"/><line x1="0" y1="212" x2="180" y2="212"/></g></pattern>
     <clipPath id="photoClip"><rect x="182" y="448" width="716" height="442" rx="26"/></clipPath>
