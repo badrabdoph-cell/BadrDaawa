@@ -1,6 +1,6 @@
 import type { ClassicPosterProps } from "./ClassicPoster";
 
-export type SharePosterTemplateId = "classic" | "simple";
+export type SharePosterTemplateId = "classic" | "simple" | "news";
 
 export type SharePosterTemplateDefinition = {
   id: SharePosterTemplateId;
@@ -20,6 +20,12 @@ export const SHARE_POSTER_TEMPLATES: SharePosterTemplateDefinition[] = [
     id: "simple",
     name: "Poster بسيط",
     description: "تصميم بسيط وعصري مناسب للمشاركة السريعة.",
+    headline: "خبر عاجل !!!",
+  },
+  {
+    id: "news",
+    name: "Poster أخبار",
+    description: "تصميم صحفي جريء بمظهر راقي ومميز.",
     headline: "خبر عاجل !!!",
   },
 ];
