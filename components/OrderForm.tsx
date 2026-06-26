@@ -1940,52 +1940,32 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "venue" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "venue"}>
-            <div className="input-grid order-compact-grid">
-              <div className={`field ${errors.venue ? "has-error" : ""}`}>
-                <label htmlFor="venue">
-                  <MapPin size={16} />
-                  اسم القاعة
-                </label>
-                <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required aria-invalid={Boolean(errors.venue)} aria-describedby={errors.venue ? "venue-error" : undefined} />
-                {errors.venue ? <small className="field-error" id="venue-error">{errors.venue}</small> : null}
-              </div>
-
-              <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
-                <label htmlFor="mapUrl">
-                  <Link2 size={16} />
-                  رابط اللوكيشن <span className="field-optional-badge">اختياري</span>
-                </label>
-                <input id="mapUrl" name="mapUrl" type="url" inputMode="url" autoComplete="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
-                <small className="field-preview" id="mapUrl-hint">إضافة موقع القاعة تساعد الضيوف على الوصول بسهولة، ويمكنك إضافته لاحقاً أثناء تجهيز الدعوة.</small>
-                {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
-              </div>
+            <div className={`field ${errors.venue ? "has-error" : ""}`}>
+              <label htmlFor="venue">
+                <MapPin size={16} />
+                اسم القاعة
+              </label>
+              <input id="venue" name="venue" placeholder="مثال: قاعة رويال - البحيرة" value={form.venue} onChange={(event) => updateField("venue", event.target.value)} required aria-invalid={Boolean(errors.venue)} aria-describedby={errors.venue ? "venue-error" : undefined} />
+              {errors.venue ? <small className="field-error" id="venue-error">{errors.venue}</small> : null}
             </div>
 
-            <button className="location-picker-trigger" type="button" onClick={() => {
+            <div className={`field ${errors.mapUrl ? "has-error" : ""}`}>
+              <label htmlFor="mapUrl">
+                <Link2 size={16} />
+                رابط اللوكيشن <span className="field-optional-badge">اختياري</span>
+              </label>
+              <input id="mapUrl" name="mapUrl" type="url" inputMode="url" autoComplete="url" placeholder="انسخ رابط Google Maps للقاعة أو الـ pin" value={form.mapUrl} onChange={(event) => updateField("mapUrl", event.target.value)} aria-invalid={Boolean(errors.mapUrl)} aria-describedby={errors.mapUrl ? "mapUrl-error mapUrl-hint" : "mapUrl-hint"} />
+              <small className="field-preview" id="mapUrl-hint">يمكنك لصق رابط Google Maps أو اختيار الموقع مباشرة من الخريطة.</small>
+              {errors.mapUrl ? <small className="field-error" id="mapUrl-error">{errors.mapUrl}</small> : null}
+            </div>
+
+            <button className="btn btn-glass venue-map-btn" type="button" onClick={() => {
               setMapPickerOpen(true);
               window.history.pushState({ modal: "map-picker", stepIndex: activeStepIndex }, "");
             }}>
-              <MapPin size={16} />
-              اختياري: حدد المكان من الخريطة بدل نسخ الرابط
+              <MapPin size={17} />
+              فتح الخريطة واختيار الموقع
             </button>
-
-            <div className="order-location-preview">
-              <MapPin size={19} />
-              <div>
-                <strong>{fieldValue(form.venue, "سيظهر اسم القاعة هنا")}</strong>
-                <span>{form.mapUrl ? "تم إضافة رابط اللوكيشن وسيظهر داخل الدعوة." : "يمكنك ترك الرابط فارغاً وإضافته لاحقاً."}</span>
-              </div>
-            </div>
-
-            {selectedLocation ? (
-              <div className="order-location-preview order-location-selected">
-                <MapPin size={19} />
-                <div>
-                  <strong>📍 الموقع المختار:</strong>
-                  <span>{selectedLocation.placeName}{selectedLocation.city ? ` — ${selectedLocation.city}` : ""}</span>
-                </div>
-              </div>
-            ) : null}
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "photos" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "photos"}>

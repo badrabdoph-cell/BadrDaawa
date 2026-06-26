@@ -4296,6 +4296,13 @@ img {
   justify-content: center;
 }
 
+.venue-map-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .order-music-fields {
   display: grid;
   gap: 12px;
@@ -38053,15 +38060,18 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 }
 
 .order-wizard-actions {
-  bottom: calc(var(--order-keyboard-inset, 0px));
-}
-
-.order-wizard-flow.is-keyboard-open .order-wizard-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
   gap: 8px;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
   background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.72), rgba(255, 253, 248, 0.98));
-  box-shadow: 0 -10px 24px rgba(30, 22, 14, 0.13);
+    linear-gradient(180deg, rgba(255, 253, 248, 0.85), rgba(255, 253, 248, 0.98));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 -10px 24px rgba(30, 22, 14, 0.1);
+  border-top: none;
+  bottom: calc(var(--order-keyboard-inset, 0px));
 }
 
 .order-wizard-flow.is-keyboard-open .order-wizard-actions .btn {
