@@ -18,13 +18,12 @@ import {
   MapPin,
   Music2,
   Phone,
-  Plus,
   Trash2,
   UploadCloud,
   UserRound,
 } from "lucide-react";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
-import { calculateKeyboardInset, orderStoryPresets } from "@/lib/order-mobile-ux";
+import { calculateKeyboardInset, getIncompleteRequiredStoryStage, orderStoryPresets, requiredOrderStoryStages } from "@/lib/order-mobile-ux";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { LocationPickerModal } from "./LocationPickerModal";
@@ -120,23 +119,23 @@ const orderImageSlots = [
 const orderStoryExamples = [
   {
     date: "مثال: 15 / 11 / 2024",
-    title: "مثال: أول مرة شوفنا بعض ❤️",
-    description: "مثال: كانت أول مقابلة بيننا في فرح صحبتي، ومن هنا بدأت الحكاية.",
+    title: "مثال: أول لقاء",
+    description: "مثال: كانت أول مقابلة بيننا، ومن هنا بدأت الحكاية.",
   },
   {
     date: "مثال: 02 / 02 / 2025",
-    title: "مثال: الخطوبة 💍",
-    description: "مثال: اليوم الذي قررنا فيه أن نكمل رحلتنا معاً ونبدأ فصلاً جديداً من حياتنا.",
+    title: "مثال: منتصف الطريق",
+    description: "مثال: اليوم الذي قررنا فيه أن نكمل رحلتنا معاً، أو محطة قربتنا أكثر.",
   },
   {
     date: "مثال: تاريخ يوم الزفاف من خانة تاريخ المناسبة",
-    title: "مثال: يوم الزفاف 👰🤵",
+    title: "مثال: يوم الزفاف",
     description: "مثال: اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً.",
   },
 ];
 
-const minimumOrderStoryStages = 2;
-const maximumOrderStoryStages = 4;
+const minimumOrderStoryStages = requiredOrderStoryStages.length;
+const maximumOrderStoryStages = requiredOrderStoryStages.length;
 
 const orderWizardSteps = [
   { id: "template", title: "اختيار القالب" },
@@ -145,7 +144,7 @@ const orderWizardSteps = [
   { id: "venue", title: "مكان الحفل" },
   { id: "photos", title: "الصور" },
   { id: "music", title: "الموسيقى" },
-  { id: "extras", title: "إضافات مهمة" },
+  { id: "story", title: "قصة العروسين" },
   { id: "photographer", title: "المصور الفوتوغرافي أو القاعة أو الميكب ارتيست" },
   { id: "review", title: "مراجعة الطلب" },
 ] as const;
@@ -560,7 +559,6 @@ export function OrderForm({
   const [activeStepIndex, setActiveStepIndex] = useState(skipTemplateStep ? 1 : 0);
   const [musicSettingsOpen, setMusicSettingsOpen] = useState(false);
   const [openingTextOpen, setOpeningTextOpen] = useState(Boolean(initialDraft?.openingText));
-  const [storyFieldsOpen, setStoryFieldsOpen] = useState(false);
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; placeName: string; city: string; governorate: string; googleMapsUrl: string } | null>(null);
@@ -701,7 +699,6 @@ export function OrderForm({
     }
     const nextIndex = Math.min(Math.max(skipTemplateStep ? Math.max(index, 1) : index, 0), orderWizardSteps.length - 1);
     if (orderWizardSteps[nextIndex]?.id === "review") {
-      setStoryFieldsOpen(false);
       reviewEnteredAtRef.current = Date.now();
       finalConfirmIntentAtRef.current = 0;
     }
@@ -734,7 +731,7 @@ export function OrderForm({
       if (allErrors.mapUrl) nextErrors.mapUrl = allErrors.mapUrl;
     }
     if (stepId === "music" && allErrors.musicUrl) nextErrors.musicUrl = allErrors.musicUrl;
-    if (stepId === "photographer" || stepId === "extras" || stepId === "review") {
+    if (stepId === "photographer" || stepId === "review") {
       if (allErrors.photographerFacebookUrl) nextErrors.photographerFacebookUrl = allErrors.photographerFacebookUrl;
       if (allErrors.photographerInstagramUrl) nextErrors.photographerInstagramUrl = allErrors.photographerInstagramUrl;
     }
@@ -745,7 +742,8 @@ export function OrderForm({
     const currentValues = getCurrentFormFromDom();
     const stepErrors = getStepErrors(stepId, currentValues);
     if (showValidationErrors(stepErrors)) return false;
-    if ((stepId === "extras" || stepId === "review") && showStoryValidationErrors(form)) return false;
+    if (stepId === "story" && showStoryValidationErrors(form, { requireAll: false })) return false;
+    if (stepId === "review" && showStoryValidationErrors(form, { requireAll: true, goToStoryStep: true })) return false;
     setForm((current) => ({ ...current, ...currentValues }));
     setState("idle");
     setMessage("");
@@ -777,6 +775,7 @@ export function OrderForm({
       goToStep(4);
       return;
     }
+    if (showStoryValidationErrors(form, { requireAll: true, goToStoryStep: true })) return;
     const currentValues = getCurrentFormFromDom();
     setForm((current) => ({ ...current, ...currentValues }));
     persistDraft(
@@ -968,25 +967,9 @@ export function OrderForm({
     if (message) setMessage("");
   }
 
-  function cancelOrderStory() {
-    const currentValues = getCurrentFormFromDom();
-    setForm((current) => ({ ...current, ...currentValues, storyEnabled: false, story: [] }));
-    setStoryErrors({});
-    setStoryFieldsOpen(false);
-    if (message) setMessage("");
-  }
-
   function enablePhotographer() {
     const currentValues = getCurrentFormFromDom();
     setForm((current) => ({ ...current, ...currentValues, photographerEnabled: true }));
-    if (message) setMessage("");
-  }
-
-  function toggleStoryFields() {
-    const currentValues = getCurrentFormFromDom();
-    setForm((current) => ({ ...current, ...currentValues, storyEnabled: true, story: ensureMinimumOrderStoryItems(current.story) }));
-    setStoryErrors({});
-    setStoryFieldsOpen((current) => !current || !form.storyEnabled);
     if (message) setMessage("");
   }
 
@@ -1004,16 +987,6 @@ export function OrderForm({
       return next;
     });
     if (choice === "default" || choice === "none") setMusicFileName("");
-    if (message) setMessage("");
-  }
-
-  function addStoryItem() {
-    const currentValues = getCurrentFormFromDom();
-    setForm((current) => {
-      const currentStory = ensureMinimumOrderStoryItems(current.story).slice(0, maximumOrderStoryStages);
-      if (currentStory.length >= maximumOrderStoryStages) return { ...current, ...currentValues, storyEnabled: true, story: currentStory };
-      return { ...current, ...currentValues, storyEnabled: true, story: [...currentStory, createOrderStoryItem()] };
-    });
     if (message) setMessage("");
   }
 
@@ -1045,17 +1018,6 @@ export function OrderForm({
       title: preset.title,
       description: preset.description,
     });
-  }
-
-  function removeStoryItem(index: number) {
-    setForm((current) => {
-      const currentValues = getCurrentFormFromDom();
-      const nextStory = cleanOrderStory(current.story).filter((_, itemIndex) => itemIndex !== index);
-      return nextStory.length ? { ...current, ...currentValues, story: nextStory, storyEnabled: current.storyEnabled } : { ...current, ...currentValues, story: [], storyEnabled: false };
-    });
-    setActiveStoryIndex((current) => Math.max(0, Math.min(current, cleanOrderStory(form.story).length - 2)));
-    setStoryErrors({});
-    if (message) setMessage("");
   }
 
   function setImageUpload(index: number, update: Partial<ImageUploadState>) {
@@ -1440,24 +1402,38 @@ export function OrderForm({
     return true;
   }
 
-  function validateOrderStory(values: Pick<FormState, "storyEnabled" | "story"> = form) {
+  function validateOrderStory(values: Pick<FormState, "storyEnabled" | "story"> = form, { requireAll = false }: { requireAll?: boolean } = {}) {
     const nextErrors: StoryFieldErrors = {};
-    if (!values.storyEnabled) return nextErrors;
-    ensureMinimumOrderStoryItems(values.story).forEach((item, index) => {
-      if (!item.date.trim()) nextErrors[storyFieldErrorKey(index, "date")] = "اكتب تاريخ هذه المرحلة أو وقتها.";
-      if (!item.title.trim()) nextErrors[storyFieldErrorKey(index, "title")] = "اكتب عنوان هذه المرحلة.";
-      if (!item.description.trim()) nextErrors[storyFieldErrorKey(index, "description")] = "اكتب وصفاً قصيراً لهذه المرحلة.";
+    const story = ensureMinimumOrderStoryItems(values.story);
+    const incomplete = getIncompleteRequiredStoryStage(story, { requireAll });
+    if (!incomplete) return nextErrors;
+    incomplete.missingFields.forEach((field) => {
+      const stageLabel = incomplete.stage.label;
+      if (field === "date") nextErrors[storyFieldErrorKey(incomplete.index, "date")] = `اكتب تاريخ أو وقت محطة ${stageLabel}.`;
+      if (field === "title") nextErrors[storyFieldErrorKey(incomplete.index, "title")] = `اكتب عنوان محطة ${stageLabel}.`;
+      if (field === "description") nextErrors[storyFieldErrorKey(incomplete.index, "description")] = `اكتب وصفاً قصيراً لمحطة ${stageLabel}.`;
     });
     return nextErrors;
   }
 
-  function showStoryValidationErrors(values: Pick<FormState, "storyEnabled" | "story"> = form) {
-    const nextErrors = validateOrderStory(values);
+  function showStoryValidationErrors(
+    values: Pick<FormState, "storyEnabled" | "story"> = form,
+    { requireAll = false, goToStoryStep = false }: { requireAll?: boolean; goToStoryStep?: boolean } = {},
+  ) {
+    const story = ensureMinimumOrderStoryItems(values.story);
+    const incomplete = getIncompleteRequiredStoryStage(story, { requireAll });
+    const nextErrors = validateOrderStory({ ...values, story }, { requireAll });
     setStoryErrors(nextErrors);
     const entries = Object.entries(nextErrors);
     if (!entries.length) return false;
     setState("error");
-    setMessage("كمل بيانات قصة العروسين في المرحلتين أو الغِ القصة عشان تقدر تعاين أو تأكد الطلب.");
+    const stageLabel = incomplete?.stage.label || "قصة العروسين";
+    setMessage(requireAll ? `قصة العروسين مطلوبة قبل تأكيد الدعوة. كمل محطة ${stageLabel}.` : `كمل محطة ${stageLabel} قبل الانتقال، أو امسح القصة بالكامل لو هترجع لها بعدين.`);
+    if (incomplete) setActiveStoryIndex(incomplete.index);
+    if (goToStoryStep && activeStep.id !== "story") {
+      const storyStepIndex = orderWizardSteps.findIndex((step) => step.id === "story");
+      if (storyStepIndex >= 0) goToStep(storyStepIndex);
+    }
     const [firstKey] = entries[0] || [];
     const [index, field] = firstKey.split(":");
     window.setTimeout(() => {
@@ -1558,7 +1534,7 @@ export function OrderForm({
       musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
     if (showValidationErrors(validateOrder({ ...currentForm, weddingDate: rawWeddingDate }, currentForm.photographerEnabled, currentForm.musicEnabled, currentForm.musicChoice))) return;
-    if (showStoryValidationErrors(currentForm)) return;
+    if (showStoryValidationErrors(currentForm, { requireAll: true, goToStoryStep: true })) return;
     setState("loading");
     setMessage("جاري التأكد من حفظ الصور قبل تأكيد الدعوة.");
 
@@ -1694,59 +1670,66 @@ export function OrderForm({
     return (
       <div className="order-story-fields order-customization-fields">
         <div className="order-story-head">
-          <p>اكتب مرحلتين على الأقل. على الهاتف ركّز في مرحلة واحدة كل مرة، والباقي محفوظ تحت.</p>
-          <button className="btn btn-soft order-story-cancel-button" type="button" onClick={cancelOrderStory}>
-            إلغاء
-          </button>
+          <div>
+            <strong>قصة العروسين داخل الدعوة</strong>
+            <p>ثلاث محطات مطلوبة قبل التأكيد النهائي. يمكنك تخطيها الآن لو لم تبدأ كتابتها.</p>
+          </div>
+          <span className="order-story-required-badge">مطلوبة</span>
         </div>
         <div className="order-story-stage-tabs" role="tablist" aria-label="مراحل قصة العروسين">
-          {storyItems.map((item, index) => (
-            <button
-              className={index === visibleStoryIndex ? "active" : ""}
-              key={item.id || index}
-              type="button"
-              role="tab"
-              aria-selected={index === visibleStoryIndex}
-              onClick={() => setActiveStoryIndex(index)}
-            >
-              <span>{index + 1}</span>
-              <strong>{item.title || `مرحلة ${index + 1}`}</strong>
-            </button>
-          ))}
+          {storyItems.map((item, index) => {
+            const stage = requiredOrderStoryStages[index];
+            const hasStageError = Boolean(storyErrors[storyFieldErrorKey(index, "date")] || storyErrors[storyFieldErrorKey(index, "title")] || storyErrors[storyFieldErrorKey(index, "description")]);
+            const isComplete = Boolean(item.date.trim() && item.title.trim() && item.description.trim());
+            return (
+              <button
+                className={`${index === visibleStoryIndex ? "active" : ""} ${hasStageError ? "has-error" : ""} ${isComplete ? "is-complete" : ""}`}
+                key={stage?.id || item.id || index}
+                type="button"
+                role="tab"
+                aria-selected={index === visibleStoryIndex}
+                onClick={() => setActiveStoryIndex(index)}
+              >
+                <span>{isComplete ? <Check size={13} /> : index + 1}</span>
+                <strong>{stage?.label || item.title || `مرحلة ${index + 1}`}</strong>
+              </button>
+            );
+          })}
         </div>
         <div className="order-story-list">
           {storyItems.map((item, index) => {
             const example = orderStoryExamples[index] || orderStoryExamples[orderStoryExamples.length - 1];
+            const stage = requiredOrderStoryStages[index];
+            const preset = orderStoryPresets[index];
             const dateError = storyErrors[storyFieldErrorKey(index, "date")];
             const titleError = storyErrors[storyFieldErrorKey(index, "title")];
             const descriptionError = storyErrors[storyFieldErrorKey(index, "description")];
             return (
               <article className={`order-story-item ${index === visibleStoryIndex ? "is-active-story" : ""}`} key={item.id || index}>
                 <div className="order-story-item-head">
-                  <strong>مرحلة {index + 1} من {storyItems.length}</strong>
-                  <button className="admin-icon-button order-story-remove-button" type="button" onClick={() => removeStoryItem(index)} title="حذف المرحلة" aria-label={`حذف مرحلة ${index + 1}`}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <div className="order-story-preset-bubbles" aria-label={`اقتراحات جاهزة لمرحلة ${index + 1}`}>
-                  {orderStoryPresets.map((preset) => (
-                    <button key={preset.id} type="button" onClick={() => applyStoryPreset(index, preset.id)}>
-                      {preset.title}
+                  <div>
+                    <span>{index + 1} من {storyItems.length}</span>
+                    <strong>{stage?.label || `مرحلة ${index + 1}`}</strong>
+                    <small>{stage?.helper}</small>
+                  </div>
+                  {preset ? (
+                    <button className="btn btn-soft order-story-suggest-button" type="button" onClick={() => applyStoryPreset(index, preset.id)}>
+                      ملء اقتراح
                     </button>
-                  ))}
+                  ) : null}
                 </div>
                 <div className="field">
-                  <label htmlFor={`storyDate-${index}`}>التاريخ أو اسم اللحظة</label>
+                  <label htmlFor={`storyDate-${index}`}>التاريخ أو وقت المحطة</label>
                   <input id={`storyDate-${index}`} name={`storyDate-${index}`} value={item.date || ""} onChange={(event) => updateStoryText(index, "date", event.target.value)} placeholder={example.date} aria-invalid={Boolean(dateError)} />
                   {dateError ? <small className="field-error">{dateError}</small> : null}
                 </div>
                 <div className="field">
-                  <label htmlFor={`storyTitle-${index}`}>العنوان</label>
+                  <label htmlFor={`storyTitle-${index}`}>عنوان {stage?.label || "المحطة"}</label>
                   <input id={`storyTitle-${index}`} name={`storyTitle-${index}`} value={item.title} onChange={(event) => updateStoryText(index, "title", event.target.value)} placeholder={example.title} aria-invalid={Boolean(titleError)} />
                   {titleError ? <small className="field-error">{titleError}</small> : null}
                 </div>
                 <div className="field full">
-                  <label htmlFor={`storyDescription-${index}`}>الوصف</label>
+                  <label htmlFor={`storyDescription-${index}`}>وصف قصير</label>
                   <textarea id={`storyDescription-${index}`} name={`storyDescription-${index}`} rows={3} value={item.description} aria-invalid={Boolean(descriptionError)} onChange={(event) => updateStoryText(index, "description", event.target.value)} placeholder={example.description} />
                   {descriptionError ? <small className="field-error">{descriptionError}</small> : null}
                 </div>
@@ -1754,25 +1737,14 @@ export function OrderForm({
                   <button className="btn btn-glass" type="button" onClick={() => setActiveStoryIndex(Math.max(0, index - 1))} disabled={index === 0}>
                     السابق
                   </button>
-                  <button className="btn btn-soft" type="button" onClick={() => setActiveStoryIndex(Math.min(storyItems.length - 1, index + 1))} disabled={index >= storyItems.length - 1}>
-                    المرحلة التالية
+                  <button className="btn btn-gold" type="button" onClick={() => setActiveStoryIndex(Math.min(storyItems.length - 1, index + 1))} disabled={index >= storyItems.length - 1}>
+                    المحطة التالية
                   </button>
                 </div>
               </article>
             );
           })}
         </div>
-        {storyItems.length < maximumOrderStoryStages ? (
-          <button className="btn btn-soft order-story-add-button" type="button" onClick={() => {
-            addStoryItem();
-            setActiveStoryIndex(storyItems.length);
-          }}>
-            <Plus size={16} />
-            إضافة مرحلة
-          </button>
-        ) : (
-          <p className="field-preview">تم الوصول إلى الحد الأقصى: 4 مراحل.</p>
-        )}
       </div>
     );
   }
