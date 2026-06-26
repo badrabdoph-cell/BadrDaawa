@@ -1,0 +1,115 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Wedding Daawa" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e8]: Wedding Daawa
+        - link "رجوع للقوالب" [ref=e9] [cursor=pointer]:
+          - /url: /templates
+          - img [ref=e10]
+          - text: رجوع للقوالب
+    - main [ref=e12]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - generic [ref=e19]: خطوة 2 من 9
+              - heading "بيانات العروسين" [level=2] [ref=e20]
+            - strong [ref=e21]: 22%
+          - navigation "خطوات إنشاء الدعوة" [ref=e24]:
+            - button "اختيار القالب تمت" [disabled] [ref=e25] [cursor=pointer]:
+              - img [ref=e27]
+              - strong [ref=e29]: اختيار القالب
+              - generic [ref=e30]: تمت
+            - button "2 بيانات العروسين الحالية" [ref=e31] [cursor=pointer]:
+              - generic [ref=e32]: "2"
+              - strong [ref=e33]: بيانات العروسين
+              - generic [ref=e34]: الحالية
+            - button "3 بيانات المناسبة التالية" [ref=e35] [cursor=pointer]:
+              - generic [ref=e36]: "3"
+              - strong [ref=e37]: بيانات المناسبة
+              - generic [ref=e38]: التالية
+            - button "4 مكان الحفل" [ref=e39] [cursor=pointer]:
+              - generic [ref=e40]: "4"
+              - strong [ref=e41]: مكان الحفل
+            - button "5 الصور" [ref=e42] [cursor=pointer]:
+              - generic [ref=e43]: "5"
+              - strong [ref=e44]: الصور
+            - button "6 الموسيقى" [ref=e45] [cursor=pointer]:
+              - generic [ref=e46]: "6"
+              - strong [ref=e47]: الموسيقى
+            - button "7 إضافات مهمة" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: "7"
+              - strong [ref=e50]: إضافات مهمة
+            - button "8 📸 صورة المشاركة" [ref=e51] [cursor=pointer]:
+              - generic [ref=e52]: "8"
+              - strong [ref=e53]: 📸 صورة المشاركة
+            - button "9 مراجعة الطلب" [ref=e54] [cursor=pointer]:
+              - generic [ref=e55]: "9"
+              - strong [ref=e56]: مراجعة الطلب
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]:
+                - img [ref=e61]
+                - text: اسم العريس
+              - textbox "اسم العريس" [ref=e64]:
+                - /placeholder: "مثال: محمد"
+                - text: أحمد
+            - generic [ref=e65]:
+              - generic [ref=e66]:
+                - img [ref=e67]
+                - text: اسم العروس
+              - textbox "اسم العروس" [ref=e70]:
+                - /placeholder: "مثال: ندي"
+                - text: نور
+          - text: ✦
+          - generic [ref=e71]:
+            - button "رجوع" [disabled] [ref=e72]:
+              - img [ref=e73]
+              - text: رجوع
+            - button "التالي" [ref=e75] [cursor=pointer]:
+              - text: التالي
+              - img [ref=e76]
+        - complementary [ref=e78]:
+          - generic [ref=e79]:
+            - heading "ملخص الطلب" [level=3] [ref=e80]
+            - generic [ref=e82]:
+              - strong [ref=e83]: مميز 1
+              - text: Featured 1
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic [ref=e86]: الإسمين
+                - strong [ref=e87]: أحمد و نور
+              - generic [ref=e88]:
+                - generic [ref=e89]: تاريخ المناسبة
+                - strong [ref=e90]: الأربعاء، ١٥ يوليو ٢٠٢٦
+              - generic [ref=e91]:
+                - generic [ref=e92]: القاعة
+                - strong [ref=e93]: قاعة الزفاف
+              - generic [ref=e94]:
+                - generic [ref=e95]: الصور
+                - strong [ref=e96]: 2 صور
+              - generic [ref=e97]:
+                - generic [ref=e98]: الموسيقى
+                - strong [ref=e99]: الموسيقى الأساسية
+              - generic [ref=e100]:
+                - generic [ref=e101]: قصة العروسين
+                - strong [ref=e102]: غير مضافة
+              - generic [ref=e103]:
+                - generic [ref=e104]: المصور
+                - strong [ref=e105]: غير مضاف
+  - generic [ref=e110] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e111]:
+      - img [ref=e112]
+    - generic [ref=e115]:
+      - button "Open issues overlay" [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]: "5"
+          - generic [ref=e119]: "6"
+        - generic [ref=e120]:
+          - text: Issue
+          - generic [ref=e121]: s
+      - button "Collapse issues badge" [ref=e122]:
+        - img [ref=e123]
+  - alert [ref=e125]

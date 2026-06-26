@@ -573,6 +573,7 @@ export function OrderForm({
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [focusedFieldName, setFocusedFieldName] = useState("");
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const finalConfirmIntentAtRef = useRef(0);
@@ -628,6 +629,10 @@ export function OrderForm({
     if (previewImageUrls.length) params.set("gallery", previewImageUrls.join(","));
     return `/templates/${encodeURIComponent(selectedTemplate.slug)}/preview?${params.toString()}`;
   }, [form, previewImageUrls, selectedTemplate.slug]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setActiveStepIndex((current) => {
@@ -1275,6 +1280,11 @@ export function OrderForm({
 
   const normalizedDate = normalizeWeddingDate(form.weddingDate);
   const readableDate = normalizedDate ? displayWeddingDate(normalizedDate) : "";
+  const invitationSlug = useMemo(() => {
+    const groom = (form.groomName || "invitation").trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "") || "invitation";
+    const bride = form.brideName ? `-${form.brideName.trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "")}` : "";
+    return `${groom}${bride}`;
+  }, [form.groomName, form.brideName]);
 
   function getCurrentFormFromDom(): OrderFormValues {
     const formData = new FormData(formRef.current || undefined);
@@ -2189,7 +2199,7 @@ export function OrderForm({
                   weddingTime: form.weddingTime || "8 pm",
                   venueName: form.venue || "LALIT ELOMR HALL",
                   venueAddress: form.mapUrl || "",
-                  invitationUrl: typeof window !== "undefined" ? `${window.location.origin}/invitation/${((form.groomName || "invitation").trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "") || "invitation")}${form.brideName ? `-${form.brideName.trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "")}` : ""}` : "",
+                  invitationUrl: mounted ? `${window.location.origin}/invitation/${invitationSlug}` : "",
                   headline: template.headline,
                 };
                 return (
@@ -2222,7 +2232,7 @@ export function OrderForm({
                 weddingTime: form.weddingTime || "8 pm",
                 venueName: form.venue || "LALIT ELOMR HALL",
                 venueAddress: form.mapUrl || "",
-                invitationUrl: typeof window !== "undefined" ? `${window.location.origin}/invitation/${((form.groomName || "invitation").trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "") || "invitation")}${form.brideName ? `-${form.brideName.trim().toLowerCase().replace(/[\u064B-\u065F]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/gi, "-").replace(/^-+|-+$/g, "")}` : ""}` : "",
+                invitationUrl: mounted ? `${window.location.origin}/invitation/${invitationSlug}` : "",
               };
               return (
                 <div className="share-poster-wiz-preview">
