@@ -22,6 +22,33 @@ function text(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+async function savePreviewMedia(file: File | null) {
+  if (!file || !file.size) return { url: "", mode: "" };
+  const isImage = isSupportedImageFile(file);
+  const isVideo = file.type.startsWith("video/");
+  if (!isImage && !isVideo) return { url: "", mode: "" };
+  if (isImage && file.size > 80 * 1024 * 1024) return { url: "", mode: "" };
+  if (isVideo && file.size > 35 * 1024 * 1024) return { url: "", mode: "" };
+
+  const extensionByType: Record<string, string> = {
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/quicktime": "mov",
+  };
+  let bytes: Buffer = Buffer.from(await file.arrayBuffer());
+  let extension = isImage ? imageExtensionForUpload(file.type, file.name, imageExtensionFromBytes(bytes) || "jpg") : extensionByType[file.type] || "mp4";
+  if (isImage) {
+    const normalized = await normalizeImageForDisplay(bytes, extension, `home-preview:${file.name || file.type}`);
+    if (!normalized) return { url: "", mode: "" };
+    bytes = normalized.bytes;
+    extension = normalized.extension;
+  }
+
+  const fileName = `home-preview-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
+  const saved = await writeProjectAssetFile(`home-preview/${fileName}`, bytes);
+  return { url: saved.url, mode: isImage ? "image" : "video" };
+}
+
 async function saveLogo(file: File | null) {
   if (!file || !file.size || !isSupportedImageFile(file) || file.size > 8 * 1024 * 1024) return "";
 
@@ -119,10 +146,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const previewMediaFile = formData.get("previewMedia");
+    const uploadedMedia = await savePreviewMedia(previewMediaFile instanceof File ? previewMediaFile : null);
     await updateHomePreviewSettingsDraft({
       mode: text(formData, "homePreviewMode") || currentPreview.mode,
       templateSlug: text(formData, "homePreviewTemplateSlug") || currentPreview.templateSlug,
       mediaUrl: text(formData, "homePreviewMediaUrl"),
+      uploadedMediaUrl: uploadedMedia.url,
+      uploadedMediaMode: uploadedMedia.mode,
       imageUrl: currentPreview.imageUrl,
       videoUrl: currentPreview.videoUrl,
     });

@@ -219,9 +219,13 @@ export default async function AdminSiteSettingsPage({
               </select>
             </label>
             <label className="field full">
+              <span>رفع صورة أو فيديو للمعاينة</span>
+              <input name="previewMedia" type="file" accept={`${acceptedImageFormats},video/mp4,video/webm,video/quicktime`} />
+              <small>الصورة حتى 80MB، الفيديو حتى 35MB. الملف المرفوع يلغى الرابط النصي.</small>
+            </label>
+            <label className="field full">
               <span>رابط ميديا المعاينة</span>
               <input name="homePreviewMediaUrl" defaultValue={previewSettings.mode === "video" ? previewSettings.videoUrl : previewSettings.imageUrl} placeholder="/uploads/previews/file.jpg أو https://example.com/preview.mp4" />
-              <small>يمكنك استخدام صفحة المعاينة المتخصصة لرفع صورة أو فيديو جديد.</small>
             </label>
           </div>
           <div className="admin-card-separator">
