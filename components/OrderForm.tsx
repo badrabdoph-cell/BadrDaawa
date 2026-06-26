@@ -9,7 +9,11 @@ import {
   Check,
   Clock,
   Eye,
+  FileText,
   FileVideo,
+  Globe,
+  Heart,
+  Image as ImageIcon,
   ImagePlus,
   LayoutTemplate,
   Link2,
@@ -17,6 +21,7 @@ import {
   MapPin,
   Music2,
   Phone,
+  Sparkles,
   Trash2,
   UploadCloud,
   UserRound,
@@ -568,6 +573,7 @@ export function OrderForm({
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [storyAIFilled, setStoryAIFilled] = useState<boolean[]>([false, false, false]);
   const [photographerSaved, setPhotographerSaved] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const orderSubmitKeyRef = useRef("");
   const finalConfirmIntentAtRef = useRef(0);
@@ -579,6 +585,7 @@ export function OrderForm({
   const mapPickerOpenRef = useRef(false);
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
   const imageUploadRequestsRef = useRef<Array<XMLHttpRequest | null>>(orderImageSlots.map(() => null));
+  const stepTabsRef = useRef<HTMLDivElement | null>(null);
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
@@ -638,6 +645,17 @@ export function OrderForm({
   useEffect(() => {
     mapPickerOpenRef.current = mapPickerOpen;
   }, [mapPickerOpen]);
+
+  useEffect(() => {
+    const container = stepTabsRef.current;
+    if (!container) return;
+    const activeButton = container.querySelector<HTMLButtonElement>("button.active");
+    if (!activeButton) return;
+    const isOverflowing = container.scrollWidth > container.clientWidth;
+    if (!isOverflowing) return;
+    const scrollTarget = activeButton.offsetLeft - (container.clientWidth / 2) + (activeButton.offsetWidth / 2);
+    container.scrollTo({ left: Math.max(0, scrollTarget), behavior: "smooth" });
+  }, [activeStepIndex]);
 
   useEffect(() => {
     function readSafeAreaBottom() {
@@ -1790,7 +1808,7 @@ export function OrderForm({
             <div>
               <span>خطوة {activeStepIndex + 1} من {orderWizardSteps.length}</span>
               <h2>{activeStep.title}</h2>
-              <p className="order-wizard-trust-note">يتم حفظ بياناتك تلقائياً أثناء الكتابة، ويمكنك مراجعة كل شيء قبل تأكيد الدعوة.</p>
+              <p className="order-wizard-trust-note">{isLastStep ? "راجع بياناتك بدقة وتأكد من اكتمال جميع المعلومات." : "يتم حفظ بياناتك تلقائياً أثناء الكتابة، ويمكنك مراجعة كل شيء قبل تأكيد الدعوة."}</p>
             </div>
             <strong>{progressPercent}%</strong>
           </header>
@@ -1799,7 +1817,8 @@ export function OrderForm({
             <span style={{ width: `${progressPercent}%` }} />
           </div>
 
-          <nav className="order-step-tabs" aria-label="خطوات إنشاء الدعوة">
+          {!isLastStep ? (
+          <nav className="order-step-tabs" aria-label="خطوات إنشاء الدعوة" ref={stepTabsRef}>
             {orderWizardSteps.map((step, index) => {
               const done = index < activeStepIndex;
               const active = index === activeStepIndex;
@@ -1821,6 +1840,7 @@ export function OrderForm({
               );
             })}
           </nav>
+          ) : null}
 
           {message ? (
             <div className={`order-alert ${state === "error" ? "danger" : "success"}`} role="alert">
@@ -2201,25 +2221,11 @@ export function OrderForm({
           </section>
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
-            <div className="order-review-final-note" role="note">
-              وصلت للمرحلة الأخيرة. راجع البيانات الأساسية ثم اضغط تأكيد الدعوة بثقة.
-            </div>
-            <div className="order-review-confidence" role="note">
-              <span>
-                <Check size={15} />
-                البيانات المطلوبة ظاهرة أمامك
-              </span>
-              <span>
-                <Check size={15} />
-                يمكنك تعديل أي بند بالضغط عليه
-              </span>
-              <span>
-                <Check size={15} />
-                الطلب لن يتوقف إذا لم تضف رابط الموقع الآن
-              </span>
-            </div>
+            <p className="order-review-submit-note" style={{ marginBottom: 12 }}>
+              اضغط على أي عنصر لتعديله، أو عاين الدعوة قبل إرسال الطلب.
+            </p>
             <div className="order-summary-card order-summary-main">
-              <h3>📋 ملخص الطلب</h3>
+              <h3><FileText size={18} /> ملخص الطلب</h3>
               <div className="order-summary-items">
                 {(() => {
                   const musicValue = !form.musicEnabled ? "بدون موسيقى"
@@ -2243,14 +2249,14 @@ export function OrderForm({
                   return (
                     <>
                       {[
-                        { icon: "👰", label: "أسماء العروسين", value: `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, step: 1 },
-                        { icon: "📅", label: "تاريخ المناسبة", value: readableDate || "لم يحدد", step: 2 },
-                        { icon: "📍", label: "القاعة", value: form.venue || "لم يحدد", step: 3 },
-                        { icon: "🌍", label: "الموقع", value: form.mapUrl.trim() ? "✅ تم تحديد الموقع" : "لم يتم تحديد الموقع (اختياري)", step: 3 },
-                        { icon: "🖼", label: "الصور", value: imageValue, step: 4 },
-                        { icon: "🎵", label: "الموسيقى", value: musicValue, step: 5 },
-                        { icon: "❤️", label: "قصة العروسين", value: storyValue, step: 6 },
-                        { icon: "📷", label: "شركاء الحفل", value: partnerValue, step: 7 },
+                        { icon: <UserRound size={16} />, label: "أسماء العروسين", value: `${fieldValue(form.groomName)} و ${fieldValue(form.brideName)}`, step: 1 },
+                        { icon: <CalendarDays size={16} />, label: "تاريخ المناسبة", value: readableDate || "لم يحدد", step: 2 },
+                        { icon: <MapPin size={16} />, label: "القاعة", value: form.venue || "لم يحدد", step: 3 },
+                        { icon: <Globe size={16} />, label: "الموقع", value: form.mapUrl.trim() ? "✅ تم تحديد الموقع" : "لم يتم تحديد الموقع (اختياري)", step: 3 },
+                        { icon: <ImageIcon size={16} />, label: "الصور", value: imageValue, step: 4 },
+                        { icon: <Music2 size={16} />, label: "الموسيقى", value: musicValue, step: 5 },
+                        { icon: <Heart size={16} />, label: "قصة العروسين", value: storyValue, step: 6 },
+                        { icon: <Camera size={16} />, label: "شركاء الحفل", value: partnerValue, step: 7 },
                       ].map((row) => {
                         const isWarning = (row.label === "الصور" && (imagesIncomplete || hasMediaUploadInProgress))
                           || (row.label === "قصة العروسين" && !storyComplete);
@@ -2263,7 +2269,7 @@ export function OrderForm({
                         );
                       })}
                       <button className={`order-summary-item order-summary-item-toggle ${!form.openingText.trim() ? "order-summary-item-empty" : ""}`} type="button" onClick={() => setOpeningTextOpen((c) => !c)}>
-                        <span className="order-summary-item-label"><span className="order-summary-item-icon">✨</span> نص الافتتاح</span>
+                        <span className="order-summary-item-label"><span className="order-summary-item-icon"><Sparkles size={16} /></span> نص الافتتاح</span>
                         <span className="order-summary-item-value">{openingValue}</span>
                         <ArrowLeft size={14} className="order-summary-item-arrow" />
                       </button>
@@ -2297,25 +2303,29 @@ export function OrderForm({
             </div>
             ) : null}
 
-            <p className="order-review-submit-note" id="confirm-order">
-              اضغط على أي عنصر لتعديله، أو افتح المعاينة قبل تأكيد الدعوة.
-            </p>
             {hasMediaUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل</p> : null}
           </section>
+
+          {isLastStep ? (
+            <label className="order-confirm-checkbox">
+              <input type="checkbox" checked={confirmed} onChange={() => setConfirmed((c) => !c)} />
+              <span>أؤكد أن جميع البيانات صحيحة وأوافق على إرسال الطلب للمراجعة.</span>
+            </label>
+          ) : null}
 
           <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
               <>
                 <button key="review-preview" className="btn btn-glass order-preview-action" type="button" onClick={openOrderPreview} disabled={hasMediaUploadInProgress}>
                   <Eye size={17} />
-                  معاينة الدعوة
+                  معاينة الدعوة قبل الإرسال
                 </button>
                 <button
                   key="review-submit"
                   className="btn btn-gold btn-glow order-submit"
                   type="submit"
                   data-order-confirm="true"
-                  disabled={state === "loading"}
+                  disabled={state === "loading" || !confirmed}
                   aria-disabled={hasMediaUploadInProgress}
                   aria-describedby={hasMediaUploadInProgress ? "order-upload-wait-hint" : undefined}
                   onPointerDown={() => {
@@ -2329,7 +2339,7 @@ export function OrderForm({
                   }}
                 >
                   {state === "loading" ? <Loader2 size={17} className="animate-float" /> : <ArrowLeft size={17} />}
-                  الانتهاء وتأكيد الدعوة
+                  إرسال الطلب للمراجعة
                 </button>
                 <button key="review-back" className="btn btn-glass" type="button" onClick={goBack} disabled={isFirstStep}>
                   <ArrowRight size={17} />
@@ -2380,6 +2390,59 @@ export function OrderForm({
           setMapPickerOpen(false);
         }}
       />
+
+      <style>{`
+        .order-confirm-checkbox {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin: 16px 0 10px;
+          padding: 14px 16px;
+          border-radius: 14px;
+          background: rgba(255, 250, 241, 0.82);
+          cursor: pointer;
+          transition: background 180ms ease, box-shadow 180ms ease;
+          user-select: none;
+        }
+        .order-confirm-checkbox:hover {
+          background: rgba(255, 247, 235, 0.94);
+          box-shadow: 0 4px 16px rgba(150, 104, 42, 0.08);
+        }
+        .order-confirm-checkbox input[type="checkbox"] {
+          flex: 0 0 20px;
+          width: 20px;
+          height: 20px;
+          margin-top: 1px;
+          accent-color: #b8873b;
+          cursor: pointer;
+        }
+        .order-confirm-checkbox span {
+          color: #5f421b;
+          font-size: 0.9rem;
+          font-weight: 800;
+          line-height: 1.6;
+        }
+
+        .order-summary-item {
+          transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+        }
+        .order-summary-item:hover {
+          transform: translateY(-1px);
+        }
+        .order-summary-item:active {
+          transform: scale(0.985);
+        }
+
+        .order-review-actions .btn {
+          transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+        }
+        .order-review-actions .btn:active:not(:disabled) {
+          transform: scale(0.97);
+        }
+        .order-review-actions .btn-gold:active:not(:disabled) {
+          box-shadow: 0 4px 12px rgba(150, 104, 42, 0.18);
+        }
+      `}</style>
 
     </div>
   );
