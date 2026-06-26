@@ -3,38 +3,6 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 import { readPublicMediaFile, writeUploadFile } from "./storage-provider";
 
-const CAIRO_900_URL = "https://fonts.gstatic.com/s/cairo/v31/SLXgc1nY6HkvangtZmpQdkhzfH5lkSs2SgRjCAGMQ1z0hEk5W1Q.ttf";
-
-let cairoFontBase64: string | null = null;
-let fontDownloadPromise: Promise<string | null> | null = null;
-
-async function getCairoFontBase64(): Promise<string | null> {
-  if (cairoFontBase64) return cairoFontBase64;
-  if (fontDownloadPromise) return fontDownloadPromise;
-
-  fontDownloadPromise = (async () => {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10_000);
-      const res = await fetch(CAIRO_900_URL, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = Buffer.from(await res.arrayBuffer());
-      if (!buffer || buffer.length < 1000) throw new Error(`Font too small: ${buffer?.length} bytes`);
-      cairoFontBase64 = buffer.toString("base64");
-      console.log(`[Share Poster] Downloaded Cairo font (${buffer.length} bytes, ${cairoFontBase64.length} base64 chars)`);
-      return cairoFontBase64;
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`[Share Poster] Failed to download Cairo font, falling back to system fonts: ${msg}`);
-      cairoFontBase64 = "";
-      return null;
-    }
-  })();
-
-  return fontDownloadPromise;
-}
-
 export type ServerSharePosterInput = {
   selectedShareTemplate?: string;
   groomName: string;
@@ -106,7 +74,7 @@ function fallbackPhotoSvg() {
   return `data:image/svg+xml;base64,${Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="820" height="520"><rect width="820" height="520" fill="#251b13"/><text x="410" y="250" fill="#fff7e8" font-size="48" font-family="Arial" font-weight="700" text-anchor="middle">Wedding Photo</text><text x="410" y="310" fill="#d7b76b" font-size="26" font-family="Arial" font-weight="700" text-anchor="middle">BadrDaawa</text></svg>`).toString("base64")}`;
 }
 
-function posterSvg(input: ServerSharePosterInput, qrDataUrl: string, coverDataUrl: string, cairoFontBase64: string | null) {
+function posterSvg(input: ServerSharePosterInput, qrDataUrl: string, coverDataUrl: string) {
   const date = parseWeddingDate(input.weddingDate);
   const headline = input.headline || headlineFor(input.selectedShareTemplate);
   const couple = `${input.groomName} ${input.brideName}`.trim();
@@ -114,28 +82,12 @@ function posterSvg(input: ServerSharePosterInput, qrDataUrl: string, coverDataUr
   const time = input.weddingTime || "8 pm";
   const urlText = shortUrl(input.invitationUrl);
 
-  const arabicFont = "'Cairo', 'Noto Kufi Arabic', 'Arial', sans-serif";
+  const arabicFont = "'Noto Naskh Arabic', 'Arial', sans-serif";
   const englishFont = "Georgia, 'Times New Roman', serif";
-
-  const fontFace = cairoFontBase64
-    ? `<style>
-@font-face {
-  font-family: 'Cairo';
-  src: url(data:font/ttf;base64,${cairoFontBase64}) format('truetype');
-  font-weight: 900;
-}
-</style>`
-    : `<style>
-@font-face {
-  font-family: 'Cairo';
-  src: local('Noto Kufi Arabic'), local('Arial');
-}
-</style>`;
 
   return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
-  <defs>
-    ${fontFace}
+  <defs>`
     <radialGradient id="bg" cx="50%" cy="18%" r="80%"><stop offset="0%" stop-color="#fffaf2"/><stop offset="62%" stop-color="#f8efe3"/><stop offset="100%" stop-color="#efe0cc"/></radialGradient>
     <pattern id="paper" width="320" height="260" patternUnits="userSpaceOnUse"><g opacity=".12" fill="#4a3526" font-family="Georgia" font-size="15"><text x="4" y="18">The beautiful glamour</text><text x="4" y="42">Wedding invitation template</text><text x="4" y="66">Love story and celebration</text><text x="4" y="90">Save the date and venue</text></g><g opacity=".08" stroke="#4a3526"><line x1="0" y1="176" x2="220" y2="176"/><line x1="0" y1="194" x2="250" y2="194"/><line x1="0" y1="212" x2="180" y2="212"/></g></pattern>
     <clipPath id="photoClip"><rect x="182" y="448" width="716" height="442" rx="26"/></clipPath>
@@ -175,12 +127,11 @@ function posterSvg(input: ServerSharePosterInput, qrDataUrl: string, coverDataUr
 export async function generateSharePosterPng(input: ServerSharePosterInput) {
   const startedAt = Date.now();
   try {
-    const [qrDataUrl, coverDataUrl, cairoFont] = await Promise.all([
+    const [qrDataUrl, coverDataUrl] = await Promise.all([
       QRCode.toDataURL(input.invitationUrl || "https://badrdaawa.com", { errorCorrectionLevel: "H", margin: 0, width: 220, color: { dark: "#111111", light: "#ffffff" } }),
       imageDataUrl(input.coverImage),
-      getCairoFontBase64(),
     ]);
-    const svg = posterSvg(input, qrDataUrl, coverDataUrl, cairoFont);
+    const svg = posterSvg(input, qrDataUrl, coverDataUrl);
     const png = await sharp(Buffer.from(svg)).png().toBuffer();
     if (!png || !png.length) {
       throw new Error("Sharp produced an empty PNG buffer from SVG.");

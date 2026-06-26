@@ -6,13 +6,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PRISMA_HIDE_UPDATE_MESSAGE=true
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl gnupg fonts-noto \
+  && apt-get install -y --no-install-recommends ca-certificates curl gnupg fonts-noto-naskh-arabic \
   && install -d /usr/share/postgresql-common/pgdg \
   && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
   && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends postgresql-client-18 \
-  && apt-get install -y --no-install-recommends fonts-noto-color-emoji \
   && rm -rf /var/lib/apt/lists/*
 
 RUN pg_dump --version && pg_restore --version
