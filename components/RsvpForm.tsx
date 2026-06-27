@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
+import { PhoneInput } from "./PhoneInput";
 
 type RsvpState = {
   name: string;
@@ -54,7 +55,7 @@ export function RsvpForm({ code }: { code: string }) {
         </div>
         <div className="field">
           <label htmlFor="guest-phone">رقم الهاتف</label>
-          <input id="guest-phone" inputMode="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required />
+          <PhoneInput id="guest-phone" value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} required />
         </div>
         <div className="field">
           <label htmlFor="guest-count">عدد الأفراد</label>

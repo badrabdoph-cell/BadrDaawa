@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit, Save, X, User, Phone, Mail, ToggleLeft, ToggleRight } from "lucide-react";
+import { PhoneInput } from "./PhoneInput";
 
 type Props = {
   customerId: string;
@@ -95,7 +96,7 @@ export function ClientCustomerEditor({ customerId, currentName, currentPhone, cu
         <label className="customer-editor-field">
           <Phone size={16} />
           <span>الهاتف</span>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="رقم الهاتف" dir="ltr" />
+          <PhoneInput value={phone} onChange={(value) => setPhone(value)} />
         </label>
         <label className="customer-editor-field">
           <Mail size={16} />

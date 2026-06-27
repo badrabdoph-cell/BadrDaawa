@@ -160,6 +160,7 @@ export function getInvitationUrl(code: string, customSlug?: string | null) {
 
 export function normalizePhoneForWhatsApp(phone: string) {
   const digits = phone.replace(/[^\d]/g, "");
+  if (phone.startsWith("+") && digits.length >= 7) return digits;
   if (digits.startsWith("00")) return digits.slice(2);
   if (digits.startsWith("0")) return `20${digits.slice(1)}`;
   if (digits.length === 10 && digits.startsWith("1")) return `20${digits}`;

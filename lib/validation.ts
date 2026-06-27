@@ -9,10 +9,12 @@ const coupleStoryItemSchema = z.object({
   description: z.string().trim().max(700).optional().default(""),
 });
 
+const e164Regex = /^\+[1-9]\d{6,14}$/;
+
 export const orderRequestSchema = z.object({
   groomName: z.string().trim().min(2),
   brideName: z.string().trim().min(2),
-  phone: z.string().trim().regex(/^01\d{9}$/, "رقم الهاتف غير صحيح"),
+  phone: z.string().trim().regex(e164Regex, "رقم الهاتف غير صحيح"),
   weddingDate: z.string().trim().min(8).refine(validDateString, "اكتب تاريخ صحيح"),
   weddingTime: z.string().trim().optional().default("07:00 مساءً"),
   venue: z.string().trim().optional().default(""),
@@ -41,7 +43,7 @@ export const rsvpSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^01\d{9}$/, "رقم الهاتف يجب أن يبدأ بـ 01 ويتكون من 11 رقمًا"),
+    .regex(e164Regex, "رقم الهاتف غير صحيح"),
   attendees: z.coerce.number().int().min(1).max(20),
   status: z.enum(["confirmed", "declined"]),
   note: z.string().trim().max(500).optional(),

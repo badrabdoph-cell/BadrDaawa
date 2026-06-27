@@ -40387,6 +40387,164 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   padding: 4px 0;
 }
 
+.phone-input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(33, 28, 24, 0.15);
+  border-radius: var(--radius, 8px);
+  background: rgba(255, 255, 255, 0.78);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+  overflow: hidden;
+}
+
+.order-wizard-flow .phone-input-group {
+  min-height: 56px;
+  border: 1px solid rgba(118, 88, 45, 0.18);
+  border-radius: 15px;
+  background: linear-gradient(180deg, rgba(255, 255, 252, 0.98), rgba(255, 250, 241, 0.86));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.rsvp-interactive .poll-form .phone-input-group {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.customer-editor-field .phone-input-group {
+  min-height: auto;
+  border: 1px solid var(--border-color, rgba(245,234,214,0.15));
+  border-radius: 6px;
+  background: var(--card-bg, rgba(255,255,255,0.04));
+}
+
+.phone-input-group:focus-within {
+  border-color: #bd8f3f;
+  box-shadow: 0 0 0 4px rgba(189, 143, 63, 0.13);
+}
+
+.order-wizard-flow .phone-input-group:focus-within {
+  border-color: rgba(185, 137, 61, 0.62);
+  box-shadow: 0 0 0 4px var(--order-premium-focus, rgba(189, 143, 63, 0.13)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.field.has-error .phone-input-group {
+  border-color: rgba(167, 55, 55, 0.72);
+  background: rgba(255, 247, 247, 0.9);
+  box-shadow: 0 0 0 4px rgba(167, 55, 55, 0.08);
+}
+
+.phone-input-country {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(33, 28, 24, 0.12);
+  transition: background 140ms ease;
+}
+
+.order-wizard-flow .phone-input-country {
+  border-left-color: rgba(118, 88, 45, 0.18);
+}
+
+.phone-input-country:hover {
+  background: rgba(33, 28, 24, 0.04);
+}
+
+.phone-input-field {
+  width: 100%;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 10px;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  box-shadow: none !important;
+  min-height: inherit;
+}
+
+.phone-input-field::placeholder {
+  color: rgba(117, 104, 92, 0.55);
+}
+
+.phone-input-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  width: 250px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid rgba(33, 28, 24, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.phone-input-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.88rem;
+  text-align: left;
+  color: #211c18;
+  transition: background 100ms ease;
+}
+
+.phone-input-dropdown-item:hover {
+  background: rgba(33, 28, 24, 0.04);
+}
+
+.phone-input-dropdown-item.active {
+  background: rgba(189, 143, 63, 0.1);
+  font-weight: 800;
+}
+
+.phone-input-flag {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.phone-input-dialcode {
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.7;
+  direction: ltr;
+}
+
+.phone-input-name {
+  flex: 1;
+  text-align: right;
+}
+
+.phone-input-dialcode-option {
+  font-size: 0.78rem;
+  opacity: 0.55;
+  direction: ltr;
+}
+
+.phone-input-arrow {
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
 .customer-editor-actions {
   display: flex;
   gap: 8px;

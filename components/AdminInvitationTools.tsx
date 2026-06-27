@@ -8,6 +8,7 @@ import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeCoupleStory, normalizeGalleryStories } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import { PhoneInput } from "./PhoneInput";
 import { SimpleDateInput } from "@/components/SimpleDateInput";
 
 export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
@@ -211,7 +212,7 @@ export function AdminInvitationTools({
         {showPhone ? (
           <label className="field">
             <span>رقم التواصل</span>
-            <input value={values.phone || ""} onChange={(event) => onPatch({ phone: event.target.value })} />
+            <PhoneInput value={values.phone || ""} onChange={(value) => onPatch({ phone: value })} />
           </label>
         ) : null}
         <label className="field">

@@ -7,26 +7,21 @@ import { getInvitationTranslator, getLocaleMeta, resolveLocale } from "@/lib/i18
 import type { Invitation, Language } from "@/lib/types";
 import { getInvitationUrl } from "@/lib/utils";
 import { SmartCalendarButton } from "./SmartCalendarButton";
+import { PhoneInput } from "./PhoneInput";
 
 type PollState = "idle" | "attending" | "declined";
 type RsvpStatus = "confirmed" | "declined";
 type SuccessState = { name: string; status: RsvpStatus; alreadyRegistered?: boolean };
 
-const phonePattern = /^01\d{9}$/;
+const e164Pattern = /^\+[1-9]\d{6,14}$/;
 
 function getStoredRsvpKey(code: string) {
   return `badrdaawa-rsvp-${code}`;
 }
 
-function sanitizePhone(value: string) {
-  return value.replace(/\D/g, "").slice(0, 11);
-}
-
 function getPhoneError(value: string) {
   if (!value) return "اكتب رقم الهاتف.";
-  if (!value.startsWith("01")) return "رقم الهاتف لازم يبدأ بـ 01.";
-  if (value.length !== 11) return "رقم الهاتف لازم يكون 11 رقم بالضبط.";
-  if (!phonePattern.test(value)) return "اكتب رقم هاتف مصري صحيح مثل 01012345678.";
+  if (!e164Pattern.test(value)) return "رقم الهاتف غير صحيح.";
   return "";
 }
 
@@ -181,10 +176,9 @@ export function InvitePoll({
   }
 
   function updatePhone(value: string) {
-    const nextPhone = sanitizePhone(value);
-    setPhone(nextPhone);
-    if (!nextPhone || phonePattern.test(nextPhone)) setPhoneError("");
-    else if (nextPhone.length >= 2) setPhoneError(getPhoneError(nextPhone));
+    setPhone(value);
+    if (!value || e164Pattern.test(value)) setPhoneError("");
+    else setPhoneError(getPhoneError(value));
   }
 
   if (success) {
@@ -267,7 +261,7 @@ export function InvitePoll({
           </label>
           <label>
             <span>رقم الهاتف</span>
-            <input value={phone} onChange={(event) => updatePhone(event.target.value)} inputMode="numeric" autoComplete="tel" placeholder="01012345678" required aria-invalid={Boolean(phoneError)} aria-describedby={phoneError ? "rsvp-phone-error" : undefined} />
+            <PhoneInput value={phone} onChange={updatePhone} autoComplete="tel" />
             {phoneError ? <small id="rsvp-phone-error" className="rsvp-field-error">{phoneError}</small> : null}
           </label>
           <button className="btn btn-gold btn-glow" type="submit" disabled={state === "loading"}>

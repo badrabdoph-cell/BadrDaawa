@@ -32,6 +32,7 @@ import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { LocationPickerModal } from "./LocationPickerModal";
 import { SimpleDateInput } from "./SimpleDateInput";
+import { PhoneInput } from "./PhoneInput";
 
 type FormState = {
   groomName: string;
@@ -1419,8 +1420,7 @@ export function OrderForm({
     if (!values.groomName) nextErrors.groomName = "اكتب اسم العريس كما تحب ظهوره في الدعوة.";
     if (!values.brideName) nextErrors.brideName = "اكتب اسم العروس كما تحب ظهوره في الدعوة.";
     if (!values.phone) nextErrors.phone = "رقم الهاتف مطلوب.";
-    else if (/[\u0660-\u0669\u06F0-\u06F9]/.test(values.phone)) nextErrors.phone = "رقم الهاتف يجب أن يكون بالأرقام الإنجليزية.";
-    else if (!/^01\d{9}$/.test(values.phone)) nextErrors.phone = "رقم الهاتف غير صحيح.";
+    else if (!/^\+[1-9]\d{6,14}$/.test(values.phone)) nextErrors.phone = "رقم الهاتف غير صحيح.";
     if (!values.weddingDate) nextErrors.weddingDate = "اختار تاريخ المناسبة من التقويم.";
     else if (!normalizeWeddingDate(values.weddingDate)) nextErrors.weddingDate = "اختار تاريخ صحيح من التقويم.";
     if (!values.venue) nextErrors.venue = "اكتب مكان الحفل أو اسم القاعة.";
@@ -1951,7 +1951,7 @@ export function OrderForm({
                   <Phone size={16} />
                   رقم الهاتف
                 </label>
-                <input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="مثال: 01000000000" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined} />
+                <PhoneInput id="phone" name="phone" value={form.phone} onChange={(value) => updateField("phone", value)} required error={errors.phone} />
                 <small className="field-preview">يساعدنا على متابعة الطلب والتأكيد.</small>
                 {errors.phone ? <small className="field-error" id="phone-error">{errors.phone}</small> : null}
               </div>
