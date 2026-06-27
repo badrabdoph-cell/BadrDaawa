@@ -58,7 +58,7 @@ function getGoogleSearchUrl(destination: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
 }
 
-function getGoogleCoordinatesUrl(coordinates: Coordinates, zoom = 15) {
+function getGoogleCoordinatesUrl(coordinates: Coordinates, zoom = 13) {
   return `https://www.google.com/maps/@${coordinates.lat},${coordinates.lng},${zoom}z/data=!3m1!1e3`;
 }
 
@@ -87,7 +87,19 @@ function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinat
   if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
     return withSatelliteMapType(mapUrl, "13");
   }
-  if (!hasVenueLink && userCoordinates) {
+  if (userCoordinates) {
+    if (coordinates) {
+      return withSatelliteMapType(
+        `https://maps.google.com/maps?saddr=${userCoordinates.lat},${userCoordinates.lng}&daddr=${coordinates.lat},${coordinates.lng}&output=embed`,
+        "13"
+      );
+    }
+    if (hasVenueLink) {
+      return withSatelliteMapType(
+        `https://maps.google.com/maps?saddr=${userCoordinates.lat},${userCoordinates.lng}&daddr=${encodeURIComponent(destination)}&output=embed`,
+        "13"
+      );
+    }
     return withSatelliteMapType(`https://maps.google.com/maps?q=${userCoordinates.lat},${userCoordinates.lng}&z=13&output=embed`, "13");
   }
   if (coordinates) {
@@ -141,7 +153,7 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
         setLocationState("ready");
       },
       () => setLocationState("unavailable"),
-      { enableHighAccuracy: true, maximumAge: 90000, timeout: 9000 },
+      { enableHighAccuracy: true, maximumAge: 120000, timeout: 30000 },
     );
   }, []);
 
@@ -187,9 +199,6 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
         loading="lazy"
         referrerPolicy="no-referrer"
       />
-      <span className="map-luxury-marker" aria-hidden="true">
-        <MapPin size={23} />
-      </span>
       {!hasVenueLink ? (
         <div className="map-missing-link-badge">
           <span>{t("invitation.map.locationSoon")}</span>
