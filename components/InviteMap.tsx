@@ -126,7 +126,7 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
         loading="lazy"
         style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          border: 0, display: "block", filter: "saturate(0.92) contrast(1.04)", opacity: 1,
+          border: 0, display: "block",
         }}
       />
       <span className="map-luxury-marker" aria-hidden="true" style={{
@@ -141,48 +141,18 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
       }}>
         <MapPin size={15} style={{ transform: "rotate(45deg)", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.12))" }} />
       </span>
-      <div className="map-actions" aria-label={t("invitation.map.actionsLabel")} style={{
-        position: "relative", inset: "auto", zIndex: "auto",
-        display: "flex", gap: 8, padding: "12px 16px 16px",
-      }}>
-        <a className="map-action recommended" href={locationUrl} target="_blank" rel="noreferrer" style={{
-          flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
-          gap: 6, minHeight: 40, padding: "8px 10px",
-          border: "1px solid rgba(212, 175, 55, 0.42)", borderRadius: 12,
-          background: "linear-gradient(135deg, #f5e6c0, #f0dba8)", color: "#241708",
-          font: "inherit", fontSize: "0.78rem", fontWeight: 850,
-          cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap",
-          boxShadow: "0 4px 12px rgba(46, 31, 11, 0.1)",
-          transition: "transform 120ms ease, box-shadow 120ms ease",
-        }}>
+      <div className="map-actions" aria-label={t("invitation.map.actionsLabel")}>
+        <a className="map-action recommended" href={locationUrl} target="_blank" rel="noreferrer">
           <MapPin size={16} />
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("invitation.map.openLocation")}</span>
+          <span>{t("invitation.map.openLocation")}</span>
         </a>
-        <a className="map-action" href={directionsUrl} target="_blank" rel="noreferrer" style={{
-          flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
-          gap: 6, minHeight: 40, padding: "8px 10px",
-          border: "1px solid rgba(189, 143, 63, 0.2)", borderRadius: 12,
-          background: "rgba(255, 250, 241, 0.92)", color: "#2f2418",
-          font: "inherit", fontSize: "0.78rem", fontWeight: 850,
-          cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap",
-          boxShadow: "0 4px 12px rgba(46, 31, 11, 0.1)",
-          transition: "transform 120ms ease, box-shadow 120ms ease",
-        }}>
+        <a className="map-action" href={directionsUrl} target="_blank" rel="noreferrer">
           <Route size={16} />
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("invitation.map.directions")}</span>
+          <span>{t("invitation.map.directions")}</span>
         </a>
-        <button className="map-action map-action-share" type="button" onClick={shareLocation} style={{
-          flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
-          gap: 6, minHeight: 40, padding: "8px 10px",
-          border: "1px solid rgba(189, 143, 63, 0.2)", borderRadius: 12,
-          background: "rgba(255, 250, 241, 0.96)", color: "#2f2418",
-          font: "inherit", fontSize: "0.78rem", fontWeight: 850,
-          cursor: "pointer", whiteSpace: "nowrap",
-          boxShadow: "0 4px 12px rgba(46, 31, 11, 0.1)",
-          transition: "transform 120ms ease, box-shadow 120ms ease",
-        }}>
+        <button className="map-action map-action-share" type="button" onClick={shareLocation}>
           <Share2 size={16} />
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shareState === "copied" ? t("invitation.map.copied") : t("invitation.map.share")}</span>
+          <span>{shareState === "copied" ? t("invitation.map.copied") : t("invitation.map.share")}</span>
         </button>
       </div>
     </div>
