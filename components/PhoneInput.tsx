@@ -36,7 +36,6 @@ export function PhoneInput({
   const [initialized, setInitialized] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const btnWrapRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -136,7 +135,7 @@ export function PhoneInput({
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       <div className="phone-input-group" role="group" aria-label="رقم الهاتف">
-        <div ref={btnWrapRef} style={{ position: "relative" }}>
+        <div className="phone-input-country-wrap">
           <button
             type="button"
             className="phone-input-country"

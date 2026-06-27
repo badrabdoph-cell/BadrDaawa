@@ -40410,7 +40410,11 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   border-radius: var(--radius, 8px);
   background: rgba(255, 255, 255, 0.78);
   transition: border-color 160ms ease, box-shadow 160ms ease;
-  overflow: hidden;
+}
+
+.phone-input-country-wrap {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .order-wizard-flow .phone-input-group {
@@ -40461,9 +40465,10 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   font-size: 0.85rem;
   color: inherit;
   white-space: nowrap;
-  flex-shrink: 0;
   border-left: 1px solid rgba(33, 28, 24, 0.12);
   transition: background 140ms ease;
+  border-radius: var(--radius, 8px) 0 0 var(--radius, 8px);
+  min-height: 100%;
 }
 
 .order-wizard-flow .phone-input-country {
