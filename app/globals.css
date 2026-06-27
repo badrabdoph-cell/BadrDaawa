@@ -40495,52 +40495,58 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
 .phone-country-list {
   position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  top: calc(100% + 3px);
+  right: 0;
   z-index: 200;
   width: 100%;
-  min-width: 260px;
-  max-width: 100%;
+  min-width: 120px;
   background: #fffdf8;
   border: 1px solid rgba(33, 28, 24, 0.1);
-  border-radius: 10px;
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.08),
-    0 2px 6px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius, 8px);
+  box-shadow: var(--shadow);
   overflow: hidden;
-  animation: phoneListIn 140ms ease;
+  animation: phoneListIn 140ms ease both;
   transform-origin: top center;
 }
 
-.phone-country-list.flip-up {
-  bottom: calc(100% + 4px);
-  top: auto;
-  transform-origin: bottom center;
+.phone-country-list.closing {
+  animation: phoneListOut 120ms ease both;
 }
 
 @keyframes phoneListIn {
   from {
     opacity: 0;
-    transform: scaleY(0.97);
+    transform: translateY(-3px) scaleY(0.97);
   }
   to {
     opacity: 1;
-    transform: scaleY(1);
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes phoneListOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px) scaleY(0.97);
   }
 }
 
 .phone-country-search-wrap {
-  padding: 6px;
+  padding: 5px 5px 3px;
 }
 
 .phone-country-search {
   width: 100%;
-  height: 40px;
+  height: 36px;
   border: 1px solid rgba(33, 28, 24, 0.1);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(33, 28, 24, 0.03);
-  padding: 0 10px;
-  font-size: 0.82rem;
+  padding: 0 8px;
+  font-size: 0.78rem;
   font-family: inherit;
   color: #211c18;
   outline: none;
@@ -40557,7 +40563,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 }
 
 .phone-country-items {
-  max-height: 300px;
+  max-height: 210px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -40578,24 +40584,24 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 }
 
 .phone-country-empty {
-  padding: 16px 10px;
+  padding: 14px 8px;
   text-align: center;
   color: rgba(33, 28, 24, 0.45);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
 }
 
 .phone-country-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  height: 44px;
-  padding: 0 10px;
+  height: 42px;
+  padding: 0 8px;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-family: inherit;
   text-align: left;
   color: #211c18;
@@ -40616,7 +40622,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 }
 
 .phone-country-item-flag {
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -40624,7 +40630,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 .phone-country-item-name {
   flex: 1;
   text-align: right;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -40632,7 +40638,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 }
 
 .phone-country-item-dial {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   opacity: 0.5;
   direction: ltr;
   font-weight: 600;
