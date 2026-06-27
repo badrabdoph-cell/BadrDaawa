@@ -1280,7 +1280,7 @@ export function OrderForm({
     return {
       groomName: String(formData.get("groomName") || "").trim(),
       brideName: String(formData.get("brideName") || "").trim(),
-      phone: String(formData.get("phone") || "").trim(),
+      phone: form.phone,
       weddingDate: String(formData.get("weddingDate") || "").trim(),
       weddingTime: String(formData.get("weddingTime") || "07:00 مساءً").trim(),
       venue: String(formData.get("venue") || "").trim(),
@@ -1565,7 +1565,6 @@ export function OrderForm({
       templateSlug: selectedTemplate.slug,
       groomName: String(formData.get("groomName") || "").trim(),
       brideName: String(formData.get("brideName") || "").trim(),
-      phone: String(formData.get("phone") || "").trim(),
       weddingDate: normalizeWeddingDate(rawWeddingDate) || rawWeddingDate,
       weddingTime: String(formData.get("weddingTime") || "07:00 مساءً").trim(),
       mapUrl: String(formData.get("mapUrl") || "").trim(),
@@ -1951,7 +1950,7 @@ export function OrderForm({
                   <Phone size={16} />
                   رقم الهاتف
                 </label>
-                <PhoneInput id="phone" name="phone" value={form.phone} onChange={(value) => updateField("phone", value)} required error={errors.phone} />
+                <PhoneInput id="phone" value={form.phone} onChange={(value) => updateField("phone", value)} required error={errors.phone} />
                 <small className="field-preview">يساعدنا على متابعة الطلب والتأكيد.</small>
                 {errors.phone ? <small className="field-error" id="phone-error">{errors.phone}</small> : null}
               </div>

@@ -16,10 +16,24 @@ type PhoneInputProps = {
   error?: string;
   placeholder?: string;
   id?: string;
-  name?: string;
   required?: boolean;
   autoComplete?: string;
 };
+
+function useClickOutside(
+  ref: React.RefObject<HTMLElement | null>,
+  handler: () => void,
+) {
+  useEffect(() => {
+    function handleClick(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler();
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [ref, handler]);
+}
 
 export function PhoneInput({
   value,
@@ -27,15 +41,18 @@ export function PhoneInput({
   error,
   placeholder,
   id,
-  name,
   required,
   autoComplete,
 }: PhoneInputProps) {
   const [country, setCountry] = useState<CountryData>(DEFAULT_COUNTRY);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [rawInput, setRawInput] = useState("");
   const [initialized, setInitialized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useClickOutside(containerRef, () => setDropdownOpen(false));
 
   useEffect(() => {
     if (value && !initialized) {
@@ -51,17 +68,11 @@ export function PhoneInput({
   }, [value, initialized]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
+    if (dropdownOpen && searchRef.current) {
+      searchRef.current.focus();
+      setSearchQuery("");
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [dropdownOpen]);
 
   function handleInputChange(input: string) {
     const digits = input.replace(/[^\d]/g, "");
@@ -85,10 +96,19 @@ export function PhoneInput({
   function selectCountry(c: CountryData) {
     setCountry(c);
     setDropdownOpen(false);
+    setSearchQuery("");
     if (rawInput) {
       onChange(formatToE164(rawInput, c.code));
     }
   }
+
+  const filteredCountries = ARAB_COUNTRIES.filter(
+    (c) =>
+      !searchQuery ||
+      c.name.includes(searchQuery) ||
+      c.dialCode.includes(searchQuery) ||
+      c.code.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const displayPlaceholder = placeholder || getPhonePlaceholder(country.code);
 
@@ -109,6 +129,10 @@ export function PhoneInput({
             height="6"
             viewBox="0 0 10 6"
             fill="none"
+            style={{
+              transition: "transform 180ms ease",
+              transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+            }}
           >
             <path
               d="M1 1L5 5L9 1"
@@ -121,7 +145,6 @@ export function PhoneInput({
         </button>
         <input
           id={id}
-          name={name}
           type="tel"
           inputMode="numeric"
           autoComplete={autoComplete || "tel"}
@@ -138,19 +161,72 @@ export function PhoneInput({
       </div>
 
       {dropdownOpen && (
-        <div className="phone-input-dropdown">
-          {ARAB_COUNTRIES.map((c) => (
-            <button
-              type="button"
-              key={c.code}
-              className={`phone-input-dropdown-item${c.code === country.code ? " active" : ""}`}
-              onClick={() => selectCountry(c)}
-            >
-              <span className="phone-input-flag">{c.flag}</span>
-              <span className="phone-input-name">{c.name}</span>
-              <span className="phone-input-dialcode-option">+{c.dialCode}</span>
-            </button>
-          ))}
+        <div className="phone-input-dropdown" role="listbox">
+          <div className="phone-input-search-wrap">
+            <input
+              ref={searchRef}
+              className="phone-input-search"
+              type="text"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="ابحث عن دولة..."
+              dir="auto"
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  const items = containerRef.current?.querySelectorAll(
+                    ".phone-input-dropdown-item",
+                  );
+                  (items?.[0] as HTMLElement)?.focus();
+                }
+              }}
+            />
+          </div>
+          <div className="phone-input-dropdown-list">
+            {filteredCountries.length === 0 ? (
+              <div className="phone-input-dropdown-empty">
+                لا توجد نتائج
+              </div>
+            ) : (
+              filteredCountries.map((c) => (
+                <button
+                  type="button"
+                  key={c.code}
+                  role="option"
+                  aria-selected={c.code === country.code}
+                  className={`phone-input-dropdown-item${c.code === country.code ? " active" : ""}`}
+                  onClick={() => selectCountry(c)}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      const next = event.currentTarget
+                        .nextElementSibling as HTMLElement | null;
+                      next?.focus();
+                    }
+                    if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      const prev = event.currentTarget
+                        .previousElementSibling as HTMLElement | null;
+                      if (prev) {
+                        prev.focus();
+                      } else {
+                        searchRef.current?.focus();
+                      }
+                    }
+                    if (event.key === "Escape") {
+                      setDropdownOpen(false);
+                    }
+                  }}
+                >
+                  <span className="phone-input-flag">{c.flag}</span>
+                  <span className="phone-input-name">{c.name}</span>
+                  <span className="phone-input-dialcode-option">
+                    +{c.dialCode}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>
