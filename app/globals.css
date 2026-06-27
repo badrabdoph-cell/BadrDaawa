@@ -40512,7 +40512,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 
 .phone-country-list {
   position: absolute;
-  top: calc(100% + 3px);
+  bottom: calc(100% + 3px);
   right: 0;
   z-index: 200;
   width: 100%;
