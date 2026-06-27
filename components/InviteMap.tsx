@@ -65,14 +65,31 @@ function getDirectionsDestination(destination: string, coordinates: Coordinates 
   return coordinates ? `${coordinates.lat},${coordinates.lng}` : destination;
 }
 
+function withSatelliteMapType(url: string, zoom = "13") {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("google.") && !parsed.hostname.includes("maps.google.")) return url;
+    if (parsed.pathname.includes("/maps/embed/v1/")) {
+      parsed.searchParams.set("maptype", "satellite");
+      parsed.searchParams.set("zoom", parsed.searchParams.get("zoom") || zoom);
+    } else {
+      parsed.searchParams.set("t", "k");
+      parsed.searchParams.set("z", zoom);
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null) {
   if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
-    return mapUrl;
+    return withSatelliteMapType(mapUrl, "13");
   }
   if (coordinates) {
-    return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=15&output=embed`;
+    return withSatelliteMapType(`https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=13&output=embed`, "13");
   }
-  return `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed`;
+  return withSatelliteMapType(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=13&output=embed`, "13");
 }
 
 function getLocationUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, hasVenueLink: boolean) {
