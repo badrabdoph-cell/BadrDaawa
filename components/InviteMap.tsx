@@ -65,14 +65,14 @@ function getDirectionsDestination(destination: string, coordinates: Coordinates 
   return coordinates ? `${coordinates.lat},${coordinates.lng}` : destination;
 }
 
-function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, hasVenueLink: boolean) {
+function getEmbedUrl(mapUrl: string, destination: string, coordinates: Coordinates | null) {
   if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
     return mapUrl;
   }
   if (coordinates) {
-    return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=15&output=embed&hl=${document.documentElement.lang || "ar"}`;
+    return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=15&output=embed`;
   }
-  return `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed&hl=${document.documentElement.lang || "ar"}`;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed`;
 }
 
 function getLocationUrl(mapUrl: string, destination: string, coordinates: Coordinates | null, hasVenueLink: boolean) {
@@ -92,7 +92,7 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
   const fallbackDestination = useMemo(() => getSearchDestination(venue, city), [city, venue]);
   const coordinates = useMemo(() => extractCoordinates(mapUrl), [mapUrl]);
   const destination = useMemo(() => getMapDestination(mapUrl, fallbackDestination), [fallbackDestination, mapUrl]);
-  const mapEmbed = useMemo(() => getEmbedUrl(mapUrl, destination, coordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl]);
+  const mapEmbed = useMemo(() => getEmbedUrl(mapUrl, destination, coordinates), [coordinates, destination, mapUrl]);
   const locationUrl = useMemo(() => getLocationUrl(mapUrl, destination, coordinates, hasVenueLink), [coordinates, destination, hasVenueLink, mapUrl]);
   const directionsUrl = useMemo(() => getDirectionsUrl(destination, coordinates), [coordinates, destination]);
 
@@ -119,163 +119,72 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
   if (!hasVenueLink) return null;
 
   return (
-    <div className="map-frame route-map is-clean-map">
+    <div className="map-frame route-map is-clean-map" style={{ position: "relative", overflow: "hidden", borderRadius: 16, background: "#f0ebe2" }}>
       <iframe
         src={mapEmbed}
         title={t("invitation.map.iframeTitle")}
         loading="lazy"
-        referrerPolicy="no-referrer"
+        style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          border: 0, display: "block", filter: "saturate(0.92) contrast(1.04)", opacity: 1,
+        }}
       />
-      <span className="map-luxury-marker" aria-hidden="true">
-        <MapPin size={15} />
+      <span className="map-luxury-marker" aria-hidden="true" style={{
+        position: "absolute", top: "50%", left: "50%", zIndex: 9,
+        display: "grid", placeItems: "center",
+        width: 40, height: 40, marginTop: -44,
+        borderRadius: "50% 50% 50% 8px", border: 0,
+        background: "#fff", color: "#b8873b",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.22), 0 0 0 5px rgba(255,255,255,0.48)",
+        pointerEvents: "none",
+        transform: "translate(-50%, -50%) rotate(-45deg)",
+      }}>
+        <MapPin size={15} style={{ transform: "rotate(45deg)", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.12))" }} />
       </span>
-      <div className="map-actions" aria-label={t("invitation.map.actionsLabel")}>
-        <a className="map-action recommended" href={locationUrl} target="_blank" rel="noreferrer">
+      <div className="map-actions" aria-label={t("invitation.map.actionsLabel")} style={{
+        position: "relative", inset: "auto", zIndex: "auto",
+        display: "flex", gap: 8, padding: "12px 16px 16px",
+      }}>
+        <a className="map-action recommended" href={locationUrl} target="_blank" rel="noreferrer" style={{
+          flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
+          gap: 6, minHeight: 40, padding: "8px 10px",
+          border: "1px solid rgba(212, 175, 55, 0.42)", borderRadius: 12,
+          background: "linear-gradient(135deg, #f5e6c0, #f0dba8)", color: "#241708",
+          font: "inherit", fontSize: "0.78rem", fontWeight: 850,
+          cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap",
+          boxShadow: "0 4px 12px rgba(46, 31, 11, 0.1)",
+          transition: "transform 120ms ease, box-shadow 120ms ease",
+        }}>
           <MapPin size={16} />
-          <span>{t("invitation.map.openLocation")}</span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("invitation.map.openLocation")}</span>
         </a>
-        <a className="map-action" href={directionsUrl} target="_blank" rel="noreferrer">
+        <a className="map-action" href={directionsUrl} target="_blank" rel="noreferrer" style={{
+          flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
+          gap: 6, minHeight: 40, padding: "8px 10px",
+          border: "1px solid rgba(189, 143, 63, 0.2)", borderRadius: 12,
+          background: "rgba(255, 250, 241, 0.92)", color: "#2f2418",
+          font: "inherit", fontSize: "0.78rem", fontWeight: 850,
+          cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap",
+          boxShadow: "0 4px 12px rgba(46, 31, 11, 0.1)",
+          transition: "transform 120ms ease, box-shadow 120ms ease",
+        }}>
           <Route size={16} />
-          <span>{t("invitation.map.directions")}</span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("invitation.map.directions")}</span>
         </a>
-        <button className="map-action map-action-share" type="button" onClick={shareLocation}>
+        <button className="map-action map-action-share" type="button" onClick={shareLocation} style={{
+          flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
+          gap: 6, minHeight: 40, padding: "8px 10px",
+          border: "1px solid rgba(189, 143, 63, 0.2)", borderRadius: 12,
+          background: "rgba(255, 250, 241, 0.96)", color: "#2f2418",
+          font: "inherit", fontSize: "0.78rem", fontWeight: 850,
+          cursor: "pointer", whiteSpace: "nowrap",
+          boxShadow: "0 4px 12px rgba(46, 31, 11, 0.1)",
+          transition: "transform 120ms ease, box-shadow 120ms ease",
+        }}>
           <Share2 size={16} />
-          <span>{shareState === "copied" ? t("invitation.map.copied") : t("invitation.map.share")}</span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shareState === "copied" ? t("invitation.map.copied") : t("invitation.map.share")}</span>
         </button>
       </div>
-      <style>{`
-        .map-frame {
-          position: relative;
-          overflow: hidden;
-          border-radius: 16px;
-          background: #f0ebe2;
-          min-height: 200px;
-          border: 0;
-          box-shadow: none;
-        }
-        .map-frame iframe {
-          width: 100%;
-          height: 100%;
-          min-height: 200px;
-          display: block;
-          border: 0;
-          filter: saturate(0.92) contrast(1.04);
-          opacity: 1;
-          transition: opacity 320ms ease;
-        }
-        .map-luxury-marker {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          z-index: 9;
-          display: grid;
-          place-items: center;
-          width: 40px;
-          height: 40px;
-          margin-top: -44px;
-          border-radius: 50% 50% 50% 8px;
-          border: 0;
-          background: #fff;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.22), 0 0 0 5px rgba(255,255,255,0.48);
-          pointer-events: none;
-          animation: map-marker-drop 600ms cubic-bezier(0.2, 0.82, 0.2, 1.18) both;
-          transform: translate(-50%, -50%) rotate(-45deg);
-        }
-        .map-luxury-marker svg {
-          width: 18px;
-          height: 18px;
-          color: #b8873b;
-          filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
-          transform: rotate(45deg);
-        }
-        @keyframes map-marker-drop {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -50%) translateY(-18px) rotate(-45deg);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -50%) rotate(-45deg);
-          }
-        }
-        .map-actions {
-          position: relative;
-          inset: auto;
-          z-index: auto;
-          display: flex !important;
-          gap: 8px;
-          padding: 12px 16px 16px;
-          grid-template-columns: none;
-        }
-        .map-action {
-          flex: 1;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          min-height: 40px;
-          padding: 8px 10px;
-          border: 1px solid rgba(189, 143, 63, 0.2);
-          border-radius: 12px;
-          background: rgba(255, 250, 241, 0.92);
-          color: #2f2418;
-          font: inherit;
-          font-size: 0.78rem;
-          font-weight: 850;
-          cursor: pointer;
-          appearance: none;
-          text-decoration: none;
-          box-shadow: 0 4px 12px rgba(46, 31, 11, 0.1);
-          transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
-          white-space: nowrap;
-        }
-        .map-action:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 8px 20px rgba(46, 31, 11, 0.16);
-        }
-        .map-action:active {
-          transform: scale(0.97);
-        }
-        .map-action.recommended {
-          border-color: rgba(212, 175, 55, 0.42);
-          background: linear-gradient(135deg, #f5e6c0, #f0dba8);
-          color: #241708;
-        }
-        .map-action.recommended:active {
-          box-shadow: 0 2px 6px rgba(38, 24, 4, 0.1);
-        }
-        .map-action-share {
-          background: rgba(255, 250, 241, 0.96);
-        }
-        .map-action span {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .map-action svg {
-          flex: 0 0 auto;
-        }
-        @media (max-width: 420px) {
-          .map-actions {
-            gap: 6px;
-            padding: 10px 12px 14px;
-          }
-          .map-action {
-            min-height: 36px;
-            font-size: 0.72rem;
-            padding: 6px 8px;
-          }
-          .map-luxury-marker {
-            width: 34px;
-            height: 34px;
-            margin-top: -38px;
-          }
-          .map-luxury-marker svg {
-            width: 15px;
-            height: 15px;
-          }
-        }
-      `}</style>
     </div>
   );
 }

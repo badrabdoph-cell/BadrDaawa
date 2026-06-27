@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
+import { SimpleDateInput } from "@/components/SimpleDateInput";
 
 type Props = {
   code: string;
@@ -260,12 +261,7 @@ export function AdminInvitationRow({
         </td>
         <td className="cell-date" data-label="تاريخ الحفل">
           {editing ? (
-            <input
-              className="inline-edit-input inline-edit-date"
-              type="date"
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-            />
+            <SimpleDateInput value={editDate} onChange={(value) => setEditDate(value)} />
           ) : (
             weddingDate
           )}

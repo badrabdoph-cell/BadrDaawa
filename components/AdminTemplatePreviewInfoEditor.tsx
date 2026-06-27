@@ -30,6 +30,7 @@ import { uploadBrowserPreviewImage, type BrowserImageUploadStatus } from "@/lib/
 import { acceptedImageFormats } from "@/lib/image-formats";
 import type { TemplatePreviewEditableInfo, TemplatePreviewInfo } from "@/lib/template-preview-info";
 import type { CoupleStoryItem, GalleryStoryItem, TemplateDefinition } from "@/lib/types";
+import { SimpleDateInput } from "@/components/SimpleDateInput";
 
 type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
 type EditMode = "global" | "template";
@@ -454,7 +455,7 @@ export function AdminTemplatePreviewInfoEditor({ templates, templatePreviewInfo 
                 <input value={state.brideName} onChange={(event) => patch({ brideName: event.target.value })} />
               </Field>
               <Field label="التاريخ" focusKey="date" onFocusField={focusPreview}>
-                <input type="date" value={state.weddingDate} onChange={(event) => patch({ weddingDate: event.target.value })} />
+                <SimpleDateInput value={state.weddingDate} onChange={(value) => patch({ weddingDate: value })} />
               </Field>
               <Field label="الوقت" focusKey="date" onFocusField={focusPreview}>
                 <select value={state.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })}>

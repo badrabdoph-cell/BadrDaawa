@@ -26,6 +26,7 @@ import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import { getPrePublishValidationReport, prePublishStatusLabel, prePublishStatusSymbol } from "@/lib/pre-publish-validation";
 import type { TemplatePreviewEditableInfo } from "@/lib/template-preview-info";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts } from "@/lib/types";
+import { SimpleDateInput } from "@/components/SimpleDateInput";
 
 type WizardTemplate = {
   slug: string;
@@ -1046,7 +1047,7 @@ export function AdminNewInvitationWizard({
               <CalendarDays size={16} />
               تاريخ المناسبة
             </label>
-            <input id="adminWeddingDate" type="date" value={draft.weddingDate} onChange={(event) => patch({ weddingDate: event.target.value })} required />
+            <SimpleDateInput id="adminWeddingDate" value={draft.weddingDate} onChange={(value) => patch({ weddingDate: value })} required />
           </div>
 
           <div className="field">
@@ -1208,7 +1209,7 @@ export function AdminNewInvitationWizard({
   function renderEventStep() {
     return (
       <div className="new-invite-field-grid">
-        <label className="field"><span>التاريخ</span><input type="date" value={draft.weddingDate} onChange={(event) => patch({ weddingDate: event.target.value })} /></label>
+        <label className="field"><span>التاريخ</span><SimpleDateInput value={draft.weddingDate} onChange={(value) => patch({ weddingDate: value })} /></label>
         <label className="field"><span>الوقت</span>
           <select value={draft.weddingTime} onChange={(event) => patch({ weddingTime: event.target.value })}>
             <option value="" disabled>اختر وقت الحفل</option>

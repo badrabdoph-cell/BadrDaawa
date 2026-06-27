@@ -8,6 +8,7 @@ import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeCoupleStory, normalizeGalleryStories } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import { SimpleDateInput } from "@/components/SimpleDateInput";
 
 export type AdminToolTemplate = Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
 export type AdminToolMusicFile = { url: string; modifiedAt?: number; name?: string; id?: string; sizeBytes?: number; extension?: string };
@@ -215,7 +216,7 @@ export function AdminInvitationTools({
         ) : null}
         <label className="field">
           <span>تاريخ المناسبة</span>
-          <input ref={refs?.fieldRefs?.weddingDate} type="date" value={values.weddingDate} onChange={(event) => onPatch({ weddingDate: event.target.value })} />
+          <SimpleDateInput ref={refs?.fieldRefs?.weddingDate ?? undefined} value={values.weddingDate} onChange={(value) => onPatch({ weddingDate: value })} />
         </label>
         <label className="field wide">
           <span>مكان الحفل</span>

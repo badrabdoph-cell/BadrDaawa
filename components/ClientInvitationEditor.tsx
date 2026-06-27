@@ -10,6 +10,7 @@ import { acceptedImageFormats } from "@/lib/image-formats";
 import { normalizeGalleryStories, normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { unifiedImageSlots } from "@/lib/invitation-template-bindings";
 import type { ContentPreset, CoupleStoryItem, GalleryStoryItem, Invitation, InvitationTexts, TemplateDefinition } from "@/lib/types";
+import { SimpleDateInput } from "@/components/SimpleDateInput";
 
 type MusicFile = { id?: string; name?: string; url: string; modifiedAt: number };
 type ImageSlotState = { previewUrl: string; dataUrl: string; name: string; loading: boolean };
@@ -413,7 +414,7 @@ export function ClientInvitationEditor({
           </label>
           <label className="field">
             <span>التاريخ</span>
-            <input ref={fieldRefs.weddingDate} type="date" value={weddingDate} onChange={(event) => { setWeddingDate(event.target.value); markDirty(); }} />
+            <SimpleDateInput ref={fieldRefs.weddingDate} value={weddingDate} onChange={(value) => { setWeddingDate(value); markDirty(); }} />
           </label>
           <label className="field">
             <span><Clock size={15} /> وقت الفرح</span>

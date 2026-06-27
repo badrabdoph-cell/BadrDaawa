@@ -31,6 +31,7 @@ import { calculateKeyboardInset, getIncompleteRequiredStoryStage, orderStoryPres
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { LocationPickerModal } from "./LocationPickerModal";
+import { SimpleDateInput } from "./SimpleDateInput";
 
 type FormState = {
   groomName: string;
@@ -1913,7 +1914,7 @@ export function OrderForm({
                   <CalendarDays size={16} />
                   تاريخ المناسبة
                 </label>
-                <input id="weddingDate" name="weddingDate" type="date" value={normalizedDate || form.weddingDate} onChange={(event) => updateField("weddingDate", event.target.value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
+                <SimpleDateInput id="weddingDate" name="weddingDate" value={normalizedDate || form.weddingDate} onChange={(value) => updateField("weddingDate", value)} required aria-invalid={Boolean(errors.weddingDate)} aria-describedby={errors.weddingDate ? "weddingDate-error weddingDate-hint" : "weddingDate-hint"} />
                 {readableDate ? <small className="field-preview" id="weddingDate-hint">هيظهر في الدعوة: {readableDate}</small> : null}
                 {errors.weddingDate ? <small className="field-error" id="weddingDate-error">{errors.weddingDate}</small> : null}
               </div>
