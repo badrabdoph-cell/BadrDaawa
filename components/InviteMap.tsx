@@ -104,7 +104,7 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
         <span className="map-fallback-pin venue"><MapPin size={18} /></span>
         {userCoords ? <span className="map-fallback-pin visitor"><LocateFixed size={16} /></span> : null}
       </div>
-      {hasVenueCoords ? <LeafletMap venueCoords={venueCoords} userCoords={userCoords} /> : null}
+      <LeafletMap venueCoords={venueCoords} userCoords={userCoords} />
       {!hasVenueLink ? (
         <div className="map-missing-link-badge"><span>{t("invitation.map.locationSoon")}</span></div>
       ) : null}
