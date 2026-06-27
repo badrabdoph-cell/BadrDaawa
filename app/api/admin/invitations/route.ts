@@ -12,6 +12,7 @@ import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug"
 import { featuredOneTemplate } from "@/lib/templates";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import { getRedirectUrl } from "@/lib/utils";
+import { extractCoordinatesFromUrl } from "@/lib/map-url";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest) {
   const venue = String(formData.get("venue") || "").trim();
   const city = String(formData.get("city") || "").trim();
   const mapUrl = String(formData.get("mapUrl") || "").trim();
+  const mapCoords = extractCoordinatesFromUrl(mapUrl);
+  const latitude = mapCoords?.lat ?? null;
+  const longitude = mapCoords?.lng ?? null;
   const language = String(formData.get("language") || "") === "en" ? "en" : "ar";
   const rawMusicUrl = String(formData.get("musicUrl") || "").trim();
   const uploadedAudio = formData.get("audioFile");
@@ -166,6 +170,8 @@ export async function POST(request: NextRequest) {
             venue,
             city,
             mapUrl,
+            latitude,
+            longitude,
             heroPhoto: gallery[0],
             gallery,
             musicUrl,

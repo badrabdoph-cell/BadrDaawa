@@ -15,6 +15,7 @@ import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib
 import type { Invitation, OrderRequest } from "@/lib/types";
 import { getPublicSiteUrl, getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { validateOrderUpdate } from "@/lib/validation-enhanced";
+import { extractCoordinatesFromUrl } from "@/lib/map-url";
 
 export const runtime = "nodejs";
 
@@ -418,6 +419,10 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
   const trialDays = payload.trialDays && payload.trialDays >= 1 && payload.trialDays <= 10 ? payload.trialDays : null;
   const trialEndsAt = trialDays ? new Date(Date.now() + trialDays * 86400000) : null;
 
+  const orderMapCoords = extractCoordinatesFromUrl(draft.mapUrl);
+  const orderLatitude = orderMapCoords?.lat ?? null;
+  const orderLongitude = orderMapCoords?.lng ?? null;
+
   const invitationData = {
     status: "ACTIVE" as never,
     language: order.language,
@@ -428,6 +433,8 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     venue: draft.venue,
     city: "",
     mapUrl: draft.mapUrl,
+    latitude: orderLatitude,
+    longitude: orderLongitude,
     heroPhoto: finalGallery[0],
     gallery: finalGallery,
     musicUrl: musicUrl || undefined,

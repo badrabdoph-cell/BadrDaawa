@@ -40506,17 +40506,22 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   padding: 8px 8px 4px;
 }
 
+.phone-input-search-wrap.sheet-search {
+  padding: 0 16px 12px;
+}
+
 .phone-input-search {
   width: 100%;
   border: 1px solid rgba(33, 28, 24, 0.1);
   border-radius: 10px;
   background: rgba(33, 28, 24, 0.03);
-  padding: 8px 10px;
-  font-size: 0.82rem;
+  padding: 10px 12px;
+  font-size: 0.88rem;
   font-family: inherit;
   color: #211c18;
   outline: none;
   transition: border-color 140ms ease;
+  -webkit-appearance: none;
 }
 
 .phone-input-search:focus {
@@ -40527,13 +40532,21 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   color: rgba(33, 28, 24, 0.35);
 }
 
-.phone-input-dropdown-list {
-  max-height: 220px;
+.phone-dropdown-list {
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.phone-input-dropdown .phone-dropdown-list {
+  max-height: 220px;
   padding: 4px;
 }
 
-.phone-input-dropdown-empty {
+.phone-dropdown-list-inner {
+  padding: 0;
+}
+
+.phone-dropdown-empty {
   padding: 20px 12px;
   text-align: center;
   color: rgba(33, 28, 24, 0.45);
@@ -40541,12 +40554,12 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   font-weight: 600;
 }
 
-.phone-input-dropdown-item {
+.phone-dropdown-item {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: none;
   border-radius: 10px;
   background: transparent;
@@ -40558,13 +40571,17 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   transition: background 100ms ease;
 }
 
-.phone-input-dropdown-item:hover,
-.phone-input-dropdown-item:focus-visible {
+.phone-input-dropdown .phone-dropdown-item {
+  padding: 8px 10px;
+}
+
+.phone-dropdown-item:hover,
+.phone-dropdown-item:focus-visible {
   background: rgba(33, 28, 24, 0.05);
   outline: none;
 }
 
-.phone-input-dropdown-item.active {
+.phone-dropdown-item.active {
   background: rgba(189, 143, 63, 0.1);
   font-weight: 800;
   color: #7b551f;
@@ -40582,22 +40599,114 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   direction: ltr;
 }
 
-.phone-input-name {
-  flex: 1;
-  text-align: right;
-  font-size: 0.88rem;
+.phone-input-arrow {
+  opacity: 0.4;
+  flex-shrink: 0;
 }
 
-.phone-input-dialcode-option {
-  font-size: 0.78rem;
+.phone-dropdown-flag {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.phone-dropdown-name {
+  flex: 1;
+  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.phone-dropdown-dial {
+  font-size: 0.8rem;
   opacity: 0.5;
   direction: ltr;
   font-weight: 600;
 }
 
-.phone-input-arrow {
-  opacity: 0.4;
+/* ── Bottom Sheet ── */
+
+.phone-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.phone-sheet-panel {
+  width: 100%;
+  max-width: 500px;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  background: #fffdf8;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 40px rgba(42, 32, 22, 0.1);
+  transform: translateY(100%);
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+
+.phone-sheet-panel.is-open {
+  transform: translateY(0);
+}
+
+.phone-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 12px;
+  position: relative;
+  min-height: 52px;
+}
+
+.phone-sheet-title {
+  flex: 1;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #211c18;
+}
+
+.phone-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(33, 28, 24, 0.06);
+  cursor: pointer;
+  color: #211c18;
   flex-shrink: 0;
+  transition: background 140ms ease;
+}
+
+.phone-sheet-close:hover {
+  background: rgba(33, 28, 24, 0.12);
+}
+
+.phone-sheet-panel .phone-dropdown-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 8px 20px;
+}
+
+.phone-sheet-panel .phone-dropdown-item {
+  padding: 12px 12px;
+  border-radius: 12px;
+}
+
+.phone-sheet-panel .phone-dropdown-item.active {
+  background: rgba(189, 143, 63, 0.1);
+  font-weight: 800;
+  color: #7b551f;
 }
 
 .customer-editor-actions {

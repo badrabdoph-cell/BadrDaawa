@@ -52,6 +52,8 @@ export type Invitation = {
   venue: string;
   city: string;
   mapUrl: string;
+  latitude?: number | null;
+  longitude?: number | null;
   heroPhoto: string;
   heroVideoUrl?: string;
   gallery: string[];
@@ -225,6 +227,8 @@ export type OrderRequest = {
   weddingTime?: string;
   venue: string;
   mapUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   notes?: string;
   imageUrls?: string[];
   musicEnabled?: boolean;

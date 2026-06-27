@@ -92,6 +92,8 @@ model Invitation {
   venue       String
   city        String?
   mapUrl      String?
+  latitude    Float?
+  longitude   Float?
   heroPhoto   String?
   gallery     Json              @default("[]")
   musicUrl    String?
@@ -154,6 +156,8 @@ model OrderRequest {
   weddingTime String  @default("07:00 مساءً")
   venue       String
   mapUrl      String?
+  latitude    Float?
+  longitude   Float?
   notes       String?
   imageUrls   Json            @default("[]")
   musicEnabled Boolean         @default(false)

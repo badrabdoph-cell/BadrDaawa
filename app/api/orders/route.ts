@@ -12,6 +12,7 @@ import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
+import { extractCoordinatesFromUrl } from "@/lib/map-url";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -178,6 +179,9 @@ export async function POST(request: NextRequest) {
     instagramUrl: cleanExternalUrl(parsed.data.photographerInstagramUrl),
   };
   const mapUrl = cleanExternalUrl(parsed.data.mapUrl);
+  const orderMapCoords = extractCoordinatesFromUrl(mapUrl);
+  const orderLatitude = orderMapCoords?.lat ?? null;
+  const orderLongitude = orderMapCoords?.lng ?? null;
   const imageNotes = imageUrls.length ? `صور الطلب:\n${imageUrls.map((url, index) => `${index + 1}. ${url}`).join("\n")}` : "";
   const mapNotes = mapUrl ? `رابط موقع القاعه:\n${mapUrl}` : "";
   const musicNotes = effectiveMusicEnabled
@@ -279,6 +283,8 @@ export async function POST(request: NextRequest) {
           weddingTime: parsed.data.weddingTime || "07:00 مساءً",
           venue: parsed.data.venue || "",
           mapUrl,
+          latitude: orderLatitude,
+          longitude: orderLongitude,
           notes,
           imageUrls,
           musicEnabled: effectiveMusicEnabled,

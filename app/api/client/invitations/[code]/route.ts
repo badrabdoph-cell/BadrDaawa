@@ -8,6 +8,7 @@ import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation } from "@/lib/types";
+import { extractCoordinatesFromUrl } from "@/lib/map-url";
 
 async function isClientAllowed(request: NextRequest, code: string) {
   return verifyClientSessionCookie(request.cookies.get(CLIENT_SESSION_COOKIE)?.value, code);
@@ -180,6 +181,9 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   fileData.city = city;
   data.mapUrl = mapUrl;
   fileData.mapUrl = mapUrl;
+  const clientMapCoords = extractCoordinatesFromUrl(mapUrl);
+  data.latitude = clientMapCoords?.lat ?? null;
+  data.longitude = clientMapCoords?.lng ?? null;
 
   if (Array.isArray(payload.gallery)) {
     const galleryInput = payload.gallery.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3);
@@ -347,6 +351,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (mapUrl) {
     data.mapUrl = mapUrl;
     fileData.mapUrl = mapUrl;
+    const formMapCoords = extractCoordinatesFromUrl(mapUrl);
+    data.latitude = formMapCoords?.lat ?? null;
+    data.longitude = formMapCoords?.lng ?? null;
   }
   if (formData.has("musicUrl") || uploadedAudio instanceof File) {
     const uploadedMusicUrl = await saveUploadedAudioFile(uploadedAudio instanceof File ? uploadedAudio : null, currentMusicUrl);

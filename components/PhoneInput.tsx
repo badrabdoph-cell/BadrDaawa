@@ -49,10 +49,27 @@ export function PhoneInput({
   const [searchQuery, setSearchQuery] = useState("");
   const [rawInput, setRawInput] = useState("");
   const [initialized, setInitialized] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [sheetAnimatedIn, setSheetAnimatedIn] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const sheetSearchRef = useRef<HTMLInputElement>(null);
 
-  useClickOutside(containerRef, () => setDropdownOpen(false));
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  useClickOutside(containerRef, () => {
+    if (!isMobile) setDropdownOpen(false);
+  });
 
   useEffect(() => {
     if (value && !initialized) {
@@ -73,6 +90,41 @@ export function PhoneInput({
       setSearchQuery("");
     }
   }, [dropdownOpen]);
+
+  useEffect(() => {
+    if (sheetVisible) {
+      document.body.style.overflow = "hidden";
+      requestAnimationFrame(() => setSheetAnimatedIn(true));
+      requestAnimationFrame(() => sheetSearchRef.current?.focus());
+    } else {
+      document.body.style.overflow = "";
+      setSheetAnimatedIn(false);
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sheetVisible]);
+
+  function openCountryPicker() {
+    if (isMobile) {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      setSearchQuery("");
+      setSheetVisible(true);
+    } else {
+      setSearchQuery("");
+      setDropdownOpen(true);
+    }
+  }
+
+  function closeSheet() {
+    setSheetAnimatedIn(false);
+    setTimeout(() => {
+      setSheetVisible(false);
+      requestAnimationFrame(() => phoneInputRef.current?.focus());
+    }, 220);
+  }
 
   function handleInputChange(input: string) {
     const digits = input.replace(/[^\d]/g, "");
@@ -95,10 +147,14 @@ export function PhoneInput({
 
   function selectCountry(c: CountryData) {
     setCountry(c);
-    setDropdownOpen(false);
     setSearchQuery("");
     if (rawInput) {
       onChange(formatToE164(rawInput, c.code));
+    }
+    if (isMobile) {
+      closeSheet();
+    } else {
+      setDropdownOpen(false);
     }
   }
 
@@ -112,13 +168,39 @@ export function PhoneInput({
 
   const displayPlaceholder = placeholder || getPhonePlaceholder(country.code);
 
+  const listContent = (
+    <div className="phone-dropdown-list-inner">
+      {filteredCountries.length === 0 ? (
+        <div className="phone-dropdown-empty">لا توجد نتائج</div>
+      ) : (
+        filteredCountries.map((c) => (
+          <button
+            type="button"
+            key={c.code}
+            role="option"
+            aria-selected={c.code === country.code}
+            className={`phone-dropdown-item${c.code === country.code ? " active" : ""}`}
+            onClick={() => selectCountry(c)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setDropdownOpen(false);
+            }}
+          >
+            <span className="phone-dropdown-flag">{c.flag}</span>
+            <span className="phone-dropdown-name">{c.name}</span>
+            <span className="phone-dropdown-dial">+{c.dialCode}</span>
+          </button>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       <div className="phone-input-group" role="group" aria-label="رقم الهاتف">
         <button
           type="button"
           className="phone-input-country"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
+          onClick={openCountryPicker}
           title={country.name}
         >
           <span className="phone-input-flag">{country.flag}</span>
@@ -131,7 +213,8 @@ export function PhoneInput({
             fill="none"
             style={{
               transition: "transform 180ms ease",
-              transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transform:
+                dropdownOpen || sheetVisible ? "rotate(180deg)" : "rotate(0deg)",
             }}
           >
             <path
@@ -144,6 +227,7 @@ export function PhoneInput({
           </svg>
         </button>
         <input
+          ref={phoneInputRef}
           id={id}
           type="tel"
           inputMode="numeric"
@@ -160,7 +244,8 @@ export function PhoneInput({
         />
       </div>
 
-      {dropdownOpen && (
+      {/* Desktop dropdown */}
+      {!isMobile && dropdownOpen && (
         <div className="phone-input-dropdown" role="listbox">
           <div className="phone-input-search-wrap">
             <input
@@ -175,57 +260,62 @@ export function PhoneInput({
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
                   const items = containerRef.current?.querySelectorAll(
-                    ".phone-input-dropdown-item",
+                    ".phone-dropdown-item",
                   );
                   (items?.[0] as HTMLElement)?.focus();
                 }
               }}
             />
           </div>
-          <div className="phone-input-dropdown-list">
-            {filteredCountries.length === 0 ? (
-              <div className="phone-input-dropdown-empty">
-                لا توجد نتائج
-              </div>
-            ) : (
-              filteredCountries.map((c) => (
-                <button
-                  type="button"
-                  key={c.code}
-                  role="option"
-                  aria-selected={c.code === country.code}
-                  className={`phone-input-dropdown-item${c.code === country.code ? " active" : ""}`}
-                  onClick={() => selectCountry(c)}
-                  onKeyDown={(event) => {
-                    if (event.key === "ArrowDown") {
-                      event.preventDefault();
-                      const next = event.currentTarget
-                        .nextElementSibling as HTMLElement | null;
-                      next?.focus();
-                    }
-                    if (event.key === "ArrowUp") {
-                      event.preventDefault();
-                      const prev = event.currentTarget
-                        .previousElementSibling as HTMLElement | null;
-                      if (prev) {
-                        prev.focus();
-                      } else {
-                        searchRef.current?.focus();
-                      }
-                    }
-                    if (event.key === "Escape") {
-                      setDropdownOpen(false);
-                    }
-                  }}
-                >
-                  <span className="phone-input-flag">{c.flag}</span>
-                  <span className="phone-input-name">{c.name}</span>
-                  <span className="phone-input-dialcode-option">
-                    +{c.dialCode}
-                  </span>
-                </button>
-              ))
-            )}
+          <div className="phone-dropdown-list scrollable">{listContent}</div>
+        </div>
+      )}
+
+      {/* Mobile bottom sheet */}
+      {isMobile && sheetVisible && (
+        <div className="phone-sheet-overlay" onClick={closeSheet}>
+          <div
+            className={`phone-sheet-panel${sheetAnimatedIn ? " is-open" : ""}`}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="اختر الدولة"
+          >
+            <div className="phone-sheet-header">
+              <button
+                type="button"
+                className="phone-sheet-close"
+                onClick={closeSheet}
+                aria-label="إغلاق"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path
+                    d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <span className="phone-sheet-title">اختر الدولة</span>
+            </div>
+
+            <div className="phone-input-search-wrap sheet-search">
+              <input
+                ref={sheetSearchRef}
+                className="phone-input-search"
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="ابحث عن دولة..."
+                dir="auto"
+              />
+            </div>
+
+            <div className="phone-dropdown-list scrollable sheet-list">
+              {listContent}
+            </div>
           </div>
         </div>
       )}

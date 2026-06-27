@@ -12,6 +12,7 @@ import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublishedTemplatePreviewInfo, resolveTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getPublishedTemplateWithPreviewMusic } from "@/lib/template-settings";
 import { normalizeInternalAssetUrl } from "@/lib/utils";
+import { extractCoordinatesFromUrl } from "@/lib/map-url";
 import type { Invitation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -196,6 +197,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
     venue: cleanPreviewText(query?.venue, effectiveTemplatePreviewInfo.venue),
     city: cleanPreviewText(query?.city, effectiveTemplatePreviewInfo.city),
     mapUrl: previewMapUrl,
+    latitude: extractCoordinatesFromUrl(previewMapUrl)?.lat ?? null,
+    longitude: extractCoordinatesFromUrl(previewMapUrl)?.lng ?? null,
     heroPhoto: previewGallery[0] || fallbackGallery[0],
     heroVideoUrl: previewHeroVideoUrl || undefined,
     gallery: previewGallery.length ? previewGallery : fallbackGallery,

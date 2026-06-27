@@ -19,6 +19,8 @@ type DatabaseInvitation = {
   venue: string;
   city: string | null;
   mapUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
   heroPhoto: string | null;
   heroVideoUrl?: string | null;
   gallery: unknown;
@@ -119,6 +121,8 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     venue: invitation.venue,
     city: invitation.city || "",
     mapUrl: invitation.mapUrl || "",
+    latitude: invitation.latitude ?? null,
+    longitude: invitation.longitude ?? null,
     heroPhoto,
     heroVideoUrl: cleanInvitationHeroVideoUrl(invitation.heroVideoUrl || rawTexts.heroVideoUrl) || undefined,
     gallery: gallery.length ? gallery : [heroPhoto],

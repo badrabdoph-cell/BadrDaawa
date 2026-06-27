@@ -16,6 +16,7 @@ import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib
 import type { Invitation } from "@/lib/types";
 import { getPublicSiteUrl } from "@/lib/utils";
 import { getSiteSettings } from "@/lib/site-settings";
+import { extractCoordinatesFromUrl } from "@/lib/map-url";
 
 export const runtime = "nodejs";
 
@@ -312,6 +313,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const mapUrl = cleanText(input.mapUrl);
+    const mapCoords = extractCoordinatesFromUrl(mapUrl);
+    const latitude = mapCoords?.lat ?? null;
+    const longitude = mapCoords?.lng ?? null;
     const data = {
       status,
       customSlug: customSlug || null,
@@ -322,7 +327,9 @@ export async function POST(request: NextRequest) {
       weddingTime: cleanText(input.weddingTime, "07:00 مساءً"),
       venue,
       city: cleanText(input.city),
-      mapUrl: cleanText(input.mapUrl),
+      mapUrl,
+      latitude,
+      longitude,
       heroPhoto: gallery[0],
       gallery,
       musicUrl,

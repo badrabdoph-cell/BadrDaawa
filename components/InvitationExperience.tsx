@@ -460,7 +460,7 @@ export function InvitationExperience({
             <h2>{invitation.venue}</h2>
             <p>{invitation.city}</p>
           </div>
-          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
         </section>
 
         {showPhotographer ? (
@@ -674,7 +674,7 @@ function LuxeNoirInvitationExperience({ invitation, musicUrl, photographer }: { 
             <p>{invitation.city}</p>
           </div>
           <div className="noir-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -781,7 +781,7 @@ function IvoryArchesInvitationExperience({ invitation, musicUrl, photographer }:
             <strong>ننتظركم بكل حب</strong>
           </div>
           <div className="ivory-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -884,7 +884,7 @@ function MobileGoldInvitationExperience({ invitation, musicUrl, photographer }: 
             <p>{invitation.city}</p>
           </div>
           <div className="mobile-gold-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -997,7 +997,7 @@ function BohoChicInvitationExperience({ invitation, musicUrl, photographer }: { 
             <span>{invitation.city}</span>
           </div>
           <div className="boho-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1129,7 +1129,7 @@ function GardenEleganceInvitationExperience({ invitation, musicUrl, photographer
         {images.length > 1 ? <InviteGallery className="garden-gallery-grid" images={images.slice(1)} locale={invitation.language} label={invitationT(invitation, "invitation.galleryLabel")} /> : null}
 
         <section className="garden-map-frame">
-          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+          <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
         </section>
 
         {showPhotographer ? (
@@ -1272,7 +1272,7 @@ function FeaturedOneInvitationExperience({ invitation, musicUrl, photographer }:
             <p>{invitation.city}</p>
           </div>
           <div className="featured-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1383,7 +1383,7 @@ function CinematicRoseInvitationExperience({ invitation, musicUrl, photographer 
             <p>{invitation.city}</p>
           </div>
           <div className="cinema-rose-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1497,7 +1497,7 @@ function ModernCinematicInvitationExperience({ invitation, musicUrl, photographe
             <p>{invitation.city}</p>
           </div>
           <div className="modern-cinema-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1612,7 +1612,7 @@ function EtherealGlassInvitationExperience({ invitation, musicUrl, photographer 
             <p>{invitation.city}</p>
           </div>
           <div className="ethereal-glass-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1688,7 +1688,7 @@ function BotanicalThemeInvitationExperience({ invitation, musicUrl, photographer
             <p>{invitation.city}</p>
           </div>
           <div className="botanical-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1763,7 +1763,7 @@ function RoyalGoldInvitationExperience({ invitation, musicUrl, photographer }: {
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="royal-gold-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1825,7 +1825,7 @@ function BohoSandInvitationExperience({ invitation, musicUrl, photographer }: { 
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="boho-sand-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1888,7 +1888,7 @@ function PureWhiteInvitationExperience({ invitation, musicUrl, photographer }: {
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="pure-white-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -1949,7 +1949,7 @@ function NeonThemeInvitationExperience({ invitation, musicUrl, photographer }: {
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="neon-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -2011,7 +2011,7 @@ function VintageThemeInvitationExperience({ invitation, musicUrl, photographer }
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="vintage-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -2073,7 +2073,7 @@ function FairytaleThemeInvitationExperience({ invitation, musicUrl, photographer
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="fairytale-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -2140,7 +2140,7 @@ function OceanThemeInvitationExperience({ invitation, musicUrl, photographer }: 
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="ocean-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -2204,7 +2204,7 @@ function ArtDecoThemeInvitationExperience({ invitation, musicUrl, photographer }
           <h2>{invitation.venue}</h2>
           <p>{invitation.city}</p>
           <div className="artdeco-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
           </div>
         </section>
 
@@ -2266,7 +2266,7 @@ function MagazineThemeInvitationExperience({ invitation, musicUrl, photographer 
             <h2>{invitation.venue}</h2>
             <p>{invitation.city}</p>
             <div className="magazine-map-frame">
-              <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+              <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
             </div>
           </section>
 
@@ -2355,7 +2355,7 @@ function CinematicStoryInvitationExperience({ invitation, musicUrl, photographer
             <p>{invitation.city}</p>
           </div>
           <div className="cinematic-map-frame">
-            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} locale={invitation.language} />
+            <InviteMap venue={invitation.venue} city={invitation.city} mapUrl={invitation.mapUrl} latitude={invitation.latitude} longitude={invitation.longitude} locale={invitation.language} />
             <span aria-hidden="true" />
           </div>
         </section>
