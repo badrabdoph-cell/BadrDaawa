@@ -20288,6 +20288,18 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   opacity: 1;
 }
 
+.leaflet-map-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-map-container .leaflet-control-attribution {
+  display: none !important;
+}
+
 .map-open-layer {
   position: absolute;
   inset: 0;

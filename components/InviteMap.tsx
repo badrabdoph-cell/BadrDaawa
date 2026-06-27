@@ -1,31 +1,17 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useMemo, useRef, useState } from "react";
 import { LocateFixed, MapPin, Route, Share2 } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
-import { extractCoordinatesFromUrl, getTextDestination, isEmbedUrl, isShortLink, tryMakeEmbedUrl } from "@/lib/map-url";
+import { extractCoordinatesFromUrl, getTextDestination, isEmbedUrl } from "@/lib/map-url";
 import type { Coordinates } from "@/lib/map-url";
 import type { Language } from "@/lib/types";
 
+const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false });
+
 type LocationState = "idle" | "locating" | "ready" | "unavailable";
 type ShareState = "idle" | "copied";
-
-function withSatellite(url: string, zoom = "17") {
-  try {
-    const p = new URL(url);
-    if (!p.hostname.includes("google.") && !p.hostname.includes("maps.google.")) return url;
-    if (p.pathname.includes("/maps/embed/v1/")) {
-      p.searchParams.set("maptype", "satellite");
-      p.searchParams.set("zoom", p.searchParams.get("zoom") || zoom);
-    } else {
-      p.searchParams.set("t", "k");
-      p.searchParams.set("z", zoom);
-    }
-    return p.toString();
-  } catch {
-    return url;
-  }
-}
 
 export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "ar" }: {
   venue: string; city: string; mapUrl: string; latitude?: number | null; longitude?: number | null; locale?: Language;
@@ -51,24 +37,6 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
     return getTextDestination(mapUrl, venue, city);
   }, [venueCoords, mapUrl, venue, city]);
 
-  const mapEmbed = useMemo(() => {
-    if (userCoords && venueCoords) {
-      return `https://maps.google.com/maps?saddr=${userCoords.lat},${userCoords.lng}&daddr=${venueCoords.lat},${venueCoords.lng}&output=embed&t=k`;
-    }
-    if (venueCoords) {
-      return withSatellite(`https://maps.google.com/maps?q=${venueCoords.lat},${venueCoords.lng}&z=17&output=embed`, "17");
-    }
-    if (hasVenueLink) {
-      const embed = tryMakeEmbedUrl(mapUrl);
-      if (embed) return withSatellite(embed, "17");
-      return `https://maps.google.com/maps?q=${encodeURIComponent(destParam)}&z=16&output=embed&t=k`;
-    }
-    if (userCoords) {
-      return withSatellite(`https://maps.google.com/maps?q=${userCoords.lat},${userCoords.lng}&z=16&output=embed`, "16");
-    }
-    return `https://maps.google.com/maps?q=${encodeURIComponent(destParam)}&z=16&output=embed&t=k`;
-  }, [mapUrl, userCoords, venueCoords, destParam, hasVenueLink]);
-
   const locationUrl = useMemo(() => {
     if (venueCoords) {
       return `https://maps.google.com/maps?q=${venueCoords.lat},${venueCoords.lng}&z=17`;
@@ -93,7 +61,7 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destParam)}`;
   }, [venueCoords, userCoords, destParam, hasVenueLink, mapUrl]);
 
-  const requestUserLocation = useCallback((force = false) => {
+  const requestUserLocation = (force = false) => {
     if (!("geolocation" in navigator)) { setLocationState("unavailable"); return; }
     if (locationRequestedRef.current && !force) return;
     locationRequestedRef.current = true;
@@ -109,7 +77,7 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
       () => setLocationState("unavailable"),
       { enableHighAccuracy: true, maximumAge: 120000, timeout: 30000 },
     );
-  }, []);
+  };
 
   async function shareLocation() {
     setShareState("idle");
@@ -136,12 +104,7 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
         <span className="map-fallback-pin venue"><MapPin size={18} /></span>
         {userCoords ? <span className="map-fallback-pin visitor"><LocateFixed size={16} /></span> : null}
       </div>
-      <iframe
-        src={mapEmbed}
-        title={t("invitation.map.iframeTitle")}
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
+      <LeafletMap venueCoords={venueCoords} userCoords={userCoords} />
       {!hasVenueLink ? (
         <div className="map-missing-link-badge"><span>{t("invitation.map.locationSoon")}</span></div>
       ) : null}
