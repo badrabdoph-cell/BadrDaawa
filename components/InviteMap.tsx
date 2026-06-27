@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { LocateFixed, MapPin, Route, Share2 } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
-import { extractCoordinatesFromUrl } from "@/lib/map-url";
+import { extractCoordinatesFromUrl, getTextDestination, isEmbedUrl, isShortLink, tryMakeEmbedUrl } from "@/lib/map-url";
 import type { Coordinates } from "@/lib/map-url";
 import type { Language } from "@/lib/types";
 
@@ -48,32 +48,34 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
 
   const destParam = useMemo(() => {
     if (venueCoords) return `${venueCoords.lat},${venueCoords.lng}`;
-    return [venue, city].filter(Boolean).join(" ").trim() || "Cairo Egypt";
-  }, [venueCoords, venue, city]);
+    return getTextDestination(mapUrl, venue, city);
+  }, [venueCoords, mapUrl, venue, city]);
 
   const mapEmbed = useMemo(() => {
-    if (mapUrl.includes("/maps/embed") || mapUrl.includes("output=embed")) {
-      return withSatellite(mapUrl, "17");
-    }
     if (userCoords && venueCoords) {
       return `https://maps.google.com/maps?saddr=${userCoords.lat},${userCoords.lng}&daddr=${venueCoords.lat},${venueCoords.lng}&output=embed&t=k`;
-    }
-    if (userCoords && !venueCoords) {
-      return withSatellite(`https://maps.google.com/maps?q=${userCoords.lat},${userCoords.lng}&z=16&output=embed`, "16");
     }
     if (venueCoords) {
       return withSatellite(`https://maps.google.com/maps?q=${venueCoords.lat},${venueCoords.lng}&z=17&output=embed`, "17");
     }
-    return withSatellite(`https://maps.google.com/maps?q=${encodeURIComponent(destParam)}&z=16&output=embed`, "16");
-  }, [mapUrl, userCoords, venueCoords, destParam]);
+    if (hasVenueLink) {
+      const embed = tryMakeEmbedUrl(mapUrl);
+      if (embed) return withSatellite(embed, "17");
+      return `https://maps.google.com/maps?q=${encodeURIComponent(destParam)}&z=16&output=embed&t=k`;
+    }
+    if (userCoords) {
+      return withSatellite(`https://maps.google.com/maps?q=${userCoords.lat},${userCoords.lng}&z=16&output=embed`, "16");
+    }
+    return `https://maps.google.com/maps?q=${encodeURIComponent(destParam)}&z=16&output=embed&t=k`;
+  }, [mapUrl, userCoords, venueCoords, destParam, hasVenueLink]);
 
   const locationUrl = useMemo(() => {
     if (venueCoords) {
       return `https://maps.google.com/maps?q=${venueCoords.lat},${venueCoords.lng}&z=17`;
     }
-    if (mapUrl && !mapUrl.includes("/maps/embed") && !mapUrl.includes("output=embed")) return mapUrl;
+    if (hasVenueLink && !isEmbedUrl(mapUrl)) return mapUrl;
     return `https://maps.google.com/maps?q=${encodeURIComponent(destParam)}`;
-  }, [venueCoords, mapUrl, destParam]);
+  }, [venueCoords, mapUrl, destParam, hasVenueLink]);
 
   const directionsUrl = useMemo(() => {
     if (venueCoords) {
@@ -82,11 +84,14 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
       }
       return `https://www.google.com/maps/dir/?api=1&destination=${venueCoords.lat},${venueCoords.lng}`;
     }
+    if (hasVenueLink && !isEmbedUrl(mapUrl)) {
+      return mapUrl;
+    }
     if (userCoords) {
       return `https://www.google.com/maps/dir/?api=1&origin=${userCoords.lat},${userCoords.lng}&destination=${encodeURIComponent(destParam)}`;
     }
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destParam)}`;
-  }, [venueCoords, userCoords, destParam]);
+  }, [venueCoords, userCoords, destParam, hasVenueLink, mapUrl]);
 
   const requestUserLocation = useCallback((force = false) => {
     if (!("geolocation" in navigator)) { setLocationState("unavailable"); return; }

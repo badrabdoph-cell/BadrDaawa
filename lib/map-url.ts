@@ -25,3 +25,45 @@ export function extractCoordinatesFromUrl(value: string): Coordinates | null {
   }
   return null;
 }
+
+export function getTextDestination(mapUrl: string, venue: string, city: string): string {
+  if (!mapUrl) return [venue, city].filter(Boolean).join(" ").trim() || "Cairo Egypt";
+  try {
+    const parsed = new URL(mapUrl);
+    const q = parsed.searchParams.get("q");
+    if (q && !extractCoordinatesFromUrl(mapUrl)) return q;
+    const placeMatch = parsed.pathname.match(/\/maps\/place\/([^/]+)/);
+    if (placeMatch?.[1]) return decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
+  } catch {
+    /* not a valid URL */
+  }
+  return [venue, city].filter(Boolean).join(" ").trim() || "Cairo Egypt";
+}
+
+export function isEmbedUrl(value: string) {
+  return value.includes("/maps/embed") || value.includes("output=embed");
+}
+
+export function isShortLink(value: string) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname.includes("goo.gl") || hostname.includes("goo.la") || hostname.includes("shorturl.at");
+  } catch {
+    return false;
+  }
+}
+
+export function tryMakeEmbedUrl(mapUrl: string): string | null {
+  if (!mapUrl) return null;
+  if (isEmbedUrl(mapUrl)) return mapUrl;
+  if (isShortLink(mapUrl)) return null;
+  try {
+    const p = new URL(mapUrl);
+    if (p.hostname.includes("google.") || p.hostname.includes("maps.google.")) {
+      return `https://maps.google.com/maps${p.search}&output=embed&t=k&z=17`;
+    }
+  } catch {
+    /* not a valid URL */
+  }
+  return null;
+}
