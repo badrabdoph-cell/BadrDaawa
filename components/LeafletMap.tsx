@@ -24,17 +24,26 @@ export default function LeafletMap({
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
-    const map = L.map(containerRef.current, {
+
+    const el = containerRef.current;
+    const map = L.map(el, {
       zoomControl: false,
       attributionControl: false,
     });
+
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
     }).addTo(map);
+
     mapRef.current = map;
     markersRef.current = L.layerGroup().addTo(map);
     routeRef.current = L.layerGroup().addTo(map);
+
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(el);
+
     return () => {
+      observer.disconnect();
       map.remove();
       mapRef.current = null;
     };
@@ -43,6 +52,8 @@ export default function LeafletMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
+    map.invalidateSize({ debounceMoveend: true });
 
     markersRef.current?.clearLayers();
     routeRef.current?.clearLayers();
@@ -68,15 +79,14 @@ export default function LeafletMap({
     if (pts.length === 1) {
       map.setView(pts[0], 17);
     } else if (pts.length > 1) {
-      const b = L.latLngBounds(pts);
-      map.fitBounds(b, { padding: [80, 80], maxZoom: 17 });
+      map.fitBounds(L.latLngBounds(pts), { padding: [80, 80], maxZoom: 17 });
     }
 
     if (venueCoords && userCoords) {
       const qk = `${venueCoords.lat.toFixed(5)},${venueCoords.lng.toFixed(5)}_${userCoords.lat.toFixed(5)},${userCoords.lng.toFixed(5)}`;
       routeQueryRef.current = qk;
 
-      const fallback = L.polyline(
+      L.polyline(
         [[venueCoords.lat, venueCoords.lng], [userCoords.lat, userCoords.lng]],
         { color: "#b8873b", weight: 3, dashArray: "8 8", opacity: 0.7 },
       ).addTo(routeRef.current!);
@@ -100,11 +110,6 @@ export default function LeafletMap({
         .catch(() => {});
     }
   }, [venueCoords, userCoords]);
-
-  useEffect(() => {
-    const t = setTimeout(() => mapRef.current?.invalidateSize(), 300);
-    return () => clearTimeout(t);
-  }, []);
 
   return <div ref={containerRef} className="leaflet-map-container" />;
 }
