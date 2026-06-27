@@ -136,14 +136,15 @@ export function InviteMap({ venue, city, mapUrl, locale = "ar" }: { venue: strin
   if (!hasVenueLink) return null;
 
   return (
-    <div className="map-frame route-map is-clean-map" style={{ position: "relative", overflow: "hidden", borderRadius: 16, background: "#f0ebe2" }}>
+    <div className="map-frame route-map is-clean-map">
       <iframe
         src={mapEmbed}
         title={t("invitation.map.iframeTitle")}
         loading="lazy"
+        referrerPolicy="no-referrer"
         style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          border: 0, display: "block",
+          border: 0, display: "block", filter: "saturate(0.92) contrast(1.04)", opacity: 1,
         }}
       />
       <span className="map-luxury-marker" aria-hidden="true" style={{
