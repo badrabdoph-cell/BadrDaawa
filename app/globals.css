@@ -40523,7 +40523,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   box-shadow: var(--shadow);
   overflow: hidden;
   animation: phoneListIn 140ms ease both;
-  transform-origin: top center;
+  transform-origin: bottom center;
 }
 
 .phone-country-list.closing {
@@ -40533,7 +40533,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 @keyframes phoneListIn {
   from {
     opacity: 0;
-    transform: translateY(-3px) scaleY(0.97);
+    transform: translateY(3px) scaleY(0.97);
   }
   to {
     opacity: 1;
@@ -40548,7 +40548,7 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   }
   to {
     opacity: 0;
-    transform: translateY(-2px) scaleY(0.97);
+    transform: translateY(2px) scaleY(0.97);
   }
 }
 
