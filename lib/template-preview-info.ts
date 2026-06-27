@@ -48,7 +48,7 @@ export const defaultTemplatePreviewInfo: TemplatePreviewInfo = {
   weddingTime: "08:00 مساءً",
   venue: "قاعة Viora ✨",
   city: "ايتاي اليارود_البحيرة",
-  mapUrl: "https://maps.app.goo.gl/abVGiAgYBxd5ez9r6",
+  mapUrl: "https://maps.google.com/maps?q=29.9759954,31.1309285&z=17",
   heroVideoUrl: "",
   gallery: [
     "/uploads/template-previews/order-preview-1781482506096-a8b40030.webp",
