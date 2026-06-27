@@ -428,6 +428,43 @@ export default async function OrderPage({ searchParams }: PageProps) {
             border-radius: 18px;
           }
         }
+
+        @media (min-width: 861px) {
+          .order-studio-page .order-compact-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+
+          .order-studio-page .order-summary-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+          }
+
+          .order-studio-page .order-step-tabs {
+            gap: 10px;
+          }
+
+          .order-studio-page .order-step-tabs button {
+            min-height: 80px;
+            padding: 12px 18px;
+          }
+
+          .order-studio-page .order-wizard-flow .field input,
+          .order-studio-page .order-wizard-flow .field textarea,
+          .order-studio-page .order-wizard-flow .field select {
+            min-height: 64px;
+            font-size: 1.05rem;
+          }
+
+          .order-studio-page .compact-image-card {
+            min-height: 200px;
+          }
+
+          .order-studio-page .order-summary-item {
+            min-height: 56px;
+            padding: 10px 14px;
+          }
+        }
       `}</style>
       <header className="order-builder-header">
         <div className="container order-builder-nav">

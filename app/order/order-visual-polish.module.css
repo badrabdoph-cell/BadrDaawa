@@ -599,3 +599,18 @@
   from { opacity: 0; transform: translateY(10px) scale(0.985); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+@media (min-width: 861px) {
+  .scope :global(.order-studio-page .order-step-tabs) {
+    padding: 14px;
+  }
+  .scope :global(.order-studio-page .order-step-tabs button) {
+    border-radius: 18px;
+  }
+  .scope :global(.order-studio-page .order-summary-card) {
+    padding: 22px;
+  }
+  .scope :global(.order-studio-page .order-summary-item) {
+    border-radius: 16px;
+  }
+}
