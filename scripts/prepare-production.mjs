@@ -251,4 +251,25 @@ try {
   console.warn("[prepare] Schema drift check failed (non-fatal):", e.message);
 }
 
-console.log("[prepare] Startup restore and legacy JSON backfills are disabled permanently.");
+console.log("[prepare] Checking for startup auto-restore...");
+try {
+  const tsxBin = path.join(root, "node_modules", ".bin", "tsx");
+  const restoreScript = path.join(root, "scripts", "startup-restore.mjs");
+  if (existsSync(tsxBin) && existsSync(restoreScript)) {
+    const restoreResult = spawnSync(tsxBin, [restoreScript], {
+      cwd: root,
+      stdio: "inherit",
+      env: { ...process.env, DATABASE_URL: databaseUrl },
+      timeout: 180000,
+    });
+    if (restoreResult.status === 0) {
+      console.log("[prepare] Startup auto-restore completed.");
+    } else {
+      console.warn(`[prepare] Startup auto-restore exited with code ${restoreResult.status} (non-fatal)`);
+    }
+  } else {
+    console.log("[prepare] tsx or startup-restore.mjs not found, skipping auto-restore");
+  }
+} catch (e) {
+  console.warn("[prepare] Startup auto-restore failed (non-fatal):", e.message);
+}

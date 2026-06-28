@@ -143,7 +143,7 @@ async function insertTableData(tx: TxClient, table: string, rows: unknown[]): Pr
 
 const V2_SCHEDULE: Record<BackupTypeV2, { intervalMs: number; keepCount: number }> = {
   database: { intervalMs: 3 * 60 * 60 * 1000, keepCount: 30 },
-  uploads: { intervalMs: 0, keepCount: 0 },
+  uploads: { intervalMs: 24 * 60 * 60 * 1000, keepCount: 14 },
   full: { intervalMs: 48 * 60 * 60 * 1000, keepCount: 5 },
 };
 

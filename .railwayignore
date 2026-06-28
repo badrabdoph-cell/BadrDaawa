@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.backup/
+data/
+public/uploads/
+*.tsbuildinfo
+*.log
+.DS_Store
+.git/

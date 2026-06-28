@@ -1,0 +1,209 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e166]: Wedding Daawa | دعوات زفاف رقمية فاخرة
+  - generic [ref=e167]:
+    - generic [ref=e168]:
+      - region "افتتاح الدعوة" [ref=e169]:
+        - generic [ref=e173]:
+          - generic [ref=e174]:
+            - img [ref=e175]
+            - text: دعوة زفاف
+          - heading "Mohamed Nada" [level=1] [ref=e177]:
+            - generic [ref=e178]: Mohamed
+            - generic [ref=e179]: "&"
+            - generic [ref=e180]: Nada
+          - time [ref=e181]: الأربعاء، 9 سبتمبر 2026
+          - paragraph [ref=e182]: ليلة جديدة تبدأ باسم الحب. افتحوا الدعوة وشاركونا الفرحة.
+          - button "فتح الدعوة" [ref=e183] [cursor=pointer]
+      - main [ref=e184]:
+        - generic:
+          - button "إيقاف الموسيقى":
+            - img
+        - generic [ref=e185]:
+          - img "صورة العرسان" [ref=e187]
+          - generic [ref=e189]:
+            - paragraph [ref=e190]: هنا تبدأ الحكاية ❤️
+            - heading "Mohamed" [level=1] [ref=e191]
+            - img [ref=e194]
+            - heading "Nada" [level=1] [ref=e197]
+        - generic [ref=e198]:
+          - generic [ref=e199]:
+            - img [ref=e200]
+            - generic [ref=e205]:
+              - generic [ref=e207]:
+                - img [ref=e209]
+                - generic [ref=e211]:
+                  - paragraph [ref=e212]: موعد الحفل
+                  - strong [ref=e213]: الأربعاء، 9 سبتمبر 2026
+              - generic [ref=e214]:
+                - img [ref=e216]
+                - generic [ref=e219]:
+                  - paragraph [ref=e220]: وقت الحضور
+                  - strong [ref=e221]: 08:00 مساءً
+              - generic [ref=e222]:
+                - img [ref=e224]
+                - generic [ref=e227]:
+                  - paragraph [ref=e228]: مكان الحفل
+                  - strong [ref=e229]: قاعة Viora ✨
+                  - generic [ref=e230]: ايتاي اليارود_البحيرة
+          - generic [ref=e231]:
+            - paragraph [ref=e232]: The Countdown
+            - generic "العد التنازلي ليوم الحفل" [ref=e234]:
+              - generic [ref=e235]:
+                - strong [ref=e236]: "74"
+                - generic [ref=e237]: يوم
+              - generic [ref=e238]:
+                - strong [ref=e239]: "2"
+                - generic [ref=e240]: ساعة
+              - generic [ref=e241]:
+                - strong [ref=e242]: "9"
+                - generic [ref=e243]: دقيقة
+              - generic [ref=e244]:
+                - strong [ref=e245]: "19"
+                - generic [ref=e246]: ثانية
+          - generic [ref=e248]:
+            - generic [ref=e249]: RSVP
+            - heading "هل ستشرفنا بحضور حفل زفافنا؟ ❤️" [level=2] [ref=e250]
+            - paragraph [ref=e251]: هل ستحضر؟
+            - generic [ref=e252]:
+              - button "سأحضر ❤️" [ref=e253] [cursor=pointer]
+              - button "أعتذر 🌹" [ref=e254] [cursor=pointer]
+          - region "صور الدعوة" [ref=e255]:
+            - figure [ref=e256]:
+              - img "صورة من الدعوة 1" [ref=e257]
+            - figure [ref=e258]:
+              - img "صورة من الدعوة 2" [ref=e259]
+            - figure [ref=e260]:
+              - img "صورة من الدعوة 3" [ref=e261]
+          - generic [ref=e262]:
+            - generic [ref=e263]:
+              - generic [ref=e264]:
+                - img [ref=e265]
+                - text: The Venue
+              - heading "قاعة Viora ✨" [level=2] [ref=e268]
+              - paragraph [ref=e269]: ايتاي اليارود_البحيرة
+            - generic [ref=e271]:
+              - img [ref=e278]
+              - button [ref=e282] [cursor=pointer]:
+                - img [ref=e283]
+              - button "موقعي" [ref=e287] [cursor=pointer]:
+                - img [ref=e288]
+                - generic [ref=e291]: موقعي
+              - generic "خيارات فتح خريطة مكان الحفل" [ref=e292]:
+                - link "فتح الموقع" [ref=e293] [cursor=pointer]:
+                  - /url: https://maps.google.com/maps?q=29.9759954,31.1309285&z=17
+                  - img [ref=e294]
+                  - generic [ref=e297]: فتح الموقع
+                - link "الحصول على الاتجاهات" [ref=e298] [cursor=pointer]:
+                  - /url: https://www.google.com/maps/dir/?api=1&destination=29.9759954,31.1309285
+                  - img [ref=e299]
+                  - generic [ref=e303]: الحصول على الاتجاهات
+                - button "مشاركة الموقع" [ref=e304] [cursor=pointer]:
+                  - img [ref=e305]
+                  - generic [ref=e311]: مشاركة الموقع
+          - generic [ref=e312]:
+            - img "Photographer" [ref=e314]
+            - generic [ref=e315]: Photography
+            - heading "Photographer" [level=2] [ref=e316]
+            - paragraph [ref=e317]: تابعو كواليس الفوتوسيشن علي استوري الفوتوجرافر❤️
+            - generic [ref=e318]:
+              - link "Facebook" [ref=e319] [cursor=pointer]:
+                - /url: https://www.facebook.com/badrabdophoto
+                - img [ref=e320]
+              - link "Instagram" [ref=e322] [cursor=pointer]:
+                - /url: https://www.instagram.com/badr_abdo_ph
+                - img [ref=e323]
+          - generic [ref=e326]:
+            - region "قصة العروسين" [ref=e327]:
+              - generic [ref=e328]:
+                - generic [ref=e329]:
+                  - img [ref=e330]
+                  - text: قصة العروسين
+                - heading "رحلتنا قبل يوم الفرح" [level=2] [ref=e332]
+              - generic [ref=e333]:
+                - article [ref=e334]:
+                  - generic [ref=e336]: "1"
+                  - generic [ref=e337]:
+                    - time [ref=e338]:
+                      - img [ref=e339]
+                      - text: 15 / 11 / 2024
+                    - heading "أول مرة شوفنا بعض ❤️" [level=3] [ref=e342]
+                    - paragraph [ref=e343]: كانت أول مقابلة بيننا في فرح صحبتي، ومن هنا بدأت الحكاية
+                - article [ref=e344]:
+                  - generic [ref=e346]: "2"
+                  - generic [ref=e347]:
+                    - time [ref=e348]:
+                      - img [ref=e349]
+                      - text: 02 / 02 / 2025
+                    - heading "الخطوبة 💍" [level=3] [ref=e352]
+                    - paragraph [ref=e353]: اليوم الذي قررنا فيه أن نكمل رحلتنا معاً ونبدأ فصلًا جديداً من حياتنا.
+                - article [ref=e354]:
+                  - generic [ref=e356]: "3"
+                  - generic [ref=e357]:
+                    - time [ref=e358]:
+                      - img [ref=e359]
+                      - text: 26 / 10 / 2026
+                    - heading "يوم الزفاف 👰🤵" [level=3] [ref=e362]
+                    - paragraph [ref=e363]: اليوم الذي نحتفل فيه مع أهلنا وأصدقائنا ببداية حياتنا الجديدة معاً.
+            - generic [ref=e364]:
+              - generic [ref=e365]:
+                - img [ref=e366]
+                - generic [ref=e368]:
+                  - text: إضافة إلى التقويم
+                  - heading "أضف الموعد للتقويم" [level=2] [ref=e369]
+                  - paragraph [ref=e370]: الأربعاء، 9 سبتمبر 2026 - 08:00 م
+              - link "إضافة إلى التقويم" [ref=e372] [cursor=pointer]:
+                - /url: https://calendar.google.com/calendar/render?action=TEMPLATE&text=%D8%B2%D9%81%D8%A7%D9%81+Mohamed+%D9%88+Nada&dates=20260909T170000Z%2F20260909T210000Z&details=%D8%AF%D8%B9%D9%88%D8%A9+%D8%B2%D9%81%D8%A7%D9%81+Mohamed+%D9%88+Nada%0A%D8%A7%D9%84%D9%85%D9%83%D8%A7%D9%86%3A+%D9%82%D8%A7%D8%B9%D8%A9+Viora+%E2%9C%A8%0A%D8%A7%D9%84%D9%85%D8%AF%D9%8A%D9%86%D8%A9%3A+%D8%A7%D9%8A%D8%AA%D8%A7%D9%8A+%D8%A7%D9%84%D9%8A%D8%A7%D8%B1%D9%88%D8%AF_%D8%A7%D9%84%D8%A8%D8%AD%D9%8A%D8%B1%D8%A9%0A%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D8%B7%D8%A9%3A+https%3A%2F%2Fmaps.google.com%2Fmaps%3Fq%3D29.9759954%2C31.1309285%26z%3D17%0A%D8%B1%D8%A7%D8%A8%D8%B7+%D8%A7%D9%84%D8%AF%D8%B9%D9%88%D8%A9%3A+https%3A%2F%2Fdaawa.up.railway.app%2F&location=%D9%82%D8%A7%D8%B9%D8%A9+Viora+%E2%9C%A8+-+%D8%A7%D9%8A%D8%AA%D8%A7%D9%8A+%D8%A7%D9%84%D9%8A%D8%A7%D8%B1%D9%88%D8%AF_%D8%A7%D9%84%D8%A8%D8%AD%D9%8A%D8%B1%D8%A9
+                - img [ref=e373]
+                - text: إضافة إلى التقويم
+            - generic [ref=e375]:
+              - generic [ref=e376]: تسجيل الوصول
+              - generic [ref=e377]:
+                - img [ref=e378]
+                - generic [ref=e381]:
+                  - heading "تسجيل الوصول" [level=2] [ref=e382]
+                  - paragraph [ref=e383]: عند وصولك لمكان الحفل اضغط الزر لتسجيل الحضور الفعلي.
+              - button "وصلت إلى الحفل" [ref=e384] [cursor=pointer]:
+                - img [ref=e385]
+                - text: وصلت إلى الحفل
+            - generic [ref=e388]:
+              - generic [ref=e389]: Couple Messages
+              - generic [ref=e390]:
+                - img [ref=e391]
+                - generic [ref=e394]:
+                  - heading "كلمات وذكريات للعرسان ❤️" [level=2] [ref=e395]
+                  - paragraph [ref=e396]: اتركوا كلمة تبقى ذكرى جميلة للعروسين بعد يوم الفرح.
+              - generic [ref=e397]:
+                - textbox "اكتب اسمك" [ref=e398]
+                - textbox "اكتب تهنئتك أو رسالتك هنا" [ref=e399]
+                - button "إرسال التهنئة" [ref=e400] [cursor=pointer]:
+                  - img [ref=e401]
+                  - text: إرسال التهنئة
+              - article [ref=e405]:
+                - img [ref=e406]
+                - generic [ref=e408]:
+                  - strong [ref=e409]: ضيف عزيز
+                  - paragraph [ref=e410]: ربنا يجعل بدايتكم كلها خير، وتعيشوا أجمل أيام العمر سوا. 🌹
+          - generic [ref=e411]:
+            - heading "مشاركة الدعوة" [level=3] [ref=e412]
+            - generic [ref=e414]:
+              - img "QR Code للدعوة" [ref=e415]
+              - strong [ref=e416]: امسح الرمز لمشاركة الدعوة
+            - link "صمم دعوت فرحك" [ref=e417] [cursor=pointer]:
+              - /url: /
+            - generic "روابط السوشيال" [ref=e418]:
+              - generic "Facebook غير مفعل" [ref=e419]:
+                - img [ref=e420]
+              - generic "Instagram غير مفعل" [ref=e422]:
+                - img [ref=e423]
+              - generic "TikTok غير مفعل" [ref=e425]:
+                - img [ref=e426]
+              - link "WhatsApp" [ref=e428] [cursor=pointer]:
+                - /url: https://wa.me/?text=https%3A%2F%2Fdaawa.up.railway.app%2F%3Futm_source%3Dwhatsapp%26utm_medium%3Dshare
+                - img [ref=e429]
+    - link "العودة إلى معرض التصاميم" [ref=e431] [cursor=pointer]:
+      - /url: /templates
+      - img [ref=e432]
+    - link "ابدأ الآن واطلب هذا التصميم" [ref=e435] [cursor=pointer]:
+      - /url: /order?template=featured-1
+      - img [ref=e436]
+      - generic [ref=e438]: أبدأ الآن
