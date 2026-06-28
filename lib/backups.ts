@@ -894,35 +894,40 @@ export type ScheduledBackupInfo = {
 
 export async function getScheduledBackupInfo(): Promise<ScheduledBackupInfo> {
   noStore();
-  if (!prisma) {
-    return { lastScheduled: null, lastScheduledSuccess: null, recentScheduled: [], nextScheduledAt: null };
-  }
-  const [lastScheduled, lastScheduledSuccess, recentScheduled] = await Promise.all([
-    prisma.backupJob
-      .findFirst({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" } })
-      .catch(() => null),
-    prisma.backupJob
-      .findFirst({ where: { type: "scheduled", status: "SUCCESS" }, orderBy: { createdAt: "desc" } })
-      .catch(() => null),
-    prisma.backupJob
-      .findMany({ where: { type: "scheduled" }, orderBy: { createdAt: "desc" }, take: 5 })
-      .catch(() => []),
+  const { findLatestBackupOnGitHubByType, getV2BackupSchedule } = await import("./backups-v2");
+
+  const types = ["database", "uploads", "full"] as const;
+  const [v2Database, v2Uploads, v2Full] = await Promise.all([
+    findLatestBackupOnGitHubByType("database").catch(() => null),
+    findLatestBackupOnGitHubByType("uploads").catch(() => null),
+    findLatestBackupOnGitHubByType("full").catch(() => null),
   ]);
-  const nextScheduledAt = lastScheduled?.finishedAt
-    ? new Date(lastScheduled.finishedAt.getTime() + 3 * 60 * 60 * 1000).toISOString()
+
+  const all = [v2Database, v2Uploads, v2Full];
+  const timestamps = all
+    .filter((b): b is NonNullable<(typeof all)[number]> => b !== null)
+    .map((b) => b.createdAt.getTime())
+    .sort((a, b) => b - a);
+
+  const latestV2CreatedAt = timestamps.length > 0 ? new Date(timestamps[0]) : null;
+
+  const nextPerType = types.map((t, i) => {
+    const last = all[i];
+    if (!last) return Infinity;
+    const schedule = getV2BackupSchedule(t);
+    return last.createdAt.getTime() + schedule.intervalMs;
+  });
+  const nearestNext = Math.min(...nextPerType);
+  const nextScheduledAt = nearestNext < Infinity ? new Date(nearestNext).toISOString() : null;
+
+  const lastScheduled = latestV2CreatedAt
+    ? { createdAt: latestV2CreatedAt.toISOString(), status: "SUCCESS", fileName: v2Database?.fileName || null }
     : null;
+
   return {
-    lastScheduled: lastScheduled
-      ? { createdAt: lastScheduled.createdAt.toISOString(), status: lastScheduled.status, fileName: lastScheduled.fileName }
-      : null,
-    lastScheduledSuccess: lastScheduledSuccess
-      ? { createdAt: lastScheduledSuccess.createdAt.toISOString(), status: lastScheduledSuccess.status, fileName: lastScheduledSuccess.fileName }
-      : null,
-    recentScheduled: recentScheduled.map((job) => ({
-      createdAt: job.createdAt.toISOString(),
-      status: job.status,
-      fileName: job.fileName,
-    })),
+    lastScheduled,
+    lastScheduledSuccess: lastScheduled,
+    recentScheduled: lastScheduled ? [lastScheduled] : [],
     nextScheduledAt,
   };
 }

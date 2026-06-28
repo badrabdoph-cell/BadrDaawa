@@ -46,6 +46,7 @@ export default async function BackupsPage() {
   ] as const;
 
   const nextSchedule = schedule?.nextScheduledAt ? new Date(schedule.nextScheduledAt) : null;
+  const isOverdue = nextSchedule && nextSchedule.getTime() < Date.now();
 
   return (
     <div>
@@ -59,29 +60,26 @@ export default async function BackupsPage() {
 
       {/* ── Schedule Info ── */}
       <div className="dashboard-section">
-        <div className="admin-card" style={{ border: "1px solid rgba(245,234,214,0.1)", borderRadius: 12, padding: "14px 18px", display: "flex", flexWrap: "wrap", gap: "16px 32px", alignItems: "center" }}>
+        <div className="admin-card" style={{ border: isOverdue ? "1px solid rgba(245,100,100,0.3)" : "1px solid rgba(245,234,214,0.1)", borderRadius: 12, padding: "14px 18px", display: "flex", flexWrap: "wrap", gap: "16px 32px", alignItems: "center", background: isOverdue ? "rgba(245,100,100,0.06)" : undefined }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem" }}>
-            <CalendarClock size={16} />
+            <CalendarClock size={16} color={isOverdue ? "#f56464" : undefined} />
             <span style={{ opacity: 0.6, fontWeight: 800 }}>النسخة القادمة:</span>
-            <strong>{nextSchedule ? formatDate(nextSchedule) : "يدوي فقط (بدون جدولة)"}</strong>
+            {isOverdue ? (
+              <strong style={{ color: "#f56464" }}>متأخرة! — {nextSchedule ? formatDate(nextSchedule) : ""}</strong>
+            ) : (
+              <strong>{nextSchedule ? formatDate(nextSchedule) : "يدوي فقط (بدون جدولة)"}</strong>
+            )}
           </div>
           {schedule?.lastScheduled ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem" }}>
               <RotateCcw size={16} />
-              <span style={{ opacity: 0.6, fontWeight: 800 }}>آخر نسخة مجدولة:</span>
+              <span style={{ opacity: 0.6, fontWeight: 800 }}>آخر نسخة:</span>
               <strong>{formatDate(new Date(schedule.lastScheduled.createdAt))}</strong>
               <span style={{ opacity: 0.5, fontSize: "0.78rem" }}>— {schedule.lastScheduled.status}</span>
             </div>
           ) : null}
-          {schedule?.lastScheduledSuccess ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem" }}>
-              <ShieldCheck size={16} color="#4caf87" />
-              <span style={{ opacity: 0.6, fontWeight: 800 }}>آخر نجاح:</span>
-              <strong>{formatDate(new Date(schedule.lastScheduledSuccess.createdAt))}</strong>
-            </div>
-          ) : null}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: "auto" }}>
-            <span style={{ fontSize: "0.78rem", opacity: 0.4 }}>التشغيل التلقائي عبر Railway Cron</span>
+            <span style={{ fontSize: "0.78rem", opacity: 0.4 }}>التشغيل التلقائي عبر {isOverdue ? "التطبيق (Auto-Backup)" : "Railway Cron"}</span>
           </div>
         </div>
       </div>

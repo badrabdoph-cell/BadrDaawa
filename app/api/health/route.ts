@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  import("@/lib/auto-backup").then((m) => m.checkAndRunAutoBackup()).catch(() => {});
+
   const issues: string[] = [];
 
   if (!prisma) {
