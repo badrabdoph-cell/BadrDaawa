@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  Activity, Database, FileImage, HardDrive, RefreshCw, ScanLine,
+  Activity, Database, FileImage, HardDrive, RefreshCw,
   Trash2, Archive, Clock, ShieldCheck, TriangleAlert, Gauge,
-  Server, Wifi, Image as ImageIcon, Music, Bug, CheckCircle2,
+  Server, Image as ImageIcon, Music, Bug, CheckCircle2,
   XCircle, ChevronDown, ChevronUp, Loader2, Search,
 } from "lucide-react";
 import Link from "next/link";

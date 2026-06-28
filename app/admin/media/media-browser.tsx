@@ -51,6 +51,7 @@ export function MediaBrowser({ files }: MediaBrowserProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const router = useRouter();
 
   function toggleSelect(url: string) {
@@ -76,6 +77,7 @@ export function MediaBrowser({ files }: MediaBrowserProps) {
       return;
     }
     setDeleting(true);
+    setDeleteError(null);
     try {
       const formData = new FormData();
       formData.set("action", "bulk-delete");
@@ -85,11 +87,13 @@ export function MediaBrowser({ files }: MediaBrowserProps) {
       const res = await fetch("/api/admin/media/file", { method: "POST", body: formData });
       if (res.redirected) {
         window.location.href = res.url;
+      } else if (!res.ok) {
+        setDeleteError("فشل حذف الملفات");
       } else {
         router.refresh();
       }
     } catch {
-      /**/
+      setDeleteError("تعذر الاتصال بالخادم");
     }
     setDeleting(false);
     setConfirmDelete(false);
@@ -113,7 +117,7 @@ export function MediaBrowser({ files }: MediaBrowserProps) {
       setCopiedUrl(url);
       window.setTimeout(() => setCopiedUrl(null), 1600);
     } catch {
-      /**/
+      console.warn("Failed to copy URL to clipboard");
     }
   }
 
@@ -160,6 +164,7 @@ export function MediaBrowser({ files }: MediaBrowserProps) {
                 <Trash2 size={16} /> حذف المحدد
               </button>
             )}
+            {deleteError ? <span style={{ color: "#d9534f", fontSize: "0.82rem", marginRight: 8 }}>{deleteError}</span> : null}
           </div>
         ) : null}
       </div>

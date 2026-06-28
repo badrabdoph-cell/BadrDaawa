@@ -22,6 +22,7 @@ export function VersionHistorySection() {
   const [versions, setVersions] = useState<ContentVersion[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rollbackId, setRollbackId] = useState<number | null>(null);
   const [rolling, setRolling] = useState(false);
   const [result, setResult] = useState<RollbackResult | null>(null);
@@ -29,15 +30,18 @@ export function VersionHistorySection() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/versions?limit=100", { cache: "no-store" });
       if (res.ok) {
         const d = await res.json();
         setVersions(d.versions || []);
         setTotal(d.total || 0);
+      } else {
+        setError("فشل تحميل سجل الإصدارات");
       }
     } catch {
-      /* ignore */
+      setError("تعذر الاتصال بالخادم");
     } finally {
       setLoading(false);
     }
@@ -84,6 +88,12 @@ export function VersionHistorySection() {
         </div>
       )}
 
+      {error && (
+        <div className="notice danger" style={{ margin: "8px 14px", padding: "6px 10px", fontSize: "0.82rem" }}>
+          <span>{error}</span>
+          <button className="btn btn-soft" onClick={load} style={{ marginRight: 8, fontSize: "0.78rem", padding: "2px 8px", minHeight: 0 }}>إعادة</button>
+        </div>
+      )}
       {expanded && (
         <div style={{ overflowX: "auto", borderTop: "1px solid rgba(245,234,214,0.05)" }}>
           {loading ? (

@@ -140,18 +140,23 @@ export default function AdminTasksPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (showLoader = false) => {
     if (showLoader) setLoading(true);
     else setRefreshing(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/tasks/data");
       if (res.ok) {
         const data = await res.json();
         setTasks(data.tasks || []);
         setRuns(data.runs || []);
+      } else {
+        setError("فشل تحميل بيانات المهام");
       }
     } catch {
+      setError("تعذر الاتصال بالخادم");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -187,7 +192,9 @@ export default function AdminTasksPage() {
     try {
       const res = await fetch("/api/admin/tasks/data", { method: "DELETE" });
       if (res.ok) await fetchData(false);
+      else setError("فشل مسح السجل");
     } catch {
+      setError("تعذر الاتصال بالخادم");
     } finally {
       setClearing(false);
     }
@@ -216,6 +223,12 @@ export default function AdminTasksPage() {
 
   return (
     <>
+      {error && (
+        <div className="notice danger" style={{ marginBottom: 14 }}>
+          <span>{error}</span>
+          <button className="btn btn-soft" onClick={() => fetchData(true)} style={{ marginRight: 10 }}>إعادة المحاولة</button>
+        </div>
+      )}
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Task Scheduler</span>

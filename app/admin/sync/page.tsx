@@ -68,15 +68,20 @@ export default function AdminSyncHubPage() {
   const [syncing, setSyncing] = useState(false);
   const [branch, setBranch] = useState("main");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
+    setError(null);
     try {
       const res = await fetch("/api/admin/sync/status");
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
+      } else {
+        setError("فشل تحميل حالة المزامنة");
       }
     } catch {
+      setError("تعذر الاتصال بالخادم");
     } finally {
       setLoading(false);
     }
@@ -90,13 +95,16 @@ export default function AdminSyncHubPage() {
 
   const handleSyncNow = async () => {
     setSyncing(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/sync-status", {
         method: "POST",
         headers: { Accept: "application/json" },
       });
       if (res.ok) await fetchStatus();
+      else setError("فشلت المزامنة");
     } catch {
+      setError("تعذر الاتصال بالخادم أثناء المزامنة");
     } finally {
       setSyncing(false);
     }
@@ -127,12 +135,18 @@ export default function AdminSyncHubPage() {
           </div>
         </div>
 
+        {error ? (
+          <div className="notice danger" style={{ marginTop: "14px" }}>
+            <span>{error}</span>
+            <button className="btn btn-soft" onClick={fetchStatus} style={{ marginRight: 10 }}>إعادة المحاولة</button>
+          </div>
+        ) : null}
         {loading ? (
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "14px", opacity: 0.6 }}>
             <Loader2 size={18} className="spin" />
             جاري تحميل الحالة...
           </div>
-        ) : (
+        ) : error ? null : (
           <div style={{ marginTop: "14px", display: "grid", gap: "14px" }}>
             <div className="backup-status-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px" }}>
               <article className="panel backup-status-card" style={{ margin: 0, padding: "14px" }}>
