@@ -78,11 +78,6 @@ const adminSections = [
     icon: Trash2,
     links: [
       { href: "/admin/cleanup", label: "لوحة التنظيف", icon: Trash2 },
-      { href: "/admin/cleanup/media", label: "الوسائط", icon: FileImage },
-      { href: "/admin/cleanup/backups", label: "النسخ", icon: DatabaseBackup },
-      { href: "/admin/cleanup/scan", label: "الفحص", icon: Activity },
-      { href: "/admin/cleanup/optimization", label: "التحسين", icon: Gauge },
-      { href: "/admin/cleanup/database", label: "قاعدة البيانات", icon: Database },
     ],
   },
   {

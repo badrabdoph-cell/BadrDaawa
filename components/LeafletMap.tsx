@@ -35,9 +35,15 @@ export default function LeafletMap({
       maxZoom: 19,
     }).addTo(map);
 
+    map.setView([30.0444, 31.2357], 5);
+
     mapRef.current = map;
     markersRef.current = L.layerGroup().addTo(map);
     routeRef.current = L.layerGroup().addTo(map);
+
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
 
     const observer = new ResizeObserver(() => map.invalidateSize());
     observer.observe(el);

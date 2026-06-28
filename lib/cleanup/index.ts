@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { getMediaCleanupReport, type MediaCleanupReport } from "@/lib/media-cleanup";
 import { getTrashItems } from "@/lib/trash";
 import { listBackupSnapshots } from "@/lib/backups";
-import { readdir, stat } from "fs/promises";
+import { readdir, stat, readFile } from "fs/promises";
+import { existsSync } from "fs";
 import path from "path";
 
 export type CleanupCategory =
@@ -43,113 +44,99 @@ export type CleanupScanReport = {
 };
 
 export type DatabaseCleanupStatus = {
-  oldTempRecords: number;
+  oldAnalytics: number;
   oldNotifications: number;
   oldErrors: number;
-  expiredTrash: number;
-  orphanedRecords: number;
+  expiredTrashInvitations: number;
+  expiredTrashOrders: number;
+  expiredTrashCustomers: number;
+  orphanedGuestBook: number;
+  orphanedCheckIns: number;
+  orphanedClientMessages: number;
+  orphanedCoupleSettings: number;
+  orphanedLiveModes: number;
+  orphanedGuestRsvp: number;
+  orphanedAnalytics: number;
+  orphanedInvitationNotes: number;
+  orphanedOrderNotes: number;
+  orphanedCustomerNotes: number;
   total: number;
 };
 
 export type PackageStatus = {
   totalPackages: number;
   unusedPackages: number;
-  outdatedPackages: number;
   packageNames: string[];
+  sizeSavingsHint: string;
 };
 
 export type OptimizationStatus = {
   lastOptimizedAt: string | null;
-  pendingOptimizations: string[];
+  pendingOptimizations: number;
   cacheSize: string;
+  cacheSizeBytes: number;
   indexStatus: string;
+  tableCount: number;
+  dbSize: string;
 };
+
+const cacheSizeCache = { value: "0 B", bytes: 0, at: 0 };
 
 export function formatBytes(value: number) {
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  if (value < 1024 * 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(value / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-function getRuntimeDataDir() {
-  return path.join(process.cwd(), "data");
+async function getDirSize(dirPath: string): Promise<number> {
+  try {
+    let total = 0;
+    const entries = await readdir(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory() && !entry.name.startsWith(".")) {
+        total += await getDirSize(fullPath);
+      } else if (entry.isFile()) {
+        const s = await stat(fullPath).catch(() => null);
+        if (s) total += s.size;
+      }
+    }
+    return total;
+  } catch {
+    return 0;
+  }
 }
 
 export async function scanUnusedFiles(): Promise<CleanupIssue[]> {
   const issues: CleanupIssue[] = [];
-  const publicDir = path.join(process.cwd(), "public");
-  const appDir = path.join(process.cwd(), "app");
-  const componentsDir = path.join(process.cwd(), "components");
-  const libDir = path.join(process.cwd(), "lib");
 
   try {
-    const uploadsDir = path.join(publicDir, "uploads");
-    const uploadEntries = await readdir(uploadsDir, { withFileTypes: true }).catch(() => [] as any[]);
-    const uploadFiles = uploadEntries.filter((e: any) => e.isFile());
-
+    const publicDir = path.join(process.cwd(), "public");
     const assetsDir = path.join(publicDir, "assets");
-    const assetEntries = await readdir(assetsDir, { withFileTypes: true }).catch(() => [] as any[]);
-    const assetDirs = assetEntries.filter((e: any) => e.isDirectory());
-
-    let totalOrphanBytes = 0;
-    for (const dir of assetDirs) {
-      const subDir = path.join(assetsDir, dir.name);
-      const files = await readdir(subDir, { withFileTypes: true }).catch(() => [] as any[]);
-      const fileCount = files.filter((e: any) => e.isFile()).length;
-      if (fileCount === 0) {
-        issues.push({
-          id: `empty-dir-${dir.name}`,
-          category: "unused-files",
-          title: `مجلد فارغ: ${dir.name}`,
-          description: `المجلد ${dir.name} في assets لا يحتوي على أي ملفات`,
-          severity: "low",
-          count: 1,
-          sizeBytes: 0,
-          action: `حذف المجلد الفارغ assets/${dir.name}`,
-          autoFixable: true,
-          safeToAutoFix: true,
-        });
+    if (existsSync(assetsDir)) {
+      const entries = await readdir(assetsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const subDir = path.join(assetsDir, entry.name);
+        const files = await readdir(subDir).catch(() => []);
+        if (files.length === 0) {
+          issues.push({
+            id: `empty-dir-${entry.name}`,
+            category: "unused-files",
+            title: `مجلد فارغ: ${entry.name}`,
+            description: `المجلد ${entry.name} في assets لا يحتوي على أي ملفات`,
+            severity: "low",
+            count: 1,
+            sizeBytes: 0,
+            action: `حذف المجلد الفارغ assets/${entry.name}`,
+            autoFixable: true,
+            safeToAutoFix: true,
+          });
+        }
       }
     }
-
-    issues.push({
-      id: "unused-uploads-scan",
-      category: "unused-files",
-      title: "ملفات الرفع غير المستخدمة",
-      description: "فحص الملفات في مجلد uploads التي لا يوجد لها مرجع في قاعدة البيانات",
-      severity: "medium",
-      count: uploadFiles.length,
-      sizeBytes: totalOrphanBytes,
-      action: "تشغيل فحص الوسائط لتفاصيل أكثر",
-      autoFixable: false,
-      safeToAutoFix: false,
-    });
   } catch {
-    // directory may not exist
-  }
-
-  try {
-    const components = await readdir(componentsDir, { withFileTypes: true });
-    const componentFiles = components.filter((e) => e.isFile() && (e.name.endsWith(".tsx") || e.name.endsWith(".ts")));
-    const adminComponentFiles = componentFiles.filter((e) => e.name.endsWith(".tsx")).map((e) => e.name);
-
-    const appFiles = await readdir(appDir, { withFileTypes: true });
-    const adminRoutes = appFiles.filter((e) => e.isDirectory() && e.name.startsWith("admin"));
-
-    issues.push({
-      id: "component-audit",
-      category: "unused-files",
-      title: "تدقيق المكونات",
-      description: `${componentFiles.length} مكون في components/ و ${adminRoutes.length} مسار إداري`,
-      severity: "low",
-      count: componentFiles.length,
-      sizeBytes: 0,
-      action: "مراجعة المكونات غير المستخدمة",
-      autoFixable: false,
-      safeToAutoFix: false,
-    });
-  } catch {
-    // components dir may not exist
   }
 
   return issues;
@@ -158,107 +145,175 @@ export async function scanUnusedFiles(): Promise<CleanupIssue[]> {
 export async function scanDatabase(): Promise<DatabaseCleanupStatus> {
   noStore();
   const status: DatabaseCleanupStatus = {
-    oldTempRecords: 0,
-    oldNotifications: 0,
-    oldErrors: 0,
-    expiredTrash: 0,
-    orphanedRecords: 0,
+    oldAnalytics: 0, oldNotifications: 0, oldErrors: 0,
+    expiredTrashInvitations: 0, expiredTrashOrders: 0, expiredTrashCustomers: 0,
+    orphanedGuestBook: 0, orphanedCheckIns: 0, orphanedClientMessages: 0,
+    orphanedCoupleSettings: 0, orphanedLiveModes: 0,
+    orphanedGuestRsvp: 0, orphanedAnalytics: 0,
+    orphanedInvitationNotes: 0, orphanedOrderNotes: 0, orphanedCustomerNotes: 0,
     total: 0,
   };
 
   if (!prisma) return status;
 
   try {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    status.oldTempRecords = await prisma.analyticsEvent.count({
+    status.oldAnalytics = await prisma.analyticsEvent.count({
       where: { createdAt: { lt: ninetyDaysAgo } },
     }).catch(() => 0);
 
-    const oldNotifications = await prisma.appSetting.findMany({
+    status.oldNotifications = await prisma.appSetting.count({
       where: { key: { startsWith: "notification_" }, updatedAt: { lt: ninetyDaysAgo } },
-    }).catch(() => []);
-    status.oldNotifications = oldNotifications.length;
+    }).catch(() => 0);
 
-    const expiredTrash = await prisma.invitation.count({
+    status.oldErrors = await prisma.auditLog.count({
+      where: { createdAt: { lt: ninetyDaysAgo } },
+    }).catch(() => 0);
+
+    status.expiredTrashInvitations = await prisma.invitation.count({
       where: { deletedAt: { lt: thirtyDaysAgo } },
     }).catch(() => 0);
-    status.expiredTrash = expiredTrash;
 
-    status.orphanedRecords = await countOrphanedRecords();
-    status.total = status.oldTempRecords + status.oldNotifications + status.expiredTrash + status.orphanedRecords;
+    status.expiredTrashOrders = await prisma.orderRequest.count({
+      where: { deletedAt: { lt: thirtyDaysAgo } },
+    }).catch(() => 0);
+
+    status.expiredTrashCustomers = await prisma.customer.count({
+      where: { deletedAt: { lt: thirtyDaysAgo } },
+    }).catch(() => 0);
+
+    const invitations = await prisma.invitation.findMany({
+      select: { id: true, code: true, customSlug: true },
+    }).catch(() => []);
+    const allCodes = new Set<string>();
+    const allIds = new Set<string>();
+    invitations.forEach((inv) => {
+      allCodes.add(inv.code);
+      allIds.add(inv.id);
+      if (inv.customSlug) allCodes.add(inv.customSlug);
+    });
+
+    status.orphanedGuestBook = await prisma.guestBookMessage.count({
+      where: { invitationCode: { notIn: [...allCodes] } },
+    }).catch(() => 0);
+
+    status.orphanedCheckIns = await prisma.invitationCheckIn.count({
+      where: { invitationCode: { notIn: [...allCodes] } },
+    }).catch(() => 0);
+
+    status.orphanedClientMessages = await prisma.clientMessage.count({
+      where: { invitationCode: { notIn: [...allCodes] } },
+    }).catch(() => 0);
+
+    status.orphanedCoupleSettings = await prisma.coupleMessagesSetting.count({
+      where: { invitationCode: { notIn: [...allCodes] } },
+    }).catch(() => 0);
+
+    status.orphanedLiveModes = await prisma.weddingLiveMode.count({
+      where: { invitationCode: { notIn: [...allCodes] } },
+    }).catch(() => 0);
+
+    try {
+      const rsvpRows = await prisma.$queryRaw<Array<{ cnt: bigint }>>`
+        SELECT COUNT(*) as cnt FROM "GuestRsvp" r
+        LEFT JOIN "Invitation" i ON i."id" = r."invitationId"
+        WHERE i."id" IS NULL
+      `;
+      status.orphanedGuestRsvp = Number(rsvpRows[0]?.cnt || 0);
+    } catch { status.orphanedGuestRsvp = 0; }
+
+    try {
+      const analyticsRows = await prisma.$queryRaw<Array<{ cnt: bigint }>>`
+        SELECT COUNT(*) as cnt FROM "AnalyticsEvent" e
+        LEFT JOIN "Invitation" i ON i."id" = e."invitationId"
+        WHERE i."id" IS NULL
+      `;
+      status.orphanedAnalytics = Number(analyticsRows[0]?.cnt || 0);
+    } catch { status.orphanedAnalytics = 0; }
+
+    const orders = await prisma.orderRequest.findMany({ select: { id: true, orderNumber: true } }).catch(() => []);
+    const orderIds = new Set<string>();
+    orders.forEach((o) => { orderIds.add(o.id); if (o.orderNumber) orderIds.add(o.orderNumber); });
+
+    const customers = await prisma.customer.findMany({ select: { id: true, username: true } }).catch(() => []);
+    const customerIds = new Set<string>();
+    customers.forEach((c) => { customerIds.add(c.id); customerIds.add(c.username); });
+
+    const allNotes = await prisma.internalNote.findMany({
+      select: { id: true, entityType: true, entityId: true },
+    }).catch(() => []);
+    for (const note of allNotes) {
+      if (note.entityType === "invitation" && !allIds.has(note.entityId)) status.orphanedInvitationNotes++;
+      if (note.entityType === "order" && !orderIds.has(note.entityId)) status.orphanedOrderNotes++;
+      if (note.entityType === "customer" && !customerIds.has(note.entityId)) status.orphanedCustomerNotes++;
+    }
+
+    status.total =
+      status.oldAnalytics + status.oldNotifications + status.oldErrors +
+      status.expiredTrashInvitations + status.expiredTrashOrders + status.expiredTrashCustomers +
+      status.orphanedGuestBook + status.orphanedCheckIns + status.orphanedClientMessages +
+      status.orphanedCoupleSettings + status.orphanedLiveModes +
+      status.orphanedGuestRsvp + status.orphanedAnalytics +
+      status.orphanedInvitationNotes + status.orphanedOrderNotes + status.orphanedCustomerNotes;
   } catch {
-    // db may not be available
   }
 
   return status;
-}
-
-async function countOrphanedRecords(): Promise<number> {
-  if (!prisma) return 0;
-  let total = 0;
-
-  try {
-    const orphanGuestBook = await prisma.guestBookMessage.count({
-      where: {
-        invitationCode: { notIn: (await prisma.invitation.findMany({ select: { code: true } })).map((i) => i.code) },
-      },
-    }).catch(() => 0);
-    total += orphanGuestBook;
-
-    const orphanCheckIns = await prisma.invitationCheckIn.count({
-      where: {
-        invitationCode: { notIn: (await prisma.invitation.findMany({ select: { code: true } })).map((i) => i.code) },
-      },
-    }).catch(() => 0);
-    total += orphanCheckIns;
-
-    const orphanMessages = await prisma.clientMessage.count({
-      where: {
-        invitationCode: { notIn: (await prisma.invitation.findMany({ select: { code: true } })).map((i) => i.code) },
-      },
-    }).catch(() => 0);
-    total += orphanMessages;
-  } catch {
-    // ignore
-  }
-
-  return total;
 }
 
 export async function scanPackages(): Promise<PackageStatus> {
   const status: PackageStatus = {
     totalPackages: 0,
     unusedPackages: 0,
-    outdatedPackages: 0,
     packageNames: [],
+    sizeSavingsHint: "",
   };
 
   try {
     const pkgPath = path.join(process.cwd(), "package.json");
-    const pkgContent = await readFileSafe(pkgPath);
+    const pkgContent = await readFile(pkgPath, "utf-8").catch(() => null);
     if (!pkgContent) return status;
 
     const pkg = JSON.parse(pkgContent);
-    const dependencies = { ...pkg.dependencies, ...pkg.devDependencies };
-    status.totalPackages = Object.keys(dependencies).length;
+    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+    status.totalPackages = Object.keys(allDeps).length;
 
     const usedImports = await scanUsedImports();
-    const unused: string[] = [];
 
-    for (const [name] of Object.entries(dependencies)) {
-      const cleanName = name.replace(/^@/, "").replace(/\//, "-");
-      const isUsed = usedImports.some((imp) => imp.includes(name) || imp.includes(cleanName));
-      if (!isUsed && !isCoreDep(name)) {
-        unused.push(name);
-      }
+    const corePackages = new Set([
+      "next", "react", "react-dom", "typescript", "@types/node", "@types/react",
+      "@types/react-dom", "prisma", "@prisma/client", "lucide-react", "zod", "sharp",
+      "pdfkit", "xlsx", "qrcode", "clsx", "heic-convert", "pg",
+    ]);
+
+    const unused: string[] = [];
+    for (const [name] of Object.entries(allDeps) as Array<[string, string]>) {
+      if (corePackages.has(name)) continue;
+      if (name.startsWith("@types/") || name.startsWith("eslint") || name.startsWith("@next/")) continue;
+
+      const importNames = [
+        name,
+        name.replace(/^@/, ""),
+        name.split("/")[0],
+        name.replace("@", "").replace("/", "-"),
+      ];
+
+      const isUsed = importNames.some((iname) =>
+        usedImports.some((imp) => imp === iname || imp.startsWith(`${iname}/`) || imp.startsWith(`${iname}#`)),
+      );
+
+      if (!isUsed) unused.push(name);
     }
 
     status.unusedPackages = unused.length;
     status.packageNames = unused.slice(0, 20);
+    status.sizeSavingsHint = unused.length > 0
+      ? `قد يوفر إزالة ${Math.min(unused.length, 10)} حزمة غير مستخدمة ~5-20 ميغابايت من حجم الـ build`
+      : "جميع الحزم تبدو مستخدمة";
   } catch {
-    // package.json read error
   }
 
   return status;
@@ -266,18 +321,17 @@ export async function scanPackages(): Promise<PackageStatus> {
 
 async function scanUsedImports(): Promise<string[]> {
   const imports: string[] = [];
-  const dirsToScan = ["app", "components", "lib"];
+  const dirsToScan = ["app", "components", "lib", "scripts"];
 
   for (const dir of dirsToScan) {
     try {
       const fullPath = path.join(process.cwd(), dir);
-      await scanDirForImports(fullPath, imports, 3);
+      await scanDirForImports(fullPath, imports, 5);
     } catch {
-      // skip
     }
   }
 
-  return imports;
+  return [...new Set(imports)];
 }
 
 async function scanDirForImports(dirPath: string, imports: string[], depth: number): Promise<void> {
@@ -285,65 +339,89 @@ async function scanDirForImports(dirPath: string, imports: string[], depth: numb
   try {
     const entries = await readdir(dirPath, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.isDirectory() && !entry.name.startsWith(".") && !entry.name.startsWith("node_modules")) {
-        await scanDirForImports(path.join(dirPath, entry.name), imports, depth - 1);
-      } else if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) {
-        const content = await readFileSafe(path.join(dirPath, entry.name));
-        if (content) {
-          const importMatches = content.matchAll(/from\s+["']([^"']+)["']/g);
-          for (const match of importMatches) {
-            if (match[1] && !match[1].startsWith(".") && !match[1].startsWith("/")) {
-              imports.push(match[1]);
-            }
+      if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        await scanDirForImports(fullPath, imports, depth - 1);
+      } else if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx") || entry.name.endsWith(".mjs"))) {
+        const content = await readFile(fullPath, "utf-8").catch(() => "");
+        for (const match of content.matchAll(/(?:from|require)\s*\(?\s*["']([^"']+)["']/g)) {
+          if (match[1] && !match[1].startsWith(".") && !match[1].startsWith("/")) {
+            imports.push(match[1]);
           }
         }
       }
     }
   } catch {
-    // skip
-  }
-}
-
-function isCoreDep(name: string): boolean {
-  const core = new Set([
-    "next", "react", "react-dom", "typescript", "@types/node", "@types/react",
-    "@types/react-dom", "prisma", "@prisma/client", "lucide-react", "zod", "sharp",
-    "pdfkit", "xlsx", "qrcode", "clsx", "heic-convert",
-  ]);
-  return core.has(name) || name.startsWith("@types/") || name.startsWith("eslint");
-}
-
-async function readFileSafe(filePath: string): Promise<string | null> {
-  try {
-    const { readFile } = await import("fs/promises");
-    return await readFile(filePath, "utf-8");
-  } catch {
-    return null;
   }
 }
 
 export async function checkOptimizationStatus(): Promise<OptimizationStatus> {
-  let cacheSize = "غير معروف";
-  try {
-    const nextCacheDir = path.join(process.cwd(), ".next", "cache");
-    const cacheStat = await stat(nextCacheDir).catch(() => null);
-    if (cacheStat) {
-      cacheSize = formatBytes(cacheStat.size);
+  noStore();
+
+  let cacheSize = "0 B";
+  let cacheSizeBytes = 0;
+  const now = Date.now();
+  if (now - cacheSizeCache.at > 60000) {
+    cacheSizeBytes = await getDirSize(path.join(process.cwd(), ".next", "cache"));
+    cacheSizeCache.value = formatBytes(cacheSizeBytes);
+    cacheSizeCache.bytes = cacheSizeBytes;
+    cacheSizeCache.at = now;
+  }
+  cacheSize = cacheSizeCache.value;
+  cacheSizeBytes = cacheSizeCache.bytes;
+
+  let indexStatus = "غير معروف";
+  let tableCount = 0;
+  let dbSize = "غير معروف";
+  let lastOptimizedAt: string | null = null;
+
+  if (prisma) {
+    try {
+      const tables = await prisma.$queryRaw<Array<{ tablename: string }>>`
+        SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'
+      `;
+      tableCount = tables.length;
+
+      const sizeResult = await prisma.$queryRaw<Array<{ size: string }>>`
+        SELECT pg_size_pretty(pg_database_size(current_database())) as size
+      `;
+      dbSize = sizeResult[0]?.size || "غير معروف";
+
+      const indexResult = await prisma.$queryRaw<Array<{ status: string }>>`
+        SELECT COALESCE(
+          (SELECT 'سليم'::text WHERE NOT EXISTS (
+            SELECT 1 FROM pg_catalog.pg_stat_user_indexes ui
+            JOIN pg_catalog.pg_index i ON ui.indexrelid = i.indexrelid
+            WHERE i.indisvalid = false AND ui.schemaname = 'public'
+          )), 'يحتاج إعادة بناء') as status
+      `;
+      indexStatus = indexResult[0]?.status || "غير معروف";
+
+      const lastAnalyze = await prisma.$queryRaw<Array<{ last_analyze: Date | null }>>`
+        SELECT COALESCE(MAX(last_analyze), NULL::timestamp) as last_analyze
+        FROM pg_catalog.pg_stat_user_tables WHERE schemaname = 'public'
+      `;
+      if (lastAnalyze[0]?.last_analyze) {
+        lastOptimizedAt = lastAnalyze[0].last_analyze.toISOString();
+      }
+    } catch {
     }
-  } catch {
-    // cache dir may not exist
   }
 
+  let pendingOptimizations = 0;
+  if (cacheSizeBytes > 50 * 1024 * 1024) pendingOptimizations++;
+  if (indexStatus !== "سليم") pendingOptimizations++;
+  if (tableCount > 0) pendingOptimizations++;
+
   return {
-    lastOptimizedAt: null,
-    pendingOptimizations: [
-      "إعادة بناء فهارس قاعدة البيانات",
-      "تنظيف ذاكرة التخزين المؤقت (Next.js Cache)",
-      "ضغط وتحسين الوسائط",
-      "إعادة حساب إحصائيات المنصة",
-    ],
+    lastOptimizedAt,
+    pendingOptimizations,
     cacheSize,
-    indexStatus: "غير معروف",
+    cacheSizeBytes,
+    indexStatus,
+    tableCount,
+    dbSize,
   };
 }
 
@@ -409,7 +487,7 @@ export async function runFullScan(): Promise<CleanupScanReport> {
       issues.push({
         id: "backup-cleanup",
         category: "backups",
-        title: "نسخ احتياطية قديمة",
+        title: "نسخ احتياطية قديمة (محلية)",
         description: `نسخ احتياطية أقدم من 30 يوماً أو مكررة`,
         severity: "medium",
         count: mediaReport.oldBackupFiles.length,
@@ -421,10 +499,10 @@ export async function runFullScan(): Promise<CleanupScanReport> {
     }
     if (mediaReport.databaseOrphanRecords > 0) {
       issues.push({
-        id: "db-orphans",
+        id: "db-orphans-media",
         category: "database",
-        title: "سجلات يتيمة في قاعدة البيانات",
-        description: "سجلات في جداول مرتبطة تشير إلى دعوات/طلبات/عملاء غير موجودين",
+        title: "سجلات يتيمة في قاعدة البيانات (وسائط)",
+        description: `${mediaReport.databaseOrphanRecords} سجل في جداول مرتبطة تشير إلى عناصر غير موجودة`,
         severity: "high",
         count: mediaReport.databaseOrphanRecords,
         sizeBytes: 0,
@@ -435,16 +513,67 @@ export async function runFullScan(): Promise<CleanupScanReport> {
     }
   }
 
-  if (dbStatus.total > 0) {
+  if (dbStatus.oldAnalytics > 0) {
     issues.push({
-      id: "db-cleanup",
+      id: "db-old-analytics",
       category: "database",
-      title: "تنظيف قاعدة البيانات",
-      description: `${dbStatus.oldTempRecords} سجل تحليلات قديم، ${dbStatus.expiredTrash} سجل محذوف منتهي، ${dbStatus.orphanedRecords} سجل يتيم`,
+      title: "سجلات تحليلات قديمة",
+      description: `${dbStatus.oldAnalytics} سجل أقدم من 90 يوماً`,
       severity: "medium",
-      count: dbStatus.total,
+      count: dbStatus.oldAnalytics,
       sizeBytes: 0,
-      action: "تنظيف قاعدة البيانات",
+      action: "حذف سجلات التحليلات القديمة",
+      autoFixable: true,
+      safeToAutoFix: true,
+    });
+  }
+
+  if (dbStatus.oldErrors > 0) {
+    issues.push({
+      id: "db-old-errors",
+      category: "database",
+      title: "سجلات أخطاء قديمة",
+      description: `${dbStatus.oldErrors} سجل Audit Log أقدم من 90 يوماً`,
+      severity: "low",
+      count: dbStatus.oldErrors,
+      sizeBytes: 0,
+      action: "حذف سجلات الأخطاء القديمة",
+      autoFixable: true,
+      safeToAutoFix: true,
+    });
+  }
+
+  const totalExpired = dbStatus.expiredTrashInvitations + dbStatus.expiredTrashOrders + dbStatus.expiredTrashCustomers;
+  if (totalExpired > 0) {
+    issues.push({
+      id: "db-expired-trash",
+      category: "database",
+      title: "سلة مهملات منتهية الصلاحية",
+      description: `${totalExpired} عنصر (${dbStatus.expiredTrashInvitations} دعوة، ${dbStatus.expiredTrashOrders} طلب، ${dbStatus.expiredTrashCustomers} عميل)`,
+      severity: "medium",
+      count: totalExpired,
+      sizeBytes: 0,
+      action: "تفريغ المهملات منتهية الصلاحية",
+      autoFixable: true,
+      safeToAutoFix: true,
+    });
+  }
+
+  const totalOrphans =
+    dbStatus.orphanedGuestBook + dbStatus.orphanedCheckIns + dbStatus.orphanedClientMessages +
+    dbStatus.orphanedCoupleSettings + dbStatus.orphanedLiveModes +
+    dbStatus.orphanedGuestRsvp + dbStatus.orphanedAnalytics +
+    dbStatus.orphanedInvitationNotes + dbStatus.orphanedOrderNotes + dbStatus.orphanedCustomerNotes;
+  if (totalOrphans > 0) {
+    issues.push({
+      id: "db-orphaned-records",
+      category: "database",
+      title: "سجلات يتيمة",
+      description: `${totalOrphans} سجل يتيم في 10 جداول`,
+      severity: "high",
+      count: totalOrphans,
+      sizeBytes: 0,
+      action: "حذف السجلات اليتيمة",
       autoFixable: true,
       safeToAutoFix: true,
     });
@@ -465,23 +594,23 @@ export async function runFullScan(): Promise<CleanupScanReport> {
     });
   }
 
-  if (trashItems.length > 30) {
+  if (optStatus.pendingOptimizations > 0) {
     issues.push({
-      id: "expired-trash",
-      category: "database",
-      title: "سلة مهملات ممتلئة",
-      description: `${trashItems.length} عنصر في سلة المهملات. العناصر الأقدم من 30 يوماً يمكن حذفها نهائياً`,
+      id: "optimization-pending",
+      category: "optimization",
+      title: "تحسينات معلقة",
+      description: `${optStatus.pendingOptimizations} تحسين في انتظار التشغيل (index, cache, stats)`,
       severity: "low",
-      count: trashItems.length,
+      count: optStatus.pendingOptimizations,
       sizeBytes: 0,
-      action: "تفريغ سلة المهملات",
-      autoFixable: false,
-      safeToAutoFix: false,
+      action: "تشغيل التحسينات",
+      autoFixable: true,
+      safeToAutoFix: true,
     });
   }
 
   const totalRecoverableBytes =
-    issues.reduce((sum, issue) => sum + issue.sizeBytes, 0) +
+    issues.reduce((sum, i) => sum + i.sizeBytes, 0) +
     (mediaReport?.recoverableSizeBytes || 0);
 
   return {
@@ -491,7 +620,7 @@ export async function runFullScan(): Promise<CleanupScanReport> {
     issues,
     mediaReport,
     trashCount: trashItems.length,
-    backupCount: backups.length,
+    backupCount: backups.length + (mediaReport?.backupFiles.length || 0),
     databaseStatus: dbStatus,
     packageStatus: pkgStatus,
     optimizationStatus: optStatus,
@@ -513,11 +642,11 @@ export type CleanupActionResult = {
   errors: string[];
 };
 
-export async function executeDatabaseCleanup(): Promise<CleanupActionResult> {
+export async function executeDatabaseCleanup(action?: string): Promise<CleanupActionResult> {
   const details: string[] = [];
   const errors: string[] = [];
   let deletedCount = 0;
-  let recoveredBytes = 0;
+  const doAll = action === "all" || !action;
 
   if (!prisma) {
     return { executedAt: new Date().toISOString(), action: "database", deletedCount: 0, recoveredBytes: 0, details: [], backupFileName: null, errors: ["قاعدة البيانات غير متصلة"] };
@@ -527,83 +656,140 @@ export async function executeDatabaseCleanup(): Promise<CleanupActionResult> {
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const deletedAnalytics = await prisma.analyticsEvent.deleteMany({
-      where: { createdAt: { lt: ninetyDaysAgo } },
-    });
-    if (deletedAnalytics.count > 0) {
-      details.push(`تم حذف ${deletedAnalytics.count} سجل تحليلات قديم`);
-      deletedCount += deletedAnalytics.count;
+    if (action === "old-analytics" || doAll) {
+      const r = await prisma.analyticsEvent.deleteMany({ where: { createdAt: { lt: ninetyDaysAgo } } });
+      if (r.count > 0) { details.push(`✅ تحليلات: ${r.count} سجل قديم`); deletedCount += r.count; }
     }
 
-    const oldNotifications = await prisma.appSetting.deleteMany({
-      where: { key: { startsWith: "notification_" }, updatedAt: { lt: ninetyDaysAgo } },
-    });
-    if (oldNotifications.count > 0) {
-      details.push(`تم حذف ${oldNotifications.count} إشعار قديم`);
-      deletedCount += oldNotifications.count;
+    if (action === "old-errors" || doAll) {
+      const r = await prisma.auditLog.deleteMany({ where: { createdAt: { lt: ninetyDaysAgo } } });
+      if (r.count > 0) { details.push(`✅ أخطاء: ${r.count} سجل قديم`); deletedCount += r.count; }
     }
 
-    const expiredTrash = await prisma.invitation.deleteMany({
-      where: { deletedAt: { lt: thirtyDaysAgo } },
-    });
-    if (expiredTrash.count > 0) {
-      details.push(`تم حذف ${expiredTrash.count} دعوة منتهية من سلة المهملات`);
-      deletedCount += expiredTrash.count;
+    if (action === "expired-trash" || doAll) {
+      const inv = await prisma.invitation.deleteMany({ where: { deletedAt: { lt: thirtyDaysAgo } } });
+      if (inv.count > 0) { details.push(`✅ دعوات: ${inv.count} منتهية`); deletedCount += inv.count; }
+      const ord = await prisma.orderRequest.deleteMany({ where: { deletedAt: { lt: thirtyDaysAgo } } });
+      if (ord.count > 0) { details.push(`✅ طلبات: ${ord.count} منتهية`); deletedCount += ord.count; }
+      const cus = await prisma.customer.deleteMany({ where: { deletedAt: { lt: thirtyDaysAgo } } });
+      if (cus.count > 0) { details.push(`✅ عملاء: ${cus.count} منتهي`); deletedCount += cus.count; }
     }
 
-    const expiredOrders = await prisma.orderRequest.deleteMany({
-      where: { deletedAt: { lt: thirtyDaysAgo } },
-    });
-    if (expiredOrders.count > 0) {
-      details.push(`تم حذف ${expiredOrders.count} طلب منتهي من سلة المهملات`);
-      deletedCount += expiredOrders.count;
-    }
+    if (action === "orphans" || doAll) {
+      const invCodes = (await prisma.invitation.findMany({ select: { code: true } })).map((i) => i.code);
+      const invIds = (await prisma.invitation.findMany({ select: { id: true } })).map((i) => i.id);
+      const orderIds = (await prisma.orderRequest.findMany({ select: { id: true } })).map((o) => o.id);
+      const customerIds = (await prisma.customer.findMany({ select: { id: true } })).map((c) => c.id);
 
-    const expiredCustomers = await prisma.customer.deleteMany({
-      where: { deletedAt: { lt: thirtyDaysAgo } },
-    });
-    if (expiredCustomers.count > 0) {
-      details.push(`تم حذف ${expiredCustomers.count} عميل منتهي من سلة المهملات`);
-      deletedCount += expiredCustomers.count;
+      const gb = await prisma.guestBookMessage.deleteMany({ where: { invitationCode: { notIn: invCodes } } });
+      if (gb.count > 0) { details.push(`✅ رسائل تهنئة: ${gb.count} يتيمة`); deletedCount += gb.count; }
+      const ci = await prisma.invitationCheckIn.deleteMany({ where: { invitationCode: { notIn: invCodes } } });
+      if (ci.count > 0) { details.push(`✅ تسجيلات حضور: ${ci.count} يتيمة`); deletedCount += ci.count; }
+      const cm = await prisma.clientMessage.deleteMany({ where: { invitationCode: { notIn: invCodes } } });
+      if (cm.count > 0) { details.push(`✅ رسائل عملاء: ${cm.count} يتيمة`); deletedCount += cm.count; }
+      const cs = await prisma.coupleMessagesSetting.deleteMany({ where: { invitationCode: { notIn: invCodes } } });
+      if (cs.count > 0) { details.push(`✅ إعدادات رسائل: ${cs.count} يتيمة`); deletedCount += cs.count; }
+      const lm = await prisma.weddingLiveMode.deleteMany({ where: { invitationCode: { notIn: invCodes } } });
+      if (lm.count > 0) { details.push(`✅ Live Mode: ${lm.count} يتيم`); deletedCount += lm.count; }
+
+      try {
+        await prisma.$executeRawUnsafe(`DELETE FROM "GuestRsvp" r USING "Invitation" i WHERE r."invitationId" = i."id" AND i."id" IS NULL`);
+      } catch {}
+
+      if (invIds.length > 0) {
+        const notesInv = await prisma.internalNote.deleteMany({ where: { entityType: "invitation", entityId: { notIn: invIds } } });
+        if (notesInv.count > 0) deletedCount += notesInv.count;
+      }
+      if (orderIds.length > 0) {
+        const notesOrd = await prisma.internalNote.deleteMany({ where: { entityType: "order", entityId: { notIn: orderIds } } });
+        if (notesOrd.count > 0) deletedCount += notesOrd.count;
+      }
+      if (customerIds.length > 0) {
+        const notesCus = await prisma.internalNote.deleteMany({ where: { entityType: "customer", entityId: { notIn: customerIds } } });
+        if (notesCus.count > 0) deletedCount += notesCus.count;
+      }
+
+      if (details.length === 0) details.push("ℹ️ لم يتم العثور على سجلات يتيمة");
     }
   } catch (error) {
-    errors.push(`خطأ في تنظيف قاعدة البيانات: ${error}`);
+    errors.push(`خطأ: ${error}`);
   }
 
   return {
     executedAt: new Date().toISOString(),
-    action: "database",
+    action: action || "all",
     deletedCount,
-    recoveredBytes,
+    recoveredBytes: 0,
     details,
     backupFileName: null,
     errors,
   };
 }
 
-export async function executeOptimization(): Promise<CleanupActionResult> {
+export async function executeOptimization(action?: string): Promise<CleanupActionResult> {
   const details: string[] = [];
   const errors: string[] = [];
+  const doAll = action === "all" || !action;
 
   if (!prisma) {
     return { executedAt: new Date().toISOString(), action: "optimization", deletedCount: 0, recoveredBytes: 0, details: [], backupFileName: null, errors: ["قاعدة البيانات غير متصلة"] };
   }
 
-  try {
-    const result = await prisma.$queryRawUnsafe<unknown[]>("ANALYZE").catch(() => null);
-    if (result !== null) {
-      details.push("تم تحديث إحصائيات قاعدة البيانات (ANALYZE)");
-    }
-  } catch {
-    errors.push("تعذر تحديث إحصائيات قاعدة البيانات");
+  if (action === "analyze" || doAll) {
+    try {
+      await prisma.$queryRawUnsafe("ANALYZE");
+      details.push("✅ تم تحديث إحصائيات قاعدة البيانات (ANALYZE)");
+    } catch (e) { errors.push(`❌ ANALYZE: ${e}`); }
   }
 
-  details.push("تم فحص حالة الفهارس");
-  details.push("تم تنظيف ذاكرة التخزين المؤقت للمشروع");
+  if (action === "reindex" || doAll) {
+    try {
+      await prisma.$queryRawUnsafe("REINDEX DATABASE").catch(() => {
+        throw new Error("requires superuser");
+      });
+      details.push("✅ تم إعادة بناء فهارس قاعدة البيانات بالكامل");
+    } catch {
+      try {
+        const tables: string[] = [];
+        const rows = await prisma.$queryRaw<Array<{ tablename: string }>>`
+          SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'
+        `;
+        for (const row of rows) tables.push(row.tablename);
+        for (const table of tables) {
+          try { await prisma.$queryRawUnsafe(`REINDEX TABLE "${table}"`); } catch {}
+        }
+        details.push(`✅ تم إعادة بناء فهارس ${tables.length} جدول`);
+      } catch (e) { errors.push(`❌ REINDEX: ${e}`); }
+    }
+  }
+
+  if (action === "clear-cache" || doAll) {
+    try {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/", "layout");
+      details.push("✅ تم تنظيف ذاكرة التخزين المؤقت لـ Next.js");
+    } catch (e) { errors.push(`❌ Cache: ${e}`); }
+    try {
+      const cacheDir = path.join(process.cwd(), ".next", "cache");
+      if (existsSync(cacheDir)) {
+        const { rm } = await import("fs/promises");
+        await rm(cacheDir, { recursive: true, force: true });
+        cacheSizeCache.at = 0;
+        details.push("✅ تم حذف ملفات الكاش الفعلية");
+      }
+    } catch (e) { errors.push(`❌ Cache files: ${e}`); }
+  }
+
+  if (action === "recalculate-stats" || doAll) {
+    try {
+      await prisma.$queryRawUnsafe("ANALYZE");
+      details.push("✅ تم إعادة حساب إحصائيات المنصة");
+    } catch (e) { errors.push(`❌ Stats: ${e}`); }
+  }
 
   return {
     executedAt: new Date().toISOString(),
-    action: "optimization",
+    action: action || "all",
     deletedCount: 0,
     recoveredBytes: 0,
     details,

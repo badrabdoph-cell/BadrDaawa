@@ -1,10 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LocateFixed, MapPin, Route, Share2 } from "lucide-react";
 import { getInvitationTranslator, resolveLocale } from "@/lib/i18n";
-import { extractCoordinatesFromUrl, getTextDestination, isEmbedUrl } from "@/lib/map-url";
+import { extractCoordinatesFromUrl, getTextDestination, isEmbedUrl, isShortLink, resolveShortLink } from "@/lib/map-url";
 import type { Coordinates } from "@/lib/map-url";
 import type { Language } from "@/lib/types";
 
@@ -20,6 +20,7 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
   const [userCoords, setUserCoords] = useState<Coordinates | null>(null);
   const [locationState, setLocationState] = useState<LocationState>("idle");
   const [shareState, setShareState] = useState<ShareState>("idle");
+  const [resolvedCoords, setResolvedCoords] = useState<Coordinates | null>(null);
   const locationRequestedRef = useRef(false);
   const hasVenueLink = Boolean(mapUrl.trim());
 
@@ -27,10 +28,22 @@ export function InviteMap({ venue, city, mapUrl, latitude, longitude, locale = "
     if (typeof latitude === "number" && typeof longitude === "number" && Number.isFinite(latitude) && Number.isFinite(longitude)) {
       return { lat: latitude, lng: longitude };
     }
-    return extractCoordinatesFromUrl(mapUrl);
-  }, [latitude, longitude, mapUrl]);
+    return extractCoordinatesFromUrl(mapUrl) || resolvedCoords;
+  }, [latitude, longitude, mapUrl, resolvedCoords]);
 
   const hasVenueCoords = useMemo(() => venueCoords !== null, [venueCoords]);
+
+  useEffect(() => {
+    if (venueCoords !== null) return;
+    if (!isShortLink(mapUrl)) return;
+    let cancelled = false;
+    resolveShortLink(mapUrl).then((resolvedUrl) => {
+      if (cancelled || !resolvedUrl) return;
+      const coords = extractCoordinatesFromUrl(resolvedUrl);
+      if (coords) setResolvedCoords(coords);
+    });
+    return () => { cancelled = true; };
+  }, [mapUrl, venueCoords]);
 
   const destParam = useMemo(() => {
     if (venueCoords) return `${venueCoords.lat},${venueCoords.lng}`;

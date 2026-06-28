@@ -47,9 +47,20 @@ export function isEmbedUrl(value: string) {
 export function isShortLink(value: string) {
   try {
     const hostname = new URL(value).hostname;
-    return hostname.includes("goo.gl") || hostname.includes("goo.la") || hostname.includes("shorturl.at");
+    return hostname.includes("goo.gl") || hostname.includes("goo.la") || hostname.includes("shorturl.at") || hostname.includes("tinyurl.com") || hostname.includes("bit.ly");
   } catch {
     return false;
+  }
+}
+
+export async function resolveShortLink(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/resolve-url?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.resolvedUrl || null;
+  } catch {
+    return null;
   }
 }
 
