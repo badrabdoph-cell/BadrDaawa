@@ -169,22 +169,18 @@ export default function AdminTasksPage() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const handleRetry = (taskId: string) => {
-    const form = document.createElement("form");
-    form.method = "post";
-    form.action = "/api/admin/tasks";
-    const actionInput = document.createElement("input");
-    actionInput.type = "hidden";
-    actionInput.name = "action";
-    actionInput.value = "run";
-    form.appendChild(actionInput);
-    const idInput = document.createElement("input");
-    idInput.type = "hidden";
-    idInput.name = "taskId";
-    idInput.value = taskId;
-    form.appendChild(idInput);
-    document.body.appendChild(form);
-    form.submit();
+  const handleRetry = async (taskId: string) => {
+    try {
+      const res = await fetch("/api/admin/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "run", taskId }),
+      });
+      if (res.ok) await fetchData(false);
+      else setError("فشل إعادة تشغيل المهمة");
+    } catch {
+      setError("تعذر الاتصال بالخادم");
+    }
   };
 
   const handleClearCompleted = async () => {

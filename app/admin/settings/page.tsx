@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, Home, Image, LayoutList, Mail, Megaphone, Phone, Save, Search, Settings } from "lucide-react";
+
+export const metadata: Metadata = { title: "إعدادات الموقع - لوحة الإدارة" };
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { getDraftHomePreviewSettings } from "@/lib/preview-settings";
 import { getDraftSiteSettings } from "@/lib/site-settings";

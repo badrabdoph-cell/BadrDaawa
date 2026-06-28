@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  Activity, Database, FileImage, HardDrive, RefreshCw,
+  Activity, BarChart3, Database, FileImage, HardDrive, Package, RefreshCw,
   Trash2, Archive, Clock, ShieldCheck, TriangleAlert, Gauge,
   Server, Image as ImageIcon, Music, Bug, CheckCircle2,
-  XCircle, ChevronDown, ChevronUp, Loader2, Search,
+  XCircle, ChevronDown, ChevronUp, Loader2, Search, Zap,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -585,7 +585,7 @@ export default function CleanupDashboard() {
       {r && activeTab === "packages" && (
         <>
           <div className="backup-metrics-grid">
-            <MetricCard icon={PackageIcon} label="إجمالي الحزم" value={String(r.packageStatus.totalPackages)} />
+            <MetricCard icon={Package} label="إجمالي الحزم" value={String(r.packageStatus.totalPackages)} />
             <MetricCard icon={Bug} label="غير مستخدمة" value={String(r.packageStatus.unusedPackages)} color={r.packageStatus.unusedPackages > 0 ? "#d9534f" : undefined} />
           </div>
 
@@ -613,27 +613,4 @@ export default function CleanupDashboard() {
   );
 }
 
-function BarChart3(props: { size?: number; className?: string; style?: React.CSSProperties }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={props.style} className={props.className}>
-      <line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" />
-    </svg>
-  );
-}
 
-function Zap(props: { size?: number; className?: string; style?: React.CSSProperties }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={props.style} className={props.className}>
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  );
-}
-
-function PackageIcon(props: { size?: number; className?: string; style?: React.CSSProperties }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={props.style} className={props.className}>
-      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" /><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-      <polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" />
-    </svg>
-  );
-}

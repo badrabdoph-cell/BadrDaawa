@@ -8,7 +8,10 @@ import {
   CalendarClock,
   ShieldCheck,
 } from "lucide-react";
+import type { Metadata } from "next";
 import { findLatestBackupOnGitHubByType, getScheduledBackupInfo } from "@/lib/backups";
+
+export const metadata: Metadata = { title: "النسخ الاحتياطي - لوحة الإدارة" };
 import { V2BackupActions } from "./v2/V2BackupActions";
 import { V2BackupTable } from "./v2/V2BackupTable";
 import { EmergencyMigration } from "./v2/EmergencyMigration";

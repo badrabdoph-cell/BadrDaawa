@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { AlertTriangle, BarChart3, CheckCircle2, CopyCheck, DatabaseBackup, FileAudio, FileImage, Filter, HardDrive, ImageOff, Music2, RotateCw, Search, ShieldCheck, Trash2 } from "lucide-react";
+
+export const metadata: Metadata = { title: "الوسائط - لوحة الإدارة" };
 import { getMediaCleanupReport, type MediaCleanupReport, type MediaFileReportItem, type MediaKind, type StorageCleanupAction } from "@/lib/media-cleanup";
 import { formatArabicNumber } from "@/lib/utils";
 import { MediaBrowser } from "./media-browser";

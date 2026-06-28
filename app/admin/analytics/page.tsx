@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, CalendarDays, MousePointerClick, Share2, TrendingUp, UserCheck, UsersRound, UserX } from "lucide-react";
+
+export const metadata: Metadata = { title: "التحليلات - لوحة الإدارة" };
 import { StatsGrid } from "@/components/StatsGrid";
 import { analyticsDateLabel, getAdminAnalyticsReport, type AnalyticsPeriod, type AdminAnalyticsReport } from "@/lib/admin-analytics";
 import { formatArabicNumber } from "@/lib/utils";

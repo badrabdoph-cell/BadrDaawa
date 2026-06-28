@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { getLatestContentVersion } from "@/lib/publish-pipeline";
 import { History, ShieldCheck } from "lucide-react";
 import { VersionHistorySection } from "./VersionHistorySection";
+
+export const metadata: Metadata = { title: "النشر والإصدارات - لوحة الإدارة" };
 
 export const dynamic = "force-dynamic";
 

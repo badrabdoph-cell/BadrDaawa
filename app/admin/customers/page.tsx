@@ -92,6 +92,13 @@ export default async function CustomersPage({
           متزامن
         </strong>
       </div>
+      {customers.length === 0 ? (
+        <div className="admin-empty-state compact">
+          <UsersRound size={22} />
+          <strong>لا يوجد عملاء بعد</strong>
+          <p>عند إنشاء أول دعوة، سيتم إنشاء حساب عميل تلقائياً.</p>
+        </div>
+      ) : (
       <div className="table-shell">
         <table className="data-table">
           <thead>
@@ -150,6 +157,7 @@ export default async function CustomersPage({
         </table>
         {customers.length > 50 ? <p className="admin-note">عرض أول 50 عميلاً من أصل {customers.length}.</p> : null}
       </div>
+      )}
     </>
   );
 }

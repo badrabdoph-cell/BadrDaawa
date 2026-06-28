@@ -26,8 +26,6 @@ const monitoringSections = [
   },
 ];
 
-export const dynamic = "force-dynamic";
-
 export default function MonitoringHubPage() {
   return (
     <div className="admin-page">
