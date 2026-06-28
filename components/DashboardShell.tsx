@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, FileImage, FilePenLine, FileText, Gauge, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, Search, ScrollText, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UsersRound, X } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Book, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, Eye, FileImage, FilePenLine, FileText, Gauge, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, ScrollText, Search, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UserCheck, UsersRound, X, XCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -19,10 +19,10 @@ const adminSections = [
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
       { href: "/admin/invitations-customers", label: "عملاء الدعوات", icon: UsersRound },
-      { href: "/admin/customers", label: "كل العملاء", icon: UsersRound },
+      { href: "/admin/customers", label: "كل العملاء", icon: UserCheck },
       { href: "/admin/messages", label: "الرسائل", icon: MessageSquareText, badgeKey: "messages" },
       { href: "/admin/guest-book", label: "التهاني", icon: MessageCircleHeart },
-      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: MessageSquareText },
+      { href: "/admin/message-templates", label: "قوالب الرسائل", icon: FileText },
     ],
   },
   {
@@ -38,11 +38,11 @@ const adminSections = [
       { href: "/admin/pages", label: "الصفحات", icon: FilePenLine },
       { href: "/admin/preview", label: "المعاينة", icon: MonitorPlay },
       { href: "/admin/broadcast", label: "تصفح الموقع", icon: RadioTower },
-      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: FilePenLine },
-      { href: "/admin/legal", label: "الصفحات القانونية", icon: FileText },
+      { href: "/admin/content-presets", label: "النصوص الجاهزة", icon: Book },
+      { href: "/admin/legal", label: "الصفحات القانونية", icon: ShieldCheck },
       { href: "/admin/search", label: "البحث العام", icon: Search },
-      { href: "/admin/texts", label: "النصوص", icon: FileText },
-      { href: "/admin/recent-edits", label: "آخر التعديلات", icon: FilePenLine },
+      { href: "/admin/texts", label: "النصوص", icon: ScrollText },
+      { href: "/admin/recent-edits", label: "آخر التعديلات", icon: History },
       { href: "/admin/favorites", label: "المفضلة", icon: Star },
     ],
   },
@@ -55,7 +55,7 @@ const adminSections = [
     links: [
       { href: "/admin/attendance", label: "الحضور", icon: ClipboardList },
       { href: "/admin/check-ins", label: "تسجيل الوصول", icon: MapPinCheckInside },
-      { href: "/admin/live-mode", label: "البث المباشر", icon: RadioTower },
+      { href: "/admin/live-mode", label: "البث المباشر", icon: Camera },
       { href: "/admin/analytics", label: "التحليلات", icon: BarChart3 },
     ],
   },
@@ -92,11 +92,11 @@ const adminSections = [
       { href: "/admin/notifications", label: "الإشعارات", icon: Bell, badgeKey: "notifications" },
       { href: "/admin/backups", label: "النسخ الاحتياطي", icon: DatabaseBackup },
       { href: "/admin/system-health", label: "صحة النظام", icon: Activity },
-      { href: "/admin/monitoring", label: "المراقبة", icon: Activity },
+      { href: "/admin/monitoring", label: "المراقبة", icon: Eye },
       { href: "/admin/diagnostics", label: "التشخيص", icon: Bug },
       { href: "/admin/audit-log", label: "سجل الأحداث", icon: ScrollText },
-      { href: "/admin/errors", label: "تقارير الأخطاء", icon: Bug },
-      { href: "/admin/trash", label: "سلة المهملات", icon: Trash2 },
+      { href: "/admin/errors", label: "تقارير الأخطاء", icon: TriangleAlert },
+      { href: "/admin/trash", label: "سلة المهملات", icon: XCircle },
       { href: "/admin/sync-settings", label: "إعدادات GitHub", icon: Github },
       { href: "/admin/sync", label: "المزامنة", icon: RefreshCw },
       { href: "/admin/sync-history", label: "سجل المزامنة", icon: History },
