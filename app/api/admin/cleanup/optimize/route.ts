@@ -6,8 +6,15 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const action = formData.get("action") as string;
+    const ct = request.headers.get("content-type") || "";
+    let action: string;
+    if (ct.includes("json")) {
+      const body = await request.json();
+      action = body.action;
+    } else {
+      const formData = await request.formData();
+      action = formData.get("action") as string;
+    }
 
     if (!action) {
       return NextResponse.json({ ok: false, error: "لا يوجد إجراء محدد" }, { status: 400 });
