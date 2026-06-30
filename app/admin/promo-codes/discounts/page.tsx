@@ -1,5 +1,5 @@
 import { Percent, Search } from "lucide-react";
-import { AdminPromoSectionNav } from "@/components/AdminPromoSectionNav";
+import { AdminPartnerCenterNav } from "@/components/AdminPartnerCenterNav";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
 
@@ -74,7 +74,7 @@ export default async function DiscountPromoCodesPage({
         </div>
       </div>
 
-      <AdminPromoSectionNav />
+      <AdminPartnerCenterNav />
 
       <StatsGrid
         stats={[

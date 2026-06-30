@@ -4,6 +4,7 @@ import crypto from "crypto";
 import QRCode from "qrcode";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { createClientMessage } from "@/lib/client-messages";
 import { prisma } from "@/lib/db";
 import { saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { buildShortReferralUrl, normalizePromoCode, normalizeReferralSlug } from "@/lib/partner-promo";
@@ -84,6 +85,15 @@ async function resolvePartnerLogoUrl(formData: FormData, fallbackLogoUrl?: strin
 
 function auditId() {
   return `audit-${Date.now().toString(36)}-${crypto.randomBytes(4).toString("hex")}`;
+}
+
+function safeReturnPath(value: string, fallback = "/admin/partners") {
+  return value.startsWith("/") && !value.startsWith("//") ? value : fallback;
+}
+
+function withReturnParam(path: string, key: string, value: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
 function cleanExternalUrl(value: string) {
@@ -191,6 +201,7 @@ export async function createPartnerAction(formData: FormData) {
 export async function updatePartnerStatusAction(formData: FormData) {
   if (!prisma) redirect("/admin/partners?error=database");
   const id = formString(formData, "id");
+  const returnTo = safeReturnPath(formString(formData, "returnTo"), id ? `/admin/partners/${id}` : "/admin/partners");
   const statusValue = formString(formData, "status") as PartnerStatusInput;
   const status = partnerStatuses.has(statusValue) ? statusValue : "PAUSED";
   if (!id) redirect("/admin/partners?error=invalid");
@@ -220,7 +231,7 @@ export async function updatePartnerStatusAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/partners/${id}?status=updated`);
+  redirect(withReturnParam(returnTo, "status", "updated"));
 }
 
 export async function updatePartnerAction(formData: FormData) {
@@ -328,4 +339,90 @@ export async function updatePartnerAction(formData: FormData) {
   });
 
   redirect(`/admin/partners/${id}?status=updated`);
+}
+
+function partnerMessageExpiry(duration: string) {
+  const now = Date.now();
+  if (duration === "24h") return new Date(now + 24 * 60 * 60 * 1000);
+  if (duration === "3d") return new Date(now + 3 * 24 * 60 * 60 * 1000);
+  if (duration === "7d") return new Date(now + 7 * 24 * 60 * 60 * 1000);
+  if (duration === "30d") return new Date(now + 30 * 24 * 60 * 60 * 1000);
+  return null;
+}
+
+export async function createPartnerMessageAction(formData: FormData) {
+  if (!prisma) redirect("/admin/partners?error=database");
+
+  const partnerId = formString(formData, "partnerId");
+  const returnTo = safeReturnPath(formString(formData, "returnTo"), partnerId ? `/admin/partners/${partnerId}?tab=messages` : "/admin/partners");
+  const title = formString(formData, "title") || "رسالة من الإدارة";
+  const body = formString(formData, "body");
+  const duration = formString(formData, "duration") || "always";
+  const target = formString(formData, "target") || "all";
+  const selectedCodes = formData.getAll("invitationCodes").map((value) => String(value).trim()).filter(Boolean);
+
+  if (!partnerId || !body) redirect(withReturnParam(returnTo, "error", "message"));
+
+  const partner = await prisma.partner.findUnique({
+    where: { id: partnerId },
+    include: {
+      orders: {
+        where: { publishedInvitationCode: { not: null } },
+        select: { publishedInvitationCode: true, status: true },
+      },
+    },
+  });
+  if (!partner) redirect("/admin/partners?error=missing");
+
+  const relatedCodes = partner.orders
+    .filter((order) => {
+      if (!order.publishedInvitationCode) return false;
+      if (target === "published") return order.status === "PUBLISHED" || order.status === "CONVERTED";
+      if (target === "pending") return order.status !== "PUBLISHED" && order.status !== "CONVERTED";
+      if (target === "selected") return selectedCodes.includes(order.publishedInvitationCode);
+      return true;
+    })
+    .map((order) => order.publishedInvitationCode)
+    .filter((code): code is string => Boolean(code));
+
+  const expiryDate = partnerMessageExpiry(duration);
+  const message = await prisma.partnerMessage.create({
+    data: {
+      partnerId,
+      title: title.slice(0, 120),
+      body: body.slice(0, 3000),
+      target: target === "selected" ? "SPECIFIC_INVITATIONS" : target === "published" ? "PUBLISHED_INVITATIONS" : target === "pending" ? "PENDING_INVITATIONS" : "ALL_INVITATIONS",
+      showEveryVisit: duration === "always",
+      startDate: new Date(),
+      expiryDate,
+      createdBy: "admin",
+    },
+  });
+
+  const invitations = relatedCodes.length
+    ? await prisma.invitation.findMany({
+        where: { code: { in: relatedCodes } },
+        select: { id: true, code: true },
+      })
+    : [];
+
+  if (invitations.length) {
+    await prisma.partnerMessageRecipient.createMany({
+      data: invitations.map((invitation) => ({ messageId: message.id, invitationId: invitation.id })),
+      skipDuplicates: true,
+    });
+  }
+
+  await Promise.all(relatedCodes.map((code) => createClientMessage({ invitationCode: code, title, body, scope: "single" })));
+
+  await prisma.partnerActivityLog.create({
+    data: {
+      partnerId,
+      action: "partner.message.sent",
+      performedBy: "admin",
+      newValue: { messageId: message.id, title, duration, target, recipients: relatedCodes.length },
+    },
+  });
+
+  redirect(withReturnParam(returnTo, "message", "sent"));
 }

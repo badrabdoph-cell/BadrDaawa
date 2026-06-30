@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Save, Sparkles, UploadCloud } from "lucide-react";
+import { AdminPartnerCenterNav } from "@/components/AdminPartnerCenterNav";
+import { PartnerPromoPreviewFields } from "@/components/PartnerPromoPreviewFields";
 import { createPartnerAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -19,12 +21,14 @@ export default async function NewPartnerPage({
           <p>سيتم إنشاء شريك عام مع بروموكود افتراضي ورابط إحالة قصير وQR واشتراك أولي.</p>
         </div>
         <div className="dashboard-actions">
-          <Link className="btn btn-soft" href="/admin/partners">
+          <Link className="btn btn-soft" href="/admin/partners/directory">
             <ArrowLeft size={17} />
             رجوع
           </Link>
         </div>
       </div>
+
+      <AdminPartnerCenterNav />
 
       {params.error ? <div className="notice danger">راجع بيانات الشريك. الاسم مطلوب والكود يجب ألا يكون مكررًا.</div> : null}
 
@@ -112,11 +116,7 @@ export default async function NewPartnerPage({
             </div>
           </div>
           <div className="dynamic-page-form-grid">
-            <label className="field">
-              <span>البروموكود</span>
-              <input name="promoCode" dir="ltr" placeholder="مثال: BADR" />
-              <small>سيصبح الرابط المختصر بهذا الشكل: /r/BADR</small>
-            </label>
+            <PartnerPromoPreviewFields />
             <label className="field">
               <span>نوع الخصم</span>
               <select name="discountType" defaultValue="NONE">
@@ -156,7 +156,7 @@ export default async function NewPartnerPage({
             <Save size={17} />
             حفظ الشريك
           </button>
-          <Link className="btn btn-soft" href="/admin/partners">إلغاء</Link>
+          <Link className="btn btn-soft" href="/admin/partners/directory">إلغاء</Link>
         </div>
       </form>
     </section>

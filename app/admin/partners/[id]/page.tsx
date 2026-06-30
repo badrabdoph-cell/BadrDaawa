@@ -2,19 +2,23 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Archive, ArrowLeft, ExternalLink, Pause, Pencil, Play, QrCode, Send, TicketPercent } from "lucide-react";
+import { ArrowLeft, BarChart3, ExternalLink, History, MessageSquareText, Pause, Pencil, Play, QrCode, Send, TicketPercent } from "lucide-react";
+import { AdminPartnerCenterNav } from "@/components/AdminPartnerCenterNav";
 import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
 import { buildShortReferralPath, buildShortReferralUrl } from "@/lib/partner-promo";
 import { getShareableSiteUrl } from "@/lib/utils";
-import { updatePartnerStatusAction } from "../actions";
+import { createPartnerMessageAction, updatePartnerStatusAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 type PartnerDetailsParams = {
   created?: string;
   status?: string;
+  tab?: string;
+  message?: string;
+  error?: string;
 };
 
 const partnerTypeLabels: Record<string, string> = {
@@ -31,10 +35,18 @@ const partnerTypeLabels: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   DRAFT: "مسودة",
   ACTIVE: "نشط",
-  PAUSED: "متوقف",
+  PAUSED: "معطل",
   EXPIRED: "منتهي",
   ARCHIVED: "مؤرشف",
 };
+
+const tabs = [
+  { id: "overview", label: "Overview" },
+  { id: "invitations", label: "الدعوات" },
+  { id: "stats", label: "الإحصائيات" },
+  { id: "messages", label: "الرسائل" },
+  { id: "activity", label: "النشاط" },
+];
 
 function statusClass(status: string) {
   if (status === "ACTIVE") return "status success";
@@ -59,7 +71,13 @@ function activityLabel(action: string) {
   if (action === "partner.active") return "تفعيل الشريك";
   if (action === "partner.paused") return "إيقاف الشريك";
   if (action === "partner.archived") return "أرشفة الشريك";
+  if (action === "partner.message.sent") return "إرسال رسالة";
   return action;
+}
+
+function conversionRate(orders: number, visits: number) {
+  if (!visits) return "0%";
+  return `${Math.round((orders / visits) * 100)}%`;
 }
 
 export default async function PartnerDetailsPage({
@@ -72,6 +90,7 @@ export default async function PartnerDetailsPage({
   const [{ id }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   if (!prisma) return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
 
+  const activeTab = tabs.some((tab) => tab.id === query.tab) ? query.tab || "overview" : "overview";
   const siteUrl = getShareableSiteUrl(requestHeaders).replace(/\/$/, "");
   const [partner, visitCount] = await Promise.all([
     prisma.partner.findUnique({
@@ -79,9 +98,24 @@ export default async function PartnerDetailsPage({
       include: {
         promoCodes: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
         subscriptions: { orderBy: { createdAt: "desc" }, take: 3 },
-        orders: { orderBy: { createdAt: "desc" }, take: 20, select: { id: true, orderNumber: true, groomName: true, brideName: true, status: true, createdAt: true, publishedInvitationCode: true } },
-        usageLogs: { orderBy: { createdAt: "desc" }, take: 20 },
-        activityLogs: { orderBy: { createdAt: "desc" }, take: 20 },
+        messages: { where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 20 },
+        orders: {
+          orderBy: { createdAt: "desc" },
+          take: 120,
+          select: {
+            id: true,
+            orderNumber: true,
+            groomName: true,
+            brideName: true,
+            phone: true,
+            status: true,
+            createdAt: true,
+            publishedInvitationCode: true,
+            customerId: true,
+          },
+        },
+        usageLogs: { orderBy: { createdAt: "desc" }, take: 80 },
+        activityLogs: { orderBy: { createdAt: "desc" }, take: 80 },
         _count: { select: { promoCodes: true, orders: true, usageLogs: true, messages: true } },
       },
     }),
@@ -89,25 +123,27 @@ export default async function PartnerDetailsPage({
   ]);
 
   if (!partner) notFound();
+
   const primaryPromo = partner.promoCodes[0];
   const shortPath = primaryPromo ? buildShortReferralPath(primaryPromo.referralSlug) : "";
   const shortUrl = primaryPromo ? buildShortReferralUrl(siteUrl, primaryPromo.referralSlug) : "";
   const displayQrCodeUrl = primaryPromo ? await QRCode.toDataURL(shortUrl).catch(() => primaryPromo.qrCodeUrl || "") : "";
   const publishedOrders = partner.orders.filter((order) => order.status === "PUBLISHED" || order.status === "CONVERTED").length;
   const pendingOrders = partner.orders.filter((order) => order.status === "NEW" || order.status === "REVIEWING" || order.status === "EDITED").length;
+  const chartMax = Math.max(visitCount, partner._count.usageLogs, partner._count.orders, 1);
 
   return (
-    <section className="admin-command-center partner-admin-page">
+    <section className="admin-command-center partner-admin-page partner-detail-workspace">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">لوحة الشريك</span>
+          <span className="eyebrow">مركز الشركاء</span>
           <h1>{partner.displayName}</h1>
           <p>{partnerTypeLabels[partner.partnerType] || partner.partnerType} · {partner.tier} · <span className={statusClass(partner.status)}>{statusLabels[partner.status]}</span></p>
         </div>
         <div className="dashboard-actions">
-          <Link className="btn btn-soft" href="/admin/partners">
+          <Link className="btn btn-soft" href="/admin/partners/directory">
             <ArrowLeft size={17} />
-            رجوع
+            الشركاء
           </Link>
           <Link className="btn btn-soft" href={`/admin/partners/${partner.id}/edit`}>
             <Pencil size={17} />
@@ -122,171 +158,258 @@ export default async function PartnerDetailsPage({
         </div>
       </div>
 
+      <AdminPartnerCenterNav />
+
       {query.created ? <div className="notice success">تم إنشاء الشريك والبروموكود الافتراضي بنجاح.</div> : null}
       {query.status ? <div className="notice success">تم تحديث حالة الشريك.</div> : null}
+      {query.message ? <div className="notice success">تم إرسال الرسالة للدعوات المرتبطة بالشريك.</div> : null}
+      {query.error ? <div className="notice danger">تعذر تنفيذ العملية. راجع البيانات وحاول مرة أخرى.</div> : null}
 
-      <div className="partner-detail-hero panel">
-        <div className="partner-detail-brand">
-          {partner.logoUrl ? <span style={{ backgroundImage: `url(${partner.logoUrl})` }} aria-label={partner.displayName} /> : <span>{partner.displayName.slice(0, 2)}</span>}
-          <div>
-            <strong>{partner.displayName}</strong>
-            <small dir="ltr">{partner.slug}</small>
-          </div>
-        </div>
-        {primaryPromo ? (
-          <div className="partner-detail-promo">
-            <span>البروموكود</span>
-            <strong>{primaryPromo.code}</strong>
-            <small dir="ltr">{shortUrl}</small>
-            <small>{discountLabel(primaryPromo.discountType, primaryPromo.discountValue)}</small>
-          </div>
-        ) : null}
-        {displayQrCodeUrl ? (
-          <div className="partner-detail-qr" style={{ backgroundImage: `url(${displayQrCodeUrl})` }} aria-label="QR" />
-        ) : (
-          <div className="partner-detail-qr empty"><QrCode size={28} /></div>
-        )}
-      </div>
+      <nav className="partner-detail-tabs" aria-label="تبويبات الشريك">
+        {tabs.map((tab) => (
+          <Link key={tab.id} className={activeTab === tab.id ? "active" : ""} href={`/admin/partners/${partner.id}?tab=${tab.id}`}>
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
 
-      <StatsGrid
-        stats={[
-          { label: "الطلبات", value: partner._count.orders, hint: "جميع الطلبات المرتبطة" },
-          { label: "المنشور", value: publishedOrders, hint: "من آخر 20 طلباً" },
-          { label: "قيد المراجعة", value: pendingOrders, hint: "طلبات لم تنشر بعد" },
-          { label: "زيارات الرابط", value: visitCount, hint: "زيارات الرابط المختصر" },
-          { label: "الاستخدام", value: partner._count.usageLogs, hint: `${partner._count.promoCodes} برومو / ${partner._count.messages} رسالة` },
-        ]}
-      />
-
-      <section className="panel">
-        <div className="admin-card-head">
-          <Send size={22} />
-          <div>
-              <span className="eyebrow">إجراءات سريعة</span>
-            <h2>إجراءات سريعة</h2>
-          </div>
-        </div>
-        <div className="button-row">
-          <form action={updatePartnerStatusAction}>
-            <input type="hidden" name="id" value={partner.id} />
-            <input type="hidden" name="status" value={partner.status === "ACTIVE" ? "PAUSED" : "ACTIVE"} />
-            <button className="btn btn-soft" type="submit">
-              {partner.status === "ACTIVE" ? <Pause size={17} /> : <Play size={17} />}
-              {partner.status === "ACTIVE" ? "إيقاف" : "إعادة تفعيل"}
-            </button>
-          </form>
-          <form action={updatePartnerStatusAction}>
-            <input type="hidden" name="id" value={partner.id} />
-            <input type="hidden" name="status" value="ARCHIVED" />
-            <button className="btn btn-soft danger-button" type="submit">
-              <Archive size={17} />
-              أرشفة
-            </button>
-          </form>
-          {primaryPromo ? (
-            <>
-              <Link className="btn btn-gold" href={`/admin/promo-codes?q=${encodeURIComponent(primaryPromo.code)}`}>
-                <TicketPercent size={17} />
-                إدارة البروموكود
-              </Link>
-              <CopyButton value={primaryPromo.code} label="نسخ الكود" className="btn btn-soft" />
-              <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
-              <Link className="btn btn-soft" href={shortPath} target="_blank">
-                <ExternalLink size={17} />
-                فتح الرابط
-              </Link>
-              {displayQrCodeUrl ? (
-                <Link className="btn btn-soft" href={displayQrCodeUrl} target="_blank">
-                  <QrCode size={17} />
-                  تحميل QR
-                </Link>
-              ) : null}
-            </>
-          ) : null}
-        </div>
-      </section>
-
-      <div className="partner-admin-grid">
-        <section className="panel">
-          <div className="admin-card-head">
-            <TicketPercent size={22} />
-            <div>
-              <span className="eyebrow">أكواد البرومو</span>
-              <h2>بروموكودات الشريك</h2>
-            </div>
-          </div>
-          <div className="table-shell">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>الكود</th>
-                  <th>الحالة</th>
-                  <th>الخصم</th>
-                  <th>الاستخدام</th>
-                  <th>آخر استخدام</th>
-                </tr>
-              </thead>
-              <tbody>
-                {partner.promoCodes.map((promo) => (
-                  <tr key={promo.id}>
-                    <td>
-                      <strong dir="ltr">{promo.code}</strong>
-                      <small dir="ltr">{buildShortReferralPath(promo.referralSlug)}</small>
-                    </td>
-                    <td><span className={statusClass(promo.status)}>{statusLabels[promo.status]}</span></td>
-                    <td>{discountLabel(promo.discountType, promo.discountValue)}</td>
-                    <td>{promo.currentUsage}{promo.usageLimit ? ` / ${promo.usageLimit}` : ""}</td>
-                    <td>{promo.lastUsedAt ? promo.lastUsedAt.toLocaleString("ar-EG") : "لم يستخدم"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <aside className="partner-side-stack">
-          <section className="panel">
-            <div className="admin-card-head">
-              <TicketPercent size={22} />
+      {activeTab === "overview" ? (
+        <>
+          <div className="partner-detail-hero panel">
+            <div className="partner-detail-brand">
+              {partner.logoUrl ? <span style={{ backgroundImage: `url(${partner.logoUrl})` }} aria-label={partner.displayName} /> : <span>{partner.displayName.slice(0, 2)}</span>}
               <div>
-                <span className="eyebrow">الطلبات</span>
-                <h2>آخر الطلبات</h2>
+                <strong>{partner.displayName}</strong>
+                <small dir="ltr">{partner.slug}</small>
               </div>
             </div>
-            <div className="partner-mini-list">
-              {partner.orders.map((order) => (
-                <Link href="/admin/orders" key={order.id}>
-                  <strong>{order.orderNumber || `${order.groomName} / ${order.brideName}`}</strong>
-                  <span>{order.status} · {order.createdAt.toLocaleDateString("ar-EG")}</span>
-                </Link>
-              ))}
-              {partner.orders.length === 0 ? <p className="admin-note">لا توجد طلبات مرتبطة بعد.</p> : null}
-            </div>
-          </section>
+            {primaryPromo ? (
+              <div className="partner-detail-promo">
+                <span>البروموكود</span>
+                <strong>{primaryPromo.code}</strong>
+                <small dir="ltr">{shortUrl}</small>
+                <small>{discountLabel(primaryPromo.discountType, primaryPromo.discountValue)}</small>
+              </div>
+            ) : null}
+            {displayQrCodeUrl ? <div className="partner-detail-qr" style={{ backgroundImage: `url(${displayQrCodeUrl})` }} aria-label="QR" /> : <div className="partner-detail-qr empty"><QrCode size={28} /></div>}
+          </div>
+
+          <StatsGrid
+            stats={[
+              { label: "عدد الدعوات", value: partner._count.orders, hint: "كل الدعوات المرتبطة" },
+              { label: "عدد الاستخدام", value: partner._count.usageLogs, hint: `${partner._count.promoCodes} بروموكود` },
+              { label: "عدد الزيارات", value: visitCount, hint: "زيارات الرابط المختصر" },
+              { label: "معدل التحويل", value: conversionRate(partner._count.orders, visitCount), hint: `${partner._count.orders} دعوة من ${visitCount} زيارة` },
+              { label: "آخر نشاط", value: partner.activityLogs[0] ? partner.activityLogs[0].createdAt.toLocaleDateString("ar-EG") : "لا يوجد", hint: "آخر حركة مسجلة" },
+            ]}
+          />
 
           <section className="panel">
             <div className="admin-card-head">
               <Send size={22} />
               <div>
-                <span className="eyebrow">السجل الزمني</span>
-                <h2>النشاط</h2>
+                <span className="eyebrow">إجراءات سريعة</span>
+                <h2>إجراءات سريعة</h2>
               </div>
             </div>
-            <div className="partner-activity-list">
-              {partner.activityLogs.map((activity) => (
-                <div key={activity.id}>
-                  <Send size={16} />
-                  <span>
-                    <strong>{activityLabel(activity.action)}</strong>
-                    <small>{activity.createdAt.toLocaleString("ar-EG")}</small>
-                  </span>
-                </div>
-              ))}
-              {partner.activityLogs.length === 0 ? <p className="admin-note">لا يوجد نشاط بعد.</p> : null}
+            <div className="button-row">
+              <form action={updatePartnerStatusAction}>
+                <input type="hidden" name="id" value={partner.id} />
+                <input type="hidden" name="returnTo" value={`/admin/partners/${partner.id}`} />
+                <input type="hidden" name="status" value={partner.status === "ACTIVE" ? "PAUSED" : "ACTIVE"} />
+                <button className="btn btn-soft" type="submit">
+                  {partner.status === "ACTIVE" ? <Pause size={17} /> : <Play size={17} />}
+                  {partner.status === "ACTIVE" ? "تعطيل" : "تفعيل"}
+                </button>
+              </form>
+              {primaryPromo ? (
+                <>
+                  <CopyButton value={primaryPromo.code} label="نسخ الكود" className="btn btn-soft" />
+                  <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
+                  <Link className="btn btn-soft" href={shortPath} target="_blank"><ExternalLink size={17} />فتح الرابط</Link>
+                  {displayQrCodeUrl ? <Link className="btn btn-soft" href={displayQrCodeUrl} target="_blank"><QrCode size={17} />تنزيل QR</Link> : null}
+                </>
+              ) : null}
             </div>
           </section>
-        </aside>
-      </div>
+        </>
+      ) : null}
+
+      {activeTab === "invitations" ? (
+        <section className="panel">
+          <div className="admin-card-head">
+            <TicketPercent size={22} />
+            <div>
+              <span className="eyebrow">الدعوات</span>
+              <h2>دعوات الشريك</h2>
+            </div>
+          </div>
+          <div className="table-shell">
+            <table className="data-table promo-data-table">
+              <thead>
+                <tr>
+                  <th>الدعوة</th>
+                  <th>العروسين</th>
+                  <th>الحالة</th>
+                  <th>التاريخ</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partner.orders.map((order) => {
+                  const invitationUrl = order.publishedInvitationCode ? `${siteUrl}/${order.publishedInvitationCode}` : "";
+                  return (
+                    <tr key={order.id}>
+                      <td>
+                        <strong>{order.orderNumber || order.id.slice(0, 8)}</strong>
+                        <small dir="ltr">{order.publishedInvitationCode || "لم تنشر بعد"}</small>
+                      </td>
+                      <td>{order.groomName} / {order.brideName}</td>
+                      <td>{order.status}</td>
+                      <td>{order.createdAt.toLocaleDateString("ar-EG")}</td>
+                      <td>
+                        <div className="button-row">
+                          {invitationUrl ? <Link className="btn btn-soft" href={invitationUrl} target="_blank">فتح الدعوة</Link> : null}
+                          {invitationUrl ? <CopyButton value={invitationUrl} label="نسخ الرابط" className="btn btn-soft" /> : null}
+                          <Link className="btn btn-soft" href="/admin/orders">فتح الطلب</Link>
+                          {order.publishedInvitationCode ? <Link className="btn btn-soft" href={`/admin/invitations-customers/${order.publishedInvitationCode}`}>فتح العميل</Link> : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {activeTab === "stats" ? (
+        <section className="panel">
+          <div className="admin-card-head">
+            <BarChart3 size={22} />
+            <div>
+              <span className="eyebrow">الإحصائيات</span>
+              <h2>زيارات، استخدام، وتحويل</h2>
+            </div>
+          </div>
+          <div className="partner-chart-bars">
+            {[
+              ["زيارات", visitCount],
+              ["استخدام", partner._count.usageLogs],
+              ["تحويل", partner._count.orders],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+                <i style={{ inlineSize: `${Math.max(8, (Number(value) / chartMax) * 100)}%` }} />
+              </div>
+            ))}
+          </div>
+          <p className="admin-note">أفضل فترة تظهر عند توفر بيانات زمنية أكبر؛ حالياً يتم عرض المقارنة الإجمالية للشريك.</p>
+        </section>
+      ) : null}
+
+      {activeTab === "messages" ? (
+        <div className="partner-admin-grid">
+          <section className="panel">
+            <div className="admin-card-head">
+              <MessageSquareText size={22} />
+              <div>
+                <span className="eyebrow">الرسائل</span>
+                <h2>إرسال رسالة لدعوات الشريك</h2>
+              </div>
+            </div>
+            <form className="partner-message-form" action={createPartnerMessageAction}>
+              <input type="hidden" name="partnerId" value={partner.id} />
+              <input type="hidden" name="returnTo" value={`/admin/partners/${partner.id}?tab=messages`} />
+              <label className="field">
+                <span>العنوان</span>
+                <input name="title" defaultValue="رسالة من الإدارة" maxLength={120} />
+              </label>
+              <label className="field">
+                <span>نص الرسالة</span>
+                <textarea name="body" rows={5} required placeholder="اكتب الرسالة التي ستظهر داخل لوحة العميل..." />
+              </label>
+              <div className="dynamic-page-form-grid">
+                <label className="field">
+                  <span>المدة</span>
+                  <select name="duration" defaultValue="always">
+                    <option value="always">دائم</option>
+                    <option value="24h">24 ساعة</option>
+                    <option value="3d">3 أيام</option>
+                    <option value="7d">أسبوع</option>
+                    <option value="30d">شهر</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>النطاق</span>
+                  <select name="target" defaultValue="all">
+                    <option value="all">كل الدعوات</option>
+                    <option value="published">الدعوات المنشورة</option>
+                    <option value="pending">الدعوات غير المنشورة</option>
+                    <option value="selected">دعوات محددة بالأسفل</option>
+                  </select>
+                </label>
+              </div>
+              <div className="partner-message-targets">
+                {partner.orders.filter((order) => order.publishedInvitationCode).map((order) => (
+                  <label key={order.id}>
+                    <input type="checkbox" name="invitationCodes" value={order.publishedInvitationCode || ""} />
+                    <span>{order.groomName} / {order.brideName} · {order.publishedInvitationCode}</span>
+                  </label>
+                ))}
+              </div>
+              <button className="btn btn-gold" type="submit"><Send size={17} />إرسال الرسالة</button>
+            </form>
+          </section>
+
+          <aside className="partner-side-stack">
+            <section className="panel">
+              <div className="admin-card-head">
+                <MessageSquareText size={22} />
+                <div>
+                  <span className="eyebrow">آخر الرسائل</span>
+                  <h2>رسائل الشريك</h2>
+                </div>
+              </div>
+              <div className="partner-mini-list">
+                {partner.messages.map((message) => (
+                  <div key={message.id}>
+                    <strong>{message.title}</strong>
+                    <span>{message.createdAt.toLocaleDateString("ar-EG")}{message.expiryDate ? ` · حتى ${message.expiryDate.toLocaleDateString("ar-EG")}` : " · دائم"}</span>
+                  </div>
+                ))}
+                {partner.messages.length === 0 ? <p className="admin-note">لا توجد رسائل بعد.</p> : null}
+              </div>
+            </section>
+          </aside>
+        </div>
+      ) : null}
+
+      {activeTab === "activity" ? (
+        <section className="panel">
+          <div className="admin-card-head">
+            <History size={22} />
+            <div>
+              <span className="eyebrow">النشاط</span>
+              <h2>Timeline كامل</h2>
+            </div>
+          </div>
+          <div className="partner-timeline">
+            {partner.activityLogs.map((activity) => (
+              <article key={activity.id}>
+                <span />
+                <div>
+                  <strong>{activityLabel(activity.action)}</strong>
+                  <small>{activity.createdAt.toLocaleString("ar-EG")}</small>
+                </div>
+              </article>
+            ))}
+            {partner.activityLogs.length === 0 ? <p className="admin-note">لا يوجد نشاط بعد.</p> : null}
+          </div>
+        </section>
+      ) : null}
     </section>
   );
 }
