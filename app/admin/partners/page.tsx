@@ -1,11 +1,8 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { Activity, ExternalLink, Handshake, MessageSquareText, Pencil, PlusCircle, Search, TicketPercent } from "lucide-react";
-import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
-import { buildShortReferralPath, buildShortReferralUrl } from "@/lib/partner-promo";
-import { getShareableSiteUrl } from "@/lib/utils";
+import { buildShortReferralPath } from "@/lib/partner-promo";
 
 export const dynamic = "force-dynamic";
 
@@ -66,12 +63,11 @@ export default async function PartnerPromoCenterPage({
 }: {
   searchParams: Promise<PartnersPageParams>;
 }) {
-  const [params, requestHeaders] = await Promise.all([searchParams, headers()]);
+  const params = await searchParams;
   if (!prisma) {
     return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
   }
 
-  const siteUrl = getShareableSiteUrl(requestHeaders).replace(/\/$/, "");
   const q = (params.q || "").trim();
   const where = {
     ...(q
@@ -145,13 +141,9 @@ export default async function PartnerPromoCenterPage({
         ]}
       />
 
-      <nav className="admin-page-tabs" aria-label="تبويبات مركز الشركاء والبروموكود">
+      <nav className="admin-page-tabs" aria-label="تنقل مركز الشركاء">
         <Link className="active" href="/admin/partners">الشركاء</Link>
-        <Link href="/admin/partners?tab=promos">أكواد البرومو</Link>
-        <Link href="/admin/partners?tab=discounts">أكواد الخصم</Link>
-        <Link href="/admin/partners?tab=messages">الرسائل</Link>
-        <Link href="/admin/partners?tab=analytics">التحليلات</Link>
-        <Link href="/admin/partners?tab=settings">الإعدادات</Link>
+        <Link href="/admin/promo-codes">أكواد البرومو</Link>
       </nav>
 
       <form className="admin-table-toolbar" action="/admin/partners" method="get">
@@ -204,7 +196,6 @@ export default async function PartnerPromoCenterPage({
                   {partners.map((partner) => {
                     const primaryPromo = partner.promoCodes[0];
                     const shortPath = primaryPromo ? buildShortReferralPath(primaryPromo.referralSlug) : "";
-                    const shortUrl = primaryPromo ? buildShortReferralUrl(siteUrl, primaryPromo.referralSlug) : "";
                     return (
                       <tr key={partner.id}>
                         <td>
@@ -236,8 +227,10 @@ export default async function PartnerPromoCenterPage({
                             </Link>
                             {primaryPromo ? (
                               <>
-                                <CopyButton value={primaryPromo.code} label="نسخ الكود" className="btn btn-soft" />
-                                <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
+                                <Link className="btn btn-soft" href={`/admin/promo-codes?q=${encodeURIComponent(primaryPromo.code)}`}>
+                                  <TicketPercent size={16} />
+                                  إدارة البرومو
+                                </Link>
                                 <Link className="btn btn-soft" href={shortPath} target="_blank">
                                   <ExternalLink size={16} />
                                   فتح

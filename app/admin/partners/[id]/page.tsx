@@ -2,7 +2,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Archive, ArrowLeft, ExternalLink, Pause, Pencil, Play, QrCode, RotateCcw, Send, TicketPercent } from "lucide-react";
+import { Archive, ArrowLeft, ExternalLink, Pause, Pencil, Play, QrCode, Send, TicketPercent } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
@@ -185,6 +185,10 @@ export default async function PartnerDetailsPage({
           </form>
           {primaryPromo ? (
             <>
+              <Link className="btn btn-gold" href={`/admin/promo-codes?q=${encodeURIComponent(primaryPromo.code)}`}>
+                <TicketPercent size={17} />
+                إدارة البروموكود
+              </Link>
               <CopyButton value={primaryPromo.code} label="نسخ الكود" className="btn btn-soft" />
               <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
               <Link className="btn btn-soft" href={shortPath} target="_blank">
@@ -199,10 +203,6 @@ export default async function PartnerDetailsPage({
               ) : null}
             </>
           ) : null}
-          <button className="btn btn-soft" type="button" disabled>
-            <RotateCcw size={17} />
-            توليد برومو جديد
-          </button>
         </div>
       </section>
 

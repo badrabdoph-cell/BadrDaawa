@@ -26,7 +26,7 @@ export function CopyButton({ value, label = "نسخ", copiedLabel = "تم الن
   }
 
   return (
-    <button className={className} type="button" title={title || label} aria-label={title || label} onClick={copyValue}>
+    <button className={className} type="button" title={title || label} aria-label={title || label} aria-live="polite" onClick={copyValue}>
       {copied ? <Check size={17} /> : <Copy size={17} />}
       {iconOnly ? null : copied ? copiedLabel : label}
     </button>
