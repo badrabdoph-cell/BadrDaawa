@@ -7374,9 +7374,9 @@ img {
 }
 
 .dashboard-section-nav {
-  grid-template-columns: 120px minmax(0, 1fr);
-  grid-template-rows: 1fr;
+  display: flex;
   gap: 8px;
+  min-height: 0;
 }
 
 .dashboard-primary-sections,
@@ -7385,9 +7385,16 @@ img {
 }
 
 .dashboard-primary-sections {
+  width: 120px;
+  flex-shrink: 0;
   display: grid;
   gap: 6px;
-  align-self: start;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 207, 115, 0.35) transparent;
+  min-height: 0;
 }
 
 .dashboard-primary-sections button {
@@ -7503,7 +7510,22 @@ img {
   opacity: 1;
 }
 
+.dashboard-primary-sections::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dashboard-primary-sections::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(243, 207, 115, 0.35);
+}
+
+.dashboard-primary-sections::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .dashboard-secondary-panel {
+  flex: 1;
+  min-width: 0;
   display: grid;
   gap: 8px;
   padding: 10px;
@@ -7514,6 +7536,7 @@ img {
     rgba(255, 255, 255, 0.025);
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(243, 207, 115, 0.35) transparent;
 }
