@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Copy, ExternalLink, Handshake, MessageSquareText, PlusCircle, QrCode, Search, TicketPercent } from "lucide-react";
+import { Activity, Copy, ExternalLink, Handshake, MessageSquareText, PlusCircle, Search, TicketPercent } from "lucide-react";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
 
@@ -102,14 +102,14 @@ export default async function PartnerPromoCenterPage({
     <section className="admin-command-center partner-admin-page">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Partner & Promo Center</span>
+          <span className="eyebrow">مركز الشركاء والبروموكود</span>
           <h1>مركز الشركاء والبروموكود</h1>
           <p>إدارة الشركاء، البروموكودات، الخصومات، الرسائل، والسجلات التشغيلية بدون التأثير على رحلة الدعوة الحالية.</p>
         </div>
         <div className="dashboard-actions">
           <Link className="btn btn-gold" href="/admin/partners/new">
             <PlusCircle size={17} />
-            New Partner
+            شريك جديد
           </Link>
         </div>
       </div>
@@ -121,29 +121,29 @@ export default async function PartnerPromoCenterPage({
           { label: "إجمالي الشركاء", value: partners.length, hint: `${activePartners} نشط / ${pausedPartners} متوقف / ${archivedPartners} مؤرشف` },
           { label: "إجمالي البروموكودات", value: promoCodes.length, hint: `${activePromos} نشط / ${pausedPromos} متوقف / ${expiredPromos} منتهي` },
           { label: "الاستخدامات", value: usageMonth, hint: `اليوم ${usageToday} / الأسبوع ${usageWeek} / الشهر ${usageMonth}` },
-          { label: "طلبات الشركاء", value: partners.reduce((sum, partner) => sum + partner._count.orders, 0), hint: "طلبات مرتبطة بPartner Snapshot" },
+          { label: "طلبات الشركاء", value: partners.reduce((sum, partner) => sum + partner._count.orders, 0), hint: "طلبات مرتبطة بنسخة الشريك المحفوظة" },
         ]}
       />
 
-      <nav className="admin-page-tabs" aria-label="Partner Center tabs">
-        <Link className="active" href="/admin/partners">Partners</Link>
-        <Link href="/admin/partners?tab=promos">Promo Codes</Link>
-        <Link href="/admin/partners?tab=discounts">Discount Codes</Link>
-        <Link href="/admin/partners?tab=messages">Messages</Link>
-        <Link href="/admin/partners?tab=analytics">Analytics</Link>
-        <Link href="/admin/partners?tab=settings">Settings</Link>
+      <nav className="admin-page-tabs" aria-label="تبويبات مركز الشركاء والبروموكود">
+        <Link className="active" href="/admin/partners">الشركاء</Link>
+        <Link href="/admin/partners?tab=promos">أكواد البرومو</Link>
+        <Link href="/admin/partners?tab=discounts">أكواد الخصم</Link>
+        <Link href="/admin/partners?tab=messages">الرسائل</Link>
+        <Link href="/admin/partners?tab=analytics">التحليلات</Link>
+        <Link href="/admin/partners?tab=settings">الإعدادات</Link>
       </nav>
 
       <form className="admin-table-toolbar" action="/admin/partners" method="get">
         <label>
           <Search size={16} />
-          <input name="q" defaultValue={q} placeholder="بحث بالاسم، البرومو، UUID، referral" />
+          <input name="q" defaultValue={q} placeholder="بحث بالاسم، البرومو، المعرّف، رابط الإحالة" />
         </label>
-        <select name="type" defaultValue={params.type || "all"} aria-label="Partner type">
+        <select name="type" defaultValue={params.type || "all"} aria-label="نوع الشريك">
           <option value="all">كل الأنواع</option>
           {Object.entries(partnerTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
-        <select name="status" defaultValue={params.status || "all"} aria-label="Status">
+        <select name="status" defaultValue={params.status || "all"} aria-label="الحالة">
           <option value="all">كل الحالات</option>
           {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
@@ -155,7 +155,7 @@ export default async function PartnerPromoCenterPage({
           <div className="admin-card-head">
             <Handshake size={22} />
             <div>
-              <span className="eyebrow">Partners</span>
+              <span className="eyebrow">الشركاء</span>
               <h2>الشركاء</h2>
             </div>
           </div>
@@ -172,12 +172,12 @@ export default async function PartnerPromoCenterPage({
                   <tr>
                     <th>الشريك</th>
                     <th>النوع</th>
-                    <th>Tier</th>
+                    <th>الفئة</th>
                     <th>الحالة</th>
-                    <th>Promos</th>
-                    <th>Orders</th>
-                    <th>Usage</th>
-                    <th>Actions</th>
+                    <th>البرومو</th>
+                    <th>الطلبات</th>
+                    <th>الاستخدام</th>
+                    <th>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,12 +205,12 @@ export default async function PartnerPromoCenterPage({
                           <div className="button-row">
                             <Link className="btn btn-soft" href={`/admin/partners/${partner.id}`}>
                               <ExternalLink size={16} />
-                              View
+                              عرض
                             </Link>
                             {primaryPromo ? (
-                              <Link className="btn btn-soft" href={`/order?promo=${encodeURIComponent(primaryPromo.code)}`} target="_blank">
+                              <Link className="btn btn-soft" href={`/p/${encodeURIComponent(primaryPromo.referralSlug)}`} target="_blank">
                                 <Copy size={16} />
-                                Test
+                                اختبار
                               </Link>
                             ) : null}
                           </div>
@@ -229,7 +229,7 @@ export default async function PartnerPromoCenterPage({
             <div className="admin-card-head">
               <TicketPercent size={22} />
               <div>
-                <span className="eyebrow">Top Partners</span>
+                <span className="eyebrow">أفضل الشركاء</span>
                 <h2>أفضل الشركاء</h2>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default async function PartnerPromoCenterPage({
             <div className="admin-card-head">
               <Activity size={22} />
               <div>
-                <span className="eyebrow">Latest Activity</span>
+                <span className="eyebrow">آخر النشاطات</span>
                 <h2>آخر النشاطات</h2>
               </div>
             </div>
@@ -257,7 +257,7 @@ export default async function PartnerPromoCenterPage({
                 <div key={activity.id}>
                   <MessageSquareText size={16} />
                   <span>
-                    <strong>{activity.partner?.displayName || "System"}</strong>
+                    <strong>{activity.partner?.displayName || "النظام"}</strong>
                     {activity.action}
                     <small>{activity.createdAt.toLocaleString("ar-EG")}</small>
                   </span>

@@ -77,7 +77,7 @@ export default async function PartnerDetailsPage({
     <section className="admin-command-center partner-admin-page">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">Partner Dashboard</span>
+          <span className="eyebrow">لوحة الشريك</span>
           <h1>{partner.displayName}</h1>
           <p>{partnerTypeLabels[partner.partnerType] || partner.partnerType} · {partner.tier} · <span className={statusClass(partner.status)}>{statusLabels[partner.status]}</span></p>
         </div>
@@ -87,9 +87,9 @@ export default async function PartnerDetailsPage({
             رجوع
           </Link>
           {primaryPromo ? (
-            <Link className="btn btn-gold" href={`/order?promo=${encodeURIComponent(primaryPromo.code)}`} target="_blank">
+            <Link className="btn btn-gold" href={`/p/${encodeURIComponent(primaryPromo.referralSlug)}`} target="_blank">
               <TicketPercent size={17} />
-              Test Promo
+              اختبار البروموكود
             </Link>
           ) : null}
         </div>
@@ -108,7 +108,7 @@ export default async function PartnerDetailsPage({
         </div>
         {primaryPromo ? (
           <div className="partner-detail-promo">
-            <span>Promo</span>
+            <span>البروموكود</span>
             <strong>{primaryPromo.code}</strong>
             <small>{discountLabel(primaryPromo.discountType, primaryPromo.discountValue)}</small>
           </div>
@@ -122,10 +122,10 @@ export default async function PartnerDetailsPage({
 
       <StatsGrid
         stats={[
-          { label: "Orders", value: partner._count.orders, hint: "جميع الطلبات المرتبطة" },
-          { label: "Published", value: publishedOrders, hint: "من آخر 20 طلباً" },
-          { label: "Pending", value: pendingOrders, hint: "قيد المراجعة أو التحرير" },
-          { label: "Usage", value: partner._count.usageLogs, hint: `${partner._count.promoCodes} promo / ${partner._count.messages} messages` },
+          { label: "الطلبات", value: partner._count.orders, hint: "جميع الطلبات المرتبطة" },
+          { label: "المنشور", value: publishedOrders, hint: "من آخر 20 طلباً" },
+          { label: "قيد المراجعة", value: pendingOrders, hint: "طلبات لم تنشر بعد" },
+          { label: "الاستخدام", value: partner._count.usageLogs, hint: `${partner._count.promoCodes} برومو / ${partner._count.messages} رسالة` },
         ]}
       />
 
@@ -133,7 +133,7 @@ export default async function PartnerDetailsPage({
         <div className="admin-card-head">
           <Send size={22} />
           <div>
-            <span className="eyebrow">Quick Actions</span>
+              <span className="eyebrow">إجراءات سريعة</span>
             <h2>إجراءات سريعة</h2>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default async function PartnerDetailsPage({
             <input type="hidden" name="status" value={partner.status === "ACTIVE" ? "PAUSED" : "ACTIVE"} />
             <button className="btn btn-soft" type="submit">
               {partner.status === "ACTIVE" ? <Pause size={17} /> : <Play size={17} />}
-              {partner.status === "ACTIVE" ? "Pause" : "Restore"}
+              {partner.status === "ACTIVE" ? "إيقاف" : "إعادة تفعيل"}
             </button>
           </form>
           <form action={updatePartnerStatusAction}>
@@ -151,26 +151,26 @@ export default async function PartnerDetailsPage({
             <input type="hidden" name="status" value="ARCHIVED" />
             <button className="btn btn-soft danger-button" type="submit">
               <Archive size={17} />
-              Archive
+              أرشفة
             </button>
           </form>
           {primaryPromo ? (
             <>
-              <Link className="btn btn-soft" href={`/order?promo=${encodeURIComponent(primaryPromo.code)}`} target="_blank">
+              <Link className="btn btn-soft" href={`/p/${encodeURIComponent(primaryPromo.referralSlug)}`} target="_blank">
                 <Copy size={17} />
-                Copy/Test Link
+                نسخ/اختبار الرابط
               </Link>
               {primaryPromo.qrCodeUrl ? (
                 <Link className="btn btn-soft" href={primaryPromo.qrCodeUrl} target="_blank">
                   <QrCode size={17} />
-                  Download QR
+                  تحميل QR
                 </Link>
               ) : null}
             </>
           ) : null}
           <button className="btn btn-soft" type="button" disabled>
             <RotateCcw size={17} />
-            Generate New Promo
+            توليد برومو جديد
           </button>
         </div>
       </section>
@@ -180,7 +180,7 @@ export default async function PartnerDetailsPage({
           <div className="admin-card-head">
             <TicketPercent size={22} />
             <div>
-              <span className="eyebrow">Promo Codes</span>
+              <span className="eyebrow">أكواد البرومو</span>
               <h2>بروموكودات الشريك</h2>
             </div>
           </div>
@@ -188,11 +188,11 @@ export default async function PartnerDetailsPage({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Status</th>
-                  <th>Discount</th>
-                  <th>Usage</th>
-                  <th>Last Used</th>
+                  <th>الكود</th>
+                  <th>الحالة</th>
+                  <th>الخصم</th>
+                  <th>الاستخدام</th>
+                  <th>آخر استخدام</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,7 +215,7 @@ export default async function PartnerDetailsPage({
             <div className="admin-card-head">
               <TicketPercent size={22} />
               <div>
-                <span className="eyebrow">Orders</span>
+                <span className="eyebrow">الطلبات</span>
                 <h2>آخر الطلبات</h2>
               </div>
             </div>
@@ -234,7 +234,7 @@ export default async function PartnerDetailsPage({
             <div className="admin-card-head">
               <Send size={22} />
               <div>
-                <span className="eyebrow">Timeline</span>
+                <span className="eyebrow">السجل الزمني</span>
                 <h2>النشاط</h2>
               </div>
             </div>

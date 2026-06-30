@@ -1849,14 +1849,13 @@ export function OrderForm({
       <div className={`order-promo-card ${form.appliedPromoCode ? "is-applied" : ""}`}>
         <div className="order-promo-copy">
           <strong>بروموكود</strong>
-          <span>إذا كان لديك بروموكود اكتبه هنا.</span>
         </div>
         <div className="order-promo-controls">
           <input
             type="text"
             inputMode="text"
             autoCapitalize="characters"
-            placeholder="مثال: BADR2026"
+            placeholder="إذا كان لديك كود خصم فاكتب البروموكود هنا"
             value={promoInput}
             onChange={(event) => {
               setPromoInput(event.target.value);

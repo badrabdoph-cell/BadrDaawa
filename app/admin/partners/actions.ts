@@ -4,7 +4,9 @@ import crypto from "crypto";
 import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { normalizePromoCode } from "@/lib/partner-promo";
+import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { slugifyInvitationName } from "@/lib/slug";
 
 type PartnerTypeInput = "PHOTOGRAPHER" | "VIDEOGRAPHER" | "HALL" | "PLANNER" | "DJ" | "MAKEUP_ARTIST" | "DECORATOR" | "OTHER";
@@ -47,7 +49,29 @@ async function uniquePromoCode(displayName: string, requestedCode: string) {
   return code;
 }
 
-function safeUrl(value: string) {
+async function uniqueReferralSlug() {
+  for (let index = 0; index < 8; index += 1) {
+    const slug = crypto.randomBytes(4).toString("base64url").replace(/[-_]/g, "").slice(0, 6);
+    if (!(await prisma?.partnerPromoCode.findUnique({ where: { referralSlug: slug }, select: { id: true } }))) return slug;
+  }
+  return crypto.randomBytes(5).toString("base64url").replace(/[-_]/g, "").slice(0, 8);
+}
+
+async function resolvePartnerLogoUrl(formData: FormData) {
+  const logoFile = formData.get("logoFile");
+  if (logoFile instanceof File && logoFile.size > 0) {
+    const saved = await saveInvitationGalleryImages([logoFile]);
+    if (saved[0]) return saved[0];
+  }
+  const settings = await getPublishedSiteSettings();
+  return settings.logoUrl || "/assets/admin/branding/site-logo-1781536656977-9910afd2.webp";
+}
+
+function auditId() {
+  return `audit-${Date.now().toString(36)}-${crypto.randomBytes(4).toString("hex")}`;
+}
+
+function cleanExternalUrl(value: string) {
   if (!value) return "";
   try {
     const url = new URL(value);
@@ -55,10 +79,6 @@ function safeUrl(value: string) {
   } catch {
     return "";
   }
-}
-
-function auditId() {
-  return `audit-${Date.now().toString(36)}-${crypto.randomBytes(4).toString("hex")}`;
 }
 
 export async function createPartnerAction(formData: FormData) {
@@ -79,10 +99,11 @@ export async function createPartnerAction(formData: FormData) {
   const discountValue = Number.isFinite(discountValueRaw) && discountType !== "NONE" && discountType !== "FREE_INVITATION" ? discountValueRaw : null;
   const code = await uniquePromoCode(displayName, formString(formData, "promoCode"));
   const slug = await uniquePartnerSlug(displayName);
-  const referralSlug = slug;
+  const referralSlug = await uniqueReferralSlug();
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || "").replace(/\/$/, "");
-  const referralUrl = `${siteUrl || ""}/order?promo=${encodeURIComponent(code)}`;
+  const referralUrl = `${siteUrl || ""}/p/${referralSlug}`;
   const qrCodeUrl = await QRCode.toDataURL(referralUrl).catch(() => "");
+  const logoUrl = await resolvePartnerLogoUrl(formData);
 
   const partner = await prisma.$transaction(async (tx) => {
     const created = await tx.partner.create({
@@ -93,9 +114,9 @@ export async function createPartnerAction(formData: FormData) {
         tier,
         status,
         subscriptionStatus: status === "ACTIVE" ? "ACTIVE" : "TRIAL",
-        logoUrl: safeUrl(formString(formData, "logoUrl")) || null,
-        facebookUrl: safeUrl(formString(formData, "facebookUrl")) || null,
-        instagramUrl: safeUrl(formString(formData, "instagramUrl")) || null,
+        logoUrl,
+        facebookUrl: cleanExternalUrl(formString(formData, "facebookUrl")) || null,
+        instagramUrl: cleanExternalUrl(formString(formData, "instagramUrl")) || null,
         internalNotes: formString(formData, "internalNotes") || null,
         showPartnerCard: formData.get("showPartnerCard") === "on",
         createdBy: "admin",

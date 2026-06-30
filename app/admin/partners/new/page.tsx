@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Sparkles, UploadCloud } from "lucide-react";
 import { createPartnerAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +14,9 @@ export default async function NewPartnerPage({
     <section className="admin-command-center partner-admin-page">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">New Partner</span>
+          <span className="eyebrow">شريك جديد</span>
           <h1>إنشاء شريك جديد</h1>
-          <p>سيتم إنشاء Partner عام مع بروموكود افتراضي ورابط إحالة وQR واشتراك أولي.</p>
+          <p>سيتم إنشاء شريك عام مع بروموكود افتراضي ورابط إحالة قصير وQR واشتراك أولي.</p>
         </div>
         <div className="dashboard-actions">
           <Link className="btn btn-soft" href="/admin/partners">
@@ -28,30 +28,34 @@ export default async function NewPartnerPage({
 
       {params.error ? <div className="notice danger">راجع بيانات الشريك. الاسم مطلوب والكود يجب ألا يكون مكررًا.</div> : null}
 
-      <form className="partner-editor-form" action={createPartnerAction}>
+      <form className="partner-editor-form" action={createPartnerAction} encType="multipart/form-data">
         <section className="panel">
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">General Information</span>
+              <span className="eyebrow">البيانات العامة</span>
               <h2>البيانات العامة</h2>
             </div>
           </div>
           <div className="dynamic-page-form-grid">
             <label className="field">
-              <span>Partner Name</span>
-              <input name="displayName" placeholder="Badr Studio" required minLength={2} />
+              <span>اسم الشريك</span>
+              <input name="displayName" placeholder="مثال: Badr Studio" required minLength={2} />
             </label>
             <label className="field">
-              <span>Logo URL</span>
-              <input name="logoUrl" dir="ltr" placeholder="https://..." />
+              <span>لوجو المصور / الشريك</span>
+              <input name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" />
+              <small>
+                <UploadCloud size={13} />
+                إذا لم ترفع صورة سيتم استخدام شعار الموقع الأساسي تلقائيًا.
+              </small>
             </label>
             <label className="field">
-              <span>Facebook</span>
+              <span>رابط فيسبوك</span>
               <input name="facebookUrl" dir="ltr" placeholder="https://facebook.com/..." />
             </label>
             <label className="field">
-              <span>Instagram</span>
+              <span>رابط إنستجرام</span>
               <input name="instagramUrl" dir="ltr" placeholder="https://instagram.com/..." />
             </label>
           </div>
@@ -61,39 +65,39 @@ export default async function NewPartnerPage({
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">Partner Settings</span>
+              <span className="eyebrow">إعدادات الشريك</span>
               <h2>إعدادات الشريك</h2>
             </div>
           </div>
           <div className="dynamic-page-form-grid">
             <label className="field">
-              <span>Partner Type</span>
+              <span>نوع الشريك</span>
               <select name="partnerType" defaultValue="PHOTOGRAPHER">
-                <option value="PHOTOGRAPHER">Photographer</option>
-                <option value="VIDEOGRAPHER">Videographer</option>
-                <option value="HALL">Wedding Hall</option>
-                <option value="PLANNER">Planner</option>
+                <option value="PHOTOGRAPHER">مصور فوتوغرافي</option>
+                <option value="VIDEOGRAPHER">مصور فيديو</option>
+                <option value="HALL">قاعة أفراح</option>
+                <option value="PLANNER">منظم حفلات</option>
                 <option value="DJ">DJ</option>
-                <option value="MAKEUP_ARTIST">Makeup Artist</option>
-                <option value="DECORATOR">Decorator</option>
-                <option value="OTHER">Other</option>
+                <option value="MAKEUP_ARTIST">ميكب آرتيست</option>
+                <option value="DECORATOR">ديكور</option>
+                <option value="OTHER">أخرى</option>
               </select>
             </label>
             <label className="field">
-              <span>Tier</span>
+              <span>الفئة</span>
               <select name="tier" defaultValue="FREE">
-                <option value="FREE">Free</option>
-                <option value="SILVER">Silver</option>
-                <option value="GOLD">Gold</option>
-                <option value="PLATINUM">Platinum</option>
+                <option value="FREE">مجاني</option>
+                <option value="SILVER">فضي</option>
+                <option value="GOLD">ذهبي</option>
+                <option value="PLATINUM">بلاتيني</option>
               </select>
             </label>
             <label className="field">
-              <span>Status</span>
+              <span>الحالة</span>
               <select name="status" defaultValue="ACTIVE">
-                <option value="DRAFT">Draft</option>
-                <option value="ACTIVE">Active</option>
-                <option value="PAUSED">Paused</option>
+                <option value="DRAFT">مسودة</option>
+                <option value="ACTIVE">نشط</option>
+                <option value="PAUSED">متوقف</option>
               </select>
             </label>
           </div>
@@ -103,31 +107,31 @@ export default async function NewPartnerPage({
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">Promo Settings</span>
+              <span className="eyebrow">إعدادات البروموكود</span>
               <h2>البروموكود والخصم</h2>
             </div>
           </div>
           <div className="dynamic-page-form-grid">
             <label className="field">
-              <span>Promo Code</span>
+              <span>البروموكود</span>
               <input name="promoCode" dir="ltr" placeholder="اتركه فارغًا للتوليد التلقائي" />
             </label>
             <label className="field">
-              <span>Discount</span>
+              <span>نوع الخصم</span>
               <select name="discountType" defaultValue="NONE">
-                <option value="NONE">No Discount</option>
-                <option value="PERCENTAGE">Percentage</option>
-                <option value="FIXED_AMOUNT">Fixed Amount</option>
-                <option value="FREE_INVITATION">Free Invitation</option>
+                <option value="NONE">بدون خصم</option>
+                <option value="PERCENTAGE">نسبة مئوية</option>
+                <option value="FIXED_AMOUNT">مبلغ ثابت</option>
+                <option value="FREE_INVITATION">دعوة مجانية</option>
               </select>
             </label>
             <label className="field">
-              <span>Discount Value</span>
+              <span>قيمة الخصم</span>
               <input name="discountValue" inputMode="decimal" placeholder="20 أو 150" />
             </label>
             <label className="toggle-field">
               <input name="showPartnerCard" type="checkbox" defaultChecked />
-              <span>Show Partner Card</span>
+              <span>إظهار بطاقة الشريك داخل الدعوة</span>
             </label>
           </div>
         </section>
@@ -136,12 +140,12 @@ export default async function NewPartnerPage({
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">Notes</span>
+              <span className="eyebrow">ملاحظات</span>
               <h2>ملاحظات داخلية</h2>
             </div>
           </div>
           <label className="field">
-            <span>Private Notes</span>
+            <span>ملاحظات خاصة</span>
             <textarea name="internalNotes" rows={5} placeholder="أي تفاصيل داخلية عن الاتفاق أو الاشتراك." />
           </label>
         </section>
@@ -149,9 +153,9 @@ export default async function NewPartnerPage({
         <div className="button-row">
           <button className="btn btn-gold" type="submit">
             <Save size={17} />
-            Save
+            حفظ الشريك
           </button>
-          <Link className="btn btn-soft" href="/admin/partners">Cancel</Link>
+          <Link className="btn btn-soft" href="/admin/partners">إلغاء</Link>
         </div>
       </form>
     </section>

@@ -17,7 +17,7 @@ const adminSections = [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
       { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
-      { href: "/admin/partners", label: "Partner & Promo Center", icon: Handshake },
+      { href: "/admin/partners", label: "مركز الشركاء والبروموكود", icon: Handshake },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
       { href: "/admin/invitations-customers", label: "عملاء الدعوات", icon: UsersRound },
       { href: "/admin/customers", label: "كل العملاء", icon: UserCheck },
