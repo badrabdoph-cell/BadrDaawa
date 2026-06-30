@@ -2,13 +2,14 @@
 
 import crypto from "crypto";
 import QRCode from "qrcode";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { buildShortReferralUrl, normalizePromoCode, normalizeReferralSlug } from "@/lib/partner-promo";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { slugifyInvitationName } from "@/lib/slug";
-import { getSiteUrl } from "@/lib/utils";
+import { getShareableSiteUrl } from "@/lib/utils";
 
 type PartnerTypeInput = "PHOTOGRAPHER" | "VIDEOGRAPHER" | "HALL" | "PLANNER" | "DJ" | "MAKEUP_ARTIST" | "DECORATOR" | "OTHER";
 type PartnerTierInput = "FREE" | "SILVER" | "GOLD" | "PLATINUM";
@@ -95,6 +96,10 @@ function cleanExternalUrl(value: string) {
   }
 }
 
+async function getPartnerPromoSiteUrl() {
+  return getShareableSiteUrl(await headers()).replace(/\/$/, "");
+}
+
 export async function createPartnerAction(formData: FormData) {
   if (!prisma) redirect("/admin/partners/new?error=database");
 
@@ -114,7 +119,7 @@ export async function createPartnerAction(formData: FormData) {
   const code = await uniquePromoCode(displayName, formString(formData, "promoCode"));
   const slug = await uniquePartnerSlug(displayName);
   const referralSlug = await uniqueReferralSlug(code);
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || getSiteUrl()).replace(/\/$/, "");
+  const siteUrl = await getPartnerPromoSiteUrl();
   const referralUrl = buildShortReferralUrl(siteUrl, referralSlug);
   const qrCodeUrl = await QRCode.toDataURL(referralUrl).catch(() => "");
   const logoUrl = await resolvePartnerLogoUrl(formData);
@@ -247,7 +252,7 @@ export async function updatePartnerAction(formData: FormData) {
   const primaryPromo = existing.promoCodes[0];
   const code = await uniquePromoCode(displayName, formString(formData, "promoCode") || primaryPromo?.code || "", primaryPromo?.id);
   const referralSlug = primaryPromo ? await uniqueReferralSlug(code, primaryPromo.id) : await uniqueReferralSlug(code);
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || getSiteUrl()).replace(/\/$/, "");
+  const siteUrl = await getPartnerPromoSiteUrl();
   const qrCodeUrl = await QRCode.toDataURL(buildShortReferralUrl(siteUrl, referralSlug)).catch(() => primaryPromo?.qrCodeUrl || "");
 
   await prisma.$transaction(async (tx) => {

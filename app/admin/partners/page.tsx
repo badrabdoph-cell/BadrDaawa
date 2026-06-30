@@ -5,7 +5,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
 import { buildShortReferralPath, buildShortReferralUrl } from "@/lib/partner-promo";
-import { getPublicSiteUrl } from "@/lib/utils";
+import { getShareableSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +71,7 @@ export default async function PartnerPromoCenterPage({
     return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
   }
 
-  const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
+  const siteUrl = getShareableSiteUrl(requestHeaders).replace(/\/$/, "");
   const q = (params.q || "").trim();
   const where = {
     ...(q

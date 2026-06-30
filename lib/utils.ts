@@ -83,6 +83,21 @@ export function getPublicSiteUrl(headers?: Headers, fallbackOrigin = "http://loc
   return normalizeSiteUrl(fallbackOrigin);
 }
 
+export function getShareableSiteUrl(headers?: Headers, fallbackOrigin = defaultSiteUrl) {
+  const forwardedHost = headers?.get("x-forwarded-host")?.split(",")[0]?.trim() || headers?.get("host")?.split(",")[0]?.trim();
+  const forwardedProto = headers?.get("x-forwarded-proto")?.split(",")[0]?.trim();
+
+  if (forwardedHost) {
+    const protocol = forwardedProto || (/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(forwardedHost) ? "http" : "https");
+    const requestSiteUrl = normalizeSiteUrl(`${protocol}://${forwardedHost}`);
+    if (!isLocalhostOrigin(requestSiteUrl)) return requestSiteUrl;
+  }
+
+  const configuredSiteUrl = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || fallbackOrigin);
+  if (!isLocalhostOrigin(configuredSiteUrl)) return configuredSiteUrl;
+  return normalizeSiteUrl(fallbackOrigin);
+}
+
 export function getPublicUrl(path: string, headers?: Headers, fallbackOrigin?: string) {
   return new URL(path, getPublicSiteUrl(headers, fallbackOrigin));
 }

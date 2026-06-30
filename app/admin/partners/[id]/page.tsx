@@ -1,4 +1,5 @@
 import Link from "next/link";
+import QRCode from "qrcode";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Archive, ArrowLeft, ExternalLink, Pause, Pencil, Play, QrCode, RotateCcw, Send, TicketPercent } from "lucide-react";
@@ -6,7 +7,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
 import { buildShortReferralPath, buildShortReferralUrl } from "@/lib/partner-promo";
-import { getPublicSiteUrl } from "@/lib/utils";
+import { getShareableSiteUrl } from "@/lib/utils";
 import { updatePartnerStatusAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +72,7 @@ export default async function PartnerDetailsPage({
   const [{ id }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   if (!prisma) return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
 
-  const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
+  const siteUrl = getShareableSiteUrl(requestHeaders).replace(/\/$/, "");
   const [partner, visitCount] = await Promise.all([
     prisma.partner.findUnique({
       where: { id },
@@ -91,6 +92,7 @@ export default async function PartnerDetailsPage({
   const primaryPromo = partner.promoCodes[0];
   const shortPath = primaryPromo ? buildShortReferralPath(primaryPromo.referralSlug) : "";
   const shortUrl = primaryPromo ? buildShortReferralUrl(siteUrl, primaryPromo.referralSlug) : "";
+  const displayQrCodeUrl = primaryPromo ? await QRCode.toDataURL(shortUrl).catch(() => primaryPromo.qrCodeUrl || "") : "";
   const publishedOrders = partner.orders.filter((order) => order.status === "PUBLISHED" || order.status === "CONVERTED").length;
   const pendingOrders = partner.orders.filter((order) => order.status === "NEW" || order.status === "REVIEWING" || order.status === "EDITED").length;
 
@@ -139,8 +141,8 @@ export default async function PartnerDetailsPage({
             <small>{discountLabel(primaryPromo.discountType, primaryPromo.discountValue)}</small>
           </div>
         ) : null}
-        {primaryPromo?.qrCodeUrl ? (
-          <div className="partner-detail-qr" style={{ backgroundImage: `url(${primaryPromo.qrCodeUrl})` }} aria-label="QR" />
+        {displayQrCodeUrl ? (
+          <div className="partner-detail-qr" style={{ backgroundImage: `url(${displayQrCodeUrl})` }} aria-label="QR" />
         ) : (
           <div className="partner-detail-qr empty"><QrCode size={28} /></div>
         )}
@@ -189,8 +191,8 @@ export default async function PartnerDetailsPage({
                 <ExternalLink size={17} />
                 فتح الرابط
               </Link>
-              {primaryPromo.qrCodeUrl ? (
-                <Link className="btn btn-soft" href={primaryPromo.qrCodeUrl} target="_blank">
+              {displayQrCodeUrl ? (
+                <Link className="btn btn-soft" href={displayQrCodeUrl} target="_blank">
                   <QrCode size={17} />
                   تحميل QR
                 </Link>
