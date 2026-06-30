@@ -216,7 +216,13 @@ function createIdleUploadState(url = ""): ImageUploadState {
 
 function promoStatusMessage(status?: string) {
   if (!status) return "";
-  return "هذا البروموكود غير متوفر أو انتهت صلاحيته. يمكنك إكمال إنشاء الدعوة بدون كود خصم.";
+  const messages: Record<string, string> = {
+    "not-found": "هذا البروموكود غير موجود. يمكنك إكمال إنشاء الدعوة بدون كود خصم.",
+    inactive: "هذا البروموكود غير متوفر أو انتهت صلاحيته. يمكنك إكمال إنشاء الدعوة بدون كود خصم.",
+    "lookup-failed": "عذراً، حدث خطأ مؤقت. يمكنك إكمال إنشاء الدعوة بدون كود خصم.",
+    "database-unavailable": "الخدمة غير متاحة حالياً. حاول مرة أخرى لاحقاً.",
+  };
+  return messages[status] || "هذا البروموكود غير متوفر أو انتهت صلاحيته. يمكنك إكمال إنشاء الدعوة بدون كود خصم.";
 }
 
 function fileKey(file: File) {
@@ -886,6 +892,7 @@ export function OrderForm({
     if (typeof window === "undefined") return {};
     const params = new URLSearchParams(window.location.search);
     const imageUrls = cleanOrderDraftImageUrls((params.get("gallery") || "").split(","));
+    const promoFromUrl = params.get("promo");
     return {
       groomName: params.get("groomName") || undefined,
       brideName: params.get("brideName") || undefined,
@@ -899,9 +906,9 @@ export function OrderForm({
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
-      appliedPromoCode: params.get("promo") || params.get("appliedPromoCode") || undefined,
-      partnerPromoId: params.get("partnerPromoId") || undefined,
-      referralSource: params.get("promo") ? "referral-link" : params.get("referralSource") || undefined,
+      appliedPromoCode: promoFromUrl || undefined,
+      partnerPromoId: undefined,
+      referralSource: promoFromUrl ? "short-link" : undefined,
       storyEnabled: params.get("storyEnabled") === "1" || undefined,
       story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
       musicEnabled: params.has("musicEnabled") ? params.get("musicEnabled") === "1" : undefined,
@@ -926,9 +933,6 @@ export function OrderForm({
       "photographerName",
       "photographerFacebookUrl",
       "photographerInstagramUrl",
-      "appliedPromoCode",
-      "partnerPromoId",
-      "referralSource",
       "musicUrl",
     ];
     fields.forEach((field) => {
@@ -936,7 +940,6 @@ export function OrderForm({
       if (value) params.set(field, value);
     });
     if (nextForm.photographerEnabled) params.set("photographerEnabled", "1");
-    if (nextForm.appliedPromoCode) params.set("promo", String(nextForm.appliedPromoCode).trim());
     const story = cleanOrderStory(nextForm.story);
     if (nextForm.storyEnabled) {
       params.set("storyEnabled", "1");
@@ -2352,7 +2355,7 @@ export function OrderForm({
                     </div>
                   ) : (
                     /* saved card */
-                    <div className="partner-saved-card">
+                    <div className={`partner-saved-card ${form.appliedPromoCode ? "from-promo" : ""}`}>
                       <div className="partner-saved-head">
                         <span className="partner-saved-icon">
                           {partnerServiceType === "مصور فوتوغرافي" ? "📷" :
@@ -2366,7 +2369,16 @@ export function OrderForm({
                           <strong className="partner-saved-name">{form.photographerName || "شريك"}</strong>
                           <small className="partner-saved-type">{partnerServiceType || "شريك"}</small>
                         </div>
+                        {form.appliedPromoCode ? (
+                          <span className="partner-promo-badge">بروموكود</span>
+                        ) : null}
                       </div>
+                      {form.appliedPromoCode && appliedPromo?.promo.discountLabel ? (
+                        <div className="partner-promo-discount">
+                          <TicketPercent size={15} />
+                          <span>{appliedPromo.promo.discountLabel}</span>
+                        </div>
+                      ) : null}
                       {(form.photographerFacebookUrl || form.photographerInstagramUrl) ? (
                         <div className="partner-saved-links">
                           {form.photographerFacebookUrl ? (

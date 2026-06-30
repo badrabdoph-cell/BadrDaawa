@@ -6,8 +6,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { slug } = await params;
   const cleanSlug = slug.trim();
   const fallback = new URL("/order", request.url);
-  if (!cleanSlug) return NextResponse.redirect(fallback, 307);
+  if (!cleanSlug) return NextResponse.redirect(fallback, 308);
 
   const url = new URL(`/r/${encodeURIComponent(cleanSlug)}`, request.url);
-  return NextResponse.redirect(url, 307);
+  return NextResponse.redirect(url, 308);
 }
