@@ -4179,9 +4179,25 @@ img {
   background: linear-gradient(135deg, rgba(244, 255, 248, 0.94), rgba(255, 253, 248, 0.9));
 }
 
+.order-promo-review-card {
+  margin-top: 6px;
+  border-color: rgba(180, 139, 57, 0.32);
+  background: #fffbf1;
+}
+
 .order-promo-copy {
   display: grid;
   gap: 3px;
+}
+
+.order-promo-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.order-promo-title svg {
+  color: #8a641f;
 }
 
 .order-promo-copy strong {

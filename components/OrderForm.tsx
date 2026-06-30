@@ -22,6 +22,7 @@ import {
   Music2,
   Phone,
   Sparkles,
+  TicketPercent,
   Trash2,
   UploadCloud,
   UserRound,
@@ -1846,9 +1847,13 @@ export function OrderForm({
 
   function renderPromoCard() {
     return (
-      <div className={`order-promo-card ${form.appliedPromoCode ? "is-applied" : ""}`}>
+      <div className={`order-promo-card order-promo-review-card ${form.appliedPromoCode ? "is-applied" : ""}`}>
         <div className="order-promo-copy">
-          <strong>بروموكود</strong>
+          <span className="order-promo-title">
+            <TicketPercent size={17} />
+            <strong>كود الخصم</strong>
+          </span>
+          {form.appliedPromoCode ? <small dir="ltr">{form.appliedPromoCode}</small> : null}
         </div>
         <div className="order-promo-controls">
           <input
@@ -1861,6 +1866,11 @@ export function OrderForm({
               setPromoInput(event.target.value);
               if (promoMessage) setPromoMessage("");
             }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" || form.appliedPromoCode || promoBusy) return;
+              event.preventDefault();
+              if (promoInput.trim()) void applyPromoCode();
+            }}
             disabled={promoBusy || Boolean(form.appliedPromoCode)}
             aria-label="بروموكود"
           />
@@ -1869,7 +1879,7 @@ export function OrderForm({
               إزالة البروموكود
             </button>
           ) : (
-            <button className="btn btn-gold" type="button" onClick={() => applyPromoCode()} disabled={promoBusy}>
+            <button className="btn btn-gold" type="button" onClick={() => applyPromoCode()} disabled={promoBusy || !promoInput.trim()}>
               {promoBusy ? "جاري التطبيق" : "تطبيق"}
             </button>
           )}
@@ -2271,7 +2281,6 @@ export function OrderForm({
             <div className="partner-section">
               <h2>شركاء الحفل (اختياري)</h2>
               <p className="partner-desc">اختر مقدم خدمة لإضافته إلى الدعوة.</p>
-              {renderPromoCard()}
 
               {!form.photographerEnabled ? (
                 /* ── service selection cards ── */
@@ -2483,6 +2492,8 @@ export function OrderForm({
 
             {hasMediaUploadInProgress ? <p className="order-submit-wait-hint" id="order-upload-wait-hint">انتظر حتي يكتمل رفع الصور والموسيقى الي الدعوه وبعدها اكمل</p> : null}
           </section>
+
+          {isLastStep ? renderPromoCard() : null}
 
           <div className={`order-wizard-actions ${isLastStep ? "order-review-actions" : ""}`}>
             {isLastStep ? (
