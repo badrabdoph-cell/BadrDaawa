@@ -12,8 +12,10 @@ import { slugifyInvitationName } from "@/lib/slug";
 import { getShareableSiteUrl } from "@/lib/utils";
 
 type DiscountTypeInput = "NONE" | "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_INVITATION";
+type PromoStatusInput = "ACTIVE" | "PAUSED" | "EXPIRED" | "ARCHIVED";
 
 const discountTypes = new Set<DiscountTypeInput>(["NONE", "PERCENTAGE", "FIXED_AMOUNT", "FREE_INVITATION"]);
+const promoStatuses = new Set<PromoStatusInput>(["ACTIVE", "PAUSED", "EXPIRED", "ARCHIVED"]);
 
 function formString(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -71,6 +73,10 @@ async function resolveLogoUrl(formData: FormData) {
 
 function auditId() {
   return `audit-${Date.now().toString(36)}-${crypto.randomBytes(4).toString("hex")}`;
+}
+
+function safeReturnPath(value: string, fallback = "/admin/promo-codes/partners") {
+  return value.startsWith("/") && !value.startsWith("//") ? value : fallback;
 }
 
 export async function createQuickPromoCodeAction(formData: FormData) {
@@ -158,4 +164,131 @@ export async function createQuickPromoCodeAction(formData: FormData) {
   });
 
   redirect(`/admin/promo-codes?created=${created.promoId}`);
+}
+
+export async function updatePartnerPromoStatusAction(formData: FormData) {
+  if (!prisma) redirect("/admin/promo-codes/partners?error=database");
+
+  const id = formString(formData, "id");
+  const returnTo = safeReturnPath(formString(formData, "returnTo"));
+  const statusValue = formString(formData, "status") as PromoStatusInput;
+  const status = promoStatuses.has(statusValue) ? statusValue : "PAUSED";
+  if (!id) redirect(`${returnTo}?error=missing`);
+
+  await prisma.$transaction(async (tx) => {
+    const promo = await tx.partnerPromoCode.update({
+      where: { id },
+      data: {
+        status,
+        archivedAt: status === "ARCHIVED" ? new Date() : null,
+        deletedAt: null,
+      },
+      select: { id: true, code: true, partnerId: true, status: true },
+    });
+    await tx.partnerActivityLog.create({
+      data: {
+        partnerId: promo.partnerId,
+        action: `promo.${status.toLowerCase()}`,
+        performedBy: "admin",
+        newValue: { promoId: promo.id, code: promo.code, status },
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        id: auditId(),
+        actorType: "admin",
+        actorId: "admin",
+        actorLabel: "Admin",
+        action: "promo.status",
+        entityType: "PartnerPromoCode",
+        entityId: promo.id,
+        entityLabel: promo.code,
+        newValues: { status },
+        metadata: { source: "promo-code-admin" },
+      },
+    });
+  });
+
+  redirect(`${returnTo}?status=updated`);
+}
+
+export async function softDeletePartnerPromoAction(formData: FormData) {
+  if (!prisma) redirect("/admin/promo-codes/partners?error=database");
+
+  const id = formString(formData, "id");
+  const returnTo = safeReturnPath(formString(formData, "returnTo"));
+  if (!id) redirect(`${returnTo}?error=missing`);
+
+  await prisma.$transaction(async (tx) => {
+    const now = new Date();
+    const promo = await tx.partnerPromoCode.update({
+      where: { id },
+      data: { status: "ARCHIVED", archivedAt: now, deletedAt: now },
+      select: { id: true, code: true, partnerId: true },
+    });
+    await tx.partnerActivityLog.create({
+      data: {
+        partnerId: promo.partnerId,
+        action: "promo.deleted",
+        performedBy: "admin",
+        newValue: { promoId: promo.id, code: promo.code, status: "ARCHIVED" },
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        id: auditId(),
+        actorType: "admin",
+        actorId: "admin",
+        actorLabel: "Admin",
+        action: "promo.delete",
+        entityType: "PartnerPromoCode",
+        entityId: promo.id,
+        entityLabel: promo.code,
+        newValues: { deletedAt: now.toISOString(), status: "ARCHIVED" },
+        metadata: { source: "promo-code-admin", deleteType: "soft" },
+      },
+    });
+  });
+
+  redirect(`${returnTo}?status=deleted`);
+}
+
+export async function restorePartnerPromoAction(formData: FormData) {
+  if (!prisma) redirect("/admin/promo-codes/partners?error=database");
+
+  const id = formString(formData, "id");
+  const returnTo = safeReturnPath(formString(formData, "returnTo"), id ? `/admin/promo-codes/${id}` : "/admin/promo-codes/partners");
+  if (!id) redirect(`${returnTo}?error=missing`);
+
+  await prisma.$transaction(async (tx) => {
+    const promo = await tx.partnerPromoCode.update({
+      where: { id },
+      data: { status: "ACTIVE", archivedAt: null, deletedAt: null },
+      select: { id: true, code: true, partnerId: true },
+    });
+    await tx.partnerActivityLog.create({
+      data: {
+        partnerId: promo.partnerId,
+        action: "promo.restored",
+        performedBy: "admin",
+        newValue: { promoId: promo.id, code: promo.code, status: "ACTIVE" },
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        id: auditId(),
+        actorType: "admin",
+        actorId: "admin",
+        actorLabel: "Admin",
+        action: "promo.restore",
+        entityType: "PartnerPromoCode",
+        entityId: promo.id,
+        entityLabel: promo.code,
+        newValues: { status: "ACTIVE", deletedAt: null, archivedAt: null },
+        metadata: { source: "promo-code-admin" },
+      },
+    });
+  });
+
+  redirect(`${returnTo}?status=restored`);
 }

@@ -29,49 +29,68 @@ function shouldLogVisit(key: string) {
   return true;
 }
 
+function buildOrderFallbackUrl(request: NextRequest, code: string, promoStatus: string) {
+  const url = new URL("/order", request.url);
+  const cleanCode = normalizeReferralSlug(code);
+  if (cleanCode) {
+    url.searchParams.set("promo", cleanCode);
+    url.searchParams.set("referralSource", "short-link");
+    url.searchParams.set("promoStatus", promoStatus);
+  }
+  return url;
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const rawSlug = slug.trim();
   const cleanSlug = normalizeReferralSlug(rawSlug);
-  const fallback = new URL("/order", request.url);
-  if (!rawSlug || !prisma) return NextResponse.redirect(fallback, 307);
+  const fallback = buildOrderFallbackUrl(request, rawSlug, "fallback");
+  if (!rawSlug) return NextResponse.redirect(new URL("/order", request.url), 307);
+  if (!prisma) return NextResponse.redirect(fallback, 307);
 
-  const promo = await prisma.partnerPromoCode.findFirst({
-    where: {
-      OR: [
-        { referralSlug: rawSlug },
-        { referralSlug: { equals: rawSlug, mode: "insensitive" as const } },
-        ...(cleanSlug && cleanSlug !== rawSlug
-          ? [{ referralSlug: cleanSlug }, { referralSlug: { equals: cleanSlug, mode: "insensitive" as const } }]
-          : []),
-      ],
-    },
-    select: {
-      id: true,
-      partnerId: true,
-      code: true,
-      referralSlug: true,
-      status: true,
-      usageLimit: true,
-      currentUsage: true,
-      startDate: true,
-      expiryDate: true,
-      deletedAt: true,
-      archivedAt: true,
-      partner: {
-        select: {
-          status: true,
-          deletedAt: true,
-          archivedAt: true,
-          subscriptionStatus: true,
-          subscriptionAutoDisable: true,
+  let promo = null;
+  try {
+    promo = await prisma.partnerPromoCode.findFirst({
+      where: {
+        OR: [
+          { referralSlug: rawSlug },
+          { referralSlug: { equals: rawSlug, mode: "insensitive" as const } },
+          ...(cleanSlug && cleanSlug !== rawSlug
+            ? [{ referralSlug: cleanSlug }, { referralSlug: { equals: cleanSlug, mode: "insensitive" as const } }]
+            : []),
+        ],
+      },
+      select: {
+        id: true,
+        partnerId: true,
+        code: true,
+        referralSlug: true,
+        status: true,
+        usageLimit: true,
+        currentUsage: true,
+        startDate: true,
+        expiryDate: true,
+        deletedAt: true,
+        archivedAt: true,
+        partner: {
+          select: {
+            status: true,
+            deletedAt: true,
+            archivedAt: true,
+            subscriptionStatus: true,
+            subscriptionAutoDisable: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[Partner Promo] Failed to resolve short link", error);
+    return NextResponse.redirect(buildOrderFallbackUrl(request, cleanSlug || rawSlug, "lookup-failed"), 307);
+  }
+
+  if (!promo) return NextResponse.redirect(buildOrderFallbackUrl(request, cleanSlug || rawSlug, "not-found"), 307);
 
   const invalid =
-    !promo ||
     promo.deletedAt ||
     promo.archivedAt ||
     promo.status !== "ACTIVE" ||
@@ -82,7 +101,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     promo.partner.status !== "ACTIVE" ||
     (promo.partner.subscriptionAutoDisable && ["PAST_DUE", "EXPIRED", "CANCELLED"].includes(promo.partner.subscriptionStatus));
 
-  if (invalid) return NextResponse.redirect(fallback, 307);
+  if (invalid) return NextResponse.redirect(buildOrderFallbackUrl(request, promo.code || cleanSlug || rawSlug, "inactive"), 307);
 
   const visitorIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
   if (shouldLogVisit(`${promo.id}:${visitorIp}`)) {

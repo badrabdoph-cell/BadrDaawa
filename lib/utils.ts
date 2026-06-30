@@ -90,12 +90,16 @@ export function getShareableSiteUrl(headers?: Headers, fallbackOrigin = defaultS
   if (forwardedHost) {
     const protocol = forwardedProto || (/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(forwardedHost) ? "http" : "https");
     const requestSiteUrl = normalizeSiteUrl(`${protocol}://${forwardedHost}`);
-    if (!isLocalhostOrigin(requestSiteUrl)) return requestSiteUrl;
+    if (!isUnsafeShareableOrigin(requestSiteUrl)) return requestSiteUrl;
   }
 
-  const configuredSiteUrl = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || fallbackOrigin);
-  if (!isLocalhostOrigin(configuredSiteUrl)) return configuredSiteUrl;
-  return normalizeSiteUrl(fallbackOrigin);
+  for (const candidate of [process.env.NEXT_PUBLIC_SITE_URL, process.env.APP_URL, fallbackOrigin, defaultSiteUrl]) {
+    if (hasUnresolvedTemplate(candidate)) continue;
+    const configuredSiteUrl = normalizeSiteUrl(candidate);
+    if (!isUnsafeShareableOrigin(configuredSiteUrl)) return configuredSiteUrl;
+  }
+
+  return defaultSiteUrl;
 }
 
 export function getPublicUrl(path: string, headers?: Headers, fallbackOrigin?: string) {
@@ -145,6 +149,28 @@ function isLocalhostOrigin(value: string) {
     return hostname === "localhost" || hostname === "127.0.0.1";
   } catch {
     return false;
+  }
+}
+
+function hasUnresolvedTemplate(value?: string | null) {
+  if (!value) return false;
+  return /\$\{|\{\{|\}\}|RAILWAY_PUBLIC_DOMAIN/i.test(value);
+}
+
+function isUnsafeShareableOrigin(value: string) {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    return (
+      hasUnresolvedTemplate(value) ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname.endsWith(".internal") ||
+      hostname.includes("railway.internal")
+    );
+  } catch {
+    return true;
   }
 }
 
