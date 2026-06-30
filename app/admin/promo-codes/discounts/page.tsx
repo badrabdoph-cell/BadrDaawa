@@ -1,5 +1,8 @@
-import { Percent, Search } from "lucide-react";
-import { AdminPartnerCenterNav } from "@/components/AdminPartnerCenterNav";
+import Link from "next/link";
+import QRCode from "qrcode";
+import { Download, Percent, PlusCircle, QrCode, Search } from "lucide-react";
+import { AdminDiscountCenterNav } from "@/components/AdminDiscountCenterNav";
+import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
 
@@ -8,6 +11,7 @@ export const dynamic = "force-dynamic";
 type PageParams = {
   q?: string;
   status?: string;
+  created?: string;
 };
 
 const statusLabels: Record<string, string> = {
@@ -63,18 +67,36 @@ export default async function DiscountPromoCodesPage({
   const activeCount = codes.filter((code) => code.status === "ACTIVE" && !code.deletedAt).length;
   const usageCount = codes.reduce((sum, code) => sum + code.currentUsage, 0);
   const limitedCount = codes.filter((code) => code.usageLimit !== null).length;
+  const codeRows = await Promise.all(
+    codes.map(async (code) => ({
+      code,
+      qrCodeUrl: await QRCode.toDataURL(code.code).catch(() => ""),
+    })),
+  );
 
   return (
-    <section className="admin-command-center promo-admin-page">
+    <section className="admin-command-center promo-admin-page discount-center-page">
       <div className="dashboard-head">
         <div>
-          <span className="eyebrow">أكواد البرومو</span>
-          <h1>أكواد الخصم المستقلة</h1>
-          <p>أكواد خصم غير مرتبطة بمصور أو شريك. هذه الصفحة تفصلها بوضوح حتى لا تختلط بروابط الإحالة.</p>
+          <span className="eyebrow">مركز أكواد الخصم</span>
+          <h1>لوحة الخصومات</h1>
+          <p>أكواد خصم عامة مستقلة تمامًا عن الشركاء. لا تعرض هنا أي بيانات شركاء أو روابط إحالة.</p>
+        </div>
+        <div className="dashboard-actions">
+          <Link className="btn btn-gold" href="/admin/promo-codes/discounts/new">
+            <PlusCircle size={17} />
+            إنشاء كود
+          </Link>
+          <Link className="btn btn-soft" href="/admin/promo-codes/discounts/export">
+            <Download size={17} />
+            CSV
+          </Link>
         </div>
       </div>
 
-      <AdminPartnerCenterNav />
+      <AdminDiscountCenterNav />
+
+      {params.created ? <div className="notice success">تم إنشاء كود الخصم المستقل بنجاح.</div> : null}
 
       <StatsGrid
         stats={[
@@ -84,10 +106,6 @@ export default async function DiscountPromoCodesPage({
           { label: "لها حد استخدام", value: limitedCount, hint: "أكواد لها سقف محدد" },
         ]}
       />
-
-      <div className="notice warning">
-        هذا القسم منفصل عن بروموكود المصورين. تطبيق هذه الأكواد داخل رحلة الطلب يحتاج ربط API خصومات مستقل حتى لا تختلط ببيانات المصور.
-      </div>
 
       <form className="admin-table-toolbar" action="/admin/promo-codes/discounts" method="get">
         <label>
@@ -126,10 +144,11 @@ export default async function DiscountPromoCodesPage({
                   <th>الاستخدام</th>
                   <th>الصلاحية</th>
                   <th>الحالة</th>
+                  <th>الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {codes.map((code) => (
+                {codeRows.map(({ code, qrCodeUrl }) => (
                   <tr key={code.id}>
                     <td><strong dir="ltr">{code.code}</strong></td>
                     <td>
@@ -138,8 +157,22 @@ export default async function DiscountPromoCodesPage({
                     </td>
                     <td>{discountLabel(code.discountType, code.discountValue)}</td>
                     <td>{code.currentUsage}{code.usageLimit ? ` / ${code.usageLimit}` : ""}</td>
-                    <td>{code.expiryDate ? code.expiryDate.toLocaleDateString("ar-EG") : "بدون تاريخ انتهاء"}</td>
+                    <td>
+                      <small>{code.startDate ? `من ${code.startDate.toLocaleDateString("ar-EG")}` : "بدون بداية"}</small>
+                      <small>{code.expiryDate ? `حتى ${code.expiryDate.toLocaleDateString("ar-EG")}` : "بدون تاريخ انتهاء"}</small>
+                    </td>
                     <td><span className={statusClass(code.deletedAt ? "ARCHIVED" : code.status)}>{code.deletedAt ? "محذوف" : statusLabels[code.status]}</span></td>
+                    <td>
+                      <div className="button-row">
+                        <CopyButton value={code.code} label="نسخ" className="btn btn-soft" />
+                        {qrCodeUrl ? (
+                          <Link className="btn btn-soft" href={qrCodeUrl} target="_blank">
+                            <QrCode size={16} />
+                            QR
+                          </Link>
+                        ) : null}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

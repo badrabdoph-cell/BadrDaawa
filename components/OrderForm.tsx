@@ -214,6 +214,11 @@ function createIdleUploadState(url = ""): ImageUploadState {
   };
 }
 
+function promoStatusMessage(status?: string) {
+  if (!status) return "";
+  return "هذا البروموكود غير متوفر أو انتهت صلاحيته. يمكنك إكمال إنشاء الدعوة بدون كود خصم.";
+}
+
 function fileKey(file: File) {
   return `${file.name}:${file.size}:${file.lastModified}`;
 }
@@ -555,12 +560,14 @@ function CompactOrderImageInput({
 export function OrderForm({
   initialTemplate,
   initialDraft,
+  initialPromoStatus = "",
   templates,
   skipTemplateStep = false,
   showPaymentMethods = false,
 }: {
   initialTemplate?: string;
   initialDraft?: OrderInitialDraft;
+  initialPromoStatus?: string;
   templates: OrderTemplateOption[];
   skipTemplateStep?: boolean;
   showPaymentMethods?: boolean;
@@ -612,7 +619,7 @@ export function OrderForm({
   const [partnerServiceType, setPartnerServiceType] = useState("");
   const [promoInput, setPromoInput] = useState(initialDraft?.appliedPromoCode || "");
   const [promoBusy, setPromoBusy] = useState(false);
-  const [promoMessage, setPromoMessage] = useState("");
+  const [promoMessage, setPromoMessage] = useState(() => promoStatusMessage(initialPromoStatus));
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; placeName: string; city: string; governorate: string; googleMapsUrl: string } | null>(null);
   const [draftReady, setDraftReady] = useState(false);
@@ -1989,6 +1996,13 @@ export function OrderForm({
             </div>
             <strong>{progressPercent}%</strong>
           </header>
+
+          {promoStatusMessage(initialPromoStatus) && !form.appliedPromoCode ? (
+            <div className="order-promo-route-notice" role="status" aria-live="polite">
+              <TicketPercent size={17} />
+              <span>{promoStatusMessage(initialPromoStatus)}</span>
+            </div>
+          ) : null}
 
           <div className="order-progress-track" aria-hidden="true">
             <span style={{ width: `${progressPercent}%` }} />

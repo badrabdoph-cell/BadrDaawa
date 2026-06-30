@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Handshake, History, Percent, PlusCircle } from "lucide-react";
+import { BarChart3, Handshake, History, PlusCircle } from "lucide-react";
 
 const links = [
   { href: "/admin/partners", label: "لوحة التحكم", icon: BarChart3 },
   { href: "/admin/partners/directory", label: "الشركاء", icon: Handshake },
   { href: "/admin/partners/new", label: "إنشاء شريك", icon: PlusCircle },
-  { href: "/admin/promo-codes/discounts", label: "أكواد الخصم", icon: Percent },
   { href: "/admin/partners/activity", label: "سجل العمليات", icon: History },
 ];
 

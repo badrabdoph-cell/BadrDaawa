@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { normalizeReferralSlug } from "@/lib/partner-promo";
+import {
+  normalizePromoCode,
+  normalizeReferralSlug,
+  PARTNER_PROMO_COOKIE,
+  PARTNER_PROMO_COOKIE_MAX_AGE,
+  PARTNER_PROMO_STATUS_COOKIE,
+  PARTNER_PROMO_STATUS_COOKIE_MAX_AGE,
+} from "@/lib/partner-promo";
 
 export const runtime = "nodejs";
 
@@ -29,24 +36,59 @@ function shouldLogVisit(key: string) {
   return true;
 }
 
-function buildOrderFallbackUrl(request: NextRequest, code: string, promoStatus: string) {
-  const url = new URL("/order", request.url);
-  const cleanCode = normalizeReferralSlug(code);
-  if (cleanCode) {
-    url.searchParams.set("promo", cleanCode);
-    url.searchParams.set("referralSource", "short-link");
-    url.searchParams.set("promoStatus", promoStatus);
-  }
-  return url;
+function isSecureRequest(request: NextRequest) {
+  return request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() === "https";
+}
+
+function referralCookieOptions(request: NextRequest, maxAge: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: isSecureRequest(request),
+    path: "/",
+    maxAge,
+  };
+}
+
+function clearReferralCookie(response: NextResponse, request: NextRequest) {
+  response.cookies.set(PARTNER_PROMO_COOKIE, "", referralCookieOptions(request, 0));
+}
+
+function clearReferralStatusCookie(response: NextResponse, request: NextRequest) {
+  response.cookies.set(PARTNER_PROMO_STATUS_COOKIE, "", referralCookieOptions(request, 0));
+}
+
+function buildOrderFallbackUrl(request: NextRequest) {
+  return new URL("/order", request.url);
+}
+
+function redirectToOrderWithPromo(request: NextRequest, code: string) {
+  const response = NextResponse.redirect(buildOrderFallbackUrl(request), 307);
+  response.cookies.set(PARTNER_PROMO_COOKIE, normalizePromoCode(code), referralCookieOptions(request, PARTNER_PROMO_COOKIE_MAX_AGE));
+  clearReferralStatusCookie(response, request);
+  return response;
+}
+
+function redirectToOrderWithUnavailablePromo(request: NextRequest, promoStatus: string) {
+  const response = NextResponse.redirect(buildOrderFallbackUrl(request), 307);
+  clearReferralCookie(response, request);
+  response.cookies.set(PARTNER_PROMO_STATUS_COOKIE, promoStatus, referralCookieOptions(request, PARTNER_PROMO_STATUS_COOKIE_MAX_AGE));
+  return response;
+}
+
+function redirectToOrderWithoutPromo(request: NextRequest) {
+  const response = NextResponse.redirect(buildOrderFallbackUrl(request), 307);
+  clearReferralCookie(response, request);
+  clearReferralStatusCookie(response, request);
+  return response;
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const rawSlug = slug.trim();
   const cleanSlug = normalizeReferralSlug(rawSlug);
-  const fallback = buildOrderFallbackUrl(request, rawSlug, "fallback");
-  if (!rawSlug) return NextResponse.redirect(new URL("/order", request.url), 307);
-  if (!prisma) return NextResponse.redirect(fallback, 307);
+  if (!rawSlug) return redirectToOrderWithoutPromo(request);
+  if (!prisma) return redirectToOrderWithUnavailablePromo(request, "database-unavailable");
 
   let promo = null;
   try {
@@ -85,10 +127,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
   } catch (error) {
     console.error("[Partner Promo] Failed to resolve short link", error);
-    return NextResponse.redirect(buildOrderFallbackUrl(request, cleanSlug || rawSlug, "lookup-failed"), 307);
+    return redirectToOrderWithUnavailablePromo(request, "lookup-failed");
   }
 
-  if (!promo) return NextResponse.redirect(buildOrderFallbackUrl(request, cleanSlug || rawSlug, "not-found"), 307);
+  if (!promo) return redirectToOrderWithUnavailablePromo(request, "not-found");
 
   const invalid =
     promo.deletedAt ||
@@ -101,7 +143,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     promo.partner.status !== "ACTIVE" ||
     (promo.partner.subscriptionAutoDisable && ["PAST_DUE", "EXPIRED", "CANCELLED"].includes(promo.partner.subscriptionStatus));
 
-  if (invalid) return NextResponse.redirect(buildOrderFallbackUrl(request, promo.code || cleanSlug || rawSlug, "inactive"), 307);
+  if (invalid) return redirectToOrderWithUnavailablePromo(request, "inactive");
 
   const visitorIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
   if (shouldLogVisit(`${promo.id}:${visitorIp}`)) {
@@ -129,8 +171,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       });
   }
 
-  const url = new URL("/order", request.url);
-  url.searchParams.set("promo", promo.code);
-  url.searchParams.set("referralSource", "short-link");
-  return NextResponse.redirect(url, 307);
+  return redirectToOrderWithPromo(request, promo.code);
 }

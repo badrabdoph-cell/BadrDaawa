@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Book, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, Eye, FileImage, FilePenLine, FileText, Gauge, Github, Handshake, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, ScrollText, Search, Settings, ShieldCheck, Star, TicketPercent, Trash2, TriangleAlert, Upload, UserCheck, UsersRound, X, XCircle } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Book, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, Eye, FileImage, FilePenLine, FileText, Gauge, Github, Handshake, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, Percent, PlusCircle, RadioTower, RefreshCw, ScrollText, Search, Settings, ShieldCheck, Star, TicketPercent, Trash2, TriangleAlert, Upload, UserCheck, UsersRound, X, XCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -35,8 +35,20 @@ const adminSections = [
       { href: "/admin/partners", label: "لوحة التحكم", icon: LayoutDashboard },
       { href: "/admin/partners/directory", label: "الشركاء", icon: Handshake },
       { href: "/admin/partners/new", label: "إنشاء شريك", icon: PlusCircle },
-      { href: "/admin/promo-codes/discounts", label: "أكواد الخصم", icon: TicketPercent },
       { href: "/admin/partners/activity", label: "سجل العمليات", icon: History },
+    ],
+  },
+  {
+    id: "discounts",
+    title: "مركز أكواد الخصم",
+    description: "خصومات عامة مستقلة عن الشركاء",
+    accent: "gold",
+    icon: Percent,
+    links: [
+      { href: "/admin/promo-codes/discounts", label: "لوحة الخصومات", icon: LayoutDashboard },
+      { href: "/admin/promo-codes/discounts", label: "جميع الأكواد", icon: Percent },
+      { href: "/admin/promo-codes/discounts/new", label: "إنشاء كود", icon: PlusCircle },
+      { href: "/admin/promo-codes/discounts/history", label: "سجل الاستخدام", icon: History },
     ],
   },
   {

@@ -48,6 +48,18 @@ async function uniquePromoCode(displayName: string, requestedCode: string) {
   return code;
 }
 
+async function uniqueDiscountPromoCode(requestedCode: string, internalName: string) {
+  const base = normalizePromoCode(requestedCode || internalName.replace(/[^\p{L}\p{N}]+/gu, "")) || randomCode();
+  let code = base.slice(0, 32);
+  let suffix = 2;
+  while (await prisma?.discountPromoCode.findUnique({ where: { code }, select: { id: true } })) {
+    const suffixText = String(suffix);
+    code = `${base.slice(0, 32 - suffixText.length)}${suffixText}`;
+    suffix += 1;
+  }
+  return code;
+}
+
 async function uniqueReferralSlug(code: string) {
   const base = normalizeReferralSlug(code) || randomCode();
   let referralSlug = base;
@@ -164,6 +176,50 @@ export async function createQuickPromoCodeAction(formData: FormData) {
   });
 
   redirect(`/admin/promo-codes?created=${created.promoId}`);
+}
+
+export async function createDiscountPromoCodeAction(formData: FormData) {
+  if (!prisma) redirect("/admin/promo-codes/discounts/new?error=database");
+
+  const internalName = formString(formData, "internalName");
+  if (internalName.length < 2) redirect("/admin/promo-codes/discounts/new?error=name");
+
+  const discountTypeValue = formString(formData, "discountType") as DiscountTypeInput;
+  const discountType = discountTypes.has(discountTypeValue) ? discountTypeValue : "PERCENTAGE";
+  const discountValueRaw = Number(formString(formData, "discountValue"));
+  const needsDiscountValue = discountType === "PERCENTAGE" || discountType === "FIXED_AMOUNT";
+  if (needsDiscountValue && (!Number.isFinite(discountValueRaw) || discountValueRaw <= 0)) {
+    redirect("/admin/promo-codes/discounts/new?error=discount");
+  }
+
+  const usageLimitRaw = Number(formString(formData, "usageLimit"));
+  const usageLimit = Number.isFinite(usageLimitRaw) && usageLimitRaw > 0 ? Math.floor(usageLimitRaw) : null;
+  const startDateRaw = formString(formData, "startDate");
+  const expiryDateRaw = formString(formData, "expiryDate");
+  const startDate = startDateRaw ? new Date(`${startDateRaw}T00:00:00`) : null;
+  const expiryDate = expiryDateRaw ? new Date(`${expiryDateRaw}T23:59:59`) : null;
+  const statusValue = formString(formData, "status") as PromoStatusInput;
+  const status = promoStatuses.has(statusValue) ? statusValue : "ACTIVE";
+  const code = await uniqueDiscountPromoCode(formString(formData, "code"), internalName);
+
+  const created = await prisma.discountPromoCode.create({
+    data: {
+      internalName,
+      code,
+      internalDescription: formString(formData, "internalDescription") || null,
+      status,
+      discountType,
+      discountValue: needsDiscountValue ? discountValueRaw : null,
+      usageLimit,
+      startDate: startDate && !Number.isNaN(startDate.getTime()) ? startDate : null,
+      expiryDate: expiryDate && !Number.isNaN(expiryDate.getTime()) ? expiryDate : null,
+      restrictions: formString(formData, "notes") ? { notes: formString(formData, "notes") } : undefined,
+      createdBy: "admin",
+    },
+    select: { id: true },
+  });
+
+  redirect(`/admin/promo-codes/discounts?created=${created.id}`);
 }
 
 export async function updatePartnerPromoStatusAction(formData: FormData) {

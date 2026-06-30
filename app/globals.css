@@ -4229,6 +4229,25 @@ img {
   white-space: nowrap;
 }
 
+.order-promo-route-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(180, 105, 57, 0.28);
+  border-radius: 16px;
+  background: rgba(255, 247, 232, 0.92);
+  color: #7d4520;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.order-promo-route-notice svg {
+  flex: 0 0 auto;
+  color: #9a6326;
+}
+
 .order-promo-message {
   min-height: 20px;
   margin: 0;

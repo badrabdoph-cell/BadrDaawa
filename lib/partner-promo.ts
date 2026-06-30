@@ -3,6 +3,11 @@ import { prisma } from "./db";
 export type PartnerDiscountType = "NONE" | "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_INVITATION";
 export type PartnerStatusValue = "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED" | "ARCHIVED";
 
+export const PARTNER_PROMO_COOKIE = "bd_partner_promo";
+export const PARTNER_PROMO_STATUS_COOKIE = "bd_partner_promo_status";
+export const PARTNER_PROMO_COOKIE_MAX_AGE = 60 * 60 * 24 * 14;
+export const PARTNER_PROMO_STATUS_COOKIE_MAX_AGE = 60 * 5;
+
 export type PartnerSnapshotSource = {
   id: string;
   displayName: string;

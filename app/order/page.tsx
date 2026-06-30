@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Crown } from "lucide-react";
 import type { OrderInitialDraft } from "@/components/OrderForm";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderRequestUxPatches } from "@/components/OrderRequestUxPatches";
+import { PARTNER_PROMO_COOKIE, PARTNER_PROMO_STATUS_COOKIE } from "@/lib/partner-promo";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublicPublishedTemplatesWithSettings } from "@/lib/template-settings";
 
@@ -37,6 +39,7 @@ type PageProps = {
     appliedPromoCode?: string;
     partnerPromoId?: string;
     referralSource?: string;
+    promoStatus?: string;
     openingText?: string;
     storyEnabled?: string;
     story?: string;
@@ -59,10 +62,15 @@ function parseStoryParam(value?: string) {
 
 export default async function OrderPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
-  const [templates, siteSettings] = await Promise.all([getPublicPublishedTemplatesWithSettings(), getPublishedSiteSettings()]);
+  const [templates, siteSettings, cookieStore] = await Promise.all([getPublicPublishedTemplatesWithSettings(), getPublishedSiteSettings(), cookies()]);
   const selected = (params.template ? templates.find((template) => template.slug === params.template) : undefined) || templates[0];
   if (!selected) redirect("/templates");
   const templateOptions = templates.map(({ slug, name, arabicName, previewImage }) => ({ slug, name, arabicName, previewImage }));
+  const cookiePromoCode = sanitizeString(cookieStore.get(PARTNER_PROMO_COOKIE)?.value || "");
+  const cookiePromoStatus = sanitizeString(cookieStore.get(PARTNER_PROMO_STATUS_COOKIE)?.value || "");
+  const requestedPromoCode = sanitizeString(params.promo || params.appliedPromoCode || cookiePromoCode);
+  const requestedReferralSource = sanitizeString(params.referralSource || (params.promo || cookiePromoCode ? "short-link" : ""));
+  const initialPromoStatus = sanitizeString(params.promoStatus || (!requestedPromoCode ? cookiePromoStatus : ""));
   const initialDraft: OrderInitialDraft = {
     groomName: sanitizeString(params.groomName || ""),
     brideName: sanitizeString(params.brideName || ""),
@@ -76,9 +84,9 @@ export default async function OrderPage({ searchParams }: PageProps) {
     photographerName: sanitizeString(params.photographerName || ""),
     photographerFacebookUrl: sanitizeString(params.photographerFacebookUrl || ""),
     photographerInstagramUrl: sanitizeString(params.photographerInstagramUrl || ""),
-    appliedPromoCode: sanitizeString(params.promo || params.appliedPromoCode || ""),
+    appliedPromoCode: requestedPromoCode,
     partnerPromoId: sanitizeString(params.partnerPromoId || ""),
-    referralSource: sanitizeString(params.promo ? "referral-link" : params.referralSource || ""),
+    referralSource: requestedReferralSource,
     openingText: sanitizeString(params.openingText || ""),
     storyEnabled: params.storyEnabled === "1",
     story: parseStoryParam(params.story),
@@ -489,7 +497,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       </header>
       <main className="order-builder-main">
         <div className="container order-shell">
-          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} templates={templateOptions} skipTemplateStep={Boolean(params.template)} showPaymentMethods={siteSettings.order.showPaymentMethods} />
+          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} initialPromoStatus={initialPromoStatus} templates={templateOptions} skipTemplateStep={Boolean(params.template)} showPaymentMethods={siteSettings.order.showPaymentMethods} />
         </div>
       </main>
       <OrderRequestUxPatches />
