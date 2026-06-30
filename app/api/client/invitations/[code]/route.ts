@@ -9,6 +9,7 @@ import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { Invitation } from "@/lib/types";
 import { extractCoordinatesFromUrl } from "@/lib/map-url";
+import { getShareableSiteUrl } from "@/lib/utils";
 
 async function isClientAllowed(request: NextRequest, code: string) {
   return verifyClientSessionCookie(request.cookies.get(CLIENT_SESSION_COOKIE)?.value, code);
@@ -266,7 +267,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (request.headers.get("content-type")?.includes("application/json")) {
       return NextResponse.json({ error: "افتح لوحة الدعوة من رابط الإدارة السري أولاً." }, { status: 401 });
     }
-    return NextResponse.redirect(new URL("/manage/invitation/invalid?reason=session", request.url), 303);
+    return NextResponse.redirect(new URL("/manage/invitation/invalid?reason=session", getShareableSiteUrl(request.headers)), 303);
   }
 
   if (prisma) {
@@ -275,7 +276,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (request.headers.get("content-type")?.includes("application/json")) {
         return NextResponse.json({ error: "الدعوة معطلة من الإدارة ولا يمكن تعديلها." }, { status: 403 });
       }
-      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=disabled`, request.url), 303);
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=disabled`, getShareableSiteUrl(request.headers)), 303);
     }
   }
 
@@ -286,14 +287,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const formData = await request.formData();
   if (!prisma) {
     console.error("[Client Invitation] PostgreSQL is not configured. Refusing operational write.");
-    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, request.url), 303);
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, getShareableSiteUrl(request.headers)), 303);
   }
   const oldValues = await getClientInvitationAuditSnapshot(code);
   const galleryImages = getInvitationGalleryEntries(formData);
   const savedGallery = await saveInvitationGalleryImages(galleryImages);
   if (galleryImages.length && !savedGallery.length) {
     console.error(`[Client Invitation] Image save failed for ${code}. Received ${galleryImages.length}, saved 0.`);
-    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=images-error`, request.url), 303);
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=images-error`, getShareableSiteUrl(request.headers)), 303);
   }
   if (savedGallery.length) {
   }
@@ -314,7 +315,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (formData.has("musicUrl") || uploadedAudio instanceof File) {
     if (rawMusicUrl && isYouTubeUrl(rawMusicUrl)) {
-      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, getShareableSiteUrl(request.headers)), 303);
     }
 
     const existing = await prisma.invitation.findFirst({ where: { code, deletedAt: null }, select: { musicUrl: true } }).catch(() => null);
@@ -360,10 +361,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const directMusicUrl = cleanPlayableAudioUrl(rawMusicUrl);
     const nextMusicUrl = uploadedMusicUrl || directMusicUrl || "";
     if (hasUploadedAudio && !uploadedMusicUrl) {
-      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, getShareableSiteUrl(request.headers)), 303);
     }
     if (rawMusicUrl && !nextMusicUrl) {
-      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, request.url), 303);
+      return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=music-error`, getShareableSiteUrl(request.headers)), 303);
     }
     if (!uploadedMusicUrl && directMusicUrl && directMusicUrl !== currentMusicUrl) {
       await deleteUploadedMusicFile(currentMusicUrl);
@@ -404,9 +405,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         metadata: { invitationCode: code, source: "client-settings-form" },
       });
     }
-    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, request.url), 303);
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=1`, getShareableSiteUrl(request.headers)), 303);
   } catch (error) {
     console.error("Failed to update database invitation from client admin", error);
-    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, request.url), 303);
+    return NextResponse.redirect(new URL(`/${code}/ad_3399?saved=database-error`, getShareableSiteUrl(request.headers)), 303);
   }
 }

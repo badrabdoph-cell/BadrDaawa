@@ -9,6 +9,7 @@ import {
   PARTNER_PROMO_STATUS_COOKIE_MAX_AGE,
 } from "@/lib/partner-promo";
 import { detectVisitSource } from "@/lib/visit-source";
+import { getShareableSiteUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -59,7 +60,8 @@ function referralCookieOptions(request: NextRequest, maxAge: number) {
 }
 
 function buildOrderUrl(request: NextRequest, promoCode?: string, promoStatus?: string) {
-  const orderUrl = new URL("/order", request.url);
+  const baseUrl = getShareableSiteUrl(request.headers);
+  const orderUrl = new URL("/order", baseUrl);
   if (promoCode) orderUrl.searchParams.set("promo", normalizePromoCode(promoCode));
   if (promoStatus) orderUrl.searchParams.set("promoStatus", promoStatus);
   return orderUrl;
@@ -80,7 +82,7 @@ function redirectToOrderWithUnavailablePromo(request: NextRequest, promoStatus: 
 }
 
 function redirectToOrderWithoutPromo(request: NextRequest) {
-  return NextResponse.redirect(new URL("/order", request.url), 307);
+  return NextResponse.redirect(new URL("/order", getShareableSiteUrl(request.headers)), 307);
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
