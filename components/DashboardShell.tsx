@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, Archive, BarChart3, Bell, Book, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, Eye, FileImage, FilePenLine, FileText, Gauge, Github, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, ScrollText, Search, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UserCheck, UsersRound, X, XCircle } from "lucide-react";
+import { Activity, Archive, BarChart3, Bell, Book, Bug, CalendarClock, Camera, ClipboardList, Crown, Database, DatabaseBackup, Eye, FileImage, FilePenLine, FileText, Gauge, Github, Handshake, History, Home, Keyboard, LayoutDashboard, LogOut, MapPinCheckInside, Menu, MessageCircleHeart, MessageSquareText, MonitorPlay, Music2, Palette, PlusCircle, RadioTower, RefreshCw, ScrollText, Search, Settings, ShieldCheck, Star, Trash2, TriangleAlert, Upload, UserCheck, UsersRound, X, XCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminSections = [
@@ -17,6 +17,7 @@ const adminSections = [
       { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
       { href: "/admin/invitations", label: "الدعوات المنشورة", icon: Archive },
       { href: "/admin/orders", label: "الدعوات المعلقة", icon: FileText, badgeKey: "orders" },
+      { href: "/admin/partners", label: "Partner & Promo Center", icon: Handshake },
       { href: "/admin/new-invitation", label: "إنشاء دعوة", icon: PlusCircle },
       { href: "/admin/invitations-customers", label: "عملاء الدعوات", icon: UsersRound },
       { href: "/admin/customers", label: "كل العملاء", icon: UserCheck },

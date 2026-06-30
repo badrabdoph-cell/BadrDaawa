@@ -33,6 +33,10 @@ type PageProps = {
     photographerName?: string;
     photographerFacebookUrl?: string;
     photographerInstagramUrl?: string;
+    promo?: string;
+    appliedPromoCode?: string;
+    partnerPromoId?: string;
+    referralSource?: string;
     openingText?: string;
     storyEnabled?: string;
     story?: string;
@@ -72,6 +76,9 @@ export default async function OrderPage({ searchParams }: PageProps) {
     photographerName: sanitizeString(params.photographerName || ""),
     photographerFacebookUrl: sanitizeString(params.photographerFacebookUrl || ""),
     photographerInstagramUrl: sanitizeString(params.photographerInstagramUrl || ""),
+    appliedPromoCode: sanitizeString(params.promo || params.appliedPromoCode || ""),
+    partnerPromoId: sanitizeString(params.partnerPromoId || ""),
+    referralSource: sanitizeString(params.promo ? "referral-link" : params.referralSource || ""),
     openingText: sanitizeString(params.openingText || ""),
     storyEnabled: params.storyEnabled === "1",
     story: parseStoryParam(params.story),

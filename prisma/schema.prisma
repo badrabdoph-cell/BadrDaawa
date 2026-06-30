@@ -36,19 +36,96 @@ enum BackupStatus {
   FAILED
 }
 
+enum PartnerType {
+  PHOTOGRAPHER
+  VIDEOGRAPHER
+  HALL
+  PLANNER
+  DJ
+  MAKEUP_ARTIST
+  DECORATOR
+  OTHER
+}
+
+enum PartnerTier {
+  FREE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum PartnerStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+enum PartnerSubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  EXPIRED
+  CANCELLED
+}
+
+enum PartnerPromoKind {
+  PARTNER
+  DISCOUNT
+  GLOBAL
+  REFERRAL
+}
+
+enum PartnerDiscountType {
+  NONE
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_INVITATION
+}
+
+enum PartnerUsageResult {
+  SUCCESS
+  FAILED
+}
+
+enum PartnerMessageType {
+  INFORMATION
+  WARNING
+  OFFER
+  SUCCESS
+  CRITICAL
+}
+
+enum PartnerMessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum PartnerMessageTarget {
+  ALL_INVITATIONS
+  PUBLISHED_INVITATIONS
+  PENDING_INVITATIONS
+  REJECTED_INVITATIONS
+  DISABLED_INVITATIONS
+  SPECIFIC_INVITATIONS
+}
+
 model Customer {
-  id           String       @id @default(cuid())
+  id           String         @id @default(cuid())
   name         String
   phone        String
   email        String?
-  username     String       @unique
+  username     String         @unique
   passwordHash String
-  isActive     Boolean      @default(true)
+  isActive     Boolean        @default(true)
   deletedAt    DateTime?
   invitations  Invitation[]
   orders       OrderRequest[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   @@index([phone])
   @@index([deletedAt])
@@ -56,8 +133,8 @@ model Customer {
 }
 
 model WeddingTemplate {
-  id          String       @id @default(cuid())
-  slug        String       @unique
+  id          String         @id @default(cuid())
+  slug        String         @unique
   name        String
   arabicName  String
   category    String
@@ -68,56 +145,60 @@ model WeddingTemplate {
   typography  String
   palette     Json
   previewUrl  String
-  enabled     Boolean      @default(true)
-  sortOrder   Int          @default(0)
+  enabled     Boolean        @default(true)
+  sortOrder   Int            @default(0)
   invitations Invitation[]
   orders      OrderRequest[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([enabled, sortOrder])
   @@index([style])
 }
 
 model Invitation {
-  id          String            @id @default(cuid())
-  code        String            @unique
-  customSlug  String?           @unique
-  status      InvitationStatus  @default(DRAFT)
-  language    String            @default("ar")
-  groomName   String
-  brideName   String
-  weddingDate DateTime
-  weddingTime String
-  venue       String
-  city        String?
-  mapUrl      String?
-  latitude    Float?
-  longitude   Float?
-  heroPhoto   String?
-  gallery     Json              @default("[]")
-  musicUrl    String?
-  musicEnabled Boolean          @default(false)
-  manageToken String?           @unique
-  manageTokenExpiresAt DateTime?
-  texts       Json?
-  photographer Json?
-  qrCodeUrl   String?
-  viewCount   Int               @default(0)
-  trialDays   Int?
-  trialEndsAt DateTime?
-  customerId  String
-  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  templateId  String
-  template    WeddingTemplate   @relation(fields: [templateId], references: [id])
-  guests      GuestRsvp[]
-  events      AnalyticsEvent[]
-  disabledAt  DateTime?
-  disabledReason String?
-  disabledBy  String?
-  deletedAt   DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id                       String                    @id @default(cuid())
+  code                     String                    @unique
+  customSlug               String?                   @unique
+  status                   InvitationStatus          @default(DRAFT)
+  language                 String                    @default("ar")
+  groomName                String
+  brideName                String
+  weddingDate              DateTime
+  weddingTime              String
+  venue                    String
+  city                     String?
+  mapUrl                   String?
+  latitude                 Float?
+  longitude                Float?
+  heroPhoto                String?
+  gallery                  Json                      @default("[]")
+  musicUrl                 String?
+  musicEnabled             Boolean                   @default(false)
+  manageToken              String?                   @unique
+  manageTokenExpiresAt     DateTime?
+  texts                    Json?
+  photographer             Json?
+  qrCodeUrl                String?
+  viewCount                Int                       @default(0)
+  trialDays                Int?
+  trialEndsAt              DateTime?
+  customerId               String
+  customer                 Customer                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  templateId               String
+  template                 WeddingTemplate           @relation(fields: [templateId], references: [id])
+  guests                   GuestRsvp[]
+  events                   AnalyticsEvent[]
+  partnerMessageRecipients PartnerMessageRecipient[]
+  disabledAt               DateTime?
+  disabledReason           String?
+  disabledBy               String?
+  partnerSnapshot          Json?
+  promoSnapshot            Json?
+  partnerPublishedAt       DateTime?
+  deletedAt                DateTime?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
 
   @@index([status, weddingDate])
   @@index([customerId, createdAt])
@@ -127,18 +208,18 @@ model Invitation {
 }
 
 model GuestRsvp {
-  id             String     @id @default(cuid())
-  invitationId   String
-  invitation     Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
-  name           String
-  phone          String
-  attendees      Int        @default(1)
-  status         RsvpStatus
-  note           String?
-  ipHash         String?
-  userAgent      String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String
+  attendees    Int        @default(1)
+  status       RsvpStatus
+  note         String?
+  ipHash       String?
+  userAgent    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([invitationId, createdAt])
   @@index([invitationId, status])
@@ -146,45 +227,304 @@ model GuestRsvp {
 }
 
 model OrderRequest {
-  id          String          @id @default(cuid())
-  orderNumber String?         @unique
-  dedupeKey   String?         @unique
-  groomName   String
-  brideName   String
-  phone       String
-  weddingDate DateTime
-  weddingTime String  @default("07:00 مساءً")
-  venue       String
-  mapUrl      String?
-  latitude    Float?
-  longitude   Float?
-  notes       String?
-  imageUrls   Json            @default("[]")
-  musicEnabled Boolean         @default(false)
-  musicChoice  String?
-  musicUrl     String?
-  texts       Json?
-  photographer Json?
-  rejectionReason String?
+  id                      String             @id @default(cuid())
+  orderNumber             String?            @unique
+  dedupeKey               String?            @unique
+  groomName               String
+  brideName               String
+  phone                   String
+  weddingDate             DateTime
+  weddingTime             String             @default("07:00 مساءً")
+  venue                   String
+  mapUrl                  String?
+  latitude                Float?
+  longitude               Float?
+  notes                   String?
+  imageUrls               Json               @default("[]")
+  musicEnabled            Boolean            @default(false)
+  musicChoice             String?
+  musicUrl                String?
+  texts                   Json?
+  photographer            Json?
+  partnerId               String?
+  partner                 Partner?           @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  partnerPromoId          String?
+  partnerPromo            PartnerPromoCode?  @relation(fields: [partnerPromoId], references: [id], onDelete: Restrict)
+  discountPromoId         String?
+  discountPromo           DiscountPromoCode? @relation(fields: [discountPromoId], references: [id], onDelete: Restrict)
+  partnerSnapshot         Json?
+  discountSnapshot        Json?
+  partnerAppliedAt        DateTime?
+  referralSource          String?
+  rejectionReason         String?
   publishedInvitationCode String?
-  manageToken String?       @unique
-  manageTokenExpiresAt DateTime?
-  language    String          @default("ar")
-  status      OrderStatus     @default(NEW)
-  submittedAt DateTime        @default(now())
-  templateId  String?
-  template    WeddingTemplate? @relation(fields: [templateId], references: [id])
-  customerId  String?
-  customer    Customer?       @relation(fields: [customerId], references: [id])
-  deletedAt   DateTime?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  manageToken             String?            @unique
+  manageTokenExpiresAt    DateTime?
+  language                String             @default("ar")
+  status                  OrderStatus        @default(NEW)
+  submittedAt             DateTime           @default(now())
+  templateId              String?
+  template                WeddingTemplate?   @relation(fields: [templateId], references: [id])
+  customerId              String?
+  customer                Customer?          @relation(fields: [customerId], references: [id])
+  deletedAt               DateTime?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
 
   @@index([status, createdAt])
   @@index([phone])
   @@index([submittedAt])
   @@index([deletedAt])
   @@index([manageTokenExpiresAt])
+  @@index([partnerId, createdAt])
+  @@index([partnerPromoId, createdAt])
+  @@index([discountPromoId, createdAt])
+}
+
+model Partner {
+  id                      String                    @id @default(uuid())
+  partnerType             PartnerType
+  displayName             String
+  slug                    String                    @unique
+  logoUrl                 String?
+  facebookUrl             String?
+  instagramUrl            String?
+  websiteUrl              String?
+  phone                   String?
+  email                   String?
+  tiktokUrl               String?
+  youtubeUrl              String?
+  description             String?
+  address                 String?
+  tier                    PartnerTier               @default(FREE)
+  status                  PartnerStatus             @default(DRAFT)
+  subscriptionStatus      PartnerSubscriptionStatus @default(TRIAL)
+  subscriptionExpiry      DateTime?
+  subscriptionRenewDate   DateTime?
+  subscriptionPrice       Decimal?                  @db.Decimal(10, 2)
+  subscriptionAutoDisable Boolean                   @default(true)
+  showPartnerCard         Boolean                   @default(true)
+  createdBy               String?
+  updatedBy               String?
+  internalNotes           String?
+  publicNotes             String?
+  archivedAt              DateTime?
+  deletedAt               DateTime?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  promoCodes              PartnerPromoCode[]
+  subscriptions           PartnerSubscription[]
+  messages                PartnerMessage[]
+  files                   PartnerFile[]
+  tagAssignments          PartnerTagAssignment[]
+  usageLogs               PartnerUsageLog[]
+  activityLogs            PartnerActivityLog[]
+  orders                  OrderRequest[]
+
+  @@index([partnerType, status])
+  @@index([tier, status])
+  @@index([subscriptionStatus, subscriptionExpiry])
+  @@index([deletedAt])
+  @@index([archivedAt])
+  @@index([createdAt])
+}
+
+model PartnerPromoCode {
+  id            String              @id @default(uuid())
+  partnerId     String
+  partner       Partner             @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  code          String              @unique
+  referralSlug  String              @unique
+  qrCodeUrl     String?
+  kind          PartnerPromoKind    @default(PARTNER)
+  status        PartnerStatus       @default(DRAFT)
+  discountType  PartnerDiscountType @default(NONE)
+  discountValue Decimal?            @db.Decimal(10, 2)
+  usageLimit    Int?
+  currentUsage  Int                 @default(0)
+  startDate     DateTime?
+  expiryDate    DateTime?
+  lastUsedAt    DateTime?
+  createdBy     String?
+  archivedAt    DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  orders        OrderRequest[]
+  usageLogs     PartnerUsageLog[]
+
+  @@index([partnerId, status])
+  @@index([code])
+  @@index([referralSlug])
+  @@index([status, expiryDate])
+  @@index([createdAt])
+}
+
+model DiscountPromoCode {
+  id                  String              @id @default(uuid())
+  internalName        String
+  code                String              @unique
+  internalDescription String?
+  status              PartnerStatus       @default(DRAFT)
+  discountType        PartnerDiscountType @default(NONE)
+  discountValue       Decimal?            @db.Decimal(10, 2)
+  usageLimit          Int?
+  currentUsage        Int                 @default(0)
+  startDate           DateTime?
+  expiryDate          DateTime?
+  restrictions        Json?
+  lastUsedAt          DateTime?
+  createdBy           String?
+  archivedAt          DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  orders              OrderRequest[]
+
+  @@index([status, expiryDate])
+  @@index([discountType, status])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model PartnerUsageLog {
+  id            String             @id @default(uuid())
+  partnerId     String?
+  partner       Partner?           @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  promoId       String?
+  promo         PartnerPromoCode?  @relation(fields: [promoId], references: [id], onDelete: Restrict)
+  orderId       String?
+  invitationId  String?
+  customerIp    String?
+  device        String?
+  browser       String?
+  country       String?
+  result        PartnerUsageResult
+  failureReason String?
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+
+  @@index([partnerId, createdAt])
+  @@index([promoId, createdAt])
+  @@index([orderId])
+  @@index([invitationId])
+  @@index([result, createdAt])
+}
+
+model PartnerActivityLog {
+  id          String   @id @default(uuid())
+  partnerId   String?
+  partner     Partner? @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  action      String
+  oldValue    Json?
+  newValue    Json?
+  performedBy String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([partnerId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+model PartnerMessage {
+  id                  String                    @id @default(uuid())
+  partnerId           String?
+  partner             Partner?                  @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  title               String
+  body                String
+  type                PartnerMessageType        @default(INFORMATION)
+  priority            PartnerMessagePriority    @default(NORMAL)
+  target              PartnerMessageTarget      @default(ALL_INVITATIONS)
+  icon                String?
+  color               String?
+  pinned              Boolean                   @default(false)
+  dismissible         Boolean                   @default(true)
+  showOnce            Boolean                   @default(false)
+  showEveryVisit      Boolean                   @default(false)
+  requireConfirmation Boolean                   @default(false)
+  startDate           DateTime?
+  expiryDate          DateTime?
+  archivedAt          DateTime?
+  deletedAt           DateTime?
+  createdBy           String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  recipients          PartnerMessageRecipient[]
+
+  @@index([partnerId, createdAt])
+  @@index([target, startDate, expiryDate])
+  @@index([priority, createdAt])
+  @@index([deletedAt])
+}
+
+model PartnerMessageRecipient {
+  id           String         @id @default(uuid())
+  messageId    String
+  message      PartnerMessage @relation(fields: [messageId], references: [id], onDelete: Restrict)
+  invitationId String
+  invitation   Invitation     @relation(fields: [invitationId], references: [id], onDelete: Restrict)
+  viewedAt     DateTime?
+  dismissedAt  DateTime?
+  confirmedAt  DateTime?
+  createdAt    DateTime       @default(now())
+
+  @@unique([messageId, invitationId])
+  @@index([invitationId, createdAt])
+  @@index([viewedAt])
+  @@index([dismissedAt])
+}
+
+model PartnerSubscription {
+  id         String                    @id @default(uuid())
+  partnerId  String
+  partner    Partner                   @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  status     PartnerSubscriptionStatus @default(TRIAL)
+  plan       PartnerTier               @default(FREE)
+  price      Decimal?                  @db.Decimal(10, 2)
+  renewDate  DateTime?
+  expiryDate DateTime?
+  autoRenew  Boolean                   @default(false)
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+
+  @@index([partnerId, createdAt])
+  @@index([status, expiryDate])
+}
+
+model PartnerFile {
+  id         String    @id @default(uuid())
+  partnerId  String
+  partner    Partner   @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  name       String
+  path       String
+  mimeType   String?
+  sizeBytes  BigInt?
+  uploadedAt DateTime  @default(now())
+  archivedAt DateTime?
+
+  @@index([partnerId, uploadedAt])
+}
+
+model PartnerTag {
+  id          String                 @id @default(uuid())
+  name        String                 @unique
+  slug        String                 @unique
+  createdAt   DateTime               @default(now())
+  assignments PartnerTagAssignment[]
+
+  @@index([createdAt])
+}
+
+model PartnerTagAssignment {
+  partnerId String
+  tagId     String
+  partner   Partner    @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  tag       PartnerTag @relation(fields: [tagId], references: [id], onDelete: Restrict)
+  createdAt DateTime   @default(now())
+
+  @@id([partnerId, tagId])
+  @@index([tagId])
 }
 
 model AnalyticsEvent {
@@ -215,21 +555,21 @@ model DynamicPage {
 }
 
 model BackupJob {
-  id                 String       @id @default(cuid())
-  type               String
-  status             BackupStatus @default(QUEUED)
-  fileName           String?
-  githubSha          String?
-  githubUrl          String?
-  sizeBytes          BigInt?
-  startedAt          DateTime?
-  finishedAt         DateTime?
-  error              String?
-  durationMs         Int?
-  stage              String?
-  attemptedFileName  String?
-  githubMessage      String?
-  createdAt          DateTime     @default(now())
+  id                String       @id @default(cuid())
+  type              String
+  status            BackupStatus @default(QUEUED)
+  fileName          String?
+  githubSha         String?
+  githubUrl         String?
+  sizeBytes         BigInt?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  error             String?
+  durationMs        Int?
+  stage             String?
+  attemptedFileName String?
+  githubMessage     String?
+  createdAt         DateTime     @default(now())
 
   @@index([type, createdAt])
   @@index([status])
@@ -237,28 +577,28 @@ model BackupJob {
 }
 
 model ContentVersion {
-  id           String   @id @default(cuid())
-  version      Int      @unique
-  commitSha    String?
-  publishedBy  String
-  publishedAt  DateTime @default(now())
-  changedKeys  String[]
+  id          String   @id @default(cuid())
+  version     Int      @unique
+  commitSha   String?
+  publishedBy String
+  publishedAt DateTime @default(now())
+  changedKeys String[]
 }
 
 model SafeBackup {
-  id             String    @id @default(cuid())
-  backupFileName String    @unique
+  id             String   @id @default(cuid())
+  backupFileName String   @unique
   label          String?
   notes          String?
-  markedAt       DateTime  @default(now())
+  markedAt       DateTime @default(now())
   markedBy       String?
 
   @@index([markedAt])
 }
 
 model SyncLog {
-  id           String    @id @default(cuid())
-  timestamp    DateTime  @default(now())
+  id           String   @id @default(cuid())
+  timestamp    DateTime @default(now())
   reason       String
   status       String
   filesCount   Int?
@@ -266,9 +606,9 @@ model SyncLog {
   commitUrl    String?
   errorMessage String?
   duration     Int?
-  retryCount   Int       @default(0)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  retryCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([status, createdAt])
   @@index([createdAt])
@@ -276,16 +616,16 @@ model SyncLog {
 
 model RestoreLog {
   id              String   @id @default(cuid())
-  type            String   // "local-v1", "github-v1", "v2-database", "v2-uploads", "v2-full", "v2-auto-restore", "rollback"
-  status          String   // "success", "failed"
-  fileName        String?  // backup file name
-  commitSha       String?  // GitHub commit SHA
-  itemsRestored   Int?     // number of DB items restored
-  uploadsRestored Int?     // number of upload files restored
-  error           String?  // error message if failed
-  durationMs      Int?     // duration in ms
-  details         Json?    // extra context (steps, version, etc.)
-  performedBy     String?  // admin email or "system" or "cron"
+  type            String // "local-v1", "github-v1", "v2-database", "v2-uploads", "v2-full", "v2-auto-restore", "rollback"
+  status          String // "success", "failed"
+  fileName        String? // backup file name
+  commitSha       String? // GitHub commit SHA
+  itemsRestored   Int? // number of DB items restored
+  uploadsRestored Int? // number of upload files restored
+  error           String? // error message if failed
+  durationMs      Int? // duration in ms
+  details         Json? // extra context (steps, version, etc.)
+  performedBy     String? // admin email or "system" or "cron"
   createdAt       DateTime @default(now())
 
   @@index([createdAt])
@@ -301,14 +641,14 @@ model AppSetting {
 }
 
 model GuestBookMessage {
-  id             String   @id
+  id             String    @id
   invitationCode String
   name           String
   message        String
-  status         String   @default("pending")
+  status         String    @default("pending")
   reviewedAt     DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([invitationCode, status, createdAt])
   @@index([createdAt])
@@ -323,15 +663,15 @@ model CoupleMessagesSetting {
 }
 
 model ClientMessage {
-  id             String   @id
+  id             String    @id
   invitationCode String
   title          String
   body           String
-  sender         String   @default("admin")
-  scope          String   @default("single")
+  sender         String    @default("admin")
+  scope          String    @default("single")
   readAt         DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([invitationCode, createdAt])
   @@index([readAt])
@@ -374,18 +714,18 @@ model InternalNote {
 }
 
 model AuditLog {
-  id         String   @id
-  actorType  String
-  actorId    String?
-  actorLabel String
-  action     String
-  entityType String
-  entityId   String
+  id          String   @id
+  actorType   String
+  actorId     String?
+  actorLabel  String
+  action      String
+  entityType  String
+  entityId    String
   entityLabel String?
-  oldValues  Json?
-  newValues  Json?
-  metadata   Json?
-  createdAt  DateTime @default(now())
+  oldValues   Json?
+  newValues   Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
 
   @@index([action, createdAt])
   @@index([entityType, entityId, createdAt])

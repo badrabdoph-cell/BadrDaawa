@@ -4164,6 +4164,178 @@ img {
   margin: 0;
 }
 
+.order-promo-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(180, 139, 57, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 253, 248, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 12px 28px rgba(61, 43, 22, 0.05);
+}
+
+.order-promo-card.is-applied {
+  border-color: rgba(37, 133, 92, 0.38);
+  background: linear-gradient(135deg, rgba(244, 255, 248, 0.94), rgba(255, 253, 248, 0.9));
+}
+
+.order-promo-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.order-promo-copy strong {
+  color: #2c2418;
+  font-size: 0.95rem;
+}
+
+.order-promo-copy span,
+.order-promo-lock-note {
+  color: #6b6254;
+  font-size: 0.82rem;
+}
+
+.order-promo-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.order-promo-controls input {
+  min-width: 0;
+  height: 44px;
+  text-transform: uppercase;
+}
+
+.order-promo-controls .btn {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.order-promo-message {
+  min-height: 20px;
+  margin: 0;
+  color: #8a3f1f;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.order-promo-message.is-success {
+  color: #1f7a4f;
+}
+
+.partner-admin-page {
+  display: grid;
+  gap: 18px;
+}
+
+.partner-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.partner-side-stack,
+.partner-editor-form {
+  display: grid;
+  gap: 16px;
+}
+
+.partner-mini-list,
+.partner-activity-list {
+  display: grid;
+  gap: 8px;
+}
+
+.partner-mini-list a,
+.partner-activity-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  text-decoration: none;
+}
+
+.partner-mini-list a span,
+.partner-activity-list small {
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.78rem;
+}
+
+.partner-activity-list div {
+  justify-content: flex-start;
+}
+
+.partner-activity-list div > span {
+  display: grid;
+  gap: 3px;
+}
+
+.partner-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.partner-detail-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.partner-detail-brand > span:first-child,
+.partner-detail-qr {
+  width: 74px;
+  height: 74px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background-color: rgba(245, 234, 214, 0.08);
+  background-position: center;
+  background-size: cover;
+  border: 1px solid rgba(245, 234, 214, 0.14);
+  color: var(--text-muted, #9ca3af);
+  font-weight: 800;
+}
+
+.partner-detail-brand div,
+.partner-detail-promo {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.partner-detail-brand strong,
+.partner-detail-promo strong {
+  font-size: 1.15rem;
+}
+
+.partner-detail-brand small,
+.partner-detail-promo span,
+.partner-detail-promo small {
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.82rem;
+}
+
+.partner-detail-qr {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: #fff;
+}
+
+.partner-detail-qr.empty {
+  background-color: rgba(245, 234, 214, 0.08);
+}
+
 .partner-cards-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -40824,6 +40996,10 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
     min-height: 64px;
   }
 
+  .order-promo-controls {
+    grid-template-columns: 1fr;
+  }
+
   .photographer-fields {
     grid-template-columns: 1fr;
   }
@@ -40831,6 +41007,16 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
   .partner-form-box,
   .partner-saved-card {
     padding: 12px;
+  }
+
+  .partner-admin-grid,
+  .partner-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-detail-qr {
+    width: 96px;
+    height: 96px;
   }
 }
 

@@ -13,6 +13,7 @@ import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 import { extractCoordinatesFromUrl } from "@/lib/map-url";
+import { recordPartnerPromoOrderApplication, validatePartnerPromoCode, type PartnerPromoValidationSuccess } from "@/lib/partner-promo";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -151,6 +152,20 @@ export async function POST(request: NextRequest) {
   }
   const effectiveMusicEnabled = Boolean(parsed.data.musicEnabled && (parsed.data.musicChoice === "default" || music.musicUrl));
   const effectiveMusicChoice: OrderMusicChoice = effectiveMusicEnabled ? parsed.data.musicChoice : "default";
+  const appliedPromoCode = parsed.data.appliedPromoCode;
+  const promoValidation = appliedPromoCode
+    ? await validatePartnerPromoCode(appliedPromoCode, {
+        source: parsed.data.referralSource || "order-form",
+        userAgent: request.headers.get("user-agent"),
+        customerIp: getClientIdentifier(request),
+        logFailures: true,
+      })
+    : null;
+
+  if (promoValidation && !promoValidation.ok) {
+    return NextResponse.json({ error: promoValidation.error }, { status: 400 });
+  }
+  const appliedPartnerPromo = promoValidation as PartnerPromoValidationSuccess | null;
   const openingText = parsed.data.openingText.trim();
   const story = normalizeCoupleStory(parsed.data.story);
   const texts = openingText || story.length ? { openingText, story } : undefined;
@@ -165,19 +180,31 @@ export async function POST(request: NextRequest) {
     orderImages: parsed.data.orderImages,
     story,
     openingText,
+    appliedPromoCode,
   });
   const dedupeKey = makeDedupeKey(dedupeSource);
   const siteUrl = getPublicSiteUrl(request.headers, request.url);
   const reservedInvitationCode = await createReservedInvitationCode(parsed.data.groomName, parsed.data.brideName);
   const reservedManageToken = await createReservedManageToken();
-  const photographer = {
-    enabled: parsed.data.photographerEnabled,
-    name: parsed.data.photographerName,
-    description: parsed.data.photographerDescription,
-    logoUrl: cleanExternalUrl(parsed.data.photographerLogoUrl),
-    facebookUrl: cleanExternalUrl(parsed.data.photographerFacebookUrl),
-    instagramUrl: cleanExternalUrl(parsed.data.photographerInstagramUrl),
-  };
+  const photographer = appliedPartnerPromo
+    ? {
+        enabled: true,
+        name: appliedPartnerPromo.photographer.name,
+        description: "تمت إضافة بيانات الشريك بواسطة البروموكود.",
+        logoUrl: appliedPartnerPromo.photographer.logoUrl,
+        facebookUrl: appliedPartnerPromo.photographer.facebookUrl,
+        instagramUrl: appliedPartnerPromo.photographer.instagramUrl,
+        lockedByPromo: true,
+        promoCode: appliedPartnerPromo.promo.code,
+      }
+    : {
+        enabled: parsed.data.photographerEnabled,
+        name: parsed.data.photographerName,
+        description: parsed.data.photographerDescription,
+        logoUrl: cleanExternalUrl(parsed.data.photographerLogoUrl),
+        facebookUrl: cleanExternalUrl(parsed.data.photographerFacebookUrl),
+        instagramUrl: cleanExternalUrl(parsed.data.photographerInstagramUrl),
+      };
   const mapUrl = cleanExternalUrl(parsed.data.mapUrl);
   const orderMapCoords = extractCoordinatesFromUrl(mapUrl);
   const orderLatitude = orderMapCoords?.lat ?? null;
@@ -187,8 +214,15 @@ export async function POST(request: NextRequest) {
   const musicNotes = effectiveMusicEnabled
     ? ["موسيقى الدعوة:", effectiveMusicChoice === "default" ? "اختار العميل الموسيقى الأساسية." : "", effectiveMusicChoice === "library" ? "اختار العميل مقطعًا من مكتبة الموقع." : "", music.musicUrl ? `رابط الموسيقى: ${music.musicUrl}` : ""].filter(Boolean).join("\n")
     : "";
-  const photographerNotes = parsed.data.photographerEnabled
-    ? ["بيانات المصور الفوتوغرافي:", parsed.data.photographerName ? `الاسم: ${parsed.data.photographerName}` : "", photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "", photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : ""].filter(Boolean).join("\n")
+  const photographerNotes = photographer.enabled
+    ? [
+        appliedPartnerPromo ? "بيانات الشريك من البروموكود:" : "بيانات المصور الفوتوغرافي:",
+        photographer.name ? `الاسم: ${photographer.name}` : "",
+        photographer.facebookUrl ? `Facebook: ${photographer.facebookUrl}` : "",
+        photographer.instagramUrl ? `Instagram: ${photographer.instagramUrl}` : "",
+        appliedPartnerPromo ? `Promo: ${appliedPartnerPromo.promo.code}` : "",
+        appliedPartnerPromo?.promo.discountLabel || "",
+      ].filter(Boolean).join("\n")
     : "";
   const storyNotes = story.length ? ["قصة العروسين:", ...story.map((item, index) => [`${index + 1}. ${item.title || "مرحلة"}`, item.date ? `التاريخ: ${item.date}` : "", item.description ? `الوصف: ${item.description}` : ""].filter(Boolean).join("\n"))].join("\n") : "";
   const openingNotes = openingText ? `نص الافتتاح السينمائي:\n${openingText}` : "";
@@ -272,32 +306,60 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const order = await prisma.orderRequest.create({
-        data: {
-          orderNumber,
-          dedupeKey,
-          groomName: parsed.data.groomName,
-          brideName: parsed.data.brideName,
-          phone: parsed.data.phone || "",
-          weddingDate: new Date(parsed.data.weddingDate),
-          weddingTime: parsed.data.weddingTime || "07:00 مساءً",
-          venue: parsed.data.venue || "",
-          mapUrl,
-          latitude: orderLatitude,
-          longitude: orderLongitude,
-          notes,
-          imageUrls,
-          musicEnabled: effectiveMusicEnabled,
-          musicChoice: effectiveMusicChoice,
-          musicUrl: music.musicUrl,
-          texts,
-          photographer,
-          language: parsed.data.language,
-          templateId: template.id,
-          publishedInvitationCode: reservedInvitationCode,
-          manageToken: reservedManageToken,
-        },
-        select: { id: true },
+      const order = await prisma.$transaction(async (tx) => {
+        const createdOrder = await tx.orderRequest.create({
+          data: {
+            orderNumber,
+            dedupeKey,
+            groomName: parsed.data.groomName,
+            brideName: parsed.data.brideName,
+            phone: parsed.data.phone || "",
+            weddingDate: new Date(parsed.data.weddingDate),
+            weddingTime: parsed.data.weddingTime || "07:00 مساءً",
+            venue: parsed.data.venue || "",
+            mapUrl,
+            latitude: orderLatitude,
+            longitude: orderLongitude,
+            notes,
+            imageUrls,
+            musicEnabled: effectiveMusicEnabled,
+            musicChoice: effectiveMusicChoice,
+            musicUrl: music.musicUrl,
+            texts,
+            photographer,
+            partnerId: appliedPartnerPromo?.partner.partnerId || null,
+            partnerPromoId: appliedPartnerPromo?.promo.id || null,
+            partnerSnapshot: appliedPartnerPromo?.partner || undefined,
+            discountSnapshot: appliedPartnerPromo
+              ? {
+                  promoId: appliedPartnerPromo.promo.id,
+                  code: appliedPartnerPromo.promo.code,
+                  discountType: appliedPartnerPromo.promo.discountType,
+                  discountValue: appliedPartnerPromo.promo.discountValue,
+                  label: appliedPartnerPromo.promo.discountLabel,
+                }
+              : undefined,
+            partnerAppliedAt: appliedPartnerPromo ? new Date() : null,
+            referralSource: appliedPartnerPromo ? parsed.data.referralSource || "order-form" : null,
+            language: parsed.data.language,
+            templateId: template.id,
+            publishedInvitationCode: reservedInvitationCode,
+            manageToken: reservedManageToken,
+          },
+          select: { id: true },
+        });
+        if (appliedPartnerPromo) {
+          await recordPartnerPromoOrderApplication({
+            db: tx as unknown as typeof prisma,
+            validation: appliedPartnerPromo,
+            orderId: createdOrder.id,
+            invitationId: null,
+            customerIp: getClientIdentifier(request),
+            userAgent: request.headers.get("user-agent"),
+            referralSource: parsed.data.referralSource || "order-form",
+          });
+        }
+        return createdOrder;
       });
       orderId = order.id;
       effectiveOrderNumber = orderNumber;

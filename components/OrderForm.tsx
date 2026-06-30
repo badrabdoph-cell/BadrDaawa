@@ -49,6 +49,9 @@ type FormState = {
   photographerName: string;
   photographerFacebookUrl: string;
   photographerInstagramUrl: string;
+  appliedPromoCode: string;
+  partnerPromoId: string;
+  referralSource: string;
   openingText: string;
   storyEnabled: boolean;
   story: CoupleStoryItem[];
@@ -77,6 +80,9 @@ type OrderFormValues = Pick<
   | "photographerName"
   | "photographerFacebookUrl"
   | "photographerInstagramUrl"
+  | "appliedPromoCode"
+  | "partnerPromoId"
+  | "referralSource"
   | "openingText"
   | "musicUrl"
 >;
@@ -103,6 +109,9 @@ export type OrderInitialDraft = Pick<
   | "photographerName"
   | "photographerFacebookUrl"
   | "photographerInstagramUrl"
+  | "appliedPromoCode"
+  | "partnerPromoId"
+  | "referralSource"
   | "openingText"
   | "musicUrl"
 > & {
@@ -112,6 +121,35 @@ export type OrderInitialDraft = Pick<
   musicEnabled: boolean;
   musicChoice: MusicChoice;
   imageUrls: string[];
+};
+type AppliedPromo = {
+  code: string;
+  partner: {
+    partnerId: string;
+    displayName: string;
+    partnerType: string;
+    logoUrl: string;
+    facebookUrl: string;
+    instagramUrl: string;
+    showPartnerCard: boolean;
+  };
+  promo: {
+    id: string;
+    code: string;
+    referralSlug: string;
+    qrCodeUrl: string;
+    discountType: string;
+    discountValue: number | null;
+    discountLabel: string;
+  };
+  photographer: {
+    enabled: true;
+    name: string;
+    logoUrl: string;
+    facebookUrl: string;
+    instagramUrl: string;
+    lockedByPromo: true;
+  };
 };
 
 const orderDraftStorageKey = "badrdaawa-order-draft";
@@ -543,6 +581,9 @@ export function OrderForm({
     photographerName: initialDraft?.photographerName || "",
     photographerFacebookUrl: initialDraft?.photographerFacebookUrl || "",
     photographerInstagramUrl: initialDraft?.photographerInstagramUrl || "",
+    appliedPromoCode: initialDraft?.appliedPromoCode || "",
+    partnerPromoId: initialDraft?.partnerPromoId || "",
+    referralSource: initialDraft?.referralSource || "",
     openingText: initialDraft?.openingText || "",
     storyEnabled: false,
     story: ensureMinimumOrderStoryItems([]),
@@ -568,6 +609,10 @@ export function OrderForm({
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [partnerServiceType, setPartnerServiceType] = useState("");
+  const [promoInput, setPromoInput] = useState(initialDraft?.appliedPromoCode || "");
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoMessage, setPromoMessage] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; placeName: string; city: string; governorate: string; googleMapsUrl: string } | null>(null);
   const [draftReady, setDraftReady] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
@@ -587,6 +632,7 @@ export function OrderForm({
   const imageUploadPromisesRef = useRef<Array<Promise<string> | null>>(orderImageSlots.map(() => null));
   const imageUploadRequestsRef = useRef<Array<XMLHttpRequest | null>>(orderImageSlots.map(() => null));
   const stepTabsRef = useRef<HTMLDivElement | null>(null);
+  const autoPromoAttemptedRef = useRef(false);
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
@@ -622,6 +668,7 @@ export function OrderForm({
       if (form.photographerFacebookUrl.trim()) params.set("photographerFacebookUrl", form.photographerFacebookUrl.trim());
       if (form.photographerInstagramUrl.trim()) params.set("photographerInstagramUrl", form.photographerInstagramUrl.trim());
     }
+    if (form.appliedPromoCode.trim()) params.set("promo", form.appliedPromoCode.trim());
     params.set("musicEnabled", form.musicEnabled ? "1" : "0");
     if (form.musicEnabled) params.set("musicChoice", form.musicChoice);
     if (form.musicUrl.trim()) params.set("musicUrl", form.musicUrl.trim());
@@ -844,6 +891,9 @@ export function OrderForm({
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
       photographerInstagramUrl: params.get("photographerInstagramUrl") || undefined,
+      appliedPromoCode: params.get("promo") || params.get("appliedPromoCode") || undefined,
+      partnerPromoId: params.get("partnerPromoId") || undefined,
+      referralSource: params.get("promo") ? "referral-link" : params.get("referralSource") || undefined,
       storyEnabled: params.get("storyEnabled") === "1" || undefined,
       story: cleanOrderStory(parseDraftJson(params.get("story"), [])),
       musicEnabled: params.has("musicEnabled") ? params.get("musicEnabled") === "1" : undefined,
@@ -868,6 +918,9 @@ export function OrderForm({
       "photographerName",
       "photographerFacebookUrl",
       "photographerInstagramUrl",
+      "appliedPromoCode",
+      "partnerPromoId",
+      "referralSource",
       "musicUrl",
     ];
     fields.forEach((field) => {
@@ -875,6 +928,7 @@ export function OrderForm({
       if (value) params.set(field, value);
     });
     if (nextForm.photographerEnabled) params.set("photographerEnabled", "1");
+    if (nextForm.appliedPromoCode) params.set("promo", String(nextForm.appliedPromoCode).trim());
     const story = cleanOrderStory(nextForm.story);
     if (nextForm.storyEnabled) {
       params.set("storyEnabled", "1");
@@ -955,11 +1009,14 @@ export function OrderForm({
         templateSlug: draftTemplate,
         language: draft.language === "en" ? "en" : "ar",
         photographerEnabled: Boolean(draft.photographerEnabled),
-      photographerName: typeof draft.photographerName === "string" ? draft.photographerName : current.photographerName,
-      photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
-      photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
-      openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
-      storyEnabled: Boolean(draft.storyEnabled),
+        photographerName: typeof draft.photographerName === "string" ? draft.photographerName : current.photographerName,
+        photographerFacebookUrl: typeof draft.photographerFacebookUrl === "string" ? draft.photographerFacebookUrl : current.photographerFacebookUrl,
+        photographerInstagramUrl: typeof draft.photographerInstagramUrl === "string" ? draft.photographerInstagramUrl : current.photographerInstagramUrl,
+        appliedPromoCode: typeof draft.appliedPromoCode === "string" ? draft.appliedPromoCode : current.appliedPromoCode,
+        partnerPromoId: typeof draft.partnerPromoId === "string" ? draft.partnerPromoId : current.partnerPromoId,
+        referralSource: typeof draft.referralSource === "string" ? draft.referralSource : current.referralSource,
+        openingText: typeof draft.openingText === "string" ? draft.openingText : current.openingText,
+        storyEnabled: Boolean(draft.storyEnabled),
         story: ensureMinimumOrderStoryItems(current.story),
         musicEnabled: typeof draft.musicEnabled === "boolean" ? draft.musicEnabled : current.musicEnabled,
         musicChoice: isOrderMusicChoice(draft.musicChoice) ? draft.musicChoice : "default",
@@ -969,6 +1026,7 @@ export function OrderForm({
       setDraftImageUrls(restoredImages);
       uploadedImageUrlsRef.current = restoredImages;
       setImageUploads(orderImageSlots.map((_, index) => createIdleUploadState(restoredImages[index] || "")));
+      if (typeof draft.appliedPromoCode === "string") setPromoInput(draft.appliedPromoCode);
     } catch {
       try {
         window.sessionStorage?.removeItem(orderDraftStorageKey);
@@ -999,6 +1057,78 @@ export function OrderForm({
     setForm((current) => ({ ...current, ...currentValues, photographerEnabled: true }));
     if (message) setMessage("");
   }
+
+  async function applyPromoCode(rawCode = promoInput, source = form.referralSource || "order-form", { silent = false }: { silent?: boolean } = {}) {
+    const code = rawCode.trim();
+    if (!code) {
+      setPromoMessage("اكتب البروموكود أولاً.");
+      return;
+    }
+    if (form.appliedPromoCode && form.appliedPromoCode !== code) {
+      const confirmed = window.confirm("هل تريد استبدال البروموكود الحالي؟");
+      if (!confirmed) return;
+    }
+    setPromoBusy(true);
+    if (!silent) setPromoMessage("جاري تطبيق البروموكود...");
+    try {
+      const response = await fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, source }),
+      });
+      const data = (await response.json().catch(() => null)) as (AppliedPromo & { ok?: true }) | { ok?: false; error?: string } | null;
+      if (!response.ok || !data || data.ok === false) {
+        setAppliedPromo(null);
+        const errorMessage = data && "error" in data ? data.error : "";
+        setPromoMessage(errorMessage || "هذا البروموكود غير صالح.");
+        return;
+      }
+      const nextPromo = data as AppliedPromo;
+      setAppliedPromo(nextPromo);
+      setPartnerServiceType("مصور فوتوغرافي");
+      setPhotographerSaved(true);
+      setForm((current) => ({
+        ...current,
+        photographerEnabled: true,
+        photographerName: nextPromo.photographer.name,
+        photographerFacebookUrl: nextPromo.photographer.facebookUrl,
+        photographerInstagramUrl: nextPromo.photographer.instagramUrl,
+        appliedPromoCode: nextPromo.promo.code,
+        partnerPromoId: nextPromo.promo.id,
+        referralSource: source,
+      }));
+      setPromoInput(nextPromo.promo.code);
+      setPromoMessage(nextPromo.promo.discountLabel || "تم التعرف على المصور وسيتم إضافة بياناته إلى الدعوة.");
+    } catch {
+      setPromoMessage("تعذر تطبيق البروموكود حالياً. حاول مرة أخرى.");
+    } finally {
+      setPromoBusy(false);
+    }
+  }
+
+  function removeAppliedPromo() {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoMessage("");
+    setPhotographerSaved(false);
+    setPartnerServiceType("");
+    setForm((current) => ({
+      ...current,
+      photographerEnabled: false,
+      photographerName: "",
+      photographerFacebookUrl: "",
+      photographerInstagramUrl: "",
+      appliedPromoCode: "",
+      partnerPromoId: "",
+      referralSource: "",
+    }));
+  }
+
+  useEffect(() => {
+    if (!draftReady || autoPromoAttemptedRef.current || !form.appliedPromoCode) return;
+    autoPromoAttemptedRef.current = true;
+    applyPromoCode(form.appliedPromoCode, form.referralSource || "referral-link", { silent: true });
+  }, [draftReady, form.appliedPromoCode, form.referralSource]);
 
   function selectMusicChoice(choice: MusicChoice | "none") {
     setForm((current) => ({
@@ -1289,6 +1419,9 @@ export function OrderForm({
       photographerName: String(formData.get("photographerName") || "").trim(),
       photographerFacebookUrl: String(formData.get("photographerFacebookUrl") || "").trim(),
       photographerInstagramUrl: String(formData.get("photographerInstagramUrl") || "").trim(),
+      appliedPromoCode: form.appliedPromoCode,
+      partnerPromoId: form.partnerPromoId,
+      referralSource: form.referralSource,
       openingText: String(formData.get("openingText") || form.openingText || "").trim(),
       musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
     };
@@ -1689,22 +1822,60 @@ export function OrderForm({
   }
 
   function renderPhotographerFields(serviceType = "مقدم الخدمة") {
+    const lockedByPromo = Boolean(form.appliedPromoCode);
     return (
       <div className="photographer-fields order-customization-fields">
         <div className="field">
           <label htmlFor="photographerName">اسم {serviceType}</label>
-          <input id="photographerName" name="photographerName" autoComplete="name" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} />
+          <input id="photographerName" name="photographerName" autoComplete="name" placeholder="اختياري" value={form.photographerName} onChange={(event) => updateField("photographerName", event.target.value)} disabled={lockedByPromo} />
         </div>
         <div className={`field ${errors.photographerFacebookUrl ? "has-error" : ""}`}>
           <label htmlFor="photographerFacebookUrl">رابط Facebook</label>
-          <input id="photographerFacebookUrl" name="photographerFacebookUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} />
+          <input id="photographerFacebookUrl" name="photographerFacebookUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://facebook.com/..." value={form.photographerFacebookUrl} onChange={(event) => updateField("photographerFacebookUrl", event.target.value)} aria-invalid={Boolean(errors.photographerFacebookUrl)} disabled={lockedByPromo} />
           {errors.photographerFacebookUrl ? <small className="field-error">{errors.photographerFacebookUrl}</small> : null}
         </div>
         <div className={`field ${errors.photographerInstagramUrl ? "has-error" : ""}`}>
           <label htmlFor="photographerInstagramUrl">رابط Instagram</label>
-          <input id="photographerInstagramUrl" name="photographerInstagramUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} />
+          <input id="photographerInstagramUrl" name="photographerInstagramUrl" type="url" inputMode="url" autoComplete="url" placeholder="https://instagram.com/..." value={form.photographerInstagramUrl} onChange={(event) => updateField("photographerInstagramUrl", event.target.value)} aria-invalid={Boolean(errors.photographerInstagramUrl)} disabled={lockedByPromo} />
           {errors.photographerInstagramUrl ? <small className="field-error">{errors.photographerInstagramUrl}</small> : null}
         </div>
+        {lockedByPromo ? <small className="order-promo-lock-note">تمت إضافة بيانات المصور بواسطة البروموكود.</small> : null}
+      </div>
+    );
+  }
+
+  function renderPromoCard() {
+    return (
+      <div className={`order-promo-card ${form.appliedPromoCode ? "is-applied" : ""}`}>
+        <div className="order-promo-copy">
+          <strong>بروموكود</strong>
+          <span>إذا كان لديك بروموكود اكتبه هنا.</span>
+        </div>
+        <div className="order-promo-controls">
+          <input
+            type="text"
+            inputMode="text"
+            autoCapitalize="characters"
+            placeholder="مثال: BADR2026"
+            value={promoInput}
+            onChange={(event) => {
+              setPromoInput(event.target.value);
+              if (promoMessage) setPromoMessage("");
+            }}
+            disabled={promoBusy || Boolean(form.appliedPromoCode)}
+            aria-label="بروموكود"
+          />
+          {form.appliedPromoCode ? (
+            <button className="btn btn-glass" type="button" onClick={removeAppliedPromo}>
+              إزالة البروموكود
+            </button>
+          ) : (
+            <button className="btn btn-gold" type="button" onClick={() => applyPromoCode()} disabled={promoBusy}>
+              {promoBusy ? "جاري التطبيق" : "تطبيق"}
+            </button>
+          )}
+        </div>
+        {promoMessage ? <p className={`order-promo-message ${form.appliedPromoCode ? "is-success" : ""}`}>{promoMessage}</p> : null}
       </div>
     );
   }
@@ -2101,6 +2272,7 @@ export function OrderForm({
             <div className="partner-section">
               <h2>شركاء الحفل (اختياري)</h2>
               <p className="partner-desc">اختر مقدم خدمة لإضافته إلى الدعوة.</p>
+              {renderPromoCard()}
 
               {!form.photographerEnabled ? (
                 /* ── service selection cards ── */
@@ -2184,12 +2356,32 @@ export function OrderForm({
                         </div>
                       ) : null}
                       <div className="partner-saved-actions">
-                        <button className="btn btn-soft" type="button" onClick={() => {
-                          setPhotographerSaved(false);
-                        }}>
-                          تعديل
-                        </button>
-                        <button className="btn btn-glass" type="button" onClick={() => {
+                        {form.appliedPromoCode ? (
+                          <button className="btn btn-glass" type="button" onClick={removeAppliedPromo}>
+                            إزالة البروموكود
+                          </button>
+                        ) : (
+                          <>
+                            <button className="btn btn-soft" type="button" onClick={() => {
+                              setPhotographerSaved(false);
+                            }}>
+                              تعديل
+                            </button>
+                            <button className="btn btn-glass" type="button" onClick={() => {
+                              updateField("photographerEnabled", false);
+                              updateField("photographerName", "");
+                              updateField("photographerFacebookUrl", "");
+                              updateField("photographerInstagramUrl", "");
+                              setPartnerServiceType("");
+                              setPhotographerSaved(false);
+                            }}>
+                              حذف
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {!form.appliedPromoCode ? (
+                        <button className="btn btn-glass partner-add-another" type="button" onClick={() => {
                           updateField("photographerEnabled", false);
                           updateField("photographerName", "");
                           updateField("photographerFacebookUrl", "");
@@ -2197,19 +2389,9 @@ export function OrderForm({
                           setPartnerServiceType("");
                           setPhotographerSaved(false);
                         }}>
-                          حذف
+                          ➕ إضافة شريك آخر
                         </button>
-                      </div>
-                      <button className="btn btn-glass partner-add-another" type="button" onClick={() => {
-                        updateField("photographerEnabled", false);
-                        updateField("photographerName", "");
-                        updateField("photographerFacebookUrl", "");
-                        updateField("photographerInstagramUrl", "");
-                        setPartnerServiceType("");
-                        setPhotographerSaved(false);
-                      }}>
-                        ➕ إضافة شريك آخر
-                      </button>
+                      ) : null}
                     </div>
                   )}
                 </div>
