@@ -4326,6 +4326,18 @@ img {
   font-size: 0.82rem;
 }
 
+.partner-admin-page .data-table td strong,
+.partner-admin-page .data-table td small {
+  display: block;
+}
+
+.partner-admin-page .data-table td small {
+  margin-top: 3px;
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
 .partner-detail-qr {
   background-size: contain;
   background-repeat: no-repeat;

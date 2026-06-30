@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Archive, ArrowLeft, Copy, Pause, Play, QrCode, RotateCcw, Send, TicketPercent } from "lucide-react";
+import { Archive, ArrowLeft, ExternalLink, Pause, Pencil, Play, QrCode, RotateCcw, Send, TicketPercent } from "lucide-react";
+import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
+import { buildShortReferralPath, buildShortReferralUrl } from "@/lib/partner-promo";
+import { getPublicSiteUrl } from "@/lib/utils";
 import { updatePartnerStatusAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +50,17 @@ function discountLabel(type: string, value: unknown) {
   return "بدون خصم";
 }
 
+function activityLabel(action: string) {
+  if (action === "promo.short_link_visit") return "زيارة رابط البروموكود";
+  if (action === "promo.applied_to_order") return "استخدام البروموكود في طلب";
+  if (action === "partner.created") return "إنشاء الشريك";
+  if (action === "partner.updated") return "تعديل بيانات الشريك";
+  if (action === "partner.active") return "تفعيل الشريك";
+  if (action === "partner.paused") return "إيقاف الشريك";
+  if (action === "partner.archived") return "أرشفة الشريك";
+  return action;
+}
+
 export default async function PartnerDetailsPage({
   params,
   searchParams,
@@ -53,23 +68,29 @@ export default async function PartnerDetailsPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<PartnerDetailsParams>;
 }) {
-  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const [{ id }, query, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   if (!prisma) return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
 
-  const partner = await prisma.partner.findUnique({
-    where: { id },
-    include: {
-      promoCodes: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
-      subscriptions: { orderBy: { createdAt: "desc" }, take: 3 },
-      orders: { orderBy: { createdAt: "desc" }, take: 20, select: { id: true, orderNumber: true, groomName: true, brideName: true, status: true, createdAt: true, publishedInvitationCode: true } },
-      usageLogs: { orderBy: { createdAt: "desc" }, take: 20 },
-      activityLogs: { orderBy: { createdAt: "desc" }, take: 20 },
-      _count: { select: { promoCodes: true, orders: true, usageLogs: true, messages: true } },
-    },
-  });
+  const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
+  const [partner, visitCount] = await Promise.all([
+    prisma.partner.findUnique({
+      where: { id },
+      include: {
+        promoCodes: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
+        subscriptions: { orderBy: { createdAt: "desc" }, take: 3 },
+        orders: { orderBy: { createdAt: "desc" }, take: 20, select: { id: true, orderNumber: true, groomName: true, brideName: true, status: true, createdAt: true, publishedInvitationCode: true } },
+        usageLogs: { orderBy: { createdAt: "desc" }, take: 20 },
+        activityLogs: { orderBy: { createdAt: "desc" }, take: 20 },
+        _count: { select: { promoCodes: true, orders: true, usageLogs: true, messages: true } },
+      },
+    }),
+    prisma.partnerActivityLog.count({ where: { partnerId: id, action: "promo.short_link_visit" } }),
+  ]);
 
   if (!partner) notFound();
   const primaryPromo = partner.promoCodes[0];
+  const shortPath = primaryPromo ? buildShortReferralPath(primaryPromo.referralSlug) : "";
+  const shortUrl = primaryPromo ? buildShortReferralUrl(siteUrl, primaryPromo.referralSlug) : "";
   const publishedOrders = partner.orders.filter((order) => order.status === "PUBLISHED" || order.status === "CONVERTED").length;
   const pendingOrders = partner.orders.filter((order) => order.status === "NEW" || order.status === "REVIEWING" || order.status === "EDITED").length;
 
@@ -86,8 +107,12 @@ export default async function PartnerDetailsPage({
             <ArrowLeft size={17} />
             رجوع
           </Link>
+          <Link className="btn btn-soft" href={`/admin/partners/${partner.id}/edit`}>
+            <Pencil size={17} />
+            تعديل
+          </Link>
           {primaryPromo ? (
-            <Link className="btn btn-gold" href={`/p/${encodeURIComponent(primaryPromo.referralSlug)}`} target="_blank">
+            <Link className="btn btn-gold" href={shortPath} target="_blank">
               <TicketPercent size={17} />
               اختبار البروموكود
             </Link>
@@ -110,6 +135,7 @@ export default async function PartnerDetailsPage({
           <div className="partner-detail-promo">
             <span>البروموكود</span>
             <strong>{primaryPromo.code}</strong>
+            <small dir="ltr">{shortUrl}</small>
             <small>{discountLabel(primaryPromo.discountType, primaryPromo.discountValue)}</small>
           </div>
         ) : null}
@@ -125,6 +151,7 @@ export default async function PartnerDetailsPage({
           { label: "الطلبات", value: partner._count.orders, hint: "جميع الطلبات المرتبطة" },
           { label: "المنشور", value: publishedOrders, hint: "من آخر 20 طلباً" },
           { label: "قيد المراجعة", value: pendingOrders, hint: "طلبات لم تنشر بعد" },
+          { label: "زيارات الرابط", value: visitCount, hint: "زيارات الرابط المختصر" },
           { label: "الاستخدام", value: partner._count.usageLogs, hint: `${partner._count.promoCodes} برومو / ${partner._count.messages} رسالة` },
         ]}
       />
@@ -156,9 +183,11 @@ export default async function PartnerDetailsPage({
           </form>
           {primaryPromo ? (
             <>
-              <Link className="btn btn-soft" href={`/p/${encodeURIComponent(primaryPromo.referralSlug)}`} target="_blank">
-                <Copy size={17} />
-                نسخ/اختبار الرابط
+              <CopyButton value={primaryPromo.code} label="نسخ الكود" className="btn btn-soft" />
+              <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
+              <Link className="btn btn-soft" href={shortPath} target="_blank">
+                <ExternalLink size={17} />
+                فتح الرابط
               </Link>
               {primaryPromo.qrCodeUrl ? (
                 <Link className="btn btn-soft" href={primaryPromo.qrCodeUrl} target="_blank">
@@ -198,7 +227,10 @@ export default async function PartnerDetailsPage({
               <tbody>
                 {partner.promoCodes.map((promo) => (
                   <tr key={promo.id}>
-                    <td>{promo.code}</td>
+                    <td>
+                      <strong dir="ltr">{promo.code}</strong>
+                      <small dir="ltr">{buildShortReferralPath(promo.referralSlug)}</small>
+                    </td>
                     <td><span className={statusClass(promo.status)}>{statusLabels[promo.status]}</span></td>
                     <td>{discountLabel(promo.discountType, promo.discountValue)}</td>
                     <td>{promo.currentUsage}{promo.usageLimit ? ` / ${promo.usageLimit}` : ""}</td>
@@ -243,7 +275,7 @@ export default async function PartnerDetailsPage({
                 <div key={activity.id}>
                   <Send size={16} />
                   <span>
-                    <strong>{activity.action}</strong>
+                    <strong>{activityLabel(activity.action)}</strong>
                     <small>{activity.createdAt.toLocaleString("ar-EG")}</small>
                   </span>
                 </div>

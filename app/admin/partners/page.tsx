@@ -1,7 +1,11 @@
 import Link from "next/link";
-import { Activity, Copy, ExternalLink, Handshake, MessageSquareText, PlusCircle, Search, TicketPercent } from "lucide-react";
+import { headers } from "next/headers";
+import { Activity, ExternalLink, Handshake, MessageSquareText, Pencil, PlusCircle, Search, TicketPercent } from "lucide-react";
+import { CopyButton } from "@/components/CopyButton";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
+import { buildShortReferralPath, buildShortReferralUrl } from "@/lib/partner-promo";
+import { getPublicSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -46,16 +50,28 @@ function discountLabel(type: string, value: unknown) {
   return "بدون خصم";
 }
 
+function activityLabel(action: string) {
+  if (action === "promo.short_link_visit") return "زيارة رابط البروموكود";
+  if (action === "promo.applied_to_order") return "استخدام البروموكود في طلب";
+  if (action === "partner.created") return "إنشاء الشريك";
+  if (action === "partner.updated") return "تعديل بيانات الشريك";
+  if (action === "partner.active") return "تفعيل الشريك";
+  if (action === "partner.paused") return "إيقاف الشريك";
+  if (action === "partner.archived") return "أرشفة الشريك";
+  return action;
+}
+
 export default async function PartnerPromoCenterPage({
   searchParams,
 }: {
   searchParams: Promise<PartnersPageParams>;
 }) {
-  const params = await searchParams;
+  const [params, requestHeaders] = await Promise.all([searchParams, headers()]);
   if (!prisma) {
     return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
   }
 
+  const siteUrl = getPublicSiteUrl(requestHeaders).replace(/\/$/, "");
   const q = (params.q || "").trim();
   const where = {
     ...(q
@@ -73,7 +89,7 @@ export default async function PartnerPromoCenterPage({
     ...(params.type && params.type !== "all" ? { partnerType: params.type as never } : {}),
   };
 
-  const [partners, promoCodes, usageToday, usageWeek, usageMonth, latestActivity] = await Promise.all([
+  const [partners, promoCodes, usageToday, usageWeek, usageMonth, visitsToday, visitsWeek, visitsMonth, latestActivity] = await Promise.all([
     prisma.partner.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -87,6 +103,9 @@ export default async function PartnerPromoCenterPage({
     prisma.partnerUsageLog.count({ where: { result: "SUCCESS", createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
     prisma.partnerUsageLog.count({ where: { result: "SUCCESS", createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
     prisma.partnerUsageLog.count({ where: { result: "SUCCESS", createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } }),
+    prisma.partnerActivityLog.count({ where: { action: "promo.short_link_visit", createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
+    prisma.partnerActivityLog.count({ where: { action: "promo.short_link_visit", createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+    prisma.partnerActivityLog.count({ where: { action: "promo.short_link_visit", createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } }),
     prisma.partnerActivityLog.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { partner: { select: { displayName: true } } } }),
   ]);
 
@@ -120,6 +139,7 @@ export default async function PartnerPromoCenterPage({
         stats={[
           { label: "إجمالي الشركاء", value: partners.length, hint: `${activePartners} نشط / ${pausedPartners} متوقف / ${archivedPartners} مؤرشف` },
           { label: "إجمالي البروموكودات", value: promoCodes.length, hint: `${activePromos} نشط / ${pausedPromos} متوقف / ${expiredPromos} منتهي` },
+          { label: "زيارات الرابط", value: visitsMonth, hint: `اليوم ${visitsToday} / الأسبوع ${visitsWeek} / الشهر ${visitsMonth}` },
           { label: "الاستخدامات", value: usageMonth, hint: `اليوم ${usageToday} / الأسبوع ${usageWeek} / الشهر ${usageMonth}` },
           { label: "طلبات الشركاء", value: partners.reduce((sum, partner) => sum + partner._count.orders, 0), hint: "طلبات مرتبطة بنسخة الشريك المحفوظة" },
         ]}
@@ -183,6 +203,8 @@ export default async function PartnerPromoCenterPage({
                 <tbody>
                   {partners.map((partner) => {
                     const primaryPromo = partner.promoCodes[0];
+                    const shortPath = primaryPromo ? buildShortReferralPath(primaryPromo.referralSlug) : "";
+                    const shortUrl = primaryPromo ? buildShortReferralUrl(siteUrl, primaryPromo.referralSlug) : "";
                     return (
                       <tr key={partner.id}>
                         <td>
@@ -195,7 +217,8 @@ export default async function PartnerPromoCenterPage({
                         <td>
                           {primaryPromo ? (
                             <span title={discountLabel(primaryPromo.discountType, primaryPromo.discountValue)}>
-                              {primaryPromo.code}
+                              <strong dir="ltr">{primaryPromo.code}</strong>
+                              <small dir="ltr">{shortPath}</small>
                             </span>
                           ) : "لا يوجد"}
                         </td>
@@ -207,11 +230,19 @@ export default async function PartnerPromoCenterPage({
                               <ExternalLink size={16} />
                               عرض
                             </Link>
+                            <Link className="btn btn-soft" href={`/admin/partners/${partner.id}/edit`}>
+                              <Pencil size={16} />
+                              تعديل
+                            </Link>
                             {primaryPromo ? (
-                              <Link className="btn btn-soft" href={`/p/${encodeURIComponent(primaryPromo.referralSlug)}`} target="_blank">
-                                <Copy size={16} />
-                                اختبار
-                              </Link>
+                              <>
+                                <CopyButton value={primaryPromo.code} label="نسخ الكود" className="btn btn-soft" />
+                                <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
+                                <Link className="btn btn-soft" href={shortPath} target="_blank">
+                                  <ExternalLink size={16} />
+                                  فتح
+                                </Link>
+                              </>
                             ) : null}
                           </div>
                         </td>
@@ -258,7 +289,7 @@ export default async function PartnerPromoCenterPage({
                   <MessageSquareText size={16} />
                   <span>
                     <strong>{activity.partner?.displayName || "النظام"}</strong>
-                    {activity.action}
+                    {activityLabel(activity.action)}
                     <small>{activity.createdAt.toLocaleString("ar-EG")}</small>
                   </span>
                 </div>

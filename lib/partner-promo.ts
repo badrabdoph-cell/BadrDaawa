@@ -101,6 +101,24 @@ export function normalizePromoCode(value: string) {
   return value.trim().replace(/\s+/g, "").toUpperCase();
 }
 
+export function normalizeReferralSlug(value: string) {
+  return normalizePromoCode(value)
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}_-]+/gu, "")
+    .slice(0, 32);
+}
+
+export function buildShortReferralPath(slug: string) {
+  const cleanSlug = normalizeReferralSlug(slug);
+  return cleanSlug ? `/r/${encodeURIComponent(cleanSlug)}` : "/order";
+}
+
+export function buildShortReferralUrl(siteUrl: string, slug: string) {
+  const cleanSiteUrl = siteUrl.trim().replace(/\/$/, "");
+  const path = buildShortReferralPath(slug);
+  return cleanSiteUrl ? `${cleanSiteUrl}${path}` : path;
+}
+
 export function formatDiscountLabel(input: { discountType: PartnerDiscountType; discountValue?: number | string | { toString(): string } | null }) {
   const value = numberOrNull(input.discountValue);
   if (input.discountType === "PERCENTAGE" && value !== null) return `تم تطبيق خصم ${value}%`;

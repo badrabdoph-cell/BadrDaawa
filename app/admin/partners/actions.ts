@@ -5,9 +5,10 @@ import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { saveInvitationGalleryImages } from "@/lib/invitation-images";
-import { normalizePromoCode } from "@/lib/partner-promo";
+import { buildShortReferralUrl, normalizePromoCode, normalizeReferralSlug } from "@/lib/partner-promo";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { slugifyInvitationName } from "@/lib/slug";
+import { getSiteUrl } from "@/lib/utils";
 
 type PartnerTypeInput = "PHOTOGRAPHER" | "VIDEOGRAPHER" | "HALL" | "PLANNER" | "DJ" | "MAKEUP_ARTIST" | "DECORATOR" | "OTHER";
 type PartnerTierInput = "FREE" | "SILVER" | "GOLD" | "PLATINUM";
@@ -38,31 +39,44 @@ async function uniquePartnerSlug(displayName: string) {
   return slug;
 }
 
-async function uniquePromoCode(displayName: string, requestedCode: string) {
+async function uniquePromoCode(displayName: string, requestedCode: string, ignorePromoId?: string) {
   const base = normalizePromoCode(requestedCode || displayName.replace(/[^\p{L}\p{N}]+/gu, "")) || `PARTNER${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
   let code = base.slice(0, 40);
   let suffix = 2;
-  while (await prisma?.partnerPromoCode.findUnique({ where: { code }, select: { id: true } })) {
+  let existing = await prisma?.partnerPromoCode.findUnique({ where: { code }, select: { id: true } });
+  while (existing && existing.id !== ignorePromoId) {
     code = `${base}${suffix}`.slice(0, 48);
     suffix += 1;
+    existing = await prisma?.partnerPromoCode.findUnique({ where: { code }, select: { id: true } });
   }
   return code;
 }
 
-async function uniqueReferralSlug() {
-  for (let index = 0; index < 8; index += 1) {
-    const slug = crypto.randomBytes(4).toString("base64url").replace(/[-_]/g, "").slice(0, 6);
-    if (!(await prisma?.partnerPromoCode.findUnique({ where: { referralSlug: slug }, select: { id: true } }))) return slug;
-  }
-  return crypto.randomBytes(5).toString("base64url").replace(/[-_]/g, "").slice(0, 8);
+function randomReferralSlug(length = 6) {
+  return crypto.randomBytes(6).toString("base64url").replace(/[-_]/g, "").slice(0, length).toUpperCase();
 }
 
-async function resolvePartnerLogoUrl(formData: FormData) {
+async function uniqueReferralSlug(code: string, ignorePromoId?: string) {
+  const base = normalizeReferralSlug(code) || randomReferralSlug();
+  let slug = base;
+  let suffix = 2;
+  let existing = await prisma?.partnerPromoCode.findUnique({ where: { referralSlug: slug }, select: { id: true } });
+  while (existing && existing.id !== ignorePromoId) {
+    const suffixText = String(suffix);
+    slug = `${base.slice(0, 32 - suffixText.length)}${suffixText}`;
+    suffix += 1;
+    existing = await prisma?.partnerPromoCode.findUnique({ where: { referralSlug: slug }, select: { id: true } });
+  }
+  return slug;
+}
+
+async function resolvePartnerLogoUrl(formData: FormData, fallbackLogoUrl?: string | null) {
   const logoFile = formData.get("logoFile");
   if (logoFile instanceof File && logoFile.size > 0) {
     const saved = await saveInvitationGalleryImages([logoFile]);
     if (saved[0]) return saved[0];
   }
+  if (fallbackLogoUrl !== undefined) return fallbackLogoUrl || "";
   const settings = await getPublishedSiteSettings();
   return settings.logoUrl || "/assets/admin/branding/site-logo-1781536656977-9910afd2.webp";
 }
@@ -99,9 +113,9 @@ export async function createPartnerAction(formData: FormData) {
   const discountValue = Number.isFinite(discountValueRaw) && discountType !== "NONE" && discountType !== "FREE_INVITATION" ? discountValueRaw : null;
   const code = await uniquePromoCode(displayName, formString(formData, "promoCode"));
   const slug = await uniquePartnerSlug(displayName);
-  const referralSlug = await uniqueReferralSlug();
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || "").replace(/\/$/, "");
-  const referralUrl = `${siteUrl || ""}/p/${referralSlug}`;
+  const referralSlug = await uniqueReferralSlug(code);
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || getSiteUrl()).replace(/\/$/, "");
+  const referralUrl = buildShortReferralUrl(siteUrl, referralSlug);
   const qrCodeUrl = await QRCode.toDataURL(referralUrl).catch(() => "");
   const logoUrl = await resolvePartnerLogoUrl(formData);
 
@@ -197,6 +211,113 @@ export async function updatePartnerStatusAction(formData: FormData) {
         action: `partner.${status.toLowerCase()}`,
         performedBy: "admin",
         newValue: { status },
+      },
+    });
+  });
+
+  redirect(`/admin/partners/${id}?status=updated`);
+}
+
+export async function updatePartnerAction(formData: FormData) {
+  if (!prisma) redirect("/admin/partners?error=database");
+
+  const id = formString(formData, "id");
+  if (!id) redirect("/admin/partners?error=invalid");
+
+  const existing = await prisma.partner.findUnique({
+    where: { id },
+    include: { promoCodes: { where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 1 } },
+  });
+  if (!existing) redirect("/admin/partners?error=missing");
+
+  const displayName = formString(formData, "displayName");
+  if (displayName.length < 2) redirect(`/admin/partners/${id}/edit?error=invalid`);
+
+  const partnerTypeValue = formString(formData, "partnerType") as PartnerTypeInput;
+  const tierValue = formString(formData, "tier") as PartnerTierInput;
+  const statusValue = formString(formData, "status") as PartnerStatusInput;
+  const discountTypeValue = formString(formData, "discountType") as DiscountTypeInput;
+  const partnerType = partnerTypes.has(partnerTypeValue) ? partnerTypeValue : existing.partnerType;
+  const tier = partnerTiers.has(tierValue) ? tierValue : existing.tier;
+  const status = partnerStatuses.has(statusValue) ? statusValue : existing.status;
+  const discountType = discountTypes.has(discountTypeValue) ? discountTypeValue : "NONE";
+  const discountValueRaw = Number(formString(formData, "discountValue"));
+  const discountValue = Number.isFinite(discountValueRaw) && discountType !== "NONE" && discountType !== "FREE_INVITATION" ? discountValueRaw : null;
+  const logoUrl = await resolvePartnerLogoUrl(formData, existing.logoUrl);
+  const primaryPromo = existing.promoCodes[0];
+  const code = await uniquePromoCode(displayName, formString(formData, "promoCode") || primaryPromo?.code || "", primaryPromo?.id);
+  const referralSlug = primaryPromo ? await uniqueReferralSlug(code, primaryPromo.id) : await uniqueReferralSlug(code);
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || getSiteUrl()).replace(/\/$/, "");
+  const qrCodeUrl = await QRCode.toDataURL(buildShortReferralUrl(siteUrl, referralSlug)).catch(() => primaryPromo?.qrCodeUrl || "");
+
+  await prisma.$transaction(async (tx) => {
+    const partner = await tx.partner.update({
+      where: { id },
+      data: {
+        displayName,
+        partnerType,
+        tier,
+        status,
+        subscriptionStatus: status === "ACTIVE" ? "ACTIVE" : existing.subscriptionStatus,
+        logoUrl,
+        facebookUrl: cleanExternalUrl(formString(formData, "facebookUrl")) || null,
+        instagramUrl: cleanExternalUrl(formString(formData, "instagramUrl")) || null,
+        internalNotes: formString(formData, "internalNotes") || null,
+        showPartnerCard: formData.get("showPartnerCard") === "on",
+        updatedBy: "admin",
+        archivedAt: status === "ARCHIVED" ? existing.archivedAt || new Date() : null,
+      },
+      select: { id: true, displayName: true },
+    });
+
+    if (primaryPromo) {
+      await tx.partnerPromoCode.update({
+        where: { id: primaryPromo.id },
+        data: {
+          code,
+          referralSlug,
+          qrCodeUrl,
+          status,
+          discountType,
+          discountValue,
+          archivedAt: status === "ARCHIVED" ? primaryPromo.archivedAt || new Date() : null,
+        },
+      });
+    } else {
+      await tx.partnerPromoCode.create({
+        data: {
+          partnerId: id,
+          code,
+          referralSlug,
+          qrCodeUrl,
+          status,
+          discountType,
+          discountValue,
+          createdBy: "admin",
+        },
+      });
+    }
+
+    await tx.partnerActivityLog.create({
+      data: {
+        partnerId: id,
+        action: "partner.updated",
+        performedBy: "admin",
+        newValue: { displayName, partnerType, tier, status, promoCode: code, referralSlug },
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        id: auditId(),
+        actorType: "admin",
+        actorId: "admin",
+        actorLabel: "Admin",
+        action: "partner.update",
+        entityType: "Partner",
+        entityId: id,
+        entityLabel: partner.displayName,
+        newValues: { displayName, partnerType, tier, status, promoCode: code, referralSlug },
+        metadata: { source: "partner-promo-center" },
       },
     });
   });
