@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, History, Percent, PlusCircle } from "lucide-react";
+import { BarChart3, History, PlusCircle } from "lucide-react";
 
 const links = [
   { href: "/admin/promo-codes/discounts", label: "لوحة الخصومات", icon: BarChart3 },
