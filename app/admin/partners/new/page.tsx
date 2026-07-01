@@ -32,13 +32,20 @@ export default async function NewPartnerPage({
 
       {params.error ? <div className="notice danger">راجع بيانات الشريك. الاسم مطلوب والكود يجب ألا يكون مكررًا.</div> : null}
 
-      <form className="partner-editor-form" action={createPartnerAction} encType="multipart/form-data">
-        <section className="panel">
+      <form className="partner-editor-form partner-wizard" action={createPartnerAction} encType="multipart/form-data">
+        <div className="partner-wizard-steps" aria-label="خطوات إنشاء الشريك">
+          <span className="active">بيانات الشريك</span>
+          <span>البروموكود</span>
+          <span>الخصم</span>
+          <span>المراجعة</span>
+        </div>
+
+        <section className="panel partner-wizard-panel">
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">البيانات العامة</span>
-              <h2>البيانات العامة</h2>
+              <span className="eyebrow">الخطوة 1</span>
+              <h2>بيانات الشريك</h2>
             </div>
           </div>
           <div className="dynamic-page-form-grid">
@@ -65,11 +72,11 @@ export default async function NewPartnerPage({
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel partner-wizard-panel">
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">إعدادات الشريك</span>
+              <span className="eyebrow">تصنيف الشريك</span>
               <h2>إعدادات الشريك</h2>
             </div>
           </div>
@@ -107,16 +114,28 @@ export default async function NewPartnerPage({
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel partner-wizard-panel">
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">إعدادات البروموكود</span>
-              <h2>البروموكود والخصم</h2>
+              <span className="eyebrow">الخطوة 2</span>
+              <h2>البروموكود</h2>
             </div>
           </div>
           <div className="dynamic-page-form-grid">
             <PartnerPromoPreviewFields />
+          </div>
+        </section>
+
+        <section className="panel partner-wizard-panel">
+          <div className="admin-card-head">
+            <Sparkles size={22} />
+            <div>
+              <span className="eyebrow">الخطوة 3</span>
+              <h2>الخصم</h2>
+            </div>
+          </div>
+          <div className="dynamic-page-form-grid">
             <label className="field">
               <span>نوع الخصم</span>
               <select name="discountType" defaultValue="NONE">
@@ -137,14 +156,15 @@ export default async function NewPartnerPage({
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel partner-wizard-panel">
           <div className="admin-card-head">
             <Sparkles size={22} />
             <div>
-              <span className="eyebrow">ملاحظات</span>
-              <h2>ملاحظات داخلية</h2>
+              <span className="eyebrow">الخطوة 4</span>
+              <h2>المراجعة</h2>
             </div>
           </div>
+          <p className="admin-note">راجع البيانات قبل الحفظ. سيتم إنشاء UUID ثابت للشريك، وبروموكود قابل للتعديل، ورابط قصير، واشتراك أولي بدون التأثير على أي بيانات قديمة.</p>
           <label className="field">
             <span>ملاحظات خاصة</span>
             <textarea name="internalNotes" rows={5} placeholder="أي تفاصيل داخلية عن الاتفاق أو الاشتراك." />
