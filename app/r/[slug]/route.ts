@@ -59,30 +59,27 @@ function referralCookieOptions(request: NextRequest, maxAge: number) {
   };
 }
 
-function buildOrderUrl(request: NextRequest, promoCode?: string, promoStatus?: string) {
+function buildOrderFallbackUrl(request: NextRequest) {
   const baseUrl = getShareableSiteUrl(request.headers);
-  const orderUrl = new URL("/order", baseUrl);
-  if (promoCode) orderUrl.searchParams.set("promo", normalizePromoCode(promoCode));
-  if (promoStatus) orderUrl.searchParams.set("promoStatus", promoStatus);
-  return orderUrl;
+  return new URL("/order", baseUrl);
 }
 
 function redirectToOrderWithPromo(request: NextRequest, code: string) {
-  const response = NextResponse.redirect(buildOrderUrl(request, code), 307);
+  const response = NextResponse.redirect(buildOrderFallbackUrl(request), 307);
   response.cookies.set(PARTNER_PROMO_COOKIE, normalizePromoCode(code), referralCookieOptions(request, PARTNER_PROMO_COOKIE_MAX_AGE));
   response.cookies.set(PARTNER_PROMO_STATUS_COOKIE, "", referralCookieOptions(request, 0));
   return response;
 }
 
 function redirectToOrderWithUnavailablePromo(request: NextRequest, promoStatus: string) {
-  const response = NextResponse.redirect(buildOrderUrl(request, undefined, promoStatus), 307);
+  const response = NextResponse.redirect(buildOrderFallbackUrl(request), 307);
   response.cookies.set(PARTNER_PROMO_COOKIE, "", referralCookieOptions(request, 0));
   response.cookies.set(PARTNER_PROMO_STATUS_COOKIE, promoStatus, referralCookieOptions(request, PARTNER_PROMO_STATUS_COOKIE_MAX_AGE));
   return response;
 }
 
 function redirectToOrderWithoutPromo(request: NextRequest) {
-  return NextResponse.redirect(new URL("/order", getShareableSiteUrl(request.headers)), 307);
+  return NextResponse.redirect(buildOrderFallbackUrl(request), 307);
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

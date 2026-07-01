@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 type ActivityParams = {
   q?: string;
   action?: string;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 function actionLabel(action: string) {
@@ -31,11 +33,19 @@ function readValue(value: unknown, key: string) {
   return typeof next === "string" || typeof next === "number" ? String(next) : "";
 }
 
-function exportHref(q: string, action: string) {
-  const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (action !== "all") params.set("action", action);
-  const query = params.toString();
+function validDate(value?: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function exportHref(filters: ActivityParams) {
+  const queryParams = new URLSearchParams();
+  if (filters.q) queryParams.set("q", filters.q);
+  if (filters.action && filters.action !== "all") queryParams.set("action", filters.action);
+  if (filters.dateFrom) queryParams.set("dateFrom", filters.dateFrom);
+  if (filters.dateTo) queryParams.set("dateTo", filters.dateTo);
+  const query = queryParams.toString();
   return `/admin/partners/activity/export${query ? `?${query}` : ""}`;
 }
 
@@ -49,10 +59,20 @@ export default async function PartnerOperationsActivityPage({
 
   const q = (params.q || "").trim();
   const action = params.action || "all";
+  const dateFrom = validDate(params.dateFrom);
+  const dateTo = validDate(params.dateTo);
   const activity = await prisma.partnerActivityLog.findMany({
     where: {
       ...(action !== "all" ? { action } : {}),
       ...(q ? { partner: { displayName: { contains: q, mode: "insensitive" as const } } } : {}),
+      ...(dateFrom || dateTo
+        ? {
+            createdAt: {
+              ...(dateFrom ? { gte: dateFrom } : {}),
+              ...(dateTo ? { lte: new Date(`${params.dateTo}T23:59:59`) } : {}),
+            },
+          }
+        : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 220,
@@ -72,7 +92,7 @@ export default async function PartnerOperationsActivityPage({
           <p>كل الأحداث في مكان واحد: زيارات، استخدام، إنشاء، تعديل، تعطيل، حذف، ورسائل.</p>
         </div>
         <div className="dashboard-actions">
-          <Link className="btn btn-soft" href={exportHref(q, action)}>
+          <Link className="btn btn-soft" href={exportHref(params)}>
             <Download size={17} />
             تصدير
           </Link>
@@ -105,6 +125,12 @@ export default async function PartnerOperationsActivityPage({
           <option value="promo.applied_to_order">استخدام بروموكود</option>
           <option value="partner.message.sent">رسائل</option>
         </select>
+        <label>
+          <input name="dateFrom" type="date" defaultValue={params.dateFrom || ""} aria-label="من تاريخ" />
+        </label>
+        <label>
+          <input name="dateTo" type="date" defaultValue={params.dateTo || ""} aria-label="إلى تاريخ" />
+        </label>
         <button className="btn btn-soft" type="submit">تطبيق</button>
       </form>
 

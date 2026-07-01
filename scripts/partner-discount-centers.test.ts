@@ -9,8 +9,9 @@ const partnerDetails = readFileSync("app/admin/partners/[id]/page.tsx", "utf8");
 const discountsPage = readFileSync("app/admin/promo-codes/discounts/page.tsx", "utf8");
 
 const partnersStart = dashboardShell.indexOf('id: "partners"');
+const discountsStart = dashboardShell.indexOf('id: "discounts"');
 const contentStart = dashboardShell.indexOf('id: "content"');
-const partnerSection = dashboardShell.slice(partnersStart, contentStart);
+const partnerSection = dashboardShell.slice(partnersStart, discountsStart > partnersStart ? discountsStart : contentStart);
 
 assert.match(dashboardShell, /id:\s*"discounts"/, "sidebar should expose an independent discount center");
 assert.match(dashboardShell, /title:\s*"مركز أكواد الخصم"/, "discount center should be named مركز أكواد الخصم");

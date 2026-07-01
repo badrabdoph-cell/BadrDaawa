@@ -25,11 +25,12 @@ assert.match(partnersDashboard, /آخر دعوات/, "dashboard should show late
 assert.doesNotMatch(partnersDashboard, /admin-table-toolbar|<table|partner-editor-form/, "dashboard should not contain filters, tables, or create/edit forms");
 
 const directoryPage = readFileSync("app/admin/partners/directory/page.tsx", "utf8");
-assert.match(directoryPage, /partner-card-grid/, "partners page should use cards, not a dense table");
-assert.match(directoryPage, /PartnerCardActions/, "partner cards should hide secondary actions in a menu");
-assert.doesNotMatch(directoryPage, /<table/, "partner directory should not render a table");
+assert.match(directoryPage, /partner-crm-table/, "partners page should use a CRM table");
+assert.match(directoryPage, /PartnerCardActions/, "partner rows should hide secondary actions in a menu");
+assert.match(directoryPage, /<table/, "partner directory should render a structured table");
+assert.doesNotMatch(directoryPage, /partner-card-grid/, "partner directory should no longer render a card grid");
 
-for (const label of ["Overview", "الدعوات", "الإحصائيات", "الرسائل", "النشاط"]) {
+for (const label of ["نظرة عامة", "الدعوات", "الطلبات", "الإحصائيات", "الرسائل", "سجل النشاط", "الإعدادات"]) {
   assert.match(partnerDetails, new RegExp(label), `partner details should expose ${label} tab`);
 }
 

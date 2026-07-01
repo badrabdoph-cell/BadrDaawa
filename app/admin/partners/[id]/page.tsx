@@ -41,11 +41,13 @@ const statusLabels: Record<string, string> = {
 };
 
 const tabs = [
-  { id: "overview", label: "Overview" },
+  { id: "overview", label: "نظرة عامة" },
   { id: "invitations", label: "الدعوات" },
-  { id: "stats", label: "الإحصائيات" },
+  { id: "orders", label: "الطلبات" },
   { id: "messages", label: "الرسائل" },
-  { id: "activity", label: "النشاط" },
+  { id: "stats", label: "الإحصائيات" },
+  { id: "activity", label: "سجل النشاط" },
+  { id: "settings", label: "الإعدادات" },
 ];
 
 function statusClass(status: string) {
@@ -165,6 +167,40 @@ export default async function PartnerDetailsPage({
       {query.message ? <div className="notice success">تم إرسال الرسالة للدعوات المرتبطة بالشريك.</div> : null}
       {query.error ? <div className="notice danger">تعذر تنفيذ العملية. راجع البيانات وحاول مرة أخرى.</div> : null}
 
+      <section className="panel partner-summary-strip">
+        <div className="partner-summary-identity">
+          {partner.logoUrl ? <span className="partner-avatar" style={{ backgroundImage: `url(${partner.logoUrl})` }} aria-label={partner.displayName} /> : <span className="partner-avatar">{partner.displayName.slice(0, 2)}</span>}
+          <div>
+            <strong>{partner.displayName}</strong>
+            <small>{partnerTypeLabels[partner.partnerType] || partner.partnerType} · <span className={statusClass(partner.status)}>{statusLabels[partner.status]}</span></small>
+          </div>
+        </div>
+        <div>
+          <span>البروموكود</span>
+          <strong dir="ltr">{primaryPromo?.code || "لا يوجد"}</strong>
+        </div>
+        <div>
+          <span>نسبة الخصم</span>
+          <strong>{discountLabel(primaryPromo?.discountType || "NONE", primaryPromo?.discountValue)}</strong>
+        </div>
+        <div>
+          <span>عدد الدعوات</span>
+          <strong>{publishedOrders}</strong>
+        </div>
+        <div>
+          <span>عدد الطلبات</span>
+          <strong>{partner._count.orders}</strong>
+        </div>
+        <div>
+          <span>عدد الزيارات</span>
+          <strong>{visitCount}</strong>
+        </div>
+        <div>
+          <span>معدل التحويل</span>
+          <strong>{conversionRate(partner._count.orders, visitCount)}</strong>
+        </div>
+      </section>
+
       <nav className="partner-detail-tabs" aria-label="تبويبات الشريك">
         {tabs.map((tab) => (
           <Link key={tab.id} className={activeTab === tab.id ? "active" : ""} href={`/admin/partners/${partner.id}?tab=${tab.id}`}>
@@ -241,7 +277,7 @@ export default async function PartnerDetailsPage({
             <TicketPercent size={22} />
             <div>
               <span className="eyebrow">الدعوات</span>
-              <h2>دعوات الشريك</h2>
+              <h2>الدعوات المنشورة للشريك</h2>
             </div>
           </div>
           <div className="table-shell">
@@ -256,7 +292,7 @@ export default async function PartnerDetailsPage({
                 </tr>
               </thead>
               <tbody>
-                {partner.orders.map((order) => {
+                {partner.orders.filter((order) => order.publishedInvitationCode).map((order) => {
                   const invitationUrl = order.publishedInvitationCode ? `${siteUrl}/${order.publishedInvitationCode}` : "";
                   return (
                     <tr key={order.id}>
@@ -278,6 +314,60 @@ export default async function PartnerDetailsPage({
                     </tr>
                   );
                 })}
+                {partner.orders.filter((order) => order.publishedInvitationCode).length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>لا توجد دعوات منشورة لهذا الشريك بعد.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {activeTab === "orders" ? (
+        <section className="panel">
+          <div className="admin-card-head">
+            <TicketPercent size={22} />
+            <div>
+              <span className="eyebrow">الطلبات</span>
+              <h2>كل الطلبات المرتبطة بالشريك</h2>
+            </div>
+          </div>
+          <div className="table-shell">
+            <table className="data-table promo-data-table">
+              <thead>
+                <tr>
+                  <th>الطلب</th>
+                  <th>العروسين</th>
+                  <th>الحالة</th>
+                  <th>التاريخ</th>
+                  <th>الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partner.orders.map((order) => (
+                  <tr key={order.id}>
+                    <td>
+                      <strong>{order.orderNumber || order.id.slice(0, 8)}</strong>
+                      <small dir="ltr">{order.publishedInvitationCode || "لم تنشر بعد"}</small>
+                    </td>
+                    <td>{order.groomName} / {order.brideName}</td>
+                    <td>{order.status}</td>
+                    <td>{order.createdAt.toLocaleDateString("ar-EG")}</td>
+                    <td>
+                      <div className="button-row">
+                        <Link className="btn btn-soft" href="/admin/orders">فتح الطلب</Link>
+                        {order.publishedInvitationCode ? <Link className="btn btn-soft" href={`/admin/invitations-customers/${order.publishedInvitationCode}`}>فتح العميل</Link> : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {partner.orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>لا توجد طلبات مرتبطة بهذا الشريك بعد.</td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -392,7 +482,7 @@ export default async function PartnerDetailsPage({
           <div className="admin-card-head">
             <History size={22} />
             <div>
-              <span className="eyebrow">النشاط</span>
+              <span className="eyebrow">سجل النشاط</span>
               <h2>Timeline كامل</h2>
             </div>
           </div>
@@ -409,6 +499,68 @@ export default async function PartnerDetailsPage({
             {partner.activityLogs.length === 0 ? <p className="admin-note">لا يوجد نشاط بعد.</p> : null}
           </div>
         </section>
+      ) : null}
+
+      {activeTab === "settings" ? (
+        <div className="partner-admin-grid">
+          <section className="panel">
+            <div className="admin-card-head">
+              <Pencil size={22} />
+              <div>
+                <span className="eyebrow">الإعدادات</span>
+                <h2>هوية الشريك والاشتراك</h2>
+              </div>
+            </div>
+            <div className="promo-status-summary">
+              <span>UUID الداخلي</span>
+              <strong dir="ltr">{partner.id}</strong>
+              <small>هذا هو المعرف الثابت للعلاقات الداخلية، ولا يتأثر بتغيير البروموكود.</small>
+            </div>
+            <div className="promo-status-summary">
+              <span>الاشتراك</span>
+              <strong>{partner.subscriptionStatus}</strong>
+              <small>{partner.subscriptionExpiry ? `ينتهي في ${partner.subscriptionExpiry.toLocaleDateString("ar-EG")}` : "بدون تاريخ انتهاء مسجل"}</small>
+            </div>
+            <div className="promo-status-summary">
+              <span>إظهار بطاقة الشريك داخل الدعوة</span>
+              <strong>{partner.showPartnerCard ? "مفعل" : "مغلق"}</strong>
+              <small>يمكن تعديلها من صفحة تعديل الشريك عند الحاجة.</small>
+            </div>
+            <div className="button-row">
+              <Link className="btn btn-gold" href={`/admin/partners/${partner.id}/edit`}>
+                <Pencil size={17} />
+                تعديل الإعدادات
+              </Link>
+            </div>
+          </section>
+          <section className="panel">
+            <div className="admin-card-head">
+              <MessageSquareText size={22} />
+              <div>
+                <span className="eyebrow">ملاحظات داخلية</span>
+                <h2>الملاحظات والروابط</h2>
+              </div>
+            </div>
+            <div className="partner-mini-list">
+              <div>
+                <strong>ملاحظات داخلية</strong>
+                <span>{partner.internalNotes || "لا توجد ملاحظات داخلية."}</span>
+              </div>
+              <div>
+                <strong>Facebook</strong>
+                <span dir="ltr">{partner.facebookUrl || "غير مسجل"}</span>
+              </div>
+              <div>
+                <strong>Instagram</strong>
+                <span dir="ltr">{partner.instagramUrl || "غير مسجل"}</span>
+              </div>
+              <div>
+                <strong>آخر اشتراكات</strong>
+                <span>{partner.subscriptions.length ? `${partner.subscriptions.length} سجل اشتراك محفوظ` : "لا توجد سجلات اشتراك"}</span>
+              </div>
+            </div>
+          </section>
+        </div>
       ) : null}
     </section>
   );

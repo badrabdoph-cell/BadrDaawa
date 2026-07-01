@@ -14,6 +14,12 @@ function readValue(value: unknown, key: string) {
   return typeof next === "string" || typeof next === "number" ? String(next) : "";
 }
 
+function validDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function GET(request: NextRequest) {
   if (!prisma) {
     return NextResponse.json({ error: "database_unavailable" }, { status: 503 });
@@ -21,10 +27,21 @@ export async function GET(request: NextRequest) {
 
   const q = (request.nextUrl.searchParams.get("q") || "").trim();
   const action = request.nextUrl.searchParams.get("action") || "all";
+  const dateFrom = validDate(request.nextUrl.searchParams.get("dateFrom"));
+  const dateToValue = request.nextUrl.searchParams.get("dateTo");
+  const dateTo = validDate(dateToValue ? `${dateToValue}T23:59:59` : null);
   const activity = await prisma.partnerActivityLog.findMany({
     where: {
       ...(action !== "all" ? { action } : {}),
       ...(q ? { partner: { displayName: { contains: q, mode: "insensitive" as const } } } : {}),
+      ...(dateFrom || dateTo
+        ? {
+            createdAt: {
+              ...(dateFrom ? { gte: dateFrom } : {}),
+              ...(dateTo ? { lte: dateTo } : {}),
+            },
+          }
+        : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 1000,
