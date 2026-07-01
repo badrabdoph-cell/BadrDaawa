@@ -30,25 +30,31 @@ export async function createQuickPromoCodeAction(formData: FormData) {
 
   const returnTo = safeReturnPath(formString(formData, "returnTo"), "/admin/promo-codes/photographers");
   const siteUrl = getShareableSiteUrl(await headers()).replace(/\/$/, "");
+  let redirectTo = returnTo;
   try {
     const created = await PromoCodeService.createPartnerPromo({ formData, siteUrl });
-    redirect(`${returnTo}?created=${created.promo.id}&linkTest=${created.linkTest.ok ? "ok" : "failed"}`);
+    redirectTo = `${returnTo}?created=${created.promo.id}&linkTest=${created.linkTest.ok ? "ok" : "failed"}`;
   } catch (error) {
-    redirect(`${returnTo}?error=${error instanceof Error ? error.message : "unknown"}`);
+    console.error("[Promo] Failed to create partner promo", error);
+    redirectTo = `${returnTo}?error=${encodeURIComponent(error instanceof Error ? error.message : "unknown")}`;
   }
+  redirect(redirectTo);
 }
 
 export async function createDiscountPromoCodeAction(formData: FormData) {
   if (!prisma) redirect("/admin/promo-codes/discounts/new?error=database");
 
+  let redirectTo = "/admin/promo-codes/discounts";
   try {
     const displayMessage = formString(formData, "displayMessage");
     if (displayMessage) formData.set("displayMessage", displayMessage);
     const created = await PromoCodeService.createDiscountPromo({ formData });
-    redirect(`/admin/promo-codes/discounts?created=${created.id}`);
+    redirectTo = `/admin/promo-codes/discounts?created=${created.id}`;
   } catch (error) {
-    redirect(`/admin/promo-codes/discounts?error=${error instanceof Error ? error.message : "unknown"}`);
+    console.error("[Promo] Failed to create discount promo", error);
+    redirectTo = `/admin/promo-codes/discounts?error=${encodeURIComponent(error instanceof Error ? error.message : "unknown")}`;
   }
+  redirect(redirectTo);
 }
 
 export async function updatePartnerPromoStatusAction(formData: FormData) {
