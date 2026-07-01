@@ -25,6 +25,17 @@ function safeReturnPath(value: string, fallback = "/admin/promo-codes/partners")
   return value.startsWith("/") && !value.startsWith("//") ? value : fallback;
 }
 
+function promoActionErrorCode(error: unknown) {
+  if (typeof error === "object" && error !== null && "code" in error && typeof (error as { code?: unknown }).code === "string") {
+    return (error as { code: string }).code;
+  }
+  const message = error instanceof Error ? error.message : String(error || "unknown");
+  if (/unique|already|duplicate/i.test(message)) return "duplicate";
+  if (/displayMessage|column|does not exist/i.test(message)) return "migration_required";
+  if (message === "name" || message === "discount" || message === "database_unavailable") return message;
+  return message || "unknown";
+}
+
 export async function createQuickPromoCodeAction(formData: FormData) {
   if (!prisma) redirect("/admin/promo-codes?error=database");
 
@@ -36,7 +47,7 @@ export async function createQuickPromoCodeAction(formData: FormData) {
     redirectTo = `${returnTo}?created=${created.promo.id}&linkTest=${created.linkTest.ok ? "ok" : "failed"}`;
   } catch (error) {
     console.error("[Promo] Failed to create partner promo", error);
-    redirectTo = `${returnTo}?error=${encodeURIComponent(error instanceof Error ? error.message : "unknown")}`;
+    redirectTo = `${returnTo}?error=${encodeURIComponent(promoActionErrorCode(error))}`;
   }
   redirect(redirectTo);
 }
@@ -52,7 +63,7 @@ export async function createDiscountPromoCodeAction(formData: FormData) {
     redirectTo = `/admin/promo-codes/discounts?created=${created.id}`;
   } catch (error) {
     console.error("[Promo] Failed to create discount promo", error);
-    redirectTo = `/admin/promo-codes/discounts?error=${encodeURIComponent(error instanceof Error ? error.message : "unknown")}`;
+    redirectTo = `/admin/promo-codes/discounts?error=${encodeURIComponent(promoActionErrorCode(error))}`;
   }
   redirect(redirectTo);
 }

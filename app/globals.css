@@ -4955,6 +4955,70 @@ img {
   font-weight: 950;
 }
 
+.promo-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.promo-row-actions .btn-compact {
+  min-height: 36px;
+  padding-inline: 12px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.promo-actions-menu {
+  position: relative;
+}
+
+.promo-actions-menu summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid rgba(245, 234, 214, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #fff7e8;
+  font-size: 0.82rem;
+  font-weight: 950;
+  cursor: pointer;
+  list-style: none;
+}
+
+.promo-actions-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.promo-actions-menu[open] summary {
+  border-color: rgba(243, 207, 115, 0.38);
+  background: rgba(243, 207, 115, 0.12);
+}
+
+.promo-actions-menu > div {
+  position: absolute;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  z-index: 20;
+  display: grid;
+  gap: 7px;
+  width: min(240px, 82vw);
+  padding: 9px;
+  border: 1px solid rgba(245, 234, 214, 0.12);
+  border-radius: 8px;
+  background: #181a20;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+}
+
+.promo-actions-menu > div .btn,
+.promo-actions-menu > div button,
+.promo-actions-menu > div a,
+.promo-actions-menu > div .promo-test-control {
+  width: 100%;
+  justify-content: center;
+}
+
 .promo-timeline-legend {
   display: flex;
   flex-wrap: wrap;
@@ -5406,6 +5470,33 @@ img {
   gap: 12px;
 }
 
+.partner-saved-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(180, 139, 57, 0.34);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.82), transparent 52%),
+    linear-gradient(145deg, #fff8e6, #ead49a);
+  color: #6e4c16;
+  box-shadow: 0 14px 32px rgba(111, 75, 23, 0.16);
+}
+
+.partner-saved-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.partner-saved-avatar span {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
 .partner-saved-icon {
   font-size: 2rem;
   line-height: 1;
@@ -5448,6 +5539,50 @@ img {
 .partner-add-another {
   width: 100%;
   justify-content: center;
+}
+
+.partner-saved-card.from-promo {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(180, 139, 57, 0.34);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 244, 0.98), rgba(255, 240, 199, 0.9)),
+    #fff8e8;
+  box-shadow: 0 18px 50px rgba(128, 82, 18, 0.12);
+}
+
+.partner-saved-card.from-promo::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 5px;
+  content: "";
+  background: linear-gradient(180deg, #6e4c16, #f3cf73);
+}
+
+.partner-promo-badge {
+  margin-inline-start: auto;
+  padding: 5px 9px;
+  border: 1px solid rgba(180, 139, 57, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.64);
+  color: #6d4c14;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.partner-promo-discount {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid rgba(180, 139, 57, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.56);
+  color: #5b3c10;
+  font-size: 0.83rem;
+  font-weight: 950;
 }
 
 .venue-map-btn {
@@ -19511,6 +19646,82 @@ body:has(.template-preview-floating-actions) .unified-audio-player.floating {
   .media-source-badges {
     grid-column: 1 / -1;
     justify-content: flex-start;
+  }
+}
+
+/* Order wizard template cards must stay compact and preview-led.
+   The public templates page also uses .order-template-card, so keep this
+   override scoped to the order wizard to avoid inheriting the large cards. */
+.order-wizard-card .order-template-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.order-wizard-card .order-template-card {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.52fr) minmax(0, 1fr) auto;
+  grid-template-rows: none;
+  align-items: center;
+  gap: 12px;
+  min-height: unset;
+  padding: 10px;
+  border-width: 1px;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(255, 246, 224, 0.76)),
+    #fffdf8;
+  box-shadow: 0 12px 32px rgba(65, 43, 18, 0.08);
+}
+
+.order-wizard-card .order-template-card.active,
+.order-wizard-card .order-template-card:hover,
+.order-wizard-card .order-template-card:focus-visible {
+  border-color: rgba(180, 139, 57, 0.58);
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(255, 238, 190, 0.88)),
+    #fff6dc;
+  transform: translateY(-1px);
+}
+
+.order-wizard-card .order-template-thumb {
+  display: block;
+  min-height: 0;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid rgba(180, 139, 57, 0.16);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(243, 207, 115, 0.18), transparent 45%),
+    linear-gradient(145deg, #fffaf0, #efe0c4);
+}
+
+.order-wizard-card .order-template-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.order-wizard-card .order-template-card svg {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(180, 139, 57, 0.16);
+  color: #805914;
+}
+
+@media (max-width: 680px) {
+  .order-wizard-card .order-template-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-wizard-card .order-template-card {
+    grid-template-columns: 92px minmax(0, 1fr) auto;
   }
 }
 
@@ -42113,3 +42324,51 @@ body:has(.cinematic-opening:not(.is-leaving)) .music-control {
 }
 
 /* end redesigned story step */
+
+/* Final order wizard guard: keep order-step template cards independent from
+   the larger public template picker styles that share the same base class. */
+body .order-wizard-card .order-template-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+body .order-wizard-card .order-template-card {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.52fr) minmax(0, 1fr) auto;
+  grid-template-rows: none;
+  align-items: center;
+  gap: 12px;
+  min-height: unset;
+  padding: 10px;
+  border-width: 1px;
+  border-radius: 14px;
+}
+
+body .order-wizard-card .order-template-thumb {
+  display: block;
+  min-height: 0;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+body .order-wizard-card .order-template-thumb img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  object-position: top center;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 680px) {
+  body .order-wizard-card .order-template-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body .order-wizard-card .order-template-card {
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+  }
+}

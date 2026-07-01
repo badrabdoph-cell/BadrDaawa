@@ -16,6 +16,8 @@ function errorMessage(value?: string) {
   if (value === "database_unavailable" || value === "database") return "قاعدة البيانات غير متاحة حالياً.";
   if (value === "name") return "اكتب اسم الخصم أو الجملة التي تظهر.";
   if (value === "discount") return "نسبة الخصم مطلوبة عند اختيار نسبة.";
+  if (value === "duplicate" || value === "P2002" || value?.toLowerCase().includes("unique") || value?.toLowerCase().includes("already")) return "هذا الكود مستخدم بالفعل. اختر كودًا آخر أو اترك الخانة فارغة للتوليد التلقائي.";
+  if (value === "migration_required" || value?.includes("displayMessage") || value?.toLowerCase().includes("column")) return "قاعدة البيانات تحتاج تحديث Migration قبل إنشاء أكواد الخصم الجديدة.";
   return value ? "تعذر إنشاء كود الخصم. راجع البيانات وحاول مرة أخرى." : "";
 }
 
@@ -44,11 +46,20 @@ export default async function DiscountPromoCodesPage({
   const params = await searchParams;
   if (!prisma) return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
 
-  const [createdCode, latestCodes] = await Promise.all([
-    params.created ? prisma.discountPromoCode.findUnique({ where: { id: params.created } }) : Promise.resolve(null),
-    prisma.discountPromoCode.findMany({ orderBy: { createdAt: "desc" }, take: 40 }),
-  ]);
+  let createdCode = null;
+  let latestCodes: Awaited<ReturnType<typeof prisma.discountPromoCode.findMany>> = [];
+  let queryError = "";
+  try {
+    [createdCode, latestCodes] = await Promise.all([
+      params.created ? prisma.discountPromoCode.findUnique({ where: { id: params.created } }) : Promise.resolve(null),
+      prisma.discountPromoCode.findMany({ orderBy: { createdAt: "desc" }, take: 40 }),
+    ]);
+  } catch (error) {
+    console.error("[Promo] Failed to load discount promo codes", error);
+    queryError = error instanceof Error ? error.message : "discount-query-failed";
+  }
   const message = errorMessage(params.error);
+  const queryMessage = queryError ? errorMessage(queryError) || "تعذر تحميل أكواد الخصم الحالية. يمكنك المحاولة مرة أخرى بعد تحديث قاعدة البيانات." : "";
 
   return (
     <section className="admin-command-center promo-admin-page promo-creative-page">
@@ -63,6 +74,7 @@ export default async function DiscountPromoCodesPage({
       <AdminPromoSectionNav />
 
       {message ? <div className="notice danger">{message}</div> : null}
+      {queryMessage ? <div className="notice danger">{queryMessage}</div> : null}
       {createdCode ? <div className="notice success">تم إنشاء كود الخصم بنجاح. يمكنك نسخه أو اختبار الكود الآن.</div> : null}
 
       <div className="promo-workbench">

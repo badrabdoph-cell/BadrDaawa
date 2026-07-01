@@ -238,35 +238,40 @@ export default async function PromoCodeHistoryPage({
                     <td>{conversionRate(promo._count.orders, visits)}</td>
                     <td>{codeState(promo)}</td>
                     <td>
-                      <div className="button-row">
-                        <Link className="btn btn-gold" href={`/admin/promo-codes/${promo.id}`}>كل الدعوات</Link>
-                        <CopyButton value={promo.code} label="نسخ الكود" className="btn btn-soft" />
-                        <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
-                        <AdminPromoTestButton code={promo.code} label="اختبار الكود" />
-                        <Link className="btn btn-soft" href={shortPath} target="_blank">اختبار الرابط</Link>
-                        <form action={pausePartnerPromoUntilAction}>
-                          <input type="hidden" name="id" value={promo.id} />
-                          <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
-                          <button className="btn btn-soft" type="submit">تعطيل مؤقت</button>
-                        </form>
-                        <form action={updatePartnerPromoStatusAction}>
-                          <input type="hidden" name="id" value={promo.id} />
-                          <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
-                          <input type="hidden" name="status" value="ACTIVE" />
-                          <button className="btn btn-soft" type="submit"><RotateCcw size={16} />إعادة تشغيل</button>
-                        </form>
-                        <form action={softDeletePartnerPromoAction}>
-                          <input type="hidden" name="id" value={promo.id} />
-                          <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
-                          <button className="btn btn-soft" type="submit"><Archive size={16} />أرشفة</button>
-                        </form>
-                        {promo.archivedAt || promo.status === "ARCHIVED" ? (
-                          <form action={restorePartnerPromoAction}>
-                            <input type="hidden" name="id" value={promo.id} />
-                            <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
-                            <button className="btn btn-gold" type="submit">استعادة</button>
-                          </form>
-                        ) : null}
+                      <div className="promo-row-actions">
+                        <Link className="btn btn-gold btn-compact" href={`/admin/promo-codes/${promo.id}`}>كل الدعوات</Link>
+                        <details className="promo-actions-menu">
+                          <summary>إجراءات</summary>
+                          <div>
+                            <CopyButton value={promo.code} label="نسخ الكود" className="btn btn-soft" />
+                            <CopyButton value={shortUrl} label="نسخ الرابط" className="btn btn-soft" />
+                            <AdminPromoTestButton code={promo.code} label="اختبار الكود" />
+                            <Link className="btn btn-soft" href={shortPath} target="_blank">اختبار الرابط</Link>
+                            <form action={pausePartnerPromoUntilAction}>
+                              <input type="hidden" name="id" value={promo.id} />
+                              <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
+                              <button className="btn btn-soft" type="submit">تعطيل مؤقت</button>
+                            </form>
+                            <form action={updatePartnerPromoStatusAction}>
+                              <input type="hidden" name="id" value={promo.id} />
+                              <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
+                              <input type="hidden" name="status" value="ACTIVE" />
+                              <button className="btn btn-soft" type="submit"><RotateCcw size={16} />إعادة تشغيل</button>
+                            </form>
+                            <form action={softDeletePartnerPromoAction}>
+                              <input type="hidden" name="id" value={promo.id} />
+                              <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
+                              <button className="btn btn-soft" type="submit"><Archive size={16} />أرشفة</button>
+                            </form>
+                            {promo.archivedAt || promo.status === "ARCHIVED" ? (
+                              <form action={restorePartnerPromoAction}>
+                                <input type="hidden" name="id" value={promo.id} />
+                                <input type="hidden" name="returnTo" value="/admin/promo-codes/history" />
+                                <button className="btn btn-gold" type="submit">استعادة</button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </details>
                       </div>
                     </td>
                   </tr>

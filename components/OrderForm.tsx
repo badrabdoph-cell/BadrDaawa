@@ -201,6 +201,31 @@ const orderWizardSteps = [
 
 type OrderWizardStepId = (typeof orderWizardSteps)[number]["id"];
 
+function partnerTypeLabel(value?: string) {
+  const labels: Record<string, string> = {
+    PHOTOGRAPHER: "مصور فوتوغرافي",
+    VIDEOGRAPHER: "مصور فيديو",
+    HALL: "قاعة",
+    PLANNER: "منظم حفلات",
+    DJ: "DJ",
+    MAKEUP_ARTIST: "ميكب آرتيست",
+    DECORATOR: "ديكور",
+    OTHER: "مزود خدمة",
+  };
+  return value ? labels[value] || value : "";
+}
+
+function partnerIconForType(value?: string) {
+  if (value === "قاعة" || value === "HALL") return "🏛️";
+  if (value === "ميكب آرتيست" || value === "MAKEUP_ARTIST") return "💄";
+  if (value === "DJ") return "🎤";
+  if (value === "منظم حفلات" || value === "PLANNER") return "🎀";
+  if (value === "مصور فيديو" || value === "VIDEOGRAPHER") return "🎥";
+  if (value === "ديكور" || value === "DECORATOR") return "🎗️";
+  if (value === "مزود خدمة" || value === "OTHER") return "➕";
+  return "📷";
+}
+
 const acceptedAudioFormats = "audio/mpeg,.mp3";
 const acceptedVideoFormats = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
 const maxClientOriginalImageBytes = 32 * 1024 * 1024;
@@ -1101,15 +1126,18 @@ export function OrderForm({
       }
       const nextPromo = data as AppliedPromo;
       setAppliedPromo(nextPromo);
-      if (nextPromo.type === "partner" && nextPromo.photographer) {
-        setPartnerServiceType("مصور فوتوغرافي");
+      if (nextPromo.type === "partner") {
+        const partnerName = nextPromo.photographer?.name || nextPromo.partner?.displayName || "";
+        const partnerFacebookUrl = nextPromo.photographer?.facebookUrl || nextPromo.partner?.facebookUrl || "";
+        const partnerInstagramUrl = nextPromo.photographer?.instagramUrl || nextPromo.partner?.instagramUrl || "";
+        setPartnerServiceType(partnerTypeLabel(nextPromo.partner?.partnerType) || "مصور فوتوغرافي");
         setPhotographerSaved(true);
         setForm((current) => ({
           ...current,
           photographerEnabled: true,
-          photographerName: nextPromo.photographer?.name || "",
-          photographerFacebookUrl: nextPromo.photographer?.facebookUrl || "",
-          photographerInstagramUrl: nextPromo.photographer?.instagramUrl || "",
+          photographerName: partnerName,
+          photographerFacebookUrl: partnerFacebookUrl,
+          photographerInstagramUrl: partnerInstagramUrl,
           appliedPromoCode: nextPromo.promo.code,
           partnerPromoId: nextPromo.promo.id,
           referralSource: source,
@@ -2376,17 +2404,16 @@ export function OrderForm({
                     /* saved card */
                     <div className={`partner-saved-card ${form.appliedPromoCode ? "from-promo" : ""}`}>
                       <div className="partner-saved-head">
-                        <span className="partner-saved-icon">
-                          {partnerServiceType === "مصور فوتوغرافي" ? "📷" :
-                           partnerServiceType === "قاعة" ? "🏛️" :
-                           partnerServiceType === "ميكب آرتيست" ? "💄" :
-                           partnerServiceType === "DJ" ? "🎤" :
-                           partnerServiceType === "منظم حفلات" ? "🎀" :
-                           "➕"}
+                        <span className="partner-saved-avatar">
+                          {appliedPromo?.partner?.logoUrl || appliedPromo?.photographer?.logoUrl ? (
+                            <img src={appliedPromo?.partner?.logoUrl || appliedPromo?.photographer?.logoUrl} alt="" loading="lazy" />
+                          ) : (
+                            <span>{partnerIconForType(appliedPromo?.partner?.partnerType || partnerServiceType)}</span>
+                          )}
                         </span>
                         <div className="partner-saved-info">
-                          <strong className="partner-saved-name">{form.photographerName || "شريك"}</strong>
-                          <small className="partner-saved-type">{partnerServiceType || "شريك"}</small>
+                          <strong className="partner-saved-name">{form.photographerName || appliedPromo?.partner?.displayName || appliedPromo?.photographer?.name || "شريك الحفل"}</strong>
+                          <small className="partner-saved-type">{partnerServiceType || partnerTypeLabel(appliedPromo?.partner?.partnerType) || "شريك"}</small>
                         </div>
                         {form.appliedPromoCode ? (
                           <span className="partner-promo-badge">بروموكود</span>
