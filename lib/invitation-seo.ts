@@ -33,12 +33,14 @@ function absoluteUrl(value: string) {
   }
 }
 
-function getInvitationImage(invitation: Invitation) {
-  const candidate = invitation.heroPhoto || invitation.gallery.find(Boolean) || "/assets/brand/hero-luxury.png";
+function getInvitationImage(invitation: Invitation, options: { postImageEnabled?: boolean } = {}) {
+  const postImageEnabled = options.postImageEnabled !== false;
+  const generatedPostImage = postImageEnabled && invitation.postImageStatus === "GENERATED" ? invitation.postImageUrl : "";
+  const candidate = generatedPostImage || invitation.heroPhoto || invitation.gallery.find(Boolean) || "/assets/brand/hero-luxury.png";
   return absoluteUrl(candidate);
 }
 
-export function getInvitationSeoMetadata(invitation: Invitation): Metadata {
+export function getInvitationSeoMetadata(invitation: Invitation, options: { postImageEnabled?: boolean } = {}): Metadata {
   const coupleName = `${invitation.groomName} و ${invitation.brideName}`;
   const weddingDate = safeArabicDate(invitation.weddingDate);
   const location = [invitation.venue, invitation.city].filter(Boolean).join(" - ");
@@ -55,7 +57,7 @@ export function getInvitationSeoMetadata(invitation: Invitation): Metadata {
     155,
   );
   const url = getInvitationUrl(invitation.code, invitation.customSlug);
-  const imageUrl = getInvitationImage(invitation);
+  const imageUrl = getInvitationImage(invitation, options);
   const imageAlt = truncate(`دعوة زفاف ${coupleName}`, 120);
 
   return {
@@ -98,7 +100,7 @@ export function getMissingInvitationSeoMetadata(): Metadata {
   };
 }
 
-export function getInvitationStructuredData(invitation: Invitation) {
+export function getInvitationStructuredData(invitation: Invitation, options: { postImageEnabled?: boolean } = {}) {
   const coupleName = `${invitation.groomName} و ${invitation.brideName}`;
   const url = getInvitationUrl(invitation.code, invitation.customSlug);
   const startDate = invitation.weddingTime ? `${invitation.weddingDate.slice(0, 10)}T${invitation.weddingTime}` : invitation.weddingDate;
@@ -112,7 +114,7 @@ export function getInvitationStructuredData(invitation: Invitation) {
     startDate,
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
-    image: [getInvitationImage(invitation)],
+    image: [getInvitationImage(invitation, options)],
     url,
     location: locationName
       ? {

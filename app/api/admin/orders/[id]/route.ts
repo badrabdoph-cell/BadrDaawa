@@ -9,6 +9,7 @@ import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
+import { ensureInvitationPostImage } from "@/lib/post-image/service";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -654,6 +655,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       revalidatePath(getCustomerAdminPath(code));
       revalidatePath(await getInvitationManagePath(code));
       const links = await responseLinks(request, code);
+      const postImage = await ensureInvitationPostImage({ code, publicUrl: links.publicUrl }).catch((error) => {
+        console.error("[Admin Order] Post image generation failed after publish", error);
+        return null;
+      });
       const order =
         (await getSnapshot(id, request)) ||
         ({
@@ -670,10 +675,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         action: auditAction,
         entity: { type: "Order", id, label: oldValues?.orderNumber || id },
         oldValues,
-        newValues: { ...order, publishedInvitationCode: code, links, trialDays: payload.trialDays },
+        newValues: { ...order, publishedInvitationCode: code, links, trialDays: payload.trialDays, postImage },
         metadata: { invitationCode: code, trialDays: payload.trialDays },
       });
-      return jsonMode ? NextResponse.json({ ok: true, code, ...links, order }) : redirectBack(request, `converted-${code}`);
+      return jsonMode ? NextResponse.json({ ok: true, code, ...links, order, postImage }) : redirectBack(request, `converted-${code}`);
     }
 
     await updateOrder(id, payload, "EDITED");

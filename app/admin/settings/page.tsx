@@ -169,6 +169,10 @@ export default async function AdminSiteSettingsPage({
               <input name="showPaymentMethods" type="checkbox" defaultChecked={settings.order.showPaymentMethods} />
               إظهار خيارات طريقة الدفع في طلب الدعوة
             </label>
+            <label className="admin-toggle-row template-inline-toggle">
+              <input name="postImageEnabled" type="checkbox" defaultChecked={settings.order.postImageEnabled} />
+              تشغيل مرحلة صورة البوست وكل الأدوات المرتبطة بها
+            </label>
           </div>
         </article>
 

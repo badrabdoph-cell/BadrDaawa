@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Archive, CalendarDays, CheckCircle2, Copy, Eye, ExternalLink, Link2, Music2, Pause, Play, Settings2, ShieldAlert, StickyNote, Trash2, UserCheck, UsersRound } from "lucide-react";
+import { Archive, CalendarDays, CheckCircle2, Copy, Eye, ExternalLink, Link2, Music2, Newspaper, Pause, Play, Settings2, ShieldAlert, StickyNote, Trash2, UserCheck, UsersRound } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { CopySuccessButton } from "@/components/CopySuccessButton";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
+import { PostImageAdminPanel } from "@/components/PostImageAdminPanel";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
 import { getGuestBookMessages } from "@/lib/guest-book";
 import { getInternalNotesForEntity } from "@/lib/internal-notes";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
+import { isPostImageFeatureEnabled } from "@/lib/post-image/feature-flag";
+import { getDraftSiteSettings } from "@/lib/site-settings";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 
@@ -64,7 +67,7 @@ export default async function AdminInvitationDetailsPage({
 }) {
   const { code } = await params;
   const cleanCode = decodeURIComponent(code || "").trim();
-  const [invitations, guests, templates, notes, favorites, messages, requestHeaders] = await Promise.all([
+  const [invitations, guests, templates, notes, favorites, messages, requestHeaders, siteSettings] = await Promise.all([
     getAdminInvitations(),
     getAdminGuests(),
     getTemplatesWithSettings(),
@@ -72,6 +75,7 @@ export default async function AdminInvitationDetailsPage({
     getAdminFavorites({ entityType: "invitation" }),
     getGuestBookMessages(cleanCode, "all"),
     headers(),
+    getDraftSiteSettings(),
   ]);
   const invitation = invitations.find((item) => item.code.toLowerCase() === cleanCode.toLowerCase());
   if (!invitation) notFound();
@@ -88,6 +92,7 @@ export default async function AdminInvitationDetailsPage({
   const invitationState = getInvitationState(invitation);
   const returnTo = `/admin/invitations/${encodeURIComponent(invitation.code)}`;
   const approvedMessages = messages.filter((message) => message.status === "approved").length;
+  const postImageFeatureEnabled = isPostImageFeatureEnabled(siteSettings);
 
   return (
     <>
@@ -128,6 +133,7 @@ export default async function AdminInvitationDetailsPage({
         <a href="#stats">الإحصائيات</a>
         <a href="#guests">الضيوف</a>
         <a href="#guest-book">التهاني</a>
+        {postImageFeatureEnabled ? <a href="#post-image">صورة البوست</a> : null}
         <a href="#music">الموسيقى</a>
         <a href="#notes">الملاحظات</a>
         <a href="#settings">الإعدادات</a>
@@ -214,6 +220,32 @@ export default async function AdminInvitationDetailsPage({
             {!messages.length ? <p className="admin-muted-paragraph">لا توجد رسائل تهنئة لهذه الدعوة بعد.</p> : null}
           </div>
         </section>
+
+        {postImageFeatureEnabled ? (
+          <section className="invitation-detail-section" id="post-image">
+            <div className="invitation-detail-section-head">
+              <div>
+                <span className="eyebrow">Post Image</span>
+                <h2>صورة البوست</h2>
+              </div>
+              <Newspaper size={18} />
+            </div>
+            <PostImageAdminPanel
+              code={invitation.code}
+              invitationUrl={invitationUrl}
+              initial={{
+                url: invitation.postImageUrl,
+                status: invitation.postImageStatus || "NEEDS_REGENERATION",
+                templateId: invitation.postImageTemplateId || "breaking-news-v1",
+                generatedAt: invitation.postImageGeneratedAt,
+                error: invitation.postImageError,
+                width: invitation.postImageWidth,
+                height: invitation.postImageHeight,
+                downloadFileName: `post-image-${invitation.code}.png`,
+              }}
+            />
+          </section>
+        ) : null}
 
         <section className="invitation-detail-section" id="music">
           <div className="invitation-detail-section-head">

@@ -28,6 +28,14 @@ type DatabaseInvitation = {
   musicEnabled?: boolean | null;
   texts?: unknown;
   photographer?: unknown;
+  postImageUrl: string | null;
+  postImageTemplateId: string | null;
+  postImageStatus: string | null;
+  postImageSignature: string | null;
+  postImageGeneratedAt: Date | null;
+  postImageError: string | null;
+  postImageWidth: number | null;
+  postImageHeight: number | null;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
   trialDays: number | null;
   trialEndsAt: Date | null;
@@ -134,6 +142,20 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     musicEnabled: invitation.musicEnabled === true || (invitation.musicEnabled == null && Boolean(invitation.musicUrl)),
     texts: normalizeInvitationTexts(invitation.texts),
     photographer: toPhotographer(invitation.photographer),
+    postImageUrl: invitation.postImageUrl || undefined,
+    postImageTemplateId: invitation.postImageTemplateId || undefined,
+    postImageStatus:
+      invitation.postImageStatus === "GENERATED" ||
+      invitation.postImageStatus === "GENERATING" ||
+      invitation.postImageStatus === "FAILED" ||
+      invitation.postImageStatus === "NEEDS_REGENERATION"
+        ? invitation.postImageStatus
+        : undefined,
+    postImageSignature: invitation.postImageSignature || undefined,
+    postImageGeneratedAt: invitation.postImageGeneratedAt?.toISOString(),
+    postImageError: invitation.postImageError || undefined,
+    postImageWidth: invitation.postImageWidth || undefined,
+    postImageHeight: invitation.postImageHeight || undefined,
     isActive: invitation.status === "ACTIVE" && !invitation.disabledAt,
     disabledAt: invitation.disabledAt?.toISOString(),
     disabledReason: invitation.disabledReason || undefined,

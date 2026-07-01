@@ -15,6 +15,7 @@ import { autoDisableExpiredTrial, getGuestsByInvitation, getInvitationByCode } f
 import { getPublishedMessageTemplates } from "@/lib/message-templates";
 import { getPublishedMusicLibrary } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
+import { isPostImageFeatureEnabled } from "@/lib/post-image/feature-flag";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublishedTemplateWithSettings } from "@/lib/template-settings";
 import { getPublicSiteUrl } from "@/lib/utils";
@@ -148,6 +149,7 @@ export default async function CustomerAdminPage({
         analytics={analytics}
         url={url}
         whatsappSupportUrl={siteSettings.whatsappUrl}
+        postImageFeatureEnabled={isPostImageFeatureEnabled(siteSettings)}
       />
     </main>
   );

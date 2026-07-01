@@ -13,6 +13,7 @@ import { autoDisableExpiredTrial, recordInvitationView } from "@/lib/invitation-
 import { getCachedInvitationByCode, getInvitationSeoMetadata, getInvitationStructuredData, getMissingInvitationSeoMetadata } from "@/lib/invitation-seo";
 import { getPublishedMusicLibrary, resolveInvitationMusic } from "@/lib/music-library";
 import { getPendingOrderByInvitationCode, getRejectedOrderByInvitationCode } from "@/lib/order-request-links";
+import { isPostImageFeatureEnabled } from "@/lib/post-image/feature-flag";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublishedTemplateWithSettings } from "@/lib/template-settings";
 import { detectVisitSource } from "@/lib/visit-source";
@@ -37,7 +38,7 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { code } = await params;
-  const invitation = await getCachedInvitationByCode(code);
+  const [invitation, siteSettings] = await Promise.all([getCachedInvitationByCode(code), getPublishedSiteSettings()]);
   if (invitation) {
     if (invitation.disabledAt || invitation.disabledReason) {
       return {
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         robots: { index: false, follow: false },
       };
     }
-    return getInvitationSeoMetadata(invitation);
+    return getInvitationSeoMetadata(invitation, { postImageEnabled: isPostImageFeatureEnabled(siteSettings) });
   }
   const pendingOrder = await getPendingOrderByInvitationCode(code);
   if (pendingOrder) {
@@ -182,7 +183,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
 
   const locale = resolveLocale(invitation.language);
   const localeMeta = getLocaleMeta(locale);
-  const structuredData = JSON.stringify(getInvitationStructuredData(invitation)).replace(/</g, "\\u003c");
+  const structuredData = JSON.stringify(getInvitationStructuredData(invitation, { postImageEnabled: isPostImageFeatureEnabled(siteSettings) })).replace(/</g, "\\u003c");
 
   return (
     <div lang={localeMeta.htmlLang} dir={localeMeta.dir} data-invitation-locale={locale}>

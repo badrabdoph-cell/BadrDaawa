@@ -10,6 +10,7 @@ import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import { hashPassword } from "@/lib/password";
+import { ensureInvitationPostImage, markPostImageNeedsRegeneration } from "@/lib/post-image/service";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
@@ -417,12 +418,25 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  const links = await responseLinks(request, code, customSlug);
+  const postImage =
+    action === "publish"
+      ? await ensureInvitationPostImage({ code, publicUrl: links.publicUrl }).catch((error) => {
+          console.error("[Invitation Builder] Post image generation failed after publish", error);
+          return null;
+        })
+      : (await markPostImageNeedsRegeneration(code).catch((error) => {
+          console.error("[Invitation Builder] Failed to mark post image for regeneration", error);
+        }),
+        null);
+
   return NextResponse.json({
     ok: true,
     status,
     code,
     customSlug,
     validation: prePublishReport,
-    ...(await responseLinks(request, code, customSlug)),
+    ...links,
+    postImage,
   });
 }

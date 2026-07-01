@@ -1,3 +1,5 @@
+import type { PostImageStatus } from "./post-image/types";
+
 export type Language = "ar" | "en";
 
 export type TemplateStyle = "featured" | "royal" | "noir" | "ivory" | "mobile" | "boho" | "garden" | "cinematic" | "glass" | "minimal" | "neon" | "vintage" | "ocean" | "artdeco" | "magazine" | "custom";
@@ -77,6 +79,14 @@ export type Invitation = {
     lockedByPromo?: boolean;
     promoCode?: string;
   };
+  postImageUrl?: string;
+  postImageTemplateId?: string;
+  postImageStatus?: PostImageStatus;
+  postImageSignature?: string;
+  postImageGeneratedAt?: string;
+  postImageError?: string;
+  postImageWidth?: number;
+  postImageHeight?: number;
   checkInEnabled?: boolean;
   isActive: boolean;
   disabledAt?: string;

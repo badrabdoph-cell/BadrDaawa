@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import { ensureInvitationPostImage } from "@/lib/post-image/service";
 import type { Invitation } from "@/lib/types";
 import { extractCoordinatesFromUrl } from "@/lib/map-url";
 import { getShareableSiteUrl } from "@/lib/utils";
@@ -74,6 +75,7 @@ async function getClientInvitationAuditSnapshot(code: string) {
         where: { code, deletedAt: null },
         select: {
           code: true,
+          customSlug: true,
           status: true,
           groomName: true,
           brideName: true,
@@ -94,6 +96,19 @@ async function getClientInvitationAuditSnapshot(code: string) {
     if (invitation) return invitation;
   }
   return null;
+}
+
+function hasPostImageRelevantChanges(data: Record<string, unknown>) {
+  return ["groomName", "brideName", "weddingDate", "heroPhoto", "gallery"].some((key) => key in data);
+}
+
+async function refreshPostImageAfterClientChange(request: NextRequest, code: string, customSlug: string | null | undefined, data: Record<string, unknown>) {
+  if (!hasPostImageRelevantChanges(data)) return null;
+  const siteUrl = getShareableSiteUrl(request.headers).replace(/\/$/, "");
+  return ensureInvitationPostImage({ code, publicUrl: `${siteUrl}/${customSlug || code}` }).catch((error) => {
+    console.error("[Client Invitation] Post image regeneration failed after client update", error);
+    return null;
+  });
 }
 
 async function resolveJsonMusic(code: string, payload: ClientInvitationPayload) {
@@ -239,6 +254,7 @@ async function handleJsonUpdate(request: NextRequest, code: string) {
   revalidatePath(`/${code}`);
   revalidatePath(`/${code}/ad_3399`);
   if (updated) {
+    await refreshPostImageAfterClientChange(request, code, oldValues && "customSlug" in oldValues ? oldValues.customSlug : null, data);
     await recordAuditLog({
       actor: getClientAuditActor(code),
       action: "invitation.update",
@@ -388,6 +404,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     revalidatePath(`/${code}`);
     revalidatePath(`/${code}/ad_3399`);
+    await refreshPostImageAfterClientChange(request, code, oldValues && "customSlug" in oldValues ? oldValues.customSlug : null, data);
     await recordAuditLog({
       actor: getClientAuditActor(code),
       action: "invitation.update",

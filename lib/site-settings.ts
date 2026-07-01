@@ -30,6 +30,7 @@ export type SiteHomepageSettings = {
 
 export type SiteOrderSettings = {
   showPaymentMethods: boolean;
+  postImageEnabled: boolean;
 };
 
 export type SitePhotographerSettings = {
@@ -101,6 +102,7 @@ export const defaultSiteSettings: SiteSettings = {
   },
   order: {
     showPaymentMethods: false,
+    postImageEnabled: true,
   },
   photographer: {
     showPhotographerCard: process.env.SHOW_PHOTOGRAPHER_CARD !== "false",
@@ -207,6 +209,7 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
     },
     order: {
       showPaymentMethods: normalizeBoolean(input.order?.showPaymentMethods, fallback.order.showPaymentMethods),
+      postImageEnabled: normalizeBoolean(input.order?.postImageEnabled, fallback.order.postImageEnabled),
     },
     photographer: {
       showPhotographerCard: normalizeBoolean(input.photographer?.showPhotographerCard, fallback.photographer.showPhotographerCard),

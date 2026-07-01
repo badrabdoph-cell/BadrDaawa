@@ -222,7 +222,7 @@ async function collectDatabaseReferences(references: Map<string, MediaUsageDetai
   if (!prisma) return;
 
   const [invitations, orders, templates] = await Promise.all([
-    prisma.invitation.findMany({ select: { code: true, groomName: true, brideName: true, heroPhoto: true, gallery: true, musicUrl: true, photographer: true } }).catch(() => []),
+    prisma.invitation.findMany({ select: { code: true, groomName: true, brideName: true, heroPhoto: true, gallery: true, musicUrl: true, photographer: true, qrCodeUrl: true, postImageUrl: true } }).catch(() => []),
     prisma.orderRequest.findMany({ select: { orderNumber: true, groomName: true, brideName: true, imageUrls: true, musicUrl: true, photographer: true } }).catch(() => []),
     prisma.weddingTemplate.findMany({ select: { slug: true, arabicName: true, previewUrl: true } }).catch(() => []),
   ]);

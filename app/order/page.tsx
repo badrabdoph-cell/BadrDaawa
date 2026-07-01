@@ -7,6 +7,7 @@ import type { OrderInitialDraft } from "@/components/OrderForm";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderRequestUxPatches } from "@/components/OrderRequestUxPatches";
 import { PARTNER_PROMO_COOKIE, PARTNER_PROMO_STATUS_COOKIE } from "@/lib/partner-promo";
+import { isPostImageFeatureEnabled } from "@/lib/post-image/feature-flag";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublicPublishedTemplatesWithSettings } from "@/lib/template-settings";
 
@@ -497,7 +498,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
       </header>
       <main className="order-builder-main">
         <div className="container order-shell">
-          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} initialPromoStatus={initialPromoStatus} templates={templateOptions} skipTemplateStep={Boolean(params.template)} showPaymentMethods={siteSettings.order.showPaymentMethods} />
+          <OrderForm initialTemplate={selected.slug} initialDraft={initialDraft} initialPromoStatus={initialPromoStatus} templates={templateOptions} skipTemplateStep={Boolean(params.template)} showPaymentMethods={siteSettings.order.showPaymentMethods} postImageFeatureEnabled={isPostImageFeatureEnabled(siteSettings)} />
         </div>
       </main>
       <OrderRequestUxPatches />

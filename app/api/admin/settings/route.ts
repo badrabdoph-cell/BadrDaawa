@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
       },
       order: {
         showPaymentMethods: formData.has("showPaymentMethods"),
+        postImageEnabled: formData.has("postImageEnabled"),
       },
       maintenance: {
         enabled: formData.has("maintenanceEnabled"),

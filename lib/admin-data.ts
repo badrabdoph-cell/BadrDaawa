@@ -39,6 +39,14 @@ type AdminInvitationRow = {
   musicEnabled?: boolean | null;
   texts?: unknown;
   photographer?: unknown;
+  postImageUrl?: string | null;
+  postImageTemplateId?: string | null;
+  postImageStatus?: string | null;
+  postImageSignature?: string | null;
+  postImageGeneratedAt?: Date | string | null;
+  postImageError?: string | null;
+  postImageWidth?: number | null;
+  postImageHeight?: number | null;
   status?: string;
   isActive?: boolean;
   disabledAt?: Date | string | null;
@@ -211,6 +219,20 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     musicEnabled: row.musicEnabled === true || (row.musicEnabled == null && Boolean(row.musicUrl)),
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer),
+    postImageUrl: row.postImageUrl || undefined,
+    postImageTemplateId: row.postImageTemplateId || undefined,
+    postImageStatus:
+      row.postImageStatus === "GENERATED" ||
+      row.postImageStatus === "GENERATING" ||
+      row.postImageStatus === "FAILED" ||
+      row.postImageStatus === "NEEDS_REGENERATION"
+        ? row.postImageStatus
+        : undefined,
+    postImageSignature: row.postImageSignature || undefined,
+    postImageGeneratedAt: row.postImageGeneratedAt instanceof Date ? row.postImageGeneratedAt.toISOString() : row.postImageGeneratedAt || undefined,
+    postImageError: row.postImageError || undefined,
+    postImageWidth: row.postImageWidth || undefined,
+    postImageHeight: row.postImageHeight || undefined,
     isActive: row.status ? (row.status === "ACTIVE" && !row.disabledAt) : Boolean(row.isActive && !row.disabledAt),
     disabledAt: row.disabledAt instanceof Date ? row.disabledAt.toISOString() : row.disabledAt || undefined,
     disabledReason: row.disabledReason || undefined,

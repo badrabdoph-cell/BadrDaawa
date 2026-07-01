@@ -383,6 +383,7 @@ async function auditDatabase() {
           musicUrl: true,
           photographer: true,
           qrCodeUrl: true,
+          postImageUrl: true,
         },
       }),
       safeFindMany(prisma.orderRequest, {

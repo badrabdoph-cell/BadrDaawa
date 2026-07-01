@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, Copy, Facebook, MessageCircle, Send, Share2 } from "lucide-react";
+import { Check, Copy, Download, Facebook, Image as ImageIcon, MessageCircle, Send, Share2 } from "lucide-react";
 import { MessageTemplatePicker } from "@/components/MessageTemplatePicker";
 import { createMessageTemplateVariables } from "@/lib/message-template-render";
 import type { MessageTemplate } from "@/lib/types";
@@ -14,6 +14,8 @@ type ClientShareToolsProps = {
   weddingDate: string;
   venue: string;
   messageTemplates?: MessageTemplate[];
+  postImageUrl?: string;
+  postImageStatus?: string;
 };
 
 function formatShareDate(value: string) {
@@ -50,7 +52,8 @@ export function ClientShareTools(props: ClientShareToolsProps) {
     [props.brideName, props.groomName, props.invitationUrl, props.venue, props.weddingDate],
   );
   const [message, setMessage] = useState(defaultMessage);
-  const [copied, setCopied] = useState<"url" | "message" | "">("");
+  const [copied, setCopied] = useState<"url" | "message" | "postImage" | "">("");
+  const [postImageMessage, setPostImageMessage] = useState("");
 
   const trackedUrls = useMemo(
     () => ({
@@ -81,6 +84,24 @@ export function ClientShareTools(props: ClientShareToolsProps) {
     window.setTimeout(() => setCopied(""), 1600);
   }
 
+  async function copyPostImage() {
+    if (!props.postImageUrl) return;
+    setPostImageMessage("");
+    try {
+      if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+        setPostImageMessage("النسخ المباشر غير مدعوم هنا. استخدم التحميل.");
+        return;
+      }
+      const response = await fetch(props.postImageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type || "image/png"]: blob })]);
+      setCopied("postImage");
+      window.setTimeout(() => setCopied(""), 1600);
+    } catch {
+      setPostImageMessage("لم ينجح نسخ الصورة. استخدم التحميل.");
+    }
+  }
+
   return (
     <article className="panel customer-share-panel">
       <div className="customer-share-head">
@@ -109,6 +130,27 @@ export function ClientShareTools(props: ClientShareToolsProps) {
           فيسبوك
         </a>
       </div>
+
+      {props.postImageUrl && props.postImageStatus === "GENERATED" ? (
+        <div className="customer-post-image-share">
+          <div>
+            <ImageIcon size={20} />
+            <strong>صورة البوست</strong>
+          </div>
+          <img src={props.postImageUrl} alt="صورة البوست" />
+          <div className="button-row">
+            <button className="btn btn-soft" type="button" onClick={copyPostImage}>
+              {copied === "postImage" ? <Check size={17} /> : <Copy size={17} />}
+              {copied === "postImage" ? "تم نسخ الصورة" : "نسخ الصورة"}
+            </button>
+            <a className="btn btn-soft" href={props.postImageUrl} download={`post-image-${props.groomName}-${props.brideName}.png`}>
+              <Download size={17} />
+              تحميل الصورة
+            </a>
+          </div>
+          {postImageMessage ? <small>{postImageMessage}</small> : null}
+        </div>
+      ) : null}
 
       <label className="field customer-share-message">
         <span>رسالة واتساب جاهزة</span>

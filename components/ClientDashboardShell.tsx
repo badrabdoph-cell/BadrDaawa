@@ -50,6 +50,7 @@ export function ClientDashboardShell({
   analytics,
   url,
   whatsappSupportUrl,
+  postImageFeatureEnabled = true,
 }: {
   invitation: Invitation;
   template: Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
@@ -64,6 +65,7 @@ export function ClientDashboardShell({
   analytics: CustomerInvitationAnalytics;
   url: string;
   whatsappSupportUrl?: string | null;
+  postImageFeatureEnabled?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const guestBookPending = guestBookMessages.filter((m) => m.status === "pending").length;
@@ -135,6 +137,7 @@ export function ClientDashboardShell({
           template={template}
           contentPresets={contentPresets}
           coupleMessagesSettings={coupleMessagesSettings}
+          postImageFeatureEnabled={postImageFeatureEnabled}
         />
       ) : null}
 
@@ -175,7 +178,7 @@ export function ClientDashboardShell({
           <ErrorBoundary name="share-tools">
             <details className="customer-admin-accordion" open>
               <summary>مشاركة الدعوة ورسالة واتساب</summary>
-              <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} />
+              <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} postImageUrl={postImageFeatureEnabled ? invitation.postImageUrl : undefined} postImageStatus={postImageFeatureEnabled ? invitation.postImageStatus : undefined} />
             </details>
           </ErrorBoundary>
           <ErrorBoundary name="live-mode">
@@ -318,6 +321,7 @@ function OverviewTab({
   template,
   contentPresets,
   coupleMessagesSettings,
+  postImageFeatureEnabled = true,
 }: {
   invitation: Invitation;
   analytics: CustomerInvitationAnalytics;
@@ -332,6 +336,7 @@ function OverviewTab({
   template: Pick<TemplateDefinition, "slug" | "name" | "arabicName" | "opening" | "concept" | "layout" | "typography">;
   contentPresets: ContentPreset[];
   coupleMessagesSettings: CoupleMessagesSettings;
+  postImageFeatureEnabled?: boolean;
 }) {
   return (
     <>
@@ -385,7 +390,7 @@ function OverviewTab({
           </details>
           <details className="customer-admin-accordion">
             <summary>مشاركة الدعوة ورسالة واتساب</summary>
-            <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} />
+            <ClientShareTools invitationUrl={url} groomName={invitation.groomName} brideName={invitation.brideName} weddingDate={invitation.weddingDate} venue={invitation.venue} messageTemplates={messageTemplates} postImageUrl={postImageFeatureEnabled ? invitation.postImageUrl : undefined} postImageStatus={postImageFeatureEnabled ? invitation.postImageStatus : undefined} />
           </details>
           <details className="customer-admin-accordion">
             <summary>وضع الحفل المباشر</summary>

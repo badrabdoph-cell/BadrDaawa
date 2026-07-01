@@ -20,6 +20,7 @@ import {
   Loader2,
   MapPin,
   Music2,
+  Newspaper,
   Phone,
   Sparkles,
   TicketPercent,
@@ -32,6 +33,7 @@ import { calculateKeyboardInset, getIncompleteRequiredStoryStage, orderStoryPres
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
 import { LocationPickerModal } from "./LocationPickerModal";
+import { PostImagePreviewCard } from "./post-image/PostImagePreviewCard";
 import { SimpleDateInput } from "./SimpleDateInput";
 import { PhoneInput } from "./PhoneInput";
 
@@ -187,7 +189,7 @@ const orderStoryExamples = [
 const minimumOrderStoryStages = requiredOrderStoryStages.length;
 const maximumOrderStoryStages = requiredOrderStoryStages.length;
 
-const orderWizardSteps = [
+const baseOrderWizardSteps = [
   { id: "template", title: "اختيار القالب" },
   { id: "couple", title: "بيانات العروسين" },
   { id: "event", title: "بيانات المناسبة" },
@@ -196,10 +198,11 @@ const orderWizardSteps = [
   { id: "music", title: "الموسيقى" },
   { id: "story", title: "قصة العروسين" },
   { id: "photographer", title: "شركاء الحفل" },
+  { id: "postImage", title: "صورة البوست" },
   { id: "review", title: "مراجعة الطلب" },
 ] as const;
 
-type OrderWizardStepId = (typeof orderWizardSteps)[number]["id"];
+type OrderWizardStepId = (typeof baseOrderWizardSteps)[number]["id"];
 
 function partnerTypeLabel(value?: string) {
   const labels: Record<string, string> = {
@@ -600,6 +603,7 @@ export function OrderForm({
   templates,
   skipTemplateStep = false,
   showPaymentMethods = false,
+  postImageFeatureEnabled = true,
 }: {
   initialTemplate?: string;
   initialDraft?: OrderInitialDraft;
@@ -607,6 +611,7 @@ export function OrderForm({
   templates: OrderTemplateOption[];
   skipTemplateStep?: boolean;
   showPaymentMethods?: boolean;
+  postImageFeatureEnabled?: boolean;
 }) {
   const fallbackTemplate = templates[0] || { slug: "featured-1", name: "Featured 1", arabicName: "مميز 1", previewImage: "/assets/templates/featured-1.svg" };
   const initialSlug = templates.some((template) => template.slug === initialTemplate) ? initialTemplate! : fallbackTemplate.slug;
@@ -681,6 +686,10 @@ export function OrderForm({
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.slug === form.templateSlug) || fallbackTemplate,
     [fallbackTemplate, form.templateSlug, templates],
+  );
+  const orderWizardSteps = useMemo(
+    () => (postImageFeatureEnabled ? baseOrderWizardSteps : baseOrderWizardSteps.filter((step) => step.id !== "postImage")),
+    [postImageFeatureEnabled],
   );
   const uploadingImageCount = imageUploads.filter((upload) => upload.phase === "selected" || upload.phase === "compressing" || upload.phase === "uploading").length;
   const hasImageUploadInProgress = uploadingImageCount > 0;
@@ -2480,6 +2489,22 @@ export function OrderForm({
               )}
             </div>
           </section>
+
+          {postImageFeatureEnabled ? (
+            <section className={`order-wizard-step ${activeStep.id === "postImage" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "postImage"}>
+              <div className="order-post-image-preview-stage">
+                <div className="order-compact-section-head">
+                  <h2><Newspaper size={20} /> صورة البوست</h2>
+                </div>
+                <PostImagePreviewCard
+                  groomName={form.groomName}
+                  brideName={form.brideName}
+                  weddingDate={form.weddingDate}
+                  coverImageUrl={previewImageUrls[0]}
+                />
+              </div>
+            </section>
+          ) : null}
 
           <section className={`order-wizard-step ${activeStep.id === "review" ? "is-active" : ""}`} aria-hidden={activeStep.id !== "review"}>
             <p className="order-review-submit-note" style={{ marginBottom: 12 }}>
