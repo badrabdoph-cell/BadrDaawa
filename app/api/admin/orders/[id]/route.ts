@@ -154,6 +154,32 @@ function cleanPhotographer(value: unknown): Invitation["photographer"] | undefin
     facebookUrl: enabled ? cleanOptionalUrl(input.facebookUrl) || "https://www.facebook.com/" : "",
     instagramUrl: enabled ? cleanOptionalUrl(input.instagramUrl) || "https://www.instagram.com/" : "",
     whatsappUrl: enabled ? cleanOptionalUrl(input.whatsappUrl) || undefined : undefined,
+    lockedByPromo: enabled && input.lockedByPromo === true,
+    promoCode: enabled ? cleanText(input.promoCode, "", 80) || undefined : undefined,
+  };
+}
+
+function readSnapshotText(source: Record<string, unknown>, key: string) {
+  const value = source[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function cleanPartnerSnapshotPhotographer(partnerSnapshot: unknown, current?: Invitation["photographer"], promoSnapshot?: unknown): Invitation["photographer"] | undefined {
+  if (!partnerSnapshot || typeof partnerSnapshot !== "object") return current;
+  const partner = partnerSnapshot as Record<string, unknown>;
+  const displayName = readSnapshotText(partner, "displayName");
+  if (!displayName) return current;
+  const promo = promoSnapshot && typeof promoSnapshot === "object" ? (promoSnapshot as Record<string, unknown>) : {};
+  return {
+    enabled: true,
+    name: displayName,
+    description: current?.description || "تمت إضافة بيانات الشريك بواسطة البروموكود.",
+    logoUrl: cleanOptionalUrl(readSnapshotText(partner, "logoUrl")) || current?.logoUrl,
+    facebookUrl: cleanOptionalUrl(readSnapshotText(partner, "facebookUrl")) || current?.facebookUrl || "https://www.facebook.com/",
+    instagramUrl: cleanOptionalUrl(readSnapshotText(partner, "instagramUrl")) || current?.instagramUrl || "https://www.instagram.com/",
+    whatsappUrl: current?.whatsappUrl,
+    lockedByPromo: true,
+    promoCode: readSnapshotText(promo, "code") || current?.promoCode,
   };
 }
 
@@ -197,6 +223,8 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
   const existingTexts = existing?.texts && typeof existing.texts === "object" ? (existing.texts as Record<string, unknown>) : {};
   const heroVideoUrl = typeof payload.heroVideoUrl === "string" ? cleanInvitationHeroVideoUrl(payload.heroVideoUrl) : cleanInvitationHeroVideoUrl(existingTexts.heroVideoUrl);
   const texts = invitationTextsWithHeroVideo(normalizeInvitationTexts(payload.texts ?? existing?.texts), heroVideoUrl);
+  const existingPhotographer = cleanPhotographer(existing?.photographer);
+  const photographer = existingPhotographer?.lockedByPromo ? existingPhotographer : cleanPhotographer(payload.photographer ?? existing?.photographer);
   return {
     groomName,
     brideName,
@@ -214,7 +242,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
     musicUrl: cleanText(payload.musicUrl, existing?.musicUrl || "", 500),
     heroVideoUrl,
     texts,
-    photographer: cleanPhotographer(payload.photographer ?? existing?.photographer),
+    photographer,
     rejectionReason: cleanText(payload.rejectionReason, existing?.rejectionReason || "", 500),
   };
 }
@@ -282,7 +310,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     musicChoice: normalizeMusicChoice(order.musicChoice),
     musicUrl: order.musicUrl || undefined,
     texts: normalizeInvitationTexts(order.texts),
-    photographer: cleanPhotographer(order.photographer),
+    photographer: cleanPartnerSnapshotPhotographer(order.partnerSnapshot, cleanPhotographer(order.photographer), order.discountSnapshot),
     rejectionReason: order.rejectionReason || undefined,
     publishedInvitationCode: order.publishedInvitationCode || undefined,
     manageToken: order.manageToken || undefined,
@@ -357,7 +385,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     musicChoice: normalizeMusicChoice(order.musicChoice),
     musicUrl: order.musicUrl || undefined,
     texts: normalizeInvitationTexts(order.texts),
-    photographer: cleanPhotographer(order.photographer),
+    photographer: cleanPartnerSnapshotPhotographer(order.partnerSnapshot, cleanPhotographer(order.photographer), order.discountSnapshot),
     rejectionReason: order.rejectionReason || undefined,
     manageToken: order.manageToken || undefined,
     manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
@@ -443,6 +471,9 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     manageTokenExpiresAt: order.manageTokenExpiresAt || undefined,
     texts: draft.texts,
     photographer: draft.photographer,
+    partnerSnapshot: order.partnerSnapshot || undefined,
+    promoSnapshot: order.discountSnapshot || undefined,
+    partnerPublishedAt: order.partnerSnapshot ? new Date() : undefined,
     customerId: customer.id,
     templateId: template.dbTemplate.id,
     trialDays,
@@ -501,7 +532,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         musicChoice: normalizeMusicChoice(existingPrisma.musicChoice),
         musicUrl: existingPrisma.musicUrl || undefined,
         texts: normalizeInvitationTexts(existingPrisma.texts),
-        photographer: cleanPhotographer(existingPrisma.photographer),
+        photographer: cleanPartnerSnapshotPhotographer(existingPrisma.partnerSnapshot, cleanPhotographer(existingPrisma.photographer), existingPrisma.discountSnapshot),
         rejectionReason: existingPrisma.rejectionReason || undefined,
         templateSlug: existingPrisma.template?.slug || "featured-1",
       }

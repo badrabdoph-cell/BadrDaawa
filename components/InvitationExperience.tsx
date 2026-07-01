@@ -244,14 +244,17 @@ type PhotographerConfig = {
   logoUrl?: string;
   instagramUrl: string;
   facebookUrl: string;
+  lockedByPromo?: boolean;
+  promoCode?: string;
 };
 
 function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invitation, settings?: InvitationExperienceSettings): PhotographerConfig {
   const invitationPhotographer = invitation?.photographer;
   const useInvitationPhotographer = Boolean(invitationPhotographer);
+  const forceInvitationPhotographer = invitationPhotographer?.lockedByPromo === true || Boolean(invitationPhotographer?.promoCode);
   const useTemplatePhotographer = !useInvitationPhotographer && settings?.showTemplatePhotographer === true && template.photographer?.enabled !== false;
   const enabled = useInvitationPhotographer
-    ? settings?.showPhotographerCard !== false && invitationPhotographer?.enabled === true
+    ? (forceInvitationPhotographer || settings?.showPhotographerCard !== false) && invitationPhotographer?.enabled === true
     : useTemplatePhotographer
       ? true
       : settings?.showPhotographerCard !== false && Boolean(settings?.photographerName || settings?.photographerInstagramUrl || settings?.photographerFacebookUrl);
@@ -264,6 +267,8 @@ function getTemplatePhotographer(template: TemplateDefinition, invitation?: Invi
     logoUrl: source?.logoUrl,
     instagramUrl: source?.instagramUrl || settings?.photographerInstagramUrl || "https://www.instagram.com/",
     facebookUrl: source?.facebookUrl || settings?.photographerFacebookUrl || "https://www.facebook.com/",
+    lockedByPromo: source?.lockedByPromo,
+    promoCode: source?.promoCode,
   };
 }
 

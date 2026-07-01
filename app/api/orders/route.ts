@@ -189,14 +189,15 @@ export async function POST(request: NextRequest) {
   const reservedInvitationCode = await createReservedInvitationCode(parsed.data.groomName, parsed.data.brideName);
   const reservedManageToken = await createReservedManageToken();
   const partnerPhotographer = appliedPartnerPromo?.photographer;
+  const partnerSnapshot = appliedPartnerPromo?.partner;
   const photographer = appliedPartnerPromo
     ? {
         enabled: true,
-        name: partnerPhotographer?.name || appliedPartnerPromo.partner?.displayName || "",
+        name: partnerPhotographer?.name || partnerSnapshot?.displayName || "",
         description: "تمت إضافة بيانات الشريك بواسطة البروموكود.",
-        logoUrl: partnerPhotographer?.logoUrl || "",
-        facebookUrl: partnerPhotographer?.facebookUrl || "",
-        instagramUrl: partnerPhotographer?.instagramUrl || "",
+        logoUrl: partnerPhotographer?.logoUrl || partnerSnapshot?.logoUrl || "",
+        facebookUrl: partnerPhotographer?.facebookUrl || partnerSnapshot?.facebookUrl || "",
+        instagramUrl: partnerPhotographer?.instagramUrl || partnerSnapshot?.instagramUrl || "",
         lockedByPromo: true,
         promoCode: appliedPartnerPromo.promo.code,
       }

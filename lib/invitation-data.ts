@@ -82,6 +82,8 @@ function toPhotographer(value: unknown): Invitation["photographer"] | undefined 
     instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
     facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
     whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
+    lockedByPromo: raw.lockedByPromo === true,
+    promoCode: typeof raw.promoCode === "string" && raw.promoCode.trim() ? raw.promoCode.trim() : undefined,
   };
 }
 
@@ -97,6 +99,8 @@ function toPhotographerWithSource(value: unknown): { photographer: Invitation["p
       instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
       facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
       whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
+      lockedByPromo: raw.lockedByPromo === true,
+      promoCode: typeof raw.promoCode === "string" && raw.promoCode.trim() ? raw.promoCode.trim() : undefined,
     },
     logoSource: raw._logoSource === "custom" ? "custom" : raw._logoSource === "global" ? "global" : undefined,
   };

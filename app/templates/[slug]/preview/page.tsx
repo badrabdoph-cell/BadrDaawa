@@ -43,6 +43,7 @@ type TemplatePreviewSearchParams = {
     openingText?: string;
     galleryStories?: string;
     story?: string;
+    promo?: string;
     orderFullPreview?: string;
     hidePreviewChrome?: string;
     galleryPreview?: string;
@@ -141,6 +142,8 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           logoUrl: query.photographerLogoUrl?.trim() || undefined,
           facebookUrl: cleanPreviewUrl(query.photographerFacebookUrl, template.photographer?.facebookUrl || "https://www.facebook.com/"),
           instagramUrl: cleanPreviewUrl(query.photographerInstagramUrl, template.photographer?.instagramUrl || "https://www.instagram.com/"),
+          lockedByPromo: Boolean(query?.promo),
+          promoCode: query?.promo,
         }
       : useGlobalTemplateInfo
         ? {
@@ -224,7 +227,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           template={template}
           disableMusic={isSilentPreview}
           settings={{
-            showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+            showPhotographerCard: hasExplicitPhotographerPreview ? true : siteSettings.photographer.showPhotographerCard,
             showTemplatePhotographer: useTemplatePhotographer && !useGlobalTemplateInfo,
             photographerName: siteSettings.photographer.defaultName,
             photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,
@@ -239,7 +242,7 @@ export default async function TemplatePreviewPage({ params, searchParams }: Page
           template={template}
           disableMusic={isSilentPreview}
           settings={{
-            showPhotographerCard: siteSettings.photographer.showPhotographerCard,
+            showPhotographerCard: hasExplicitPhotographerPreview ? true : siteSettings.photographer.showPhotographerCard,
             showTemplatePhotographer: useTemplatePhotographer && !useGlobalTemplateInfo,
             photographerName: siteSettings.photographer.defaultName,
             photographerInstagramUrl: siteSettings.photographer.defaultInstagramUrl,

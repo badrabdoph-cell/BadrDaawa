@@ -128,10 +128,13 @@ function toPhotographer(value: unknown): Invitation["photographer"] | undefined 
   return {
     enabled: raw.enabled !== false,
     name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "badrabdoph",
+    description: typeof raw.description === "string" ? raw.description : undefined,
     logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
     instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
     facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
     whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
+    lockedByPromo: raw.lockedByPromo === true,
+    promoCode: typeof raw.promoCode === "string" && raw.promoCode.trim() ? raw.promoCode.trim() : undefined,
   };
 }
 
@@ -142,10 +145,13 @@ function toPhotographerWithSource(value: unknown): { photographer: Invitation["p
     photographer: {
       enabled: raw.enabled !== false,
       name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "badrabdoph",
+      description: typeof raw.description === "string" ? raw.description : undefined,
       logoUrl: typeof raw.logoUrl === "string" ? raw.logoUrl : undefined,
       instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "https://www.instagram.com/",
       facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "https://www.facebook.com/",
       whatsappUrl: typeof raw.whatsappUrl === "string" ? raw.whatsappUrl : undefined,
+      lockedByPromo: raw.lockedByPromo === true,
+      promoCode: typeof raw.promoCode === "string" && raw.promoCode.trim() ? raw.promoCode.trim() : undefined,
     },
     logoSource: raw._logoSource === "custom" ? "custom" : raw._logoSource === "global" ? "global" : undefined,
   };

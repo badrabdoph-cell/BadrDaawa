@@ -31,6 +31,8 @@ export type TemplateDefinition = {
     instagramUrl: string;
     facebookUrl: string;
     whatsappUrl?: string;
+    lockedByPromo?: boolean;
+    promoCode?: string;
   };
   customHtml?: string;
   isCustom?: boolean;
@@ -72,6 +74,8 @@ export type Invitation = {
     instagramUrl: string;
     facebookUrl: string;
     whatsappUrl?: string;
+    lockedByPromo?: boolean;
+    promoCode?: string;
   };
   checkInEnabled?: boolean;
   isActive: boolean;
