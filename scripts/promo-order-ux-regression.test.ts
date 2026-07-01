@@ -14,6 +14,8 @@ assert.match(
 
 assert.match(orderForm, /partner-saved-avatar/, "partner saved card should render a premium avatar/logo area");
 assert.match(orderForm, /appliedPromo\?\.partner\?\.logoUrl/, "partner saved card should use partner logo from promo response");
+assert.match(orderForm, /params\.set\("photographerLogoUrl"/, "order preview URL should pass the applied partner logo to template preview");
+assert.match(orderForm, /appliedPromo\?\.photographer\?\.logoUrl\s*\|\|\s*appliedPromo\?\.partner\?\.logoUrl/, "order preview should derive photographer logo from applied promo data");
 
 assert.match(css, /\.order-wizard-card\s+\.order-template-card[\s\S]*grid-template-rows:\s*none/, "order wizard template cards should reset the generic template-card row layout");
 assert.match(css, /\.order-wizard-card\s+\.order-template-card[\s\S]*min-height:\s*unset/, "order wizard template cards should not inherit huge marketing-card heights");

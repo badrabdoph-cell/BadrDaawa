@@ -708,7 +708,9 @@ export function OrderForm({
     if (form.mapUrl.trim()) params.set("mapUrl", form.mapUrl.trim());
     params.set("photographerEnabled", form.photographerEnabled ? "1" : "0");
     if (form.photographerEnabled) {
+      const previewPhotographerLogoUrl = appliedPromo?.photographer?.logoUrl || appliedPromo?.partner?.logoUrl || "";
       if (form.photographerName.trim()) params.set("photographerName", form.photographerName.trim());
+      if (previewPhotographerLogoUrl.trim()) params.set("photographerLogoUrl", previewPhotographerLogoUrl.trim());
       if (form.photographerFacebookUrl.trim()) params.set("photographerFacebookUrl", form.photographerFacebookUrl.trim());
       if (form.photographerInstagramUrl.trim()) params.set("photographerInstagramUrl", form.photographerInstagramUrl.trim());
     }
@@ -721,7 +723,7 @@ export function OrderForm({
     if (form.storyEnabled && story.length) params.set("story", JSON.stringify(story));
     if (previewImageUrls.length) params.set("gallery", previewImageUrls.join(","));
     return `/templates/${encodeURIComponent(selectedTemplate.slug)}/preview?${params.toString()}`;
-  }, [form, previewImageUrls, selectedTemplate.slug]);
+  }, [appliedPromo, form, previewImageUrls, selectedTemplate.slug]);
 
   useEffect(() => {
     setActiveStepIndex((current) => {
