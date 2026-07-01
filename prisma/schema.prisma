@@ -365,6 +365,7 @@ model DiscountPromoCode {
   internalName        String
   code                String              @unique
   internalDescription String?
+  displayMessage      String?
   status              PartnerStatus       @default(DRAFT)
   discountType        PartnerDiscountType @default(NONE)
   discountValue       Decimal?            @db.Decimal(10, 2)

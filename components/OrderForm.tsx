@@ -124,8 +124,13 @@ export type OrderInitialDraft = Pick<
   imageUrls: string[];
 };
 type AppliedPromo = {
+  ok?: true;
+  type?: "partner" | "discount";
+  status?: string;
+  promoId?: string;
+  message?: string;
   code: string;
-  partner: {
+  partner?: {
     partnerId: string;
     displayName: string;
     partnerType: string;
@@ -143,7 +148,7 @@ type AppliedPromo = {
     discountValue: number | null;
     discountLabel: string;
   };
-  photographer: {
+  photographer?: {
     enabled: true;
     name: string;
     logoUrl: string;
@@ -1087,29 +1092,38 @@ export function OrderForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, source }),
       });
-      const data = (await response.json().catch(() => null)) as (AppliedPromo & { ok?: true }) | { ok?: false; error?: string } | null;
+      const data = (await response.json().catch(() => null)) as AppliedPromo | { ok?: false; error?: string; message?: string } | null;
       if (!response.ok || !data || data.ok === false) {
         setAppliedPromo(null);
-        const errorMessage = data && "error" in data ? data.error : "";
+        const errorMessage = data && "error" in data ? data.error : data && "message" in data ? data.message : "";
         setPromoMessage(errorMessage || "هذا البروموكود غير صالح.");
         return;
       }
       const nextPromo = data as AppliedPromo;
       setAppliedPromo(nextPromo);
-      setPartnerServiceType("مصور فوتوغرافي");
-      setPhotographerSaved(true);
-      setForm((current) => ({
-        ...current,
-        photographerEnabled: true,
-        photographerName: nextPromo.photographer.name,
-        photographerFacebookUrl: nextPromo.photographer.facebookUrl,
-        photographerInstagramUrl: nextPromo.photographer.instagramUrl,
-        appliedPromoCode: nextPromo.promo.code,
-        partnerPromoId: nextPromo.promo.id,
-        referralSource: source,
-      }));
+      if (nextPromo.type === "partner" && nextPromo.photographer) {
+        setPartnerServiceType("مصور فوتوغرافي");
+        setPhotographerSaved(true);
+        setForm((current) => ({
+          ...current,
+          photographerEnabled: true,
+          photographerName: nextPromo.photographer?.name || "",
+          photographerFacebookUrl: nextPromo.photographer?.facebookUrl || "",
+          photographerInstagramUrl: nextPromo.photographer?.instagramUrl || "",
+          appliedPromoCode: nextPromo.promo.code,
+          partnerPromoId: nextPromo.promo.id,
+          referralSource: source,
+        }));
+      } else {
+        setForm((current) => ({
+          ...current,
+          appliedPromoCode: nextPromo.promo.code,
+          partnerPromoId: "",
+          referralSource: source,
+        }));
+      }
       setPromoInput(nextPromo.promo.code);
-      setPromoMessage(nextPromo.promo.discountLabel || "تم التعرف على المصور وسيتم إضافة بياناته إلى الدعوة.");
+      setPromoMessage(nextPromo.message || nextPromo.promo.discountLabel || "تم تطبيق البروموكود بنجاح.");
     } catch {
       setPromoMessage("تعذر تطبيق البروموكود حالياً. حاول مرة أخرى.");
     } finally {
@@ -1118,17 +1132,20 @@ export function OrderForm({
   }
 
   function removeAppliedPromo() {
+    const wasPartnerPromo = appliedPromo?.type !== "discount";
     setAppliedPromo(null);
     setPromoInput("");
     setPromoMessage("");
-    setPhotographerSaved(false);
-    setPartnerServiceType("");
+    if (wasPartnerPromo) {
+      setPhotographerSaved(false);
+      setPartnerServiceType("");
+    }
     setForm((current) => ({
       ...current,
-      photographerEnabled: false,
-      photographerName: "",
-      photographerFacebookUrl: "",
-      photographerInstagramUrl: "",
+      photographerEnabled: wasPartnerPromo ? false : current.photographerEnabled,
+      photographerName: wasPartnerPromo ? "" : current.photographerName,
+      photographerFacebookUrl: wasPartnerPromo ? "" : current.photographerFacebookUrl,
+      photographerInstagramUrl: wasPartnerPromo ? "" : current.photographerInstagramUrl,
       appliedPromoCode: "",
       partnerPromoId: "",
       referralSource: "",
@@ -1750,11 +1767,13 @@ export function OrderForm({
       const clientMusicNotes = getMusicNotes(effectiveForm, effectiveMusic.musicUrl || (orderMusic ? "ملف موسيقى مرفوع مع الطلب" : ""));
       const story = effectiveForm.storyEnabled ? filledOrderStory(effectiveForm.story) : [];
       const storyNotes = getStoryNotes({ ...effectiveForm, story });
+      const { appliedPromoCode: _appliedPromoCode, partnerPromoId: _partnerPromoId, ...orderPayloadForm } = effectiveForm;
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...effectiveForm,
+          ...orderPayloadForm,
+          promoCode: effectiveForm.appliedPromoCode,
           story,
           notes: [photographerNotes, clientMusicNotes, storyNotes].filter(Boolean).join("\n\n"),
           orderImages,
@@ -1833,7 +1852,7 @@ export function OrderForm({
   }
 
   function renderPhotographerFields(serviceType = "مقدم الخدمة") {
-    const lockedByPromo = Boolean(form.appliedPromoCode);
+    const lockedByPromo = appliedPromo?.type === "partner";
     return (
       <div className="photographer-fields order-customization-fields">
         <div className="field">

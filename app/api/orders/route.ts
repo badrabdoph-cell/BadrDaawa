@@ -13,7 +13,7 @@ import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 import { extractCoordinatesFromUrl } from "@/lib/map-url";
-import { recordPartnerPromoOrderApplication, validatePartnerPromoCode, type PartnerPromoValidationSuccess } from "@/lib/partner-promo";
+import { PromoCodeService, type PromoValidationSuccess } from "@/lib/promo-code-service";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -152,9 +152,9 @@ export async function POST(request: NextRequest) {
   }
   const effectiveMusicEnabled = Boolean(parsed.data.musicEnabled && (parsed.data.musicChoice === "default" || music.musicUrl));
   const effectiveMusicChoice: OrderMusicChoice = effectiveMusicEnabled ? parsed.data.musicChoice : "default";
-  const appliedPromoCode = parsed.data.appliedPromoCode;
+  const appliedPromoCode = parsed.data.promoCode || parsed.data.appliedPromoCode;
   const promoValidation = appliedPromoCode
-    ? await validatePartnerPromoCode(appliedPromoCode, {
+    ? await PromoCodeService.validatePromoCode(appliedPromoCode, {
         source: parsed.data.referralSource || "order-form",
         userAgent: request.headers.get("user-agent"),
         customerIp: getClientIdentifier(request),
@@ -165,7 +165,9 @@ export async function POST(request: NextRequest) {
   if (promoValidation && !promoValidation.ok) {
     return NextResponse.json({ error: promoValidation.error }, { status: 400 });
   }
-  const appliedPartnerPromo = promoValidation as PartnerPromoValidationSuccess | null;
+  const appliedPromo = promoValidation as PromoValidationSuccess | null;
+  const appliedPartnerPromo = appliedPromo?.type === "partner" ? appliedPromo : null;
+  const appliedDiscountPromo = appliedPromo?.type === "discount" ? appliedPromo : null;
   const openingText = parsed.data.openingText.trim();
   const story = normalizeCoupleStory(parsed.data.story);
   const texts = openingText || story.length ? { openingText, story } : undefined;
@@ -327,20 +329,22 @@ export async function POST(request: NextRequest) {
             musicUrl: music.musicUrl,
             texts,
             photographer,
-            partnerId: appliedPartnerPromo?.partner.partnerId || null,
+            partnerId: appliedPartnerPromo?.partner?.partnerId || null,
             partnerPromoId: appliedPartnerPromo?.promo.id || null,
+            discountPromoId: appliedDiscountPromo?.promo.id || null,
             partnerSnapshot: appliedPartnerPromo?.partner || undefined,
-            discountSnapshot: appliedPartnerPromo
+            discountSnapshot: appliedPromo
               ? {
-                  promoId: appliedPartnerPromo.promo.id,
-                  code: appliedPartnerPromo.promo.code,
-                  discountType: appliedPartnerPromo.promo.discountType,
-                  discountValue: appliedPartnerPromo.promo.discountValue,
-                  label: appliedPartnerPromo.promo.discountLabel,
+                  promoId: appliedPromo.promo.id,
+                  code: appliedPromo.promo.code,
+                  discountType: appliedPromo.promo.discountType,
+                  discountValue: appliedPromo.promo.discountValue,
+                  label: appliedPromo.promo.discountLabel,
+                  type: appliedPromo.type,
                 }
               : undefined,
-            partnerAppliedAt: appliedPartnerPromo ? new Date() : null,
-            referralSource: appliedPartnerPromo ? parsed.data.referralSource || "order-form" : null,
+            partnerAppliedAt: appliedPromo ? new Date() : null,
+            referralSource: appliedPromo ? parsed.data.referralSource || "order-form" : null,
             language: parsed.data.language,
             templateId: template.id,
             publishedInvitationCode: reservedInvitationCode,
@@ -348,10 +352,10 @@ export async function POST(request: NextRequest) {
           },
           select: { id: true },
         });
-        if (appliedPartnerPromo) {
-          await recordPartnerPromoOrderApplication({
+        if (appliedPromo) {
+          await PromoCodeService.recordPromoOrderApplication({
             db: tx as unknown as typeof prisma,
-            validation: appliedPartnerPromo,
+            validation: appliedPromo,
             orderId: createdOrder.id,
             invitationId: null,
             customerIp: getClientIdentifier(request),

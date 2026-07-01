@@ -27,6 +27,7 @@ export const orderRequestSchema = z.object({
   photographerLogoUrl: z.string().trim().max(500).optional().default(""),
   photographerFacebookUrl: z.string().trim().max(500).optional().default(""),
   photographerInstagramUrl: z.string().trim().max(500).optional().default(""),
+  promoCode: z.string().trim().max(80).optional().default(""),
   appliedPromoCode: z.string().trim().max(80).optional().default(""),
   partnerPromoId: z.string().trim().max(120).optional().default(""),
   referralSource: z.string().trim().max(80).optional().default(""),

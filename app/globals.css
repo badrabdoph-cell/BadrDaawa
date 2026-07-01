@@ -4876,6 +4876,137 @@ img {
   color: #fff7e8;
 }
 
+.promo-creative-page,
+.promo-history-unified,
+.promo-health-page {
+  gap: 18px;
+}
+
+.promo-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.promo-builder-form,
+.promo-result-card {
+  display: grid;
+  gap: 16px;
+}
+
+.promo-result-hero {
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+  border: 1px solid rgba(243, 207, 115, 0.18);
+  border-radius: 8px;
+  background: rgba(243, 207, 115, 0.08);
+}
+
+.promo-result-hero span,
+.promo-result-hero small,
+.promo-result-hero p,
+.promo-result-hero code {
+  color: var(--text-muted, rgba(245, 234, 214, 0.72));
+  font-size: 0.86rem;
+}
+
+.promo-result-hero strong {
+  color: #fff7e8;
+  font-size: 2rem;
+  font-weight: 950;
+}
+
+.promo-test-control {
+  display: inline-grid;
+  gap: 5px;
+}
+
+.promo-test-control small {
+  color: var(--text-muted, rgba(245, 234, 214, 0.72));
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.promo-test-control.is-success small {
+  color: #92e6b0;
+}
+
+.promo-test-control.is-error small {
+  color: #ffb0b0;
+}
+
+.promo-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-block: 12px;
+  padding: 12px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.promo-bulk-bar strong,
+.promo-bulk-bar span {
+  color: #fff7e8;
+  font-weight: 950;
+}
+
+.promo-timeline-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 12px;
+}
+
+.promo-timeline-legend span {
+  padding: 6px 9px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(255, 248, 234, 0.78);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.promo-health-summary.is-clean {
+  border-color: rgba(146, 230, 176, 0.22);
+}
+
+.promo-health-summary.has-issues {
+  border-color: rgba(243, 207, 115, 0.28);
+}
+
+.promo-health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.promo-health-card {
+  display: grid;
+  gap: 8px;
+}
+
+.promo-health-card svg {
+  color: #f3cf73;
+}
+
+.promo-health-card span,
+.promo-health-card small {
+  color: var(--text-muted, rgba(245, 234, 214, 0.72));
+  font-weight: 850;
+}
+
+.promo-health-card strong {
+  color: #fff7e8;
+  font-size: 2rem;
+  font-weight: 950;
+}
+
 .partner-crm-panel {
   padding: 0;
   overflow: visible;
@@ -5153,6 +5284,10 @@ img {
   }
 
   .partner-wizard-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-workbench {
     grid-template-columns: 1fr;
   }
 

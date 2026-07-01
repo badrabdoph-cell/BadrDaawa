@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validatePartnerPromoCode } from "@/lib/partner-promo";
+import { PromoCodeService } from "@/lib/promo-code-service";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
 
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = (await request.json().catch(() => null)) as { code?: unknown; source?: unknown } | null;
-  const code = typeof body?.code === "string" ? body.code : "";
-  const result = await validatePartnerPromoCode(code, {
+  const promoCode = typeof body?.promoCode === "string" ? body.promoCode : typeof body?.code === "string" ? body.code : "";
+  const result = await PromoCodeService.validatePromoCode(promoCode, {
     source: typeof body?.source === "string" ? body.source : "order-form",
     userAgent: request.headers.get("user-agent"),
     customerIp: getClientIdentifier(request),

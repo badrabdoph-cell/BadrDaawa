@@ -3,6 +3,7 @@ import { Activity, BarChart3, Handshake, PlusCircle, TicketPercent } from "lucid
 import { AdminPartnerCenterNav } from "@/components/AdminPartnerCenterNav";
 import { StatsGrid } from "@/components/StatsGrid";
 import { prisma } from "@/lib/db";
+import { logLegacyPromoRouteAction } from "@/app/admin/promo-codes/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ function conversionRate(orders: number, visits: number) {
 
 export default async function PartnerCenterDashboardPage() {
   if (!prisma) return <div className="notice danger">قاعدة البيانات غير متاحة حالياً.</div>;
+  await logLegacyPromoRouteAction("/admin/partners");
 
   const sinceMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [partners, activePartners, pausedPartners, archivedPartners, partnerOrders, usageCount, visitCount, latestActivity, latestOrders] = await Promise.all([

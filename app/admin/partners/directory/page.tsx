@@ -90,6 +90,7 @@ export default async function PartnersDirectoryPage({
   const siteUrl = getShareableSiteUrl(requestHeaders).replace(/\/$/, "");
   const q = (params.q || "").trim();
   const referralToken = referralSearchToken(q);
+  const typeSearch = Object.keys(partnerTypeLabels).includes(q.toUpperCase()) ? q.toUpperCase() : "";
   const where = {
     ...(q
       ? {
@@ -99,7 +100,7 @@ export default async function PartnersDirectoryPage({
             { slug: { contains: q, mode: "insensitive" as const } },
             { facebookUrl: { contains: q, mode: "insensitive" as const } },
             { instagramUrl: { contains: q, mode: "insensitive" as const } },
-            { partnerType: { equals: q.toUpperCase() as never } },
+            ...(typeSearch ? [{ partnerType: { equals: typeSearch as never } }] : []),
             { promoCodes: { some: { code: { contains: q.toUpperCase(), mode: "insensitive" as const } } } },
             { promoCodes: { some: { referralSlug: { contains: referralToken || q, mode: "insensitive" as const } } } },
           ],

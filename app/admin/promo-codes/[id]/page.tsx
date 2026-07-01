@@ -15,12 +15,28 @@ import { restorePartnerPromoAction, softDeletePartnerPromoAction, updatePartnerP
 export const dynamic = "force-dynamic";
 
 const statusLabels: Record<string, string> = {
-  DRAFT: "مسودة",
+  DRAFT: "بانتظار البداية",
   ACTIVE: "نشط",
-  PAUSED: "متوقف",
+  PAUSED: "معلق مؤقتًا",
   EXPIRED: "منتهي",
   ARCHIVED: "مؤرشف",
 };
+
+function timelineLabel(action: string) {
+  if (action === "partner.created" || action === "promo.create") return "إنشاء الكود";
+  if (action === "partner.updated") return "تعديل البيانات";
+  if (action === "promo.discount_updated") return "تغيير الخصم";
+  if (action === "promo.paused" || action === "promo.PAUSED") return "تعطيل";
+  if (action === "promo.active" || action === "promo.ACTIVE" || action === "promo.restored") return "إعادة تشغيل";
+  if (action === "promo.paused_until") return "إيقاف مؤقت";
+  if (action === "promo.deleted") return "حذف";
+  if (action === "promo.restored") return "استعادة";
+  if (action === "promo.short_link_visit") return "زيارة الرابط";
+  if (action === "promo.applied_to_order") return "استخدام البروموكود";
+  if (action === "order.created") return "إنشاء دعوة";
+  if (action === "partner.message.sent") return "إرسال رسالة";
+  return action;
+}
 
 function statusClass(status: string) {
   if (status === "ACTIVE") return "status success";
@@ -268,12 +284,17 @@ export default async function PromoCodeDetailsPage({
             <h2>آخر حركات هذا الكود</h2>
           </div>
         </div>
+        <div className="promo-timeline-legend" aria-label="أنواع أحداث السجل">
+          {["إنشاء الكود", "تعديل البيانات", "تغيير الخصم", "تعطيل", "إعادة تشغيل", "إيقاف مؤقت", "حذف", "استعادة", "زيارة الرابط", "استخدام البروموكود", "إنشاء دعوة", "إرسال رسالة"].map((event) => (
+            <span key={event}>{event}</span>
+          ))}
+        </div>
         <div className="promo-history-list">
           {promoActivity.slice(0, 18).map((item) => (
             <article key={item.id}>
               <TicketPercent size={17} />
               <div>
-                <strong>{item.action}</strong>
+                <strong>{timelineLabel(item.action)}</strong>
                 <span>{item.partner?.displayName || promo.partner.displayName}</span>
                 <small>{item.createdAt.toLocaleString("ar-EG")}{readOrderIdFromActivity(item.newValue) ? ` · طلب ${readOrderIdFromActivity(item.newValue).slice(0, 8)}` : ""}</small>
               </div>
