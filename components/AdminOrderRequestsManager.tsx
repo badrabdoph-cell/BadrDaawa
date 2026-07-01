@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, CheckCircle2, CheckSquare, ChevronDown, Clock, Clock3, Copy, Eye, Loader2, Send, SlidersHorizontal, Trash2, Volume2, VolumeX, XCircle } from "lucide-react";
+import { Check, CheckCircle2, CheckSquare, ChevronDown, Clock, Clock3, Copy, Eye, Loader2, Newspaper, Send, SlidersHorizontal, Trash2, Volume2, VolumeX, XCircle } from "lucide-react";
 import {
   AdminInvitationTools,
   emptyAdminToolImages,
@@ -23,6 +23,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { CopySuccessButton, buildSuccessMessage } from "@/components/CopySuccessButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
+import { PostImageAdminPanel } from "@/components/PostImageAdminPanel";
 import type { LiveInvitationPreviewPayload } from "@/components/LiveInvitationPreview";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
 import type { TemplatePreviewEditableInfo } from "@/lib/template-preview-info";
@@ -527,6 +528,7 @@ export function AdminOrderRequestsManager({
   const tabLabels: Record<string, string> = { pending: "المعلقة", published: "المنشورة", rejected: "المرفوضة" };
   const selectedInternalNotes = useMemo(() => (selectedOrder ? internalNotes.filter((note) => note.entityType === "order" && note.entityId === selectedOrder.id) : []), [internalNotes, selectedOrder]);
   const selectedIsFavorite = useMemo(() => (selectedOrder ? favorites.some((favorite) => favorite.entityType === "order" && favorite.entityId === selectedOrder.id) : false), [favorites, selectedOrder]);
+  const selectedInvitationUrl = selectedOrder?.publishedInvitationCode ? selectedOrder.publicUrl || links?.publicUrl || `${cleanSiteUrl}/${selectedOrder.publishedInvitationCode}` : "";
 
   function patchForm(update: Partial<OrderFormState>) {
     setForm((current) => ({ ...current, ...update }));
@@ -1076,6 +1078,35 @@ export function AdminOrderRequestsManager({
             title="ملاحظات داخلية للطلب"
             returnTo="/admin/orders"
           />
+        ) : null}
+
+        {selectedOrder?.publishedInvitationCode ? (
+          <div className="orders-edit-section orders-post-image-section">
+            <div className="invitation-detail-section-head">
+              <div>
+                <span className="eyebrow">Post Image</span>
+                <h2>صورة البوست</h2>
+              </div>
+              <Newspaper size={18} />
+            </div>
+            <p className="admin-muted-paragraph">
+              هنا تقدر تشوف صورة البوست الخاصة بالدعوة المنشورة، تحملها، تنسخها، أو تعيد توليدها عند الحاجة.
+            </p>
+            <PostImageAdminPanel
+              code={selectedOrder.publishedInvitationCode}
+              invitationUrl={selectedInvitationUrl}
+              initial={{
+                url: selectedOrder.postImage?.url,
+                status: selectedOrder.postImage?.status || "NEEDS_REGENERATION",
+                templateId: selectedOrder.postImage?.templateId || selectedOrder.postImageTemplateId || "breaking-news-v1",
+                generatedAt: selectedOrder.postImage?.generatedAt,
+                error: selectedOrder.postImage?.error,
+                width: selectedOrder.postImage?.width,
+                height: selectedOrder.postImage?.height,
+                downloadFileName: `post-image-${selectedOrder.publishedInvitationCode}.png`,
+              }}
+            />
+          </div>
         ) : null}
 
         <AdminInvitationTools

@@ -230,6 +230,16 @@ export type WeddingLiveModeConfig = {
   updatedBy?: "admin" | "client";
 };
 
+export type OrderPostImageState = {
+  url?: string;
+  status?: PostImageStatus;
+  templateId?: string;
+  generatedAt?: string;
+  error?: string;
+  width?: number;
+  height?: number;
+};
+
 export type OrderRequest = {
   id: string;
   orderNumber?: string;
@@ -246,6 +256,7 @@ export type OrderRequest = {
   notes?: string;
   imageUrls?: string[];
   postImageTemplateId?: string;
+  postImage?: OrderPostImageState;
   musicEnabled?: boolean;
   musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;

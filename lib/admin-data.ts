@@ -3,7 +3,7 @@ import { isBrowserDisplayImageUrl } from "./image-formats";
 import { archiveExpiredInvitations } from "./invitation-archiving";
 import { cleanInvitationHeroVideoUrl } from "./invitation-media";
 import { normalizeInvitationTexts } from "./invitation-texts";
-import type { GuestRsvp, Invitation, OrderRequest } from "./types";
+import type { GuestRsvp, Invitation, OrderPostImageState, OrderRequest } from "./types";
 import { normalizeInternalAssetUrl } from "./utils";
 
 export type AdminCustomer = {
@@ -91,6 +91,17 @@ type AdminOrderRow = {
   deletedAt?: Date | string | null;
 };
 
+type AdminOrderPostImageRow = {
+  code: string;
+  postImageUrl?: string | null;
+  postImageTemplateId?: string | null;
+  postImageStatus?: string | null;
+  postImageGeneratedAt?: Date | string | null;
+  postImageError?: string | null;
+  postImageWidth?: number | null;
+  postImageHeight?: number | null;
+};
+
 type AdminGuestRow = {
   id: string;
   invitation: { code: string };
@@ -174,6 +185,25 @@ function normalizeOrderStatus(status: string): OrderRequest["status"] {
   return "new";
 }
 
+function toOrderPostImageState(row?: AdminOrderPostImageRow | null): OrderPostImageState | undefined {
+  if (!row) return undefined;
+  return {
+    url: row.postImageUrl || undefined,
+    status:
+      row.postImageStatus === "GENERATED" ||
+      row.postImageStatus === "GENERATING" ||
+      row.postImageStatus === "FAILED" ||
+      row.postImageStatus === "NEEDS_REGENERATION"
+        ? row.postImageStatus
+        : undefined,
+    templateId: row.postImageTemplateId || undefined,
+    generatedAt: row.postImageGeneratedAt instanceof Date ? row.postImageGeneratedAt.toISOString() : row.postImageGeneratedAt || undefined,
+    error: row.postImageError || undefined,
+    width: row.postImageWidth || undefined,
+    height: row.postImageHeight || undefined,
+  };
+}
+
 function parseMusicUrlFromNotes(notes?: string | null) {
   if (!notes) return "";
   const directMatch = notes.match(/رابط الموسيقى:\s*(\S+)/);
@@ -245,7 +275,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
   };
 }
 
-function toOrder(row: AdminOrderRow): OrderRequest {
+function toOrder(row: AdminOrderRow, postImage?: AdminOrderPostImageRow | null): OrderRequest {
   const notes = row.notes || "";
   const noteImageUrls = Array.from(notes.matchAll(/https?:\/\/\S+|\/uploads\/[^\s]+/g))
     .map((match) => normalizeInternalAssetUrl(match[0]))
@@ -267,6 +297,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     notes: notes || undefined,
     imageUrls,
     postImageTemplateId: row.postImageTemplateId || undefined,
+    postImage: toOrderPostImageState(postImage),
     musicEnabled: row.musicEnabled ?? Boolean(row.musicUrl || parseMusicUrlFromNotes(notes)),
     musicChoice: row.musicChoice === "upload" || row.musicChoice === "video" || row.musicChoice === "url" || row.musicChoice === "library" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
     musicUrl: row.musicUrl || parseMusicUrlFromNotes(notes) || undefined,
@@ -310,7 +341,24 @@ export async function getAdminOrders(): Promise<OrderRequest[]> {
       include: { template: { select: { slug: true } } },
       orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
     });
-    return orders.map(toOrder);
+    const publishedCodes = orders.map((order) => order.publishedInvitationCode).filter((code): code is string => Boolean(code));
+    const postImages = publishedCodes.length
+      ? await prisma.invitation.findMany({
+          where: { code: { in: publishedCodes }, deletedAt: null },
+          select: {
+            code: true,
+            postImageUrl: true,
+            postImageTemplateId: true,
+            postImageStatus: true,
+            postImageGeneratedAt: true,
+            postImageError: true,
+            postImageWidth: true,
+            postImageHeight: true,
+          },
+        })
+      : [];
+    const postImageByCode = new Map(postImages.map((postImage) => [postImage.code, postImage]));
+    return orders.map((order) => toOrder(order, order.publishedInvitationCode ? postImageByCode.get(order.publishedInvitationCode) : undefined));
   } catch (error) {
     console.error("Failed to load admin orders", error);
     return [];

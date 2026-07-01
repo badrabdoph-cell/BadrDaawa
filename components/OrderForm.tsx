@@ -2503,6 +2503,9 @@ export function OrderForm({
               <div className="order-post-image-preview-stage">
                 <div className="order-compact-section-head">
                   <h2><Newspaper size={20} /> صورة البوست</h2>
+                  <p className="order-post-image-note">
+                    دي الصورة اللي هتتنشر مع الرابط على فيسبوك أو واتساب في الحالة، وهي اختيارية؛ يمكنك نشر رابط الدعوة بدونها.
+                  </p>
                 </div>
                 <PostImagePreviewCard
                   groomName={form.groomName}

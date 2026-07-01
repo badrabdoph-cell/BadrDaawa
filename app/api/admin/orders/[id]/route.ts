@@ -13,7 +13,7 @@ import { ensureInvitationPostImage } from "@/lib/post-image/service";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
-import type { Invitation, OrderRequest } from "@/lib/types";
+import type { Invitation, OrderPostImageState, OrderRequest } from "@/lib/types";
 import { getPublicSiteUrl, getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { validateOrderUpdate } from "@/lib/validation-enhanced";
 import { extractCoordinatesFromUrl } from "@/lib/map-url";
@@ -209,6 +209,38 @@ async function responseLinks(request: NextRequest, code: string) {
   };
 }
 
+async function getInvitationPostImageState(code?: string | null): Promise<OrderPostImageState | undefined> {
+  if (!prisma || !code) return undefined;
+  const invitation = await prisma.invitation.findFirst({
+    where: { code, deletedAt: null },
+    select: {
+      postImageUrl: true,
+      postImageTemplateId: true,
+      postImageStatus: true,
+      postImageGeneratedAt: true,
+      postImageError: true,
+      postImageWidth: true,
+      postImageHeight: true,
+    },
+  });
+  if (!invitation) return undefined;
+  return {
+    url: invitation.postImageUrl || undefined,
+    status:
+      invitation.postImageStatus === "GENERATED" ||
+      invitation.postImageStatus === "GENERATING" ||
+      invitation.postImageStatus === "FAILED" ||
+      invitation.postImageStatus === "NEEDS_REGENERATION"
+        ? invitation.postImageStatus
+        : undefined,
+    templateId: invitation.postImageTemplateId || undefined,
+    generatedAt: dateToString(invitation.postImageGeneratedAt),
+    error: invitation.postImageError || undefined,
+    width: invitation.postImageWidth || undefined,
+    height: invitation.postImageHeight || undefined,
+  };
+}
+
 function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderRequest> | null) {
   const groomName = cleanText(payload.groomName, existing?.groomName || "", 120);
   const brideName = cleanText(payload.brideName, existing?.brideName || "", 120);
@@ -297,6 +329,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     include: { template: { select: { slug: true } } },
   });
   if (!order) return null;
+  const postImage = order.publishedInvitationCode ? await getInvitationPostImageState(order.publishedInvitationCode) : undefined;
   const snapshot: AdminOrderSnapshot = {
     id: order.id,
     orderNumber: order.orderNumber || undefined,
@@ -321,6 +354,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
     templateSlug: order.template?.slug || "featured-1",
     postImageTemplateId: order.postImageTemplateId || undefined,
+    postImage,
     language: order.language === "en" ? "en" : "ar",
     status: normalizeStatus(String(order.status || "NEW")),
     submittedAt: dateToString(order.submittedAt),
