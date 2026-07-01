@@ -50,4 +50,5 @@ export type PostImageTemplate = {
   name: string;
   defaultSize: PostImageSize;
   supportedSizes: PostImageSize[];
+  renderSvg: (payload: PostImageRenderPayload) => string;
 };
