@@ -5,13 +5,18 @@ const dashboardShell = readFileSync("components/DashboardShell.tsx", "utf8");
 const partnersDashboard = readFileSync("app/admin/partners/page.tsx", "utf8");
 const partnerDetails = readFileSync("app/admin/partners/[id]/page.tsx", "utf8");
 const partnerActions = readFileSync("app/admin/partners/actions.ts", "utf8");
+const promoNav = readFileSync("components/AdminPromoSectionNav.tsx", "utf8");
 
-assert.match(dashboardShell, /id:\s*"partners"/, "sidebar should expose an independent partners section");
-assert.match(dashboardShell, /title:\s*"مركز الشركاء"/, "partners section should be named مركز الشركاء");
+assert.match(dashboardShell, /id:\s*"promo-codes"/, "sidebar should expose unified promo codes section");
+assert.match(dashboardShell, /title:\s*"أكواد الخصم"/, "unified section should be named أكواد الخصم");
+assert.doesNotMatch(dashboardShell, /id:\s*"partners"|title:\s*"مركز الشركاء"/, "old independent partners section should not remain in the sidebar");
 const contactsStart = dashboardShell.indexOf('id: "contacts"');
-const partnersStart = dashboardShell.indexOf('id: "partners"');
-const contactsSection = dashboardShell.slice(contactsStart, partnersStart);
+const promoStart = dashboardShell.indexOf('id: "promo-codes"');
+const contactsSection = dashboardShell.slice(contactsStart, promoStart);
 assert.doesNotMatch(contactsSection, /\/admin\/partners|\/admin\/promo-codes/, "partners links should not live inside contacts section");
+assert.match(promoNav, /المصورين/, "unified promo nav should expose photographer codes");
+assert.match(promoNav, /كود الخصم/, "unified promo nav should expose discount codes");
+assert.match(promoNav, /السجل/, "unified promo nav should expose history");
 
 assert.ok(existsSync("components/AdminPartnerCenterNav.tsx"), "partner center internal nav must exist");
 assert.ok(existsSync("components/PartnerCardActions.tsx"), "partner card actions menu must exist");

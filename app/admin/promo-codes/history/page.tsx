@@ -115,7 +115,7 @@ export default async function PromoCodeHistoryPage({
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">أكواد الخصم</span>
-          <h1>السجل</h1>
+          <h1>سجل أكواد الخصم</h1>
           <p>كل الأكواد في مكان واحد: أكواد الخصم العامة، ثم المصورين والقاعات مع كل الدعوات والإحصائيات.</p>
         </div>
       </div>
@@ -216,7 +216,7 @@ export default async function PromoCodeHistoryPage({
                 <th>الرابط</th>
                 <th>الدعوات</th>
                 <th>الزيارات</th>
-                <th>التحويل</th>
+                <th>معدل التحويل</th>
                 <th>الحالة</th>
                 <th>إجراءات</th>
               </tr>

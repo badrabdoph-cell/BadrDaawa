@@ -56,7 +56,7 @@ export default async function PhotographerPromoPage({
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">أكواد الخصم</span>
-          <h1>المصورين</h1>
+          <h1>أكواد المصورين</h1>
           <p>أنشئ كود مصور أو قاعة أو شريك. سيظهر لك كود مستقل ورابط مختصر يدخل الموقع والبروموكود جاهز.</p>
         </div>
       </div>

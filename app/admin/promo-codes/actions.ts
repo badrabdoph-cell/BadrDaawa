@@ -42,6 +42,8 @@ export async function createDiscountPromoCodeAction(formData: FormData) {
   if (!prisma) redirect("/admin/promo-codes/discounts/new?error=database");
 
   try {
+    const displayMessage = formString(formData, "displayMessage");
+    if (displayMessage) formData.set("displayMessage", displayMessage);
     const created = await PromoCodeService.createDiscountPromo({ formData });
     redirect(`/admin/promo-codes/discounts?created=${created.id}`);
   } catch (error) {

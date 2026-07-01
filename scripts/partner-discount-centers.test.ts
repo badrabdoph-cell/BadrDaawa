@@ -2,38 +2,37 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
 const dashboardShell = readFileSync("components/DashboardShell.tsx", "utf8");
-const partnerNav = readFileSync("components/AdminPartnerCenterNav.tsx", "utf8");
-const partnerDirectory = readFileSync("app/admin/partners/directory/page.tsx", "utf8");
-const partnerNew = readFileSync("app/admin/partners/new/page.tsx", "utf8");
-const partnerDetails = readFileSync("app/admin/partners/[id]/page.tsx", "utf8");
+const promoNav = readFileSync("components/AdminPromoSectionNav.tsx", "utf8");
+const photographersPage = readFileSync("app/admin/promo-codes/photographers/page.tsx", "utf8");
 const discountsPage = readFileSync("app/admin/promo-codes/discounts/page.tsx", "utf8");
+const historyPage = readFileSync("app/admin/promo-codes/history/page.tsx", "utf8");
 
-const partnersStart = dashboardShell.indexOf('id: "partners"');
-const discountsStart = dashboardShell.indexOf('id: "discounts"');
+const promoStart = dashboardShell.indexOf('id: "promo-codes"');
 const contentStart = dashboardShell.indexOf('id: "content"');
-const partnerSection = dashboardShell.slice(partnersStart, discountsStart > partnersStart ? discountsStart : contentStart);
+const promoSection = dashboardShell.slice(promoStart, contentStart);
 
-assert.match(dashboardShell, /id:\s*"discounts"/, "sidebar should expose an independent discount center");
-assert.match(dashboardShell, /title:\s*"مركز أكواد الخصم"/, "discount center should be named مركز أكواد الخصم");
-assert.doesNotMatch(partnerSection, /\/admin\/promo-codes\/discounts/, "partner center must not contain general discount links");
-assert.doesNotMatch(partnerNav, /أكواد الخصم|promo-codes\/discounts/, "partner center nav must not expose general discounts");
-assert.ok(existsSync("components/AdminDiscountCenterNav.tsx"), "discount center internal nav must exist");
-assert.doesNotMatch(discountsPage, /AdminPartnerCenterNav/, "discount pages must not use partner center nav");
-assert.match(discountsPage, /AdminDiscountCenterNav/, "discount pages should use discount center nav");
+assert.match(dashboardShell, /id:\s*"promo-codes"/, "sidebar should expose one unified discount codes section");
+assert.match(dashboardShell, /title:\s*"أكواد الخصم"/, "unified section should be named أكواد الخصم");
+assert.doesNotMatch(dashboardShell, /id:\s*"partners"|title:\s*"مركز الشركاء"|title:\s*"مركز أكواد الخصم"/, "old split centers should not remain in the sidebar");
+assert.match(promoSection, /\/admin\/promo-codes\/photographers/, "unified section should link photographers page");
+assert.match(promoSection, /\/admin\/promo-codes\/discounts/, "unified section should link discount page");
+assert.match(promoSection, /\/admin\/promo-codes\/history/, "unified section should link history page");
+assert.match(promoNav, /المصورين/, "promo nav should expose photographers");
+assert.match(promoNav, /كود الخصم/, "promo nav should expose discount code page");
+assert.match(promoNav, /السجل/, "promo nav should expose history");
+assert.ok(existsSync("app/admin/promo-codes/photographers/page.tsx"), "photographers creation page must exist");
+assert.doesNotMatch(discountsPage, /AdminPartnerCenterNav|AdminDiscountCenterNav/, "discount pages must not use the old split-center navs");
 
-for (const label of ["الصورة", "الاسم", "النوع", "البروموكود", "نسبة الخصم", "الحالة", "الدعوات", "الطلبات", "الزيارات", "معدل التحويل", "آخر نشاط", "الإجراءات"]) {
-  assert.match(partnerDirectory, new RegExp(label), `partner CRM table should include ${label}`);
-}
-assert.match(partnerDirectory, /partner-crm-table/, "partner directory should use a CRM table");
-assert.doesNotMatch(partnerDirectory, /partner-card-grid/, "partner directory should no longer be card-first");
-
-for (const label of ["بيانات الشريك", "البروموكود", "الخصم", "المراجعة"]) {
-  assert.match(partnerNew, new RegExp(label), `partner creation wizard should include ${label}`);
-}
-assert.match(partnerNew, /partner-wizard/, "partner creation should use wizard layout");
-
-for (const label of ["نظرة عامة", "الدعوات", "الطلبات", "الرسائل", "الإحصائيات", "سجل النشاط", "الإعدادات"]) {
-  assert.match(partnerDetails, new RegExp(label), `partner dashboard should expose ${label} tab`);
+for (const label of ["اسم المصور", "رفع الشعار", "Facebook", "Instagram", "الرابط المختصر", "نسخ الكود", "نسخ الرابط", "اختبار الكود"]) {
+  assert.match(photographersPage, new RegExp(label), `photographers page should include ${label}`);
 }
 
-console.log("partner-discount-centers tests passed");
+for (const label of ["كود الخصم", "نسبة الخصم", "مجاني 100%", "الجملة التي تظهر", "اختبار الكود"]) {
+  assert.match(discountsPage, new RegExp(label), `discount page should include ${label}`);
+}
+
+for (const label of ["أكواد الخصم", "المصورين والقاعات", "Bulk Actions", "كل الدعوات"]) {
+  assert.match(historyPage, new RegExp(label), `history page should include ${label}`);
+}
+
+console.log("unified partner-discount center tests passed");

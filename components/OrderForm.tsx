@@ -1090,7 +1090,7 @@ export function OrderForm({
       const response = await fetch("/api/promo/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, source }),
+        body: JSON.stringify({ promoCode: code, source }),
       });
       const data = (await response.json().catch(() => null)) as AppliedPromo | { ok?: false; error?: string; message?: string } | null;
       if (!response.ok || !data || data.ok === false) {
