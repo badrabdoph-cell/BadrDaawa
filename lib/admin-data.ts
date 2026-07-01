@@ -72,6 +72,7 @@ type AdminOrderRow = {
   mapUrl?: string | null;
   notes?: string | null;
   imageUrls?: unknown;
+  postImageTemplateId?: string | null;
   musicEnabled?: boolean | null;
   musicChoice?: string | null;
   musicUrl?: string | null;
@@ -265,6 +266,7 @@ function toOrder(row: AdminOrderRow): OrderRequest {
     mapUrl: row.mapUrl || undefined,
     notes: notes || undefined,
     imageUrls,
+    postImageTemplateId: row.postImageTemplateId || undefined,
     musicEnabled: row.musicEnabled ?? Boolean(row.musicUrl || parseMusicUrlFromNotes(notes)),
     musicChoice: row.musicChoice === "upload" || row.musicChoice === "video" || row.musicChoice === "url" || row.musicChoice === "library" ? row.musicChoice : row.musicChoice === "default" ? "default" : row.musicUrl || parseMusicUrlFromNotes(notes) ? "url" : "default",
     musicUrl: row.musicUrl || parseMusicUrlFromNotes(notes) || undefined,

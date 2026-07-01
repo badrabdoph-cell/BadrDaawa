@@ -36,6 +36,7 @@ type AdminOrderPayload = {
   notes?: string;
   templateSlug?: string;
   imageUrls?: string[];
+  postImageTemplateId?: string;
   heroVideoUrl?: string;
   musicEnabled?: boolean;
   musicChoice?: "default" | "library" | "upload" | "video" | "url";
@@ -219,6 +220,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
   const mapUrl = cleanOptionalUrl(payload.mapUrl ?? existing?.mapUrl ?? "");
   const notes = cleanText(payload.notes, existing?.notes || "", 1500);
   const templateSlug = cleanText(payload.templateSlug, existing?.templateSlug || "featured-1", 140);
+  const postImageTemplateId = cleanText(payload.postImageTemplateId, existing?.postImageTemplateId || "breaking-news-v1", 120);
   const images = cleanImageList(payload.imageUrls).length ? cleanImageList(payload.imageUrls) : existing?.imageUrls || [];
   const musicChoice = normalizeMusicChoice(payload.musicChoice, normalizeMusicChoice(existing?.musicChoice));
   const existingTexts = existing?.texts && typeof existing.texts === "object" ? (existing.texts as Record<string, unknown>) : {};
@@ -237,6 +239,7 @@ function getOrderDraft(payload: AdminOrderPayload, existing?: Partial<OrderReque
     mapUrl,
     notes,
     templateSlug,
+    postImageTemplateId,
     imageUrls: images.slice(0, 3),
     musicEnabled: payload.musicEnabled ?? existing?.musicEnabled ?? false,
     musicChoice,
@@ -317,6 +320,7 @@ async function serializePrismaOrder(id: string, request: NextRequest): Promise<A
     manageToken: order.manageToken || undefined,
     manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
     templateSlug: order.template?.slug || "featured-1",
+    postImageTemplateId: order.postImageTemplateId || undefined,
     language: order.language === "en" ? "en" : "ar",
     status: normalizeStatus(String(order.status || "NEW")),
     submittedAt: dateToString(order.submittedAt),
@@ -391,6 +395,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     manageToken: order.manageToken || undefined,
     manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
     templateSlug: order.template?.slug || "featured-1",
+    postImageTemplateId: order.postImageTemplateId || undefined,
   };
   const draft = getOrderDraft(payload, existingOrder);
   const error = validateDraft(draft, true);
@@ -477,6 +482,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
     partnerPublishedAt: order.partnerSnapshot ? new Date() : undefined,
     customerId: customer.id,
     templateId: template.dbTemplate.id,
+    postImageTemplateId: draft.postImageTemplateId,
     trialDays,
     trialEndsAt,
   };
@@ -509,6 +515,7 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
       rejectionReason: null,
       customerId: customer.id,
       templateId: template.dbTemplate.id,
+      postImageTemplateId: draft.postImageTemplateId,
     },
   });
   return code;
@@ -536,6 +543,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         photographer: cleanPartnerSnapshotPhotographer(existingPrisma.partnerSnapshot, cleanPhotographer(existingPrisma.photographer), existingPrisma.discountSnapshot),
         rejectionReason: existingPrisma.rejectionReason || undefined,
         templateSlug: existingPrisma.template?.slug || "featured-1",
+        postImageTemplateId: existingPrisma.postImageTemplateId || undefined,
       }
     : null;
   if (!existingOrder) return null;
@@ -565,6 +573,7 @@ async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVI
         musicUrl,
         texts: draft.texts,
         photographer: draft.photographer,
+        postImageTemplateId: draft.postImageTemplateId,
         ...(status ? { status: status as never } : {}),
         ...(status === "REJECTED" ? { rejectionReason: draft.rejectionReason || "تم رفض الطلب من لوحة الإدارة." } : { rejectionReason: null }),
         ...(template?.dbTemplate ? { templateId: template.dbTemplate.id } : {}),

@@ -273,6 +273,7 @@ model OrderRequest {
   submittedAt             DateTime           @default(now())
   templateId              String?
   template                WeddingTemplate?   @relation(fields: [templateId], references: [id])
+  postImageTemplateId     String?            @default("breaking-news-v1")
   customerId              String?
   customer                Customer?          @relation(fields: [customerId], references: [id])
   deletedAt               DateTime?

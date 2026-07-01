@@ -245,6 +245,7 @@ export type OrderRequest = {
   longitude?: number | null;
   notes?: string;
   imageUrls?: string[];
+  postImageTemplateId?: string;
   musicEnabled?: boolean;
   musicChoice?: "default" | "library" | "upload" | "video" | "url";
   musicUrl?: string;

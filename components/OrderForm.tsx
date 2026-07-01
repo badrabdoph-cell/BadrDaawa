@@ -32,6 +32,7 @@ import { normalizeCoupleStory } from "@/lib/invitation-texts";
 import { calculateKeyboardInset, getIncompleteRequiredStoryStage, orderStoryPresets, requiredOrderStoryStages } from "@/lib/order-mobile-ux";
 import type { CoupleStoryItem, TemplateDefinition } from "@/lib/types";
 import { acceptedImageFormats } from "@/lib/image-formats";
+import { DEFAULT_POST_IMAGE_TEMPLATE_ID, type PostImageTemplateId } from "@/lib/post-image/types";
 import { LocationPickerModal } from "./LocationPickerModal";
 import { PostImagePreviewCard } from "./post-image/PostImagePreviewCard";
 import { SimpleDateInput } from "./SimpleDateInput";
@@ -47,6 +48,7 @@ type FormState = {
   venue: string;
   notes: string;
   templateSlug: string;
+  postImageTemplateId: PostImageTemplateId;
   language: "ar" | "en";
   photographerEnabled: boolean;
   photographerName: string;
@@ -88,6 +90,7 @@ type OrderFormValues = Pick<
   | "referralSource"
   | "openingText"
   | "musicUrl"
+  | "postImageTemplateId"
 >;
 type OrderDraft = Partial<FormState> & { imageUrls?: string[] };
 type ImageUploadPhase = "idle" | "selected" | "compressing" | "uploading" | "saved" | "error";
@@ -118,6 +121,7 @@ export type OrderInitialDraft = Pick<
   | "openingText"
   | "musicUrl"
 > & {
+  postImageTemplateId?: PostImageTemplateId;
   photographerEnabled: boolean;
   storyEnabled: boolean;
   story: CoupleStoryItem[];
@@ -625,6 +629,7 @@ export function OrderForm({
     venue: initialDraft?.venue || "",
     notes: initialDraft?.notes || "",
     templateSlug: initialSlug,
+    postImageTemplateId: initialDraft?.postImageTemplateId || DEFAULT_POST_IMAGE_TEMPLATE_ID,
     language: "ar",
     photographerEnabled: Boolean(initialDraft?.photographerEnabled),
     photographerName: initialDraft?.photographerName || "",
@@ -943,6 +948,7 @@ export function OrderForm({
       venue: params.get("venue") || undefined,
       notes: params.get("notes") || undefined,
       templateSlug: params.get("template") || undefined,
+      postImageTemplateId: (params.get("postImageTemplateId") as PostImageTemplateId | null) || undefined,
       photographerEnabled: params.get("photographerEnabled") === "1" || undefined,
       photographerName: params.get("photographerName") || undefined,
       photographerFacebookUrl: params.get("photographerFacebookUrl") || undefined,
@@ -1491,6 +1497,7 @@ export function OrderForm({
       referralSource: form.referralSource,
       openingText: String(formData.get("openingText") || form.openingText || "").trim(),
       musicUrl: String(formData.get("musicUrl") || form.musicUrl || "").trim(),
+      postImageTemplateId: form.postImageTemplateId,
     };
   }
 
@@ -1812,6 +1819,7 @@ export function OrderForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...orderPayloadForm,
+          postImageTemplateId: form.postImageTemplateId,
           promoCode: effectiveForm.appliedPromoCode,
           story,
           notes: [photographerNotes, clientMusicNotes, storyNotes].filter(Boolean).join("\n\n"),
@@ -2501,6 +2509,8 @@ export function OrderForm({
                   brideName={form.brideName}
                   weddingDate={form.weddingDate}
                   coverImageUrl={previewImageUrls[0]}
+                  selectedTemplateId={form.postImageTemplateId}
+                  onTemplateChange={(templateId) => updateField("postImageTemplateId", templateId)}
                 />
               </div>
             </section>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_POST_IMAGE_TEMPLATE_ID } from "./post-image/types";
 
 const validDateString = (value: string) => !Number.isNaN(Date.parse(value));
 
@@ -39,6 +40,7 @@ export const orderRequestSchema = z.object({
   orderMusic: z.string().max(48 * 1024 * 1024).optional().default(""),
   idempotencyKey: z.string().trim().max(120).optional().default(""),
   templateSlug: z.string().trim().min(2),
+  postImageTemplateId: z.string().trim().max(120).optional().default(DEFAULT_POST_IMAGE_TEMPLATE_ID),
   language: z.enum(["ar", "en"]).optional().default("ar"),
 });
 
