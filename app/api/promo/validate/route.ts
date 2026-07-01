@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = (await request.json().catch(() => null)) as { code?: unknown; source?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { promoCode?: unknown; code?: unknown; source?: unknown } | null;
   const promoCode = typeof body?.promoCode === "string" ? body.promoCode : typeof body?.code === "string" ? body.code : "";
   const result = await PromoCodeService.validatePromoCode(promoCode, {
     source: typeof body?.source === "string" ? body.source : "order-form",

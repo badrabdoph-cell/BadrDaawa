@@ -2,7 +2,7 @@ import crypto from "crypto";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { saveInvitationGalleryImages } from "@/lib/invitation-images";
-import { buildShortReferralPath, buildShortReferralUrl, type PartnerDiscountType, type PartnerStatusValue } from "@/lib/partner-promo";
+import { PARTNER_PROMO_COOKIE, buildShortReferralPath, buildShortReferralUrl, type PartnerDiscountType, type PartnerStatusValue } from "@/lib/partner-promo";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { slugifyInvitationName } from "@/lib/slug";
 
@@ -403,6 +403,20 @@ export const PromoCodeService = {
     });
 
     const linkTest = await PromoCodeService.testShortLink({ siteUrl: input.siteUrl, slug: created.promo.referralSlug, expectedCode: created.promo.code });
+    if (!linkTest.ok) {
+      await prisma.$transaction([
+        prisma.partnerPromoCode.update({ where: { id: created.promo.id }, data: { status: "PAUSED" } }),
+        prisma.partnerActivityLog.create({
+          data: {
+            partnerId: created.partner.id,
+            action: "promo.short_link_test_failed",
+            performedBy: "promo-code-service",
+            newValue: { promoId: created.promo.id, code: created.promo.code, reason: linkTest.reason || "unknown" },
+            metadata: { url: linkTest.url, status: linkTest.status || null, location: linkTest.location || null },
+          },
+        }),
+      ]);
+    }
     return { ...created, shortUrl, qrCodeUrl, linkTest };
   },
 
@@ -473,15 +487,45 @@ export const PromoCodeService = {
 
   async testShortLink(input: { siteUrl: string; slug: string; expectedCode?: string }) {
     const path = buildShortReferralPath(input.slug);
-    return {
-      ok: Boolean(path.startsWith("/r/") && input.slug),
-      status: 307,
-      location: "/order",
-      cookieName: "bd_partner_promo",
-      path,
-      url: buildShortReferralUrl(input.siteUrl, input.slug),
-      expectedCode: input.expectedCode || "",
-    };
+    const url = buildShortReferralUrl(input.siteUrl, input.slug);
+    if (!path.startsWith("/r/") || !input.slug) {
+      return { ok: false, status: 0, location: "", cookieName: PARTNER_PROMO_COOKIE, path, url, expectedCode: input.expectedCode || "", reason: "invalid-short-path" };
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(url, { redirect: "manual", cache: "no-store", signal: controller.signal });
+      const location = response.headers.get("location") || "";
+      const setCookie = response.headers.get("set-cookie") || "";
+      const redirectOk = response.status === 307 && (location.endsWith("/order") || location.includes("/order"));
+      const expectedCode = PromoCodeService.normalizePromoCodeInput(input.expectedCode || "");
+      const cookieOk = setCookie.includes(PARTNER_PROMO_COOKIE) && (!expectedCode || setCookie.toUpperCase().includes(expectedCode));
+      const reason = !redirectOk ? "short-link-did-not-redirect-to-order" : !cookieOk ? "promo-cookie-missing" : "";
+      return {
+        ok: redirectOk && cookieOk,
+        status: response.status,
+        location,
+        cookieName: PARTNER_PROMO_COOKIE,
+        path,
+        url,
+        expectedCode,
+        reason,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        status: 0,
+        location: "",
+        cookieName: PARTNER_PROMO_COOKIE,
+        path,
+        url,
+        expectedCode: input.expectedCode || "",
+        reason: error instanceof Error ? error.message : "short-link-fetch-failed",
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
   },
 
   async getPromoHealth() {
