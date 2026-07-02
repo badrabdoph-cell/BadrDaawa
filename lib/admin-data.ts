@@ -179,9 +179,8 @@ function toPhotographerWithSource(value: unknown): { photographer: Invitation["p
 
 function normalizeOrderStatus(status: string): OrderRequest["status"] {
   const clean = status.toLowerCase();
-  if (clean === "accepted") return "reviewing";
   if (clean === "converted") return "published";
-  if (["new", "reviewing", "edited", "published", "rejected"].includes(clean)) return clean as OrderRequest["status"];
+  if (["new", "reviewing", "edited", "accepted", "published", "rejected"].includes(clean)) return clean as OrderRequest["status"];
   return "new";
 }
 

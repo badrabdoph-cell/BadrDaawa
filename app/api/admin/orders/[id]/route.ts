@@ -25,7 +25,8 @@ type RouteContext = {
 };
 
 type AdminOrderPayload = {
-  action?: "review" | "update" | "publish" | "trial-publish" | "reject" | "delete" | "hard-delete";
+  action?: "review" | "update" | "publish" | "trial-publish" | "reject" | "delete" | "hard-delete" | "update-status";
+  status?: OrderRequest["status"];
   groomName?: string;
   brideName?: string;
   phone?: string;
@@ -105,9 +106,8 @@ function dateToString(value: Date | string | null | undefined) {
 
 function normalizeStatus(status: string): OrderRequest["status"] {
   const clean = status.toLowerCase();
-  if (clean === "accepted") return "reviewing";
   if (clean === "converted") return "published";
-  if (["new", "reviewing", "edited", "published", "rejected"].includes(clean)) return clean as OrderRequest["status"];
+  if (["new", "reviewing", "edited", "accepted", "published", "rejected"].includes(clean)) return clean as OrderRequest["status"];
   return "new";
 }
 
@@ -655,6 +655,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
       revalidatePath("/admin/orders");
       revalidatePath("/admin/trash");
       return jsonMode ? NextResponse.json({ ok: true, hardDeleted: true }) : redirectBack(request, "hard-deleted");
+    }
+
+    if (action === "update-status") {
+      const nextStatus = normalizeStatus(payload.status || "");
+      if (nextStatus === "published" || nextStatus === "converted") {
+        return jsonMode ? jsonError("استخدم زر النشر لإنشاء الدعوة والصورة.") : redirectBack(request, "invalid-status");
+      }
+      await prisma.orderRequest.updateMany({
+        where: { id, deletedAt: null },
+        data: {
+          status: nextStatus.toUpperCase() as never,
+          ...(nextStatus === "rejected" ? { rejectionReason: payload.rejectionReason || "تم رفض الطلب من لوحة الإدارة." } : {}),
+        },
+      });
+      const order = await getSnapshot(id, request);
+      revalidatePath("/admin/orders");
+      return jsonMode ? NextResponse.json({ ok: true, order }) : redirectBack(request, "status-updated");
     }
 
     if (action === "review") {

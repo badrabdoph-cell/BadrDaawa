@@ -920,26 +920,9 @@ export function AdminOrderRequestsManager({
                   <div className="orders-queue-item-actions">
                     {!isFinal && (
                       <>
-                        <button className="orders-queue-accept" type="button" disabled={busy !== "idle"} onClick={async () => {
-                          try {
-                            const res = await fetch(`/api/admin/orders/${order.id}`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json", Accept: "application/json" },
-                              body: JSON.stringify({ action: "update-status", status: "accepted" }),
-                            });
-                            const data = await res.json().catch(() => null) as { order?: OrderRequest; error?: string } | null;
-                            if (res.ok && data?.order) {
-                              setItems((current) => current.map((item) => (item.id === order.id ? data.order! : item)));
-                              window.dispatchEvent(new Event("admin-orders-count-refresh"));
-                            } else {
-                              setNotice({ kind: "error", text: data?.error || "تعذر قبول الطلب." });
-                            }
-                          } catch {
-                            setNotice({ kind: "error", text: "تعذر قبول الطلب." });
-                          }
-                        }}>
-                          <Check size={14} />
-                          قبول
+                        <button className="orders-queue-accept" type="button" disabled={busy !== "idle"} onClick={() => quickPublish(order)}>
+                          {isPublishingThisOrder ? <Loader2 size={15} /> : <Check size={14} />}
+                          قبول ونشر
                         </button>
                         <button className="orders-queue-reject" type="button" disabled={busy !== "idle"} onClick={() => {
                           setSelectedId(order.id);
@@ -950,12 +933,6 @@ export function AdminOrderRequestsManager({
                           رفض
                         </button>
                       </>
-                    )}
-                    {!isFinal && (
-                      <button className="orders-queue-publish" type="button" disabled={busy !== "idle"} onClick={() => quickPublish(order)}>
-                        {isPublishingThisOrder ? <Loader2 size={15} /> : <Send size={15} />}
-                        موافقة ونشر
-                      </button>
                     )}
                     <button className="orders-queue-delete" type="button" disabled={busy !== "idle"} onClick={() => setConfirmDelete({ type: "single", ids: [order.id] })}>
                       <Trash2 size={14} /> حذف

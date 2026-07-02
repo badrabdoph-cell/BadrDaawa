@@ -11,12 +11,17 @@ assert.match(types, /postImage\?: OrderPostImageState/, "admin order data should
 
 assert.match(adminData, /postImageByCode/, "admin orders loader should map published invitation codes to post image data");
 assert.match(adminData, /postImage:\s*toOrderPostImageState\(postImage\)/, "admin orders should include linked post image data");
+assert.doesNotMatch(adminData, /if \(clean === "accepted"\) return "reviewing"/, "admin orders loader should preserve accepted status");
 
 assert.match(orderRoute, /getInvitationPostImageState/, "admin order API snapshots should include post image data after publish/regenerate");
 assert.match(orderRoute, /postImage,\s*\n\s*language:/, "admin order API should return the latest linked post image state");
+assert.match(orderRoute, /action\?:[\s\S]*"update-status"/, "admin order API should explicitly accept status-only updates");
+assert.match(orderRoute, /if \(action === "update-status"\)/, "admin order API should handle status-only updates without falling through to edited");
 
 assert.match(manager, /PostImageAdminPanel/, "admin orders manager should render the post image admin controls");
 assert.match(manager, /selectedOrder\.postImage/, "post image panel should use the selected order linked post image state");
 assert.match(manager, /صورة البوست/, "admin orders should label the post image control section clearly");
+assert.doesNotMatch(manager, /action:\s*"update-status",\s*status:\s*"accepted"/, "primary accept action should publish the invitation so the post image can be generated");
+assert.match(manager, /قبول ونشر/, "primary accept action should communicate that it publishes and generates final assets");
 
 console.log("admin orders post image panel tests passed");
