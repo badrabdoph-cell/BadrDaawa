@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     const deleted = await deleteInternalNote(id);
     if (!deleted) return redirectNotes(request, returnTo, { noteStatus: "missing" });
     revalidateAdminNotes();
+    revalidatePath(returnTo);
     return redirectNotes(request, returnTo, { noteStatus: "deleted" });
   }
 
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
     const updated = await updateInternalNote(id, { body: formData.get("body") });
     if (!updated) return redirectNotes(request, returnTo, { noteStatus: "invalid" });
     revalidateAdminNotes();
+    revalidatePath(returnTo);
     return redirectNotes(request, returnTo, { noteStatus: "updated" });
   }
 
@@ -64,5 +66,6 @@ export async function POST(request: NextRequest) {
   });
   if (!created) return redirectNotes(request, returnTo, { noteStatus: "invalid" });
   revalidateAdminNotes();
+  revalidatePath(returnTo);
   return redirectNotes(request, returnTo, { noteStatus: "created" });
 }

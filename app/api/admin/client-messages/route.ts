@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
   const invitationCode = String(formData.get("invitationCode") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const body = String(formData.get("body") || "").trim();
-  const scope = String(formData.get("scope") || "single").trim();
+  const scopeInput = String(formData.get("scope") || "single").trim();
+  const scope = scopeInput === "all" ? "all" : "single";
   const invitations = await getAdminInvitations();
   const invitation = invitations.find((item) => item.code === invitationCode);
   if ((scope !== "all" && !invitation) || !body) {
@@ -43,7 +44,12 @@ export async function POST(request: NextRequest) {
   }
 
   revalidatePath("/admin/messages");
-  revalidatePath(getCustomerAdminPath(invitationCode));
+  if (scope === "all") {
+    revalidatePath("/admin/customers");
+  } else {
+    revalidatePath(getCustomerAdminPath(invitationCode));
+    if (invitation?.customerId) revalidatePath(`/admin/customers/${invitation.customerId}`);
+  }
 
-  return NextResponse.redirect(getRedirectUrl(`/admin/messages?sent=${encodeURIComponent(invitationCode)}`, request.headers, request.nextUrl.origin), 303);
+  return NextResponse.redirect(getRedirectUrl(`/admin/messages?sent=${encodeURIComponent(scope === "all" ? "كل العملاء" : invitationCode)}`, request.headers, request.nextUrl.origin), 303);
 }

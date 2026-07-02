@@ -4,12 +4,12 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-sess
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
+import { resolveOrCreateCustomerForInvitation } from "@/lib/customer-identity";
 import { prisma } from "@/lib/db";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
-import { hashPassword } from "@/lib/password";
 import { ensureInvitationPostImage, markPostImageNeedsRegeneration } from "@/lib/post-image/service";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
@@ -29,6 +29,9 @@ type BuilderPayload = {
   templateSlug?: string;
   groomName?: string;
   brideName?: string;
+  customerId?: string;
+  phone?: string;
+  email?: string;
   weddingDate?: string;
   weddingTime?: string;
   venue?: string;
@@ -296,22 +299,12 @@ export async function POST(request: NextRequest) {
         ).flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean),
       );
 
-    const username = `client_${code.replace(/[^a-z0-9]+/gi, "_")}`;
-    const customer = await db.customer.upsert({
-      where: { username },
-      update: {
-        name: `${groomName} و ${brideName}`,
-        phone: "",
-        passwordHash: hashPassword(`${code}-admin`),
-        isActive: true,
-      },
-      create: {
-        name: `${groomName} و ${brideName}`,
-        phone: "",
-        username,
-        passwordHash: hashPassword(`${code}-admin`),
-        isActive: true,
-      },
+    const customer = await resolveOrCreateCustomerForInvitation(db, {
+      existingCustomerId: cleanText(input.customerId) || existing?.customerId || null,
+      code,
+      name: `${groomName} و ${brideName}`,
+      phone: cleanText(input.phone),
+      email: cleanText(input.email),
     });
 
     const mapUrl = cleanText(input.mapUrl);

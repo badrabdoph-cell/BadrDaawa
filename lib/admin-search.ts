@@ -95,7 +95,7 @@ function buildInvitationResult(invitation: Invitation): AdminSearchResult {
     title: `${invitation.groomName} و ${invitation.brideName}`,
     subtitle: invitation.code,
     meta: `${invitation.venue}${invitation.city ? ` - ${invitation.city}` : ""} - ${invitationStatusLabel(invitation)}`,
-    href: `/admin/invitations?q=${encodeURIComponent(invitation.code)}`,
+    href: `/admin/invitations/${encodeURIComponent(invitation.code)}`,
   };
 }
 
@@ -232,7 +232,7 @@ export async function getGlobalAdminSearchResults(query: string, limitPerGroup =
         title: customer.name,
         subtitle: customer.username,
         meta: `${customer.phone}${customer.email ? ` - ${customer.email}` : ""} - ${customer.invitations} دعوة`,
-        href: "/admin/customers",
+        href: `/admin/customers/${encodeURIComponent(customer.id)}`,
       })),
     },
     {

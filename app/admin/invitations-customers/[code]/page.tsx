@@ -8,6 +8,7 @@ import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
 import { getAdminCustomers, getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
+import { getInvitationState, stateClassName, stateLabel } from "@/lib/admin-crm-status";
 import { getGuestBookMessages } from "@/lib/guest-book";
 import { getInternalNotesForEntity } from "@/lib/internal-notes";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
@@ -27,35 +28,6 @@ function formatAdminDateTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(date);
-}
-
-function isExpiredInvitation(weddingDate: string) {
-  const date = new Date(weddingDate);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.getTime() < Date.now();
-}
-
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string }) {
-  if (invitation.disabledAt) return "disabled";
-  if (invitation.status === "archived") return "archived";
-  if (invitation.status === "paused" || !invitation.isActive) return "paused";
-  if (isExpiredInvitation(invitation.weddingDate)) return "expired";
-  return "active";
-}
-
-function stateLabel(state: string) {
-  if (state === "active") return "نشطة";
-  if (state === "paused") return "متوقفة";
-  if (state === "expired") return "منتهية";
-  if (state === "archived") return "مؤرشفة";
-  if (state === "disabled") return "معطلة";
-  return "غير محددة";
-}
-
-function stateClassName(state: string) {
-  if (state === "active") return "status success";
-  if (state === "paused" || state === "expired") return "status warning";
-  return "status danger";
 }
 
 export default async function UnifiedInvitationDetailsPage({ params }: { params: Promise<{ code: string }> }) {

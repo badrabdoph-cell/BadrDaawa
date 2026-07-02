@@ -17,6 +17,15 @@ function redirectBack(request: NextRequest, status: string) {
   return NextResponse.redirect(url, 303);
 }
 
+type InvitationUpdateOptions = {
+  customSlug?: string;
+  disabledReason?: string;
+  disabledBy?: string;
+  groomName?: string;
+  brideName?: string;
+  weddingDate?: Date;
+};
+
 function safeRevalidatePath(path: string) {
   try {
     revalidatePath(path);
@@ -25,12 +34,25 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-async function updateDatabaseInvitation(code: string, action: string, customSlug?: string, disabledReason?: string, disabledBy?: string) {
+async function updateDatabaseInvitation(code: string, action: string, options: InvitationUpdateOptions = {}) {
   if (!prisma) return false;
 
   try {
     if (action === "custom-slug") {
-      const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data: { customSlug: customSlug || null } });
+      const result = await prisma.invitation.updateMany({ where: { code, deletedAt: null }, data: { customSlug: options.customSlug || null } });
+      return result.count > 0;
+    }
+
+    if (action === "update-details") {
+      if (!options.groomName || !options.brideName || !options.weddingDate) return false;
+      const result = await prisma.invitation.updateMany({
+        where: { code, deletedAt: null },
+        data: {
+          groomName: options.groomName,
+          brideName: options.brideName,
+          weddingDate: options.weddingDate,
+        },
+      });
       return result.count > 0;
     }
 
@@ -50,7 +72,7 @@ async function updateDatabaseInvitation(code: string, action: string, customSlug
     if (action === "disable") {
       const result = await prisma.invitation.updateMany({
         where: { code, deletedAt: null },
-        data: { disabledAt: new Date(), disabledReason: disabledReason || null, disabledBy: disabledBy || null },
+        data: { disabledAt: new Date(), disabledReason: options.disabledReason || null, disabledBy: options.disabledBy || null },
       });
       return result.count > 0;
     }
@@ -113,18 +135,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   let action: string;
   let customSlug = "";
   let disabledReason = "";
+  let groomName = "";
+  let brideName = "";
+  let weddingDate = "";
   
   if (jsonMode) {
-    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string; disabledReason?: string } | null;
+    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string; disabledReason?: string; groomName?: string; brideName?: string; weddingDate?: string } | null;
     if (!body) return jsonMode ? jsonError("بيانات غير صالحة.") : redirectBack(request, "invalid");
     action = (body.action || "").trim();
     customSlug = body.customSlug || "";
     disabledReason = body.disabledReason || "";
+    groomName = (body.groomName || "").trim();
+    brideName = (body.brideName || "").trim();
+    weddingDate = (body.weddingDate || "").trim();
   } else {
     const formData = await request.formData();
     action = String(formData.get("action") || "").trim();
     customSlug = String(formData.get("customSlug") || "").trim();
     disabledReason = String(formData.get("disabledReason") || "").trim();
+    groomName = String(formData.get("groomName") || "").trim();
+    brideName = String(formData.get("brideName") || "").trim();
+    weddingDate = String(formData.get("weddingDate") || "").trim();
   }
 
   if (action === "disable") {
@@ -135,8 +166,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     disabledReason = reason;
   }
 
-  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete", "disable", "enable"].includes(action)) {
-    return redirectBack(request, "invalid");
+  if (action === "update-details") {
+    const parsedWeddingDate = new Date(weddingDate);
+    if (!groomName || !brideName || Number.isNaN(parsedWeddingDate.getTime())) {
+      return jsonMode ? jsonError("اسم العريس والعروس وتاريخ الحفل مطلوبة.") : redirectBack(request, "invalid");
+    }
+  }
+
+  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete", "disable", "enable", "update-details"].includes(action)) {
+    return jsonMode ? jsonError("الإجراء غير صالح.") : redirectBack(request, "invalid");
   }
 
   // Handle hard-delete with JSON response for AJAX calls
@@ -177,7 +215,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const disabledBy = action === "disable" ? await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) : undefined;
-  const updatedDatabase = await updateDatabaseInvitation(code, action, customSlug, action === "disable" ? disabledReason : undefined, disabledBy || undefined);
+  const updatedDatabase = await updateDatabaseInvitation(code, action, {
+    customSlug,
+    disabledReason: action === "disable" ? disabledReason : undefined,
+    disabledBy: disabledBy || undefined,
+    groomName,
+    brideName,
+    weddingDate: action === "update-details" ? new Date(weddingDate) : undefined,
+  });
   const changed = updatedDatabase;
 
   if (changed) {
@@ -189,10 +234,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     safeRevalidatePath(`/${code}/ad_3399`);
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
-      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "disable" ? "invitation.disable" : action === "enable" ? "invitation.enable" : action === "custom-slug" ? "invitation.update" : "invitation.resume",
+      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "disable" ? "invitation.disable" : action === "enable" ? "invitation.enable" : action === "custom-slug" || action === "update-details" ? "invitation.update" : "invitation.resume",
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
-      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : action === "disable" ? { disabledAt: new Date().toISOString(), disabledReason } : action === "enable" ? { disabledAt: null, disabledReason: null } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
+      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : action === "update-details" ? { groomName, brideName, weddingDate } : action === "disable" ? { disabledAt: new Date().toISOString(), disabledReason } : action === "enable" ? { disabledAt: null, disabledReason: null } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
       metadata: { storage: "database" },
     });
   }

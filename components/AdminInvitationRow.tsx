@@ -16,6 +16,7 @@ type Props = {
   groomName: string;
   brideName: string;
   weddingDate: string;
+  weddingDateValue: string;
   views: string;
   stateEmoji: string;
   stateLabel: string;
@@ -54,11 +55,11 @@ function CopyButton({ value, label, onDone }: { value: string; label: string; on
 }
 
 export function AdminInvitationRow({
-  code, groomName, brideName, weddingDate, views,
+  code, groomName, brideName, weddingDate, weddingDateValue, views,
   stateEmoji, stateLabel, stateClass,
   publicPath, adminPath, invitationUrl, adminUrl,
   isDisabled, disabledReason, disabledBy,
-  trialDays, trialRemaining,
+  trialDays, trialRemaining, isFavorite = false,
 }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -68,7 +69,7 @@ export function AdminInvitationRow({
   const [editing, setEditing] = useState(false);
   const [editGroom, setEditGroom] = useState(groomName);
   const [editBride, setEditBride] = useState(brideName);
-  const [editDate, setEditDate] = useState(weddingDate);
+  const [editDate, setEditDate] = useState(weddingDateValue);
   const [editSaving, setEditSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -102,7 +103,7 @@ export function AdminInvitationRow({
   function handleStartEdit() {
     setEditGroom(groomName);
     setEditBride(brideName);
-    setEditDate(weddingDate);
+    setEditDate(weddingDateValue);
     setEditing(true);
     setMenuOpen(false);
   }
@@ -139,7 +140,7 @@ export function AdminInvitationRow({
     setEditing(false);
     setEditGroom(groomName);
     setEditBride(brideName);
-    setEditDate(weddingDate);
+    setEditDate(weddingDateValue);
   }
 
   async function handleToggleState() {
@@ -193,7 +194,7 @@ export function AdminInvitationRow({
       const res = await fetch(`/api/admin/invitations/${encodeURIComponent(code)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ action: "hard-delete" }),
+        body: JSON.stringify({ action: "delete" }),
       });
       const data = await res.json().catch(() => null) as { ok?: boolean } | null;
       if (!res.ok || !data?.ok) throw new Error("تعذر الحذف.");
@@ -289,6 +290,17 @@ export function AdminInvitationRow({
                 تعديل
               </button>
             )}
+            {editing ? null : (
+              <FavoriteToggleButton
+                entityType="invitation"
+                entityId={code}
+                label={`${groomName} و ${brideName}`}
+                href="/admin/invitations"
+                returnTo="/admin/invitations"
+                active={isFavorite}
+                iconOnly
+              />
+            )}
             <div className="admin-more-actions" ref={menuRef}>
               <button
                 ref={btnRef}
@@ -313,7 +325,7 @@ export function AdminInvitationRow({
                   </button>
                   <button type="button" onClick={() => { setDeleteConfirm(true); setMenuOpen(false); }} className="danger-action">
                     <Trash2 size={16} />
-                    حذف الدعوة
+                    نقل للمهملات
                   </button>
                 </div>
               ) : null}
@@ -323,9 +335,9 @@ export function AdminInvitationRow({
       </tr>
       <ConfirmDialog
         isOpen={deleteConfirm}
-        title="تأكيد حذف الدعوة"
-        message={`هل أنت متأكد من حذف الدعوة (${code}) نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`}
-        confirmText="حذف"
+        title="نقل الدعوة إلى المهملات"
+        message={`سيتم نقل الدعوة (${code}) إلى سلة المهملات ويمكن استرجاعها لاحقاً.`}
+        confirmText="نقل للمهملات"
         cancelText="إلغاء"
         isDangerous
         onConfirm={handleDelete}

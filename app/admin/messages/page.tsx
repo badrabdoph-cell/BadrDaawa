@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, CheckCircle2, MessageSquareText, Search, Send, UserRound } from "lucide-react";
+import { Bell, CheckCircle2, Filter, MessageSquareText, Search, Send, UserRound } from "lucide-react";
 import { headers } from "next/headers";
 import { AdminClientMessageForm } from "@/components/AdminClientMessageForm";
 import { getAdminInvitations } from "@/lib/admin-data";
@@ -13,6 +13,8 @@ type AdminMessagesParams = {
   sent?: string;
   error?: string;
   q?: string;
+  status?: string;
+  scope?: string;
 };
 
 function formatDate(value: string) {
@@ -26,11 +28,19 @@ function formatDate(value: string) {
 export default async function AdminMessagesPage({ searchParams }: { searchParams: Promise<AdminMessagesParams> }) {
   const [params, invitations, messages, unreadCount, messageTemplates, requestHeaders] = await Promise.all([searchParams, getAdminInvitations(), getAllClientMessages(), getTotalUnreadClientMessages(), getMessageTemplates(), headers()]);
   const query = (params.q || "").trim().toLowerCase();
+  const selectedStatus = params.status || "all";
+  const selectedScope = params.scope || "any";
   const invitationMap = new Map(invitations.map((inv) => [inv.code, inv]));
   const filteredMessages = messages.filter((message) => {
     const invitation = invitationMap.get(message.invitationCode);
     const haystack = [message.title, message.body, message.invitationCode, invitation?.groomName, invitation?.brideName, invitation?.venue].join(" ").toLowerCase();
-    return !query || haystack.includes(query);
+    const matchesQuery = !query || haystack.includes(query);
+    const matchesStatus =
+      selectedStatus === "all" ||
+      (selectedStatus === "unread" && !message.readAt) ||
+      (selectedStatus === "read" && Boolean(message.readAt));
+    const matchesScope = selectedScope === "any" || message.scope === selectedScope;
+    return matchesQuery && matchesStatus && matchesScope;
   });
   const DISPLAY_LIMIT = 100;
   const displayMessages = filteredMessages.length > DISPLAY_LIMIT ? filteredMessages.slice(0, DISPLAY_LIMIT) : filteredMessages;
@@ -86,8 +96,24 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
           <Search size={17} />
           <input name="q" placeholder="ابحث في الرسائل أو كود الدعوة أو اسم العميل" defaultValue={params.q || ""} />
         </label>
+        <label className="admin-select-field">
+          <Filter size={17} />
+          <select name="status" defaultValue={selectedStatus} aria-label="حالة القراءة">
+            <option value="all">كل الحالات</option>
+            <option value="unread">غير مقروءة</option>
+            <option value="read">مقروءة</option>
+          </select>
+        </label>
+        <label className="admin-select-field">
+          <MessageSquareText size={17} />
+          <select name="scope" defaultValue={selectedScope} aria-label="نطاق الرسالة">
+            <option value="any">كل النطاقات</option>
+            <option value="single">خاص</option>
+            <option value="all">عام</option>
+          </select>
+        </label>
         <button className="btn btn-soft" type="submit">بحث</button>
-        {query ? <Link className="btn btn-soft" href="/admin/messages">مسح</Link> : null}
+        {(query || selectedStatus !== "all" || selectedScope !== "any") ? <Link className="btn btn-soft" href="/admin/messages">مسح</Link> : null}
       </form>
 
       <div className="table-shell">
@@ -112,8 +138,22 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
                         <strong>كل العملاء</strong>
                       ) : (
                         <>
-                          <strong>{invitation ? `${invitation.groomName} و ${invitation.brideName}` : message.invitationCode}</strong>
-                          <small>{message.invitationCode}</small>
+                          {invitation ? (
+                            <Link href={`/admin/invitations/${encodeURIComponent(invitation.code)}`}>
+                              <strong>{invitation.groomName} و {invitation.brideName}</strong>
+                            </Link>
+                          ) : (
+                            <strong>{message.invitationCode}</strong>
+                          )}
+                          <small>
+                            {message.invitationCode}
+                            {invitation?.customerId ? (
+                              <>
+                                {" · "}
+                                <Link href={`/admin/customers/${encodeURIComponent(invitation.customerId)}`}>ملف العميل</Link>
+                              </>
+                            ) : null}
+                          </small>
                         </>
                       )}
                     </td>

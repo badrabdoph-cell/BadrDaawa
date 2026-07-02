@@ -43,11 +43,21 @@ type ImageLibraryFile = {
   extension?: string;
 };
 
+type WizardCustomer = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+};
+
 type StepId = "template" | "couple" | "event" | "images" | "extras" | "texts" | "review" | "publish";
 
 type DraftState = {
   language: "ar" | "en";
   templateSlug: string;
+  customerId: string;
+  phone: string;
+  email: string;
   groomName: string;
   brideName: string;
   groomNameEn: string;
@@ -194,6 +204,9 @@ function createInitialDraft(templates: WizardTemplate[], defaults?: TemplatePrev
   return {
     language: defaults?.language || "ar",
     templateSlug: templates[0]?.slug || "",
+    customerId: "",
+    phone: "",
+    email: "",
     groomName: defaults?.groomName || "",
     brideName: defaults?.brideName || "",
     groomNameEn: "",
@@ -267,6 +280,8 @@ export function AdminNewInvitationWizard({
   contentPresets,
   siteUrl,
   templatePreviewInfo,
+  customers = [],
+  initialCustomerId = "",
 }: {
   templates: WizardTemplate[];
   musicFiles: AdminToolMusicFile[];
@@ -274,6 +289,8 @@ export function AdminNewInvitationWizard({
   contentPresets: ContentPreset[];
   siteUrl: string;
   templatePreviewInfo?: TemplatePreviewEditableInfo;
+  customers?: WizardCustomer[];
+  initialCustomerId?: string;
 }) {
   const defaults = useMemo<TemplatePreviewDefaults | undefined>(() => {
     if (!templatePreviewInfo) return undefined;
@@ -325,6 +342,7 @@ export function AdminNewInvitationWizard({
   const cleanSiteUrl = siteUrl.replace(/\/$/, "");
   const stepIndex = steps.findIndex((step) => step.id === currentStep);
   const selectedTemplate = templates.find((template) => template.slug === draft.templateSlug) || templates[0];
+  const selectedCustomer = customers.find((customer) => customer.id === draft.customerId);
   const prePublishReport = useMemo(
     () =>
       getPrePublishValidationReport({
@@ -419,6 +437,18 @@ export function AdminNewInvitationWizard({
   useEffect(() => {
     postPreviewUpdate();
   }, [postPreviewUpdate]);
+
+  useEffect(() => {
+    if (!initialCustomerId) return;
+    const customer = customers.find((item) => item.id === initialCustomerId);
+    if (!customer) return;
+    setDraft((current) => ({
+      ...current,
+      customerId: customer.id,
+      phone: current.phone || customer.phone || "",
+      email: current.email || customer.email || "",
+    }));
+  }, [customers, initialCustomerId]);
 
   useEffect(() => {
     function onPreviewReady(event: MessageEvent<{ source?: string; type?: string }>) {
@@ -722,6 +752,9 @@ export function AdminNewInvitationWizard({
         code: savedCode,
         language: draft.language,
         templateSlug: draft.templateSlug,
+        customerId: draft.customerId,
+        phone: draft.phone,
+        email: draft.email,
         groomName: draft.groomName,
         brideName: draft.brideName,
         weddingDate: draft.weddingDate,
@@ -761,7 +794,7 @@ export function AdminNewInvitationWizard({
     }
     setSavedCode(data.code);
     setLinks({ publicUrl: data.publicUrl || `${cleanSiteUrl}/${data.code}`, adminUrl: data.adminUrl || `${cleanSiteUrl}/${data.code}/ad_3399` });
-    window.localStorage.removeItem(draftStorageKey);
+    window.sessionStorage.removeItem(draftStorageKey);
     setMessage({ kind: "success", text: action === "draft" ? "تم حفظ الدعوة كمسودة ويمكنك استكمالها من رابط العميل." : "تم نشر الدعوة وإنشاء الروابط." });
     setCurrentStep("publish");
   }
@@ -772,7 +805,7 @@ export function AdminNewInvitationWizard({
   }
 
   function resetLocalDraft() {
-    window.localStorage.removeItem(draftStorageKey);
+    window.sessionStorage.removeItem(draftStorageKey);
     setDraft(createInitialDraft(templates));
     setSavedCode("");
     setLinks(null);
@@ -1013,6 +1046,49 @@ export function AdminNewInvitationWizard({
             <p>{message.text}</p>
           </div>
         ) : null}
+
+        <section className="order-customer-box" aria-labelledby="adminCustomerBoxTitle">
+          <div className="order-compact-section-head">
+            <h2 id="adminCustomerBoxTitle">بيانات العميل</h2>
+            <p>اربط الدعوة بعميل موجود أو اكتب بياناته ليتم إنشاء حسابه تلقائياً.</p>
+          </div>
+          <div className="input-grid order-compact-grid">
+            <div className="field">
+              <label htmlFor="adminCustomerId">
+                <UserRound size={16} />
+                العميل
+              </label>
+              <select
+                id="adminCustomerId"
+                value={draft.customerId}
+                onChange={(event) => {
+                  const customer = customers.find((item) => item.id === event.target.value);
+                  patch({
+                    customerId: event.target.value,
+                    phone: customer?.phone || draft.phone,
+                    email: customer?.email || draft.email,
+                  });
+                }}
+              >
+                <option value="">عميل جديد أو غير محدد</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} - {customer.phone || "بدون هاتف"}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="adminCustomerPhone">هاتف العميل</label>
+              <input id="adminCustomerPhone" inputMode="tel" placeholder="مثال: 01001234567" value={draft.phone} onChange={(event) => patch({ phone: event.target.value })} />
+            </div>
+            <div className="field">
+              <label htmlFor="adminCustomerEmail">البريد الإلكتروني</label>
+              <input id="adminCustomerEmail" dir="ltr" inputMode="email" placeholder="name@example.com" value={draft.email} onChange={(event) => patch({ email: event.target.value })} />
+            </div>
+          </div>
+          {selectedCustomer ? <p className="field-preview">سيتم تحديث حساب {selectedCustomer.name} بهذه الدعوة بدون إنشاء عميل مكرر.</p> : <p className="field-preview">إذا تطابق الهاتف مع عميل موجود سيتم ربطه تلقائياً حتى لو لم تختره من القائمة.</p>}
+        </section>
 
         <div className="input-grid order-compact-grid">
           <div className="field">
@@ -1419,6 +1495,7 @@ export function AdminNewInvitationWizard({
   function renderReviewStep() {
     const summary = [
       ["القالب", selectedTemplate?.arabicName || draft.templateSlug],
+      ["العميل", selectedCustomer?.name || draft.phone || "عميل جديد"],
       ["العروسين", `${draft.groomName || "-"} و ${draft.brideName || "-"}`],
       ["الموعد", `${draft.weddingDate || "-"} · ${draft.weddingTime || "-"}`],
       ["المكان", [draft.venue, draft.city].filter(Boolean).join(" - ") || "-"],

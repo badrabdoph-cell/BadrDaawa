@@ -3,12 +3,12 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
+import { resolveOrCreateCustomerForInvitation } from "@/lib/customer-identity";
 import { prisma } from "@/lib/db";
 import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
-import { hashPassword } from "@/lib/password";
 import { ensureInvitationPostImage } from "@/lib/post-image/service";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
@@ -101,10 +101,6 @@ function cleanDate(value: unknown) {
 function dateToString(value: Date | string | null | undefined) {
   if (!value) return "";
   return value instanceof Date ? value.toISOString() : value;
-}
-
-function digitsOnly(value: string) {
-  return value.replace(/\D/g, "");
 }
 
 function normalizeStatus(status: string): OrderRequest["status"] {
@@ -464,24 +460,11 @@ async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
       baseSlug,
       existingCodes.flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean),
     );
-  const digits = digitsOnly(draft.phone);
-  const username = `client_${digits || code.replace(/[^a-z0-9]/gi, "_")}`;
-  const password = digits.slice(-6) || code.slice(-6) || "123456";
-  const customer = await prisma.customer.upsert({
-    where: { username },
-    update: {
-      name: `${draft.groomName} و ${draft.brideName}`,
-      phone: draft.phone,
-      passwordHash: hashPassword(password),
-      isActive: true,
-    },
-    create: {
-      name: `${draft.groomName} و ${draft.brideName}`,
-      phone: draft.phone,
-      username,
-      passwordHash: hashPassword(password),
-      isActive: true,
-    },
+  const customer = await resolveOrCreateCustomerForInvitation(prisma, {
+    existingCustomerId: order.customerId || null,
+    code,
+    name: `${draft.groomName} و ${draft.brideName}`,
+    phone: draft.phone,
   });
 
   const trialDays = payload.trialDays && payload.trialDays >= 1 && payload.trialDays <= 10 ? payload.trialDays : null;

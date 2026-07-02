@@ -41,7 +41,10 @@ export function AdminInvitationFiltersV2({ query, selectedState, selectedSort, s
           <option value="active">نشطة</option>
           <option value="paused">متوقفة</option>
           <option value="disabled">معطلة</option>
+          <option value="trial">تجريبي</option>
+          <option value="trial-ended">منتهي تجريبي</option>
           <option value="expired">منتهية</option>
+          <option value="draft">مسودة</option>
           <option value="archived">مؤرشفة</option>
         </select>
       </label>

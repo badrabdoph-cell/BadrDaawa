@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Archive, CalendarDays, Eye, Settings2, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 import { getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
+import { getInvitationState, stateClassName, stateEmoji, stateLabel } from "@/lib/admin-crm-status";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { AdminInvitationRow } from "@/components/AdminInvitationRow";
@@ -30,41 +31,10 @@ function formatAdminDate(value: string) {
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Cairo" }).format(date);
 }
 
-function isExpiredInvitation(weddingDate: string) {
-  const date = new Date(weddingDate);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.getTime() < Date.now();
-}
-
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string; trialEndsAt?: string; disabledBy?: string }) {
-  if (invitation.disabledAt) {
-    if (invitation.disabledBy === "system" && invitation.trialEndsAt) return "trial-ended";
-    return "disabled";
-  }
-  if (invitation.trialEndsAt && new Date(invitation.trialEndsAt).getTime() > Date.now()) return "trial";
-  if (invitation.status === "archived") return "archived";
-  if (invitation.status === "paused" || !invitation.isActive) return "paused";
-  if (isExpiredInvitation(invitation.weddingDate)) return "expired";
-  return "active";
-}
-
-function stateLabel(state: string) {
-  if (state === "active") return "نشطة";
-  if (state === "paused") return "متوقفة";
-  if (state === "expired") return "منتهية";
-  if (state === "archived") return "مؤرشفة";
-  if (state === "disabled") return "معطلة";
-  if (state === "trial") return "تجريبي";
-  if (state === "trial-ended") return "منتهي تجريبي";
-  return "كل الحالات";
-}
-
-function stateClassName(state: string) {
-  if (state === "active") return "status success";
-  if (state === "paused" || state === "expired") return "status warning";
-  if (state === "trial") return "status info trial-badge";
-  if (state === "trial-ended") return "status danger";
-  return "status danger";
+function formatDateInput(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+  return date.toISOString().slice(0, 10);
 }
 
 export default async function InvitationsPage({
@@ -244,7 +214,6 @@ export default async function InvitationsPage({
                 const publicSlug = invitation.customSlug || invitation.code;
                 const invitationUrl = `${siteUrl}/${publicSlug}`;
                 const invitationState = getInvitationState(invitation);
-                const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" || invitationState === "trial-ended" ? "\uD83D\uDD34" : invitationState === "trial" ? "\uD83D\uDFE0" : "";
                 const adminPath = adminPathByCode.get(invitation.code);
                 const adminUrl = adminPath ? `${siteUrl}${adminPath}` : "";
                 const rowIsFavorite = isAdminFavorite(favorites, "invitation", invitation.code);
@@ -255,8 +224,9 @@ export default async function InvitationsPage({
                     groomName={invitation.groomName}
                     brideName={invitation.brideName}
                     weddingDate={formatAdminDate(invitation.weddingDate)}
+                    weddingDateValue={formatDateInput(invitation.weddingDate)}
                     views={formatArabicNumber(invitation.views)}
-                    stateEmoji={stateEmoji}
+                    stateEmoji={stateEmoji(invitationState)}
                     stateLabel={stateLabel(invitationState)}
                     stateClass={stateClassName(invitationState)}
                     publicPath={`/${publicSlug}`}

@@ -41,7 +41,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (!changed) return redirectCustomers(request, "missing");
 
   revalidatePath("/admin/customers");
-    revalidatePath("/admin/invitations-customers");
+  revalidatePath(`/admin/customers/${id}`);
+  revalidatePath("/admin/invitations-customers");
   revalidatePath("/admin/trash");
   return redirectCustomers(request, "deleted");
 }
@@ -78,6 +79,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   await prisma.customer.update({ where: { id }, data: { name: body.name, phone: body.phone, email: body.email === undefined ? undefined : body.email, isActive: body.isActive } as never });
   revalidatePath("/admin/customers");
-    revalidatePath("/admin/invitations-customers");
+  revalidatePath(`/admin/customers/${id}`);
+  revalidatePath("/admin/invitations-customers");
   return NextResponse.json({ ok: true });
 }

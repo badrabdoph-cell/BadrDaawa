@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Archive, CalendarDays, Eye, Settings2, ShieldAlert, Sparkles, UserCheck, UsersRound, Phone, User, Activity } from "lucide-react";
 import { getAdminCustomers, getAdminGuests, getAdminInvitations } from "@/lib/admin-data";
 import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
+import { getInvitationState, stateClassName, stateEmoji, stateLabel } from "@/lib/admin-crm-status";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
 import { AdminInvitationFiltersV2 } from "@/components/AdminInvitationFiltersV2";
@@ -22,43 +23,6 @@ function formatAdminDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Cairo" }).format(date);
-}
-
-function isExpiredInvitation(weddingDate: string) {
-  const date = new Date(weddingDate);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.getTime() < Date.now();
-}
-
-function getInvitationState(invitation: { isActive: boolean; weddingDate: string; status?: string; disabledAt?: string; trialEndsAt?: string; disabledBy?: string }) {
-  if (invitation.disabledAt) {
-    if (invitation.disabledBy === "system" && invitation.trialEndsAt) return "trial-ended";
-    return "disabled";
-  }
-  if (invitation.trialEndsAt && new Date(invitation.trialEndsAt).getTime() > Date.now()) return "trial";
-  if (invitation.status === "archived") return "archived";
-  if (invitation.status === "paused" || !invitation.isActive) return "paused";
-  if (isExpiredInvitation(invitation.weddingDate)) return "expired";
-  return "active";
-}
-
-function stateLabel(state: string) {
-  if (state === "active") return "نشطة";
-  if (state === "paused") return "متوقفة";
-  if (state === "expired") return "منتهية";
-  if (state === "archived") return "مؤرشفة";
-  if (state === "disabled") return "معطلة";
-  if (state === "trial") return "تجريبي";
-  if (state === "trial-ended") return "منتهي تجريبي";
-  return "كل الحالات";
-}
-
-function stateClassName(state: string) {
-  if (state === "active") return "status success";
-  if (state === "paused" || state === "expired") return "status warning";
-  if (state === "trial") return "status info trial-badge";
-  if (state === "trial-ended") return "status danger";
-  return "status danger";
 }
 
 export default async function UnifiedInvitationsPage({ searchParams }: { searchParams: Promise<UnifiedListParams> }) {
@@ -221,12 +185,11 @@ export default async function UnifiedInvitationsPage({ searchParams }: { searchP
                 const invitationState = getInvitationState(invitation);
                 const publicSlug = invitation.customSlug || invitation.code;
                 const invitationUrl = `${siteUrl}/${publicSlug}`;
-                const stateEmoji = invitationState === "active" ? "\uD83D\uDFE2" : invitationState === "paused" ? "\uD83D\uDFE1" : invitationState === "disabled" || invitationState === "trial-ended" ? "\uD83D\uDD34" : invitationState === "trial" ? "\uD83D\uDFE0" : "";
                 const rowIsFavorite = isAdminFavorite(favorites, "invitation", invitation.code);
                 return (
                   <tr key={invitation.id} className="admin-invitation-row unified-row">
                     <td className="cell-state">
-                      <span className={`state-dot ${stateClassName(invitationState).replace("status ", "")}`}>{stateEmoji}</span>
+                      <span className={`state-dot ${stateClassName(invitationState).replace("status ", "")}`}>{stateEmoji(invitationState)}</span>
                     </td>
                     <td className="cell-name" data-label="اسم الدعوة">
                       <div className="admin-name-content">

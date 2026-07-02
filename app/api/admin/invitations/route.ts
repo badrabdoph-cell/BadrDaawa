@@ -3,10 +3,10 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, isYouTubeUrl, saveUploadedAudioFile } from "@/lib/audio-files";
+import { resolveOrCreateCustomerForInvitation } from "@/lib/customer-identity";
 import { prisma } from "@/lib/db";
 import { fallbackInvitationGallery, getInvitationGalleryEntries, saveInvitationGalleryImages } from "@/lib/invitation-images";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
-import { hashPassword } from "@/lib/password";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
 import { buildInvitationBaseSlug, makeNumberedInvitationSlug } from "@/lib/slug";
 import { featuredOneTemplate } from "@/lib/templates";
@@ -137,21 +137,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const customer = await prisma.customer.upsert({
-      where: { username },
-      update: {
-        name: `${groomName} و ${brideName}`,
-        phone,
-        passwordHash: hashPassword(password),
-        isActive: true,
-      },
-      create: {
-        name: `${groomName} و ${brideName}`,
-        phone,
-        username,
-        passwordHash: hashPassword(password),
-        isActive: true,
-      },
+    const customer = await resolveOrCreateCustomerForInvitation(prisma, {
+      code: baseSlug,
+      name: `${groomName} و ${brideName}`,
+      phone,
+      preferredUsername: username,
+      passwordSeed: password,
     });
 
     let code = "";
