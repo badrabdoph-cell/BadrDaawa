@@ -1581,6 +1581,11 @@ export function AdminNewInvitationWizard({
           <span className="eyebrow">New Invitation</span>
           <h1>دعوة جديدة</h1>
           <p>نفس طريقة طلب الدعوة في الموقع، مع معاينة حية تبث كل تغيير أثناء الإنشاء.</p>
+          <div className="crm-inline-badge">
+            <UserRound size={16} />
+            <strong>CRM v2</strong>
+            <span>يمكنك الآن ربط الدعوة بعميل موجود أو إنشاء عميل تلقائياً من نفس الشاشة.</span>
+          </div>
         </div>
         <div className="new-invite-header-actions">
           <span className="new-invite-autosave"><CheckCircle2 size={16} /> {autosaveState}</span>

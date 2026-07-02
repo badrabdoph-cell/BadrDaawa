@@ -65,16 +65,23 @@ function sortFavorites(favorites: AdminFavorite[]) {
 }
 
 async function readFavoritesRaw() {
-  return readAppSettingOrSeed(favoritesKey, async () => {
+  const readSeed = async () => {
     try {
-    const raw = await readFile(favoritesPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return sortFavorites(parsed.map((item) => normalizeFavorite(item as AdminFavoriteInput)).filter(Boolean) as AdminFavorite[]);
+      const raw = await readFile(favoritesPath, "utf8");
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return sortFavorites(parsed.map((item) => normalizeFavorite(item as AdminFavoriteInput)).filter(Boolean) as AdminFavorite[]);
     } catch {
-    return [];
+      return [];
     }
-  });
+  };
+
+  try {
+    return await readAppSettingOrSeed(favoritesKey, readSeed);
+  } catch (error) {
+    console.warn("[AdminFavorites] Falling back to local favorites seed:", error instanceof Error ? error.message : String(error));
+    return readSeed();
+  }
 }
 
 async function writeFavorites(favorites: AdminFavorite[]) {

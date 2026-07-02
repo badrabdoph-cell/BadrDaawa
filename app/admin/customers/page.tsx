@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Filter, Search, Trash2, UserCheck, UsersRound } from "lucide-react";
+import { Filter, MessageSquareText, PlusCircle, Search, Trash2, UserCheck, UsersRound } from "lucide-react";
 import { AdminExportButton } from "@/components/AdminExportButton";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
@@ -74,6 +74,7 @@ export default async function CustomersPage({
         <div>
           <span className="eyebrow">Customers</span>
           <h1>العملاء وبيانات الدخول</h1>
+          <p>نسخة CRM الجديدة: ملف عميل موحد، ربط مباشر بالدعوات، رسائل، ملاحظات، وفلاتر تشغيلية.</p>
         </div>
         <div className="dashboard-actions">
           <AdminExportButton
@@ -90,6 +91,23 @@ export default async function CustomersPage({
           />
         </div>
       </div>
+      <section className="crm-upgrade-strip" aria-label="لوحة CRM الجديدة">
+        <div>
+          <span>CRM v2</span>
+          <strong>مركز العملاء الجديد مفعل الآن</strong>
+          <p>افتح أي عميل للوصول إلى ملف 360 الكامل، أو أنشئ دعوة مرتبطة بعميل مباشرة من هنا.</p>
+        </div>
+        <div className="crm-upgrade-actions">
+          <Link className="btn btn-gold" href="/admin/new-invitation">
+            <PlusCircle size={17} />
+            دعوة مرتبطة بعميل
+          </Link>
+          <Link className="btn btn-soft" href="/admin/messages">
+            <MessageSquareText size={17} />
+            مركز الرسائل
+          </Link>
+        </div>
+      </section>
       {message ? <div className={params.status === "deleted" ? "notice success" : "notice danger"}>{message}</div> : null}
       {noteMessage ? <div className={params.noteStatus === "created" || params.noteStatus === "updated" || params.noteStatus === "deleted" ? "notice success" : "notice danger"}>{noteMessage}</div> : null}
       {favoriteMessage ? <div className={params.favoriteStatus === "added" || params.favoriteStatus === "removed" ? "notice success" : "notice danger"}>{favoriteMessage}</div> : null}

@@ -11221,6 +11221,81 @@ img {
   font-size: 0.82rem;
 }
 
+.crm-upgrade-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid rgba(243, 207, 115, 0.34);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(243, 207, 115, 0.18), rgba(255, 255, 255, 0.055)),
+    rgba(255, 255, 255, 0.045);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.14);
+}
+
+.crm-upgrade-strip > div:first-child {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.crm-upgrade-strip span,
+.crm-inline-badge strong {
+  color: #f3cf73;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.crm-upgrade-strip strong {
+  color: #fff7e8;
+  font-size: 1.08rem;
+}
+
+.crm-upgrade-strip p {
+  margin: 0;
+  color: rgba(245, 234, 214, 0.68);
+  line-height: 1.65;
+}
+
+.crm-upgrade-actions,
+.crm-inline-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.crm-inline-badge {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1px solid rgba(243, 207, 115, 0.28);
+  border-radius: 10px;
+  background: rgba(243, 207, 115, 0.1);
+  color: rgba(245, 234, 214, 0.76);
+  line-height: 1.5;
+}
+
+.crm-inline-badge svg {
+  color: #f3cf73;
+}
+
+@media (max-width: 760px) {
+  .crm-upgrade-strip {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .crm-upgrade-actions .btn {
+    width: 100%;
+  }
+}
+
 .analytics-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
