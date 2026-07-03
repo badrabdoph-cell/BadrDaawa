@@ -235,13 +235,17 @@ export default async function AdminInvitationDetailsPage({
               invitationUrl={invitationUrl}
               initial={{
                 url: invitation.postImageUrl,
+                ogUrl: invitation.postImageOgUrl,
                 status: invitation.postImageStatus || "NEEDS_REGENERATION",
                 templateId: invitation.postImageTemplateId || "breaking-news-v1",
                 generatedAt: invitation.postImageGeneratedAt,
                 error: invitation.postImageError,
                 width: invitation.postImageWidth,
                 height: invitation.postImageHeight,
+                ogWidth: invitation.postImageOgWidth,
+                ogHeight: invitation.postImageOgHeight,
                 downloadFileName: `post-image-${invitation.code}.png`,
+                ogDownloadFileName: `post-image-og-${invitation.code}.png`,
               }}
             />
           </section>

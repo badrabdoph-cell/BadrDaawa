@@ -29,13 +29,17 @@ type DatabaseInvitation = {
   texts?: unknown;
   photographer?: unknown;
   postImageUrl: string | null;
+  postImageOgUrl: string | null;
   postImageTemplateId: string | null;
   postImageStatus: string | null;
   postImageSignature: string | null;
+  postImageOgSignature: string | null;
   postImageGeneratedAt: Date | null;
   postImageError: string | null;
   postImageWidth: number | null;
   postImageHeight: number | null;
+  postImageOgWidth: number | null;
+  postImageOgHeight: number | null;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
   trialDays: number | null;
   trialEndsAt: Date | null;
@@ -143,6 +147,7 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
     texts: normalizeInvitationTexts(invitation.texts),
     photographer: toPhotographer(invitation.photographer),
     postImageUrl: invitation.postImageUrl || undefined,
+    postImageOgUrl: invitation.postImageOgUrl || undefined,
     postImageTemplateId: invitation.postImageTemplateId || undefined,
     postImageStatus:
       invitation.postImageStatus === "GENERATED" ||
@@ -152,10 +157,13 @@ function toPublicInvitation(invitation: DatabaseInvitation): Invitation {
         ? invitation.postImageStatus
         : undefined,
     postImageSignature: invitation.postImageSignature || undefined,
+    postImageOgSignature: invitation.postImageOgSignature || undefined,
     postImageGeneratedAt: invitation.postImageGeneratedAt?.toISOString(),
     postImageError: invitation.postImageError || undefined,
     postImageWidth: invitation.postImageWidth || undefined,
     postImageHeight: invitation.postImageHeight || undefined,
+    postImageOgWidth: invitation.postImageOgWidth || undefined,
+    postImageOgHeight: invitation.postImageOgHeight || undefined,
     isActive: invitation.status === "ACTIVE" && !invitation.disabledAt,
     disabledAt: invitation.disabledAt?.toISOString(),
     disabledReason: invitation.disabledReason || undefined,

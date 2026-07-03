@@ -181,13 +181,19 @@ model Invitation {
   photographer             Json?
   qrCodeUrl                String?
   postImageUrl             String?
+  postImageOgUrl           String?
   postImageTemplateId      String?                   @default("breaking-news-v1")
   postImageStatus          String?                   @default("NEEDS_REGENERATION")
   postImageSignature       String?
+  postImageOgSignature     String?
   postImageGeneratedAt     DateTime?
   postImageError           String?
   postImageWidth           Int?
   postImageHeight          Int?
+  postImageOgWidth         Int?
+  postImageOgHeight        Int?
+  postImageGenerationToken String?
+  postImageGenerationStartedAt DateTime?
   viewCount                Int                       @default(0)
   trialDays                Int?
   trialEndsAt              DateTime?

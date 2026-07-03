@@ -22,10 +22,12 @@ function renderNewsCardSvg(payload: PostImageRenderPayload): string {
   const qrSize = 108 * s;
   const qrX = width - 154 * sx;
   const qrY = height - 235 * sy;
+  const arabicFont = "BadrDaawaArabic, Tahoma, Arial, sans-serif";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" direction="rtl">
   <defs>
+    ${payload.fontCss || ""}
     <pattern id="paperMarks" width="${140 * s}" height="${120 * s}" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
       <path d="M12 28 C38 6, 58 54, 92 22 S132 38, 146 18" fill="none" stroke="#777064" stroke-width="${1.1 * s}" opacity="0.16" stroke-linecap="round"/>
       <path d="M8 88 C36 66, 62 104, 104 78" fill="none" stroke="#777064" stroke-width="${0.9 * s}" opacity="0.12" stroke-linecap="round"/>
@@ -47,19 +49,19 @@ function renderNewsCardSvg(payload: PostImageRenderPayload): string {
   <line x1="${70 * sx}" x2="${width - 70 * sx}" y1="${topRuleY}" y2="${topRuleY}" stroke="#2a2221" stroke-width="${6 * s}"/>
   <line x1="${70 * sx}" x2="${width - 70 * sx}" y1="${topRuleY + 14 * sy}" y2="${topRuleY + 14 * sy}" stroke="#2a2221" stroke-width="${2 * s}"/>
 
-  <text x="${width / 2}" y="${titleY}" text-anchor="middle" direction="rtl" font-family="'Noto Naskh Arabic', Tahoma, Arial, sans-serif" font-size="${titleSize}" font-weight="900" fill="#d50a0a" stroke="#d50a0a" stroke-width="${1.5 * s}">${xml(payload.title)}</text>
+  <text x="${width / 2}" y="${titleY}" text-anchor="middle" direction="rtl" font-family="${arabicFont}" font-size="${titleSize}" font-weight="900" fill="#d50a0a" stroke="#d50a0a" stroke-width="${1.5 * s}">${xml(payload.title)}</text>
 
   <line x1="${82 * sx}" x2="${width - 82 * sx}" y1="${315 * sy}" y2="${315 * sy}" stroke="#2a2221" stroke-width="${4 * s}"/>
   <line x1="${82 * sx}" x2="${width - 82 * sx}" y1="${328 * sy}" y2="${328 * sy}" stroke="#2a2221" stroke-width="${2 * s}"/>
 
-  <text x="${width / 2}" y="${namesY}" text-anchor="middle" direction="rtl" font-family="'Noto Naskh Arabic', Tahoma, Arial, sans-serif" font-size="${namesSize}" font-weight="800" fill="#332b30">${xml(payload.coupleLine)}</text>
+  <text x="${width / 2}" y="${namesY}" text-anchor="middle" direction="rtl" font-family="${arabicFont}" font-size="${namesSize}" font-weight="800" fill="#332b30">${xml(payload.coupleLine)}</text>
   <line x1="${82 * sx}" x2="${width - 82 * sx}" y1="${488 * sy}" y2="${488 * sy}" stroke="#2a2221" stroke-width="${2 * s}"/>
 
   <rect x="${imageX - 8 * sx}" y="${imageY - 8 * sy}" width="${imageW + 16 * sx}" height="${imageH + 16 * sy}" fill="#2b2524" filter="url(#softShadow)"/>
   ${
     payload.coverImageDataUrl
       ? `<image href="${dataUrl(payload.coverImageDataUrl)}" x="${imageX}" y="${imageY}" width="${imageW}" height="${imageH}" preserveAspectRatio="xMidYMid slice" clip-path="url(#coverClip)"/>`
-      : `<rect x="${imageX}" y="${imageY}" width="${imageW}" height="${imageH}" fill="#d8d0c1"/><text x="${width / 2}" y="${imageY + imageH / 2}" text-anchor="middle" font-family="'Noto Naskh Arabic', Tahoma, Arial, sans-serif" font-size="${40 * s}" fill="#5f554d">صورة الدعوة</text>`
+      : `<rect x="${imageX}" y="${imageY}" width="${imageW}" height="${imageH}" fill="#d8d0c1"/><text x="${width / 2}" y="${imageY + imageH / 2}" text-anchor="middle" font-family="${arabicFont}" font-size="${40 * s}" fill="#5f554d">صورة الدعوة</text>`
   }
   <rect x="${imageX}" y="${imageY}" width="${imageW}" height="${imageH}" fill="none" stroke="#2b2524" stroke-width="${5 * s}"/>
 
@@ -79,14 +81,25 @@ function renderNewsCardSvg(payload: PostImageRenderPayload): string {
 </svg>`;
 }
 
+const supportedSizes = [
+  { id: "portrait-4x5", width: 1080, height: 1350 },
+  { id: "square", width: 1080, height: 1080 },
+  { id: "open-graph", width: 1200, height: 630 },
+] as const;
+
 export const newsCardPostImageTemplate: PostImageTemplate = {
   id: "breaking-news-v1",
   name: "Breaking News Wedding Post",
-  defaultSize: { id: "portrait-4x5", width: 1080, height: 1350 },
-  supportedSizes: [
-    { id: "portrait-4x5", width: 1080, height: 1350 },
-    { id: "square", width: 1080, height: 1080 },
-    { id: "open-graph", width: 1200, height: 630 },
-  ],
+  manifest: {
+    id: "breaking-news-v1",
+    name: "Breaking News Wedding Post",
+    previewId: "breaking-news-v1",
+    version: "1.0.0",
+    description: "Newspaper-inspired Arabic wedding announcement poster with a dynamic cover image, curiosity date, and QR code.",
+    defaultSizeId: "portrait-4x5",
+    supportedSizes: [...supportedSizes],
+  },
+  defaultSize: supportedSizes[0],
+  supportedSizes: [...supportedSizes],
   renderSvg: renderNewsCardSvg,
 };

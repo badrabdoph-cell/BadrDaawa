@@ -35,9 +35,13 @@ function absoluteUrl(value: string) {
 
 function getInvitationImage(invitation: Invitation, options: { postImageEnabled?: boolean } = {}) {
   const postImageEnabled = options.postImageEnabled !== false;
-  const generatedPostImage = postImageEnabled && invitation.postImageStatus === "GENERATED" ? invitation.postImageUrl : "";
+  const generatedPostImage = postImageEnabled && invitation.postImageStatus === "GENERATED" ? invitation.postImageOgUrl || invitation.postImageUrl : "";
   const candidate = generatedPostImage || invitation.heroPhoto || invitation.gallery.find(Boolean) || "/assets/brand/hero-luxury.png";
-  return absoluteUrl(candidate);
+  return {
+    url: absoluteUrl(candidate),
+    width: generatedPostImage && invitation.postImageOgUrl ? invitation.postImageOgWidth || 1200 : generatedPostImage ? invitation.postImageWidth || 1080 : 1200,
+    height: generatedPostImage && invitation.postImageOgUrl ? invitation.postImageOgHeight || 630 : generatedPostImage ? invitation.postImageHeight || 1350 : 630,
+  };
 }
 
 export function getInvitationSeoMetadata(invitation: Invitation, options: { postImageEnabled?: boolean } = {}): Metadata {
@@ -57,7 +61,7 @@ export function getInvitationSeoMetadata(invitation: Invitation, options: { post
     155,
   );
   const url = getInvitationUrl(invitation.code, invitation.customSlug);
-  const imageUrl = getInvitationImage(invitation, options);
+  const image = getInvitationImage(invitation, options);
   const imageAlt = truncate(`دعوة زفاف ${coupleName}`, 120);
 
   return {
@@ -75,9 +79,9 @@ export function getInvitationSeoMetadata(invitation: Invitation, options: { post
       type: "website",
       images: [
         {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
+          url: image.url,
+          width: image.width,
+          height: image.height,
           alt: imageAlt,
         },
       ],
@@ -86,7 +90,7 @@ export function getInvitationSeoMetadata(invitation: Invitation, options: { post
       card: "summary_large_image",
       title,
       description,
-      images: [imageUrl],
+      images: [image.url],
     },
   };
 }
@@ -114,7 +118,7 @@ export function getInvitationStructuredData(invitation: Invitation, options: { p
     startDate,
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
-    image: [getInvitationImage(invitation, options)],
+    image: [getInvitationImage(invitation, options).url],
     url,
     location: locationName
       ? {

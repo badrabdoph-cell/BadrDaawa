@@ -211,17 +211,21 @@ async function getInvitationPostImageState(code?: string | null): Promise<OrderP
     where: { code, deletedAt: null },
     select: {
       postImageUrl: true,
+      postImageOgUrl: true,
       postImageTemplateId: true,
       postImageStatus: true,
       postImageGeneratedAt: true,
       postImageError: true,
       postImageWidth: true,
       postImageHeight: true,
+      postImageOgWidth: true,
+      postImageOgHeight: true,
     },
   });
   if (!invitation) return undefined;
   return {
     url: invitation.postImageUrl || undefined,
+    ogUrl: invitation.postImageOgUrl || undefined,
     status:
       invitation.postImageStatus === "GENERATED" ||
       invitation.postImageStatus === "GENERATING" ||
@@ -234,6 +238,8 @@ async function getInvitationPostImageState(code?: string | null): Promise<OrderP
     error: invitation.postImageError || undefined,
     width: invitation.postImageWidth || undefined,
     height: invitation.postImageHeight || undefined,
+    ogWidth: invitation.postImageOgWidth || undefined,
+    ogHeight: invitation.postImageOgHeight || undefined,
   };
 }
 

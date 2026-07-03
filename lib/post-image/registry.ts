@@ -8,6 +8,10 @@ export function getPostImageTemplates() {
   return templates;
 }
 
+export function getPostImageTemplateManifests() {
+  return templates.map((template) => template.manifest);
+}
+
 export function getDefaultPostImageTemplate() {
   return getPostImageTemplate(DEFAULT_POST_IMAGE_TEMPLATE_ID);
 }

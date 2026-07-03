@@ -25,24 +25,31 @@ function postImagePayload(invitation: {
   code: string;
   customSlug: string | null;
   postImageUrl: string | null;
+  postImageOgUrl: string | null;
   postImageStatus: string | null;
   postImageTemplateId: string | null;
   postImageGeneratedAt: Date | null;
   postImageError: string | null;
   postImageWidth: number | null;
   postImageHeight: number | null;
+  postImageOgWidth: number | null;
+  postImageOgHeight: number | null;
 }) {
   return {
     code: invitation.code,
     customSlug: invitation.customSlug,
     url: invitation.postImageUrl,
+    ogUrl: invitation.postImageOgUrl,
     status: invitation.postImageStatus || "NEEDS_REGENERATION",
     templateId: invitation.postImageTemplateId || "breaking-news-v1",
     generatedAt: invitation.postImageGeneratedAt?.toISOString() || null,
     error: invitation.postImageError,
     width: invitation.postImageWidth,
     height: invitation.postImageHeight,
+    ogWidth: invitation.postImageOgWidth,
+    ogHeight: invitation.postImageOgHeight,
     downloadFileName: `post-image-${invitation.code}.png`,
+    ogDownloadFileName: `post-image-og-${invitation.code}.png`,
   };
 }
 
@@ -57,12 +64,15 @@ async function findInvitation(code: string) {
       code: true,
       customSlug: true,
       postImageUrl: true,
+      postImageOgUrl: true,
       postImageStatus: true,
       postImageTemplateId: true,
       postImageGeneratedAt: true,
       postImageError: true,
       postImageWidth: true,
       postImageHeight: true,
+      postImageOgWidth: true,
+      postImageOgHeight: true,
     },
   });
 }

@@ -3,10 +3,11 @@ import sharp from "sharp";
 
 import { readPublicMediaFile } from "../storage-provider";
 import { formatPostImageCuriosityDate } from "./date";
+import { embedPostImageFonts } from "./font";
 import { getPostImageSize, getPostImageTemplate } from "./registry";
 import { renderPostImageSvg } from "./render-svg";
 import { createPostImageSignature } from "./signature";
-import { DEFAULT_POST_IMAGE_SIZE_ID, DEFAULT_POST_IMAGE_TEMPLATE_ID, type PostImageGeneratedAsset, type PostImageSignatureInput } from "./types";
+import { DEFAULT_POST_IMAGE_SIZE_ID, DEFAULT_POST_IMAGE_TEMPLATE_ID, type PostImageGeneratedAsset, type PostImageGeneratedSet, type PostImageSignatureInput, type PostImageVariantAsset } from "./types";
 
 export type GeneratePostImageInput = Omit<PostImageSignatureInput, "templateId" | "size"> & {
   templateId?: string | null;
@@ -62,15 +63,26 @@ export async function generatePostImage(input: GeneratePostImageInput): Promise<
     curiosityDate: formatPostImageCuriosityDate(input.weddingDate),
     qrCodeDataUrl,
     coverImageDataUrl,
+    fontCss: embedPostImageFonts(),
   });
   const bytes = await sharp(Buffer.from(svg)).png({ compressionLevel: 8, quality: 92 }).toBuffer();
 
   return {
     bytes,
     contentType: "image/png",
+    size,
     width: size.width,
     height: size.height,
     signature,
     qrCodeDataUrl,
+  };
+}
+
+export async function generatePostImageSet(input: GeneratePostImageInput): Promise<PostImageGeneratedSet> {
+  const portrait = await generatePostImage({ ...input, sizeId: "portrait-4x5" });
+  const openGraph = await generatePostImage({ ...input, sizeId: "open-graph" });
+  return {
+    portrait: { ...portrait, variant: "portrait" } satisfies PostImageVariantAsset,
+    openGraph: { ...openGraph, variant: "openGraph" } satisfies PostImageVariantAsset,
   };
 }

@@ -5,6 +5,7 @@ const manager = readFileSync("components/AdminOrderRequestsManager.tsx", "utf8")
 const adminData = readFileSync("lib/admin-data.ts", "utf8");
 const types = readFileSync("lib/types.ts", "utf8");
 const orderRoute = readFileSync("app/api/admin/orders/[id]/route.ts", "utf8");
+const postImagePanel = readFileSync("components/PostImageAdminPanel.tsx", "utf8");
 
 assert.match(types, /export type OrderPostImageState/, "OrderRequest should expose a reusable post image state type");
 assert.match(types, /postImage\?: OrderPostImageState/, "admin order data should carry the linked invitation post image state");
@@ -23,5 +24,8 @@ assert.match(manager, /selectedOrder\.postImage/, "post image panel should use t
 assert.match(manager, /صورة البوست/, "admin orders should label the post image control section clearly");
 assert.doesNotMatch(manager, /action:\s*"update-status",\s*status:\s*"accepted"/, "primary accept action should publish the invitation so the post image can be generated");
 assert.match(manager, /قبول ونشر/, "primary accept action should communicate that it publishes and generates final assets");
+assert.match(postImagePanel, /ogUrl/, "post image admin panel should receive the Open Graph post image asset");
+assert.match(postImagePanel, /تحميل OG/, "post image admin panel should allow downloading the Open Graph asset");
+assert.match(postImagePanel, /نسخ رابط OG/, "post image admin panel should allow copying the Open Graph asset link");
 
 console.log("admin orders post image panel tests passed");

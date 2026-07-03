@@ -40,13 +40,17 @@ type AdminInvitationRow = {
   texts?: unknown;
   photographer?: unknown;
   postImageUrl?: string | null;
+  postImageOgUrl?: string | null;
   postImageTemplateId?: string | null;
   postImageStatus?: string | null;
   postImageSignature?: string | null;
+  postImageOgSignature?: string | null;
   postImageGeneratedAt?: Date | string | null;
   postImageError?: string | null;
   postImageWidth?: number | null;
   postImageHeight?: number | null;
+  postImageOgWidth?: number | null;
+  postImageOgHeight?: number | null;
   status?: string;
   isActive?: boolean;
   disabledAt?: Date | string | null;
@@ -94,12 +98,15 @@ type AdminOrderRow = {
 type AdminOrderPostImageRow = {
   code: string;
   postImageUrl?: string | null;
+  postImageOgUrl?: string | null;
   postImageTemplateId?: string | null;
   postImageStatus?: string | null;
   postImageGeneratedAt?: Date | string | null;
   postImageError?: string | null;
   postImageWidth?: number | null;
   postImageHeight?: number | null;
+  postImageOgWidth?: number | null;
+  postImageOgHeight?: number | null;
 };
 
 type AdminGuestRow = {
@@ -188,6 +195,7 @@ function toOrderPostImageState(row?: AdminOrderPostImageRow | null): OrderPostIm
   if (!row) return undefined;
   return {
     url: row.postImageUrl || undefined,
+    ogUrl: row.postImageOgUrl || undefined,
     status:
       row.postImageStatus === "GENERATED" ||
       row.postImageStatus === "GENERATING" ||
@@ -200,6 +208,8 @@ function toOrderPostImageState(row?: AdminOrderPostImageRow | null): OrderPostIm
     error: row.postImageError || undefined,
     width: row.postImageWidth || undefined,
     height: row.postImageHeight || undefined,
+    ogWidth: row.postImageOgWidth || undefined,
+    ogHeight: row.postImageOgHeight || undefined,
   };
 }
 
@@ -250,6 +260,7 @@ function toInvitation(row: AdminInvitationRow): Invitation {
     texts: normalizeInvitationTexts(row.texts),
     photographer: toPhotographer(row.photographer),
     postImageUrl: row.postImageUrl || undefined,
+    postImageOgUrl: row.postImageOgUrl || undefined,
     postImageTemplateId: row.postImageTemplateId || undefined,
     postImageStatus:
       row.postImageStatus === "GENERATED" ||
@@ -259,10 +270,13 @@ function toInvitation(row: AdminInvitationRow): Invitation {
         ? row.postImageStatus
         : undefined,
     postImageSignature: row.postImageSignature || undefined,
+    postImageOgSignature: row.postImageOgSignature || undefined,
     postImageGeneratedAt: row.postImageGeneratedAt instanceof Date ? row.postImageGeneratedAt.toISOString() : row.postImageGeneratedAt || undefined,
     postImageError: row.postImageError || undefined,
     postImageWidth: row.postImageWidth || undefined,
     postImageHeight: row.postImageHeight || undefined,
+    postImageOgWidth: row.postImageOgWidth || undefined,
+    postImageOgHeight: row.postImageOgHeight || undefined,
     isActive: row.status ? (row.status === "ACTIVE" && !row.disabledAt) : Boolean(row.isActive && !row.disabledAt),
     disabledAt: row.disabledAt instanceof Date ? row.disabledAt.toISOString() : row.disabledAt || undefined,
     disabledReason: row.disabledReason || undefined,
@@ -347,12 +361,15 @@ export async function getAdminOrders(): Promise<OrderRequest[]> {
           select: {
             code: true,
             postImageUrl: true,
+            postImageOgUrl: true,
             postImageTemplateId: true,
             postImageStatus: true,
             postImageGeneratedAt: true,
             postImageError: true,
             postImageWidth: true,
             postImageHeight: true,
+            postImageOgWidth: true,
+            postImageOgHeight: true,
           },
         })
       : [];

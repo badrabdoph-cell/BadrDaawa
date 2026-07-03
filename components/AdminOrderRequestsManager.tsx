@@ -1074,13 +1074,17 @@ export function AdminOrderRequestsManager({
               invitationUrl={selectedInvitationUrl}
               initial={{
                 url: selectedOrder.postImage?.url,
+                ogUrl: selectedOrder.postImage?.ogUrl,
                 status: selectedOrder.postImage?.status || "NEEDS_REGENERATION",
                 templateId: selectedOrder.postImage?.templateId || selectedOrder.postImageTemplateId || "breaking-news-v1",
                 generatedAt: selectedOrder.postImage?.generatedAt,
                 error: selectedOrder.postImage?.error,
                 width: selectedOrder.postImage?.width,
                 height: selectedOrder.postImage?.height,
+                ogWidth: selectedOrder.postImage?.ogWidth,
+                ogHeight: selectedOrder.postImage?.ogHeight,
                 downloadFileName: `post-image-${selectedOrder.publishedInvitationCode}.png`,
+                ogDownloadFileName: `post-image-og-${selectedOrder.publishedInvitationCode}.png`,
               }}
             />
           </div>

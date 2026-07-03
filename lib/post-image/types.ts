@@ -15,6 +15,16 @@ export type PostImageSize = {
   height: number;
 };
 
+export type PostImageTemplateManifest = {
+  id: PostImageTemplateId;
+  name: string;
+  previewId: string;
+  version: string;
+  description: string;
+  defaultSizeId: PostImageSizeId;
+  supportedSizes: PostImageSize[];
+};
+
 export type PostImageSignatureInput = {
   templateId: PostImageTemplateId;
   size: PostImageSize;
@@ -31,6 +41,7 @@ export type PostImageRenderPayload = PostImageSignatureInput & {
   curiosityDate: string;
   qrCodeDataUrl: string;
   coverImageDataUrl: string | null;
+  fontCss?: string;
   mastheadLeft?: string;
   mastheadRight?: string;
   footerLabel?: string;
@@ -39,15 +50,26 @@ export type PostImageRenderPayload = PostImageSignatureInput & {
 export type PostImageGeneratedAsset = {
   bytes: Buffer;
   contentType: "image/png";
+  size: PostImageSize;
   width: number;
   height: number;
   signature: string;
   qrCodeDataUrl: string;
 };
 
+export type PostImageVariantAsset = PostImageGeneratedAsset & {
+  variant: "portrait" | "openGraph";
+};
+
+export type PostImageGeneratedSet = {
+  portrait: PostImageVariantAsset;
+  openGraph: PostImageVariantAsset;
+};
+
 export type PostImageTemplate = {
   id: PostImageTemplateId;
   name: string;
+  manifest: PostImageTemplateManifest;
   defaultSize: PostImageSize;
   supportedSizes: PostImageSize[];
   renderSvg: (payload: PostImageRenderPayload) => string;

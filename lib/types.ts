@@ -80,13 +80,17 @@ export type Invitation = {
     promoCode?: string;
   };
   postImageUrl?: string;
+  postImageOgUrl?: string;
   postImageTemplateId?: string;
   postImageStatus?: PostImageStatus;
   postImageSignature?: string;
+  postImageOgSignature?: string;
   postImageGeneratedAt?: string;
   postImageError?: string;
   postImageWidth?: number;
   postImageHeight?: number;
+  postImageOgWidth?: number;
+  postImageOgHeight?: number;
   checkInEnabled?: boolean;
   isActive: boolean;
   disabledAt?: string;
@@ -232,12 +236,15 @@ export type WeddingLiveModeConfig = {
 
 export type OrderPostImageState = {
   url?: string;
+  ogUrl?: string;
   status?: PostImageStatus;
   templateId?: string;
   generatedAt?: string;
   error?: string;
   width?: number;
   height?: number;
+  ogWidth?: number;
+  ogHeight?: number;
 };
 
 export type OrderRequest = {

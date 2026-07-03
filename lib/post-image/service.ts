@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
+
 import { prisma } from "../db";
 import { getPublishedSiteSettings } from "../site-settings";
 import { deleteUploadFile, writeUploadFile } from "../storage-provider";
 import { isPostImageFeatureEnabled } from "./feature-flag";
-import { generatePostImage } from "./generator";
+import { generatePostImageSet } from "./generator";
 import { getPostImageSize, getPostImageTemplate } from "./registry";
 import { createPostImageSignature } from "./signature";
 import { DEFAULT_POST_IMAGE_SIZE_ID, DEFAULT_POST_IMAGE_TEMPLATE_ID, type PostImageStatus } from "./types";
@@ -10,7 +12,9 @@ import { DEFAULT_POST_IMAGE_SIZE_ID, DEFAULT_POST_IMAGE_TEMPLATE_ID, type PostIm
 type ExistingPostImageState = {
   postImageStatus?: string | null;
   postImageSignature?: string | null;
+  postImageOgSignature?: string | null;
   postImageUrl?: string | null;
+  postImageOgUrl?: string | null;
 };
 
 type EnsurePostImageInput = {
@@ -27,6 +31,7 @@ type EnsurePostImageResult = {
   skipped: boolean;
   status: PostImageStatus;
   url?: string;
+  ogUrl?: string;
   error?: string;
 };
 
@@ -46,14 +51,21 @@ export function selectPostImageCoverUrl(input: { heroPhoto?: string | null; gall
   return input.heroPhoto?.trim() || input.gallery?.find((item) => item.trim())?.trim() || "";
 }
 
-export function shouldSkipPostImageGeneration(existing: ExistingPostImageState, nextSignature: string, force = false) {
+export function shouldSkipPostImageGeneration(existing: ExistingPostImageState, nextSignature: string, force = false, nextOgSignature?: string) {
   return (
     !force &&
     existing.postImageStatus === "GENERATED" &&
     Boolean(existing.postImageUrl) &&
+    (!nextOgSignature || Boolean(existing.postImageOgUrl)) &&
     Boolean(nextSignature) &&
-    existing.postImageSignature === nextSignature
+    existing.postImageSignature === nextSignature &&
+    (!nextOgSignature || existing.postImageOgSignature === nextOgSignature)
   );
+}
+
+function hasFreshGenerationLock(input: { postImageStatus?: string | null; postImageGenerationStartedAt?: Date | null }) {
+  if (input.postImageStatus !== "GENERATING" || !input.postImageGenerationStartedAt) return false;
+  return Date.now() - input.postImageGenerationStartedAt.getTime() < 2 * 60 * 1000;
 }
 
 export async function markPostImageNeedsRegeneration(code: string, error?: string) {
@@ -91,9 +103,12 @@ export async function ensureInvitationPostImage(input: EnsurePostImageInput): Pr
       heroPhoto: true,
       gallery: true,
       postImageUrl: true,
+      postImageOgUrl: true,
       postImageTemplateId: true,
       postImageStatus: true,
       postImageSignature: true,
+      postImageOgSignature: true,
+      postImageGenerationStartedAt: true,
     },
   });
 
@@ -102,7 +117,8 @@ export async function ensureInvitationPostImage(input: EnsurePostImageInput): Pr
   }
 
   const template = getPostImageTemplate(input.templateId || invitation.postImageTemplateId || DEFAULT_POST_IMAGE_TEMPLATE_ID);
-  const size = getPostImageSize(template.id, (input.sizeId || DEFAULT_POST_IMAGE_SIZE_ID) as never);
+  const size = getPostImageSize(template.id, DEFAULT_POST_IMAGE_SIZE_ID);
+  const ogSize = getPostImageSize(template.id, "open-graph");
   const coverImageUrl = selectPostImageCoverUrl({
     heroPhoto: invitation.heroPhoto,
     gallery: parseGallery(invitation.gallery),
@@ -116,59 +132,95 @@ export async function ensureInvitationPostImage(input: EnsurePostImageInput): Pr
     coverImageUrl,
     invitationUrl: input.publicUrl,
   });
+  const ogSignature = createPostImageSignature({
+    templateId: template.id,
+    size: ogSize,
+    groomName: invitation.groomName,
+    brideName: invitation.brideName,
+    weddingDate: invitation.weddingDate,
+    coverImageUrl,
+    invitationUrl: input.publicUrl,
+  });
 
-  if (shouldSkipPostImageGeneration(invitation, signature, input.force)) {
+  if (shouldSkipPostImageGeneration(invitation, signature, input.force, ogSignature)) {
     return {
       ok: true,
       generated: false,
       skipped: true,
       status: "GENERATED",
       url: invitation.postImageUrl || undefined,
+      ogUrl: invitation.postImageOgUrl || undefined,
     };
   }
 
+  if (!input.force && hasFreshGenerationLock(invitation)) {
+    return {
+      ok: true,
+      generated: false,
+      skipped: true,
+      status: "GENERATING",
+      url: invitation.postImageUrl || undefined,
+      ogUrl: invitation.postImageOgUrl || undefined,
+    };
+  }
+
+  const generationToken = randomUUID();
   await prisma.invitation.update({
     where: { id: invitation.id },
     data: {
       postImageTemplateId: template.id,
       postImageStatus: "GENERATING",
       postImageError: null,
+      postImageGenerationToken: generationToken,
+      postImageGenerationStartedAt: new Date(),
     },
   });
 
   try {
-    const generated = await generatePostImage({
+    const generated = await generatePostImageSet({
       templateId: template.id,
-      sizeId: size.id,
       groomName: invitation.groomName,
       brideName: invitation.brideName,
       weddingDate: invitation.weddingDate,
       coverImageUrl,
       invitationUrl: input.publicUrl,
     });
-    const fileName = `${template.id}-${size.width}x${size.height}-${generated.signature.slice(0, 12)}.png`;
-    const key = `client-invitations/post-images/${invitation.code}/${fileName}`;
-    const saved = await writeUploadFile(key, generated.bytes, generated.contentType);
+    const portraitFileName = `${template.id}-${size.width}x${size.height}-${generated.portrait.signature.slice(0, 12)}.png`;
+    const ogFileName = `${template.id}-${ogSize.width}x${ogSize.height}-${generated.openGraph.signature.slice(0, 12)}.png`;
+    const saved = await writeUploadFile(`client-invitations/post-images/${invitation.code}/${portraitFileName}`, generated.portrait.bytes, generated.portrait.contentType);
+    const savedOg = await writeUploadFile(`client-invitations/post-images/${invitation.code}/${ogFileName}`, generated.openGraph.bytes, generated.openGraph.contentType);
     const oldUrl = invitation.postImageUrl;
+    const oldOgUrl = invitation.postImageOgUrl;
 
     await prisma.invitation.update({
       where: { id: invitation.id },
       data: {
-        qrCodeUrl: generated.qrCodeDataUrl,
+        qrCodeUrl: generated.portrait.qrCodeDataUrl,
         postImageUrl: saved.url,
+        postImageOgUrl: savedOg.url,
         postImageTemplateId: template.id,
         postImageStatus: "GENERATED",
-        postImageSignature: generated.signature,
+        postImageSignature: generated.portrait.signature,
+        postImageOgSignature: generated.openGraph.signature,
         postImageGeneratedAt: new Date(),
         postImageError: null,
-        postImageWidth: generated.width,
-        postImageHeight: generated.height,
+        postImageWidth: generated.portrait.width,
+        postImageHeight: generated.portrait.height,
+        postImageOgWidth: generated.openGraph.width,
+        postImageOgHeight: generated.openGraph.height,
+        postImageGenerationToken: null,
+        postImageGenerationStartedAt: null,
       },
     });
 
     if (oldUrl && oldUrl !== saved.url) {
       await deleteUploadFile(oldUrl).catch((error) => {
         console.error("[post-image] Failed to delete old post image", error);
+      });
+    }
+    if (oldOgUrl && oldOgUrl !== savedOg.url) {
+      await deleteUploadFile(oldOgUrl).catch((error) => {
+        console.error("[post-image] Failed to delete old Open Graph post image", error);
       });
     }
 
@@ -178,6 +230,7 @@ export async function ensureInvitationPostImage(input: EnsurePostImageInput): Pr
       skipped: false,
       status: "GENERATED",
       url: saved.url,
+      ogUrl: savedOg.url,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Post image generation failed.";
@@ -187,7 +240,10 @@ export async function ensureInvitationPostImage(input: EnsurePostImageInput): Pr
       data: {
         postImageStatus: "FAILED",
         postImageSignature: signature,
+        postImageOgSignature: ogSignature,
         postImageError: message.slice(0, 1000),
+        postImageGenerationToken: null,
+        postImageGenerationStartedAt: null,
       },
     });
     return {

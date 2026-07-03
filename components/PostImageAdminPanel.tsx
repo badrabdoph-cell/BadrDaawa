@@ -5,13 +5,17 @@ import { Check, Clipboard, Download, ExternalLink, Maximize2, RefreshCw, X } fro
 
 type AdminPostImageState = {
   url?: string | null;
+  ogUrl?: string | null;
   status?: string | null;
   templateId?: string | null;
   generatedAt?: string | null;
   error?: string | null;
   width?: number | null;
   height?: number | null;
+  ogWidth?: number | null;
+  ogHeight?: number | null;
   downloadFileName?: string | null;
+  ogDownloadFileName?: string | null;
 };
 
 type PostImageAdminPanelProps = {
@@ -40,7 +44,9 @@ export function PostImageAdminPanel({ code, invitationUrl, initial }: PostImageA
   const [isPending, startTransition] = useTransition();
   const status = isPending ? "GENERATING" : postImage.status || "NEEDS_REGENERATION";
   const imageUrl = postImage.url || "";
+  const ogImageUrl = postImage.ogUrl || "";
   const downloadFileName = postImage.downloadFileName || `post-image-${code}.png`;
+  const ogDownloadFileName = postImage.ogDownloadFileName || `post-image-og-${code}.png`;
 
   async function refresh() {
     const response = await fetch(`/api/admin/invitations/${encodeURIComponent(code)}/post-image`, { cache: "no-store" });
@@ -75,6 +81,17 @@ export function PostImageAdminPanel({ code, invitationUrl, initial }: PostImageA
     }
   }
 
+  async function copyText(value: string, successMessage: string) {
+    if (!value) return;
+    setMessage("");
+    try {
+      await navigator.clipboard.writeText(value);
+      setMessage(successMessage);
+    } catch {
+      setMessage("لم ينجح النسخ المباشر. افتح الرابط وانسخه يدويًا.");
+    }
+  }
+
   return (
     <div className="post-image-admin-panel">
       <div className="post-image-admin-preview">
@@ -104,6 +121,10 @@ export function PostImageAdminPanel({ code, invitationUrl, initial }: PostImageA
             <strong>{postImage.width && postImage.height ? `${postImage.width} x ${postImage.height}` : "1080 x 1350"}</strong>
           </div>
           <div>
+            <span>Open Graph</span>
+            <strong>{postImage.ogWidth && postImage.ogHeight ? `${postImage.ogWidth} x ${postImage.ogHeight}` : ogImageUrl ? "1200 x 630" : "لم يتم توليدها بعد"}</strong>
+          </div>
+          <div>
             <span>آخر توليد</span>
             <strong>{postImage.generatedAt ? new Date(postImage.generatedAt).toLocaleString("ar-EG") : "لم يتم التوليد بعد"}</strong>
           </div>
@@ -122,6 +143,18 @@ export function PostImageAdminPanel({ code, invitationUrl, initial }: PostImageA
           <button className="btn btn-soft" type="button" onClick={copyImage} disabled={!imageUrl}>
             <Clipboard size={16} />
             نسخ الصورة
+          </button>
+          <button className="btn btn-soft" type="button" onClick={() => copyText(imageUrl, "تم نسخ رابط صورة البوست.")} disabled={!imageUrl}>
+            <Clipboard size={16} />
+            نسخ رابط الصورة
+          </button>
+          <a className="btn btn-soft" href={ogImageUrl || "#"} download={ogDownloadFileName} aria-disabled={!ogImageUrl}>
+            <Download size={16} />
+            تحميل OG
+          </a>
+          <button className="btn btn-soft" type="button" onClick={() => copyText(ogImageUrl, "تم نسخ رابط صورة Open Graph.")} disabled={!ogImageUrl}>
+            <Clipboard size={16} />
+            نسخ رابط OG
           </button>
           <button className="btn btn-gold" type="button" onClick={regenerate} disabled={isPending}>
             {isPending ? <RefreshCw size={16} className="spin" /> : <RefreshCw size={16} />}
