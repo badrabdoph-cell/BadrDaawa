@@ -6,6 +6,7 @@ import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
 import { getInvitationState, stateClassName, stateEmoji, stateLabel } from "@/lib/admin-crm-status";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
+import { AdminContactsCommandCenter } from "@/components/AdminContactsCommandCenter";
 import { AdminInvitationRow } from "@/components/AdminInvitationRow";
 import { AdminInvitationFilters } from "@/components/AdminInvitationFilters";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
@@ -135,6 +136,12 @@ export default async function InvitationsPage({
           </Link>
         </div>
       </div>
+
+      <AdminContactsCommandCenter
+        active="invitations"
+        title="إدارة الدعوات أصبحت جزءًا من CRM"
+        description="كل دعوة الآن مرتبطة بسياق عميل، حالة تشغيل واضحة، وفلاتر تساعدك تتابع النشر والحضور بسرعة."
+      />
 
       <section className="admin-list-overview" aria-label="ملخص الدعوات">
         <div className="admin-list-stat">

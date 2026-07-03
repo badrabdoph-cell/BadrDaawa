@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, CheckCircle2, Filter, MessageSquareText, Search, Send, UserRound } from "lucide-react";
 import { headers } from "next/headers";
+import { AdminContactsCommandCenter } from "@/components/AdminContactsCommandCenter";
 import { AdminClientMessageForm } from "@/components/AdminClientMessageForm";
 import { getAdminInvitations } from "@/lib/admin-data";
 import { getAllClientMessages, getTotalUnreadClientMessages } from "@/lib/client-messages";
@@ -53,6 +54,12 @@ export default async function AdminMessagesPage({ searchParams }: { searchParams
           <p>أرسل رسالة داخلية لعميل محدد، وتابع هل وصلت كرسالة مقروءة أو غير مقروءة داخل لوحة العميل.</p>
         </div>
       </div>
+
+      <AdminContactsCommandCenter
+        active="messages"
+        title="رسائل العملاء داخل نفس منظومة CRM"
+        description="فلتر الرسائل حسب القراءة أو النطاق، وافتح ملف العميل أو الدعوة مباشرة من سجل الرسائل."
+      />
 
       {params.sent ? (
         <div className="notice success">

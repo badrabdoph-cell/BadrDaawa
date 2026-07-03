@@ -11236,6 +11236,129 @@ img {
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.14);
 }
 
+.contacts-command-center {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.1fr) minmax(320px, 1.35fr);
+  gap: 14px;
+  align-items: stretch;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(243, 207, 115, 0.12)),
+    rgba(255, 255, 255, 0.05);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+.contacts-command-copy {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.contacts-command-copy > span {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 1px solid rgba(243, 207, 115, 0.28);
+  border-radius: 999px;
+  background: rgba(243, 207, 115, 0.12);
+  color: #f3cf73;
+  font-size: 0.74rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.contacts-command-copy strong {
+  color: #fff7e8;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  line-height: 1.35;
+}
+
+.contacts-command-copy p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(245, 234, 214, 0.7);
+  line-height: 1.7;
+}
+
+.contacts-command-nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  align-content: center;
+}
+
+.contacts-command-nav a {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 8px;
+  border: 1px solid rgba(245, 234, 214, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+  color: rgba(245, 234, 214, 0.78);
+  font-size: 0.82rem;
+  font-weight: 950;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.contacts-command-nav a.active,
+.contacts-command-nav a:hover {
+  border-color: rgba(243, 207, 115, 0.42);
+  background: rgba(243, 207, 115, 0.14);
+  color: #fff7e8;
+}
+
+.contacts-command-search {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 46px;
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 234, 214, 0.1);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.contacts-command-search svg {
+  color: #f3cf73;
+}
+
+.contacts-command-search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff7e8;
+  font: inherit;
+}
+
+.contacts-command-search input::placeholder {
+  color: rgba(245, 234, 214, 0.48);
+}
+
+.contacts-command-search button {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(243, 207, 115, 0.32);
+  border-radius: 9px;
+  background: rgba(243, 207, 115, 0.14);
+  color: #f3cf73;
+  font-weight: 950;
+  cursor: pointer;
+}
+
 .crm-upgrade-strip > div:first-child {
   display: grid;
   gap: 5px;
@@ -11293,6 +11416,22 @@ img {
 
   .crm-upgrade-actions .btn {
     width: 100%;
+  }
+
+  .contacts-command-center {
+    grid-template-columns: 1fr;
+  }
+
+  .contacts-command-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contacts-command-search {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .contacts-command-search button {
+    grid-column: 1 / -1;
   }
 }
 

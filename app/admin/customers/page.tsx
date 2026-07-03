@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Filter, MessageSquareText, PlusCircle, Search, Trash2, UserCheck, UsersRound } from "lucide-react";
+import { AdminContactsCommandCenter } from "@/components/AdminContactsCommandCenter";
 import { AdminExportButton } from "@/components/AdminExportButton";
 import { FavoriteToggleButton } from "@/components/FavoriteToggleButton";
 import { InternalNotesPanel } from "@/components/InternalNotesPanel";
@@ -91,6 +92,11 @@ export default async function CustomersPage({
           />
         </div>
       </div>
+      <AdminContactsCommandCenter
+        active="customers"
+        title="ملفات العملاء أصبحت نقطة البداية"
+        description="افتح ملف 360 لأي عميل، راجع دعواته ورسائله وملاحظاته، أو أنشئ دعوة مرتبطة به مباشرة."
+      />
       <section className="crm-upgrade-strip" aria-label="لوحة CRM الجديدة">
         <div>
           <span>CRM v2</span>

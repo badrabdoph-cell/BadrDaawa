@@ -6,6 +6,7 @@ import { getAdminFavorites, isAdminFavorite } from "@/lib/admin-favorites";
 import { getInvitationState, stateClassName, stateEmoji, stateLabel } from "@/lib/admin-crm-status";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
 import { formatArabicNumber, getPublicSiteUrl } from "@/lib/utils";
+import { AdminContactsCommandCenter } from "@/components/AdminContactsCommandCenter";
 import { AdminInvitationFiltersV2 } from "@/components/AdminInvitationFiltersV2";
 
 export const dynamic = "force-dynamic";
@@ -108,6 +109,12 @@ export default async function UnifiedInvitationsPage({ searchParams }: { searchP
           </Link>
         </div>
       </div>
+
+      <AdminContactsCommandCenter
+        active="unified"
+        title="الواجهة الموحدة للدعوات والعملاء"
+        description="هذه هي شاشة التشغيل اليومية: العميل، الدعوة، الحالة، الزيارات، الحضور، والرابط العام في جدول واحد."
+      />
 
       <section className="admin-list-overview" aria-label="ملخص الدعوات الموحد">
         <div className="admin-list-stat">
