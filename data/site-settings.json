@@ -8,18 +8,31 @@
   },
   "email": "",
   "order": {
+    "postImageEnabled": false,
     "showPaymentMethods": false
   },
   "logoUrl": "/assets/admin/branding/site-logo-1781536656977-9910afd2.webp",
   "homepage": {
     "showPreview": true,
-    "showPricing": true,
+    "showPricing": false,
+    "sectionOrder": [
+      "hero",
+      "quick-benefits",
+      "flow",
+      "preview",
+      "features",
+      "trust",
+      "stats",
+      "pricing",
+      "faq",
+      "final-cta"
+    ],
     "showFeatures": true,
     "primaryCtaLabel": "ابدأ تصميم دعوتك",
     "secondaryCtaLabel": "استعرض التصاميم"
   },
   "siteName": "Wedding Daawa",
-  "updatedAt": "2026-06-25T15:06:42.414Z",
+  "updatedAt": "2026-07-03T16:42:46.691Z",
   "maintenance": {
     "enabled": false,
     "message": "الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج."
