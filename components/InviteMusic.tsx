@@ -124,7 +124,8 @@ export function InviteMusic({ musicUrl }: { musicUrl?: string | null }) {
     window.addEventListener("keydown", playAfterGesture);
     window.addEventListener("pagehide", stopOnLeave);
     document.addEventListener("visibilitychange", onVisibilityChange);
-    void play();
+    const isHomePreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("homePreview") === "1";
+    if (!isHomePreview) void play();
 
     return () => {
       window.removeEventListener(inviteOpenedEventName, playAfterOpening);
