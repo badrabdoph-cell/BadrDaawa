@@ -1,10 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { getDraftTemplatePreviewInfo, updateTemplatePreviewInfoDraft } from "@/lib/template-preview-info";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
+import { getTemplatePreviewInfo, updateTemplatePreviewInfo } from "@/lib/template-preview-info";
 import { getTemplatesWithSettings } from "@/lib/template-settings";
-import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
 
 export const runtime = "nodejs";
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const value = cleanText(payload?.value, 500);
     if (!id) return NextResponse.json({ ok: false, error: "النص المحدد غير صالح." }, { status: 400 });
 
-    const current = await getDraftTemplatePreviewInfo();
+    const current = await getTemplatePreviewInfo();
     const nextPatch = {
       texts: { ...current.texts },
       photographer: { ...current.photographer },
@@ -43,13 +43,13 @@ export async function POST(request: NextRequest) {
     else if (id === "poll-question") nextPatch.texts.rsvpQuestion = value;
     else return NextResponse.json({ ok: false, error: "هذا النص غير قابل للحفظ من البحث." }, { status: 400 });
 
-    const next = await updateTemplatePreviewInfoDraft(nextPatch);
+    const next = await updateTemplatePreviewInfo(nextPatch);
     const templates = await getTemplatesWithSettings();
 
-    // Revalidate all affected paths to ensure the UI shows the new data
     revalidatePath("/admin/templates");
     revalidatePath("/templates");
     for (const template of templates) revalidatePath(`/templates/${template.slug}/preview`);
+    queueGitHubSync(`Template text updated: ${id}.`, { uploadProjectFiles: true, changeType: "project" });
 
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
@@ -60,9 +60,7 @@ export async function POST(request: NextRequest) {
       metadata: { source: "admin-template-text-search", fieldId: id },
     });
 
-    const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
-    await publishSingleContentToGitHub("template-preview-info", username);
-
+    console.log(`[Templates Text] Successfully updated: ${id}`);
     return NextResponse.json({ ok: true, previewInfo: next });
   } catch (error) {
     console.error("[Templates Text] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));

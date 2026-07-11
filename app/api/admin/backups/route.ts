@@ -5,7 +5,6 @@ import { createBackupSnapshot, listBackupSnapshots } from "@/lib/backups";
 import { getRedirectUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 async function isAdmin(request: NextRequest) {
   return verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -13,7 +12,7 @@ async function isAdmin(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.json({ error: "غير مصرح." }, { status: 401 });
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   return NextResponse.json({ backups: await listBackupSnapshots() });
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) {
-    return NextResponse.json({ error: "غير مصرح." }, { status: 401 });
+    return NextResponse.redirect(getRedirectUrl("/admin/login", request.headers, request.nextUrl.origin), 303);
   }
 
   try {

@@ -1,7 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting, readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
+import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
 import { normalizePhoneForWhatsApp } from "./utils";
-import { DEFAULT_SECTION_ORDER, HOMEPAGE_SECTION_IDS } from "./home-sections";
 
 export type SiteSocialLinks = {
   facebook: string;
@@ -25,12 +24,6 @@ export type SiteHomepageSettings = {
   showPricing: boolean;
   primaryCtaLabel: string;
   secondaryCtaLabel: string;
-  sectionOrder: string[];
-};
-
-export type SiteOrderSettings = {
-  showPaymentMethods: boolean;
-  postImageEnabled: boolean;
 };
 
 export type SitePhotographerSettings = {
@@ -38,19 +31,6 @@ export type SitePhotographerSettings = {
   defaultName: string;
   defaultInstagramUrl: string;
   defaultFacebookUrl: string;
-  defaultLogoUrl: string;
-};
-
-export type SiteMaintenanceSettings = {
-  enabled: boolean;
-  message: string;
-};
-
-export type SiteAnnouncementSettings = {
-  enabled: boolean;
-  text: string;
-  ctaLabel: string;
-  ctaUrl: string;
 };
 
 export type SiteSettings = {
@@ -64,17 +44,13 @@ export type SiteSettings = {
   seo: SiteSeoSettings;
   homepage: SiteHomepageSettings;
   photographer: SitePhotographerSettings;
-  order: SiteOrderSettings;
-  maintenance: SiteMaintenanceSettings;
-  announcement: SiteAnnouncementSettings;
-  customHeadHtml: string;
   updatedAt: string;
 };
 
 export const defaultSiteSettings: SiteSettings = {
-  siteName: "Wedding Daawa",
-  logoUrl: "/assets/admin/branding/site-logo-1781536656977-9910afd2.webp",
-  siteDescription: "اصنع دعوتك بنفسك بشكل حديث وكريتف . اعرف عدد ال هيجضرو فرحك والمهتمين ليومك❤️",
+  siteName: "BadrDaawa",
+  logoUrl: "",
+  siteDescription: "Royal Envelope. دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك.",
   contactPhones: ["01038434472"],
   whatsappUrl: "https://wa.me/201038434472",
   email: "",
@@ -86,11 +62,11 @@ export const defaultSiteSettings: SiteSettings = {
     telegram: "",
   },
   seo: {
-    title: "Wedding Daawa | دعوات زفاف رقمية فاخرة",
-    description: "منصة عربية متخصصة لإنشاء دعوات زفاف رقمية فاخرة مع QR Code وتأكيد حضور RSVP ومشاركة سهلة عبر واتساب ولوحة متابعة للحضور وقوالب احترافية قابلة للتخصيص.",
-    keywords: "دعوات زفاف رقمية, دعوة زفاف إلكترونية, دعوة فرح إلكترونية, Wedding Invitation, Wedding Daawa, RSVP, QR Code Wedding, دعوات زواج, دعوات أفراح, موقع دعوات إلكترونية, دعوة عرس رقمية, بطاقة دعوة زفاف, دعوة فرح اونلاين, قوالب دعوات زفاف, دعوات ف",
-    ogTitle: "Wedding Daawa | أنشئ دعوة زفاف رقمية فاخرة خلال دقائق",
-    ogDescription: "صمم دعوتك الرقمية بسهولة وشاركها مع ضيوفك عبر رابط خاص أو QR Code. قوالب احترافية، تأكيد حضور RSVP، موسيقى، معرض صور ولوحة متابعة متكاملة.",
+    title: "BadrDaawa | دعوات زفاف رقمية فاخرة",
+    description: "منصة عربية فاخرة لإنشاء دعوات زفاف رقمية، RSVP، QR Code، ولوحات متابعة للحضور.",
+    keywords: "دعوة فرح, دعوات زفاف رقمية, RSVP, QR Code, BadrDaawa",
+    ogTitle: "BadrDaawa | دعوة تليق بأجمل يوم في حياتكم",
+    ogDescription: "دعوة رقمية أنيقة وسهلة المشاركة مع ضيوفك، مع RSVP وQR Code ولوحة متابعة مباشرة.",
   },
   homepage: {
     showFeatures: true,
@@ -98,31 +74,14 @@ export const defaultSiteSettings: SiteSettings = {
     showPricing: true,
     primaryCtaLabel: "ابدأ تصميم دعوتك",
     secondaryCtaLabel: "استعرض التصاميم",
-    sectionOrder: DEFAULT_SECTION_ORDER,
-  },
-  order: {
-    showPaymentMethods: false,
-    postImageEnabled: true,
   },
   photographer: {
     showPhotographerCard: process.env.SHOW_PHOTOGRAPHER_CARD !== "false",
-    defaultName: "Photographer",
-    defaultInstagramUrl: "https://www.instagram.com/badr_abdo_ph",
-    defaultFacebookUrl: "https://www.facebook.com/badrabdophoto",
-    defaultLogoUrl: "",
+    defaultName: "badrabdoph",
+    defaultInstagramUrl: "https://www.instagram.com/",
+    defaultFacebookUrl: "https://www.facebook.com/",
   },
-  maintenance: {
-    enabled: false,
-    message: "الموقع تحت الصيانة حاليًا. نعتذر عن الإزعاج.",
-  },
-  announcement: {
-    enabled: true,
-    text: "مجاني لفترة محدودة أثناء الإطلاق التجريبي",
-    ctaLabel: "ابدأ الآن",
-    ctaUrl: "/templates",
-  },
-  customHeadHtml: "",
-  updatedAt: "2026-06-21T23:28:38.701Z",
+  updatedAt: "",
 };
 
 function cleanText(value: unknown, fallback = "") {
@@ -158,14 +117,6 @@ function cleanPhoneList(value: unknown, fallback: string[]) {
 
 function normalizeBoolean(value: unknown, fallback: boolean) {
   return typeof value === "boolean" ? value : fallback;
-}
-
-function normalizeSectionOrder(value: unknown, fallback: string[]): string[] {
-  if (!Array.isArray(value)) return fallback;
-  const valid = value.filter((id) => typeof id === "string" && HOMEPAGE_SECTION_IDS.includes(id));
-  if (!valid.length) return fallback;
-  const missing = HOMEPAGE_SECTION_IDS.filter((id) => !valid.includes(id));
-  return [...valid, ...missing];
 }
 
 function normalizeSocialLinks(input: Partial<SiteSocialLinks> | undefined): SiteSocialLinks {
@@ -205,30 +156,13 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       showPricing: normalizeBoolean(input.homepage?.showPricing, fallback.homepage.showPricing),
       primaryCtaLabel: cleanText(input.homepage?.primaryCtaLabel, fallback.homepage.primaryCtaLabel).slice(0, 80),
       secondaryCtaLabel: cleanText(input.homepage?.secondaryCtaLabel, fallback.homepage.secondaryCtaLabel).slice(0, 80),
-      sectionOrder: normalizeSectionOrder(input.homepage?.sectionOrder, fallback.homepage.sectionOrder),
-    },
-    order: {
-      showPaymentMethods: normalizeBoolean(input.order?.showPaymentMethods, fallback.order.showPaymentMethods),
-      postImageEnabled: normalizeBoolean(input.order?.postImageEnabled, fallback.order.postImageEnabled),
     },
     photographer: {
       showPhotographerCard: normalizeBoolean(input.photographer?.showPhotographerCard, fallback.photographer.showPhotographerCard),
       defaultName: cleanText(input.photographer?.defaultName, fallback.photographer.defaultName).slice(0, 80),
       defaultInstagramUrl: cleanUrl(input.photographer?.defaultInstagramUrl, fallback.photographer.defaultInstagramUrl),
       defaultFacebookUrl: cleanUrl(input.photographer?.defaultFacebookUrl, fallback.photographer.defaultFacebookUrl),
-      defaultLogoUrl: typeof input.photographer?.defaultLogoUrl === "string" ? input.photographer.defaultLogoUrl.trim() : "",
     },
-    maintenance: {
-      enabled: normalizeBoolean(input.maintenance?.enabled, fallback.maintenance.enabled),
-      message: cleanText(input.maintenance?.message, fallback.maintenance.message).slice(0, 500),
-    },
-    announcement: {
-      enabled: normalizeBoolean(input.announcement?.enabled, fallback.announcement.enabled),
-      text: cleanText(input.announcement?.text, fallback.announcement.text).slice(0, 200),
-      ctaLabel: cleanText(input.announcement?.ctaLabel, fallback.announcement.ctaLabel).slice(0, 60),
-      ctaUrl: cleanText(input.announcement?.ctaUrl, fallback.announcement.ctaUrl).slice(0, 200),
-    },
-    customHeadHtml: typeof input.customHeadHtml === "string" ? input.customHeadHtml.trim() : "",
     updatedAt: cleanOptionalText(input.updatedAt),
   };
 }
@@ -244,50 +178,27 @@ export async function getSiteSettings() {
   return settings;
 }
 
-// Draft/Publish System Functions
-export async function getDraftSiteSettings() {
-  noStore();
-  const settings = await readDraftContent("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
-  console.log("[Site Settings Draft] Loaded successfully");
-  return settings;
-}
-
-export async function getPublishedSiteSettings() {
-  noStore();
-  const settings = await readPublishedContent("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
-  console.log("[Site Settings Published] Loaded successfully");
-  return settings;
-}
-
-export async function updateSiteSettingsDraft(input: Partial<SiteSettings>) {
-  const current = await getDraftSiteSettings();
+export async function updateSiteSettings(input: Partial<SiteSettings>) {
+  const current = await getSiteSettings();
   const next = normalizeSettings({
     ...current,
     ...input,
     socialLinks: { ...current.socialLinks, ...input.socialLinks },
     seo: { ...current.seo, ...input.seo },
     homepage: { ...current.homepage, ...input.homepage },
-    order: { ...current.order, ...input.order },
     photographer: { ...current.photographer, ...input.photographer },
-    maintenance: { ...current.maintenance, ...input.maintenance },
-    announcement: { ...current.announcement, ...input.announcement },
     updatedAt: new Date().toISOString(),
   });
 
-  console.log("[Site Settings Draft] Updating photographer to:", {
+  console.log("[Site Settings] Updating photographer to:", {
     name: next.photographer.defaultName,
     instagram: next.photographer.defaultInstagramUrl,
     facebook: next.photographer.defaultFacebookUrl,
-    logoUrl: next.photographer.defaultLogoUrl,
   });
 
-  await writeDraftContent("site-settings", next);
-  console.log("[Site Settings Draft] Successfully saved to database");
+  await writeProjectContentSetting("site-settings", next);
+  console.log("[Site Settings] Successfully saved to database/storage");
   return next;
-}
-
-export async function updateSiteSettings(input: Partial<SiteSettings>) {
-  return updateSiteSettingsDraft(input);
 }
 
 export function shouldShowPhotographerCard() {

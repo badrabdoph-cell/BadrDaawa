@@ -1,16 +1,14 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie, getAdminSessionUser } from "@/lib/admin-session";
-
-export const dynamic = "force-dynamic";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
-import { publishSingleContentToGitHub } from "@/lib/publish-pipeline";
+import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { deleteUploadUrlIfUnused } from "@/lib/media-cleanup";
 import {
   getTemplatePreviewBaseInfo,
-  getDraftTemplatePreviewInfo,
+  getTemplatePreviewInfo,
   resolveTemplatePreviewInfo,
-  updateTemplatePreviewInfoDraft,
+  updateTemplatePreviewInfo,
   type TemplatePreviewEditableInfo,
   type TemplatePreviewInfo,
 } from "@/lib/template-preview-info";
@@ -104,7 +102,7 @@ async function revalidateTemplates(templates: Awaited<ReturnType<typeof getTempl
 
 export async function GET(request: NextRequest) {
   if (!(await isAdmin(request))) return NextResponse.json({ ok: false, error: "انتهت جلسة الأدمن." }, { status: 401 });
-  const [previewInfo, templates] = await Promise.all([getDraftTemplatePreviewInfo(), getTemplatesWithSettings()]);
+  const [previewInfo, templates] = await Promise.all([getTemplatePreviewInfo(), getTemplatesWithSettings()]);
   return NextResponse.json(responsePayload(previewInfo, templates));
 }
 
@@ -115,7 +113,7 @@ export async function POST(request: NextRequest) {
     const payload = (await request.json().catch(() => null)) as SavePayload | null;
     if (!payload?.content) return NextResponse.json({ ok: false, error: "بيانات الحفظ غير صالحة." }, { status: 400 });
 
-    const [current, templates] = await Promise.all([getDraftTemplatePreviewInfo(), getTemplatesWithSettings()]);
+    const [current, templates] = await Promise.all([getTemplatePreviewInfo(), getTemplatesWithSettings()]);
     const allSlugs = new Set(templates.map((template) => template.slug));
     const mode = payload.mode === "template" ? "template" : "global";
     const beforeUrlsSnapshot = current;
@@ -125,7 +123,7 @@ export async function POST(request: NextRequest) {
       const slug = payload.templateSlug || "";
       if (!allSlugs.has(slug)) return NextResponse.json({ ok: false, error: "القالب المحدد غير موجود." }, { status: 400 });
       const base = resolveTemplatePreviewInfo(current, slug);
-      next = await updateTemplatePreviewInfoDraft({
+      next = await updateTemplatePreviewInfo({
         templateOverrides: {
           ...current.templateOverrides,
           [slug]: {
@@ -163,7 +161,7 @@ export async function POST(request: NextRequest) {
           };
         }
       }
-      next = await updateTemplatePreviewInfoDraft({
+      next = await updateTemplatePreviewInfo({
         ...mergeContent(base, payload.content),
         templateOverrides: nextOverrides,
         adminScope: { mode: scopeMode, excludedSlugs },
@@ -172,11 +170,9 @@ export async function POST(request: NextRequest) {
 
     if (!next) throw new Error("Failed to update template preview info");
 
-    const username = await getAdminSessionUser(request.cookies.get(ADMIN_SESSION_COOKIE)?.value) || "admin";
-    await publishSingleContentToGitHub("template-preview-info", username);
-
     await revalidateTemplates(templates);
     const deletedUploads = await cleanupReplacedUploads(beforeUrlsSnapshot, next);
+    queueGitHubSync("Templates content updated from redesigned admin editor.", { uploadProjectFiles: true, changeType: "project" });
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
       action: "template.change",
@@ -186,6 +182,7 @@ export async function POST(request: NextRequest) {
       metadata: { source: "templates-content-editor", mode, deletedUploads },
     });
 
+    console.log("[Templates Content] Successfully updated and saved");
     return NextResponse.json(responsePayload(next, templates));
   } catch (error) {
     console.error("[Templates Content] CRITICAL ERROR:", error instanceof Error ? error.message : String(error));

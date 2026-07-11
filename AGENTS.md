@@ -1,7 +1,13 @@
-# Session Summary — Disaster Recovery + Content Publishing
+# Retry Policy
+عند فشل أي طلب (انتهاء اتصال، Free usage exceeded، أو أي خطأ شبيه):
+- أقصى محاولتين فقط (محاولة أصلية + محاولة إعادة واحدة)
+- لا تزيد مهلة الانتظار بين المحاولات عن 30 ثانية
+- لا تقم بمحاولات متكررة أو عشوائية بعد ذلك
+
+# Session Summary — تثبيت مهارات الذكاء الاصطناعي وتفعيل Auto-Pilot
 
 ## Goal
-Implement Auto Restore via GitHub API discovery, Rollback, version history, and 1-hour backup cron — with zero DB dependency for restore discovery.
+تثبيت 68 مهارة (Agent Skills) من skills.sh وتفعيل نمط Auto-Pilot كسلوك افتراضي.
 
 ## Progress
 
