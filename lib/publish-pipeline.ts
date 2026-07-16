@@ -269,7 +269,7 @@ export async function publishSingleContentToGitHub(
       return { success: false, message: `Key ${key} not found in definitions`, commitSha: null, commitUrl: null, error: "Unknown key" };
     }
 
-    const content = await readAppSetting<unknown>(definition.publishedAppSettingKey);
+    const content = await readAppSetting<unknown>(`project-content:published:${key}`);
     if (content === null || content === undefined) {
       return { success: false, message: `No published content found for ${key}`, commitSha: null, commitUrl: null, error: "No content" };
     }

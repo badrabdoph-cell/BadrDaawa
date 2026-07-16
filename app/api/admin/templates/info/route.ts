@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
       logoUrl: text(formData, "photographerLogoUrl"),
       instagramUrl: text(formData, "photographerInstagramUrl"),
       facebookUrl: text(formData, "photographerFacebookUrl"),
+      whatsappUrl: text(formData, "photographerWhatsappUrl"),
     },
   });
 

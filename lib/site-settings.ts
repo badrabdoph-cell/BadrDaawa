@@ -30,7 +30,7 @@ export type SiteHomepageSettings = {
 export type SitePhotographerSettings = {
   showPhotographerCard: boolean;
   defaultName: string;
-  defaultLogoUrl: string;
+  defaultLogoUrl?: string;
   defaultInstagramUrl: string;
   defaultFacebookUrl: string;
 };
