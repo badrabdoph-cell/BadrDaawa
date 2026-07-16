@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { readProjectContentSetting, writeProjectContentSetting } from "./project-content-store";
+import { readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
 import { normalizePhoneForWhatsApp } from "./utils";
 
 export type SiteSocialLinks = {
@@ -24,11 +24,13 @@ export type SiteHomepageSettings = {
   showPricing: boolean;
   primaryCtaLabel: string;
   secondaryCtaLabel: string;
+  sectionOrder?: string[];
 };
 
 export type SitePhotographerSettings = {
   showPhotographerCard: boolean;
   defaultName: string;
+  defaultLogoUrl: string;
   defaultInstagramUrl: string;
   defaultFacebookUrl: string;
 };
@@ -44,6 +46,21 @@ export type SiteSettings = {
   seo: SiteSeoSettings;
   homepage: SiteHomepageSettings;
   photographer: SitePhotographerSettings;
+  order: {
+    showPaymentMethods: boolean;
+    postImageEnabled: boolean;
+  };
+  maintenance: {
+    enabled: boolean;
+    message: string;
+  };
+  announcement: {
+    enabled: boolean;
+    text: string;
+    ctaLabel: string;
+    ctaUrl: string;
+  };
+  customHeadHtml: string;
   updatedAt: string;
 };
 
@@ -74,13 +91,30 @@ export const defaultSiteSettings: SiteSettings = {
     showPricing: true,
     primaryCtaLabel: "ابدأ تصميم دعوتك",
     secondaryCtaLabel: "استعرض التصاميم",
+    sectionOrder: [],
   },
   photographer: {
     showPhotographerCard: process.env.SHOW_PHOTOGRAPHER_CARD !== "false",
     defaultName: "badrabdoph",
+    defaultLogoUrl: "",
     defaultInstagramUrl: "https://www.instagram.com/",
     defaultFacebookUrl: "https://www.facebook.com/",
   },
+  order: {
+    showPaymentMethods: true,
+    postImageEnabled: false,
+  },
+  maintenance: {
+    enabled: false,
+    message: "",
+  },
+  announcement: {
+    enabled: false,
+    text: "",
+    ctaLabel: "",
+    ctaUrl: "",
+  },
+  customHeadHtml: "",
   updatedAt: "",
 };
 
@@ -156,26 +190,75 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
       showPricing: normalizeBoolean(input.homepage?.showPricing, fallback.homepage.showPricing),
       primaryCtaLabel: cleanText(input.homepage?.primaryCtaLabel, fallback.homepage.primaryCtaLabel).slice(0, 80),
       secondaryCtaLabel: cleanText(input.homepage?.secondaryCtaLabel, fallback.homepage.secondaryCtaLabel).slice(0, 80),
+      sectionOrder: Array.isArray(input.homepage?.sectionOrder) ? input.homepage.sectionOrder : fallback.homepage.sectionOrder,
     },
     photographer: {
       showPhotographerCard: normalizeBoolean(input.photographer?.showPhotographerCard, fallback.photographer.showPhotographerCard),
       defaultName: cleanText(input.photographer?.defaultName, fallback.photographer.defaultName).slice(0, 80),
+      defaultLogoUrl: cleanUrl(input.photographer?.defaultLogoUrl, fallback.photographer.defaultLogoUrl),
       defaultInstagramUrl: cleanUrl(input.photographer?.defaultInstagramUrl, fallback.photographer.defaultInstagramUrl),
       defaultFacebookUrl: cleanUrl(input.photographer?.defaultFacebookUrl, fallback.photographer.defaultFacebookUrl),
     },
+    order: {
+      showPaymentMethods: normalizeBoolean(input.order?.showPaymentMethods, fallback.order.showPaymentMethods),
+      postImageEnabled: normalizeBoolean(input.order?.postImageEnabled, fallback.order.postImageEnabled),
+    },
+    maintenance: {
+      enabled: normalizeBoolean(input.maintenance?.enabled, fallback.maintenance.enabled),
+      message: cleanText(input.maintenance?.message, fallback.maintenance.message).slice(0, 500),
+    },
+    announcement: {
+      enabled: normalizeBoolean(input.announcement?.enabled, fallback.announcement.enabled),
+      text: cleanText(input.announcement?.text, fallback.announcement.text).slice(0, 500),
+      ctaLabel: cleanText(input.announcement?.ctaLabel, fallback.announcement.ctaLabel).slice(0, 80),
+      ctaUrl: cleanUrl(input.announcement?.ctaUrl, fallback.announcement.ctaUrl),
+    },
+    customHeadHtml: cleanOptionalText(input.customHeadHtml),
     updatedAt: cleanOptionalText(input.updatedAt),
   };
 }
 
 export async function getSiteSettings() {
   noStore();
-  const settings = await readProjectContentSetting("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
+  const settings = await readDraftContent("site-settings", defaultSiteSettings, (value) => normalizeSettings(value as Partial<SiteSettings>));
   console.log("[Site Settings] Loaded successfully. Photographer:", {
     name: settings.photographer.defaultName,
     instagram: settings.photographer.defaultInstagramUrl,
     facebook: settings.photographer.defaultFacebookUrl,
   });
   return settings;
+}
+
+export async function getDraftSiteSettings(): Promise<SiteSettings> {
+  noStore();
+  return readDraftContent("site-settings", defaultSiteSettings, (value) =>
+    normalizeSettings(value as Partial<SiteSettings>),
+  );
+}
+
+export async function getPublishedSiteSettings(): Promise<SiteSettings> {
+  noStore();
+  return readPublishedContent("site-settings", defaultSiteSettings, (value) =>
+    normalizeSettings(value as Partial<SiteSettings>),
+  );
+}
+
+export async function updateSiteSettingsDraft(input: Partial<SiteSettings>): Promise<SiteSettings> {
+  const current = await getDraftSiteSettings();
+  const next = normalizeSettings({
+    ...current,
+    ...input,
+    socialLinks: { ...current.socialLinks, ...input.socialLinks },
+    seo: { ...current.seo, ...input.seo },
+    homepage: { ...current.homepage, ...input.homepage },
+    photographer: { ...current.photographer, ...input.photographer },
+    order: { ...current.order, ...input.order },
+    maintenance: { ...current.maintenance, ...input.maintenance },
+    announcement: { ...current.announcement, ...input.announcement },
+    updatedAt: new Date().toISOString(),
+  });
+  await writeDraftContent("site-settings", next);
+  return next;
 }
 
 export async function updateSiteSettings(input: Partial<SiteSettings>) {
@@ -187,6 +270,9 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     seo: { ...current.seo, ...input.seo },
     homepage: { ...current.homepage, ...input.homepage },
     photographer: { ...current.photographer, ...input.photographer },
+    order: { ...current.order, ...input.order },
+    maintenance: { ...current.maintenance, ...input.maintenance },
+    announcement: { ...current.announcement, ...input.announcement },
     updatedAt: new Date().toISOString(),
   });
 
@@ -196,7 +282,7 @@ export async function updateSiteSettings(input: Partial<SiteSettings>) {
     facebook: next.photographer.defaultFacebookUrl,
   });
 
-  await writeProjectContentSetting("site-settings", next);
+  await writeDraftContent("site-settings", next);
   console.log("[Site Settings] Successfully saved to database/storage");
   return next;
 }
