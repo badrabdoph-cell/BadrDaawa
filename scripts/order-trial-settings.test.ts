@@ -17,6 +17,8 @@ assert.equal(normalizeOrderTrialDays("7"), 7);
 assert.equal(normalizeOrderTrialDays(0), 1);
 assert.equal(normalizeOrderTrialDays(99), 10);
 assert.equal(normalizeOrderTrialDays("invalid"), 3);
+assert.equal(normalizeOrderTrialDays(""), 3);
+assert.equal(normalizeOrderTrialDays(null), 3);
 assert.deepEqual(buildTrialWindow(2, new Date("2026-07-26T00:00:00.000Z")), {
   trialDays: 2,
   trialEndsAt: new Date("2026-07-28T00:00:00.000Z"),

@@ -5,6 +5,8 @@ import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { resolveCustomInvitationSlug } from "@/lib/custom-invitation-url";
 import { prisma } from "@/lib/db";
 import { hardDeleteInvitationCompletely } from "@/lib/invitation-deletion";
+import { getInvitationManagePath } from "@/lib/invitation-manage-token";
+import { normalizeOrderTrialDays } from "@/lib/order-trial-policy";
 import { getRedirectUrl } from "@/lib/utils";
 
 async function isAdmin(request: NextRequest) {
@@ -24,6 +26,7 @@ type InvitationUpdateOptions = {
   groomName?: string;
   brideName?: string;
   weddingDate?: Date;
+  trialDays?: number;
 };
 
 function safeRevalidatePath(path: string) {
@@ -84,6 +87,37 @@ async function updateDatabaseInvitation(code: string, action: string, options: I
       });
       return result.count > 0;
     }
+
+    if (action === "extend-trial") {
+      const trialDays = normalizeOrderTrialDays(options.trialDays);
+      const result = await prisma.invitation.updateMany({
+        where: { code, deletedAt: null },
+        data: {
+          trialDays,
+          trialEndsAt: new Date(Date.now() + trialDays * 86_400_000),
+          disabledAt: null,
+          disabledReason: null,
+          disabledBy: null,
+          status: "ACTIVE",
+        },
+      });
+      return result.count > 0;
+    }
+
+    if (action === "final-activate") {
+      const result = await prisma.invitation.updateMany({
+        where: { code, deletedAt: null },
+        data: {
+          trialDays: null,
+          trialEndsAt: null,
+          disabledAt: null,
+          disabledReason: null,
+          disabledBy: null,
+          status: "ACTIVE",
+        },
+      });
+      return result.count > 0;
+    }
   } catch (error) {
     console.error("Failed to update database invitation from admin", error);
   }
@@ -106,6 +140,9 @@ async function getInvitationAuditSnapshot(code: string) {
           venue: true,
           musicEnabled: true,
           musicUrl: true,
+          trialDays: true,
+          trialEndsAt: true,
+          disabledAt: true,
         },
       })
       .catch(() => null);
@@ -138,9 +175,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   let groomName = "";
   let brideName = "";
   let weddingDate = "";
+  let trialDays = 3;
   
   if (jsonMode) {
-    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string; disabledReason?: string; groomName?: string; brideName?: string; weddingDate?: string } | null;
+    const body = await request.json().catch(() => null) as { action?: string; customSlug?: string; disabledReason?: string; groomName?: string; brideName?: string; weddingDate?: string; trialDays?: number } | null;
     if (!body) return jsonMode ? jsonError("بيانات غير صالحة.") : redirectBack(request, "invalid");
     action = (body.action || "").trim();
     customSlug = body.customSlug || "";
@@ -148,6 +186,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     groomName = (body.groomName || "").trim();
     brideName = (body.brideName || "").trim();
     weddingDate = (body.weddingDate || "").trim();
+    trialDays = normalizeOrderTrialDays(body.trialDays);
   } else {
     const formData = await request.formData();
     action = String(formData.get("action") || "").trim();
@@ -156,6 +195,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     groomName = String(formData.get("groomName") || "").trim();
     brideName = String(formData.get("brideName") || "").trim();
     weddingDate = String(formData.get("weddingDate") || "").trim();
+    trialDays = normalizeOrderTrialDays(String(formData.get("trialDays") || "") || undefined);
   }
 
   if (action === "disable") {
@@ -173,7 +213,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   }
 
-  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete", "disable", "enable", "update-details"].includes(action)) {
+  if (!code || !["pause", "resume", "archive", "delete", "custom-slug", "hard-delete", "disable", "enable", "update-details", "extend-trial", "final-activate"].includes(action)) {
     return jsonMode ? jsonError("الإجراء غير صالح.") : redirectBack(request, "invalid");
   }
 
@@ -222,6 +262,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     groomName,
     brideName,
     weddingDate: action === "update-details" ? new Date(weddingDate) : undefined,
+    trialDays: action === "extend-trial" ? trialDays : undefined,
   });
   const changed = updatedDatabase;
 
@@ -232,12 +273,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (oldValues && "customSlug" in oldValues && typeof oldValues.customSlug === "string") safeRevalidatePath(`/${oldValues.customSlug}`);
     if (customSlug) safeRevalidatePath(`/${customSlug}`);
     safeRevalidatePath(`/${code}/ad_3399`);
+    safeRevalidatePath(await getInvitationManagePath(code));
     await recordAuditLog({
       actor: await getAuditActorFromAdminRequest(request),
-      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "disable" ? "invitation.disable" : action === "enable" ? "invitation.enable" : action === "custom-slug" || action === "update-details" ? "invitation.update" : "invitation.resume",
+      action: action === "delete" ? "invitation.delete" : action === "archive" ? "invitation.archive" : action === "pause" ? "invitation.pause" : action === "disable" ? "invitation.disable" : action === "enable" ? "invitation.enable" : action === "extend-trial" ? "invitation.trial-extend" : action === "final-activate" ? "invitation.final-activate" : action === "custom-slug" || action === "update-details" ? "invitation.update" : "invitation.resume",
       entity: { type: "Invitation", id: code, label: code },
       oldValues,
-      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : action === "update-details" ? { groomName, brideName, weddingDate } : action === "disable" ? { disabledAt: new Date().toISOString(), disabledReason } : action === "enable" ? { disabledAt: null, disabledReason: null } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
+      newValues: action === "delete" ? { deleted: true } : action === "custom-slug" ? { customSlug } : action === "update-details" ? { groomName, brideName, weddingDate } : action === "disable" ? { disabledAt: new Date().toISOString(), disabledReason } : action === "enable" ? { disabledAt: null, disabledReason: null } : action === "extend-trial" ? { trialDays, trialEndsAt: new Date(Date.now() + trialDays * 86_400_000).toISOString(), disabledAt: null } : action === "final-activate" ? { trialDays: null, trialEndsAt: null, disabledAt: null, status: "ACTIVE" } : { status: action === "archive" ? "ARCHIVED" : action === "pause" ? "PAUSED" : "ACTIVE", active: action === "resume" },
       metadata: { storage: "database" },
     });
   }

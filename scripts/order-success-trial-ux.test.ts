@@ -10,6 +10,7 @@ assert.match(success, /دعوتك جاهزة للتجربة/);
 assert.match(success, /فتح لوحة التحكم/);
 assert.match(success, /مشاهدة الدعوة/);
 assert.match(success, /تواصل مع الدعم/);
+assert.match(success, /storedPayloadMatchesCurrent/);
 assert.doesNotMatch(success, /redirectCountdownSeconds/);
 assert.doesNotMatch(success, /window\.location\.assign\(payload\.whatsappUrl\)/);
 

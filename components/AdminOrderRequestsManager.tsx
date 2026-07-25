@@ -619,9 +619,9 @@ export function AdminOrderRequestsManager({
     setSelectedId(order.id);
     setBusy(action);
     setBusyOrderId(order.id);
-    const pendingText = action === "publish" || action === "trial-publish" ? "جاري الموافقة والنشر..." : action === "reject" ? "جاري رفض الطلب..." : "جاري الحفظ...";
+    const pendingText = action === "trial-publish" ? "جاري إعادة محاولة النشر التجريبي..." : action === "publish" ? "جاري النشر النهائي..." : action === "reject" ? "جاري رفض الطلب..." : "جاري الحفظ...";
     setActionFeedback((current) => ({ ...current, [order.id]: { kind: "pending", text: pendingText } }));
-    setNotice({ kind: "success", text: action === "publish" || action === "trial-publish" ? "جاري الموافقة ونشر الدعوة..." : action === "reject" ? "جاري رفض الطلب..." : "جاري حفظ التعديلات..." });
+    setNotice({ kind: "success", text: action === "trial-publish" ? "جاري إعادة محاولة النشر التجريبي..." : action === "publish" ? "جاري النشر النهائي..." : action === "reject" ? "جاري رفض الطلب..." : "جاري حفظ التعديلات..." });
     try {
       const response = await fetch(`/api/admin/orders/${order.id}`, {
         method: "POST",
@@ -645,7 +645,7 @@ export function AdminOrderRequestsManager({
       setActionFeedback((current) => ({ ...current, [order.id]: { kind: "success", text: successText } }));
       setNotice({
         kind: "success",
-        text: action === "publish" || action === "trial-publish" ? "تمت الموافقة ونشر الدعوة وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
+        text: action === "trial-publish" ? "تم نشر الدعوة بفترة تجريبية وإنشاء الروابط." : action === "publish" ? "تم النشر النهائي وإنشاء الروابط." : action === "reject" ? "تم رفض الطلب وحفظ السبب." : "تم حفظ التعديلات.",
       });
     } catch {
       const text = "تعذر الاتصال بالخادم. تحقق من الاتصال أو سجل الدخول مرة أخرى ثم حاول.";
@@ -664,7 +664,7 @@ export function AdminOrderRequestsManager({
 
   async function quickPublish(order: OrderRequestWithLinks) {
     const state = formFromOrder(order, fallbackTemplate, musicFiles);
-    await runOrderAction(order, "publish", state);
+    await runOrderAction(order, "trial-publish", state);
   }
 
   async function handleImageFile(index: number, file?: File | null) {
@@ -801,13 +801,14 @@ export function AdminOrderRequestsManager({
         <div className="orders-queue-head">
           <div>
             <span className="eyebrow">طلبات الدعوات</span>
-            <h2>الطلبات المقدمة</h2>
+            <h2>طلبات تحتاج تدخل</h2>
+            <p>الطلبات المكتملة تُنشر تلقائيًا؛ الموجود هنا يحتاج استكمال بيانات أو إعادة محاولة النشر.</p>
           </div>
         </div>
 
         <div className="orders-queue-tabs">
           <button className={`orders-queue-tab ${tab === "pending" ? "active" : ""}`} type="button" onClick={() => { setTab("pending"); setSelectedIds(new Set()); }}>
-            المعلقة <span className="orders-queue-tab-count">{openCount}</span>
+            تحتاج تدخل <span className="orders-queue-tab-count">{openCount}</span>
           </button>
           <button className={`orders-queue-tab ${tab === "published" ? "active" : ""}`} type="button" onClick={() => { setTab("published"); setSelectedIds(new Set()); }}>
             المنشورة <span className="orders-queue-tab-count">{publishedCount}</span>
@@ -922,7 +923,7 @@ export function AdminOrderRequestsManager({
                       <>
                         <button className="orders-queue-accept" type="button" disabled={busy !== "idle"} onClick={() => quickPublish(order)}>
                           {isPublishingThisOrder ? <Loader2 size={15} /> : <Check size={14} />}
-                          قبول ونشر
+                          إعادة محاولة النشر التجريبي
                         </button>
                         <button className="orders-queue-reject" type="button" disabled={busy !== "idle"} onClick={() => {
                           setSelectedId(order.id);
@@ -1153,12 +1154,12 @@ export function AdminOrderRequestsManager({
           </button>
           <button className="btn btn-gold btn-glow" type="button" disabled={busy !== "idle"} onClick={() => runAction("publish")}>
             {busy === "publish" ? <Loader2 size={17} /> : <Send size={17} />}
-            نشر الدعوة
+            نشر نهائي
           </button>
           <div className="trial-publish-group">
             <button className="btn btn-gold" type="button" disabled={busy !== "idle"} onClick={() => runAction("trial-publish")}>
               {busy === "trial-publish" ? <Loader2 size={17} /> : <Send size={17} />}
-              مده تجريبيه
+              إعادة محاولة النشر التجريبي
             </button>
             <select
               className="trial-days-select"

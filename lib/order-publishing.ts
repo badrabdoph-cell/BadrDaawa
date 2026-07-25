@@ -318,12 +318,13 @@ export async function publishOrder(input: PublishOrderInput): Promise<PublishOrd
   if (!order) throw new Error("لم يتم العثور على الطلب.");
 
   const publishedCode = order.publishedInvitationCode || "";
-  const existingInvitation = publishedCode
+  const foundInvitation = publishedCode
     ? await prisma.invitation.findUnique({
         where: { code: publishedCode },
-        select: { id: true, code: true, customerId: true, templateId: true, trialDays: true, trialEndsAt: true },
+        select: { id: true, code: true, customerId: true, templateId: true, trialDays: true, trialEndsAt: true, deletedAt: true },
       })
     : null;
+  const existingInvitation = foundInvitation && !foundInvitation.deletedAt ? foundInvitation : null;
 
   if (existingInvitation && input.mode === "AUTO_TRIAL") {
     if (order.status !== "PUBLISHED" || order.customerId !== existingInvitation.customerId) {

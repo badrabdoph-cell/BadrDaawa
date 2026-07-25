@@ -23,6 +23,7 @@ export function getInvitationState(invitation: AdminInvitationStateInput, now = 
     if (invitation.disabledBy === "system" && invitation.trialEndsAt) return "trial-ended";
     return "disabled";
   }
+  if (invitation.trialEndsAt && trialEndsAt <= now) return "trial-ended";
   if (trialEndsAt > now) return "trial";
   if (status === "draft") return "draft";
   if (status === "archived") return "archived";

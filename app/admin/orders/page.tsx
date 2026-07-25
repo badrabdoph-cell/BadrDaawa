@@ -76,8 +76,8 @@ export default async function OrdersPage({
       <div className="dashboard-head">
         <div>
           <span className="eyebrow">Order Requests</span>
-          <h1>طلبات الدعوات ({openCount})</h1>
-          <p>كل طلب من الموقع يتسجل هنا بالصور والموسيقى وبيانات المصور، تراجعه في نفس الصفحة ثم تنشره كدعوة جاهزة.</p>
+          <h1>طلبات تحتاج تدخل ({openCount})</h1>
+          <p>الطلبات المكتملة تُنشر تلقائيًا بفترة تجريبية. تظهر هنا فقط الطلبات الناقصة أو التي تعذر نشرها لتراجعها أو تعيد المحاولة.</p>
         </div>
         <div className="dashboard-actions">
           <AdminExportButton

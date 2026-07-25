@@ -105,6 +105,8 @@ export default async function InvitationsPage({
     "custom-url-error": params.message || "تعذر حفظ الرابط المخصص.",
     disable: "تم تعطيل الدعوة.",
     enable: "تم إعادة تفعيل الدعوة.",
+    "extend-trial": "تم تمديد الفترة التجريبية.",
+    "final-activate": "تم تفعيل الدعوة نهائيًا.",
     "disable-reason-required": "سبب التعطيل مطلوب. اكتب سبباً قبل التعطيل.",
   };
   const noteMessages: Record<string, string> = {
@@ -246,6 +248,7 @@ export default async function InvitationsPage({
                     disabledBy={invitation.disabledBy}
                     trialDays={invitation.trialDays}
                     trialRemaining={invitation.trialEndsAt ? Math.max(0, Math.ceil((new Date(invitation.trialEndsAt).getTime() - Date.now()) / 86400000)) : undefined}
+                    hasTrial={Boolean(invitation.trialDays || invitation.trialEndsAt)}
                   />
                 );
               })}

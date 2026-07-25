@@ -59,6 +59,12 @@ function readStoredPayload(): Partial<OrderSuccessPayload> {
   }
 }
 
+function storedPayloadMatchesCurrent(stored: Partial<OrderSuccessPayload>, current: OrderSuccessPayload) {
+  if (current.orderNumber && stored.orderNumber !== current.orderNumber) return false;
+  if (current.invitationCode && stored.invitationCode !== current.invitationCode) return false;
+  return Boolean(stored.orderNumber || stored.invitationCode);
+}
+
 const confettiColors = ["#bd8f3f", "#ffffff", "#7dbf7d", "#c8a96e", "#e8f5e9", "#d4af37"];
 
 export function OrderSuccessRedirect({ activationStatus = "pending", orderNumber, invitationCode, supportUrl }: OrderSuccessRedirectProps) {
@@ -71,7 +77,8 @@ export function OrderSuccessRedirect({ activationStatus = "pending", orderNumber
   const cleanSupportUrl = useMemo(() => cleanHttpUrl(supportUrl), [supportUrl]);
 
   useEffect(() => {
-    setPayload((current) => ({ ...current, ...readStoredPayload() }));
+    const stored = readStoredPayload();
+    setPayload((current) => storedPayloadMatchesCurrent(stored, current) ? { ...current, ...stored } : current);
     setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 

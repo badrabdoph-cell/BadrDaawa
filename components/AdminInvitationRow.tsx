@@ -31,6 +31,7 @@ type Props = {
   disabledBy?: string;
   trialDays?: number;
   trialRemaining?: number;
+  hasTrial?: boolean;
 };
 
 function CopyButton({ value, label, onDone }: { value: string; label: string; onDone: () => void }) {
@@ -59,7 +60,7 @@ export function AdminInvitationRow({
   stateEmoji, stateLabel, stateClass,
   publicPath, adminPath, invitationUrl, adminUrl,
   isDisabled, disabledReason, disabledBy,
-  trialDays, trialRemaining, isFavorite = false,
+  trialDays, trialRemaining, hasTrial = false, isFavorite = false,
 }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -208,6 +209,38 @@ export function AdminInvitationRow({
     }
   }
 
+  async function handleTrialAction(action: "extend-trial" | "final-activate") {
+    let nextTrialDays = trialDays || 3;
+    if (action === "extend-trial") {
+      const value = window.prompt("مدة التجربة الجديدة من 1 إلى 10 أيام:", String(nextTrialDays));
+      if (value === null) return;
+      nextTrialDays = Number(value);
+      if (!Number.isInteger(nextTrialDays) || nextTrialDays < 1 || nextTrialDays > 10) {
+        alert("مدة التجربة يجب أن تكون من يوم إلى 10 أيام.");
+        return;
+      }
+    } else if (!window.confirm("هل تريد تحويل هذه الدعوة إلى تفعيل نهائي بدون تاريخ انتهاء تجريبي؟")) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/invitations/${encodeURIComponent(code)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ action, ...(action === "extend-trial" ? { trialDays: nextTrialDays } : {}) }),
+      });
+      const data = await res.json().catch(() => null) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "تعذر تحديث الفترة التجريبية.");
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "حدث خطأ.");
+    } finally {
+      setActionLoading(false);
+      setMenuOpen(false);
+    }
+  }
+
   return (
     <>
       <tr className={`admin-invitation-row ${mobileExpanded ? "expanded" : ""} ${editing ? "editing" : ""}`}>
@@ -319,10 +352,23 @@ export function AdminInvitationRow({
                   </Link>
                   <CopyButton value={invitationUrl} label="نسخ رابط الدعوة" onDone={() => setMenuOpen(false)} />
                   <CopyButton value={adminUrl} label="نسخ رابط الإدارة" onDone={() => setMenuOpen(false)} />
-                  <button type="button" onClick={handleToggleState} disabled={actionLoading}>
-                    {isDisabled ? <CheckCircle size={16} /> : <Ban size={16} />}
-                    {isDisabled ? "تفعيل الدعوة" : "تعطيل الدعوة"}
-                  </button>
+                  {hasTrial ? (
+                    <>
+                      <button type="button" onClick={() => handleTrialAction("extend-trial")} disabled={actionLoading}>
+                        <CheckCircle size={16} />
+                        تمديد التجربة
+                      </button>
+                      <button type="button" onClick={() => handleTrialAction("final-activate")} disabled={actionLoading}>
+                        <CheckCircle size={16} />
+                        تفعيل نهائي
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={handleToggleState} disabled={actionLoading}>
+                      {isDisabled ? <CheckCircle size={16} /> : <Ban size={16} />}
+                      {isDisabled ? "تفعيل الدعوة" : "تعطيل الدعوة"}
+                    </button>
+                  )}
                   <button type="button" onClick={() => { setDeleteConfirm(true); setMenuOpen(false); }} className="danger-action">
                     <Trash2 size={16} />
                     نقل للمهملات

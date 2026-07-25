@@ -13,6 +13,7 @@ assert.match(service, /prisma\.\$transaction/);
 assert.match(service, /status:\s*"PUBLISHED"/);
 assert.match(service, /getPublicPublishedTemplateWithSettings/);
 assert.match(service, /reused:\s*true/);
+assert.match(service, /deletedAt:\s*true/);
 assert.doesNotMatch(route, /async function publishPrismaOrder/);
 assert.match(route, /publishOrder\(/);
 

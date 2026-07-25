@@ -23,7 +23,8 @@ assert.match(manager, /PostImageAdminPanel/, "admin orders manager should render
 assert.match(manager, /selectedOrder\.postImage/, "post image panel should use the selected order linked post image state");
 assert.match(manager, /صورة البوست/, "admin orders should label the post image control section clearly");
 assert.doesNotMatch(manager, /action:\s*"update-status",\s*status:\s*"accepted"/, "primary accept action should publish the invitation so the post image can be generated");
-assert.match(manager, /قبول ونشر/, "primary accept action should communicate that it publishes and generates final assets");
+assert.match(manager, /إعادة محاولة النشر التجريبي/, "primary recovery action should publish the invitation with a trial and generate final assets");
+assert.match(manager, /runOrderAction\(order, "trial-publish", state\)/, "quick recovery should preserve the customer's trial instead of final activation");
 assert.match(postImagePanel, /ogUrl/, "post image admin panel should receive the Open Graph post image asset");
 assert.match(postImagePanel, /تحميل OG/, "post image admin panel should allow downloading the Open Graph asset");
 assert.match(postImagePanel, /نسخ رابط OG/, "post image admin panel should allow copying the Open Graph asset link");
