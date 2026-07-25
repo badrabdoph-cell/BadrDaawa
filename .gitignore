@@ -20,3 +20,4 @@ tsconfig.tsbuildinfo
 !/data/*.json
 /data/backups/
 .playwright-mcp/
+.worktrees/
