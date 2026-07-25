@@ -7,6 +7,7 @@ import { queueGitHubSync } from "@/lib/github-sync-queue";
 import { getHomeContent, updateHomeContent } from "@/lib/home-content";
 import { imageExtensionForUpload, imageExtensionFromBytes, isSupportedImageFile } from "@/lib/image-formats";
 import { getHomePreviewSettings, updateHomePreviewSettings } from "@/lib/preview-settings";
+import { normalizeOrderTrialDays } from "@/lib/order-trial-policy";
 import { writeProjectAssetFile } from "@/lib/project-assets";
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings";
 import { getRedirectUrl } from "@/lib/utils";
@@ -97,6 +98,12 @@ export async function POST(request: NextRequest) {
         defaultName: text(formData, "photographerName"),
         defaultInstagramUrl: text(formData, "photographerInstagramUrl"),
         defaultFacebookUrl: text(formData, "photographerFacebookUrl"),
+      },
+      order: {
+        showPaymentMethods: formData.has("showPaymentMethods"),
+        postImageEnabled: formData.has("postImageEnabled"),
+        autoTrialPublishEnabled: formData.has("autoTrialPublishEnabled"),
+        defaultTrialDays: normalizeOrderTrialDays(text(formData, "defaultTrialDays")),
       },
     });
 

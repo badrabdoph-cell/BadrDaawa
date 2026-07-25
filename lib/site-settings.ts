@@ -1,5 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { readDraftContent, readPublishedContent, writeDraftContent } from "./project-content-store";
+import { DEFAULT_ORDER_TRIAL_DAYS, normalizeOrderTrialDays } from "./order-trial-policy";
 import { normalizePhoneForWhatsApp } from "./utils";
 
 export type SiteSocialLinks = {
@@ -49,6 +50,8 @@ export type SiteSettings = {
   order: {
     showPaymentMethods: boolean;
     postImageEnabled: boolean;
+    autoTrialPublishEnabled: boolean;
+    defaultTrialDays: number;
   };
   maintenance: {
     enabled: boolean;
@@ -103,6 +106,8 @@ export const defaultSiteSettings: SiteSettings = {
   order: {
     showPaymentMethods: true,
     postImageEnabled: false,
+    autoTrialPublishEnabled: true,
+    defaultTrialDays: DEFAULT_ORDER_TRIAL_DAYS,
   },
   maintenance: {
     enabled: false,
@@ -202,6 +207,8 @@ function normalizeSettings(input: Partial<SiteSettings>): SiteSettings {
     order: {
       showPaymentMethods: normalizeBoolean(input.order?.showPaymentMethods, fallback.order.showPaymentMethods),
       postImageEnabled: normalizeBoolean(input.order?.postImageEnabled, fallback.order.postImageEnabled),
+      autoTrialPublishEnabled: normalizeBoolean(input.order?.autoTrialPublishEnabled, fallback.order.autoTrialPublishEnabled),
+      defaultTrialDays: normalizeOrderTrialDays(input.order?.defaultTrialDays, fallback.order.defaultTrialDays),
     },
     maintenance: {
       enabled: normalizeBoolean(input.maintenance?.enabled, fallback.maintenance.enabled),

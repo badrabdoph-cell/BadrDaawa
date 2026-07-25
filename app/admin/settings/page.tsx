@@ -166,12 +166,30 @@ export default async function AdminSiteSettingsPage({
           </div>
           <div className="site-settings-toggles">
             <label className="admin-toggle-row template-inline-toggle">
+              <input name="autoTrialPublishEnabled" type="checkbox" defaultChecked={settings.order.autoTrialPublishEnabled} />
+              نشر الدعوة تلقائيًا بعد إكمال الطلب وتفعيل الفترة التجريبية
+            </label>
+            <label className="admin-toggle-row template-inline-toggle">
               <input name="showPaymentMethods" type="checkbox" defaultChecked={settings.order.showPaymentMethods} />
               إظهار خيارات طريقة الدفع في طلب الدعوة
             </label>
             <label className="admin-toggle-row template-inline-toggle">
               <input name="postImageEnabled" type="checkbox" defaultChecked={settings.order.postImageEnabled} />
               تشغيل مرحلة صورة البوست وكل الأدوات المرتبطة بها
+            </label>
+          </div>
+          <div className="admin-form-grid">
+            <label className="field">
+              <span>مدة التجربة الافتراضية بالأيام</span>
+              <input
+                name="defaultTrialDays"
+                type="number"
+                min="1"
+                max="10"
+                defaultValue={settings.order.defaultTrialDays}
+                inputMode="numeric"
+              />
+              <small>تبدأ فور إنشاء الدعوة تلقائيًا، ويمكن تمديدها أو تحويلها لتفعيل نهائي من لوحة الإدارة.</small>
             </label>
           </div>
         </article>
