@@ -17,6 +17,8 @@ export type AuditAction =
   | "order.create"
   | "order.publish"
   | "order.trial-publish"
+  | "order.auto-trial-publish"
+  | "order.auto-trial-publish-failed"
   | "template.change"
   | "media.image.upload"
   | "media.image.delete"
@@ -260,6 +262,8 @@ export const auditActionLabels: Record<AuditAction, string> = {
   "order.create": "إنشاء طلب",
   "order.publish": "نشر طلب",
   "order.trial-publish": "نشر تجريبي",
+  "order.auto-trial-publish": "نشر تجريبي تلقائي",
+  "order.auto-trial-publish-failed": "فشل النشر التجريبي التلقائي",
   "template.change": "تغيير قالب",
   "media.image.upload": "رفع صورة",
   "media.image.delete": "حذف صورة",

@@ -7,6 +7,7 @@ const historyPage = readFileSync("app/admin/promo-codes/history/page.tsx", "utf8
 const discountsPage = readFileSync("app/admin/promo-codes/discounts/page.tsx", "utf8");
 const orderApi = readFileSync("app/api/orders/route.ts", "utf8");
 const adminOrderApi = readFileSync("app/api/admin/orders/[id]/route.ts", "utf8");
+const orderPublishing = readFileSync("lib/order-publishing.ts", "utf8");
 const invitationExperience = readFileSync("components/InvitationExperience.tsx", "utf8");
 const templatePreview = readFileSync("app/templates/[slug]/preview/page.tsx", "utf8");
 const invitationData = readFileSync("lib/invitation-data.ts", "utf8");
@@ -29,8 +30,8 @@ assert.match(orderApi, /lockedByPromo:\s*true/, "order API should mark partner p
 
 assert.match(adminOrderApi, /cleanPartnerSnapshotPhotographer/, "admin publish flow should rebuild photographer data from stored partner snapshot");
 assert.match(adminOrderApi, /existingPhotographer\?\.lockedByPromo\s*\?\s*existingPhotographer/, "admin updates should not overwrite promo-locked photographer data with defaults");
-assert.match(adminOrderApi, /partnerSnapshot:\s*order\.partnerSnapshot/, "published invitation should retain the partner snapshot");
-assert.match(adminOrderApi, /partnerPublishedAt:\s*order\.partnerSnapshot\s*\?\s*new Date\(\)/, "published invitation should record partner publish time");
+assert.match(orderPublishing, /partnerSnapshot:\s*order\.partnerSnapshot/, "published invitation should retain the partner snapshot");
+assert.match(orderPublishing, /partnerPublishedAt:\s*order\.partnerSnapshot\s*\?\s*now/, "published invitation should record partner publish time");
 
 assert.match(invitationExperience, /forceInvitationPhotographer/, "invitation rendering should force promo photographer display even if global photographer card is off");
 assert.match(templatePreview, /hasExplicitPhotographerPreview\s*\?\s*true\s*:\s*siteSettings\.photographer\.showPhotographerCard/, "order preview should force explicit promo photographer display");

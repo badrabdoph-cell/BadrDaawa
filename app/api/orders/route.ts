@@ -3,12 +3,13 @@ import crypto from "crypto";
 import { getPublicAuditActor, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
 import { prisma } from "@/lib/db";
+import { publishOrder } from "@/lib/order-publishing";
 import { saveOrderPreviewImages } from "@/lib/order-preview-images";
 import { buildReservedInvitationLinks, createReservedInvitationCode, createReservedManageToken } from "@/lib/order-request-links";
 import { getPublishedSiteSettings } from "@/lib/site-settings";
 import { getPublicPublishedTemplateWithSettings, getPublishedTemplateSortOrderWithSettings } from "@/lib/template-settings";
 import { normalizeCoupleStory } from "@/lib/invitation-texts";
-import { getPublicSiteUrl, getWhatsAppOrderUrl } from "@/lib/utils";
+import { getPublicSiteUrl } from "@/lib/utils";
 import { orderRequestSchema } from "@/lib/validation";
 import { checkRateLimit, createRateLimitKey, getClientIdentifier, RATE_LIMIT_CONFIGS } from "@/lib/rate-limiting";
 import { isSameOriginRequest, sameOriginErrorResponse } from "@/lib/security-enhancements";
@@ -71,37 +72,65 @@ function cleanExternalUrl(value: string) {
   }
 }
 
-function buildOrderWhatsAppMessage(input: {
+async function activateOrderTrial(input: {
+  orderId: string;
+  orderNumber: string;
   invitationCode: string;
-  groomName: string;
-  brideName: string;
-  publicUrl: string;
-  adminUrl: string;
+  manageToken: string;
+  siteUrl: string;
+  trialDays: number;
+  autoTrialPublishEnabled: boolean;
+  actorLabel: string;
+  duplicate?: boolean;
 }) {
-  return [
-    "تم تأكيد طلبك ❤️",
-    "",
-    "فقط أرسل هذه الرسالة إلى الأدمن وسوف نقوم بمراجعة الدعوة ونشرها.",
-    "",
-    "طلب دعوة:",
-    input.invitationCode,
-    "",
-    "العريس والعروس:",
-    `${input.groomName} / ${input.brideName}`,
-    "",
-    "هذا رابط الدعوة الذي ستشاركه مع معازيمك بعد موافقة الأدمن على الطلب:",
-    "",
-    input.publicUrl,
-    "",
-    "وهذا رابط الإدارة الخاص بالدعوة والذي يمكنك من خلاله:",
-    "",
-    "- متابعة الحضور.",
-    "- معرفة من أكد حضوره.",
-    "- معرفة من ينوي الحضور.",
-    "- مراجعة الرسائل والتهاني والتعليقات قبل ظهورها داخل الدعوة.",
-    "",
-    input.adminUrl,
-  ].join("\n");
+  const pending = {
+    ok: true,
+    activationStatus: "pending" as const,
+    duplicate: Boolean(input.duplicate),
+    orderId: input.orderId,
+    orderNumber: input.orderNumber,
+    invitationCode: input.invitationCode,
+  };
+  if (!input.autoTrialPublishEnabled) return pending;
+
+  try {
+    const published = await publishOrder({
+      orderId: input.orderId,
+      mode: "AUTO_TRIAL",
+      templateVisibility: "published",
+      trialDays: input.trialDays,
+    });
+    const links = buildReservedInvitationLinks(input.siteUrl, published.code, input.manageToken);
+    await recordAuditLog({
+      actor: getPublicAuditActor(input.actorLabel),
+      action: "order.auto-trial-publish",
+      entity: { type: "Order", id: input.orderId, label: input.orderNumber },
+      newValues: {
+        invitationCode: published.code,
+        trialDays: published.trialDays,
+        trialEndsAt: published.trialEndsAt?.toISOString(),
+        reused: published.reused,
+      },
+      metadata: { source: "public-order-form" },
+    }).catch((error) => console.error("[Order API] Failed to audit automatic trial publish", error));
+    return {
+      ...pending,
+      activationStatus: "ready" as const,
+      invitationCode: published.code,
+      trialDays: published.trialDays,
+      trialEndsAt: published.trialEndsAt?.toISOString(),
+      ...links,
+    };
+  } catch (error) {
+    console.error("[Order API] Automatic trial publish failed", { orderId: input.orderId, error });
+    await recordAuditLog({
+      actor: getPublicAuditActor(input.actorLabel),
+      action: "order.auto-trial-publish-failed",
+      entity: { type: "Order", id: input.orderId, label: input.orderNumber },
+      metadata: { source: "public-order-form", error: error instanceof Error ? error.message : String(error) },
+    }).catch((auditError) => console.error("[Order API] Failed to audit automatic trial failure", auditError));
+    return pending;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -139,7 +168,6 @@ export async function POST(request: NextRequest) {
   }
 
   const siteSettings = await getPublishedSiteSettings();
-  const orderWhatsAppRecipient = siteSettings.whatsappUrl || siteSettings.contactPhones[0] || "";
   const imageUrls = await saveOrderImages(parsed.data.orderImages, request);
   const music = await resolveOrderMusic({
     musicEnabled: parsed.data.musicEnabled,
@@ -187,8 +215,8 @@ export async function POST(request: NextRequest) {
   });
   const dedupeKey = makeDedupeKey(dedupeSource);
   const siteUrl = getPublicSiteUrl(request.headers, request.url);
-  const reservedInvitationCode = await createReservedInvitationCode(parsed.data.groomName, parsed.data.brideName);
-  const reservedManageToken = await createReservedManageToken();
+  let reservedInvitationCode = "";
+  let reservedManageToken = "";
   const partnerPhotographer = appliedPartnerPromo?.photographer;
   const partnerSnapshot = appliedPartnerPromo?.partner;
   const photographer = appliedPartnerPromo
@@ -277,39 +305,34 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
 
-      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true, publishedInvitationCode: true, manageToken: true } }).catch((err) => {
+      const existingOrder = await prisma.orderRequest.findFirst({ where: { dedupeKey, deletedAt: null }, select: { id: true, orderNumber: true, publishedInvitationCode: true, manageToken: true, status: true } }).catch((err) => {
         console.error("Deduplication check failed:", err);
         return null;
       });
       if (existingOrder) {
-        const duplicateInvitationCode = existingOrder.publishedInvitationCode || reservedInvitationCode;
-        const duplicateManageToken = existingOrder.manageToken || reservedManageToken;
+        const duplicateInvitationCode = existingOrder.publishedInvitationCode || await createReservedInvitationCode(parsed.data.groomName, parsed.data.brideName);
+        const duplicateManageToken = existingOrder.manageToken || await createReservedManageToken();
         if (!existingOrder.publishedInvitationCode || !existingOrder.manageToken) {
           await prisma.orderRequest.update({
             where: { id: existingOrder.id },
             data: { publishedInvitationCode: duplicateInvitationCode, manageToken: duplicateManageToken },
           });
         }
-        const links = buildReservedInvitationLinks(siteUrl, duplicateInvitationCode, duplicateManageToken);
-        const message = buildOrderWhatsAppMessage({
-          invitationCode: duplicateInvitationCode,
-          groomName: parsed.data.groomName,
-          brideName: parsed.data.brideName,
-          publicUrl: links.publicUrl,
-          adminUrl: links.adminUrl,
-        });
-        return NextResponse.json({
-          ok: true,
-          duplicate: true,
+        return NextResponse.json(await activateOrderTrial({
           orderId: existingOrder.id,
           orderNumber: existingOrder.orderNumber || orderNumber,
           invitationCode: duplicateInvitationCode,
-          imageUrls,
-          musicUrl: music.musicUrl,
-          whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient),
-          ...links,
-        });
+          manageToken: duplicateManageToken,
+          siteUrl,
+          trialDays: siteSettings.order.defaultTrialDays,
+          autoTrialPublishEnabled: siteSettings.order.autoTrialPublishEnabled,
+          actorLabel: parsed.data.phone || parsed.data.groomName || "Public order",
+          duplicate: true,
+        }));
       }
+
+      reservedInvitationCode = await createReservedInvitationCode(parsed.data.groomName, parsed.data.brideName);
+      reservedManageToken = await createReservedManageToken();
 
       const order = await prisma.$transaction(async (tx) => {
         const createdOrder = await tx.orderRequest.create({
@@ -382,14 +405,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "تعذر حفظ الطلب في قاعدة البيانات." }, { status: 500 });
   }
 
-  const links = buildReservedInvitationLinks(siteUrl, effectiveInvitationCode, effectiveManageToken);
-  const message = buildOrderWhatsAppMessage({
-    invitationCode: effectiveInvitationCode,
-    groomName: parsed.data.groomName,
-    brideName: parsed.data.brideName,
-    publicUrl: links.publicUrl,
-    adminUrl: links.adminUrl,
-  });
   await recordAuditLog({
     actor: getPublicAuditActor(parsed.data.phone || parsed.data.groomName || "Public order"),
     action: "order.create",
@@ -398,7 +413,6 @@ export async function POST(request: NextRequest) {
       orderId,
       orderNumber: effectiveOrderNumber,
       invitationCode: effectiveInvitationCode,
-      manageToken: effectiveManageToken,
       groomName: parsed.data.groomName,
       brideName: parsed.data.brideName,
       phone: parsed.data.phone,
@@ -416,5 +430,14 @@ export async function POST(request: NextRequest) {
     },
     metadata: { source: "public-order-form" },
   });
-  return NextResponse.json({ ok: true, orderId, orderNumber: effectiveOrderNumber, invitationCode: effectiveInvitationCode, imageUrls, musicUrl: music.musicUrl, whatsappUrl: getWhatsAppOrderUrl(message, orderWhatsAppRecipient), ...links });
+  return NextResponse.json(await activateOrderTrial({
+    orderId,
+    orderNumber: effectiveOrderNumber,
+    invitationCode: effectiveInvitationCode,
+    manageToken: effectiveManageToken,
+    siteUrl,
+    trialDays: siteSettings.order.defaultTrialDays,
+    autoTrialPublishEnabled: siteSettings.order.autoTrialPublishEnabled,
+    actorLabel: parsed.data.phone || parsed.data.groomName || "Public order",
+  }));
 }
