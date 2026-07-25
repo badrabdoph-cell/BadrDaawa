@@ -12,3 +12,11 @@ export function normalizeOrderTrialDays(value: unknown, fallback = DEFAULT_ORDER
 export function getTrialEndsAt(trialDays: unknown, now = new Date()) {
   return new Date(now.getTime() + normalizeOrderTrialDays(trialDays) * 24 * 60 * 60 * 1000);
 }
+
+export function buildTrialWindow(trialDays: unknown, now = new Date()) {
+  const normalizedDays = normalizeOrderTrialDays(trialDays);
+  return {
+    trialDays: normalizedDays,
+    trialEndsAt: getTrialEndsAt(normalizedDays, now),
+  };
+}

@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { buildCustomerPasswordSeed, buildCustomerUsername } from "../lib/customer-identity";
+
+const source = readFileSync("lib/customer-identity.ts", "utf8");
+assert.match(source, /Prisma\.TransactionClient/);
 
 assert.equal(buildCustomerUsername({ phone: "+20 100 123 4567", code: "ahmed-sara" }), "client_201001234567");
 assert.equal(buildCustomerUsername({ phone: "", code: "Ahmed & Sara 2026" }), "client_ahmed_sara_2026");

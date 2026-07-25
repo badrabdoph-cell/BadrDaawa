@@ -3,20 +3,19 @@ import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/admin-session";
 import { getAuditActorFromAdminRequest, recordAuditLog } from "@/lib/audit-log";
 import { cleanPlayableAudioUrl, saveAudioDataUrl } from "@/lib/audio-files";
-import { resolveOrCreateCustomerForInvitation } from "@/lib/customer-identity";
 import { prisma } from "@/lib/db";
-import { fallbackInvitationGallery, saveInvitationGalleryImages } from "@/lib/invitation-images";
+import { fallbackInvitationGallery } from "@/lib/invitation-images";
 import { cleanInvitationHeroVideoUrl, invitationTextsWithHeroVideo } from "@/lib/invitation-media";
 import { getInvitationManagePath } from "@/lib/invitation-manage-token";
 import { normalizeInvitationTexts } from "@/lib/invitation-texts";
+import { publishOrder } from "@/lib/order-publishing";
 import { ensureInvitationPostImage } from "@/lib/post-image/service";
 import { getPrePublishValidationReport } from "@/lib/pre-publish-validation";
-import { buildInvitationBaseSlug, getCustomerAdminPath, makeNumberedInvitationSlug } from "@/lib/slug";
+import { getCustomerAdminPath } from "@/lib/slug";
 import { getTemplateSortOrderWithSettings, getTemplateWithSettings } from "@/lib/template-settings";
 import type { Invitation, OrderPostImageState, OrderRequest } from "@/lib/types";
 import { getPublicSiteUrl, getRedirectUrl, normalizeInternalAssetUrl } from "@/lib/utils";
 import { validateOrderUpdate } from "@/lib/validation-enhanced";
-import { extractCoordinatesFromUrl } from "@/lib/map-url";
 
 export const runtime = "nodejs";
 
@@ -406,144 +405,6 @@ async function upsertTemplate(templateSlug: string) {
   return { definition: selectedTemplate, dbTemplate };
 }
 
-async function publishPrismaOrder(id: string, payload: AdminOrderPayload) {
-  if (!prisma) return null;
-  const order = await prisma.orderRequest.findFirst({
-    where: { id, deletedAt: null },
-    include: { template: { select: { slug: true } } },
-  });
-  if (!order) return null;
-  const existingOrder: Partial<OrderRequest> = {
-    groomName: order.groomName,
-    brideName: order.brideName,
-    phone: order.phone,
-    weddingDate: dateToString(order.weddingDate),
-    venue: order.venue,
-    mapUrl: order.mapUrl || undefined,
-    notes: order.notes || undefined,
-    imageUrls: parseStoredImageUrls(order.imageUrls),
-    musicEnabled: order.musicEnabled,
-    musicChoice: normalizeMusicChoice(order.musicChoice),
-    musicUrl: order.musicUrl || undefined,
-    texts: normalizeInvitationTexts(order.texts),
-    photographer: cleanPartnerSnapshotPhotographer(order.partnerSnapshot, cleanPhotographer(order.photographer), order.discountSnapshot),
-    rejectionReason: order.rejectionReason || undefined,
-    manageToken: order.manageToken || undefined,
-    manageTokenExpiresAt: dateToString(order.manageTokenExpiresAt),
-    templateSlug: order.template?.slug || "featured-1",
-    postImageTemplateId: order.postImageTemplateId || undefined,
-  };
-  const draft = getOrderDraft(payload, existingOrder);
-  const error = validateDraft(draft, true);
-  if (error) throw new Error(error);
-  const weddingDate = draft.weddingDate || new Date();
-  const template = await upsertTemplate(draft.templateSlug);
-  if (!template?.dbTemplate) throw new Error("القالب المختار غير موجود.");
-
-  const gallery = (await saveInvitationGalleryImages(draft.imageUrls)).slice(0, 3);
-  const finalGallery = gallery.length ? gallery : fallbackGallery;
-  const musicUrl = await resolveMusic(draft, order.musicUrl, order.musicEnabled);
-  const effectiveMusicEnabled = Boolean(draft.musicEnabled && (draft.musicChoice === "default" || musicUrl));
-  const effectiveMusicChoice = effectiveMusicEnabled ? draft.musicChoice : "default";
-  const baseSlug = buildInvitationBaseSlug(draft.groomName, draft.brideName);
-  const publishedCode = order.publishedInvitationCode || "";
-  const existingPublishedInvitation = publishedCode ? await prisma.invitation.findUnique({ where: { code: publishedCode }, select: { code: true } }).catch(() => null) : null;
-  const existingCodes = existingPublishedInvitation
-    ? []
-    : await prisma.invitation.findMany({
-        where: {
-          OR: [
-            { code: { startsWith: baseSlug } },
-            { customSlug: { startsWith: baseSlug } },
-          ],
-        },
-        select: { code: true, customSlug: true },
-      });
-  const code =
-    existingPublishedInvitation?.code ||
-    publishedCode ||
-    makeNumberedInvitationSlug(
-      baseSlug,
-      existingCodes.flatMap((item) => [item.code, item.customSlug || ""]).filter(Boolean),
-    );
-  const customer = await resolveOrCreateCustomerForInvitation(prisma, {
-    existingCustomerId: order.customerId || null,
-    code,
-    name: `${draft.groomName} و ${draft.brideName}`,
-    phone: draft.phone,
-  });
-
-  const trialDays = payload.trialDays && payload.trialDays >= 1 && payload.trialDays <= 10 ? payload.trialDays : null;
-  const trialEndsAt = trialDays ? new Date(Date.now() + trialDays * 86400000) : null;
-
-  const orderMapCoords = extractCoordinatesFromUrl(draft.mapUrl);
-  const orderLatitude = orderMapCoords?.lat ?? null;
-  const orderLongitude = orderMapCoords?.lng ?? null;
-
-  const invitationData = {
-    status: "ACTIVE" as never,
-    language: order.language,
-    groomName: draft.groomName,
-    brideName: draft.brideName,
-    weddingDate,
-    weddingTime: draft.weddingTime || "07:00 مساءً",
-    venue: draft.venue,
-    city: "",
-    mapUrl: draft.mapUrl,
-    latitude: orderLatitude,
-    longitude: orderLongitude,
-    heroPhoto: finalGallery[0],
-    gallery: finalGallery,
-    musicUrl: musicUrl || undefined,
-    musicEnabled: effectiveMusicEnabled,
-    manageToken: order.manageToken || undefined,
-    manageTokenExpiresAt: order.manageTokenExpiresAt || undefined,
-    texts: draft.texts,
-    photographer: draft.photographer,
-    partnerSnapshot: order.partnerSnapshot || undefined,
-    promoSnapshot: order.discountSnapshot || undefined,
-    partnerPublishedAt: order.partnerSnapshot ? new Date() : undefined,
-    customerId: customer.id,
-    templateId: template.dbTemplate.id,
-    postImageTemplateId: draft.postImageTemplateId,
-    trialDays,
-    trialEndsAt,
-  };
-
-  if (existingPublishedInvitation) {
-    await prisma.invitation.update({ where: { code }, data: invitationData });
-  } else {
-    await prisma.invitation.create({ data: { code, ...invitationData } });
-  }
-
-  await prisma.orderRequest.update({
-    where: { id },
-    data: {
-      groomName: draft.groomName,
-      brideName: draft.brideName,
-      phone: draft.phone,
-      weddingDate,
-      weddingTime: draft.weddingTime || "07:00 مساءً",
-      venue: draft.venue,
-      mapUrl: draft.mapUrl,
-      notes: draft.notes,
-      imageUrls: finalGallery,
-      musicEnabled: effectiveMusicEnabled,
-      musicChoice: effectiveMusicChoice,
-      musicUrl,
-      texts: draft.texts,
-      photographer: draft.photographer,
-      status: "PUBLISHED" as never,
-      publishedInvitationCode: code,
-      rejectionReason: null,
-      customerId: customer.id,
-      templateId: template.dbTemplate.id,
-      postImageTemplateId: draft.postImageTemplateId,
-    },
-  });
-  return code;
-}
-
 async function updateOrder(id: string, payload: AdminOrderPayload, status: "REVIEWING" | "EDITED" | "REJECTED" | null) {
   if (!prisma) return null;
   const existingPrisma = prisma
@@ -696,8 +557,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (action === "publish" || action === "trial-publish") {
       const oldValues = await getSnapshot(id, request);
-      const code = await publishPrismaOrder(id, payload);
-      if (!code) throw new Error("لم يتم العثور على الطلب.");
+      const published = await publishOrder({
+        orderId: id,
+        mode: action === "trial-publish" ? "MANUAL_TRIAL" : "FINAL",
+        templateVisibility: "admin",
+        trialDays: payload.trialDays,
+        overrides: payload,
+      });
+      const code = published.code;
       revalidatePath("/admin/orders");
       revalidatePath("/admin/invitations");
       revalidatePath(`/${code}`);

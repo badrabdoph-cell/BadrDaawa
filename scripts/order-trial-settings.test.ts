@@ -5,6 +5,7 @@ import {
   DEFAULT_ORDER_TRIAL_DAYS,
   MAX_ORDER_TRIAL_DAYS,
   MIN_ORDER_TRIAL_DAYS,
+  buildTrialWindow,
   normalizeOrderTrialDays,
 } from "../lib/order-trial-policy";
 
@@ -16,6 +17,10 @@ assert.equal(normalizeOrderTrialDays("7"), 7);
 assert.equal(normalizeOrderTrialDays(0), 1);
 assert.equal(normalizeOrderTrialDays(99), 10);
 assert.equal(normalizeOrderTrialDays("invalid"), 3);
+assert.deepEqual(buildTrialWindow(2, new Date("2026-07-26T00:00:00.000Z")), {
+  trialDays: 2,
+  trialEndsAt: new Date("2026-07-28T00:00:00.000Z"),
+});
 
 const root = process.cwd();
 const settingsSource = fs.readFileSync(path.join(root, "lib/site-settings.ts"), "utf8");

@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { hashPassword } from "./password";
 
 type CustomerIdentityInput = {
@@ -34,7 +34,7 @@ export function buildCustomerPasswordSeed({ phone, code }: { phone?: string | nu
   return digits.slice(-6) || `${code.trim().slice(0, 80) || "invitation"}-admin`;
 }
 
-export async function resolveOrCreateCustomerForInvitation(db: PrismaClient, input: CustomerIdentityInput) {
+export async function resolveOrCreateCustomerForInvitation(db: PrismaClient | Prisma.TransactionClient, input: CustomerIdentityInput) {
   const username = String(input.preferredUsername || "").trim() || buildCustomerUsername({ phone: input.phone, code: input.code });
   const passwordSeed = String(input.passwordSeed || "").trim() || buildCustomerPasswordSeed({ phone: input.phone, code: input.code });
   const phone = String(input.phone || "").trim();
