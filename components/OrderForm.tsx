@@ -1837,28 +1837,34 @@ export function OrderForm({
       }
 
       const data = (await response.json().catch(() => null)) as {
-        whatsappUrl?: string;
-        imageUrls?: string[];
-        musicUrl?: string;
+        activationStatus?: "ready" | "pending";
         orderNumber?: string;
         invitationCode?: string;
+        publicUrl?: string;
+        adminUrl?: string;
+        trialDays?: number | null;
+        trialEndsAt?: string;
       } | null;
       try {
         window.sessionStorage?.removeItem(orderDraftStorageKey);
       } catch {}
       orderSubmitKeyRef.current = "";
       finalConfirmIntentAtRef.current = 0;
-      const whatsappUrl = data?.whatsappUrl || "https://wa.me/";
       const successParams = new URLSearchParams();
       if (data?.orderNumber) successParams.set("orderNumber", data.orderNumber);
       if (data?.invitationCode) successParams.set("invitationCode", data.invitationCode);
+      successParams.set("activationStatus", data?.activationStatus === "ready" ? "ready" : "pending");
       try {
         window.sessionStorage?.setItem(
           "badrdaawa-order-success",
           JSON.stringify({
-            whatsappUrl,
+            activationStatus: data?.activationStatus === "ready" ? "ready" : "pending",
             orderNumber: data?.orderNumber || "",
             invitationCode: data?.invitationCode || "",
+            publicUrl: data?.publicUrl || "",
+            adminUrl: data?.adminUrl || "",
+            trialDays: data?.trialDays ?? null,
+            trialEndsAt: data?.trialEndsAt || "",
             groomName: currentForm.groomName,
             brideName: currentForm.brideName,
             weddingDate: readableDate || currentForm.weddingDate,
@@ -1870,9 +1876,7 @@ export function OrderForm({
             storyEnabled: form.storyEnabled,
           }),
         );
-      } catch {
-        successParams.set("whatsappUrl", whatsappUrl);
-      }
+      } catch {}
       window.location.href = `/order/success${successParams.size ? `?${successParams.toString()}` : ""}`;
     } catch {
       setState("error");
